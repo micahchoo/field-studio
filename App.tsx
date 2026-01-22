@@ -1,228 +1,351 @@
-import React, { useState, useEffect } from 'react';
-import { createManifest, processInput, exportManifest } from './services/iiifBuilder';
-import { IIIFManifest, IIIFCanvas, IIIFAnnotation, IIIFItem, IIIFCollection } from './types';
-import { ManifestTree } from './components/ManifestTree';
-import { Workspace } from './components/Workspace';
-import { MetadataEditor } from './components/MetadataEditor';
-import { Icon } from './components/Icon';
 
-const App: React.FC = () => {
-  // Root resource can be a Manifest or a Collection
-  const [rootResource, setRootResource] = useState<IIIFItem | null>(createManifest("New Project", "https://example.org/iiif/new"));
-  const [activeManifestId, setActiveManifestId] = useState<string | null>(null);
-  const [selectedCanvasId, setSelectedCanvasId] = useState<string | null>(null);
-  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+import React, { useState, useEffect, useCallback } from 'react';
+import { ToastProvider, useToast } from './components/Toast';
+import { IIIFItem, IIIFCanvas, FileTree, AppSettings, AppMode, ViewType, AbstractionLevel } from './types';
+import { CONSTANTS, DEFAULT_INGEST_PREFS, DEFAULT_MAP_CONFIG, DEFAULT_ZOOM_CONFIG } from './constants';
+import { Sidebar } from './components/Sidebar';
+import { ArchiveView } from './components/views/ArchiveView';
+import { BoardView } from './components/views/BoardView';
+import { Viewer } from './components/views/Viewer';
+import { CollectionsView } from './components/views/CollectionsView';
+import { SearchView } from './components/views/SearchView';
+import { Inspector } from './components/Inspector';
+import { StatusBar } from './components/StatusBar';
+import { CommandPalette } from './components/CommandPalette';
+import { StagingArea } from './components/StagingArea';
+import { ExportDialog } from './components/ExportDialog';
+import { ContextualHelp } from './components/ContextualHelp';
+import { QCDashboard } from './components/QCDashboard';
+import { OnboardingModal } from './components/OnboardingModal';
+import { buildTree, ingestTree } from './services/iiifBuilder';
+import { storage } from './services/storage';
+import { validator, ValidationIssue } from './services/validator';
+import { DEFAULT_AI_CONFIG } from './services/geminiService';
 
-  // Helper to find manifest in the tree (recursive)
-  const findManifest = (item: IIIFItem | null, id: string): IIIFManifest | null => {
-    if (!item) return null;
-    if (item.id === id && item.type === 'Manifest') return item as IIIFManifest;
-    if (item.type === 'Collection') {
-        const col = item as IIIFCollection;
-        for (const child of col.items) {
-            const found = findManifest(child, id);
-            if (found) return found;
-        }
-    }
-    return null;
+const MainApp: React.FC = () => {
+  const [root, setRoot] = useState<IIIFItem | null>(null);
+  const [currentMode, setCurrentMode] = useState<AppMode>('archive');
+  const [viewType, setViewType] = useState<ViewType>('iiif');
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showInspector, setShowInspector] = useState(true);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showQCDashboard, setShowQCDashboard] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [stagingTree, setStagingTree] = useState<FileTree | null>(null);
+  const [showExport, setShowExport] = useState(false);
+  
+  // Field Mode State
+  const [fieldMode, setFieldMode] = useState(false);
+  // Save State
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+
+  const [settings, setSettings] = useState<AppSettings>({
+      defaultBaseUrl: 'http://localhost',
+      language: 'en',
+      aiConfig: DEFAULT_AI_CONFIG,
+      theme: 'light',
+      fieldMode: false,
+      abstractionLevel: 'standard',
+      mapConfig: DEFAULT_MAP_CONFIG,
+      zoomConfig: DEFAULT_ZOOM_CONFIG,
+      ingestPreferences: DEFAULT_INGEST_PREFS
+  });
+
+  // System State
+  const [validationIssuesMap, setValidationIssuesMap] = useState<Record<string, ValidationIssue[]>>({});
+  const [storageUsage, setStorageUsage] = useState<{usage: number, quota: number} | null>(null);
+
+  const { showToast } = useToast();
+
+  useEffect(() => {
+      storage.loadProject().then(proj => {
+          if (proj) setRoot(proj);
+      });
+      
+      // Check onboarding
+      if (!localStorage.getItem('iiif-field-setup-complete')) {
+          setShowOnboarding(true);
+      } else {
+          // Load settings if persisted (simplified here)
+          const savedLevel = localStorage.getItem('iiif-abstraction-level');
+          if (savedLevel) setSettings(s => ({ ...s, abstractionLevel: savedLevel as AbstractionLevel }));
+      }
+
+      // Initial storage check
+      checkStorage();
+      const interval = setInterval(checkStorage, 30000); // Check every 30s
+      return () => clearInterval(interval);
+  }, []);
+
+  const checkStorage = async () => {
+      const est = await storage.getEstimate();
+      setStorageUsage(est);
   };
 
-  const activeManifest = activeManifestId ? findManifest(rootResource, activeManifestId) : (rootResource?.type === 'Manifest' ? rootResource as IIIFManifest : null);
-  
-  // Set default active manifest if none selected
-  useEffect(() => {
-    if (!activeManifestId && rootResource) {
-        if (rootResource.type === 'Manifest') {
-            setActiveManifestId(rootResource.id);
-        } else {
-             // Try to find first manifest in collection
-             const firstManifest = findFirstManifest(rootResource);
-             if (firstManifest) setActiveManifestId(firstManifest.id);
-        }
-    }
-  }, [rootResource, activeManifestId]);
+  const handleOnboardingComplete = (level: AbstractionLevel) => {
+      setSettings(s => ({ ...s, abstractionLevel: level }));
+      localStorage.setItem('iiif-field-setup-complete', 'true');
+      localStorage.setItem('iiif-abstraction-level', level);
+      setShowOnboarding(false);
+      showToast(`Interface set to ${level} mode`, 'success');
+  };
 
-  const findFirstManifest = (item: IIIFItem): IIIFManifest | null => {
-      if (item.type === 'Manifest') return item as IIIFManifest;
-      if (item.type === 'Collection') {
-          for (const child of (item as IIIFCollection).items) {
-              const found = findFirstManifest(child);
+  // Content State API Handling
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const contentState = params.get('iiif-content');
+    if (contentState && root) {
+      try {
+        const decoded = atob(contentState);
+        const state = JSON.parse(decoded);
+        let targetId = '';
+        if (state.id) targetId = state.id;
+        else if (state.target) targetId = typeof state.target === 'string' ? state.target : state.target.id;
+        
+        if (targetId) {
+            if (typeof state.target === 'object' && state.target.source) {
+                 targetId = state.target.source;
+                 if (typeof targetId === 'object') targetId = (targetId as any).id;
+            }
+            const item = findItem(root, targetId);
+            if (item) {
+                setSelectedId(targetId);
+                showToast("Loaded content state", "success");
+            }
+        }
+      } catch (e) {
+        console.error("Invalid iiif-content", e);
+      }
+    }
+  }, [root]); 
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.metaKey || e.ctrlKey) {
+            if (e.key === 'k') {
+                e.preventDefault();
+                setShowCommandPalette(p => !p);
+            } else if (e.key === 'b') {
+                e.preventDefault();
+                setShowSidebar(s => !s);
+            } else if (e.key === 'i') {
+                e.preventDefault();
+                setShowInspector(i => !i);
+            }
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleUpdateRoot = (newRoot: IIIFItem) => {
+      setRoot(newRoot);
+      setSaveStatus('saving');
+      storage.saveProject(newRoot)
+        .then(() => {
+            setSaveStatus('saved');
+            checkStorage();
+        })
+        .catch(e => {
+            console.error(e);
+            setSaveStatus('error');
+            showToast("Failed to save project!", 'error');
+        });
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+        const files = Array.from(e.target.files);
+        const tree = buildTree(files);
+        setStagingTree(tree);
+    }
+  };
+
+  const handleIngest = async (tree: FileTree, merge: boolean) => {
+      try {
+          const { root: newRoot, report } = await ingestTree(tree, merge ? root : null);
+          setRoot(newRoot);
+          setStagingTree(null);
+          
+          let msg = `Ingested ${report.filesProcessed} files.`;
+          if (report.warnings.length > 0) msg += ` ${report.warnings.length} warnings.`;
+          showToast(msg, report.warnings.length > 0 ? 'info' : 'success');
+          checkStorage();
+          // Trigger save immediately
+          handleUpdateRoot(newRoot);
+      } catch (e) {
+          console.error(e);
+          showToast('Ingest Failed', 'error');
+      }
+  };
+
+  const findItem = useCallback((node: IIIFItem | null, id: string): IIIFItem | any | null => {
+      if (!node) return null;
+      if (node.id === id) return node;
+      if (node.type === 'Canvas' && (node as IIIFCanvas).annotations) {
+          for (const page of (node as IIIFCanvas).annotations!) {
+              const foundAnno = page.items.find(a => a.id === id);
+              if (foundAnno) return foundAnno;
+          }
+      }
+      if (node.items) {
+          for (const child of node.items) {
+              const found = findItem(child, id);
               if (found) return found;
           }
       }
       return null;
-  };
+  }, []);
 
-  // Helper to get current canvas
-  const selectedCanvas = activeManifest?.items.find(c => c.id === selectedCanvasId) || null;
-  // Helper to get current annotation
-  const selectedAnnotation = selectedCanvas?.annotations?.[0]?.items.find(a => a.id === selectedAnnotationId) || null;
+  const findParentCanvas = useCallback((node: IIIFItem | null, annotationId: string): IIIFCanvas | null => {
+      if (!node) return null;
+      if (node.type === 'Canvas') {
+          const canvas = node as IIIFCanvas;
+          if (canvas.annotations?.some(page => page.items.some(a => a.id === annotationId))) {
+              return canvas;
+          }
+      }
+      if (node.items) {
+          for (const child of node.items) {
+              const found = findParentCanvas(child, annotationId);
+              if (found) return found;
+          }
+      }
+      return null;
+  }, []);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const { root } = await processInput(e.target.files);
+  const selectedItem = selectedId ? findItem(root, selectedId) : null;
+
+  // Run full tree validation when root changes
+  useEffect(() => {
       if (root) {
-          setRootResource(root);
-          // Selection logic will trigger via useEffect
-          setActiveManifestId(null); 
-          setSelectedCanvasId(null);
+          const map = validator.validateTree(root);
+          setValidationIssuesMap(map);
+      } else {
+          setValidationIssuesMap({});
       }
-    }
-  };
+  }, [root]);
 
-  // Updates need to traverse the tree to find the node to update
-  const updateResourceInTree = (root: IIIFItem, updated: IIIFItem): IIIFItem => {
-      if (root.id === updated.id) return updated;
-      if (root.type === 'Collection') {
-          const col = root as IIIFCollection;
-          return {
-              ...col,
-              items: col.items.map(child => updateResourceInTree(child, updated))
-          };
-      }
-      return root;
-  };
-
-  const handleUpdateManifest = (changes: Partial<IIIFManifest>) => {
-    if (!activeManifest || !rootResource) return;
-    const updated = { ...activeManifest, ...changes };
-    setRootResource(prev => prev ? updateResourceInTree(prev, updated) : null);
-  };
-
-  const handleUpdateCanvas = (updatedCanvas: IIIFCanvas) => {
-    if (!activeManifest || !rootResource) return;
-    const updatedItems = activeManifest.items.map(item => item.id === updatedCanvas.id ? updatedCanvas : item);
-    const updatedManifest = { ...activeManifest, items: updatedItems };
-    setRootResource(prev => prev ? updateResourceInTree(prev, updatedManifest) : null);
-  };
-
-  const handleAddAnnotation = (rect: { x: number, y: number, w: number, h: number }) => {
-    if (!selectedCanvas) return;
-
-    const annotationId = `${selectedCanvas.id}/annotation/${Date.now()}`;
-    const newAnnotation: IIIFAnnotation = {
-      id: annotationId,
-      type: "Annotation",
-      motivation: "commenting",
-      body: {
-        type: "TextualBody",
-        value: "",
-        format: "text/plain",
-        language: "en"
-      },
-      target: {
-        source: selectedCanvas.id,
-        selector: {
-          type: "FragmentSelector",
-          value: `xywh=${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.w)},${Math.round(rect.h)}`
+  useEffect(() => {
+    if (selectedItem) {
+        if (selectedItem.type === 'Canvas') {
+            setCurrentMode('viewer');
+        } else if (selectedItem.type === 'Annotation') {
+            setCurrentMode('viewer');
         }
+    }
+  }, [selectedItem]);
+
+  const handleItemUpdate = (updatedItem: Partial<IIIFItem>) => {
+      if (root && selectedId) {
+          const newRoot = JSON.parse(JSON.stringify(root));
+          const target = findItem(newRoot, selectedId);
+          if (target) {
+              Object.assign(target, updatedItem);
+              handleUpdateRoot(newRoot);
+          }
       }
-    };
-
-    const updatedCanvas = { ...selectedCanvas };
-    if (!updatedCanvas.annotations) {
-      updatedCanvas.annotations = [{
-        id: `${selectedCanvas.id}/page/annotations`,
-        type: 'AnnotationPage',
-        items: []
-      }];
-    }
-    
-    if (updatedCanvas.annotations.length === 0) {
-         updatedCanvas.annotations.push({
-            id: `${selectedCanvas.id}/page/annotations`,
-            type: 'AnnotationPage',
-            items: []
-         });
-    }
-
-    updatedCanvas.annotations[0].items = [...updatedCanvas.annotations[0].items, newAnnotation];
-    handleUpdateCanvas(updatedCanvas);
-    setSelectedAnnotationId(annotationId);
   };
 
-  const handleUpdateAnnotation = (updatedAnnotation: IIIFAnnotation) => {
-    if (!selectedCanvas) return;
-    const updatedCanvas = { ...selectedCanvas };
-    if (updatedCanvas.annotations && updatedCanvas.annotations.length > 0) {
-      updatedCanvas.annotations[0].items = updatedCanvas.annotations[0].items.map(a => 
-        a.id === updatedAnnotation.id ? updatedAnnotation : a
-      );
-      handleUpdateCanvas(updatedCanvas);
+  const renderContent = () => {
+    switch (currentMode) {
+        case 'archive': return <ArchiveView root={root} onSelect={(item) => setSelectedId(item.id)} validationIssues={validationIssuesMap} fieldMode={fieldMode} />;
+        case 'collections': return <CollectionsView root={root} onUpdate={handleUpdateRoot} abstractionLevel={settings.abstractionLevel} />;
+        case 'boards': return <BoardView root={root} />;
+        case 'viewer':
+            let viewerItem = null;
+            if (selectedItem?.type === 'Canvas') viewerItem = selectedItem as IIIFCanvas;
+            else if (selectedItem?.type === 'Annotation' && root) viewerItem = findParentCanvas(root, selectedItem.id);
+            return <Viewer item={viewerItem} onUpdate={(updatedCanvas) => {
+                 if (viewerItem) {
+                     const newRoot = JSON.parse(JSON.stringify(root));
+                     const target = findItem(newRoot, viewerItem.id);
+                     if (target) {
+                         Object.assign(target, updatedCanvas);
+                         handleUpdateRoot(newRoot);
+                     }
+                 }
+            }} />;
+        case 'search': return <SearchView root={root} onSelect={(id) => setSelectedId(id)} />;
+        default: return null;
     }
   };
 
-  const handleDeleteAnnotation = (id: string) => {
-    if (!selectedCanvas) return;
-    const updatedCanvas = { ...selectedCanvas };
-    if (updatedCanvas.annotations && updatedCanvas.annotations.length > 0) {
-      updatedCanvas.annotations[0].items = updatedCanvas.annotations[0].items.filter(a => a.id !== id);
-      handleUpdateCanvas(updatedCanvas);
-      setSelectedAnnotationId(null);
-    }
-  };
+  const commands = [
+      { id: 'goto-archive', label: 'Go to Archive', icon: 'inventory_2', section: 'Navigation', action: () => setCurrentMode('archive'), shortcut: 'Cmd+1' },
+      { id: 'goto-collections', label: 'Go to Collections', icon: 'library_books', section: 'Navigation', action: () => setCurrentMode('collections'), shortcut: 'Cmd+2' },
+      { id: 'goto-boards', label: 'Go to Boards', icon: 'dashboard', section: 'Navigation', action: () => setCurrentMode('boards'), shortcut: 'Cmd+3' },
+      { id: 'goto-search', label: 'Search', icon: 'search', section: 'Navigation', action: () => setCurrentMode('search'), shortcut: 'Cmd+4' },
+      { id: 'toggle-sidebar', label: 'Toggle Sidebar', icon: 'vertical_split', section: 'View', action: () => setShowSidebar(s => !s), shortcut: 'Cmd+B' },
+      { id: 'toggle-inspector', label: 'Toggle Inspector', icon: 'info', section: 'View', action: () => setShowInspector(i => !i), shortcut: 'Cmd+I' },
+      { id: 'toggle-fieldmode', label: 'Toggle Field Mode', icon: 'visibility', section: 'View', action: () => setFieldMode(f => !f) },
+      { id: 'export', label: 'Export Archive', icon: 'archive', section: 'Actions', action: () => setShowExport(true) },
+      { id: 'import', label: 'Import Files', icon: 'upload_file', section: 'Actions', action: () => document.querySelector<HTMLInputElement>('input[type="file"]')?.click() },
+      { id: 'qc', label: 'QC Dashboard', icon: 'health_and_safety', section: 'Actions', action: () => setShowQCDashboard(true) },
+  ] as any[];
+
+  const totalItems = root ? 1 + (root.items?.length || 0) : 0; 
+  const allIssues = Object.values(validationIssuesMap).flat();
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Header */}
-      <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 z-30">
-        <div className="flex items-center gap-2">
-            <div className="bg-iiif-red text-white p-1 rounded font-bold text-xs tracking-tighter">IIIF</div>
-            <h1 className="font-bold text-slate-800 text-lg">Web Studio</h1>
-            {rootResource?.type === 'Collection' && (
-                <span className="text-slate-400 text-sm border-l border-slate-200 pl-2 ml-2">
-                    {(rootResource as IIIFCollection).items.length} items in root
-                </span>
-            )}
-        </div>
-        
-        <div className="flex items-center gap-2">
-            <button 
-                onClick={() => rootResource && exportManifest(rootResource)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-iiif-blue hover:bg-blue-800 text-white rounded text-sm font-medium transition-colors"
-                title={rootResource?.type === 'Collection' ? "Export Collection JSON" : "Export Manifest JSON"}
-            >
-                <Icon name="download" className="text-lg"/>
-                Export
-            </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        <ManifestTree 
-          rootResource={rootResource}
-          activeManifestId={activeManifestId}
-          onSelectManifest={(m) => {
-              setActiveManifestId(m.id);
-              if(m.items.length > 0) setSelectedCanvasId(m.items[0].id);
-          }}
-          selectedCanvasId={selectedCanvasId}
-          onSelectCanvas={setSelectedCanvasId}
-          onUpload={handleFileUpload}
-          activeManifest={activeManifest}
+    <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans ${fieldMode ? 'text-white bg-black' : 'text-slate-900 bg-slate-100'}`}>
+      <div className="flex-1 flex min-h-0">
+        <Sidebar 
+            root={root}
+            selectedId={selectedId}
+            currentMode={currentMode}
+            viewType={viewType}
+            fieldMode={fieldMode}
+            onSelect={(id) => { setSelectedId(id); if(currentMode === 'viewer') setCurrentMode('archive'); }}
+            onModeChange={setCurrentMode}
+            onViewTypeChange={setViewType}
+            onImport={handleImport}
+            onExportTrigger={() => setShowExport(true)}
+            onToggleFieldMode={() => setFieldMode(!fieldMode)}
+            visible={showSidebar}
         />
-        
-        <Workspace 
-            canvas={selectedCanvas}
-            onAddAnnotation={handleAddAnnotation}
-            selectedAnnotationId={selectedAnnotationId}
-            onSelectAnnotation={setSelectedAnnotationId}
-        />
-        
-        {activeManifest && (
-            <MetadataEditor 
-                manifest={activeManifest}
-                canvas={selectedCanvas}
-                selectedAnnotation={selectedAnnotation}
-                onUpdateManifest={handleUpdateManifest}
-                onUpdateCanvas={handleUpdateCanvas}
-                onUpdateAnnotation={handleUpdateAnnotation}
-                onDeleteAnnotation={handleDeleteAnnotation}
+        <main className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${fieldMode ? 'bg-black' : 'bg-white'}`}>
+            {renderContent()}
+            <ContextualHelp mode={currentMode} />
+        </main>
+        {!fieldMode && (
+            <Inspector 
+                resource={selectedItem} 
+                onUpdateResource={handleItemUpdate}
+                settings={settings}
+                visible={showInspector}
+                onClose={() => setShowInspector(false)}
             />
         )}
       </div>
+      <StatusBar 
+        totalItems={totalItems} 
+        selectedItem={selectedItem}
+        validationIssues={allIssues}
+        storageUsage={storageUsage}
+        onOpenQC={() => setShowQCDashboard(true)}
+        saveStatus={saveStatus}
+      />
+      <CommandPalette 
+        isOpen={showCommandPalette} 
+        onClose={() => setShowCommandPalette(false)} 
+        commands={commands} 
+      />
+      {stagingTree && <StagingArea initialTree={stagingTree} existingRoot={root} onIngest={handleIngest} onCancel={() => setStagingTree(null)} />}
+      {showExport && root && <ExportDialog root={root} onClose={() => setShowExport(false)} />}
+      {showQCDashboard && <QCDashboard issuesMap={validationIssuesMap} totalItems={totalItems} onSelect={(id) => { setSelectedId(id); setShowQCDashboard(false); }} onClose={() => setShowQCDashboard(false)} />}
+      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ToastProvider>
+      <MainApp />
+    </ToastProvider>
   );
 };
 

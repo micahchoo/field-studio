@@ -1,5 +1,5 @@
 {
-  "name": "biiif-web-studio",
+  "name": "iiif-field-archive-studio",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,12 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "@google/genai": "^1.38.0",
-    "js-yaml": "4.1.0"
+    "idb": "^8.0.3",
+    "js-yaml": "4.1.0",
+    "flexsearch": "0.7.31",
+    "jszip": "3.10.1",
+    "file-saver": "^2.0.5",
+    "exifreader": "4.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

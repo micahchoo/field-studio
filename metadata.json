@@ -1,5 +1,7 @@
 {
-  "name": "Biiif Web Studio",
-  "description": "A web-based IIIF Manifest generation and annotation studio. Replicates biiif folder-to-manifest logic in the browser and enhances annotation workflows with AI assistance.",
-  "requestFramePermissions": []
+  "name": "IIIF Field Archive Studio",
+  "description": "A local-first, privacy-focused workbench for field researchers to organize, annotate, and export IIIF-compliant digital archives.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }
