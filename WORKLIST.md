@@ -41,52 +41,102 @@ These tasks prioritize offline reliability, spec compliance, and foundational ac
 
 ## 📋 Backlog (Prioritized)
 
-### Critical - Architecture Foundation (from ARCHITECTURE_INSPIRATION.md)
-- [x] **Vault: Normalized State** - O(1) entity lookup, no full-tree clones on update.
-  - Created `services/vault.ts` with flat entity storage by type
-  - `normalize()` and `denormalize()` functions for tree conversion
-  - O(1) operations: getEntity, updateEntity, addEntity, removeEntity, moveEntity
-- [x] **Vault: Action-Driven Mutations** - Pre-validated mutations with undo/redo.
-  - Created `services/actions.ts` with 15+ typed action definitions
-  - Reducer with validation (language maps, behaviors, dimensions, rights URLs)
-  - `ActionHistory` class with configurable max size, `ActionDispatcher` with listeners
-- [x] **LanguageString Class** - Immutable wrapper for language maps.
-  - Added to `types.ts` with fallback chain (locale → none → @none → en → first)
-  - Immutable operations: set, setAll, append, remove, merge
-  - Utilities: isEmpty, hasLocale, locales, equals, of, empty
-- [x] **Entity Hooks** - React hooks for IIIF resources with memoization.
-  - Created `hooks/useIIIFEntity.ts` with VaultProvider context
-  - Specialized: `useManifest`, `useCanvas`, `useAnnotation`, `useCollection`, `useRange`
-  - Utilities: `useHistory`, `useRoot`, `useBulkOperations`, `useEntitySearch`
-
-### High Priority - Architecture Integration
-- [ ] **Spec Bridge: V2/V3 Import** - Auto-upgrade IIIF v2 manifests on import.
-  - Integrate `@iiif/parser` upgrader or implement lightweight upgrader
+### High Priority - Next Batch
+- [x] **Spec Bridge: V2/V3 Import** - Auto-upgrade IIIF v2 manifests on import.
   - Detect version from @context, normalize to v3 internally
+  - Implemented `services/specBridge.ts` with `upgradeToV3()`, `detectVersion()`
+- [x] **Selector Abstraction** - Parse URI fragments into editable objects.
+  - Implemented `services/selectors.ts` with full W3C Media Fragments support
+  - Parse `#xywh=` for spatial, `#t=` for temporal, SVG and Point selectors
+- [x] **Migrate App.tsx to Vault** - Replace deep-clone pattern with vault actions.
+  - VaultProvider wired at app root level
+  - Undo/redo keyboard shortcuts enabled (Cmd+Z, Cmd+Shift+Z)
 
 ### Medium Priority
-- [ ] **UX: Metadata Complexity Slider** - Toggle visible metadata fields based on user persona (Simple vs Expert).
+- [x] **UX: Metadata Complexity Slider** - Toggle visible metadata fields based on user persona.
+  - Added `METADATA_FIELD_DEFINITIONS` with complexity levels (simple/standard/advanced)
+  - Created visual slider in PersonaSettings with field preview
+  - Updated Inspector to conditionally show fields based on complexity
+- [x] **Search: Autocomplete Service** - Enhanced searchService.ts with autocomplete.
+  - Prefix matching with frequency-based ranking
+  - Fuzzy matching using Levenshtein distance
+  - Recent searches persistence and type filter suggestions
+- [x] **Annotation: Polygon Tool (SvgSelector)** - Non-rectangular selection regions.
+  - Created `PolygonAnnotationTool.tsx` with polygon, rectangle, and freehand modes
+  - SVG selector generation and parsing with Douglas-Peucker simplification
+  - Integrated with selectors.ts service
 - [ ] **Ingest: Visual Preview Wizard** - Show the proposed IIIF structure before committing files to IndexedDB.
-- [ ] **Annotation: Polygon Tool (SvgSelector)** - Implementation of non-rectangular selection regions.
-- [ ] **Search: Autocomplete Service** - Implement `AutoCompleteService2` for global search.
-- [ ] **Selector Abstraction** - Parse URI fragments (`#xywh=`, `#t=`) into objects for AV/region support.
+
+### High Priority - Phase 3 Refinement (from Architecture Patterns)
+- [ ] **Extension Preservation (Round-Tripping)** - Store unknown JSON-LD properties during import.
+  - Preserve vendor extensions (tify, mirador configs) that aren't in IIIF spec
+  - Add `_extensions` bucket to normalized entities
+  - Include in export without data loss
+- [ ] **Content-Addressable Storage (Hashing)** - SHA-256 file integrity (Tropy pattern).
+  - Generate hash on ingest for deduplication
+  - Track file moves via fingerprint
+  - Enable "Consolidator" flow for broken links
+- [ ] **Activity Stream (Change Discovery API)** - Track changes for sync.
+  - Append entries to discovery.json on save
+  - Enable multi-device/researcher sync
+  - IIIF Change Discovery 1.0 format
+
+### Medium Priority
+- [ ] **Ingest: Visual Preview Wizard** - Show the proposed IIIF structure before committing files to IndexedDB.
+- [ ] **CSV/Spreadsheet Sync** - Bulk metadata import/export (Wax pattern).
+  - Map CSV columns to IIIF metadata fields
+  - Support bulk editing of 100s of items
+- [ ] **Lazy Selector Hydration** - Performance for large manifests.
+  - Parse SVG/complex selectors only on interaction
+  - Reduce initial compute for OCR-heavy manifests
 
 ### Low Priority / Future
 - [ ] **AI: OCR Integration** - Tesseract.js integration for auto-transcription of image sidecars.
 - [ ] **Learning: Progress Analytics** - Dashboard showing IIIF concepts mastered by the user.
 - [ ] **Convention: biiif Migration Tools** - Bidirectional conversion for standard `biiif` folder structures.
 - [ ] **Workbench Architecture** - Refactor views into self-contained workbench modules.
+- [ ] **Static Site Export (Wax pattern)** - Generate static IIIF site from boards.
 
 ---
 
 ## ✅ Completed Items
 
-### Architecture Foundation
-- [x] **Vault Normalized State** - `services/vault.ts` with O(1) entity lookups, flat storage.
-- [x] **Action-Driven Mutations** - `services/actions.ts` with validated mutations and undo/redo.
+### Architecture Foundation (Vault Pattern)
+- [x] **Vault: Normalized State** - `services/vault.ts` with O(1) entity lookup.
+  - Flat storage by type (Collection, Manifest, Canvas, Range, Annotation)
+  - `normalize()` / `denormalize()` for tree conversion
+  - Reference tracking: parent→children, child→parent
+- [x] **Vault: Action-Driven Mutations** - `services/actions.ts` with undo/redo.
+  - 15+ typed actions with pre-mutation validation
+  - `ActionHistory` with configurable max size
+  - `ActionDispatcher` with subscribe/onError listeners
 - [x] **LanguageString Class** - Immutable language map wrapper in `types.ts`.
-- [x] **Entity Hooks** - `hooks/useIIIFEntity.ts` with useManifest, useCanvas, useAnnotation, etc.
-- [x] **Background Tile Generation** - `services/tileWorker.ts` with Web Worker pool.
+  - Fallback chain: locale → none → @none → en → first
+  - Operations: get, set, append, remove, merge, equals
+- [x] **Entity Hooks** - `hooks/useIIIFEntity.ts` with VaultProvider.
+  - Specialized: useManifest, useCanvas, useAnnotation, useCollection, useRange
+  - Utilities: useHistory, useRoot, useBulkOperations, useEntitySearch
+- [x] **Spec Bridge** - `services/specBridge.ts` for V2→V3 manifest upgrading.
+  - Auto-detect version from @context, normalize to v3 internally
+  - Handles sequences→items, label strings→language maps, viewingHint→behavior
+- [x] **Selector Abstraction** - `services/selectors.ts` for URI fragment parsing.
+  - Full W3C Media Fragments support (xywh, t, percent)
+  - SVG and Point selector support, serialization for round-trip
+- [x] **App.tsx Vault Integration** - VaultProvider wired at app root.
+  - Undo/redo keyboard shortcuts (Cmd+Z, Cmd+Shift+Z)
+  - Architecture ready for incremental migration of state handlers
+- [x] **Metadata Complexity Slider** - Field visibility based on user expertise.
+  - `METADATA_FIELD_DEFINITIONS` with 16 fields across 4 categories
+  - Visual slider with field preview in PersonaSettings
+  - Inspector conditionally shows rights, navDate, behavior, viewingDirection
+- [x] **Search Autocomplete** - Enhanced searchService with intelligent suggestions.
+  - Word index for prefix matching with frequency ranking
+  - Fuzzy matching using Levenshtein distance algorithm
+  - Recent searches persistence with type filter syntax
+- [x] **Polygon Annotation Tool** - SvgSelector support for non-rectangular regions.
+  - PolygonAnnotationTool.tsx with polygon, rectangle, freehand modes
+  - Douglas-Peucker path simplification for freehand
+  - SVG selector serialization compatible with IIIF spec
 
 ### Core Infrastructure
 - [x] **Static Export Offline Bundling** - Self-contained exports with local viewer assets.
@@ -94,11 +144,12 @@ These tasks prioritize offline reliability, spec compliance, and foundational ac
 - [x] **Service Worker Image API** - IIIF Image API 3.0 Level 2 implementation.
 - [x] **IndexedDB Storage** - Local-first persistence for files and project state.
 - [x] **Search Service** - Full-text search using FlexSearch.
-- [x] **Content State API** - `iiif-content` parameter handling and link generation (Verified in `App.tsx`).
-- [x] **Virtualized Data Model** - LRU cache and lazy loading implemented in `services/virtualizedData.ts`.
-- [x] **Provenance System** - Change tracking, history panel, full PREMIS 3.0 export.
-- [x] **Full Behavior Support** - All 12+ IIIF behaviors with descriptions and conflict detection.
-- [x] **Board Export** - Export boards as IIIF Manifests with positioned annotations.
+- [x] **Content State API** - `iiif-content` parameter handling and link generation.
+- [x] **Virtualized Data Model** - LRU cache and lazy loading in `services/virtualizedData.ts`.
+- [x] **Provenance System** - Full PREMIS 3.0 export with history panel.
+- [x] **Background Tile Generation** - Web Worker pool in `services/tileWorker.ts`.
+- [x] **Full Behavior Support** - All 12+ IIIF behaviors with conflict detection.
+- [x] **Board Export** - Export boards as IIIF Manifests with spatial annotations.
 
 ### User Interface
 - [x] **3-Panel Layout** - Responsive workspace with resizable panels.

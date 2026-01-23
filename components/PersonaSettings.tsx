@@ -2,7 +2,7 @@
 import React from 'react';
 import { AbstractionLevel, AppSettings } from '../types';
 import { Icon } from './Icon';
-import { METADATA_TEMPLATES } from '../constants';
+import { METADATA_TEMPLATES, MetadataComplexity, getVisibleFields, getFieldsByCategory } from '../constants';
 
 interface PersonaSettingsProps {
   settings: AppSettings;
@@ -15,24 +15,37 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
       let template = METADATA_TEMPLATES.ARCHIVIST;
       let showTechnical = true;
       let fieldMode = false;
+      let complexity: MetadataComplexity = 'standard';
 
       if (lvl === 'simple') {
           template = METADATA_TEMPLATES.RESEARCHER;
           showTechnical = false;
           fieldMode = true;
+          complexity = 'simple';
       } else if (lvl === 'advanced') {
           template = METADATA_TEMPLATES.DEVELOPER;
           showTechnical = true;
           fieldMode = false;
+          complexity = 'advanced';
       }
 
-      onUpdate({ 
-          abstractionLevel: lvl, 
+      onUpdate({
+          abstractionLevel: lvl,
           metadataTemplate: template,
           showTechnicalIds: showTechnical,
-          fieldMode: fieldMode
+          fieldMode: fieldMode,
+          metadataComplexity: complexity
       });
   };
+
+  const complexityLevels: { level: MetadataComplexity; label: string; desc: string }[] = [
+      { level: 'simple', label: 'Essential', desc: 'Label, summary, thumbnail only' },
+      { level: 'standard', label: 'Standard', desc: '+ metadata, rights, navDate' },
+      { level: 'advanced', label: 'Full Spec', desc: '+ behaviors, services, structures' }
+  ];
+
+  const currentComplexityIndex = complexityLevels.findIndex(c => c.level === settings.metadataComplexity);
+  const visibleFieldCount = getVisibleFields(settings.metadataComplexity).length;
 
   return (
     <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
@@ -87,6 +100,77 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                     <div className="space-y-1">
                         <span className="text-[9px] font-bold text-slate-500 uppercase">Base Hosting URL</span>
                         <input value={settings.defaultBaseUrl} onChange={e => onUpdate({ defaultBaseUrl: e.target.value })} className="w-full text-xs font-bold p-2 bg-slate-50 border rounded-lg font-mono" placeholder="http://localhost" />
+                    </div>
+                </div>
+            </section>
+
+            <section className="pt-6 border-t border-slate-100">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Metadata Complexity</label>
+                <div className="bg-slate-50 rounded-xl border p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700">Field Visibility Level</span>
+                        <span className="text-[9px] font-mono bg-iiif-blue/10 text-iiif-blue px-2 py-0.5 rounded-full">{visibleFieldCount} fields</span>
+                    </div>
+
+                    {/* Slider Track */}
+                    <div className="relative pt-2">
+                        <div className="flex justify-between mb-2">
+                            {complexityLevels.map((c, idx) => (
+                                <button
+                                    key={c.level}
+                                    onClick={() => onUpdate({ metadataComplexity: c.level })}
+                                    className={`text-[9px] font-black uppercase tracking-tight transition-colors ${
+                                        settings.metadataComplexity === c.level
+                                            ? 'text-iiif-blue'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                >
+                                    {c.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Custom Slider */}
+                        <div className="relative h-2 bg-slate-200 rounded-full">
+                            <div
+                                className="absolute h-2 bg-gradient-to-r from-iiif-blue to-blue-400 rounded-full transition-all"
+                                style={{ width: `${((currentComplexityIndex + 1) / complexityLevels.length) * 100}%` }}
+                            />
+                            <input
+                                type="range"
+                                min="0"
+                                max="2"
+                                value={currentComplexityIndex}
+                                onChange={e => onUpdate({ metadataComplexity: complexityLevels[parseInt(e.target.value)].level })}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                aria-label="Metadata complexity level"
+                            />
+                            {/* Slider Thumb */}
+                            <div
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-iiif-blue rounded-full shadow-md transition-all pointer-events-none"
+                                style={{ left: `calc(${(currentComplexityIndex / 2) * 100}% - 8px)` }}
+                            />
+                        </div>
+
+                        {/* Current Level Description */}
+                        <p className="text-[10px] text-slate-500 mt-3 text-center">
+                            {complexityLevels[currentComplexityIndex]?.desc}
+                        </p>
+                    </div>
+
+                    {/* Field Preview */}
+                    <div className="pt-3 border-t border-slate-200">
+                        <span className="text-[9px] font-black text-slate-400 uppercase block mb-2">Visible Fields Preview</span>
+                        <div className="flex flex-wrap gap-1">
+                            {getVisibleFields(settings.metadataComplexity).slice(0, 8).map(field => (
+                                <span key={field.key} className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-600">
+                                    {field.label}
+                                </span>
+                            ))}
+                            {visibleFieldCount > 8 && (
+                                <span className="text-[8px] font-bold text-slate-400">+{visibleFieldCount - 8} more</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </section>

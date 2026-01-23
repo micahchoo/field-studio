@@ -25,6 +25,7 @@ import { buildTree, ingestTree } from './services/iiifBuilder';
 import { storage } from './services/storage';
 import { validator, ValidationIssue } from './services/validator';
 import { contentStateService } from './services/contentState';
+import { VaultProvider, useUndoRedoShortcuts, useHistory } from './hooks/useIIIFEntity';
 
 const MainApp: React.FC = () => {
   const [root, setRoot] = useState<IIIFItem | null>(null);
@@ -46,6 +47,9 @@ const MainApp: React.FC = () => {
 
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth <= 1024;
+
+  // Enable undo/redo keyboard shortcuts (Cmd+Z, Cmd+Shift+Z)
+  useUndoRedoShortcuts();
 
   // Responsive listener
   useEffect(() => {
@@ -73,7 +77,8 @@ const MainApp: React.FC = () => {
       ingestPreferences: DEFAULT_INGEST_PREFS,
       autoSaveInterval: 30,
       showTechnicalIds: false,
-      metadataTemplate: METADATA_TEMPLATES.ARCHIVIST
+      metadataTemplate: METADATA_TEMPLATES.ARCHIVIST,
+      metadataComplexity: 'standard'
   });
 
   const [validationIssuesMap, setValidationIssuesMap] = useState<Record<string, ValidationIssue[]>>({});
@@ -282,7 +287,9 @@ const MainApp: React.FC = () => {
 };
 
 const App: React.FC = () => (
-    <ToastProvider><MainApp /></ToastProvider>
+    <VaultProvider>
+        <ToastProvider><MainApp /></ToastProvider>
+    </VaultProvider>
 );
 
 export default App;

@@ -10,7 +10,7 @@ export interface AppSettings {
   defaultBaseUrl: string;
   language: string;
   theme: 'light' | 'dark';
-  fieldMode: boolean; 
+  fieldMode: boolean;
   abstractionLevel: AbstractionLevel;
   mapConfig: typeof import('./constants').DEFAULT_MAP_CONFIG;
   zoomConfig: typeof import('./constants').DEFAULT_ZOOM_CONFIG;
@@ -19,6 +19,7 @@ export interface AppSettings {
   autoSaveInterval: number; // in seconds
   showTechnicalIds: boolean;
   metadataTemplate: string[]; // List of suggested property labels
+  metadataComplexity: import('./constants').MetadataComplexity; // Field visibility level
 }
 
 export interface IngestReport {

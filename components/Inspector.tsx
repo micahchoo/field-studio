@@ -5,7 +5,7 @@ import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
 import { ProvenancePanel } from './ProvenancePanel';
-import { RESOURCE_TYPE_CONFIG } from '../constants';
+import { RESOURCE_TYPE_CONFIG, isFieldVisible, getFieldsByCategory } from '../constants';
 
 interface InspectorProps {
   resource: IIIFItem | null;
@@ -207,6 +207,115 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+
+                    {/* Standard Fields (visible at standard+ complexity) */}
+                    {isFieldVisible('rights', settings.metadataComplexity) && (
+                        <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                            <label htmlFor="rights-field" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Rights Statement
+                            </label>
+                            <select
+                                id="rights-field"
+                                value={resource.rights || ''}
+                                onChange={e => onUpdateResource({ rights: e.target.value || undefined })}
+                                className={`w-full text-xs p-3 rounded-lg outline-none font-bold shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`}
+                            >
+                                <option value="">No rights statement</option>
+                                <option value="https://creativecommons.org/publicdomain/zero/1.0/">CC0 - Public Domain</option>
+                                <option value="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</option>
+                                <option value="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</option>
+                                <option value="http://rightsstatements.org/vocab/InC/1.0/">In Copyright</option>
+                            </select>
+                        </div>
+                    )}
+
+                    {isFieldVisible('navDate', settings.metadataComplexity) && (
+                        <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                            <label htmlFor="navdate-field" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Navigation Date
+                            </label>
+                            <input
+                                id="navdate-field"
+                                type="date"
+                                value={resource.navDate ? resource.navDate.split('T')[0] : ''}
+                                onChange={e => onUpdateResource({ navDate: e.target.value ? new Date(e.target.value).toISOString() : undefined })}
+                                className={`w-full text-xs p-3 rounded-lg outline-none font-bold shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`}
+                            />
+                            <p className={`text-[9px] mt-1 ${settings.fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                                Used for timeline navigation in viewers
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Advanced Fields (visible at advanced complexity only) */}
+                    {isFieldVisible('behavior', settings.metadataComplexity) && (
+                        <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                            <label className={`block text-[10px] font-black mb-2 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Behaviors
+                                <span className={`ml-2 text-[8px] font-mono px-1.5 py-0.5 rounded ${settings.fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-purple-100 text-purple-600'}`}>
+                                    advanced
+                                </span>
+                            </label>
+                            <div className="flex flex-wrap gap-1">
+                                {(resource.behavior || []).map((b, i) => (
+                                    <span key={i} className={`text-[9px] font-bold px-2 py-1 rounded-full ${settings.fieldMode ? 'bg-slate-800 text-yellow-400' : 'bg-purple-100 text-purple-700'}`}>
+                                        {b}
+                                        <button
+                                            onClick={() => {
+                                                const newBehaviors = resource.behavior?.filter((_, idx) => idx !== i);
+                                                onUpdateResource({ behavior: newBehaviors?.length ? newBehaviors : undefined });
+                                            }}
+                                            className="ml-1 hover:text-red-500"
+                                            aria-label={`Remove behavior ${b}`}
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                                {(!resource.behavior || resource.behavior.length === 0) && (
+                                    <span className={`text-[9px] italic ${settings.fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                                        No behaviors set
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {isFieldVisible('viewingDirection', settings.metadataComplexity) && (resource.type === 'Manifest' || resource.type === 'Range') && (
+                        <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                            <label htmlFor="viewingdir-field" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Viewing Direction
+                                <span className={`ml-2 text-[8px] font-mono px-1.5 py-0.5 rounded ${settings.fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-purple-100 text-purple-600'}`}>
+                                    advanced
+                                </span>
+                            </label>
+                            <select
+                                id="viewingdir-field"
+                                value={(resource as IIIFManifest).viewingDirection || 'left-to-right'}
+                                onChange={e => onUpdateResource({ viewingDirection: e.target.value as any })}
+                                className={`w-full text-xs p-3 rounded-lg outline-none font-bold shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`}
+                            >
+                                <option value="left-to-right">Left to Right</option>
+                                <option value="right-to-left">Right to Left</option>
+                                <option value="top-to-bottom">Top to Bottom</option>
+                                <option value="bottom-to-top">Bottom to Top</option>
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Complexity indicator */}
+                    <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                        <div className={`flex items-center justify-between text-[9px] ${settings.fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                            <span className="uppercase font-black tracking-widest">Field Complexity</span>
+                            <span className={`font-mono px-2 py-0.5 rounded ${
+                                settings.metadataComplexity === 'simple' ? 'bg-green-100 text-green-700' :
+                                settings.metadataComplexity === 'standard' ? 'bg-blue-100 text-blue-700' :
+                                'bg-purple-100 text-purple-700'
+                            }`}>
+                                {settings.metadataComplexity}
+                            </span>
                         </div>
                     </div>
                 </div>

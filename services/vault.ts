@@ -52,6 +52,66 @@ export interface NormalizedState {
 
   /** Entity type index for O(1) type lookup */
   typeIndex: Record<string, EntityType>;
+
+  /**
+   * Extension preservation for round-tripping
+   * Stores unknown/vendor-specific properties by entity ID
+   * Ensures properties like Mirador configs, Tify settings survive import/export
+   */
+  extensions: Record<string, Record<string, unknown>>;
+}
+
+/**
+ * Known IIIF Presentation API 3.0 properties by entity type
+ * Properties not in this list are preserved as extensions
+ */
+const KNOWN_IIIF_PROPERTIES: Record<EntityType | 'common', Set<string>> = {
+  common: new Set([
+    '@context', 'id', 'type', 'label', 'summary', 'metadata', 'requiredStatement',
+    'rights', 'navDate', 'thumbnail', 'behavior', 'provider', 'homepage', 'seeAlso',
+    'rendering', 'service', 'services', 'partOf', 'items', 'annotations',
+    // Internal properties (prefixed with _)
+    '_fileRef', '_blobUrl', '_parentId', '_state', '_filename'
+  ]),
+  Collection: new Set(['viewingDirection']),
+  Manifest: new Set(['viewingDirection', 'structures', 'start', 'supplementary', 'placeholderCanvas', 'accompanyingCanvas']),
+  Canvas: new Set(['width', 'height', 'duration']),
+  Range: new Set(['supplementary', 'start', 'viewingDirection']),
+  AnnotationPage: new Set([]),
+  Annotation: new Set(['motivation', 'body', 'target', 'bodyValue'])
+};
+
+/**
+ * Extract unknown properties from an entity for extension preservation
+ */
+function extractExtensions(item: Record<string, unknown>, type: EntityType): Record<string, unknown> {
+  const extensions: Record<string, unknown> = {};
+  const knownCommon = KNOWN_IIIF_PROPERTIES.common;
+  const knownForType = KNOWN_IIIF_PROPERTIES[type];
+
+  for (const [key, value] of Object.entries(item)) {
+    // Skip known properties
+    if (knownCommon.has(key) || knownForType.has(key)) continue;
+    // Skip undefined/null values
+    if (value === undefined || value === null) continue;
+    // Preserve unknown property
+    extensions[key] = value;
+  }
+
+  return extensions;
+}
+
+/**
+ * Apply preserved extensions back to an entity during denormalization
+ */
+function applyExtensions(
+  item: Record<string, unknown>,
+  extensions: Record<string, unknown> | undefined
+): void {
+  if (!extensions) return;
+  for (const [key, value] of Object.entries(extensions)) {
+    item[key] = value;
+  }
 }
 
 export interface VaultSnapshot {
@@ -79,7 +139,8 @@ export function createEmptyState(): NormalizedState {
     references: {},
     reverseRefs: {},
     rootId: null,
-    typeIndex: {}
+    typeIndex: {},
+    extensions: {}
   };
 }
 
