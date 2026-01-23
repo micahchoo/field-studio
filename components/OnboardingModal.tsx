@@ -26,7 +26,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
         <div className="h-1.5 bg-slate-100 w-full">
             <div 
                 className="h-full bg-iiif-blue transition-all duration-500 ease-out" 
-                style={{ width: step === 1 ? '50%' : '100%' }}
+                style={{ width: step === 1 ? '33%' : step === 2 ? '66%' : '100%' }}
             ></div>
         </div>
 
@@ -35,29 +35,30 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                 <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                     <div className="text-center">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-full mb-6 text-iiif-blue">
-                            <Icon name="waving_hand" className="text-3xl" />
+                            <Icon name="history_edu" className="text-3xl" />
                         </div>
-                        <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome to Field Studio</h1>
-                        <p className="text-lg text-slate-500">Your privacy-first, offline-capable IIIF workbench.</p>
+                        <h1 className="text-3xl font-bold text-slate-900 mb-2">Preserving Field Knowledge</h1>
+                        <p className="text-lg text-slate-500 leading-relaxed max-w-md mx-auto">
+                            Field Studio helps you turn messy raw data into organized, interoperable digital archives using the IIIF standard.
+                        </p>
                     </div>
 
-                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                        <h3 className="font-bold text-slate-700 mb-4">What brings you here?</h3>
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-iiif-blue hover:shadow-md transition-all group">
-                                <input type="radio" name="goal" defaultChecked className="w-5 h-5 text-iiif-blue accent-iiif-blue"/>
-                                <div>
-                                    <div className="font-bold text-slate-800">Organize Field Research</div>
-                                    <div className="text-sm text-slate-500">I have folders of photos and notes to structure.</div>
-                                </div>
-                            </label>
-                            <label className="flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-iiif-blue hover:shadow-md transition-all group">
-                                <input type="radio" name="goal" className="w-5 h-5 text-iiif-blue accent-iiif-blue"/>
-                                <div>
-                                    <div className="font-bold text-slate-800">Create IIIF Manifests</div>
-                                    <div className="text-sm text-slate-500">I need standards-compliant JSON output.</div>
-                                </div>
-                            </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                                <Icon name="visibility" className="text-blue-500 text-sm"/> Rich Presentation
+                            </h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Arrange photos, audio, and notes into structured sequences and deep-zoom views for colleagues to explore.
+                            </p>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                                <Icon name="link" className="text-green-500 text-sm"/> Standard-Compliant
+                            </h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Your work is exported as JSON-LD, making it immediately viewable in tools like Mirador or the Universal Viewer.
+                            </p>
                         </div>
                     </div>
 
@@ -66,17 +67,60 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                             onClick={() => setStep(2)}
                             className="bg-iiif-blue text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
                         >
-                            Next <Icon name="arrow_forward" />
+                            Continue <Icon name="arrow_forward" />
                         </button>
                     </div>
                 </div>
             )}
 
             {step === 2 && (
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">The IIIF Hierarchy</h2>
+                        <p className="text-slate-500">How we organize your field findings:</p>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="flex items-start gap-4 p-4 bg-amber-50/50 border border-amber-100 rounded-xl">
+                            <Icon name="folder" className="text-amber-500 mt-1"/>
+                            <div>
+                                <h4 className="font-bold text-slate-800 text-sm">Collections (Your Projects)</h4>
+                                <p className="text-xs text-slate-600 leading-relaxed">Groups of related objects, like a whole field season or a site survey set.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4 p-4 bg-green-50/50 border border-green-100 rounded-xl">
+                            <Icon name="menu_book" className="text-green-600 mt-1"/>
+                            <div>
+                                <h4 className="font-bold text-slate-800 text-sm">Manifests (Your Objects)</h4>
+                                <p className="text-xs text-slate-600 leading-relaxed">The digital representation of a single cohesive item—like a field diary, a map, or an artifact.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            <Icon name="crop_original" className="text-blue-500 mt-1"/>
+                            <div>
+                                <h4 className="font-bold text-slate-800 text-sm">Canvases (Your Views)</h4>
+                                <p className="text-xs text-slate-600 leading-relaxed">Virtual pages where we "paint" your media. It might be a page of text, or a detail shot of a site feature.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4">
+                        <button onClick={() => setStep(1)} className="text-slate-400 font-bold hover:text-slate-600">Back</button>
+                        <button 
+                            onClick={() => setStep(3)}
+                            className="bg-iiif-blue text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                        >
+                            Got it
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {step === 3 && (
                 <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Customize your experience</h2>
-                        <p className="text-slate-500">How familiar are you with the IIIF standard?</p>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Choose your Workbench</h2>
+                        <p className="text-slate-500">Set the level of technical detail you want to see.</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-4">
@@ -85,13 +129,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                             className={`p-6 rounded-xl border-2 text-left transition-all relative ${
                                 expertise === 'novice' 
                                 ? 'border-iiif-blue bg-blue-50 ring-2 ring-blue-100' 
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                : 'border-slate-200 hover:border-slate-300'
                             }`}
                         >
-                            <div className="text-3xl mb-3">🌱</div>
-                            <div className="font-bold text-slate-800 mb-1">What is IIIF?</div>
-                            <div className="text-xs text-slate-500 leading-relaxed">
-                                I'm new to this. Hide the technical jargon and focus on organizing my files.
+                            <div className="text-3xl mb-3">🛠️</div>
+                            <div className="font-bold text-slate-800 mb-1">Simple</div>
+                            <div className="text-[10px] text-slate-500 leading-relaxed">
+                                Hides standard IDs and JSON. Focus on dragging folders and writing labels.
                             </div>
                             {expertise === 'novice' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
                         </button>
@@ -101,13 +145,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                             className={`p-6 rounded-xl border-2 text-left transition-all relative ${
                                 expertise === 'intermediate' 
                                 ? 'border-iiif-blue bg-blue-50 ring-2 ring-blue-100' 
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                : 'border-slate-200 hover:border-slate-300'
                             }`}
                         >
                             <div className="text-3xl mb-3">🏗️</div>
-                            <div className="font-bold text-slate-800 mb-1">Familiar</div>
-                            <div className="text-xs text-slate-500 leading-relaxed">
-                                I know what Manifests and Canvases are. Show me the structure.
+                            <div className="font-bold text-slate-800 mb-1">Standard</div>
+                            <div className="text-[10px] text-slate-500 leading-relaxed">
+                                See how file names create structure. Edit standard metadata properties.
                             </div>
                             {expertise === 'intermediate' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
                         </button>
@@ -117,30 +161,25 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                             className={`p-6 rounded-xl border-2 text-left transition-all relative ${
                                 expertise === 'expert' 
                                 ? 'border-iiif-blue bg-blue-50 ring-2 ring-blue-100' 
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                : 'border-slate-200 hover:border-slate-300'
                             }`}
                         >
                             <div className="text-3xl mb-3">⚡</div>
                             <div className="font-bold text-slate-800 mb-1">Expert</div>
-                            <div className="text-xs text-slate-500 leading-relaxed">
-                                I write JSON-LD for breakfast. Give me full control and raw editing.
+                            <div className="text-[10px] text-slate-500 leading-relaxed">
+                                Full control. Direct ID editing, JSON inspection, and raw property access.
                             </div>
                             {expertise === 'expert' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
                         </button>
                     </div>
 
-                    <div className="bg-slate-50 p-4 rounded-lg flex items-start gap-3 text-sm text-slate-600">
-                        <Icon name="info" className="text-iiif-blue mt-0.5 shrink-0"/>
-                        <p>This will set your <strong>Abstraction Level</strong>. "Simple" mode hides JSON and IDs. "Advanced" exposes all properties. You can change this later in Settings.</p>
-                    </div>
-
                     <div className="flex justify-between items-center pt-4">
-                        <button onClick={() => setStep(1)} className="text-slate-400 font-bold hover:text-slate-600">Back</button>
+                        <button onClick={() => setStep(2)} className="text-slate-400 font-bold hover:text-slate-600">Back</button>
                         <button 
                             onClick={handleFinish}
-                            className="bg-iiif-blue text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5 transform"
+                            className="bg-iiif-blue text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg"
                         >
-                            Get Started
+                            Complete Setup
                         </button>
                     </div>
                 </div>

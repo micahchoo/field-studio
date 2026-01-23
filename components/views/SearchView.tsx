@@ -1,15 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { IIIFItem } from '../../types';
 import { searchService, SearchResult } from '../../services/searchService';
 import { Icon } from '../Icon';
+import { RESOURCE_TYPE_CONFIG } from '../../constants';
 
 interface SearchViewProps {
   root: IIIFItem | null;
   onSelect: (id: string) => void;
+  onRevealMap?: (id: string) => void;
 }
 
-export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect }) => {
+export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect, onRevealMap }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [filter, setFilter] = useState<'All' | 'Manifest' | 'Canvas' | 'Annotation'>('All');
@@ -95,32 +96,37 @@ export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect }) => {
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
                         Found {results.length} results
                     </p>
-                    {results.map(res => (
+                    {results.map(res => {
+                        const config = RESOURCE_TYPE_CONFIG[res.type] || RESOURCE_TYPE_CONFIG['Content'];
+                        return (
                         <div 
                             key={res.id}
                             onClick={() => onSelect(res.id)}
                             className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-md hover:border-iiif-blue cursor-pointer transition-all group"
                         >
                             <div className="flex items-start gap-3">
-                                <div className={`p-2 rounded shrink-0 ${
-                                    res.type === 'Manifest' ? 'bg-green-100 text-green-600' :
-                                    res.type === 'Canvas' ? 'bg-blue-100 text-blue-600' :
-                                    'bg-amber-100 text-amber-600'
-                                }`}>
-                                    <Icon name={
-                                        res.type === 'Manifest' ? 'menu_book' :
-                                        res.type === 'Canvas' ? 'image' :
-                                        'comment'
-                                    } />
+                                <div className={`p-2 rounded shrink-0 ${config.bgClass} ${config.colorClass}`}>
+                                    <Icon name={config.icon} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between">
-                                        <h3 className="font-bold text-slate-800 truncate group-hover:text-iiif-blue">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="font-bold text-slate-800 truncate group-hover:text-iiif-blue flex-1">
                                             {res.label}
                                         </h3>
-                                        <span className="text-[10px] font-mono bg-slate-50 px-1.5 py-0.5 rounded text-slate-400 border border-slate-100">
-                                            {res.type}
-                                        </span>
+                                        <div className="flex items-center gap-2 ml-2">
+                                            {onRevealMap && (
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); onRevealMap(res.id); }}
+                                                    className="p-1 hover:bg-blue-50 rounded text-slate-400 hover:text-blue-500 transition-colors"
+                                                    title="Reveal on Map"
+                                                >
+                                                    <Icon name="place" className="text-xs"/>
+                                                </button>
+                                            )}
+                                            <span className={`text-[10px] font-mono bg-slate-50 px-1.5 py-0.5 rounded text-slate-400 border border-slate-100`}>
+                                                {res.type}
+                                            </span>
+                                        </div>
                                     </div>
                                     <p className="text-xs text-slate-400 mt-1 flex items-center gap-1 truncate">
                                         <Icon name="folder_open" className="text-[10px]"/>
@@ -129,7 +135,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect }) => {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )})}
                 </>
             ) : query.length > 1 ? (
                 <div className="text-center py-20 text-slate-400">

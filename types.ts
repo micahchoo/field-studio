@@ -1,10 +1,10 @@
 
-export type AppMode = 'archive' | 'collections' | 'boards' | 'search' | 'viewer' | 'timeline' | 'map';
+export type AppMode = 'archive' | 'collections' | 'boards' | 'search' | 'viewer' | 'metadata';
 export type ViewType = 'files' | 'iiif';
-export type LanguageMap = Record<string, string[]>;
-export type IIIFMotivation = 'painting' | 'supplementing' | 'commenting' | 'tagging' | 'linking' | 'identifying' | 'describing' | string;
+export type IIIFMotivation = 'painting' | 'supplementing' | 'commenting' | 'tagging' | 'linking' | 'identifying' | 'describing' | 'contentState' | string;
 export type ConnectionType = 'depicts' | 'transcribes' | 'relatesTo' | 'contradicts' | 'precedes';
 export type AbstractionLevel = 'simple' | 'standard' | 'advanced';
+export type ResourceState = 'cached' | 'stub' | 'local-only' | 'stale' | 'conflict';
 
 export interface AIConfig {
   provider: 'none' | 'gemini' | 'ollama';
@@ -21,7 +21,11 @@ export interface AppSettings {
   abstractionLevel: AbstractionLevel;
   mapConfig: typeof import('./constants').DEFAULT_MAP_CONFIG;
   zoomConfig: typeof import('./constants').DEFAULT_ZOOM_CONFIG;
+  height: number;
   ingestPreferences: typeof import('./constants').DEFAULT_INGEST_PREFS;
+  autoSaveInterval: number; // in seconds
+  showTechnicalIds: boolean;
+  metadataTemplate: string[]; // List of suggested property labels
 }
 
 export interface IngestReport {
@@ -43,9 +47,11 @@ export interface FileTree {
   files: Map<string, File>;
   directories: Map<string, FileTree>;
   iiifIntent?: 'Collection' | 'Manifest' | 'Range' | 'Canvas';
+  iiifBehavior?: string[];
+  viewingDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
+  iiifBaseUrl?: string; 
 }
 
-// IIIF Core Types
 export interface IIIFItem {
   "@context"?: string | string[];
   id: string;
@@ -57,25 +63,36 @@ export interface IIIFItem {
   rights?: string;
   navDate?: string;
   thumbnail?: IIIFExternalWebResource[];
-  items?: IIIFItem[]; 
+  items?: any[]; 
   annotations?: IIIFAnnotationPage[];
   behavior?: string[];
   
-  // v3.0 Optional Properties
   provider?: Array<{ id: string; type: "Agent"; label: Record<string, string[]>; homepage?: any[]; logo?: any[] }>;
-  homepage?: Array<{ id: string; type: "Text"; label: Record<string, string[]>; format?: string }>;
-  seeAlso?: Array<{ id: string; type: "Dataset" | string; format?: string; profile?: string }>;
+  homepage?: Array<{ id: string; type: "Text"; label: Record<string, string[]>; format?: string; language?: string[] }>;
+  seeAlso?: Array<{ id: string; type: "Dataset" | string; format?: string; profile?: string; label?: Record<string, string[]> }>;
   rendering?: Array<{ id: string; type: "Text" | string; label: Record<string, string[]>; format?: string }>;
   service?: any[];
+  viewingDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
+  start?: { id: string; type: "Canvas" | "SpecificResource"; source?: string; selector?: any };
+  supplementary?: { id: string; type: "AnnotationCollection" };
+  partOf?: Array<{ id: string; type: string; label?: Record<string, string[]> }>;
   
-  // Canvas Specific
   placeholderCanvas?: IIIFCanvas;
   accompanyingCanvas?: IIIFCanvas;
 
-  // Internal Helpers
-  _fileRef?: File; // Reference to original file if applicable
+  _fileRef?: File; 
   _blobUrl?: string;
   _parentId?: string;
+  _state?: ResourceState; 
+  _filename?: string;
+}
+
+export interface IIIFCanvas extends IIIFItem {
+  type: "Canvas";
+  width: number;
+  height: number;
+  duration?: number;
+  items: IIIFAnnotationPage[];
 }
 
 export interface IIIFCollection extends IIIFItem {
@@ -90,33 +107,31 @@ export interface IIIFManifest extends IIIFItem {
   structures?: IIIFRange[]; 
 }
 
-export interface IIIFCanvas extends IIIFItem {
-  type: "Canvas";
-  width?: number;
-  height?: number;
-  duration?: number;
-  items: IIIFAnnotationPage[]; // Painting annotations
-}
-
 export interface IIIFRange extends IIIFItem {
   type: "Range";
-  items: Array<{ id: string; type: "Canvas" | "Range" } | IIIFCanvas>;
+  items: Array<IIIFRangeReference | IIIFSpecificResource | IIIFRange>;
+}
+
+export interface IIIFRangeReference {
+    id: string;
+    type: "Canvas" | "Range";
 }
 
 export interface IIIFAnnotationPage {
   id: string;
   type: "AnnotationPage";
+  label?: Record<string, string[]>;
   items: IIIFAnnotation[];
 }
 
 export interface IIIFAnnotation {
   id: string;
   type: "Annotation";
+  label?: Record<string, string[]>;
   motivation: IIIFMotivation | IIIFMotivation[];
   body: IIIFAnnotationBody | IIIFAnnotationBody[];
   target: string | IIIFSpecificResource | Array<string | IIIFSpecificResource>;
   created?: string;
-  // UI helpers
   _layout?: { x: number; y: number; w: number; h: number }; 
 }
 
@@ -142,11 +157,19 @@ export interface IIIFExternalWebResource {
 
 export interface IIIFSpecificResource {
   type: "SpecificResource";
-  source: string;
+  id?: string;
+  source: string | IIIFItem;
   selector?: Selector | Selector[];
+  purpose?: IIIFMotivation;
 }
 
 export type Selector = 
-  | { type: "FragmentSelector"; value: string } 
+  | { type: "FragmentSelector"; value: string; conformsTo?: string } 
   | { type: "SvgSelector"; value: string } 
   | { type: "PointSelector"; t?: number; x?: number; y?: number };
+
+export function getIIIFValue(map?: Record<string, string[]>, preferredLang: string = 'en'): string {
+  if (!map || typeof map !== 'object') return '';
+  const values = map[preferredLang] || map['en'] || map['none'] || map['@none'] || Object.values(map)[0];
+  return Array.isArray(values) ? values[0] || '' : '';
+}

@@ -1,5 +1,4 @@
-
-import { IIIFItem, IIIFCanvas, LanguageMap } from '../types';
+import { IIIFItem, IIIFCanvas } from '../types';
 
 export interface CSVColumnMapping {
   csvColumn: string;
@@ -13,7 +12,7 @@ export interface CSVImportResult {
   errors: string[];
 }
 
-const SUPPORTED_IIIF_PROPERTIES = [
+export const SUPPORTED_IIIF_PROPERTIES: string[] = [
   'label',
   'summary',
   'metadata.title',
@@ -33,9 +32,9 @@ const SUPPORTED_IIIF_PROPERTIES = [
   'requiredStatement.value',
   'rights',
   'navDate'
-] as const;
+];
 
-export type SupportedIIIFProperty = typeof SUPPORTED_IIIF_PROPERTIES[number];
+export type SupportedIIIFProperty = string;
 
 class CSVImporterService {
 
@@ -206,7 +205,7 @@ class CSVImporterService {
     }
   }
 
-  private toLanguageMap(value: string, language: string): LanguageMap {
+  private toLanguageMap(value: string, language: string): Record<string, string[]> {
     return { [language]: [value] };
   }
 
@@ -220,7 +219,9 @@ class CSVImporterService {
       if (!isNaN(date.getTime())) {
         return date.toISOString();
       }
-    } catch {}
+    } catch (e) {
+      // Ignore invalid date
+    }
     return value;
   }
 }

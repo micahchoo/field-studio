@@ -21,7 +21,8 @@ class SearchService {
   reset() {
     // FlexSearch via esm.sh exports the library as default.
     // We access Document from the default export.
-    this.index = new (FlexSearch as any).Document({
+    const FlexSearchLib = (FlexSearch as any).default || FlexSearch;
+    this.index = new FlexSearchLib.Document({
       document: {
         id: "id",
         index: ["label", "text"],

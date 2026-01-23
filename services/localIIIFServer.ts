@@ -20,23 +20,20 @@ export class LocalIIIFServer {
     try {
         const urlObj = new URL(url);
         
-        // Handle Content Search API 2.0
-        // Pattern: .../iiif/search/{id}?q={query}
         if (urlObj.pathname.includes('/iiif/search/')) {
             const query = urlObj.searchParams.get('q') || '';
             const results = searchService.search(query);
             
-            // Transform FlexSearch results to IIIF Content Search API 2.0 AnnotationPage
             const items = results.map(res => ({
                 "id": `${url}&match=${res.id}`,
                 "type": "Annotation",
-                "motivation": "supplementing", // Standard for text search results usually, or 'highlighting'
+                "motivation": "supplementing",
                 "body": {
                     "type": "TextualBody",
-                    "value": res.match, // This is the snippet or full text
+                    "value": res.match,
                     "format": "text/plain"
                 },
-                "target": res.id // The Canvas ID or Annotation ID
+                "target": res.id
             }));
 
             return {
@@ -45,12 +42,10 @@ export class LocalIIIFServer {
                     "id": url,
                     "type": "AnnotationPage",
                     "items": items
-                    // 'annotations' property would go here for Hit highlighting if we had coordinate data
                 }
             };
         }
 
-        // Handle Image API
         const pathParts = urlObj.pathname.split('/iiif/image/');
         if (pathParts.length < 2) return { error: "Invalid IIIF URL" };
 
@@ -65,8 +60,6 @@ export class LocalIIIFServer {
             return { json: info };
         }
 
-        // Simplistic Image API implementation for preview
-        // Supports: full/max/0/default.jpg and basic region/size/rotation
         const region = params[1];
         const size = params[2];
         const rotation = params[3];
@@ -84,9 +77,10 @@ export class LocalIIIFServer {
 
   private async generateInfoJson(id: string, file: File | Blob): Promise<any> {
       const bitmap = await createImageBitmap(file);
+      // DYNAMICALLY USE CURRENT ORIGIN
       return {
           "@context": "http://iiif.io/api/image/3/context.json",
-          "id": `https://archive.local/iiif/image/${id}`,
+          "id": `${window.location.origin}/iiif/image/${id}`,
           "type": "ImageService3",
           "protocol": "http://iiif.io/api/image",
           "profile": "level2",
@@ -109,14 +103,12 @@ export class LocalIIIFServer {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Canvas context failed");
 
-      // 1. Region (Simplified: only full or x,y,w,h)
       let rx = 0, ry = 0, rw = bitmap.width, rh = bitmap.height;
       if (region !== 'full' && region !== 'square' && !region.startsWith('pct:')) {
           const p = region.split(',').map(Number);
           if (p.length === 4) { rx=p[0]; ry=p[1]; rw=p[2]; rh=p[3]; }
       }
 
-      // 2. Size (Simplified: max or w,h)
       let sw = rw, sh = rh;
       if (size !== 'max' && !size.startsWith('pct:') && size.indexOf(',') > -1) {
          const p = size.split(',');
@@ -126,12 +118,8 @@ export class LocalIIIFServer {
 
       canvas.width = sw;
       canvas.height = sh;
-      
-      // 3. Draw & Rotate
-      // Basic rotation (0 only for MVP performance fallback)
       ctx.drawImage(bitmap, rx, ry, rw, rh, 0, 0, sw, sh);
 
-      // 4. Output
       let mime = 'image/jpeg';
       if (format === 'png') mime = 'image/png';
       if (format === 'webp') mime = 'image/webp';

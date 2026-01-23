@@ -1,377 +1,284 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { IIIFManifest, IIIFCanvas, IIIFAnnotation, IIIFItem, ConnectionType, IIIFAnnotationPage } from '../../types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { IIIFManifest, IIIFItem, ConnectionType } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 
-interface BoardViewProps {
-  root: IIIFItem | null;
-}
-
 interface BoardItem {
-  id: string; // Internal Board ID (uuid)
-  resourceId: string; // The ID of the Archive item (Manifest/Canvas)
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  rotation: number;
-  resourceType: string;
-  label: string;
-  blobUrl?: string; // For images
+  id: string; resourceId: string; x: number; y: number; w: number; h: number;
+  resourceType: string; label: string; blobUrl?: string; annotation?: string;
 }
 
 interface Connection {
-  id: string;
-  fromId: string; // BoardItem ID
-  toId: string; // BoardItem ID
-  type: ConnectionType;
-  label?: string;
+  id: string; fromId: string; toId: string; type: ConnectionType; label?: string;
 }
 
-export const BoardView: React.FC<BoardViewProps> = ({ root }) => {
+export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
   const { showToast } = useToast();
   const [items, setItems] = useState<BoardItem[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
-  
-  // Viewport State
-  const [scale, setScale] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  
-  // Interaction State
   const [tool, setTool] = useState<'select' | 'connect'>('select');
-  const [draggingItem, setDraggingItem] = useState<string | null>(null);
-  const [panning, setPanning] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [connectingStart, setConnectingStart] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Helper to find item in root recursively
-  const findItemInArchive = (node: IIIFItem, id: string): IIIFItem | null => {
-    if (node.id === id) return node;
-    if (node.items) {
-        for (const child of node.items) {
-            const found = findItemInArchive(child, id);
-            if (found) return found;
-        }
-    }
-    return null;
-  };
+  const getCanvasCoords = useCallback((e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }, []);
 
   const handleDrop = (e: React.DragEvent) => {
       e.preventDefault();
       const itemId = e.dataTransfer.getData('application/iiif-item-id');
       if (!itemId || !root) return;
+      const coords = getCanvasCoords(e as any);
+      
+      // Attempt to find metadata for dropped item
+      const findItem = (node: IIIFItem): IIIFItem | null => {
+          if (node.id === itemId) return node;
+          if (node.items) for (const c of node.items) { const f = findItem(c); if (f) return f; }
+          return null;
+      };
+      const resource = findItem(root);
+      const label = resource?.label?.['none']?.[0] || 'New Item';
+      const blob = (resource as any)._blobUrl || (resource as any).thumbnail?.[0]?.id;
 
-      const item = findItemInArchive(root, itemId);
-      if (item) {
-          const rect = containerRef.current?.getBoundingClientRect();
-          if (!rect) return;
-
-          // Calculate drop position relative to canvas origin
-          const dropX = (e.clientX - rect.left - pan.x) / scale;
-          const dropY = (e.clientY - rect.top - pan.y) / scale;
-
-          const newItem: BoardItem = {
-              id: crypto.randomUUID(),
-              resourceId: item.id,
-              resourceType: item.type,
-              label: item.label?.['none']?.[0] || 'Untitled',
-              x: dropX - 100, // Center roughly
-              y: dropY - 100,
-              w: 200,
-              h: item.type === 'Canvas' ? 250 : 100,
-              rotation: 0,
-              blobUrl: item._blobUrl
-          };
-
-          setItems(prev => [...prev, newItem]);
-      }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const s = e.deltaY > 0 ? 0.9 : 1.1;
-        setScale(prev => Math.min(Math.max(0.1, prev * s), 5));
-    } else {
-        setPan(p => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }));
-    }
-  };
-
-  const handleMouseDownItem = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (tool === 'select') {
-        setDraggingItem(id);
-    } else if (tool === 'connect') {
-        setConnectingStart(id);
-    }
-  };
-
-  const handleMouseUpItem = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (tool === 'connect' && connectingStart && connectingStart !== id) {
-        // Create connection
-        setConnections(prev => [...prev, {
-            id: crypto.randomUUID(),
-            fromId: connectingStart,
-            toId: id,
-            type: 'relatesTo'
-        }]);
-        setConnectingStart(null);
-    }
+      setItems(prev => [...prev, { 
+          id: crypto.randomUUID(), 
+          resourceId: itemId, 
+          resourceType: resource?.type || 'Resource', 
+          label, 
+          blobUrl: blob,
+          x: coords.x - 100, 
+          y: coords.y - 75, 
+          w: 200, 
+          h: 150 
+      }]);
+      showToast("Resource pinned to research board", "success");
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    // Track mouse for connection line preview
-    if (containerRef.current) {
-         const rect = containerRef.current.getBoundingClientRect();
-         setMousePos({
-             x: (e.clientX - rect.left - pan.x) / scale,
-             y: (e.clientY - rect.top - pan.y) / scale
-         });
-    }
-
-    if (draggingItem && tool === 'select') {
-        setItems(prev => prev.map(item => {
-            if (item.id === draggingItem) {
-                return { ...item, x: item.x + e.movementX / scale, y: item.y + e.movementY / scale };
-            }
-            return item;
-        }));
-    } else if (panning) {
-        setPan(p => ({ x: p.x + e.movementX, y: p.y + e.movementY }));
+    const coords = getCanvasCoords(e);
+    setMousePos(coords);
+    if (draggingId && tool === 'select') {
+        setItems(prev => prev.map(it => it.id === draggingId ? { ...it, x: it.x + e.movementX, y: it.y + e.movementY } : it));
     }
   };
 
-  const handleDelete = (id: string) => {
-      setItems(prev => prev.filter(i => i.id !== id));
+  const handleItemDown = (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      setActiveId(id);
+      setSelectedConnectionId(null);
+      if (tool === 'select') {
+          setDraggingId(id);
+      } else {
+          setConnectingStart(id);
+      }
+  };
+
+  const handleItemUp = (id: string) => {
+    if (tool === 'connect' && connectingStart && connectingStart !== id) {
+        const exists = connections.some(c => (c.fromId === connectingStart && c.toId === id) || (c.fromId === id && c.toId === connectingStart));
+        if (!exists) {
+            setConnections(prev => [...prev, { id: crypto.randomUUID(), fromId: connectingStart, toId: id, type: 'relatesTo' }]);
+            showToast("Archive connection synthesized", "success");
+        }
+    }
+    setDraggingId(null);
+    setConnectingStart(null);
+  };
+
+  const getCenter = (id: string) => {
+      const it = items.find(i => i.id === id);
+      return it ? { x: it.x + it.w / 2, y: it.y + it.h / 2 } : { x: 0, y: 0 };
+  };
+
+  const deleteItem = (id: string) => {
+      setItems(prev => prev.filter(it => it.id !== id));
       setConnections(prev => prev.filter(c => c.fromId !== id && c.toId !== id));
+      if (activeId === id) setActiveId(null);
   };
 
-  const getItemCenter = (id: string) => {
-      const item = items.find(i => i.id === id);
-      if (!item) return { x: 0, y: 0 };
-      return { x: item.x + item.w / 2, y: item.y + item.h / 2 };
-  };
-
-  const serializeBoard = () => {
-      // Convert Board State to IIIF Manifest
-      // 1. Create a large Canvas (The Board)
-      const boardCanvasId = `https://archive.local/iiif/board/${crypto.randomUUID()}`;
-      const boardW = 5000;
-      const boardH = 5000;
-
-      // 2. Annotations for Items (Painting/Supplementing the Board)
-      const itemAnnos: IIIFAnnotation[] = items.map((item, idx) => ({
-          id: `${boardCanvasId}/anno/${item.id}`,
-          type: "Annotation",
-          motivation: "painting",
-          target: `${boardCanvasId}#xywh=${Math.round(item.x)},${Math.round(item.y)},${Math.round(item.w)},${Math.round(item.h)}`,
-          body: {
-              id: item.resourceId, // Linking to the archive item
-              type: "SpecificResource", 
-              source: item.resourceId,
-              label: { none: [item.label] }
-          } as any
-      }));
-
-      // 3. Annotations for Connections (Linking)
-      const connAnnos: IIIFAnnotation[] = connections.map((conn, idx) => ({
-          id: `${boardCanvasId}/conn/${conn.id}`,
-          type: "Annotation",
-          motivation: "linking",
-          body: {
-              type: "TextualBody",
-              value: conn.type,
-              format: "text/plain"
-          },
-          target: [
-              `${boardCanvasId}/anno/${conn.fromId}`,
-              `${boardCanvasId}/anno/${conn.toId}`
-          ]
-      }));
-
-      const manifest: IIIFManifest = {
-          "@context": "http://iiif.io/api/presentation/3/context.json",
-          id: `https://archive.local/iiif/manifest/board-${Date.now()}`,
-          type: "Manifest",
-          label: { none: ["Research Board Export"] },
-          items: [
-              {
-                  id: boardCanvasId,
-                  type: "Canvas",
-                  width: boardW,
-                  height: boardH,
-                  items: [
-                      {
-                          id: `${boardCanvasId}/page/items`,
-                          type: "AnnotationPage",
-                          items: itemAnnos
-                      }
-                  ],
-                  annotations: [
-                       {
-                          id: `${boardCanvasId}/page/connections`,
-                          type: "AnnotationPage",
-                          items: connAnnos
-                      }
-                  ]
-              }
-          ]
-      };
-
-      console.log("Serialized Board Manifest:", manifest);
-      showToast("Board Serialized to Console (IIIF Manifest)", "success");
-      // In a real app, this would trigger a download or save to storage
-  };
+  const activeItem = items.find(i => i.id === activeId);
+  const activeConn = connections.find(c => c.id === selectedConnectionId);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="h-12 bg-white border-b flex items-center justify-between px-4 z-10 shadow-sm">
-        <div className="flex items-center gap-4">
-            <h2 className="font-bold text-slate-700 flex items-center gap-2">
-                <Icon name="dashboard" className="text-amber-500"/> 
-                Research Board
-            </h2>
-            <div className="flex bg-slate-100 rounded p-0.5">
-                <button 
-                    onClick={() => setTool('select')}
-                    className={`px-3 py-1 flex items-center gap-1 text-xs font-bold rounded ${tool === 'select' ? 'bg-white shadow text-iiif-blue' : 'text-slate-500'}`}
-                >
-                    <Icon name="near_me" className="text-xs"/> Select
-                </button>
-                <button 
-                    onClick={() => setTool('connect')}
-                    className={`px-3 py-1 flex items-center gap-1 text-xs font-bold rounded ${tool === 'connect' ? 'bg-white shadow text-iiif-blue' : 'text-slate-500'}`}
-                >
-                    <Icon name="timeline" className="text-xs"/> Connect
-                </button>
-            </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-slate-500 text-sm">
-            <button className="p-1 hover:bg-slate-100 rounded" onClick={() => setScale(s => s - 0.1)}><Icon name="remove"/></button>
-            <span>{Math.round(scale * 100)}%</span>
-            <button className="p-1 hover:bg-slate-100 rounded" onClick={() => setScale(s => s + 0.1)}><Icon name="add"/></button>
-            <div className="w-px h-4 bg-slate-300 mx-2"></div>
-            <button onClick={serializeBoard} className="px-3 py-1 bg-slate-800 text-white rounded text-xs font-bold hover:bg-slate-700">
-                Save as Manifest
+    <div className="flex flex-col h-full bg-slate-100 overflow-hidden relative font-sans">
+      <div className="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+              <Icon name="dashboard" className="text-amber-500 text-2xl" />
+              <div>
+                  <h1 className="font-black text-slate-800 uppercase tracking-tighter text-lg leading-none">Boards</h1>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Spatial Synthesis</p>
+              </div>
+          </div>
+          <div className="h-8 w-px bg-slate-200"></div>
+          <div className="flex bg-slate-100 rounded-xl p-1 border border-slate-200">
+            <button onClick={() => setTool('select')} className={`px-5 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${tool === 'select' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}>
+                <Icon name="near_me" className="text-sm"/> Select
             </button>
+            <button onClick={() => setTool('connect')} className={`px-5 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${tool === 'connect' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}>
+                <Icon name="mediation" className="text-sm"/> Synthesize
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+            <span>{items.length} Nodes</span>
+            <span>{connections.length} Links</span>
         </div>
       </div>
 
-      <div 
-        ref={containerRef}
-        className="flex-1 bg-slate-100 relative overflow-hidden"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onWheel={handleWheel}
-        onMouseDown={() => setPanning(true)}
-        onMouseUp={() => { setPanning(false); setDraggingItem(null); setConnectingStart(null); }}
-        onMouseLeave={() => { setPanning(false); setDraggingItem(null); setConnectingStart(null); }}
-        onMouseMove={handleMouseMove}
-        style={{ 
-            backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', 
-            backgroundSize: `${20 * scale}px ${20 * scale}px`,
-            backgroundPosition: `${pan.x}px ${pan.y}px`,
-            cursor: panning ? 'grabbing' : (tool === 'connect' ? 'crosshair' : 'default')
-        }}
-      >
+      <div className="flex-1 flex overflow-hidden">
         <div 
-            style={{ 
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-                transformOrigin: '0 0',
-                width: '100%', height: '100%',
-                position: 'absolute',
-                pointerEvents: panning ? 'none' : 'auto'
-            }}
+            ref={containerRef} 
+            className={`flex-1 relative overflow-hidden bg-slate-100 cursor-crosshair`} 
+            onDrop={handleDrop} 
+            onDragOver={e => e.preventDefault()} 
+            onMouseMove={handleMouseMove} 
+            onMouseUp={() => { setDraggingId(null); setConnectingStart(null); }}
+            onClick={() => { setActiveId(null); setSelectedConnectionId(null); }}
+            style={{ backgroundImage: 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)', backgroundSize: '24px 24px' }}
         >
-            {/* SVG Layer for Connections */}
-            <svg className="absolute top-0 left-0 w-full h-full overflow-visible pointer-events-none z-0">
-                <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
-                    </marker>
-                </defs>
-                {connections.map(conn => {
-                    const start = getItemCenter(conn.fromId);
-                    const end = getItemCenter(conn.toId);
-                    return (
-                        <g key={conn.id}>
-                            <line 
-                                x1={start.x} y1={start.y} x2={end.x} y2={end.y} 
-                                stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead)"
-                            />
-                            <text 
-                                x={(start.x + end.x)/2} y={(start.y + end.y)/2} 
-                                className="text-[10px] fill-slate-500 font-bold bg-white"
-                                textAnchor="middle" dy="-5"
-                            >
-                                {conn.type}
-                            </text>
-                        </g>
-                    );
-                })}
-                {/* Preview Line */}
-                {tool === 'connect' && connectingStart && (
-                    <line 
-                        x1={getItemCenter(connectingStart).x} 
-                        y1={getItemCenter(connectingStart).y}
-                        x2={mousePos.x} 
-                        y2={mousePos.y}
-                        stroke="#3b82f6" strokeWidth="2" strokeDasharray="5,5"
-                    />
-                )}
-            </svg>
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                    {connections.map(c => {
+                        const start = getCenter(c.fromId), end = getCenter(c.toId);
+                        const isSelected = selectedConnectionId === c.id;
+                        return (
+                            <g key={c.id} className="pointer-events-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedConnectionId(c.id); setActiveId(null); }}>
+                                <line 
+                                    x1={start.x} y1={start.y} x2={end.x} y2={end.y} 
+                                    stroke={isSelected ? "#005596" : "#3b82f6"} 
+                                    strokeWidth={isSelected ? "5" : "2.5"} 
+                                    strokeDasharray={isSelected ? "none" : "6,4"} 
+                                    markerEnd="url(#arrowhead)" 
+                                    className={isSelected ? "" : "animate-dash"}
+                                />
+                                {c.label && (
+                                    <text 
+                                        x={(start.x + end.x)/2} 
+                                        y={(start.y + end.y)/2 - 10} 
+                                        textAnchor="middle" 
+                                        className="text-[10px] font-black uppercase fill-slate-700 bg-white"
+                                        style={{ paintOrder: 'stroke', stroke: 'white', strokeWidth: '3px' }}
+                                    >
+                                        {c.label}
+                                    </text>
+                                )}
+                            </g>
+                        );
+                    })}
+                    {connectingStart && (
+                        <line 
+                            x1={getCenter(connectingStart).x} y1={getCenter(connectingStart).y} 
+                            x2={mousePos.x} y2={mousePos.y} 
+                            stroke="#3b82f6" strokeWidth="2" strokeDasharray="4,4" 
+                        />
+                    )}
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+                        </marker>
+                    </defs>
+                </svg>
 
-            {items.map(item => (
-                <div
-                    key={item.id}
-                    className={`absolute bg-white shadow-lg border flex flex-col group ${connectingStart === item.id ? 'ring-2 ring-iiif-blue' : 'hover:ring-1 ring-slate-300'}`}
-                    style={{
-                        left: item.x, top: item.y, width: item.w, height: item.h,
-                        transform: `rotate(${item.rotation}deg)`,
-                        borderColor: tool === 'connect' ? '#3b82f6' : '#e2e8f0',
-                        cursor: tool === 'select' ? 'move' : 'pointer'
-                    }}
-                    onMouseDown={(e) => handleMouseDownItem(e, item.id)}
-                    onMouseUp={(e) => handleMouseUpItem(e, item.id)}
-                >
-                    <div className="flex-1 bg-slate-50 relative overflow-hidden flex items-center justify-center">
-                        {item.blobUrl ? (
-                            <img src={item.blobUrl} className="w-full h-full object-contain pointer-events-none" />
-                        ) : (
-                            <Icon name={item.resourceType === 'Manifest' ? 'menu_book' : 'folder'} className="text-slate-300 text-4xl"/>
-                        )}
-                        
-                        {/* Context Action */}
-                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {items.map(it => (
+                    <div 
+                        key={it.id} 
+                        onMouseDown={(e) => handleItemDown(e, it.id)}
+                        onMouseUp={() => handleItemUp(it.id)}
+                        className={`absolute bg-white shadow-2xl rounded-2xl overflow-hidden group select-none transition-shadow ${activeId === it.id ? 'ring-4 ring-iiif-blue/20 border-iiif-blue' : 'border-slate-200'} border-2 z-20`} 
+                        style={{ left: it.x, top: it.y, width: it.w, height: it.h }}
+                    >
+                        <div className="h-full flex flex-col relative">
+                            <div className="flex-1 bg-slate-900 flex items-center justify-center relative overflow-hidden">
+                                {it.blobUrl ? (
+                                    <img src={it.blobUrl} className="w-full h-full object-contain pointer-events-none" alt="Pin" />
+                                ) : (
+                                    <Icon name="description" className="text-5xl text-slate-700 opacity-50"/>
+                                )}
+                                <div className="absolute top-2 left-2 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest">
+                                    {it.resourceType}
+                                </div>
+                                {it.annotation && (
+                                    <div className="absolute top-2 right-2 text-yellow-400 drop-shadow-md animate-pulse">
+                                        <Icon name="chat_bubble" className="text-sm"/>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-3 bg-white border-t border-slate-100">
+                                <div className="text-[10px] font-black text-slate-800 truncate uppercase tracking-tighter">{it.label}</div>
+                                <div className="text-[8px] font-mono text-slate-400 truncate mt-0.5">{it.resourceId.split('/').pop()}</div>
+                            </div>
                             <button 
-                                onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                                className="bg-white/80 p-0.5 rounded-full shadow hover:bg-red-50 text-red-500"
+                                onClick={(e) => { e.stopPropagation(); deleteItem(it.id); }}
+                                className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full shadow-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-110 hover:bg-red-600 z-30"
                             >
-                                <Icon name="close" className="text-xs"/>
+                                <Icon name="close" className="text-sm"/>
                             </button>
                         </div>
                     </div>
-                    <div className="h-7 bg-white border-t p-1.5 text-[10px] font-bold text-slate-700 truncate flex items-center gap-1">
-                         <Icon name={item.resourceType === 'Manifest' ? 'menu_book' : 'image'} className="text-[10px] text-slate-400"/>
-                        {item.label}
-                    </div>
-                </div>
-            ))}
+                ))}
         </div>
+
+        {/* Synthesis Inspector Panel */}
+        {(activeItem || activeConn) && (
+            <div className="w-80 bg-white border-l shadow-xl z-30 p-6 flex flex-col gap-6 animate-in slide-in-from-right-2">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest">Synthesis DNA</h3>
+                    <button onClick={() => { setActiveId(null); setSelectedConnectionId(null); }}><Icon name="close" className="text-slate-300 text-sm"/></button>
+                </div>
+                
+                {activeItem ? (
+                    <>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Item Annotation</label>
+                            <textarea 
+                                value={activeItem.annotation || ''} 
+                                onChange={(e) => setItems(items.map(it => it.id === activeId ? {...it, annotation: e.target.value} : it))}
+                                placeholder="Add scholarly notes for this node..."
+                                className="w-full text-xs p-3 rounded-lg border focus:ring-2 focus:ring-iiif-blue outline-none min-h-[100px] leading-relaxed"
+                            />
+                        </div>
+                        <div className="text-[10px] text-slate-400 italic">This note acts as a 'linking' back-reference in the semantic archive.</div>
+                    </>
+                ) : activeConn && (
+                    <>
+                        <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                            <label className="block text-[10px] font-black text-blue-700 uppercase mb-2">Relationship Nature</label>
+                            <input 
+                                value={activeConn.label || ''}
+                                onChange={(e) => setConnections(connections.map(c => c.id === selectedConnectionId ? {...c, label: e.target.value} : c))}
+                                placeholder="e.g. transcribes, depicts, precedes"
+                                className="w-full text-xs font-bold p-3 rounded-lg border-2 border-blue-100 focus:border-iiif-blue outline-none uppercase tracking-widest"
+                            />
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                             <h4 className="text-[10px] font-black uppercase text-slate-400 mb-2">Connected IDs</h4>
+                             <div className="space-y-2 opacity-50">
+                                <code className="block text-[8px] truncate">{items.find(i => i.id === activeConn.fromId)?.resourceId}</code>
+                                <Icon name="sync_alt" className="text-xs rotate-90 block mx-auto"/>
+                                <code className="block text-[8px] truncate">{items.find(i => i.id === activeConn.toId)?.resourceId}</code>
+                             </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        )}
       </div>
-      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur p-2 rounded shadow text-xs text-slate-500 pointer-events-none">
-        {tool === 'select' ? 'Drag items to move • Drop from Archive to add' : 'Click two items to connect'}
-      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes dash {
+              to { stroke-dashoffset: -100; }
+          }
+          .animate-dash {
+              animation: dash 5s linear infinite;
+          }
+      `}} />
     </div>
   );
 };

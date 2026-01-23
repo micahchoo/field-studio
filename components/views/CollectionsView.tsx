@@ -1,444 +1,223 @@
 
-import React, { useState, useRef } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel } from '../../types';
+import React, { useState } from 'react';
+import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, IIIFRange, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
-import { RangeEditor } from '../RangeEditor';
 import { useToast } from '../Toast';
+import { MuseumLabel } from '../MuseumLabel';
+import { RESOURCE_TYPE_CONFIG } from '../../constants';
+import { autoStructureService } from '../../services/autoStructure';
 
 interface CollectionsViewProps {
   root: IIIFItem | null;
   onUpdate: (newRoot: IIIFItem) => void;
   abstractionLevel?: AbstractionLevel;
+  onReveal?: (id: string, mode: any) => void;
+  onSynthesize?: (id: string) => void;
 }
 
-interface ContextMenuState {
-  visible: boolean;
-  x: number;
-  y: number;
-  nodeId: string | null;
-  nodeType: string | null;
-}
-
-export const CollectionsView: React.FC<CollectionsViewProps> = ({ root, onUpdate, abstractionLevel = 'standard' }) => {
+export const CollectionsView: React.FC<CollectionsViewProps> = ({ root, onUpdate, abstractionLevel = 'standard', onReveal, onSynthesize }) => {
   const { showToast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(root?.id || null);
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [previewTab, setPreviewTab] = useState<'details' | 'structure' | 'json'>('details');
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>({ visible: false, x: 0, y: 0, nodeId: null, nodeType: null });
 
-  // Helper to find a node by ID
   const findNode = (node: IIIFItem, id: string): IIIFItem | null => {
     if (node.id === id) return node;
-    if (node.items) {
-      for (const child of node.items) {
+    const children = (node as any).items || (node as any).annotations || [];
+    for (const child of children) {
         const found = findNode(child, id);
         if (found) return found;
-      }
     }
     return null;
   };
 
-  // Helper to clone the tree deeply (simplified for JSON structures)
   const cloneTree = (node: IIIFItem): IIIFItem => JSON.parse(JSON.stringify(node));
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.stopPropagation();
-    setDragId(id);
-    e.dataTransfer.setData('text/plain', id);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, targetId: string, position: 'inside' | 'before' | 'after') => {
-    e.preventDefault();
-    e.stopPropagation();
-    const sourceId = e.dataTransfer.getData('text/plain');
-    
-    if (sourceId === targetId) return;
-    if (!root) return;
-
-    // Clone root to mutate
+  const handleAutoStructure = () => {
+    if (!selectedId || !root) return;
     const newRoot = cloneTree(root);
-    
-    // Find parent of source
-    const findParent = (node: IIIFItem, childId: string): IIIFItem | null => {
-        if (!node.items) return null;
-        if (node.items.some(i => i.id === childId)) return node;
-        for (const child of node.items) {
-            const p = findParent(child, childId);
-            if (p) return p;
-        }
-        return null;
-    };
-
-    const sourceParent = findParent(newRoot, sourceId);
-    if (!sourceParent || !sourceParent.items) return;
-
-    const sourceIndex = sourceParent.items.findIndex(i => i.id === sourceId);
-    const [movedItem] = sourceParent.items.splice(sourceIndex, 1);
-
-    // Find target and insert
-    if (position === 'inside') {
-        const targetNode = findNode(newRoot, targetId);
-        if (targetNode && targetNode.type === 'Collection') {
-             if (!targetNode.items) targetNode.items = [];
-             targetNode.items.push(movedItem);
-        } else {
-            // Fallback: put back
-            sourceParent.items.splice(sourceIndex, 0, movedItem);
-            return;
-        }
+    const target = findNode(newRoot, selectedId);
+    if (target && target.type === 'Manifest') {
+        const updated = autoStructureService.generateRangesFromPatterns(target as IIIFManifest);
+        Object.assign(target, updated);
+        onUpdate(newRoot);
+        showToast("Auto-generated Table of Contents", "success");
     } else {
-        const targetParent = findParent(newRoot, targetId);
-        if (targetParent && targetParent.items) {
-            const targetIndex = targetParent.items.findIndex(i => i.id === targetId);
-            const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
-            targetParent.items.splice(insertIndex, 0, movedItem);
-        } else {
-             // Fallback
-             sourceParent.items.splice(sourceIndex, 0, movedItem);
-             return;
-        }
+        showToast("Select a Manifest to auto-structure", "info");
     }
-
-    onUpdate(newRoot);
-    setDragId(null);
   };
 
-  const handleCreateCollection = () => {
+  const handleCreateType = (type: 'Collection' | 'Manifest', parentId: string | null) => {
       if (!root) return;
       const newRoot = cloneTree(root);
-      const target = selectedId ? findNode(newRoot, selectedId) : newRoot;
+      const target = parentId ? findNode(newRoot, parentId) : newRoot;
       
-      if (target && target.type === 'Collection') {
-          const newCollection: IIIFCollection = {
-              "@context": "http://iiif.io/api/presentation/3/context.json",
-              id: `https://archive.local/iiif/collection/${crypto.randomUUID()}`,
-              type: "Collection",
-              label: { none: ["New Collection"] },
-              items: []
-          };
+      const newItem: any = {
+          id: `https://archive.local/iiif/${type.toLowerCase()}/${crypto.randomUUID()}`,
+          type,
+          label: { none: [`New ${type}`] },
+          items: []
+      };
+
+      if (target && (target.type === 'Collection' || target.type === 'Manifest')) {
           if (!target.items) target.items = [];
-          target.items.push(newCollection);
+          target.items.push(newItem);
           onUpdate(newRoot);
+          showToast(`New ${type} Added`, "success");
       }
   };
 
-  const handleDelete = () => {
-      if (!root || !selectedId || selectedId === root.id) return;
-      if (!confirm("Are you sure you want to delete this item?")) return;
-
-      const newRoot = cloneTree(root);
-      const findParent = (node: IIIFItem, childId: string): IIIFItem | null => {
-          if (!node.items) return null;
-          if (node.items.some(i => i.id === childId)) return node;
-          for (const child of node.items) {
-              const p = findParent(child, childId);
-              if (p) return p;
-          }
-          return null;
-      };
-
-      const parent = findParent(newRoot, selectedId);
-
-      if (parent && parent.items) {
-          const idx = parent.items.findIndex(i => i.id === selectedId);
-          parent.items.splice(idx, 1);
-          onUpdate(newRoot);
-          setSelectedId(null);
-      }
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, nodeId: string, nodeType: string) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setContextMenu({
-          visible: true,
-          x: e.clientX,
-          y: e.clientY,
-          nodeId,
-          nodeType
-      });
-  };
-
-  const closeContextMenu = () => {
-      setContextMenu({ visible: false, x: 0, y: 0, nodeId: null, nodeType: null });
-  };
-
-  const handleConvertToManifest = () => {
-      if (!root || !contextMenu.nodeId) return;
-      const newRoot = cloneTree(root);
-      const node = findNode(newRoot, contextMenu.nodeId);
-
-      if (node && node.type === 'Collection') {
-          // Convert Collection to Manifest
-          // Move nested Collections/Manifests as Canvases (if possible) or flatten
-          const collection = node as IIIFCollection;
-
-          // Create Canvases from child items
-          const canvases: IIIFCanvas[] = [];
-          const collectCanvases = (item: IIIFItem) => {
-              if (item.type === 'Canvas') {
-                  canvases.push(item as IIIFCanvas);
-              } else if (item.items) {
-                  item.items.forEach(collectCanvases);
-              }
-          };
-          if (collection.items) {
-              collection.items.forEach(collectCanvases);
-          }
-
-          // Transform to Manifest
-          (node as any).type = 'Manifest';
-          (node as any)["@context"] = "http://iiif.io/api/presentation/3/context.json";
-          node.items = canvases;
-
-          onUpdate(newRoot);
-          showToast(`Converted to Manifest with ${canvases.length} canvases`, 'success');
-      }
-      closeContextMenu();
-  };
-
-  const handleConvertToCollection = () => {
-      if (!root || !contextMenu.nodeId) return;
-      const newRoot = cloneTree(root);
-      const node = findNode(newRoot, contextMenu.nodeId);
-
-      if (node && node.type === 'Manifest') {
-          // Convert Manifest to Collection
-          // Each Canvas becomes a separate Manifest
-          const manifest = node as IIIFManifest;
-          const newItems: IIIFManifest[] = [];
-
-          if (manifest.items && manifest.items.length > 0) {
-              manifest.items.forEach((canvas, idx) => {
-                  const newManifest: IIIFManifest = {
-                      "@context": "http://iiif.io/api/presentation/3/context.json",
-                      id: `${manifest.id}/manifest/${idx + 1}`,
-                      type: 'Manifest',
-                      label: canvas.label || { none: [`Item ${idx + 1}`] },
-                      items: [canvas as IIIFCanvas]
-                  };
-                  newItems.push(newManifest);
-              });
-          }
-
-          // Transform to Collection
-          (node as any).type = 'Collection';
-          node.items = newItems;
-          delete (node as any).structures;
-
-          onUpdate(newRoot);
-          showToast(`Converted to Collection with ${newItems.length} manifests`, 'success');
-      }
-      closeContextMenu();
-  };
-
-  const handleDuplicateItem = () => {
-      if (!root || !contextMenu.nodeId || contextMenu.nodeId === root.id) return;
-      const newRoot = cloneTree(root);
-
-      const findParent = (node: IIIFItem, childId: string): IIIFItem | null => {
-          if (!node.items) return null;
-          if (node.items.some(i => i.id === childId)) return node;
-          for (const child of node.items) {
-              const p = findParent(child, childId);
-              if (p) return p;
-          }
-          return null;
-      };
-
-      const parent = findParent(newRoot, contextMenu.nodeId);
-      const original = findNode(newRoot, contextMenu.nodeId);
-
-      if (parent && parent.items && original) {
-          const duplicate = cloneTree(original);
-          // Update IDs to avoid conflicts
-          const updateIds = (item: IIIFItem) => {
-              item.id = item.id.replace(/[^/]+$/, crypto.randomUUID());
-              if (item.label?.['none']) {
-                  item.label['none'] = [item.label['none'][0] + ' (copy)'];
-              }
-              if (item.items) item.items.forEach(updateIds);
-          };
-          updateIds(duplicate);
-
-          const idx = parent.items.findIndex(i => i.id === contextMenu.nodeId);
-          parent.items.splice(idx + 1, 0, duplicate);
-          onUpdate(newRoot);
-          showToast('Item duplicated', 'success');
-      }
-      closeContextMenu();
-  };
-
-  const handleUpdateManifest = (updatedManifest: IIIFManifest) => {
+  const handleUpdate = (id: string, updates: Partial<IIIFItem>) => {
       if (!root) return;
       const newRoot = cloneTree(root);
-      const target = findNode(newRoot, updatedManifest.id);
+      const target = findNode(newRoot, id);
       if (target) {
-          Object.assign(target, updatedManifest);
+          Object.assign(target, updates);
           onUpdate(newRoot);
+      }
+  };
+
+  const handleReorderDrag = (draggedId: string, targetId: string) => {
+      if (!root || draggedId === targetId) return;
+      const newRoot = cloneTree(root);
+      let draggedNode: any = null;
+
+      const findAndRemove = (parent: any) => {
+          const list = parent.items || parent.annotations || [];
+          const idx = list.findIndex((x: any) => x.id === draggedId);
+          if (idx > -1) {
+              draggedNode = list.splice(idx, 1)[0];
+              return true;
+          }
+          for (const child of list) if (findAndRemove(child)) return true;
+          return false;
+      };
+
+      const findAndInsert = (parent: any) => {
+          if (parent.id === targetId) {
+              if (parent.type !== 'Collection' && parent.type !== 'Manifest') return false;
+              if (!parent.items) parent.items = [];
+              parent.items.push(draggedNode);
+              return true;
+          }
+          const list = parent.items || parent.annotations || [];
+          for (const child of list) if (findAndInsert(child)) return true;
+          return false;
+      };
+
+      findAndRemove(newRoot);
+      if (draggedNode) {
+          const success = findAndInsert(newRoot);
+          if (success) {
+              onUpdate(newRoot);
+              showToast("Structure reorganized", "success");
+          }
       }
   };
 
   const selectedNode = root && selectedId ? findNode(root, selectedId) : null;
-
-  if (!root) return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 text-slate-400">
-          <div className="text-center">
-              <Icon name="library_books" className="text-6xl mb-4 text-slate-300" />
-              <p>No archive loaded.</p>
-          </div>
-      </div>
-  );
+  const nodeConfig = selectedNode ? (RESOURCE_TYPE_CONFIG[selectedNode.type] || RESOURCE_TYPE_CONFIG['Content']) : RESOURCE_TYPE_CONFIG['Content'];
 
   return (
-    <div className="flex h-full bg-slate-100" onClick={closeContextMenu}>
-      {/* Context Menu */}
-      {contextMenu.visible && (
-          <div
-              className="fixed bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-50 min-w-[180px]"
-              style={{ left: contextMenu.x, top: contextMenu.y }}
-              onClick={(e) => e.stopPropagation()}
-          >
-              {contextMenu.nodeType === 'Collection' && (
-                  <button
-                      onClick={handleConvertToManifest}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
-                  >
-                      <Icon name="menu_book" className="text-blue-500" />
-                      Convert to Manifest
-                  </button>
-              )}
-              {contextMenu.nodeType === 'Manifest' && (
-                  <button
-                      onClick={handleConvertToCollection}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
-                  >
-                      <Icon name="folder" className="text-amber-500" />
-                      Convert to Collection
-                  </button>
-              )}
-              <button
-                  onClick={handleDuplicateItem}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
-              >
-                  <Icon name="content_copy" className="text-slate-500" />
-                  Duplicate
-              </button>
-              <div className="border-t my-1"></div>
-              <button
-                  onClick={() => { setSelectedId(contextMenu.nodeId); closeContextMenu(); handleDelete(); }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
-              >
-                  <Icon name="delete" />
-                  Delete
-              </button>
+    <div className="flex flex-col h-full bg-slate-100">
+      <div className="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 shadow-sm z-20">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-iiif-blue/10 rounded-lg text-iiif-blue"><Icon name="account_tree" className="text-2xl" /></div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-800 leading-tight">Structure</h1>
+            <p className="text-xs text-slate-500">Hierarchy & Organization</p>
           </div>
-      )
-      {/* Sidebar / Tree Editor */}
-      <div className="w-1/3 min-w-[300px] flex flex-col border-r border-slate-200 bg-white">
-        <div className="h-14 border-b px-4 flex items-center justify-between bg-slate-50">
-            <h2 className="font-bold text-slate-700 flex items-center gap-2">
-                <Icon name="schema" className="text-iiif-blue"/> Hierarchy
-            </h2>
-            <div className="flex gap-1">
-                <button onClick={handleCreateCollection} className="p-1.5 hover:bg-slate-200 rounded text-slate-600" title="New Collection">
-                    <Icon name="create_new_folder"/>
-                </button>
-                <button onClick={handleDelete} className="p-1.5 hover:bg-red-100 hover:text-red-600 rounded text-slate-600" title="Delete Selected">
-                    <Icon name="delete"/>
-                </button>
-            </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-            <TreeNode
-                node={root}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                onDrop={handleDrop}
-                onDragStart={handleDragStart}
-                onContextMenu={handleContextMenu}
-            />
+        <div className="flex items-center gap-2">
+            {selectedNode?.type === 'Manifest' && (
+                <button onClick={handleAutoStructure} className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm font-bold hover:bg-amber-100 transition-all mr-4">
+                    <Icon name="auto_awesome" className="text-amber-500" /> Build TOC
+                </button>
+            )}
+            <button onClick={() => handleCreateType('Collection', selectedId)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all">
+                <Icon name="create_new_folder" className="text-amber-600" /> Collection
+            </button>
+            <button onClick={() => handleCreateType('Manifest', selectedId)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all">
+                <Icon name="note_add" className="text-emerald-600" /> Manifest
+            </button>
         </div>
       </div>
 
-      {/* Main / Preview */}
-      <div className="flex-1 flex flex-col bg-slate-50">
-         {selectedNode ? (
-             <>
-                <div className="h-14 border-b px-6 flex items-center justify-between bg-white shrink-0">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                        <Icon name={selectedNode.type === 'Collection' ? 'folder' : 'menu_book'} className="text-slate-400"/>
-                        <h2 className="font-bold text-slate-800 truncate">{selectedNode.label?.['none']?.[0] || 'Untitled'}</h2>
-                        <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-500 rounded">{selectedNode.type}</span>
-                    </div>
-                    <div className="flex bg-slate-100 rounded p-1">
-                        <button 
-                            className={`px-3 py-1 text-xs font-bold rounded ${previewTab === 'details' ? 'bg-white shadow text-iiif-blue' : 'text-slate-500 hover:text-slate-700'}`}
-                            onClick={() => setPreviewTab('details')}
-                        >
-                            Details
-                        </button>
-                        {selectedNode.type === 'Manifest' && (
+      <div className="flex-1 flex min-h-0">
+        <div className="w-80 flex flex-col border-r border-slate-200 bg-white shadow-inner overflow-y-auto p-4 custom-scrollbar">
+            {root ? (
+                <TreeNode node={root} selectedId={selectedId} onSelect={setSelectedId} onDrop={handleReorderDrag} level={0} />
+            ) : null}
+        </div>
+
+        <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+            {selectedNode ? (
+                <>
+                    <div className="h-14 bg-white border-b px-6 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-3">
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1 ${nodeConfig.bgClass} ${nodeConfig.colorClass}`}>
+                                <Icon name={nodeConfig.icon} className="text-xs" />
+                                {selectedNode.type}
+                            </span>
+                            <h2 className="font-bold text-slate-800 truncate">{getIIIFValue(selectedNode.label)}</h2>
+                        </div>
+                        <div className="flex gap-2">
                              <button 
-                                className={`px-3 py-1 text-xs font-bold rounded ${previewTab === 'structure' ? 'bg-white shadow text-iiif-blue' : 'text-slate-500 hover:text-slate-700'}`}
-                                onClick={() => setPreviewTab('structure')}
-                            >
-                                Structure
-                            </button>
-                        )}
-                        {abstractionLevel !== 'simple' && (
-                            <button 
-                                className={`px-3 py-1 text-xs font-bold rounded ${previewTab === 'json' ? 'bg-white shadow text-iiif-blue' : 'text-slate-500 hover:text-slate-700'}`}
-                                onClick={() => setPreviewTab('json')}
-                            >
-                                JSON-LD
-                            </button>
-                        )}
+                                onClick={() => onReveal?.(selectedNode.id, 'archive')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase text-slate-400 hover:text-iiif-blue transition-all"
+                             >
+                                <Icon name="inventory_2" className="text-xs"/> Reveal in Archive
+                             </button>
+                             {selectedNode.type === 'Manifest' && (
+                                <button 
+                                    onClick={() => onSynthesize?.(selectedNode.id)}
+                                    className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-[10px] font-black uppercase hover:bg-indigo-100 transition-all shadow-sm"
+                                >
+                                    <Icon name="layers" className="text-xs"/> Synthesis Workbench
+                                </button>
+                             )}
+                             {selectedNode.type === 'Canvas' && (
+                                <button 
+                                    onClick={() => onReveal?.(selectedNode.id, 'viewer')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase text-slate-400 hover:text-iiif-blue transition-all"
+                                >
+                                    <Icon name="visibility" className="text-xs"/> View in Workbench
+                                </button>
+                             )}
+                        </div>
                     </div>
-                </div>
-                <div className="flex-1 overflow-hidden relative">
-                    {previewTab === 'details' && (
-                        <div className="p-8 max-w-2xl mx-auto overflow-y-auto h-full">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
-                                {abstractionLevel !== 'simple' && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">ID</label>
-                                        <div className="text-xs font-mono bg-slate-50 p-2 rounded break-all text-slate-600 select-all">{selectedNode.id}</div>
+
+                    <div className="flex-1 overflow-y-auto p-10 bg-slate-100/50">
+                        <div className="max-w-4xl mx-auto space-y-6">
+                            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-8">
+                                <h3 className="text-xl font-black text-slate-800 flex items-center gap-3 border-b pb-4">
+                                    <Icon name="auto_fix_high" className="text-iiif-blue" /> Structural Modeling
+                                </h3>
+                                
+                                <div className="p-6 bg-slate-50 rounded-xl border border-slate-100">
+                                    <h4 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Behavior Policies</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {(['individuals', 'paged', 'continuous', 'unordered'] as const).map(b => (
+                                            <button 
+                                                key={b} 
+                                                onClick={() => handleUpdate(selectedId!, { behavior: [b] })}
+                                                className={`p-3 rounded-lg border text-left flex items-center justify-between transition-all ${selectedNode.behavior?.includes(b) ? 'bg-iiif-blue text-white border-iiif-blue shadow-lg scale-[1.02]' : 'bg-white text-slate-600 border-slate-200 hover:border-iiif-blue'}`}
+                                            >
+                                                <span className="text-xs font-bold capitalize">{b}</span>
+                                                {selectedNode.behavior?.includes(b) && <Icon name="check_circle" className="text-sm"/>}
+                                            </button>
+                                        ))}
                                     </div>
-                                )}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Label</label>
-                                    <div className="text-lg font-medium text-slate-800">{selectedNode.label?.['none']?.[0]}</div>
                                 </div>
-                                {selectedNode.type === 'Collection' && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Contents</label>
-                                        <div className="text-sm text-slate-600">{(selectedNode as IIIFCollection).items?.length || 0} items</div>
-                                    </div>
-                                )}
                             </div>
+                            <MuseumLabel title="Inheritance Logic" type="field-note">
+                                Behavior values chosen here will propagate down to all nested Canvases unless overridden. "Paged" mode is recommended for book-like digitized artifacts.
+                            </MuseumLabel>
                         </div>
-                    )}
-                    {previewTab === 'structure' && selectedNode.type === 'Manifest' && (
-                        <RangeEditor manifest={selectedNode as IIIFManifest} onUpdate={handleUpdateManifest} />
-                    )}
-                    {previewTab === 'json' && abstractionLevel !== 'simple' && (
-                        <div className="absolute inset-0 p-4">
-                            <textarea 
-                                className="w-full h-full font-mono text-xs bg-slate-900 text-green-400 p-4 rounded-lg resize-none focus:outline-none"
-                                readOnly
-                                value={JSON.stringify(selectedNode, null, 2)}
-                            />
-                        </div>
-                    )}
-                </div>
-             </>
-         ) : (
-             <div className="flex-1 flex items-center justify-center text-slate-400">
-                 <p>Select an item to view details.</p>
-             </div>
-         )}
+                    </div>
+                </>
+            ) : (
+                <div className="h-full flex items-center justify-center text-slate-300 italic">Select a structural node to configure</div>
+            )}
+        </div>
       </div>
     </div>
   );
@@ -448,95 +227,35 @@ const TreeNode: React.FC<{
     node: IIIFItem;
     selectedId: string | null;
     onSelect: (id: string) => void;
-    onDragStart: (e: React.DragEvent, id: string) => void;
-    onDrop: (e: React.DragEvent, targetId: string, position: 'inside' | 'before' | 'after') => void;
-    onContextMenu: (e: React.MouseEvent, nodeId: string, nodeType: string) => void;
-    level?: number;
-}> = ({ node, selectedId, onSelect, onDragStart, onDrop, onContextMenu, level = 0 }) => {
-    const [expanded, setExpanded] = useState(true);
-    const [dragOver, setDragOver] = useState<'none' | 'top' | 'middle' | 'bottom'>('none');
-    
+    onDrop: (draggedId: string, targetId: string) => void;
+    level: number;
+}> = ({ node, selectedId, onSelect, onDrop, level }) => {
+    const [expanded, setExpanded] = React.useState(true);
+    const [isDragOver, setIsDragOver] = React.useState(false);
     const isSelected = node.id === selectedId;
-    const isCollection = node.type === 'Collection';
-    const hasChildren = isCollection && (node as IIIFCollection).items?.length > 0;
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const rect = e.currentTarget.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        const height = rect.height;
-        
-        if (isCollection) {
-            // Collections can accept drops inside
-            if (y < height * 0.25) setDragOver('top');
-            else if (y > height * 0.75) setDragOver('bottom');
-            else setDragOver('middle');
-        } else {
-            // Leafs can only accept before/after
-            if (y < height * 0.5) setDragOver('top');
-            else setDragOver('bottom');
-        }
-    };
-
-    const handleDropInternal = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        let position: 'inside' | 'before' | 'after' = 'inside';
-        
-        if (dragOver === 'top') position = 'before';
-        if (dragOver === 'bottom') position = 'after';
-        if (dragOver === 'middle') position = 'inside';
-        
-        onDrop(e, node.id, position);
-        setDragOver('none');
-    };
+    const children = (node as any).items || (node as any).annotations || [];
+    
+    const config = RESOURCE_TYPE_CONFIG[node.type] || RESOURCE_TYPE_CONFIG['Content'];
 
     return (
-        <div style={{ paddingLeft: level > 0 ? 12 : 0 }}>
+        <div style={{ paddingLeft: level > 0 ? 12 : 0 }} className="mb-0.5">
             <div
-                className={`
-                    relative flex items-center gap-2 p-1.5 rounded cursor-pointer border-2 transition-colors select-none
-                    ${isSelected ? 'bg-blue-50 border-blue-200' : 'bg-transparent border-transparent hover:bg-slate-100'}
-                    ${dragOver === 'top' ? 'border-t-iiif-blue' : ''}
-                    ${dragOver === 'bottom' ? 'border-b-iiif-blue' : ''}
-                    ${dragOver === 'middle' ? 'bg-amber-50 border-amber-300' : ''}
-                `}
-                onClick={(e) => { e.stopPropagation(); onSelect(node.id); }}
-                onContextMenu={(e) => onContextMenu(e, node.id, node.type)}
-                draggable
-                onDragStart={(e) => onDragStart(e, node.id)}
-                onDragOver={handleDragOver}
-                onDragLeave={() => setDragOver('none')}
-                onDrop={handleDropInternal}
+                draggable onDragStart={e => e.dataTransfer.setData('resourceId', node.id)}
+                onDragOver={e => { if (node.type !== 'Canvas') { e.preventDefault(); setIsDragOver(true); } }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={e => { e.preventDefault(); setIsDragOver(false); onDrop(e.dataTransfer.getData('resourceId'), node.id); }}
+                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all select-none border ${isDragOver ? 'bg-blue-100 border-blue-500' : isSelected ? `bg-white border-blue-400 shadow-md font-bold` : 'hover:bg-slate-50 text-slate-700 border-transparent'}`}
+                onClick={() => onSelect(node.id)}
             >
-                 <div 
-                    className={`p-0.5 rounded hover:bg-slate-200 ${!hasChildren ? 'invisible' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                >
-                    <Icon name={expanded ? "expand_more" : "chevron_right"} className="text-slate-400 text-[16px]" />
+                <div className={`p-0.5 rounded hover:bg-black/10 ${!children.length ? 'invisible' : ''}`} onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}>
+                    <Icon name={expanded ? "expand_more" : "chevron_right"} className="text-[14px]" />
                 </div>
-                <Icon 
-                    name={isCollection ? "folder" : node.type === 'Manifest' ? "menu_book" : "image"} 
-                    className={`text-[18px] ${isCollection ? 'text-amber-500' : 'text-blue-400'}`} 
-                />
-                <span className="text-sm truncate text-slate-700">{node.label?.['none']?.[0] || 'Untitled'}</span>
+                <Icon name={config.icon} className={`text-[18px] ${isSelected ? config.colorClass : 'text-slate-400'}`} />
+                <span className={`text-sm truncate`}>{getIIIFValue(node.label) || 'Untitled'}</span>
             </div>
-            {hasChildren && expanded && (
-                <div>
-                    {(node as IIIFCollection).items.map(child => (
-                        <TreeNode
-                            key={child.id}
-                            node={child}
-                            selectedId={selectedId}
-                            onSelect={onSelect}
-                            onDragStart={onDragStart}
-                            onDrop={onDrop}
-                            onContextMenu={onContextMenu}
-                            level={level + 1}
-                        />
-                    ))}
+            {expanded && children.length > 0 && (
+                <div className="border-l border-slate-200 ml-4 mt-0.5 space-y-0.5">
+                    {children.map((child: any) => <TreeNode key={child.id} node={child} selectedId={selectedId} onSelect={onSelect} onDrop={onDrop} level={level + 1} />)}
                 </div>
             )}
         </div>

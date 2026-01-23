@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 
@@ -61,16 +60,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
 
   if (!isOpen) return null;
 
-  // Grouping logic
   const grouped = filteredCommands.reduce((acc, cmd) => {
       if (!acc[cmd.section]) acc[cmd.section] = [];
       acc[cmd.section].push(cmd);
       return acc;
   }, {} as Record<string, Command[]>);
 
-  // Flatten for rendering but keep index logic correct relative to filteredCommands
-  // We'll iterate filteredCommands to render, injecting headers when section changes.
-  
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[20vh]" onClick={onClose}>
         <div 
@@ -96,7 +91,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                         <p>No commands found.</p>
                     </div>
                 ) : (
-                    Object.entries(grouped).map(([section, sectionCmds]) => (
+                    Object.entries(grouped).map(([section, sectionCmds]: [string, Command[]]) => (
                         <div key={section} className="mb-2">
                             <div className="px-3 py-2 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                                 {section}

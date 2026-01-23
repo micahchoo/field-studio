@@ -1,7 +1,8 @@
 
 const DB_NAME = 'biiif-archive-db';
 const FILES_STORE = 'files';
-const TILE_CACHE_NAME = 'iiif-tile-cache-v1';
+const DERIVATIVES_STORE = 'derivatives';
+const TILE_CACHE_NAME = 'iiif-tile-cache-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -11,7 +12,6 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
       self.clients.claim(),
-      // Clear old caches
       caches.keys().then(keys => Promise.all(
         keys.map(key => {
           if (key !== TILE_CACHE_NAME) return caches.delete(key);
@@ -21,32 +21,28 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Helper to get file from IDB
-function getFile(id) {
+// IDB Helpers
+function getFromIDB(storeName, key) {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME);
     req.onerror = () => reject(req.error);
     req.onsuccess = () => {
       const db = req.result;
-      const tx = db.transaction(FILES_STORE, 'readonly');
-      const store = tx.objectStore(FILES_STORE);
-      const getReq = store.get(id);
+      if (!db.objectStoreNames.contains(storeName)) { resolve(undefined); return; }
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const getReq = store.get(key);
       getReq.onsuccess = () => resolve(getReq.result);
       getReq.onerror = () => reject(getReq.error);
     };
   });
 }
 
-// IIIF Image API 3.0 Implementation
 async function handleImageRequest(request) {
   const url = request.url;
-  
-  // 1. Cache First Strategy
   const cache = await caches.open(TILE_CACHE_NAME);
   const cachedResponse = await cache.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
+  if (cachedResponse) return cachedResponse;
 
   try {
     const urlObj = new URL(url);
@@ -55,16 +51,20 @@ async function handleImageRequest(request) {
 
     const params = pathParts[1].split('/');
     const identifier = decodeURIComponent(params[0]);
+    const region = params[1];
+    const size = params[2];
+    const rotationParam = params[3];
+    const qualityFormat = params[4] ? params[4].split('.') : ['default', 'jpg'];
+    const quality = qualityFormat[0];
+    const format = qualityFormat[1];
 
-    const blob = await getFile(identifier);
-    if (!blob) return new Response('Image not found', { status: 404 });
-
-    // Handle info.json
     if (params[1] === 'info.json') {
+      const blob = await getFromIDB(FILES_STORE, identifier);
+      if (!blob) return new Response('Not found', { status: 404 });
       const bitmap = await createImageBitmap(blob);
       const info = {
         "@context": "http://iiif.io/api/image/3/context.json",
-        "id": `https://archive.local/iiif/image/${identifier}`,
+        "id": `${urlObj.origin}${urlObj.pathname.replace('/info.json', '')}`,
         "type": "ImageService3",
         "protocol": "http://iiif.io/api/image",
         "profile": "level2",
@@ -72,147 +72,93 @@ async function handleImageRequest(request) {
         "height": bitmap.height,
         "tiles": [{ "width": 512, "scaleFactors": [1, 2, 4, 8, 16] }],
         "sizes": [
-            { "width": Math.floor(bitmap.width / 4), "height": Math.floor(bitmap.height / 4) },
-            { "width": Math.floor(bitmap.width / 2), "height": Math.floor(bitmap.height / 2) },
-            { "width": bitmap.width, "height": bitmap.height }
-        ],
-        "extraQualities": ["gray", "bitonal"],
-        "extraFeatures": ["mirroring", "rotationBy90s"]
+            { "width": 150, "height": Math.floor(150 * (bitmap.height/bitmap.width)) },
+            { "width": 600, "height": Math.floor(600 * (bitmap.height/bitmap.width)) },
+            { "width": 1200, "height": Math.floor(1200 * (bitmap.height/bitmap.width)) }
+        ]
       };
-      const response = new Response(JSON.stringify(info), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      return new Response(JSON.stringify(info), { 
+          headers: { 
+              'Content-Type': 'application/json', 
+              'Access-Control-Allow-Origin': '*',
+              'Cache-Control': 'no-cache'
+          } 
       });
-      // Cache info.json too
-      cache.put(request, response.clone());
-      return response;
     }
 
-    // Handle Image Request: /{region}/{size}/{rotation}/{quality}.{format}
-    const region = params[1];
-    const size = params[2];
-    const rotationParam = params[3];
-    const qualityFormat = params[4].split('.');
-    const quality = qualityFormat[0];
-    const format = qualityFormat[1];
+    if (region === 'full' && rotationParam === '0' && (quality === 'default' || quality === 'color')) {
+        let sizeKey = null;
+        if (size === '150,' || size === 'pct:7.5') sizeKey = 'thumb';
+        else if (size === '600,' || size === 'pct:30') sizeKey = 'small';
+        else if (size === '1200,' || size === 'pct:60') sizeKey = 'medium';
 
-    const bitmap = await createImageBitmap(blob);
+        if (sizeKey) {
+            const derivativeBlob = await getFromIDB(DERIVATIVES_STORE, `${identifier}_${sizeKey}`);
+            if (derivativeBlob) {
+                return new Response(derivativeBlob, { headers: { 'Content-Type': 'image/jpeg', 'Access-Control-Allow-Origin': '*' } });
+            }
+        }
+    }
+
+    const originalBlob = await getFromIDB(FILES_STORE, identifier);
+    if (!originalBlob) return new Response('Not found', { status: 404 });
     
-    // 1. Region
+    const bitmap = await createImageBitmap(originalBlob);
     let rx = 0, ry = 0, rw = bitmap.width, rh = bitmap.height;
+    
     if (region !== 'full') {
-      if (region === 'square') {
-        const min = Math.min(rw, rh);
-        rx = (rw - min) / 2;
-        ry = (rh - min) / 2;
-        rw = min;
-        rh = min;
-      } else if (region.startsWith('pct:')) {
-        const p = region.substring(4).split(',').map(Number);
-        rx = (p[0] / 100) * bitmap.width;
-        ry = (p[1] / 100) * bitmap.height;
-        rw = (p[2] / 100) * bitmap.width;
-        rh = (p[3] / 100) * bitmap.height;
-      } else {
-        const p = region.split(',').map(Number);
-        rx = p[0]; ry = p[1]; rw = p[2]; rh = p[3];
-      }
+        if (region.startsWith('pct:')) {
+             const p = region.replace('pct:', '').split(',').map(Number);
+             if (p.length === 4) {
+                 rx = Math.floor(bitmap.width * (p[0]/100));
+                 ry = Math.floor(bitmap.height * (p[1]/100));
+                 rw = Math.floor(bitmap.width * (p[2]/100));
+                 rh = Math.floor(bitmap.height * (p[3]/100));
+             }
+        } else {
+             const p = region.split(',').map(Number);
+             if (p.length === 4) { rx=p[0]; ry=p[1]; rw=p[2]; rh=p[3]; }
+        }
     }
 
-    // 2. Size
     let sw = rw, sh = rh;
-    if (size !== 'max' && size !== '^max' && size !== 'full') {
-       if (size.startsWith('pct:')) {
-         const pct = Number(size.substring(4)) / 100;
-         sw = rw * pct;
-         sh = rh * pct;
-       } else if (size.includes(',')) {
-         const p = size.split(',');
-         if (p[0] === '') { // ,h
-            sh = Number(p[1]);
-            sw = (sh / rh) * rw;
-         } else if (p[1] === '') { // w,
-            sw = Number(p[0]);
-            sh = (sw / rw) * rh;
-         } else if (size.startsWith('!')) { // !w,h (best fit)
-             sw = Number(p[0].substring(1));
-             sh = Number(p[1]);
-             // Calculate best fit logic if needed, simplied here
-         } else {
-            sw = Number(p[0]);
-            sh = Number(p[1]);
-         }
-       }
+    if (size !== 'max') {
+        if (size.startsWith('pct:')) {
+             const pct = Number(size.split(':')[1]);
+             if (!isNaN(pct)) {
+                 sw = Math.floor(rw * (pct/100));
+                 sh = Math.floor(rh * (pct/100));
+             }
+        } else if (size.includes(',')) {
+             const p = size.split(',');
+             if (p[0] && p[1]) { 
+                 sw = Number(p[0]); sh = Number(p[1]); 
+             } else if (p[0]) { 
+                 sw = Number(p[0]); sh = Math.floor((sw / rw) * rh); 
+             } else if (p[1]) { 
+                 sh = Number(p[1]); sw = Math.floor((sh / rh) * rw); 
+             }
+        }
     }
 
-    // Ensure dimensions are valid
-    sw = Math.max(1, Math.floor(sw));
-    sh = Math.max(1, Math.floor(sh));
-
-    const canvas = new OffscreenCanvas(sw, sh);
+    const canvas = new OffscreenCanvas(Math.max(1, Math.floor(sw)), Math.max(1, Math.floor(sh)));
     const ctx = canvas.getContext('2d');
-    
-    // 3. Rotation & Mirroring
-    let rotation = 0;
-    let mirrored = false;
-    if (rotationParam.startsWith('!')) {
-        mirrored = true;
-        rotation = Number(rotationParam.substring(1));
-    } else {
-        rotation = Number(rotationParam);
-    }
-
-    ctx.save();
-    
-    // Move to center
-    ctx.translate(sw/2, sh/2);
-    
-    // Rotate
-    if (rotation !== 0) {
-        ctx.rotate(rotation * Math.PI / 180);
-    }
-    
-    // Mirror
-    if (mirrored) {
-        ctx.scale(-1, 1);
-    }
-    
-    // Move back
-    ctx.translate(-sw/2, -sh/2);
-
-    // 4. Quality (Grayscale / Bitonal filters)
-    if (quality === 'gray') {
-        ctx.filter = 'grayscale(100%)';
-    } else if (quality === 'bitonal') {
-        ctx.filter = 'grayscale(100%) contrast(1000%)'; // Simple bitonal approximation
-    }
-
-    // Draw
     ctx.drawImage(bitmap, rx, ry, rw, rh, 0, 0, sw, sh);
-    ctx.restore();
 
-    const blobOutput = await canvas.convertToBlob({
-      type: format === 'png' ? 'image/png' : 'image/jpeg',
-      quality: 0.85 
-    });
-
-    const response = new Response(blobOutput, {
-      headers: { 'Content-Type': format === 'png' ? 'image/png' : 'image/jpeg', 'Access-Control-Allow-Origin': '*' }
-    });
-
-    // Cache the generated tile
-    cache.put(request, response.clone());
-
-    return response;
+    const blobOutput = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
+    const res = new Response(blobOutput, { headers: { 'Content-Type': 'image/jpeg', 'Access-Control-Allow-Origin': '*' } });
+    cache.put(request, res.clone());
+    return res;
 
   } catch (err) {
-    console.error(err);
-    return new Response('Internal Server Error', { status: 500 });
+    return new Response('Error', { status: 500 });
   }
 }
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (url.origin === location.origin && url.pathname.startsWith('/iiif/image/')) {
+  // Match archive.local (legacy) OR current origin WITH /iiif/ path
+  if (url.host === 'archive.local' || url.pathname.includes('/iiif/image/')) {
     event.respondWith(handleImageRequest(event.request));
   }
 });

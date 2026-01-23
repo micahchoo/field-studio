@@ -1,9 +1,11 @@
 
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Icon } from './Icon';
 
 interface Props {
-  children: ReactNode;
+  // Made children optional to fix "Property 'children' is missing" error in index.tsx
+  children?: ReactNode;
 }
 
 interface State {
@@ -12,7 +14,9 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
+// Fix: Import Component directly and extend it to ensure property access (setState, props) works correctly in TypeScript
 export class ErrorBoundary extends Component<Props, State> {
+  // Declare and initialize state to resolve "Property 'state' does not exist"
   public state: State = {
     hasError: false,
     error: null,
@@ -25,10 +29,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    // Fix: setState is now correctly inherited from Component
     this.setState({ errorInfo });
   }
 
   public render() {
+    // Accessing state from this.state
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -71,6 +77,7 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
+    // Fix: props.children is now correctly inherited and typed from Component
     return this.props.children;
   }
 }

@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { IIIFManifest, IIIFRange, IIIFCanvas } from '../types';
+import { IIIFManifest, IIIFRange, IIIFCanvas, IIIFSpecificResource, IIIFRangeReference } from '../types';
 import { Icon } from './Icon';
+import { RESOURCE_TYPE_CONFIG } from '../constants';
 
 interface RangeEditorProps {
   manifest: IIIFManifest;
@@ -15,114 +16,105 @@ export const RangeEditor: React.FC<RangeEditorProps> = ({ manifest, onUpdate }) 
     const newRange: IIIFRange = {
       id: `${manifest.id}/range/${crypto.randomUUID()}`,
       type: "Range",
-      label: { none: ["New Range"] },
+      label: { none: ["New Section"] },
       items: []
     };
-    
-    const updated = { ...manifest, structures: [...(manifest.structures || []), newRange] };
-    onUpdate(updated);
-  };
-
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-      setDraggedCanvasId(id);
-      e.dataTransfer.setData('text/plain', id);
-      e.dataTransfer.effectAllowed = 'copy';
+    onUpdate({ ...manifest, structures: [...(manifest.structures || []), newRange] });
   };
 
   const handleDropOnRange = (e: React.DragEvent, rangeId: string) => {
       e.preventDefault();
       if (!draggedCanvasId) return;
 
-      // Deep clone manifest to mutate structures
       const newManifest = JSON.parse(JSON.stringify(manifest));
-      
-      const findAndAddToRange = (ranges: IIIFRange[]): boolean => {
+      const canvas = manifest.items.find(c => c.id === draggedCanvasId);
+      if (!canvas) return;
+
+      const findAndAdd = (ranges: IIIFRange[]): boolean => {
           for (const range of ranges) {
               if (range.id === rangeId) {
-                  // Find the canvas to add
-                  const canvasToAdd = manifest.items.find(c => c.id === draggedCanvasId);
-                  if (canvasToAdd) {
-                      // Add reference
-                      range.items.push({ id: canvasToAdd.id, type: "Canvas" } as any);
-                  }
+                  range.items.push({ id: canvas.id, type: "Canvas" });
                   return true;
               }
               if (range.items) {
-                  // recurse if item is range (ranges can contain ranges)
-                  // simplifying assumptions: items in range can be Canvas or Range.
-                  // We need to filter items that are ranges to recurse.
-                  // In IIIF 3, items array mixes Canvases and Ranges.
-                  // We'll skip recursion into children for this simple editor or implement complex recursion later.
-                  // For now, only top level ranges or one level deep supported visually?
-                  // Let's assume recursion is needed.
                   const subRanges = range.items.filter((i: any) => i.type === 'Range') as IIIFRange[];
-                  if (findAndAddToRange(subRanges)) return true;
+                  if (findAndAdd(subRanges)) return true;
               }
           }
           return false;
       };
 
       if (newManifest.structures) {
-        findAndAddToRange(newManifest.structures);
+        findAndAdd(newManifest.structures);
         onUpdate(newManifest);
       }
       setDraggedCanvasId(null);
   };
 
-  const handleDeleteRange = (rangeId: string) => {
-      if(!confirm("Delete this range?")) return;
+  const handleSetRegion = (rangeId: string, itemId: string) => {
+      const xywh = prompt("Enter region (x,y,w,h):", "0,0,500,500");
+      if (!xywh) return;
+
       const newManifest = JSON.parse(JSON.stringify(manifest));
-      if (newManifest.structures) {
-          newManifest.structures = newManifest.structures.filter((r: IIIFRange) => r.id !== rangeId);
-          onUpdate(newManifest);
-      }
+      const updateRegion = (ranges: IIIFRange[]) => {
+          ranges.forEach(r => {
+              r.items = r.items.map((it: any) => {
+                  if (it.id === itemId && it.type === 'Canvas') {
+                      return {
+                          type: "SpecificResource",
+                          source: it.id,
+                          selector: { type: "FragmentSelector", value: `xywh=${xywh}` }
+                      };
+                  }
+                  return it;
+              });
+              const subRanges = r.items.filter((i: any) => i.type === 'Range') as IIIFRange[];
+              updateRegion(subRanges);
+          });
+      };
+      updateRegion(newManifest.structures || []);
+      onUpdate(newManifest);
   };
 
   return (
     <div className="flex h-full bg-slate-50">
-      {/* Range Tree */}
       <div className="w-1/2 border-r border-slate-200 flex flex-col">
         <div className="p-4 border-b bg-white flex justify-between items-center">
-            <h3 className="font-bold text-slate-700">Structures (Ranges)</h3>
-            <button onClick={handleCreateRootRange} className="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold text-slate-600 flex items-center gap-1">
-                <Icon name="add" className="text-sm"/> New Range
+            <h3 className="font-bold text-slate-700">Table of Contents</h3>
+            <button onClick={handleCreateRootRange} className="text-xs bg-iiif-blue text-white px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow-sm">
+                <Icon name="add" className="text-sm"/> Add Section
             </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {!manifest.structures || manifest.structures.length === 0 ? (
-                <div className="text-center text-slate-400 py-10">
-                    <p>No structures defined.</p>
-                    <p className="text-xs mt-1">Create a range to build a Table of Contents.</p>
-                </div>
+                <div className="text-center text-slate-400 py-10 italic text-xs">Build a hierarchy by adding sections.</div>
             ) : (
                 manifest.structures.map((range) => (
                     <RangeNode 
                         key={range.id} 
                         range={range} 
                         onDrop={handleDropOnRange}
-                        onDelete={handleDeleteRange}
+                        onSetRegion={handleSetRegion}
+                        onDelete={(id) => onUpdate({...manifest, structures: manifest.structures!.filter(r => r.id !== id)})}
                     />
                 ))
             )}
         </div>
       </div>
 
-      {/* Canvas Source List */}
       <div className="w-1/2 flex flex-col bg-slate-100">
         <div className="p-4 border-b bg-white">
-             <h3 className="font-bold text-slate-700">Canvases</h3>
-             <p className="text-xs text-slate-500">Drag canvases to ranges to organize them.</p>
+             <h3 className="font-bold text-slate-700">Available Canvases</h3>
+             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Drag to sections on left</p>
         </div>
         <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-2 content-start">
             {manifest.items.map(canvas => (
                 <div 
-                    key={canvas.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, canvas.id)}
-                    className="bg-white p-2 rounded border hover:border-iiif-blue cursor-grab active:cursor-grabbing shadow-sm flex items-center gap-2"
+                    key={canvas.id} draggable onDragStart={(e) => { setDraggedCanvasId(canvas.id); e.dataTransfer.setData('text/plain', canvas.id); }}
+                    className="bg-white p-2 rounded border hover:border-iiif-blue cursor-grab shadow-sm flex items-center gap-2 group"
                 >
-                    <Icon name="image" className="text-slate-400"/>
-                    <span className="text-xs truncate">{canvas.label?.['none']?.[0]}</span>
+                    <Icon name="image" className="text-slate-300 group-hover:text-blue-400"/>
+                    <span className="text-[10px] font-bold truncate">{canvas.label?.['none']?.[0]}</span>
                 </div>
             ))}
         </div>
@@ -131,33 +123,56 @@ export const RangeEditor: React.FC<RangeEditorProps> = ({ manifest, onUpdate }) 
   );
 };
 
-const RangeNode: React.FC<{ range: IIIFRange; onDrop: (e: React.DragEvent, id: string) => void; onDelete: (id: string) => void }> = ({ range, onDrop, onDelete }) => {
+const RangeNode: React.FC<{ range: IIIFRange; onDrop: any; onSetRegion: any; onDelete: any }> = ({ range, onDrop, onSetRegion, onDelete }) => {
     const [dragOver, setDragOver] = useState(false);
+    const rangeConfig = RESOURCE_TYPE_CONFIG['Range'];
+    const canvasConfig = RESOURCE_TYPE_CONFIG['Canvas'];
 
     return (
         <div 
-            className={`border rounded bg-white overflow-hidden ${dragOver ? 'border-iiif-blue ring-2 ring-blue-100' : 'border-slate-300'}`}
+            className={`border rounded-xl bg-white shadow-sm overflow-hidden transition-all ${dragOver ? 'border-iiif-blue ring-4 ring-blue-50' : 'border-slate-200'}`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { setDragOver(false); onDrop(e, range.id); }}
         >
-            <div className="p-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-700">
-                    <Icon name="list_alt" className="text-slate-400"/>
-                    {range.label?.['none']?.[0] || 'Untitled Range'}
+            <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <div className={`flex items-center gap-2 font-bold text-xs ${rangeConfig.colorClass} uppercase tracking-wider`}>
+                    <Icon name={rangeConfig.icon} />
+                    {range.label?.['none']?.[0]}
                 </div>
-                <button onClick={() => onDelete(range.id)} className="text-slate-400 hover:text-red-500">
-                    <Icon name="delete" className="text-sm"/>
-                </button>
+                <button onClick={() => onDelete(range.id)} className="text-slate-300 hover:text-red-500"><Icon name="close" className="text-sm"/></button>
             </div>
-            <div className="p-2 space-y-1 min-h-[40px]">
-                {range.items.length === 0 && <div className="text-xs text-slate-400 italic text-center py-2">Drop canvases here</div>}
-                {range.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-600 pl-2 border-l-2 border-slate-200">
-                        <Icon name={item.type === 'Range' ? 'list_alt' : 'image'} className="text-[10px]"/>
-                        <span className="truncate">{item.id.split('/').pop()}</span> 
-                    </div>
-                ))}
+            <div className="p-2 space-y-1 min-h-[50px]">
+                {range.items.length === 0 && <div className="text-[10px] text-slate-300 text-center py-4">Drag canvases here</div>}
+                {range.items.map((it: any, idx: number) => {
+                    const isSpecific = it.type === 'SpecificResource';
+                    const canvasId = isSpecific ? it.source : it.id;
+                    const region = isSpecific ? it.selector.value : 'Full Canvas';
+                    const itemType = it.type === 'Range' ? 'Range' : 'Canvas';
+                    const itemConfig = itemType === 'Range' ? rangeConfig : canvasConfig;
+                    
+                    return (
+                        <div key={idx} className={`flex flex-col gap-1 p-2 ${itemType === 'Range' ? 'bg-indigo-50 border-indigo-100' : 'bg-slate-50 border-slate-100'} rounded border relative group/item`}>
+                            <div className={`flex items-center gap-2 text-[10px] font-bold ${itemConfig.colorClass}`}>
+                                <Icon name={itemConfig.icon} className="text-[10px] opacity-70"/>
+                                <span className="truncate text-slate-600">{canvasId.split('/').pop()}</span>
+                            </div>
+                            <div className="flex justify-between items-center mt-1">
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${isSpecific ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'}`}>
+                                    {region}
+                                </span>
+                                {itemType === 'Canvas' && (
+                                    <button 
+                                        onClick={() => onSetRegion(range.id, canvasId)}
+                                        className="text-[9px] font-bold text-iiif-blue opacity-0 group-item-hover:opacity-100 uppercase"
+                                    >
+                                        Define Region
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

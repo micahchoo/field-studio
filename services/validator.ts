@@ -1,5 +1,6 @@
+import { IIIFItem, IIIFManifest, IIIFCollection, IIIFCanvas, getIIIFValue } from '../types';
 
-import { IIIFItem, IIIFManifest, IIIFCollection, IIIFCanvas } from '../types';
+export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
 
 export interface ValidationIssue {
   id: string;
@@ -7,6 +8,8 @@ export interface ValidationIssue {
   itemLabel: string;
   level: 'error' | 'warning';
   message: string;
+  category: IssueCategory;
+  fixable: boolean;
 }
 
 export class ValidationService {
@@ -15,118 +18,108 @@ export class ValidationService {
       const issueMap: Record<string, ValidationIssue[]> = {};
       if (!root) return issueMap;
 
+      const seenIds = new Set<string>();
+
       const traverse = (item: IIIFItem) => {
           const issues = this.validateItem(item);
+          
+          if (seenIds.has(item.id)) {
+              issues.push({
+                  id: Math.random().toString(36).substr(2, 9),
+                  itemId: item.id,
+                  itemLabel: getIIIFValue(item.label) || 'Unknown',
+                  level: 'error',
+                  category: 'Identity',
+                  message: 'CRITICAL: Duplicate ID detected. This will break most IIIF viewers.',
+                  fixable: true
+              });
+          }
+          seenIds.add(item.id);
+
           if (issues.length > 0) {
-              issueMap[item.id] = issues;
+              issueMap[item.id] = (issueMap[item.id] || []).concat(issues);
           }
-          if (item.items) {
-              item.items.forEach(traverse);
-          }
-          // Also check specific properties that contain items
-          if (item.type === 'Manifest' && (item as IIIFManifest).structures) {
-              (item as IIIFManifest).structures!.forEach(traverse);
-          }
+          
+          const children = (item as any).items || (item as any).annotations || (item as any).structures || [];
+          children.forEach((child: any) => {
+              if (child && typeof child === 'object') traverse(child);
+          });
       };
 
       traverse(root);
       return issueMap;
   }
 
+  private hasContent(map?: Record<string, string[]>): boolean {
+    if (!map) return false;
+    return Object.values(map).some(arr => arr.some(s => s && s.trim().length > 0));
+  }
+
   validateItem(item: IIIFItem): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
-    const addIssue = (level: 'error' | 'warning', message: string) => {
+    const addIssue = (level: 'error' | 'warning', category: IssueCategory, message: string, fixable: boolean = false) => {
         issues.push({
             id: Math.random().toString(36).substr(2, 9),
             itemId: item.id,
-            itemLabel: item.label?.['none']?.[0] || item.label?.['en']?.[0] || 'Untitled',
+            itemLabel: getIIIFValue(item.label) || 'Untitled',
             level,
-            message
+            category,
+            message,
+            fixable
         });
     };
 
-    // 1. Universal Checks
-    this.checkRequiredProperties(item, addIssue);
-
-    // 2. Type-specific Checks
-    if (item.type === 'Manifest') this.validateManifest(item as IIIFManifest, addIssue);
-    else if (item.type === 'Collection') this.validateCollection(item as IIIFCollection, addIssue);
-    else if (item.type === 'Canvas') this.validateCanvas(item as IIIFCanvas, addIssue);
-
-    return issues;
-  }
-
-  private checkRequiredProperties(item: IIIFItem, addIssue: (l: 'error'|'warning', m: string) => void) {
-    if (!item.id) {
-        addIssue('error', 'Resource missing "id" property.');
-    }
-    if (!item.type) {
-        addIssue('error', 'Resource missing "type" property.');
-    }
-    if (!item.label) {
-        addIssue('error', 'Resource must have a "label" map.');
-    } else {
-        const hasLang = Object.keys(item.label).length > 0;
-        if (!hasLang) addIssue('error', 'Label map cannot be empty.');
-    }
+    if (!item.id) addIssue('error', 'Identity', 'Required property "id" is missing.', true);
+    if (!item.type) addIssue('error', 'Identity', 'Required property "type" is missing.');
     
-    // @context check for top-level resources (Manifest/Collection) usually checked at root level only, 
-    // but here we might check if it's missing on assumed root. Skipped for individual item check context.
-  }
+    if (item.id && !item.id.startsWith('http')) {
+        addIssue('error', 'Identity', 'ID must be a valid HTTP(S) URI.', true);
+    }
 
-  private validateManifest(manifest: IIIFManifest, addIssue: (l: 'error'|'warning', m: string) => void) {
-    if (!manifest.items || manifest.items.length === 0) {
-        addIssue('error', 'Manifest must contain at least one Canvas.');
-    } else {
-        const hasNonCanvas = manifest.items.some(i => i.type !== 'Canvas');
-        if (hasNonCanvas) {
-            addIssue('error', 'Manifest "items" must only contain Canvases.');
+    const isMajorResource = ['Collection', 'Manifest', 'Range'].includes(item.type);
+    
+    if (!this.hasContent(item.label)) {
+        if (isMajorResource) {
+            addIssue('error', 'Metadata', `Required property "label" is missing or empty on ${item.type}.`, true);
+        } else if (item.type === 'Canvas') {
+            addIssue('warning', 'Metadata', 'A Canvas should have a label for navigation.', true);
         }
     }
-  }
 
-  private validateCollection(collection: IIIFCollection, addIssue: (l: 'error'|'warning', m: string) => void) {
-      if (!collection.items) {
-          addIssue('warning', 'Collection should have an "items" property, even if empty.');
-      }
-  }
+    const raw = item as any;
+    
+    if (item.type === 'Collection') {
+        if (raw.structures) addIssue('error', 'Structure', 'Property "structures" is not allowed on a Collection.', true);
+        if (raw.height || raw.width) addIssue('error', 'Content', 'Spatial dimensions are not allowed on a Collection.', true);
+        if (!raw.items) addIssue('error', 'Structure', 'Collection must have an "items" array.', true);
+    }
 
-  private validateCanvas(canvas: IIIFCanvas, addIssue: (l: 'error'|'warning', m: string) => void) {
-      // Dimension Rules
-      if (canvas.width && !canvas.height) {
-          addIssue('error', 'Canvas has width but missing height.');
-      }
-      if (canvas.height && !canvas.width) {
-          addIssue('error', 'Canvas has height but missing width.');
-      }
-      if (!canvas.width && !canvas.height && !canvas.duration) {
-          addIssue('error', 'Canvas must have dimensions (width/height) or duration.');
-      }
+    if (item.type === 'Manifest') {
+        if (raw.height || raw.width) addIssue('error', 'Content', 'Spatial dimensions are not allowed on a Manifest. Use Canvases.', true);
+        if (!raw.items || raw.items.length === 0) addIssue('error', 'Structure', 'Manifest MUST have at least one Canvas in "items".', true);
+    }
 
-      // Content Rules
-      let hasContent = false;
-      if (canvas.items && canvas.items.length > 0) {
-          for (const page of canvas.items) {
-              if (page.items && page.items.length > 0) {
-                  hasContent = true;
-                  break;
-              }
-          }
-      }
-      
-      if (!hasContent) {
-          addIssue('warning', 'Canvas has no painting annotations (empty content).');
-      }
+    if (item.type === 'Canvas') {
+        if ((raw.width && !raw.height) || (!raw.width && raw.height)) {
+            addIssue('error', 'Content', 'Canvas dimensions MUST include both width and height.', true);
+        }
+        if (!raw.width && !raw.height && !raw.duration) {
+            addIssue('error', 'Content', 'Canvas missing all dimensions.', true);
+        }
+        const hasPainting = raw.items?.some((p: any) => p.items?.some((a: any) => a.motivation === 'painting'));
+        if (!hasPainting) {
+            addIssue('warning', 'Content', 'Canvas has no "painting" content. It will appear blank.');
+        }
+    }
 
-      // 3.0 Constraint: Placeholder/Accompanying cannot nest
-      if (canvas.placeholderCanvas && (canvas.placeholderCanvas.placeholderCanvas || canvas.placeholderCanvas.accompanyingCanvas)) {
-          addIssue('error', 'placeholderCanvas cannot have its own placeholder/accompanying canvas.');
-      }
-  }
-  
-  // Legacy single validate for backward compat if needed, but we encourage validateTree
-  validate(item: IIIFItem | null): ValidationIssue[] {
-      return item ? this.validateItem(item) : [];
+    if (isMajorResource && !this.hasContent(item.summary)) {
+        addIssue('warning', 'Metadata', 'Adding a "summary" improves search.', true);
+    }
+    if (isMajorResource && !item.thumbnail) {
+        addIssue('warning', 'Metadata', 'Adding a "thumbnail" is recommended.', false);
+    }
+
+    return issues;
   }
 }
 

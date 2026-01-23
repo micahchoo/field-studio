@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { IIIFItem, IIIFAnnotation, IIIFCanvas, AppSettings } from '../types';
+import React, { useState } from 'react';
+import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue } from '../types';
 import { Icon } from './Icon';
-import { analyzeImage, blobToBase64 } from '../services/geminiService';
-import { useToast } from './Toast';
+import { MuseumLabel } from './MuseumLabel';
+import { RESOURCE_TYPE_CONFIG } from '../constants';
 
 interface InspectorProps {
   resource: IIIFItem | null;
@@ -11,194 +11,198 @@ interface InspectorProps {
   settings: AppSettings;
   visible: boolean;
   onClose: () => void;
+  isMobile?: boolean;
 }
 
-export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose }) => {
-  const { showToast } = useToast();
-  const [analyzing, setAnalyzing] = useState(false);
-  const [tab, setTab] = useState<'metadata' | 'annotations' | 'technical'>('metadata');
-
-  // Reset to metadata tab if switching to simple mode where technical is hidden
-  useEffect(() => {
-      if (settings.abstractionLevel === 'simple' && tab === 'technical') {
-          setTab('metadata');
-      }
-  }, [settings.abstractionLevel]);
-
-  if (!visible) return null;
-
-  if (!resource) {
-    return (
-        <aside className="w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 transition-all duration-300">
-            <div className="h-14 flex items-center justify-between px-4 border-b border-slate-100 bg-slate-50/50">
-                <span className="text-xs font-bold uppercase text-slate-500">Inspector</span>
-                <button onClick={onClose}><Icon name="close" className="text-slate-400 hover:text-slate-600 text-sm"/></button>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-                <Icon name="info" className="text-4xl mb-2 text-slate-200"/>
-                <p className="text-sm">Select an item to view properties</p>
-            </div>
-        </aside>
-    );
+const IIIF_SPECS: Record<string, { 
+    desc: string, 
+    implication: string,
+}> = {
+  'Collection': {
+    desc: 'The master container for multiple research units. It groups Manifests into a cohesive archive.',
+    implication: 'Treats nested items as part of a curated series. This level cannot have its own visual pixels, only child links.'
+  },
+  'Manifest': {
+    desc: 'The primary unit of description. Represents a single physical artifact, document, or field notebook.',
+    implication: 'The "Atomic" unit of research. All internal views are considered parts of ONE cohesive physical object.'
+  },
+  'Canvas': {
+    desc: 'A virtual workspace where media is pinned. It defines the coordinates for all your scholarly notes.',
+    implication: 'Pins media to a specific coordinate grid. Annotations created here are forever linked to these pixel addresses.'
+  },
+  'Range': {
+    desc: 'A structural division within a manifest, like a chapter or section.',
+    implication: 'Provides navigation structure for long or complex objects.'
   }
+};
 
-  const handleAIAnalysis = async () => {
-    const canvas = resource as IIIFCanvas;
-    if (resource.type === 'Canvas' && canvas._blobUrl) {
-      setAnalyzing(true);
-      try {
-        const response = await fetch(canvas._blobUrl);
-        const blob = await response.blob();
-        const base64 = await blobToBase64(blob);
-        const analysis = await analyzeImage(base64, blob.type, settings.aiConfig);
-        
-        // Merge metadata
-        onUpdateResource({
-          summary: { [settings.language]: [analysis.summary] },
-          metadata: [
-            ...(resource.metadata || []),
-            { label: { [settings.language]: ["AI Keywords"] }, value: { [settings.language]: analysis.labels } }
-          ]
-        });
-        showToast("AI Analysis Complete", "success");
-      } catch (e) {
-        showToast("Analysis Failed", "error");
-        console.error(e);
-      } finally {
-        setAnalyzing(false);
+export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose, isMobile }) => {
+  const [tab, setTab] = useState<'metadata' | 'learn'>('metadata');
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
+  if (!visible || !resource) return null;
+
+  const config = RESOURCE_TYPE_CONFIG[resource.type] || RESOURCE_TYPE_CONFIG['Content'];
+  const spec = IIIF_SPECS[resource.type];
+  
+  const label = getIIIFValue(resource.label, settings.language) || '';
+  const summary = getIIIFValue(resource.summary, settings.language) || '';
+
+  const getPreviewUrl = (node: any): string | undefined => {
+      if (node.thumbnail?.[0]?.id) return node.thumbnail[0].id;
+      if (node.type === 'Canvas') {
+          return node.items?.[0]?.items?.[0]?.body?.id || node._blobUrl;
       }
-    } else {
-        showToast("Select a Canvas with an image to analyze", "info");
-    }
+      if (node.type === 'Manifest' && node.items?.[0]) {
+          return getPreviewUrl(node.items[0]);
+      }
+      return node._blobUrl;
   };
 
-  const label = resource.label?.[settings.language]?.[0] || resource.label?.['none']?.[0] || '';
-  const summary = resource.summary?.[settings.language]?.[0] || '';
-  const inputClass = "w-full text-sm p-2.5 border border-slate-200 rounded bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none transition-all";
+  const imageUrl = getPreviewUrl(resource);
 
-  const availableTabs = ['metadata', 'annotations'];
-  if (settings.abstractionLevel !== 'simple') availableTabs.push('technical');
+  const handleUpdateMetadataField = (index: number, key: string, val: string) => {
+      const newMeta = [...(resource.metadata || [])];
+      newMeta[index] = { 
+          label: { [settings.language]: [key] }, 
+          value: { [settings.language]: [val] } 
+      };
+      onUpdateResource({ metadata: newMeta });
+  };
+
+  const handleAddMetadataField = (labelStr: string) => {
+      const newMeta = [...(resource.metadata || []), { label: { [settings.language]: [labelStr] }, value: { [settings.language]: [''] } }];
+      onUpdateResource({ metadata: newMeta });
+      setShowAddMenu(false);
+  };
+
+  const handleRemoveMetadataField = (index: number) => {
+      const newMeta = resource.metadata?.filter((_, i) => i !== index);
+      onUpdateResource({ metadata: newMeta });
+  };
+
+  const inspectorStyles = isMobile 
+    ? `fixed inset-0 z-[1100] bg-white flex flex-col animate-in slide-in-from-bottom duration-300`
+    : `w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 animate-in slide-in-from-right-2 duration-300 shrink-0`;
 
   return (
-    <aside className="w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30">
-        {/* Header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 bg-slate-50">
-             <div className="flex items-center gap-2 overflow-hidden">
-                <Icon name={resource.type === 'Collection' ? 'folder' : resource.type === 'Manifest' ? 'menu_book' : 'image'} className="text-slate-400 text-sm"/>
-                <span className="text-xs font-bold uppercase text-slate-700 truncate max-w-[150px]">{resource.type}</span>
+    <aside className={inspectorStyles}>
+        {/* Fixed Header */}
+        <div className={`h-14 flex items-center justify-between px-4 border-b shrink-0 ${settings.fieldMode ? 'bg-black text-white border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+             <div className="flex items-center gap-2">
+                <Icon name={config.icon} className={`${config.colorClass} text-sm`}/>
+                <span className={`text-xs font-black uppercase tracking-widest ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>Inspector</span>
              </div>
-             <button onClick={onClose}><Icon name="close" className="text-slate-400 hover:text-slate-600 text-sm"/></button>
+             <button onClick={onClose} className={`p-2 rounded-lg ${settings.fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-200'}`}><Icon name="close"/></button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 bg-white">
-            {availableTabs.map(t => (
-                <button 
-                    key={t}
-                    className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider ${tab === t ? 'text-iiif-blue border-b-2 border-iiif-blue bg-blue-50/50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                    onClick={() => setTab(t as any)}
-                >
-                    {t}
-                </button>
+        <div className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white'}`}>
+            {['metadata', 'learn'].map(t => (
+                <button key={t} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? (settings.fieldMode ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-iiif-blue border-b-2 border-iiif-blue bg-blue-50/20') : 'text-slate-400 hover:text-slate-600'}`} onClick={() => setTab(t as any)}>{t}</button>
             ))}
         </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      {/* Scrollable Content */}
+      <div className={`flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar min-h-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'}`}>
         {tab === 'metadata' && (
-            <>
-                <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Label</label>
-                    <input 
-                        type="text" 
-                        value={label}
-                        onChange={e => onUpdateResource({ label: { [settings.language]: [e.target.value] } })}
-                        className={inputClass}
-                        placeholder="Untitled"
-                    />
-                </div>
-
-                <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Summary</label>
-                        {resource.type === 'Canvas' && (
-                             <button 
-                                onClick={handleAIAnalysis} 
-                                disabled={analyzing}
-                                className="text-[10px] text-purple-600 hover:text-purple-800 flex items-center gap-1 font-bold bg-purple-50 px-2 py-0.5 rounded-full"
-                            >
-                                <Icon name="auto_awesome" className="text-xs" />
-                                {analyzing ? 'Thinking...' : 'AI Generate'}
-                            </button>
-                        )}
+            <div className="space-y-6">
+                {imageUrl && (
+                    <div className={`aspect-video rounded-xl overflow-hidden border shadow-inner relative group ring-1 shrink-0 ${settings.fieldMode ? 'bg-slate-900 border-slate-800 ring-slate-800' : 'bg-slate-900 border-slate-200 ring-slate-100'}`}>
+                        <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
                     </div>
-                    <textarea 
-                        rows={6}
-                        value={summary}
-                        onChange={e => onUpdateResource({ summary: { [settings.language]: [e.target.value] } })}
-                        className={`${inputClass} resize-none`}
-                        placeholder="Add a description..."
-                    />
-                </div>
+                )}
 
-                <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Metadata</label>
-                    <div className="space-y-3">
-                        {(resource.metadata || []).map((md, idx) => (
-                            <div key={idx} className="group relative bg-white p-3 rounded border border-slate-200 shadow-sm hover:border-iiif-blue transition-colors">
-                                <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{md.label[settings.language]?.[0] || 'Unknown'}</div>
-                                <div className="text-sm text-slate-800 leading-snug">{md.value[settings.language]?.join(', ')}</div>
+                <div className="space-y-4">
+                    <div>
+                        <label className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Archival Label</label>
+                        <input 
+                            type="text" 
+                            value={label} 
+                            onChange={e => onUpdateResource({ label: { [settings.language]: [e.target.value] } })} 
+                            className={`w-full text-sm p-4 rounded-lg outline-none font-bold shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
+                        />
+                    </div>
+
+                    <div>
+                        <label className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Scientific Summary</label>
+                        <textarea 
+                            value={summary} 
+                            onChange={e => onUpdateResource({ summary: { [settings.language]: [e.target.value] } })} 
+                            className={`w-full text-sm p-4 rounded-lg outline-none min-h-[100px] leading-relaxed shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
+                            placeholder="Describe context..."
+                        />
+                    </div>
+
+                    <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                        <div className="flex justify-between items-center mb-3">
+                            <label className={`text-[10px] font-black uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Field Metadata</label>
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setShowAddMenu(!showAddMenu)} 
+                                    className={`text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1 ${settings.fieldMode ? 'text-yellow-400' : 'text-iiif-blue'}`}
+                                >
+                                    Add Field <Icon name="expand_more" className="text-[10px]"/>
+                                </button>
+                                {showAddMenu && (
+                                    <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 min-w-[140px] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                        {settings.metadataTemplate.map(prop => (
+                                            <button key={prop} onClick={() => handleAddMetadataField(prop)} className="w-full px-4 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50 transition-colors">{prop}</button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        ))}
-                        <button className="w-full py-2 border border-dashed border-slate-300 rounded text-xs text-slate-500 hover:bg-slate-50 hover:text-iiif-blue hover:border-iiif-blue flex items-center justify-center gap-1 transition-all">
-                            <Icon name="add" className="text-sm"/> Add Field
-                        </button>
+                        </div>
+                        <div className="space-y-3">
+                            {(resource.metadata || []).map((md, idx) => {
+                                const mKey = getIIIFValue(md.label, settings.language);
+                                const mVal = getIIIFValue(md.value, settings.language);
+                                return (
+                                    <div key={idx} className={`group relative p-3 rounded-lg border transition-colors shadow-sm ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}>
+                                        <input 
+                                            className={`w-full text-[10px] font-black uppercase bg-transparent outline-none mb-1 border-b ${settings.fieldMode ? 'text-slate-500 border-slate-800 focus:border-slate-700' : 'text-slate-500 border-transparent focus:border-slate-200'}`}
+                                            value={mKey}
+                                            onChange={e => handleUpdateMetadataField(idx, e.target.value, mVal)}
+                                        />
+                                        <input 
+                                            className={`w-full text-xs font-bold bg-transparent outline-none ${settings.fieldMode ? 'text-white' : 'text-slate-800'}`}
+                                            value={mVal}
+                                            onChange={e => handleUpdateMetadataField(idx, mKey, e.target.value)}
+                                        />
+                                        <button 
+                                            onClick={() => handleRemoveMetadataField(idx)}
+                                            className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Icon name="close" className="text-xs"/>
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-            </>
-        )}
-
-        {tab === 'annotations' && (
-            <div className="text-center py-10">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                     <Icon name="comments_disabled" className="text-2xl"/>
-                </div>
-                <p className="text-xs text-slate-500 mb-4">No annotations on this resource.</p>
-                <button className="px-4 py-2 bg-iiif-blue text-white text-xs font-bold rounded shadow hover:bg-blue-600 transition-colors">
-                    Create Annotation
-                </button>
             </div>
         )}
 
-        {tab === 'technical' && (
-             <div className="space-y-4">
-                 <div className="bg-slate-900 rounded p-4 overflow-hidden">
-                     <div className="flex items-center justify-between text-slate-400 text-[10px] uppercase font-bold mb-2">
-                        <span>Resource ID</span>
-                        <Icon name="content_copy" className="text-xs hover:text-white cursor-pointer"/>
-                     </div>
-                     <div className="font-mono text-[10px] text-green-400 break-all select-all">
-                        {resource.id}
-                     </div>
-                 </div>
-
-                 {resource.requiredStatement && (
-                     <div>
-                         <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Attribution</label>
-                         <div className="text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-200">
-                             {resource.requiredStatement.value[settings.language]?.[0]}
-                         </div>
-                     </div>
-                 )}
-                 
-                 {resource.rights && (
-                     <div>
-                         <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Rights</label>
-                         <a href={resource.rights} target="_blank" className="text-xs text-blue-600 hover:underline break-all block">
-                             {resource.rights}
-                         </a>
-                     </div>
-                 )}
-             </div>
+        {tab === 'learn' && spec && (
+            <div className="space-y-4 animate-in fade-in duration-300">
+                <div className={`border p-5 rounded-2xl ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : `${config.bgClass} ${config.borderClass.replace('200','300')}`}`}>
+                    <h3 className={`text-sm font-black uppercase mb-2 flex items-center gap-2 ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>
+                        <Icon name={config.icon} className="text-xs" /> {resource.type} Model
+                    </h3>
+                    <div className={`items-center gap-3 p-3 rounded-xl mb-4 shadow-sm flex ${settings.fieldMode ? 'bg-black/50 border border-slate-800' : 'bg-white/80 backdrop-blur-sm border border-blue-100/50'}`}>
+                        <Icon name="psychology" className={settings.fieldMode ? 'text-yellow-400' : config.colorClass} />
+                        <div>
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Archival Metaphor</p>
+                            <p className={`text-xs font-bold ${settings.fieldMode ? 'text-white' : 'text-slate-700'}`}>{config.metaphor}</p>
+                        </div>
+                    </div>
+                    <p className={`text-xs leading-relaxed font-medium mb-4 ${settings.fieldMode ? 'text-slate-400' : 'text-slate-600'}`}>{spec.desc}</p>
+                </div>
+                <MuseumLabel title="Archival Implication" type={settings.fieldMode ? 'spec' : 'exhibit'}>
+                    {spec.implication}
+                </MuseumLabel>
+            </div>
         )}
       </div>
     </aside>

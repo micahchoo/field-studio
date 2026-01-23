@@ -3,7 +3,6 @@ import ExifReader from 'exifreader';
 import { IIIFItem } from '../types';
 
 export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> => {
-    // Only process images for now
     if (!file.type.startsWith('image/')) return {};
 
     try {
@@ -11,14 +10,10 @@ export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> =>
         const metadata: Array<{ label: Record<string, string[]>; value: Record<string, string[]> }> = [];
         let navDate: string | undefined;
 
-        // 1. Date (DateTimeOriginal) -> navDate & Metadata
-        // Exif format is typically "YYYY:MM:DD HH:MM:SS"
+        // 1. Date Created (Archive DNA: Time)
         const dateStr = tags['DateTimeOriginal']?.description;
         if (dateStr) {
-            // Convert to ISO 8601 for navDate
             const isoDate = dateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3').replace(' ', 'T') + 'Z';
-            
-            // Validate date object
             if (!isNaN(Date.parse(isoDate))) {
                 navDate = isoDate;
                 metadata.push({
@@ -28,7 +23,7 @@ export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> =>
             }
         }
 
-        // 2. Camera Info
+        // 2. Camera Info (Archive DNA: Device)
         const make = tags['Make']?.description;
         const model = tags['Model']?.description;
         if (make || model) {
@@ -38,27 +33,21 @@ export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> =>
             });
         }
 
-        // 3. GPS -> Metadata (and potentially navPlace in future)
+        // 3. GPS (Archive DNA: Location)
         const lat = tags['GPSLatitude']?.description;
         const lon = tags['GPSLongitude']?.description;
         if (lat && lon) {
-             // Basic decimal conversion might be needed depending on ExifReader output
-             // ExifReader usually provides a description string.
              metadata.push({
                  label: { en: ["Location"] },
                  value: { en: [`${lat}, ${lon}`] }
              });
         }
 
-        // 4. Tech Metadata
-        const exposure = tags['ExposureTime']?.description;
-        const iso = tags['ISOSpeedRatings']?.description;
-        const aperture = tags['FNumber']?.description;
-        
+        // 4. Archival Technical Details
         const techDetails = [];
-        if (exposure) techDetails.push(`Exp: ${exposure}`);
-        if (aperture) techDetails.push(`f/${aperture}`);
-        if (iso) techDetails.push(`ISO ${iso}`);
+        if (tags['ExposureTime']?.description) techDetails.push(`Exposure: ${tags['ExposureTime'].description}`);
+        if (tags['FNumber']?.description) techDetails.push(`Aperture: f/${tags['FNumber'].description}`);
+        if (tags['ISOSpeedRatings']?.description) techDetails.push(`ISO: ${tags['ISOSpeedRatings'].description}`);
         
         if (techDetails.length > 0) {
             metadata.push({
@@ -73,7 +62,7 @@ export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> =>
         };
 
     } catch (e) {
-        console.warn(`Failed to extract EXIF for ${file.name}`, e);
+        console.warn(`[Metadata] Harvester failed for ${file.name}`, e);
         return {};
     }
 };
