@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IIIFItem, IIIFAnnotation, IIIFCanvas, AppSettings, getIIIFValue } from '../types';
 import { Icon } from './Icon';
-import { analyzeImage, blobToBase64 } from '../services/geminiService';
 import { useToast } from './Toast';
 import { RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP, BEHAVIOR_OPTIONS, DEFAULT_MAP_CONFIG } from '../constants';
 
@@ -31,36 +30,6 @@ export const MetadataEditor: React.FC<MetadataEditorProps> = ({ resource, onUpda
         </div>
     );
   }
-
-  const handleAIAnalysis = async () => {
-    const canvas = resource as IIIFCanvas;
-    if (resource.type === 'Canvas' && canvas._blobUrl) {
-      setAnalyzing(true);
-      try {
-        const response = await fetch(canvas._blobUrl);
-        const blob = await response.blob();
-        const base64 = await blobToBase64(blob);
-        const analysis = await analyzeImage(base64, blob.type, settings.aiConfig);
-        
-        // Merge metadata
-        onUpdateResource({
-          summary: { [settings.language]: [analysis.summary] },
-          metadata: [
-            ...(resource.metadata || []),
-            { label: { [settings.language]: ["AI Keywords"] }, value: { [settings.language]: analysis.labels } }
-          ]
-        });
-        showToast("AI Analysis Complete", "success");
-      } catch (e) {
-        showToast("Analysis Failed", "error");
-        console.error(e);
-      } finally {
-        setAnalyzing(false);
-      }
-    } else {
-        showToast("Select a Canvas with an image to analyze", "info");
-    }
-  };
 
   const label = resource.label?.[settings.language]?.[0] || resource.label?.['none']?.[0] || '';
   const summary = resource.summary?.[settings.language]?.[0] || '';
@@ -124,16 +93,6 @@ export const MetadataEditor: React.FC<MetadataEditorProps> = ({ resource, onUpda
                 <div>
                     <div className="flex justify-between items-center mb-1.5">
                         <label className="block text-xs font-bold text-slate-700">Summary</label>
-                        {resource.type === 'Canvas' && (
-                             <button 
-                                onClick={handleAIAnalysis} 
-                                disabled={analyzing}
-                                className="text-[10px] text-purple-600 hover:text-purple-800 flex items-center gap-1 font-bold"
-                            >
-                                <Icon name="auto_awesome" className="text-xs" />
-                                {analyzing ? 'Thinking...' : 'AI Generate'}
-                            </button>
-                        )}
                     </div>
                     <textarea 
                         rows={5}

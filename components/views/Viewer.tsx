@@ -5,7 +5,6 @@ import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
 import { CanvasComposer } from '../CanvasComposer';
-import { ocrService } from '../../services/ocrService';
 import { contentStateService } from '../../services/contentState';
 
 declare const OpenSeadragon: any;
@@ -164,37 +163,6 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
       showToast("Evidence extract added as annotation", "success");
   };
 
-  const handleOCR = async () => {
-      if (!item || !resolvedImageUrl) return;
-      setIsOcring(true);
-      try {
-          const response = await fetch(resolvedImageUrl);
-          const blob = await response.blob();
-          const result = await ocrService.recognize(blob);
-          
-          const newAnno: IIIFAnnotation = {
-              id: `${item.id}/annotation/ocr-${crypto.randomUUID()}`,
-              type: "Annotation",
-              motivation: "supplementing",
-              label: { en: ["OCR Text"] },
-              body: {
-                  type: "TextualBody",
-                  value: result.text,
-                  format: "text/plain",
-                  language: "en"
-              },
-              target: item.id
-          };
-
-          saveAnnotation(newAnno);
-          showToast("OCR processing complete", "success");
-          setShowTranscriptionPanel(true);
-      } catch (e) {
-          showToast("OCR Failed", "error");
-      } finally {
-          setIsOcring(false);
-      }
-  };
 
   const saveAnnotation = (newAnno: IIIFAnnotation) => {
       if (!item) return;
@@ -237,7 +205,6 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
             {mediaType === 'image' && (
                 <div className="flex bg-slate-800 rounded p-1 border border-slate-700 ml-4 gap-2">
                     <button onClick={() => handleExtractEvidence('default')} className="text-[10px] font-black uppercase text-blue-400 hover:text-white flex items-center gap-1 px-2"><Icon name="content_cut" className="text-xs"/> Extract</button>
-                    <button onClick={handleOCR} disabled={isOcring} className="text-[10px] font-black uppercase text-slate-400 hover:text-white flex items-center gap-1 px-2 disabled:opacity-50"><Icon name={isOcring ? "hourglass_empty" : "document_scanner"} className={`text-xs ${isOcring ? 'animate-spin' : ''}`}/> {isOcring ? 'Scanning...' : 'OCR'}</button>
                     <button onClick={handleShareView} className="text-[10px] font-black uppercase text-slate-400 hover:text-white flex items-center gap-1 px-2"><Icon name="share" className="text-xs"/> Share</button>
                 </div>
             )}

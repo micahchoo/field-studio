@@ -1,44 +1,69 @@
+# IIIF Field Archive Studio
 
-# IIIF Field Archive Studio - Local Development
+A local-first, browser-based workbench for organizing, annotating, and connecting field research media using IIIF standards.
 
-## 🚀 How to Run Locally
+## ⚠️ Disclaimer: Vibe Coded
+This project is **vibe coded**. It was developed through high-level intent and iterative AI-assisted exploration. While it implements rigorous standards like IIIF and W3C Web Annotations, the architecture reflects an experimental, "build-as-you-think" philosophy. Expect quirks, and embrace the vibes.
 
-This application uses **TypeScript** and **React**, and relies on a **Service Worker** to serve IIIF images from the browser's database.
+## Overview
+IIIF Field Archive Studio acts as a "Darkroom for Digital Humanities." It bridges the gap between messy field data (raw photos, recordings, notes) and structured archival objects.
 
-**You cannot simply open `index.html` in a browser.** You must use a local web server that supports ES Modules and compilation (like Vite).
+- **Local-First:** All data is stored in your browser's IndexedDB. No files are uploaded to a server.
+- **Personal IIIF Ecosystem:** Includes an internal IIIF Image API 3.0 server (via Service Workers), a Presentation API 3.0 manifest editor, and a W3C Web Annotation environment.
+- **Spatial Thinking:** Use the "Board" view to map relationships between items on an infinite canvas.
+- **Standards-Driven:** Built from the ground up to comply with IIIF and W3C Web Annotation specifications.
 
-### Quick Start with Vite
+## 🚀 Getting Started
 
-1.  **Install Dependencies** (if you haven't already):
-    ```bash
-    npm install vite @vitejs/plugin-react typescript react react-dom @types/react @types/react-dom --save-dev
-    ```
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v20 or later recommended)
+- [npm](https://www.npmjs.com/)
 
-2.  **Run the Development Server**:
-    ```bash
-    npx vite
-    ```
+### Local Development
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/micahchoo/biiif-web-studio.git
+   cd biiif-web-studio
+   ```
 
-3.  Open the URL shown (usually `http://localhost:5173`).
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Access the app:**
+   Open `http://localhost:3000` in your browser.
+
+**Note:** The application relies on Service Workers (`sw.js`) to serve IIIF image tiles. Ensure you are in a **Secure Context** (localhost or HTTPS). If images fail to load, check the "Service Workers" section in your browser's DevTools Application tab.
+
+## 🛠 Workflows & Extension
+
+### Replicating the Environment
+This project is built with **Vite**, **React**, and **TypeScript**. 
+- `vite.config.ts` handles the base path and environment variables.
+- `sw.js` is the heart of the local IIIF Image API server, intercepting requests to `/iiif/image/`.
+
+### Extending the Studio
+- **Adding new metadata fields:** Modify the templates in `services/iiifBuilder.ts`.
+- **Customizing the Board:** Explore `components/CanvasComposer.tsx` for spatial logic.
+- **Changing Deployment:** The project is configured for GitHub Pages via `.github/workflows/deploy.yml`.
+
+## 📦 Deployment
+The studio is ready for GitHub Pages. 
+1. Push your changes to the `main` branch.
+2. Enable GitHub Actions in your repo settings (**Settings > Pages > Build and deployment > Source: GitHub Actions**).
+3. The site will be available at `https://<username>.github.io/biiif-web-studio/`.
+
+## 📜 Standards Compliance
+- **IIIF Image API 3.0** (Level 2)
+- **IIIF Presentation API 3.0**
+- **W3C Web Annotation Data Model**
+- **IIIF Content Search API 2.0**
 
 ---
-
-## ⚠️ Important: Fixing Broken Previews
-
-The application uses a Service Worker (`sw.js`) to generate image tiles on the fly. If you see **broken images** or `404` errors for image tiles:
-
-1.  **Check Service Worker Registration**:
-    *   Open DevTools (F12) -> **Application** tab -> **Service Workers**.
-    *   Ensure `sw.js` is registered and **Status** is "Activated and is running".
-    *   If it says "Waiting to Activate", click **"Skip Waiting"**.
-
-2.  **Secure Context Required**:
-    *   Service Workers **only** work on `localhost` or `https://`.
-    *   They **will not work** on `http://` (unless it's localhost) or `file://`.
-
-3.  **Bypass Network**:
-    *   In the **Network** tab, ensure "Disable Cache" is helpful, but ensure you aren't blocking the Service Worker from intercepting requests.
-    *   The Service Worker intercepts requests to `/iiif/image/`. If the SW isn't running, the browser sends these requests to the Vite server, which returns 404 (because those files don't actually exist on the server).
-
-4.  **Hard Refresh**:
-    *   If you change `sw.js`, perform a hard refresh (`Ctrl+Shift+R` or `Cmd+Shift+R`) and unregister the old worker if necessary.
+*Built for field researchers, by vibes.*

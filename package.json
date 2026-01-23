@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.38.0",
     "exifreader": "4.20.0",
     "file-saver": "2.0.5",
     "flexsearch": "0.7.31",

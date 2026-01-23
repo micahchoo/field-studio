@@ -24,7 +24,6 @@ import { Icon } from './components/Icon';
 import { buildTree, ingestTree } from './services/iiifBuilder';
 import { storage } from './services/storage';
 import { validator, ValidationIssue } from './services/validator';
-import { DEFAULT_AI_CONFIG } from './services/geminiService';
 import { contentStateService } from './services/contentState';
 
 const MainApp: React.FC = () => {
@@ -65,7 +64,6 @@ const MainApp: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>({
       defaultBaseUrl: 'http://localhost',
       language: 'en',
-      aiConfig: DEFAULT_AI_CONFIG,
       theme: 'light',
       fieldMode: false,
       abstractionLevel: 'standard',

@@ -6,16 +6,9 @@ export type ConnectionType = 'depicts' | 'transcribes' | 'relatesTo' | 'contradi
 export type AbstractionLevel = 'simple' | 'standard' | 'advanced';
 export type ResourceState = 'cached' | 'stub' | 'local-only' | 'stale' | 'conflict';
 
-export interface AIConfig {
-  provider: 'none' | 'gemini' | 'ollama';
-  ollamaEndpoint?: string;
-  ollamaModel?: string;
-}
-
 export interface AppSettings {
   defaultBaseUrl: string;
   language: string;
-  aiConfig: AIConfig;
   theme: 'light' | 'dark';
   fieldMode: boolean; 
   abstractionLevel: AbstractionLevel;
