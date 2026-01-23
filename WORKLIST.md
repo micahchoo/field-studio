@@ -49,8 +49,11 @@ These tasks prioritize offline reliability, spec compliance, and foundational ac
   - Implemented `services/selectors.ts` with full W3C Media Fragments support
   - Parse `#xywh=` for spatial, `#t=` for temporal, SVG and Point selectors
 - [x] **Migrate App.tsx to Vault** - Replace deep-clone pattern with vault actions.
-  - VaultProvider wired at app root level
-  - Undo/redo keyboard shortcuts enabled (Cmd+Z, Cmd+Shift+Z)
+  - VaultProvider wired at app root level ✅
+  - Undo/redo keyboard shortcuts enabled (Cmd+Z, Cmd+Shift+Z) ✅
+  - `handleItemUpdate` now uses `dispatch(actions.batchUpdate(...))` ✅
+  - `BatchEditor.onApply` now uses `useBulkOperations().batchUpdate()` ✅
+  - Storage sync via `exportRoot()` after vault mutations ✅
 
 ### Medium Priority
 - [x] **UX: Metadata Complexity Slider** - Toggle visible metadata fields based on user persona.
@@ -65,27 +68,28 @@ These tasks prioritize offline reliability, spec compliance, and foundational ac
   - Created `PolygonAnnotationTool.tsx` with polygon, rectangle, and freehand modes
   - SVG selector generation and parsing with Douglas-Peucker simplification
   - Integrated with selectors.ts service
-- [ ] **Ingest: Visual Preview Wizard** - Show the proposed IIIF structure before committing files to IndexedDB.
 
 ### High Priority - Phase 3 Refinement (from Architecture Patterns)
-- [ ] **Extension Preservation (Round-Tripping)** - Store unknown JSON-LD properties during import.
-  - Preserve vendor extensions (tify, mirador configs) that aren't in IIIF spec
-  - Add `_extensions` bucket to normalized entities
-  - Include in export without data loss
-- [ ] **Content-Addressable Storage (Hashing)** - SHA-256 file integrity (Tropy pattern).
-  - Generate hash on ingest for deduplication
-  - Track file moves via fingerprint
-  - Enable "Consolidator" flow for broken links
-- [ ] **Activity Stream (Change Discovery API)** - Track changes for sync.
-  - Append entries to discovery.json on save
-  - Enable multi-device/researcher sync
-  - IIIF Change Discovery 1.0 format
+- [x] **Extension Preservation (Round-Tripping)** - Store unknown JSON-LD properties during import.
+  - Added `extensions` map to NormalizedState in vault.ts
+  - `extractExtensions()` preserves vendor properties (mirador, tify configs)
+  - `applyExtensions()` restores them on denormalize/export
+- [x] **Content-Addressable Storage (Hashing)** - SHA-256 file integrity (Tropy pattern).
+  - Created `services/fileIntegrity.ts` with SHA-256 hashing
+  - Deduplication via content fingerprinting
+  - Consolidator flow for moved/broken file links
+- [x] **Activity Stream (Change Discovery API)** - Track changes for sync.
+  - Created `services/activityStream.ts` with IIIF Change Discovery 1.0
+  - Activity types: Create, Update, Delete, Move, Add, Remove
+  - Export as OrderedCollection/OrderedCollectionPage for sync
 
 ### Medium Priority
-- [ ] **Ingest: Visual Preview Wizard** - Show the proposed IIIF structure before committing files to IndexedDB.
+- [x] **Ingest: Visual Preview Wizard** - Show the proposed IIIF structure before committing files.
+  - `StagingArea.tsx` implements 6-step wizard (analyze→structure→details→identity→review→processing)
+  - Schematic preview shows proposed IIIF hierarchy before commit
 - [ ] **CSV/Spreadsheet Sync** - Bulk metadata import/export (Wax pattern).
-  - Map CSV columns to IIIF metadata fields
-  - Support bulk editing of 100s of items
+  - Import: ✅ `csvImporter.ts` + `CSVImportDialog.tsx` exist
+  - Export: 🔲 Missing - need `csvExporter.ts` for round-trip
 - [ ] **Lazy Selector Hydration** - Performance for large manifests.
   - Parse SVG/complex selectors only on interaction
   - Reduce initial compute for OCR-heavy manifests
@@ -122,9 +126,14 @@ These tasks prioritize offline reliability, spec compliance, and foundational ac
 - [x] **Selector Abstraction** - `services/selectors.ts` for URI fragment parsing.
   - Full W3C Media Fragments support (xywh, t, percent)
   - SVG and Point selector support, serialization for round-trip
-- [x] **App.tsx Vault Integration** - VaultProvider wired at app root.
+- [x] **App.tsx Vault Integration** - Full migration to Vault dispatch pattern.
+  - VaultProvider at app root with normalized state
   - Undo/redo keyboard shortcuts (Cmd+Z, Cmd+Shift+Z)
-  - Architecture ready for incremental migration of state handlers
+  - `handleItemUpdate` and `BatchEditor.onApply` use dispatch actions
+  - Storage sync via `exportRoot()` after all mutations
+- [x] **Ingest Visual Preview Wizard** - `StagingArea.tsx` wizard.
+  - 6-step flow: analyze→structure→details→identity→review→processing
+  - Shows proposed IIIF hierarchy before committing to IndexedDB
 - [x] **Metadata Complexity Slider** - Field visibility based on user expertise.
   - `METADATA_FIELD_DEFINITIONS` with 16 fields across 4 categories
   - Visual slider with field preview in PersonaSettings
@@ -137,6 +146,18 @@ These tasks prioritize offline reliability, spec compliance, and foundational ac
   - PolygonAnnotationTool.tsx with polygon, rectangle, freehand modes
   - Douglas-Peucker path simplification for freehand
   - SVG selector serialization compatible with IIIF spec
+- [x] **Extension Preservation** - Round-trip unknown JSON-LD properties.
+  - `extensions` map in vault.ts NormalizedState
+  - `KNOWN_IIIF_PROPERTIES` defines spec properties by type
+  - Vendor extensions survive import→edit→export cycle
+- [x] **File Integrity (SHA-256)** - Content-addressable storage in `services/fileIntegrity.ts`.
+  - SHA-256 hashing via Web Crypto API
+  - Duplicate detection before import
+  - Consolidator flow for broken/moved file links
+- [x] **Activity Stream** - IIIF Change Discovery 1.0 in `services/activityStream.ts`.
+  - Activity types: Create, Update, Delete, Move, Add, Remove
+  - Export as OrderedCollection with pagination
+  - Sync support via `getActivitiesSince()` and `importActivities()`
 
 ### Core Infrastructure
 - [x] **Static Export Offline Bundling** - Self-contained exports with local viewer assets.

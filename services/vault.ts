@@ -179,6 +179,12 @@ function normalizeItem(
     state.references[parentId].push(id);
   }
 
+  // Extract and store extensions for round-tripping
+  const extensions = extractExtensions(item as Record<string, unknown>, type);
+  if (Object.keys(extensions).length > 0) {
+    state.extensions[id] = extensions;
+  }
+
   // Process based on type
   switch (type) {
     case 'Collection': {
@@ -305,6 +311,12 @@ function normalizeAnnotationPage(
   }
   state.references[parentId].push(id);
 
+  // Extract extensions from annotation page
+  const pageExtensions = extractExtensions(page as Record<string, unknown>, 'AnnotationPage');
+  if (Object.keys(pageExtensions).length > 0) {
+    state.extensions[id] = pageExtensions;
+  }
+
   // Store page without nested annotations
   state.entities.AnnotationPage[id] = {
     ...page,
@@ -319,6 +331,12 @@ function normalizeAnnotationPage(
       state.typeIndex[anno.id] = 'Annotation';
       state.reverseRefs[anno.id] = id;
       state.entities.Annotation[anno.id] = { ...anno };
+
+      // Extract extensions from annotation
+      const annoExtensions = extractExtensions(anno as Record<string, unknown>, 'Annotation');
+      if (Object.keys(annoExtensions).length > 0) {
+        state.extensions[anno.id] = annoExtensions;
+      }
     }
   }
 
@@ -346,18 +364,21 @@ function denormalizeItem(state: NormalizedState, id: string): IIIFItem {
 
   switch (type) {
     case 'Collection': {
-      const collection = { ...state.entities.Collection[id] };
+      const collection = { ...state.entities.Collection[id] } as Record<string, unknown>;
       const childIds = state.references[id] || [];
 
       collection.items = childIds
         .map(childId => denormalizeItem(state, childId))
         .filter(Boolean);
 
-      return collection;
+      // Apply preserved extensions
+      applyExtensions(collection, state.extensions[id]);
+
+      return collection as IIIFCollection;
     }
 
     case 'Manifest': {
-      const manifest = { ...state.entities.Manifest[id] };
+      const manifest = { ...state.entities.Manifest[id] } as Record<string, unknown>;
       const childIds = state.references[id] || [];
 
       // Reconstruct canvases
@@ -370,17 +391,27 @@ function denormalizeItem(state: NormalizedState, id: string): IIIFItem {
         .filter(rid => state.reverseRefs[rid] === id);
 
       if (rangeIds.length > 0) {
-        manifest.structures = rangeIds.map(rid => ({ ...state.entities.Range[rid] }));
+        manifest.structures = rangeIds.map(rid => {
+          const range = { ...state.entities.Range[rid] } as Record<string, unknown>;
+          applyExtensions(range, state.extensions[rid]);
+          return range;
+        });
       }
 
-      return manifest;
+      // Apply preserved extensions
+      applyExtensions(manifest, state.extensions[id]);
+
+      return manifest as IIIFManifest;
     }
 
     case 'Canvas':
       return denormalizeCanvas(state, id);
 
-    case 'Range':
-      return { ...state.entities.Range[id] };
+    case 'Range': {
+      const range = { ...state.entities.Range[id] } as Record<string, unknown>;
+      applyExtensions(range, state.extensions[id]);
+      return range as IIIFRange;
+    }
 
     default:
       throw new Error(`Cannot denormalize type: ${type}`);
@@ -391,7 +422,7 @@ function denormalizeItem(state: NormalizedState, id: string): IIIFItem {
  * Denormalize a canvas with its annotation pages
  */
 function denormalizeCanvas(state: NormalizedState, id: string): IIIFCanvas {
-  const canvas = { ...state.entities.Canvas[id] };
+  const canvas = { ...state.entities.Canvas[id] } as Record<string, unknown>;
   const pageIds = state.references[id] || [];
 
   // Reconstruct painting annotation pages
@@ -399,21 +430,31 @@ function denormalizeCanvas(state: NormalizedState, id: string): IIIFCanvas {
     .filter(pid => state.typeIndex[pid] === 'AnnotationPage')
     .map(pid => denormalizeAnnotationPage(state, pid));
 
-  return canvas;
+  // Apply preserved extensions
+  applyExtensions(canvas, state.extensions[id]);
+
+  return canvas as IIIFCanvas;
 }
 
 /**
  * Denormalize an annotation page with its annotations
  */
 function denormalizeAnnotationPage(state: NormalizedState, id: string): IIIFAnnotationPage {
-  const page = { ...state.entities.AnnotationPage[id] };
+  const page = { ...state.entities.AnnotationPage[id] } as Record<string, unknown>;
   const annoIds = state.references[id] || [];
 
   page.items = annoIds
     .filter(aid => state.typeIndex[aid] === 'Annotation')
-    .map(aid => ({ ...state.entities.Annotation[aid] }));
+    .map(aid => {
+      const anno = { ...state.entities.Annotation[aid] } as Record<string, unknown>;
+      applyExtensions(anno, state.extensions[aid]);
+      return anno as IIIFAnnotation;
+    });
 
-  return page;
+  // Apply preserved extensions
+  applyExtensions(page, state.extensions[id]);
+
+  return page as IIIFAnnotationPage;
 }
 
 // ============================================================================

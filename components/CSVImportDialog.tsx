@@ -1,25 +1,55 @@
 
-import React, { useState, useEffect } from 'react';
-import { IIIFItem } from '../types';
-import { csvImporter, CSVColumnMapping, CSVImportResult } from '../services/csvImporter';
+import React, { useState, useEffect, useMemo } from 'react';
+import { IIIFItem, getIIIFValue } from '../types';
+import { csvImporter, CSVColumnMapping, CSVImportResult, CSVExportOptions, SUPPORTED_IIIF_PROPERTIES } from '../services/csvImporter';
 import { Icon } from './Icon';
+
+type DialogMode = 'import' | 'export';
+type ImportStep = 'upload' | 'map' | 'result';
+type ExportStep = 'configure' | 'preview' | 'complete';
 
 interface CSVImportDialogProps {
   root: IIIFItem;
   onApply: (updatedRoot: IIIFItem) => void;
   onClose: () => void;
+  initialMode?: DialogMode;
 }
 
-export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply, onClose }) => {
-  const [step, setStep] = useState<'upload' | 'map' | 'result'>('upload');
+export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply, onClose, initialMode = 'import' }) => {
+  const [mode, setMode] = useState<DialogMode>(initialMode);
+
+  // Import state
+  const [importStep, setImportStep] = useState<ImportStep>('upload');
   const [csvText, setCsvText] = useState('');
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [filenameColumn, setFilenameColumn] = useState('');
   const [mappings, setMappings] = useState<CSVColumnMapping[]>([]);
-  const [result, setResult] = useState<CSVImportResult | null>(null);
+  const [importResult, setImportResult] = useState<CSVImportResult | null>(null);
+
+  // Export state
+  const [exportStep, setExportStep] = useState<ExportStep>('configure');
+  const [exportItemTypes, setExportItemTypes] = useState<('Canvas' | 'Manifest' | 'Collection')[]>(['Canvas']);
+  const [exportProperties, setExportProperties] = useState<string[]>([
+    'label', 'summary', 'metadata.title', 'metadata.creator', 'metadata.date', 'metadata.description'
+  ]);
+  const [exportIncludeId, setExportIncludeId] = useState(true);
+  const [exportLanguage, setExportLanguage] = useState('en');
+  const [exportPreview, setExportPreview] = useState<string>('');
+  const [exportItemCount, setExportItemCount] = useState(0);
 
   const supportedProps = csvImporter.getSupportedProperties();
+  const exportColumns = csvImporter.getExportColumns();
+
+  // Group export columns by category
+  const exportColumnsByCategory = useMemo(() => {
+    const grouped: Record<string, typeof exportColumns> = {};
+    for (const col of exportColumns) {
+      if (!grouped[col.category]) grouped[col.category] = [];
+      grouped[col.category].push(col);
+    }
+    return grouped;
+  }, [exportColumns]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,7 +72,7 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
         .map(h => ({ csvColumn: h, iiifProperty: '', language: 'en' }));
       setMappings(initialMappings);
 
-      setStep('map');
+      setImportStep('map');
     };
     reader.readAsText(file);
   };
@@ -71,29 +101,101 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
   const handleApply = () => {
     const validMappings = mappings.filter(m => m.csvColumn && m.iiifProperty);
     const { updatedRoot, result } = csvImporter.applyMappings(root, rows, filenameColumn, validMappings);
-    setResult(result);
-    setStep('result');
+    setImportResult(result);
+    setImportStep('result');
 
     if (result.matched > 0) {
       onApply(updatedRoot);
     }
   };
 
+  // Export handlers
+  const toggleExportProperty = (prop: string) => {
+    setExportProperties(prev =>
+      prev.includes(prop)
+        ? prev.filter(p => p !== prop)
+        : [...prev, prop]
+    );
+  };
+
+  const toggleExportItemType = (type: 'Canvas' | 'Manifest' | 'Collection') => {
+    setExportItemTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const handleGeneratePreview = () => {
+    const result = csvImporter.exportCSV(root, {
+      properties: exportProperties,
+      language: exportLanguage,
+      includeId: exportIncludeId,
+      includeType: true,
+      itemTypes: exportItemTypes
+    });
+    setExportPreview(result.csv);
+    setExportItemCount(result.itemCount);
+    setExportStep('preview');
+  };
+
+  const handleExportDownload = () => {
+    const filename = `iiif-metadata-${new Date().toISOString().split('T')[0]}.csv`;
+    csvImporter.downloadCSV(exportPreview, filename);
+    setExportStep('complete');
+  };
+
+  const handleExportSmartColumns = () => {
+    // Auto-select only columns that have data
+    const result = csvImporter.exportCSVSmart(root, {
+      language: exportLanguage,
+      includeId: exportIncludeId,
+      itemTypes: exportItemTypes
+    });
+    // Parse the result to find which columns were included
+    const headerLine = result.csv.split('\n')[0];
+    const headers = headerLine.split(',').map(h => h.replace(/^"|"$/g, ''));
+    const detected = headers.filter(h => SUPPORTED_IIIF_PROPERTIES.includes(h));
+    setExportProperties(detected);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Icon name="table_chart" className="text-green-600" />
-            CSV Metadata Import
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <Icon name="close" />
-          </button>
+        <div className="p-4 border-b">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Icon name="table_chart" className="text-green-600" />
+              CSV Metadata {mode === 'import' ? 'Import' : 'Export'}
+            </h2>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <Icon name="close" />
+            </button>
+          </div>
+          {/* Mode tabs */}
+          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+            <button
+              onClick={() => { setMode('import'); setImportStep('upload'); }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+                mode === 'import' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Icon name="upload" className="text-base" /> Import
+            </button>
+            <button
+              onClick={() => { setMode('export'); setExportStep('configure'); }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+                mode === 'export' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Icon name="download" className="text-base" /> Export
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {step === 'upload' && (
+          {/* IMPORT MODE */}
+          {mode === 'import' && importStep === 'upload' && (
             <div className="text-center py-12">
               <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Icon name="upload_file" className="text-4xl text-slate-400" />

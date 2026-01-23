@@ -110,8 +110,8 @@ useUndoRedoShortcuts(); // Cmd+Z, Cmd+Shift+Z
 | **1. Foundation** | ✅ Complete | Vault, Actions, Undo/Redo, LanguageString, Entity Hooks |
 | **2. Integration** | ✅ Complete | Spec Bridge, Selector Abstraction, App.tsx Migration |
 | **2.5 UX Polish** | ✅ Complete | Metadata Complexity, Search Autocomplete, Polygon Tool |
-| **3. Refinement** | 🔲 In Progress | Extension Preservation, File Hashing, Activity Stream |
-| **4. Advanced** | 🔲 Future | Workbench Architecture, Lazy Hydration, CSV Sync |
+| **3. Refinement** | ✅ Complete | Extension Preservation, File Hashing (SHA-256), Activity Stream |
+| **4. Advanced** | 🔲 Next | Workbench Architecture, Lazy Hydration, CSV Sync, Static Site Export |
 
 [
   {

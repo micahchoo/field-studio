@@ -25,10 +25,23 @@ import { buildTree, ingestTree } from './services/iiifBuilder';
 import { storage } from './services/storage';
 import { validator, ValidationIssue } from './services/validator';
 import { contentStateService } from './services/contentState';
-import { VaultProvider, useUndoRedoShortcuts, useHistory } from './hooks/useIIIFEntity';
+import { VaultProvider, useUndoRedoShortcuts, useHistory, useVault, useRoot, useBulkOperations } from './hooks/useIIIFEntity';
+import { actions } from './services/actions';
 
 const MainApp: React.FC = () => {
-  const [root, setRoot] = useState<IIIFItem | null>(null);
+  // Vault state (normalized) - replaces deep-clone pattern
+  const { state, dispatch, loadRoot, exportRoot, rootId } = useVault();
+  const { batchUpdate } = useBulkOperations();
+
+  // Derive root from vault for compatibility with existing code
+  const root = exportRoot();
+
+  // Legacy setRoot bridge - calls loadRoot to normalize into vault
+  const setRoot = useCallback((newRoot: IIIFItem | null) => {
+    if (newRoot) {
+      loadRoot(newRoot);
+    }
+  }, [loadRoot]);
   const [currentMode, setCurrentMode] = useState<AppMode>('archive');
   const [viewType, setViewType] = useState<ViewType>('iiif');
   const [showSidebar, setShowSidebar] = useState(window.innerWidth > 1024);
@@ -96,23 +109,25 @@ const MainApp: React.FC = () => {
     }
   }, []);
 
-  const handleUpdateRoot = (newRoot: IIIFItem) => {
-      setRoot(newRoot);
+  const handleUpdateRoot = useCallback((newRoot: IIIFItem) => {
+      // Load into vault (normalizes state)
+      loadRoot(newRoot);
+      // Save to storage
       setSaveStatus('saving');
       storage.saveProject(newRoot)
         .then(() => { setSaveStatus('saved'); checkStorage(); })
         .catch(() => { setSaveStatus('error'); showToast("Failed to save project!", 'error'); });
-  };
+  }, [loadRoot, showToast]);
 
   useEffect(() => {
-      storage.loadProject().then(async (proj) => { 
-        if (proj) setRoot(proj); 
+      storage.loadProject().then(async (proj) => {
+        if (proj) loadRoot(proj); // Load into vault
         const params = new URLSearchParams(window.location.search);
         const encodedState = params.get('iiif-content');
         if (encodedState) {
-            const state = contentStateService.decode(encodedState);
-            if (state) {
-                const targetId = state.id || (state.target && state.target.id);
+            const contentState = contentStateService.decode(encodedState);
+            if (contentState) {
+                const targetId = contentState.id || (contentState.target && contentState.target.id);
                 if (targetId) {
                   setSelectedId(targetId);
                   setCurrentMode('viewer');
@@ -124,16 +139,17 @@ const MainApp: React.FC = () => {
       checkStorage();
       const interval = setInterval(checkStorage, 30000);
       return () => clearInterval(interval);
-  }, []);
+  }, [loadRoot]);
 
   useEffect(() => {
       const interval = setInterval(() => {
-          if (root && saveStatus === 'saved') {
-              storage.saveProject(root);
+          if (rootId && saveStatus === 'saved') {
+              const currentRoot = exportRoot();
+              if (currentRoot) storage.saveProject(currentRoot);
           }
       }, settings.autoSaveInterval * 1000);
       return () => clearInterval(interval);
-  }, [root, settings.autoSaveInterval, saveStatus]);
+  }, [rootId, exportRoot, settings.autoSaveInterval, saveStatus]);
 
   const checkStorage = async () => {
       const est = await storage.getEstimate();
@@ -175,15 +191,21 @@ const MainApp: React.FC = () => {
       return null;
   }, []);
 
-  const handleItemUpdate = (updates: Partial<IIIFItem>) => {
-    if (!root || !selectedId) return;
-    const newRoot = JSON.parse(JSON.stringify(root));
-    const target = findItem(newRoot, selectedId);
-    if (target) {
-      Object.assign(target, updates);
-      handleUpdateRoot(newRoot);
+  const handleItemUpdate = useCallback((updates: Partial<IIIFItem>) => {
+    if (!selectedId) return;
+    // Use vault dispatch instead of deep clone
+    const success = dispatch(actions.batchUpdate([{ id: selectedId, changes: updates }]));
+    if (success) {
+      // Trigger save after vault update
+      setSaveStatus('saving');
+      const updatedRoot = exportRoot();
+      if (updatedRoot) {
+        storage.saveProject(updatedRoot)
+          .then(() => { setSaveStatus('saved'); checkStorage(); })
+          .catch(() => { setSaveStatus('error'); showToast("Failed to save project!", 'error'); });
+      }
     }
-  };
+  }, [selectedId, dispatch, exportRoot, showToast]);
 
   useEffect(() => {
       if (root) setValidationIssuesMap(validator.validateTree(root));
@@ -267,18 +289,28 @@ const MainApp: React.FC = () => {
       {showExternalImport && <ExternalImportDialog onImport={(it) => handleUpdateRoot(root?.type === 'Collection' ? { ...root, items: [...(root.items || []), it] } as any : it as any)} onClose={() => setShowExternalImport(false)} />}
       
       {showBatchEditor && root && <BatchEditor ids={batchIds} root={root} onApply={(ids, updatesMap, ren) => {
-          const newRoot = JSON.parse(JSON.stringify(root));
-          ids.forEach((id, idx) => {
-              const target = findItem(newRoot, id);
-              if (target) {
-                  Object.assign(target, updatesMap[id]);
-                  if (ren) {
+          // Use vault batch update instead of deep clone
+          const updates = ids.map((id, idx) => {
+              const changes = { ...updatesMap[id] };
+              if (ren) {
+                  const target = findItem(root, id);
+                  if (target) {
                       const oldLabel = getIIIFValue(target.label);
-                      target.label = { none: [ren.replace('{orig}', oldLabel).replace('{nnn}', (idx+1).toString().padStart(3, '0'))] };
+                      changes.label = { none: [ren.replace('{orig}', oldLabel).replace('{nnn}', (idx+1).toString().padStart(3, '0'))] };
                   }
               }
+              return { id, changes };
           });
-          handleUpdateRoot(newRoot);
+          const success = batchUpdate(updates);
+          if (success) {
+              setSaveStatus('saving');
+              const updatedRoot = exportRoot();
+              if (updatedRoot) {
+                  storage.saveProject(updatedRoot)
+                    .then(() => { setSaveStatus('saved'); checkStorage(); })
+                    .catch(() => { setSaveStatus('error'); showToast("Failed to save project!", 'error'); });
+              }
+          }
       }} onClose={() => setShowBatchEditor(false)} />}
       
       {showPersonaSettings && <PersonaSettings settings={settings} onUpdate={upd => setSettings(s => ({ ...s, ...upd }))} onClose={() => setShowPersonaSettings(false)} />}
