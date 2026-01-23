@@ -1793,6 +1793,187 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
+## 18. Provenance & Audit Logging
+
+### 18.1 Change History
+
+All resources maintain a provenance log tracking modifications:
+
+```typescript
+interface ProvenanceEntry {
+  timestamp: string;       // ISO 8601
+  action: 'create' | 'update' | 'delete' | 'merge' | 'export';
+  agent: {
+    type: 'Person' | 'Software';
+    name: string;
+    version?: string;      // For software agents
+  };
+  changes?: {
+    property: string;
+    oldValue: any;
+    newValue: any;
+  }[];
+  source?: {
+    filename: string;
+    checksum: string;      // SHA-256
+    ingestTimestamp: string;
+  };
+}
+
+interface ResourceProvenance {
+  resourceId: string;
+  created: ProvenanceEntry;
+  modified: ProvenanceEntry[];
+  exports: ProvenanceEntry[];
+}
+```
+
+### 18.2 Ingest Tracking
+
+During file ingest, capture:
+- Original filename (before any normalization)
+- File creation/modification dates
+- SHA-256 checksum for fixity
+- EXIF metadata extraction timestamp
+- Ingest configuration used
+
+### 18.3 PREMIS Export
+
+For archival handoff, export provenance as PREMIS (Preservation Metadata):
+
+```xml
+<premis:event>
+  <premis:eventType>ingestion</premis:eventType>
+  <premis:eventDateTime>2024-01-15T10:30:00Z</premis:eventDateTime>
+  <premis:eventOutcome>success</premis:eventOutcome>
+  <premis:linkingAgentIdentifier>
+    <premis:linkingAgentIdentifierType>software</premis:linkingAgentIdentifierType>
+    <premis:linkingAgentIdentifierValue>IIIF Field Studio v1.0</premis:linkingAgentIdentifierValue>
+  </premis:linkingAgentIdentifier>
+</premis:event>
+```
+
+---
+
+## 19. Scalability Considerations
+
+### 19.1 Performance Targets
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Maximum archive size | 5,000+ Canvases | With virtualized loading |
+| Initial load time | < 3 seconds | Manifest stubs only |
+| Mode switch | < 500ms | Cached views |
+| Search results | < 200ms | Pre-indexed |
+| Export (1000 images) | < 10 minutes | Streamed ZIP |
+
+### 19.2 Virtualized Data Model
+
+Large archives require lazy loading:
+
+```typescript
+interface ManifestStub {
+  id: string;
+  type: 'Manifest';
+  label: LanguageMap;
+  thumbnail?: Thumbnail[];
+  canvasCount: number;      // Metadata only
+  _loaded: boolean;         // Full data available?
+}
+
+// Load full manifest on demand
+async function loadFullManifest(stub: ManifestStub): Promise<IIIFManifest> {
+  if (stub._loaded) return getFromCache(stub.id);
+  const full = await storage.loadManifest(stub.id);
+  cacheManifest(full);
+  return full;
+}
+```
+
+### 19.3 Memory Management
+
+**Tile Generation Strategy**:
+1. Pre-generate common sizes (150px, 600px, 1200px) during ingest
+2. Generate tiles on-demand with request coalescing
+3. Implement LRU cache with 100MB limit
+4. Offload processing to Web Worker pool
+
+**Blob URL Lifecycle**:
+- Revoke blob URLs when Canvas scrolls out of view
+- Limit concurrent blob URLs to 50
+- Implement reference counting for shared blobs
+
+### 19.4 Storage Quotas
+
+| Browser | Typical Quota | Strategy |
+|---------|--------------|----------|
+| Chrome | 60% of disk | Show warning at 80% |
+| Firefox | 50% of disk | Prompt cleanup at 75% |
+| Safari | 1GB default | Request quota increase |
+
+Display storage usage in StatusBar with color coding:
+- Green: < 50% used
+- Yellow: 50-80% used
+- Red: > 80% used (prompt cleanup)
+
+---
+
+## 20. Interoperability Testing
+
+### 20.1 Viewer Compatibility Matrix
+
+Exports MUST be tested against these viewers:
+
+| Viewer | Version | Required Support |
+|--------|---------|-----------------|
+| Mirador | 3.x | Collection/Manifest/Canvas navigation |
+| Universal Viewer | 4.x | Full annotation display |
+| Annona | Latest | Annotation rendering |
+| Clover | Latest | Basic manifest display |
+
+### 20.2 Compatibility Test Cases
+
+**Manifest Tests**:
+- [ ] Loads in Mirador without errors
+- [ ] All Canvases render correctly
+- [ ] Navigation between Canvases works
+- [ ] Annotations display on Canvas
+- [ ] Thumbnails appear in navigation
+
+**Collection Tests**:
+- [ ] Nested Collections navigate correctly
+- [ ] Manifest links resolve
+- [ ] Thumbnails display for child items
+
+**Annotation Tests**:
+- [ ] Commenting annotations display
+- [ ] Supplementing annotations accessible
+- [ ] Fragment selectors highlight correctly
+- [ ] Linking annotations navigate
+
+### 20.3 v2 to v3 Conversion
+
+When importing IIIF v2.x manifests:
+
+| v2 Property | v3 Equivalent | Conversion |
+|-------------|---------------|------------|
+| `@context` (v2) | `@context` (v3) | Replace context URL |
+| `@id` | `id` | Remove @ prefix |
+| `@type` | `type` | Remove @ prefix |
+| `label` (string) | `label` (map) | Wrap in `{"none": [...]}` |
+| `sequences` | `items` | Flatten to Canvas array |
+| `canvases` | (moved) | Into Manifest.items |
+
+### 20.4 CORS Handling
+
+For external resources:
+1. Attempt direct fetch
+2. On CORS error, try proxy: `https://corsproxy.io/?url=`
+3. Cache successful fetches locally
+4. Warn user about unreachable resources
+
+---
+
 ## Appendices
 
 ### A. IIIF Service Type Reference

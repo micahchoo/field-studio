@@ -52,7 +52,9 @@ export const BEHAVIOR_OPTIONS = {
   'Collection': ['multi-part', 'together', 'auto-advance', 'no-auto-advance', 'repeat', 'no-repeat', 'unordered', 'individuals', 'continuous', 'paged'],
   'Manifest': ['auto-advance', 'no-auto-advance', 'repeat', 'no-repeat', 'unordered', 'individuals', 'continuous', 'paged'],
   'Canvas': ['auto-advance', 'no-auto-advance', 'facing-pages', 'non-paged'],
-  'Range': ['auto-advance', 'no-auto-advance', 'unordered', 'individuals', 'continuous', 'paged', 'sequence', 'thumbnail-nav', 'no-nav'],
+  'Range': ['auto-advance', 'no-auto-advance', 'unordered', 'individuals', 'continuous', 'paged', 'sequence', 'thumbnail-nav', 'no-nav', 'hidden'],
+  'AnnotationPage': ['hidden'],
+  'AnnotationCollection': ['hidden'],
   'Content': []
 };
 

@@ -61,22 +61,48 @@ const processNode = async (
         
         // Smart Sidecar Detection: Map of base filename to related files
         const sidecars = new Map<string, { main: File, supplemental: File[] }>();
+        const orphanedSupplemental: File[] = [];
+
+        // First pass: identify main content files
         fileNames.forEach(fn => {
             const parts = fn.split('.');
             const ext = parts.pop()?.toLowerCase() || '';
             const base = parts.join('.');
             const mime = MIME_TYPE_MAP[ext];
-            
+
             if (mime && mime.motivation === 'painting') {
-                if (!sidecars.has(base)) sidecars.set(base, { main: node.files.get(fn)!, supplemental: [] });
-            } else if (ext === 'txt' || ext === 'srt') {
                 if (!sidecars.has(base)) {
-                  // Might be a standalone text file, handle later or skip
-                } else {
-                  sidecars.get(base)!.supplemental.push(node.files.get(fn)!);
+                    sidecars.set(base, { main: node.files.get(fn)!, supplemental: [] });
                 }
             }
         });
+
+        // Second pass: link supplemental files to their main content
+        fileNames.forEach(fn => {
+            const parts = fn.split('.');
+            const ext = parts.pop()?.toLowerCase() || '';
+            const base = parts.join('.');
+
+            if (ext === 'txt' || ext === 'srt' || ext === 'vtt') {
+                const file = node.files.get(fn)!;
+                if (sidecars.has(base)) {
+                    // Linked sidecar: photo_001.jpg + photo_001.txt
+                    sidecars.get(base)!.supplemental.push(file);
+                } else {
+                    // Orphaned supplemental file (no matching main file)
+                    orphanedSupplemental.push(file);
+                }
+            }
+        });
+
+        // Log sidecar detection results
+        if (sidecars.size > 0) {
+            const withSupp = Array.from(sidecars.values()).filter(s => s.supplemental.length > 0).length;
+            report.warnings.push(`Smart Sidecar: Detected ${withSupp} paired files with transcriptions/captions`);
+        }
+        if (orphanedSupplemental.length > 0) {
+            report.warnings.push(`Smart Sidecar: Found ${orphanedSupplemental.length} orphaned .txt/.srt files (no matching media)`);
+        }
 
         const bases = Array.from(sidecars.keys()).sort();
         for (let i = 0; i < bases.length; i++) {
@@ -125,40 +151,50 @@ const processNode = async (
                     service: isImage ? [{
                         id: `${baseUrl}/image/${assetId}`,
                         type: "ImageService3",
+                        protocol: "http://iiif.io/api/image",
                         profile: "level2"
                     }] : undefined
                 }
             };
 
             // Handle Smart Sidecars as supplementing annotations
-            const annos: IIIFAnnotationPage[] = [{ 
-                id: `${canvasId}/page/painting`, 
-                type: "AnnotationPage", 
+            const annos: IIIFAnnotationPage[] = [{
+                id: `${canvasId}/page/painting`,
+                type: "AnnotationPage",
                 label: { none: ["Painting Page"] },
-                items: [paintingAnnotation] 
+                items: [paintingAnnotation]
             }];
 
+            // Process supplemental files (txt, srt) and create supplementing annotations
+            const supplementingPages: IIIFAnnotationPage[] = [];
             if (supplemental.length > 0) {
                 const suppPage: IIIFAnnotationPage = {
                     id: `${canvasId}/page/supplementing`,
                     type: "AnnotationPage",
                     label: { none: ["Supplements"] },
-                    items: await Promise.all(supplemental.map(async (sf, sIdx) => ({
-                        id: `${canvasId}/annotation/supp-${sIdx}`,
-                        type: "Annotation",
-                        motivation: "supplementing",
-                        label: { none: [sf.name] },
-                        body: {
-                            type: "TextualBody",
-                            value: await sf.text(),
-                            format: sf.name.endsWith('.srt') ? 'text/vtt' : 'text/plain'
-                        },
-                        target: canvasId
-                    })))
+                    items: await Promise.all(supplemental.map(async (sf, sIdx) => {
+                        // Store supplemental file in IndexedDB for retrieval
+                        const suppAssetId = `${assetId}-supp-${sIdx}`;
+                        const textContent = await sf.text();
+                        const textBlob = new Blob([textContent], { type: 'text/plain' });
+                        await storage.saveAsset(textBlob, suppAssetId);
+
+                        return {
+                            id: `${canvasId}/annotation/supp-${sIdx}`,
+                            type: "Annotation",
+                            motivation: "supplementing",
+                            label: { none: [sf.name] },
+                            body: {
+                                type: "TextualBody",
+                                value: textContent,
+                                format: sf.name.endsWith('.srt') ? 'text/vtt' : 'text/plain',
+                                language: sf.name.endsWith('.srt') ? undefined : 'en'
+                            },
+                            target: canvasId
+                        } as IIIFAnnotation;
+                    }))
                 };
-                // In IIIF, painting goes in .items, others go in .annotations usually, 
-                // but we'll stick them in an extra page for now or reference them.
-                // Spec says Canvas.annotations is for non-painting.
+                supplementingPages.push(suppPage);
             }
 
             items.push({
@@ -167,10 +203,11 @@ const processNode = async (
                 label: { none: [file.name] },
                 width: 2000, height: 2000,
                 items: annos,
+                annotations: supplementingPages, // Canvas.annotations for non-painting content
                 thumbnail: thumbnails,
                 navDate: extractedMeta.navDate,
                 metadata: extractedMeta.metadata,
-                _fileRef: file 
+                _fileRef: file
             });
             report.canvasesCreated++;
             report.filesProcessed++;

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
+import { ShareButton } from './ShareButton';
 import { RESOURCE_TYPE_CONFIG } from '../constants';
 
 interface InspectorProps {
@@ -93,7 +94,10 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                 <Icon name={config.icon} className={`${config.colorClass} text-sm`}/>
                 <span className={`text-xs font-black uppercase tracking-widest ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>Inspector</span>
              </div>
-             <button onClick={onClose} className={`p-2 rounded-lg ${settings.fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-200'}`}><Icon name="close"/></button>
+             <div className="flex items-center gap-2">
+                <ShareButton item={resource} fieldMode={settings.fieldMode} />
+                <button onClick={onClose} className={`p-2 rounded-lg ${settings.fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-200'}`}><Icon name="close"/></button>
+             </div>
         </div>
 
         {/* Tabs */}

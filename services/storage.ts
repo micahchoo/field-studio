@@ -101,6 +101,79 @@ class StorageService {
     }
     return null;
   }
+
+  /**
+   * Load a specific resource by ID from the project tree
+   * Supports virtualized data loading
+   */
+  async loadResource(id: string): Promise<IIIFItem | null> {
+    const root = await this.loadProject();
+    if (!root) return null;
+
+    const findById = (node: IIIFItem): IIIFItem | null => {
+      if (node.id === id) return node;
+      const children = (node as any).items || (node as any).annotations || [];
+      for (const child of children) {
+        if (child && typeof child === 'object') {
+          const found = findById(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    return findById(root);
+  }
+
+  /**
+   * Save a specific resource back to the project tree
+   * Supports incremental updates
+   */
+  async saveResource(id: string, updates: Partial<IIIFItem>): Promise<boolean> {
+    const root = await this.loadProject();
+    if (!root) return false;
+
+    const updateById = (node: IIIFItem): boolean => {
+      if (node.id === id) {
+        Object.assign(node, updates);
+        return true;
+      }
+      const children = (node as any).items || (node as any).annotations || [];
+      for (const child of children) {
+        if (child && typeof child === 'object') {
+          if (updateById(child)) return true;
+        }
+      }
+      return false;
+    };
+
+    if (updateById(root)) {
+      await this.saveProject(root);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get all asset IDs stored in the database
+   */
+  async getAllAssetIds(): Promise<string[]> {
+    const db = await this.dbPromise;
+    return await db.getAllKeys(FILES_STORE);
+  }
+
+  /**
+   * Delete a specific asset
+   */
+  async deleteAsset(id: string): Promise<void> {
+    const db = await this.dbPromise;
+    await db.delete(FILES_STORE, id);
+    // Also delete derivatives
+    const derivativeKeys = ['thumb', 'small', 'medium'];
+    for (const key of derivativeKeys) {
+      await db.delete(DERIVATIVES_STORE, `${id}_${key}`);
+    }
+  }
 }
 
 export const storage = new StorageService();

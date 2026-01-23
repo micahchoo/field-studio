@@ -20,9 +20,9 @@ export class ValidationService {
 
       const seenIds = new Set<string>();
 
-      const traverse = (item: IIIFItem) => {
-          const issues = this.validateItem(item);
-          
+      const traverse = (item: IIIFItem, parent?: IIIFItem, parentType?: string) => {
+          const issues = this.validateItem(item, parent, parentType);
+
           if (seenIds.has(item.id)) {
               issues.push({
                   id: Math.random().toString(36).substr(2, 9),
@@ -39,10 +39,10 @@ export class ValidationService {
           if (issues.length > 0) {
               issueMap[item.id] = (issueMap[item.id] || []).concat(issues);
           }
-          
+
           const children = (item as any).items || (item as any).annotations || (item as any).structures || [];
           children.forEach((child: any) => {
-              if (child && typeof child === 'object') traverse(child);
+              if (child && typeof child === 'object') traverse(child, item, item.type);
           });
       };
 
@@ -55,7 +55,7 @@ export class ValidationService {
     return Object.values(map).some(arr => arr.some(s => s && s.trim().length > 0));
   }
 
-  validateItem(item: IIIFItem): ValidationIssue[] {
+  validateItem(item: IIIFItem, parent?: IIIFItem, parentType?: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
     const addIssue = (level: 'error' | 'warning', category: IssueCategory, message: string, fixable: boolean = false) => {
         issues.push({
@@ -68,6 +68,34 @@ export class ValidationService {
             fixable
         });
     };
+
+    // Behavior inheritance validation (spec §3.4)
+    if (item.behavior && parentType) {
+        // Manifests DO NOT inherit from Collections
+        if (item.type === 'Manifest' && parentType === 'Collection') {
+            // This is OK - no inheritance expected
+        }
+        // Canvases inherit from Manifest, NOT from Ranges
+        if (item.type === 'Canvas' && parentType === 'Range') {
+            addIssue('warning', 'Structure', 'Canvas behavior should inherit from Manifest, not Range. Check behavior consistency.', false);
+        }
+        // Collections inherit from parent Collection
+        if (item.type === 'Collection' && parentType === 'Collection' && parent?.behavior) {
+            const parentBehaviors = new Set(parent.behavior);
+            const conflicting = item.behavior.filter(b => {
+                const opposites: Record<string, string> = {
+                    'auto-advance': 'no-auto-advance',
+                    'no-auto-advance': 'auto-advance',
+                    'repeat': 'no-repeat',
+                    'no-repeat': 'repeat'
+                };
+                return opposites[b] && parentBehaviors.has(opposites[b]);
+            });
+            if (conflicting.length > 0) {
+                addIssue('warning', 'Structure', `Behavior conflicts with parent: ${conflicting.join(', ')}. Child overrides parent.`, false);
+            }
+        }
+    }
 
     if (!item.id) addIssue('error', 'Identity', 'Required property "id" is missing.', true);
     if (!item.type) addIssue('error', 'Identity', 'Required property "type" is missing.');
