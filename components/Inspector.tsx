@@ -88,7 +88,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
     : `w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 animate-in slide-in-from-right-2 duration-300 shrink-0`;
 
   return (
-    <aside className={inspectorStyles}>
+    <aside className={inspectorStyles} aria-label="Resource Inspector">
         {/* Fixed Header */}
         <div className={`h-14 flex items-center justify-between px-4 border-b shrink-0 ${settings.fieldMode ? 'bg-black text-white border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
              <div className="flex items-center gap-2">
@@ -97,12 +97,18 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
              </div>
              <div className="flex items-center gap-2">
                 <ShareButton item={resource} fieldMode={settings.fieldMode} />
-                <button onClick={onClose} className={`p-2 rounded-lg ${settings.fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-200'}`}><Icon name="close"/></button>
+                <button 
+                    aria-label="Close Inspector"
+                    onClick={onClose} 
+                    className={`p-2 rounded-lg ${settings.fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-200'}`}
+                >
+                    <Icon name="close"/>
+                </button>
              </div>
         </div>
 
         {/* Tabs */}
-        <div className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white'}`}>
+        <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white'}`}>
             {['metadata', 'provenance', 'learn'].map(t => (
                 <button
                   key={t}
@@ -110,6 +116,8 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                   onClick={() => setTab(t as any)}
                   aria-selected={tab === t}
                   role="tab"
+                  aria-controls={`inspector-tab-${t}`}
+                  id={`tab-${t}`}
                 >
                   {t === 'provenance' ? 'History' : t}
                 </button>
@@ -119,7 +127,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
       {/* Scrollable Content */}
       <div className={`flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar min-h-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'}`}>
         {tab === 'metadata' && (
-            <div className="space-y-6">
+            <div role="tabpanel" id="inspector-tab-metadata" aria-labelledby="tab-metadata" className="space-y-6">
                 {imageUrl && (
                     <div className={`aspect-video rounded-xl overflow-hidden border shadow-inner relative group ring-1 shrink-0 ${settings.fieldMode ? 'bg-slate-900 border-slate-800 ring-slate-800' : 'bg-slate-900 border-slate-200 ring-slate-100'}`}>
                         <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
@@ -128,8 +136,9 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
 
                 <div className="space-y-4">
                     <div>
-                        <label className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Archival Label</label>
+                        <label htmlFor="archival-label" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Archival Label</label>
                         <input 
+                            id="archival-label"
                             type="text" 
                             value={label} 
                             onChange={e => onUpdateResource({ label: { [settings.language]: [e.target.value] } })} 
@@ -138,8 +147,9 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                     </div>
 
                     <div>
-                        <label className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Scientific Summary</label>
+                        <label htmlFor="scientific-summary" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Scientific Summary</label>
                         <textarea 
+                            id="scientific-summary"
                             value={summary} 
                             onChange={e => onUpdateResource({ summary: { [settings.language]: [e.target.value] } })} 
                             className={`w-full text-sm p-4 rounded-lg outline-none min-h-[100px] leading-relaxed shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
@@ -152,6 +162,9 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                             <label className={`text-[10px] font-black uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Field Metadata</label>
                             <div className="relative">
                                 <button 
+                                    aria-label="Add metadata field"
+                                    aria-haspopup="true"
+                                    aria-expanded={showAddMenu}
                                     onClick={() => setShowAddMenu(!showAddMenu)} 
                                     className={`text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1 ${settings.fieldMode ? 'text-yellow-400' : 'text-iiif-blue'}`}
                                 >
@@ -173,16 +186,19 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                                 return (
                                     <div key={idx} className={`group relative p-3 rounded-lg border transition-colors shadow-sm ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}>
                                         <input 
+                                            aria-label={`Field name for index ${idx + 1}`}
                                             className={`w-full text-[10px] font-black uppercase bg-transparent outline-none mb-1 border-b ${settings.fieldMode ? 'text-slate-500 border-slate-800 focus:border-slate-700' : 'text-slate-500 border-transparent focus:border-slate-200'}`}
                                             value={mKey}
                                             onChange={e => handleUpdateMetadataField(idx, e.target.value, mVal)}
                                         />
                                         <input 
+                                            aria-label={`Field value for ${mKey}`}
                                             className={`w-full text-xs font-bold bg-transparent outline-none ${settings.fieldMode ? 'text-white' : 'text-slate-800'}`}
                                             value={mVal}
                                             onChange={e => handleUpdateMetadataField(idx, mKey, e.target.value)}
                                         />
                                         <button 
+                                            aria-label={`Remove field ${mKey}`}
                                             onClick={() => handleRemoveMetadataField(idx)}
                                             className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
@@ -198,11 +214,13 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
         )}
 
         {tab === 'provenance' && (
-            <ProvenancePanel resourceId={resource.id} fieldMode={settings.fieldMode} />
+            <div role="tabpanel" id="inspector-tab-provenance" aria-labelledby="tab-provenance">
+                <ProvenancePanel resourceId={resource.id} fieldMode={settings.fieldMode} />
+            </div>
         )}
 
         {tab === 'learn' && spec && (
-            <div className="space-y-4 animate-in fade-in duration-300">
+            <div role="tabpanel" id="inspector-tab-learn" aria-labelledby="tab-learn" className="space-y-4 animate-in fade-in duration-300">
                 <div className={`border p-5 rounded-2xl ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : `${config.bgClass} ${config.borderClass.replace('200','300')}`}`}>
                     <h3 className={`text-sm font-black uppercase mb-2 flex items-center gap-2 ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>
                         <Icon name={config.icon} className="text-xs" /> {resource.type} Model

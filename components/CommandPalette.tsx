@@ -67,8 +67,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   }, {} as Record<string, Command[]>);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[20vh]" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[20vh]" onClick={onClose} role="none">
         <div 
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command Palette"
             className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             onClick={e => e.stopPropagation()}
         >
@@ -78,6 +81,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                     ref={inputRef}
                     type="text" 
                     placeholder="Type a command..." 
+                    aria-label="Search commands"
+                    aria-autocomplete="list"
+                    aria-controls="command-list"
+                    aria-activedescendant={filteredCommands[activeIndex] ? `command-${filteredCommands[activeIndex].id}` : undefined}
                     className="flex-1 text-lg outline-none text-slate-700 placeholder:text-slate-300"
                     value={query}
                     onChange={e => { setQuery(e.target.value); setActiveIndex(0); }}
@@ -85,15 +92,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                 <div className="text-xs font-bold text-slate-300 border border-slate-200 rounded px-1.5 py-0.5">ESC</div>
             </div>
             
-            <div className="max-h-[60vh] overflow-y-auto p-2">
+            <div className="max-h-[60vh] overflow-y-auto p-2" id="command-list" role="listbox" aria-label="Commands">
                 {filteredCommands.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">
+                    <div className="p-8 text-center text-slate-400" role="option" aria-selected="false">
                         <p>No commands found.</p>
                     </div>
                 ) : (
                     Object.entries(grouped).map(([section, sectionCmds]: [string, Command[]]) => (
-                        <div key={section} className="mb-2">
-                            <div className="px-3 py-2 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        <div key={section} className="mb-2" role="group" aria-label={section}>
+                            <div className="px-3 py-2 text-[10px] font-bold uppercase text-slate-400 tracking-wider" role="presentation">
                                 {section}
                             </div>
                             {sectionCmds.map(cmd => {
@@ -102,6 +109,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                                 return (
                                     <button
                                         key={cmd.id}
+                                        id={`command-${cmd.id}`}
+                                        role="option"
+                                        aria-selected={isActive}
                                         onClick={() => { cmd.action(); onClose(); }}
                                         className={`w-full text-left px-3 py-3 rounded-lg flex items-center justify-between group transition-colors ${
                                             isActive ? 'bg-iiif-blue text-white' : 'text-slate-700 hover:bg-slate-50'

@@ -669,3 +669,37 @@ Parse URI fragments (`#xywh=`, `#t=`) into objects, re-serialize on save. Enable
 ### Pattern 12: Service-Linked Feature Detection
 
 Adapter pattern to detect services and conditionally enable features (deep zoom, search, auth).
+[
+  {
+    "pattern_name": "Relational Identity Mapping (Reference Pattern)",
+    "description": "The editor avoids duplicating large objects by using a 'Reference' pattern. In the internal state, components often hold onto a IIIF 'Reference' (a simple object with 'id' and 'type') rather than the full resource. This mirrors the IIIF specification's use of URIs to link resources, ensuring that a single Canvas can be referenced by multiple Ranges or AnnotationPages without creating data synchronization conflicts."
+  },
+  {
+    "pattern_name": "Strict Schema-Model Coupling",
+    "description": "The codebase utilizes TypeScript interfaces that are strictly mapped to the IIIF Presentation API 3.0 JSON schema. By enforcing 'Property Guards,' the application ensures that optional fields (like 'summary' or 'requiredStatement') are handled according to the spec's cardinality rules, preventing the UI from crashing when encountering 'orphaned' or incomplete IIIF objects."
+  },
+  {
+    "pattern_name": "Annotation-as-Content Strategy",
+    "description": "Following the IIIF v3 shift where 'everything is an annotation,' the editor treats the Canvas as a blank coordinate system. It uses a 'Painting' pattern where images, video, and audio are not properties of the Canvas itself but are interpreted as Annotation resources. This allows the editor to support complex multi-layered canvases by simply iterating through the 'items' list of the Canvas."
+  },
+  {
+    "pattern_name": "Recursive Resource Walking",
+    "description": "To generate tree views (like the Table of Contents), the editor employs a recursive 'Walker' pattern. This logic traverses the 'structures' (Ranges) of a manifest, identifying nested child ranges and canvas references. It interprets the specification's tree-like structure into a flat, searchable index for the UI's navigation sidebar."
+  },
+  {
+    "pattern_name": "Dumb Component / Smart Store Separation",
+    "description": "UI components are generally 'spec-agnostic' (dumb), focusing on rendering inputs and labels. The 'Smart' logic is moved to selectors (using the @iiif/vault store) which interpret the spec. For example, a component just asks for 'the label'; the selector performs the complex logic of checking the user's preferred language against the IIIF Language Map to return the correct string."
+  },
+  {
+    "pattern_name": "Virtual Canvas Geometry Logic",
+    "description": "The editor implements a coordinate calculation pattern to interpret the 'height' and 'width' of a Canvas. Since IIIF allows media to be larger or smaller than the canvas, the editor calculates 'Aspect Ratio Containers' to visually represent the canvas area, ensuring that annotations are positioned relative to the virtual coordinate space defined in the spec rather than the pixel size of the source image."
+  },
+  {
+    "pattern_name": "Temporal and Spatial Selector Abstraction",
+    "description": "When dealing with AV or specific regions of images, the editor abstracts 'Selectors' (e.g., #xywh= or #t=). It uses a parsing pattern to decompose these URI fragments into state-driven objects that the UI can manipulate (like a bounding box or a timeline segment), and then re-serializes them back into the standard IIIF fragment format upon saving."
+  },
+  {
+    "pattern_name": "Service-Linked Architecture",
+    "description": "The editor interprets the 'service' property of IIIF resources (like Image Services or Search Services) as external capability providers. It uses an 'Adapter' pattern to detect these services and conditionally enable UI features, such as deep-zooming (via OpenSeadragon) or autocomplete, only when the manifest explicitly declares support for those specific service profiles."
+  }
+]

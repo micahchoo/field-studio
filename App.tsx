@@ -188,14 +188,15 @@ const MainApp: React.FC = () => {
 
   return (
     <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans ${settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-100'}`}>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[2000] focus:bg-iiif-blue focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">Skip to content</a>
       <div className="flex-1 flex min-h-0 relative">
         {/* Mobile Header Affordance */}
         {isMobile && (
-            <div className="absolute top-0 left-0 right-0 h-14 bg-slate-900 z-[100] flex items-center px-4 justify-between shadow-lg">
-                <button onClick={() => setShowSidebar(true)} className="text-white p-2"><Icon name="menu"/></button>
+            <header className="absolute top-0 left-0 right-0 h-14 bg-slate-900 z-[100] flex items-center px-4 justify-between shadow-lg">
+                <button onClick={() => setShowSidebar(true)} aria-label="Open sidebar" className="text-white p-2"><Icon name="menu"/></button>
                 <div className="text-yellow-400 font-black tracking-tighter uppercase text-xs">Field Studio</div>
-                <button onClick={() => selectedItem && setShowInspector(true)} className={`text-white p-2 ${!selectedItem ? 'opacity-20' : ''}`}><Icon name="info"/></button>
-            </div>
+                <button onClick={() => selectedItem && setShowInspector(true)} aria-label="Open inspector" className={`text-white p-2 ${!selectedItem ? 'opacity-20' : ''}`}><Icon name="info"/></button>
+            </header>
         )}
 
         <Sidebar 
@@ -217,7 +218,7 @@ const MainApp: React.FC = () => {
             onOpenSettings={() => setShowPersonaSettings(true)}
         />
         
-        <main className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''}`}>
+        <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''}`}>
             {currentMode === 'archive' && (
               <ArchiveView 
                 root={root} onUpdate={handleUpdateRoot} 

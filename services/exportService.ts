@@ -114,14 +114,40 @@ class ExportService {
         processItem(processedRoot, root);
 
         if (options.format === 'static-site') {
+            // Bundle Universal Viewer assets for offline use
+            try {
+                const uvAssets = await this.fetchViewerAssets();
+                virtualFiles.push(...uvAssets);
+            } catch (e) {
+                console.error("Failed to bundle viewer assets, falling back to CDN", e);
+            }
+
             virtualFiles.push({
                 path: 'index.html',
-                content: this.generateIndexHtml(root),
+                content: this.generateIndexHtml(root, options),
                 type: 'html'
             });
         }
 
         return virtualFiles;
+    }
+
+    private async fetchViewerAssets(): Promise<VirtualFile[]> {
+        const assets: { path: string, url: string }[] = [
+            { path: 'viewer/uv.css', url: 'https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.css' },
+            { path: 'viewer/uv.js', url: 'https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.js' }
+        ];
+
+        return Promise.all(assets.map(async (a) => {
+            const resp = await fetch(a.url);
+            if (!resp.ok) throw new Error(`Failed to fetch ${a.url}`);
+            const blob = await resp.blob();
+            return {
+                path: a.path,
+                content: blob,
+                type: 'asset' as const
+            };
+        }));
     }
 
     async exportArchive(root: IIIFItem, options: ExportOptions, onProgress: (p: ExportProgress) => void): Promise<Blob> {
@@ -183,11 +209,14 @@ class ExportService {
      * Generates self-contained HTML with embedded Universal Viewer
      * Spec §12.2: Deployable static site with viewer
      */
-    private generateIndexHtml(root: IIIFItem): string {
+    private generateIndexHtml(root: IIIFItem, options: ExportOptions): string {
         const rootIdVal = root.id.split('/').pop();
         const rootType = root.type.toLowerCase();
         const manifestUrl = `iiif/${rootType}/${rootIdVal}.json`;
         const title = root.label?.none?.[0] || root.label?.en?.[0] || 'IIIF Export';
+
+        const uvCss = options.format === 'static-site' ? 'viewer/uv.css' : 'https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.css';
+        const uvJs = options.format === 'static-site' ? 'viewer/uv.js' : 'https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.js';
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -197,8 +226,8 @@ class ExportService {
     <title>${title} - IIIF Archive</title>
 
     <!-- Universal Viewer -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.css">
-    <script src="https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.js"></script>
+    <link rel="stylesheet" type="text/css" href="${uvCss}">
+    <script src="${uvJs}"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }

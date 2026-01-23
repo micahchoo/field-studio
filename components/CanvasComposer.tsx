@@ -93,7 +93,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
   };
 
   return (
-    <div className="fixed inset-0 z-[500] bg-slate-950 flex flex-col animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[500] bg-slate-950 flex flex-col animate-in fade-in duration-300" role="dialog" aria-modal="true" aria-label="Synthesis Workspace">
       <div className="h-14 bg-slate-900 border-b border-white/10 flex items-center justify-between px-6 shrink-0 shadow-2xl">
         <div className="flex items-center gap-6">
           <h2 className="text-white font-bold flex items-center gap-2">
@@ -102,25 +102,25 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
           <div className="h-6 w-px bg-white/10"></div>
           <div className="flex items-center gap-2">
              <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Dimensions</span>
-             <input type="number" value={canvasDimensions.w} onChange={e => setCanvasDimensions({...canvasDimensions, w: Number(e.target.value)})} className="w-16 bg-white/5 text-white text-[10px] border border-white/10 rounded px-1 outline-none"/>
+             <input type="number" aria-label="Canvas Width" value={canvasDimensions.w} onChange={e => setCanvasDimensions({...canvasDimensions, w: Number(e.target.value)})} className="w-16 bg-white/5 text-white text-[10px] border border-white/10 rounded px-1 outline-none"/>
              <span className="text-white/20">×</span>
-             <input type="number" value={canvasDimensions.h} onChange={e => setCanvasDimensions({...canvasDimensions, h: Number(e.target.value)})} className="w-16 bg-white/5 text-white text-[10px] border border-white/10 rounded px-1 outline-none"/>
+             <input type="number" aria-label="Canvas Height" value={canvasDimensions.h} onChange={e => setCanvasDimensions({...canvasDimensions, h: Number(e.target.value)})} className="w-16 bg-white/5 text-white text-[10px] border border-white/10 rounded px-1 outline-none"/>
           </div>
           <div className="h-6 w-px bg-white/10"></div>
-          <div className="flex bg-white/5 border border-white/10 rounded p-1">
+          <div className="flex bg-white/5 border border-white/10 rounded p-1" role="group" aria-label="Background Mode">
               {(['grid', 'dark', 'light'] as const).map(m => (
-                  <button key={m} onClick={() => setBgMode(m)} className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${bgMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{m}</button>
+                  <button key={m} onClick={() => setBgMode(m)} aria-pressed={bgMode === m} className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${bgMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{m}</button>
               ))}
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-white/5 border border-white/10 rounded p-1">
-              <button onClick={() => setScale(s => s * 0.8)} className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></button>
-              <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center">{Math.round(scale * 100)}%</span>
-              <button onClick={() => setScale(s => s * 1.2) } className="p-1 text-white/40 hover:text-white"><Icon name="add"/></button>
+              <button onClick={() => setScale(s => s * 0.8)} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></button>
+              <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center" aria-live="polite">{Math.round(scale * 100)}%</span>
+              <button onClick={() => setScale(s => s * 1.2) } aria-label="Zoom In" className="p-1 text-white/40 hover:text-white"><Icon name="add"/></button>
           </div>
-          <button onClick={onClose} className="px-4 py-2 text-white/40 hover:text-white font-bold text-sm">Cancel</button>
-          <button onClick={handleSave} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-black uppercase tracking-widest text-xs hover:bg-indigo-500 shadow-xl transition-all">Apply Composition</button>
+          <button onClick={onClose} aria-label="Cancel and close workspace" className="px-4 py-2 text-white/40 hover:text-white font-bold text-sm">Cancel</button>
+          <button onClick={handleSave} aria-label="Apply composition to canvas" className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-black uppercase tracking-widest text-xs hover:bg-indigo-500 shadow-xl transition-all">Apply Composition</button>
         </div>
       </div>
 
@@ -130,18 +130,26 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
                 <span>Resource Layers</span>
                 <Icon name="layers" className="text-xs"/>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar" role="list" aria-label="Resource Layers">
                 {layers.length === 0 ? (
                     <div className="text-center py-20 text-slate-600 italic text-sm">No items on canvas.</div>
                 ) : layers.map((l, i) => (
-                    <div key={l.id} onClick={() => setActiveId(l.id)} className={`p-4 rounded-xl border transition-all cursor-pointer group ${activeId === l.id ? 'bg-indigo-600/20 border-indigo-500' : 'bg-white/5 border-white/5 hover:border-white/20'}`}>
+                    <div 
+                      key={l.id} 
+                      role="listitem"
+                      tabIndex={0}
+                      aria-selected={activeId === l.id}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveId(l.id); } }}
+                      onClick={() => setActiveId(l.id)} 
+                      className={`p-4 rounded-xl border transition-all cursor-pointer group outline-none focus:ring-2 focus:ring-indigo-500 ${activeId === l.id ? 'bg-indigo-600/20 border-indigo-500' : 'bg-white/5 border-white/5 hover:border-white/20'}`}
+                    >
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-[11px] font-bold text-white truncate max-w-[140px]">{l.resource.label?.['none']?.[0]}</span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); setLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer"><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'down'); }} className="p-1 hover:bg-white/10 rounded" title="Move Back"><Icon name="arrow_downward" className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'up'); }} className="p-1 hover:bg-white/10 rounded" title="Move Forward"><Icon name="arrow_upward" className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); setLayers(prev => prev.filter(x => x.id !== l.id)); }} className="p-1 hover:bg-red-500 text-white rounded" title="Remove Layer"><Icon name="delete" className="text-[14px]"/></button>
+                                <button onClick={(e) => { e.stopPropagation(); setLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer" aria-label={l.locked ? "Unlock Layer" : "Lock Layer"}><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></button>
+                                <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'down'); }} className="p-1 hover:bg-white/10 rounded" title="Move Back" aria-label="Move Layer Back"><Icon name="arrow_downward" className="text-[14px]"/></button>
+                                <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'up'); }} className="p-1 hover:bg-white/10 rounded" title="Move Forward" aria-label="Move Layer Forward"><Icon name="arrow_upward" className="text-[14px]"/></button>
+                                <button onClick={(e) => { e.stopPropagation(); setLayers(prev => prev.filter(x => x.id !== l.id)); }} className="p-1 hover:bg-red-500 text-white rounded" title="Remove Layer" aria-label="Remove Layer"><Icon name="delete" className="text-[14px]"/></button>
                             </div>
                         </div>
                         <div className={`space-y-3 ${l.locked ? 'opacity-40 pointer-events-none' : ''}`}>
@@ -149,13 +157,13 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
                                 {['x','y','w','h'].map(f => (
                                     <div key={f} className="space-y-1">
                                         <span className="text-[8px] font-black text-white/30 uppercase block">{f}</span>
-                                        <input type="number" value={(l as any)[f]} onChange={e => setLayers(layers.map(x => x.id === l.id ? {...x, [f]: Number(e.target.value)} : x))} className="w-full bg-black/40 text-white text-[10px] border-none rounded p-1 outline-none"/>
+                                        <input type="number" aria-label={`Layer ${f} coordinate`} value={(l as any)[f]} onChange={e => setLayers(layers.map(x => x.id === l.id ? {...x, [f]: Number(e.target.value)} : x))} className="w-full bg-black/40 text-white text-[10px] border-none rounded p-1 outline-none"/>
                                     </div>
                                 ))}
                             </div>
                             <div className="space-y-1">
                                 <div className="flex justify-between text-[8px] font-black text-white/30 uppercase"><span>Opacity</span><span>{Math.round(l.opacity * 100)}%</span></div>
-                                <input type="range" min="0" max="1" step="0.05" value={l.opacity} onChange={e => setLayers(layers.map(x => x.id === l.id ? {...x, opacity: Number(e.target.value)} : x))} className="w-full accent-indigo-500" />
+                                <input type="range" aria-label="Layer Opacity" min="0" max="1" step="0.05" value={l.opacity} onChange={e => setLayers(layers.map(x => x.id === l.id ? {...x, opacity: Number(e.target.value)} : x))} className="w-full accent-indigo-500" />
                             </div>
                         </div>
                         {activeId === l.id && !l.locked && (
@@ -175,7 +183,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
                 height: canvasDimensions.h * scale, 
                 backgroundImage: bgMode === 'grid' ? 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)' : 'none', 
                 backgroundSize: '20px 20px' 
-            }}>
+            }} aria-label="Canvas Area">
                 {layers.map((l, idx) => (
                     <div 
                         key={l.id} 
@@ -183,7 +191,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
                         className={`absolute group select-none transition-all ${activeId === l.id ? 'ring-2 ring-indigo-500 z-50 shadow-2xl' : 'z-10'}`} 
                         style={{ left: l.x * scale, top: l.y * scale, width: l.w * scale, height: l.h * scale, opacity: l.opacity, zIndex: layers.length - idx }}
                     >
-                        {l.resource._blobUrl ? <img src={l.resource._blobUrl} className="w-full h-full object-fill pointer-events-none" /> : <div className="w-full h-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20"><Icon name="image" className="text-4xl"/></div>}
+                        {l.resource._blobUrl ? <img src={l.resource._blobUrl} className="w-full h-full object-fill pointer-events-none" alt={l.resource.label?.['none']?.[0] || 'Layer Image'} /> : <div className="w-full h-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20"><Icon name="image" className="text-4xl"/></div>}
                         {activeId === l.id && (
                             <>
                                 <div className="absolute -top-6 left-0 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-lg flex items-center gap-1">

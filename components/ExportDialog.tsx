@@ -67,22 +67,27 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
   const criticalErrors = integrityIssues.filter(i => i.level === 'error');
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <div className={`bg-white rounded-3xl shadow-2xl transition-all duration-500 overflow-hidden flex flex-col ${step === 'dry-run' ? 'max-w-5xl w-full' : 'max-w-md w-full'}`}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" role="none">
+        <div 
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="export-dialog-title"
+            className={`bg-white rounded-3xl shadow-2xl transition-all duration-500 overflow-hidden flex flex-col ${step === 'dry-run' ? 'max-w-5xl w-full' : 'max-w-md w-full'}`}
+        >
             <div className="p-6 border-b flex justify-between items-center bg-slate-50">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-iiif-blue rounded-xl flex items-center justify-center text-white shadow-lg">
                         <Icon name="publish" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Archive Export</h2>
+                        <h2 id="export-dialog-title" className="text-lg font-black text-slate-800 uppercase tracking-tighter">Archive Export</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             {step === 'config' ? 'Step 1: Configuration' : step === 'dry-run' ? 'Step 2: Integrity & Preview' : 'Step 3: Compressing'}
                         </p>
                     </div>
                 </div>
                 {step !== 'exporting' && (
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                    <button onClick={onClose} aria-label="Close dialog" className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
                         <Icon name="close"/>
                     </button>
                 )}
@@ -90,7 +95,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
             
             <div className="flex-1 overflow-y-auto p-8">
                 {errorMsg && (
-                    <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-800 text-sm mb-6 flex gap-3 animate-in shake">
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-800 text-sm mb-6 flex gap-3 animate-in shake" role="alert">
                         <Icon name="error" className="shrink-0 mt-0.5" />
                         <div>
                             <p className="font-bold mb-1 uppercase tracking-tighter">Integrity Failure</p>
@@ -101,8 +106,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
 
                 {step === 'config' && (
                     <div className="space-y-8 animate-in slide-in-from-right-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-labelledby="export-format-label">
+                            <span id="export-format-label" className="sr-only">Choose Export Format</span>
                             <button 
+                                role="radio"
+                                aria-checked={format === 'static-site'}
                                 className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'static-site' ? 'border-iiif-blue bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
                                 onClick={() => setFormat('static-site')}
                             >
@@ -112,6 +120,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 {format === 'static-site' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
                             </button>
                             <button 
+                                role="radio"
+                                aria-checked={format === 'raw-iiif'}
                                 className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'raw-iiif' ? 'border-iiif-blue bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
                                 onClick={() => setFormat('raw-iiif')}
                             >
@@ -140,7 +150,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                 {step === 'dry-run' && (
                     <div className="space-y-6 animate-in fade-in duration-500">
                         {processing ? (
-                            <div className="h-[500px] flex flex-col items-center justify-center gap-4 text-slate-400">
+                            <div className="h-[500px] flex flex-col items-center justify-center gap-4 text-slate-400" aria-live="polite">
                                 <div className="w-12 h-12 border-4 border-slate-100 border-t-iiif-blue rounded-full animate-spin"></div>
                                 <p className="text-xs font-black uppercase tracking-widest">Synthesizing Archive DNA...</p>
                             </div>
@@ -181,7 +191,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
 
                 {step === 'exporting' && (
                     <div className="text-center py-12 space-y-6">
-                        <div className="relative w-24 h-24 mx-auto">
+                        <div className="relative w-24 h-24 mx-auto" aria-live="polite">
                             <div className="absolute inset-0 border-8 border-slate-100 rounded-full"></div>
                             <div 
                                 className="absolute inset-0 border-8 border-iiif-blue rounded-full transition-all duration-300"
