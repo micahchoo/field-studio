@@ -505,3 +505,74 @@ Based on expert feedback, add these sections to the Technical Specification:
    - Viewer compatibility requirements
    - v2/v3 conversion specification
    - CORS handling documentation
+
+---
+
+## 13. Architecture Inspiration (Digirati Manifest Editor)
+
+Based on analysis of Digirati's `@iiif/vault` architecture. See `ARCHITECTURE_INSPIRATION.md` for full analysis.
+
+### Critical Anti-Patterns to Fix
+
+**Current Issue**: 15+ instances of `JSON.parse(JSON.stringify(root))` for state updates.
+- Causes O(n) memory allocation on every change
+- Blocks main thread for large manifests
+- Prevents efficient undo/redo implementation
+
+### Vault Pattern Migration (Priority: CRITICAL)
+
+| Component | Pattern | Benefit |
+|-----------|---------|---------|
+| **Normalized State** | Flat entity store by ID | O(1) lookups instead of tree traversal |
+| **Action-Driven Mutations** | Dispatch validated actions | Pre-mutation validation + undo/redo |
+| **Entity Hooks** | `useManifest()`, `useCanvas()` | Encapsulated IIIF complexity |
+| **V2↔V3 Bridge** | Upgrade on load, downgrade on export | Simplified component logic |
+
+### New Dependencies to Consider
+
+```json
+{
+  "@iiif/vault": "^0.9.x",
+  "@iiif/parser": "^1.1.x",
+  "immer": "^10.x"
+}
+```
+
+### Architecture Refactor Phases
+
+**Phase A: State Normalization** (Critical)
+1. Create `services/vault.ts` with normalized state
+2. Implement `normalize()` on project load
+3. Implement `denormalize()` on export
+4. Migrate `App.tsx` to use vault
+
+**Phase B: Action System** (High)
+1. Create `services/actions.ts` with typed actions
+2. Implement reducer with validation
+3. Add undo/redo history stack
+4. Integrate provenance logging with actions
+
+**Phase C: Hook Migration** (High)
+1. Create `useManifest()`, `useCanvas()`, `useAnnotation()` hooks
+2. Add automatic locale resolution
+3. Migrate components to use hooks
+4. Remove direct `findItem()` traversals
+
+**Phase D: Spec Bridge** (Medium)
+1. Integrate `@iiif/parser` for v2→v3 upgrading
+2. Add v2 export option
+3. Improve external manifest import reliability
+
+**Phase E: Workbench Refactor** (Low)
+1. Create workbench folder structure
+2. Isolate mode-specific state and actions
+3. Enable lazy loading by workbench
+
+### Performance Targets
+
+| Metric | Current | After Vault |
+|--------|---------|-------------|
+| Single property update | ~50ms | <5ms |
+| Memory (1000 canvases) | ~500MB | ~100MB |
+| Undo/redo support | None | Full history |
+| v2 import success rate | ~70% | 99%+ |
