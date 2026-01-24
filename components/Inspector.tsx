@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
@@ -40,36 +40,76 @@ const IIIF_SPECS: Record<string, {
 };
 
 const DebouncedInput = ({ value, onChange, ...props }: any) => {
-  const [innerValue, setInnerValue] = useState(value);
-  useEffect(() => { setInnerValue(value); }, [value]);
+  const [innerValue, setInnerValue] = useState(value ?? '');
+  const onChangeRef = useRef<(val: string) => void>(onChange);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTyping = useRef<boolean>(false);
 
+  // Keep onChange ref current without triggering effects
+  onChangeRef.current = onChange;
+
+  // Sync from external prop changes only when not actively typing
   useEffect(() => {
-    // Only fire if value actually changed from prop
-    if (innerValue === value) return;
-    
-    const timeout = setTimeout(() => {
-      onChange(innerValue);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [innerValue, value, onChange]);
+    if (!isTyping.current) {
+      setInnerValue(value ?? '');
+    }
+  }, [value]);
 
-  return <input {...props} value={innerValue} onChange={e => setInnerValue(e.target.value)} />;
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.value;
+    isTyping.current = true;
+    setInnerValue(newVal);
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChangeRef.current(newVal);
+      isTyping.current = false;
+    }, 300);
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return <input {...props} value={innerValue} onChange={handleChange} />;
 };
 
 const DebouncedTextarea = ({ value, onChange, ...props }: any) => {
-  const [innerValue, setInnerValue] = useState(value);
-  useEffect(() => { setInnerValue(value); }, [value]);
+  const [innerValue, setInnerValue] = useState(value ?? '');
+  const onChangeRef = useRef<(val: string) => void>(onChange);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTyping = useRef<boolean>(false);
+
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (innerValue === value) return;
-    
-    const timeout = setTimeout(() => {
-      onChange(innerValue);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [innerValue, value, onChange]);
+    if (!isTyping.current) {
+      setInnerValue(value ?? '');
+    }
+  }, [value]);
 
-  return <textarea {...props} value={innerValue} onChange={e => setInnerValue(e.target.value)} />;
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newVal = e.target.value;
+    isTyping.current = true;
+    setInnerValue(newVal);
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChangeRef.current(newVal);
+      isTyping.current = false;
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return <textarea {...props} value={innerValue} onChange={handleChange} />;
 };
 
 export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose, isMobile }) => {

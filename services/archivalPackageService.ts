@@ -534,12 +534,12 @@ class ArchivalPackageService {
     if (!paintingAnno?.body) return null;
 
     const body = Array.isArray(paintingAnno.body) ? paintingAnno.body[0] : paintingAnno.body;
-    const mediaId = typeof body === 'string' ? body : body?.id;
+    const mediaId = typeof body === 'string' ? body : (body as any)?.id;
 
     if (!mediaId) return null;
 
     // Try to fetch from storage
-    const stored = await storage.getFile(mediaId);
+    const stored = await storage.getAsset(mediaId);
     if (stored) {
       const digest = await this.computeDigest(stored, algorithm);
       const filename = mediaId.split('/').pop() || 'media';

@@ -1,0 +1,15 @@
+View,Current,expected
+Archive,Clicking on the extract button says added view as annotation but there is no indication that anything worked,The button that is hidden behind thge fullscreen button opens up somehtiong called evidence which has a screenshot of the view but you can’t zoom too deeply into the image or add annotations
+Archive,Share button gives a url that doesn’t work,The url should take you to the detailed view of the object
+Inspector sidebar,Field complexity doesn’t change regardless of what you chose during the onboarding,The metadata needs to show that you can add the full range of iiif metadata and any other additional vocabularies
+Archive,The compose button opens up a view that is very confusing,"Take it out, if it does not have a clear purpose"
+Archive,The selection tab on top has a weird white bar behind it that crops the detailed view,Integrate this into one of the fixed parts of the interface like the inspector tab
+Archive,The settings button opens up the image request builder which is cropped on the top by the selection bar and the weird white background behind it,The modal should be fully visible
+Archive,The image request builder console gives the wrong url which gives this error - The server is configured with a public base URL of /field-studio/ - did you mean to visit /field-studio/iiif/image/6097e4cf-6613-421a-aa66-e126d3002d96-1600115354-design-appr-tablewebp/full/max/0/default.jpg instead?,The url should take you to the detailed view of the object
+Archive,The multiselect in the archive view does not work very well,you should be able to use keyboard shortcuts to multiselect whether or not the detailed view is open
+Ingest,The choice to choose manifest or collection seems to have unpredictable consequences,The rules should be documented somewhere based on the iiif spec
+Structure and file tree,"too long of a scroll since it shows canvas, annotation, annotation page,manifest and collections",needs a better way to navigate
+Structure,"Has nonsensical buttons like Build TOC, synthesis workbench(this opens a whole different detail view than from the arvhive), reveal in archive, view in workbench","Consolidate, conform, collate"
+app,There are screens that you cannot back out of unless you refresh,better signposting
+Structure,No idea what the structural modelling behavior policies do,better consequences and explanations
+Structure,Choosing a differnt canvas on the structure filetree doesn’t make a change in the inspector,it should

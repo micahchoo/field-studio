@@ -10,6 +10,27 @@
 
 import { IIIFItem, IIIFManifest, IIIFCanvas, LanguageMap } from '../types';
 
+// GeoJSON type declarations (subset needed for this service)
+declare namespace GeoJSON {
+  interface FeatureCollection {
+    type: 'FeatureCollection';
+    features: Feature[];
+  }
+  interface Feature {
+    type: 'Feature';
+    geometry: Geometry;
+    properties: Record<string, any> | null;
+  }
+  type Geometry =
+    | { type: 'Point'; coordinates: [number, number] }
+    | { type: 'LineString'; coordinates: Array<[number, number]> }
+    | { type: 'Polygon'; coordinates: Array<Array<[number, number]>> }
+    | { type: 'MultiPoint'; coordinates: Array<[number, number]> }
+    | { type: 'MultiLineString'; coordinates: Array<Array<[number, number]>> }
+    | { type: 'MultiPolygon'; coordinates: Array<Array<Array<[number, number]>>> }
+    | { type: 'GeometryCollection'; geometries: Geometry[] };
+}
+
 // ============================================================================
 // Types
 // ============================================================================

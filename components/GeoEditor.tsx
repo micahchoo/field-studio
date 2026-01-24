@@ -17,9 +17,9 @@ import {
 import { IIIFItem, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 
-// Leaflet CSS should be imported in the app
-// import 'leaflet/dist/leaflet.css';
-// import 'leaflet-draw/dist/leaflet.draw.css';
+// Leaflet type declaration for dynamic import
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LeafletModule = any;
 
 interface GeoEditorProps {
   /** The IIIF item to edit navPlace for */
@@ -57,7 +57,8 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
 
     // Dynamic import of Leaflet
     const initMap = async () => {
-      const L = (await import('leaflet')).default;
+      // @ts-ignore - Leaflet loaded via CDN
+      const L = (await import('leaflet' as any)).default as LeafletModule;
 
       // Fix default marker icon issue
       delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -121,7 +122,8 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
     if (!leafletMapRef.current || !drawnItemsRef.current) return;
 
     const loadLeaflet = async () => {
-      const L = (await import('leaflet')).default;
+      // @ts-ignore - Leaflet loaded via CDN
+      const L = (await import('leaflet' as any)).default as LeafletModule;
       drawnItemsRef.current.clearLayers();
       if (navPlace) {
         loadNavPlaceToMap(navPlace, leafletMapRef.current, drawnItemsRef.current, L);
@@ -421,7 +423,8 @@ export const GeoPreview: React.FC<{
     if (!mapRef.current || !navPlace || leafletMapRef.current) return;
 
     const initMap = async () => {
-      const L = (await import('leaflet')).default;
+      // @ts-ignore - Leaflet loaded via CDN
+      const L = (await import('leaflet' as any)).default as LeafletModule;
 
       const map = L.map(mapRef.current!, {
         center: [0, 0],

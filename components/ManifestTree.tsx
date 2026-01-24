@@ -10,8 +10,19 @@ interface ManifestTreeProps {
 
 const TreeItem: React.FC<{ item: IIIFItem; level: number; selectedId: string | null; onSelect: (id: string) => void }> = ({ item, level, selectedId, onSelect }) => {
   const isSelected = item.id === selectedId;
-  const isCollection = item.type === 'Collection';
   const label = item.label?.['en']?.[0] || item.label?.['none']?.[0] || 'Untitled';
+
+  // Determine icon based on type
+  const getIcon = () => {
+    switch (item.type) {
+      case 'Collection': return 'folder';
+      case 'Manifest': return 'menu_book';
+      case 'Canvas': return 'image';
+      case 'Range': return 'segment';
+      case 'AnnotationPage': return 'notes';
+      default: return 'description';
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -19,22 +30,27 @@ const TreeItem: React.FC<{ item: IIIFItem; level: number; selectedId: string | n
       onSelect(item.id);
     }
   };
-  
+
+  // Check if this item has children to render
+  const children = (item as any).items;
+  const hasChildren = children && children.length > 0;
+
   return (
     <div className="select-none" role="none">
-      <div 
+      <div
         role="treeitem"
         aria-selected={isSelected}
+        aria-expanded={hasChildren ? true : undefined}
         tabIndex={0}
         onKeyDown={handleKeyDown}
         className={`flex items-center gap-2 py-1.5 px-2 cursor-pointer hover:bg-slate-800 transition-colors outline-none focus:ring-2 focus:ring-iiif-blue/50 ${isSelected ? 'bg-iiif-blue text-white' : 'text-slate-400'}`}
         style={{ paddingLeft: level * 12 + 8 }}
         onClick={(e) => { e.stopPropagation(); onSelect(item.id); }}
       >
-        <Icon name={isCollection ? "folder" : "menu_book"} className="text-sm" />
+        <Icon name={getIcon()} className="text-sm" />
         <span className="text-xs truncate font-medium">{label}</span>
       </div>
-      {isCollection && (item as IIIFCollection).items?.map(child => (
+      {hasChildren && children.map((child: IIIFItem) => (
         <TreeItem key={child.id} item={child} level={level + 1} selectedId={selectedId} onSelect={onSelect} />
       ))}
     </div>

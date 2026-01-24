@@ -65,7 +65,7 @@ export const ImageRequestWorkbench: React.FC<ImageRequestWorkbenchProps> = ({ ca
   const url = isImageService ? `${imageId}/${params.region}/${params.size}/${params.rotation}/${params.quality}.${params.format}` : imageId;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm pointer-events-auto">
+    <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm pointer-events-auto">
         <div className="bg-white w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
             
             <div className="flex-1 bg-slate-900 relative flex flex-col overflow-hidden">

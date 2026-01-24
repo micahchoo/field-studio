@@ -20,6 +20,7 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { ExternalImportDialog } from './components/ExternalImportDialog';
 import { BatchEditor } from './components/BatchEditor';
 import { PersonaSettings } from './components/PersonaSettings';
+import { CommandPalette } from './components/CommandPalette';
 import { Icon } from './components/Icon';
 import { buildTree, ingestTree } from './services/iiifBuilder';
 import { storage } from './services/storage';
@@ -52,6 +53,7 @@ const MainApp: React.FC = () => {
   const [showExternalImport, setShowExternalImport] = useState(false);
   const [showBatchEditor, setShowBatchEditor] = useState(false);
   const [showPersonaSettings, setShowPersonaSettings] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [batchIds, setBatchIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stagingTree, setStagingTree] = useState<FileTree | null>(null);
@@ -64,6 +66,33 @@ const MainApp: React.FC = () => {
 
   // Enable undo/redo keyboard shortcuts (Cmd+Z, Cmd+Shift+Z)
   useUndoRedoShortcuts();
+
+  // Command Palette keyboard shortcut (Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Command palette commands
+  const commands = useMemo(() => [
+    { id: 'archive', label: 'Go to Archive', icon: 'inventory_2', shortcut: '⌘1', action: () => setCurrentMode('archive'), section: 'Navigation' as const },
+    { id: 'collections', label: 'Go to Collections', icon: 'folder_special', shortcut: '⌘2', action: () => setCurrentMode('collections'), section: 'Navigation' as const },
+    { id: 'metadata', label: 'Go to Metadata', icon: 'table_chart', shortcut: '⌘3', action: () => setCurrentMode('metadata'), section: 'Navigation' as const },
+    { id: 'search', label: 'Go to Search', icon: 'search', shortcut: '⌘4', action: () => setCurrentMode('search'), section: 'Navigation' as const },
+    { id: 'export', label: 'Export Archive', icon: 'download', shortcut: '⌘E', action: () => setShowExport(true), section: 'Actions' as const },
+    { id: 'import', label: 'Import External IIIF', icon: 'cloud_download', action: () => setShowExternalImport(true), section: 'Actions' as const },
+    { id: 'settings', label: 'Open Settings', icon: 'settings', shortcut: '⌘,', action: () => setShowPersonaSettings(true), section: 'Actions' as const },
+    { id: 'qc', label: 'Quality Control Dashboard', icon: 'fact_check', action: () => setShowQCDashboard(true), section: 'Actions' as const },
+    { id: 'fieldmode', label: 'Toggle Field Mode', icon: 'contrast', action: () => setSettings(s => ({ ...s, fieldMode: !s.fieldMode })), section: 'View' as const },
+    { id: 'sidebar', label: 'Toggle Sidebar', icon: 'side_navigation', action: () => setShowSidebar(s => !s), section: 'View' as const },
+    { id: 'inspector', label: 'Toggle Inspector', icon: 'info', action: () => setShowInspector(s => !s), section: 'View' as const },
+  ], []);
 
   // Responsive listener
   useEffect(() => {
@@ -123,18 +152,14 @@ const MainApp: React.FC = () => {
   useEffect(() => {
       storage.loadProject().then(async (proj) => {
         if (proj) loadRoot(proj); // Load into vault
-        const params = new URLSearchParams(window.location.search);
-        const encodedState = params.get('iiif-content');
-        if (encodedState) {
-            const contentState = contentStateService.decode(encodedState);
-            if (contentState) {
-                const target = contentState.target;
-                const targetId = contentState.id || (target && typeof target !== 'string' && !Array.isArray(target) ? target.source && typeof target.source === 'object' ? (target.source as any).id : target.source : typeof target === 'string' ? target : null);
-                if (targetId) {
-                  setSelectedId(targetId);
-                  setCurrentMode('viewer');
-                }
-            }
+
+        // Handle IIIF Content State from URL
+        const viewport = contentStateService.parseFromUrl();
+        if (viewport) {
+          console.log('[App] Content State detected:', viewport);
+          setSelectedId(viewport.canvasId);
+          setCurrentMode('viewer');
+          setShowInspector(true);
         }
       });
       if (!localStorage.getItem('iiif-field-setup-complete')) { setShowOnboarding(true); }
@@ -277,10 +302,11 @@ const MainApp: React.FC = () => {
             <ContextualHelp mode={currentMode} isInspectorOpen={showInspector && !!selectedItem && !settings.fieldMode} />
         </main>
 
-        <Inspector 
-            resource={selectedItem} onUpdateResource={handleItemUpdate} settings={settings} 
+        <Inspector
+            key={selectedId || 'none'}
+            resource={selectedItem} onUpdateResource={handleItemUpdate} settings={settings}
             visible={showInspector && !!selectedId} isMobile={isMobile}
-            onClose={() => { setShowInspector(false); setSelectedId(null); }} 
+            onClose={() => { setShowInspector(false); setSelectedId(null); }}
         />
       </div>
       
@@ -291,11 +317,20 @@ const MainApp: React.FC = () => {
       {stagingTree && <StagingArea initialTree={stagingTree} existingRoot={root} onIngest={async (t, m, p) => { const { root: r } = await ingestTree(t, m ? root : null, p); handleUpdateRoot(r!); setStagingTree(null); }} onCancel={() => setStagingTree(null)} />}
       {showExport && root && <ExportDialog root={root} onClose={() => setShowExport(false)} />}
       {showQCDashboard && <QCDashboard root={root} onUpdate={handleUpdateRoot} issuesMap={validationIssuesMap} totalItems={root?.items?.length || 0} onSelect={(id) => handleReveal(id, 'archive')} onClose={() => setShowQCDashboard(false)} />}
-      {showOnboarding && <OnboardingModal onComplete={(lvl) => { 
+      {showOnboarding && <OnboardingModal onComplete={(lvl) => {
           const template = lvl === 'simple' ? METADATA_TEMPLATES.RESEARCHER : lvl === 'standard' ? METADATA_TEMPLATES.ARCHIVIST : METADATA_TEMPLATES.DEVELOPER;
-          setSettings(s => ({ ...s, abstractionLevel: lvl, fieldMode: lvl === 'simple', metadataTemplate: template })); 
-          localStorage.setItem('iiif-field-setup-complete', 'true'); 
-          setShowOnboarding(false); 
+          const complexity = lvl === 'simple' ? 'simple' : lvl === 'advanced' ? 'advanced' : 'standard';
+          const showTechnical = lvl !== 'simple';
+          setSettings(s => ({
+            ...s,
+            abstractionLevel: lvl,
+            fieldMode: lvl === 'simple',
+            metadataTemplate: template,
+            metadataComplexity: complexity as any,
+            showTechnicalIds: showTechnical
+          }));
+          localStorage.setItem('iiif-field-setup-complete', 'true');
+          setShowOnboarding(false);
       }} />}
       {showExternalImport && <ExternalImportDialog onImport={(it) => handleUpdateRoot(root?.type === 'Collection' ? { ...root, items: [...(root.items || []), it] } as any : it as any)} onClose={() => setShowExternalImport(false)} />}
       
@@ -325,6 +360,8 @@ const MainApp: React.FC = () => {
       }} onClose={() => setShowBatchEditor(false)} />}
       
       {showPersonaSettings && <PersonaSettings settings={settings} onUpdate={upd => setSettings(s => ({ ...s, ...upd }))} onClose={() => setShowPersonaSettings(false)} />}
+
+      <CommandPalette isOpen={showCommandPalette} onClose={() => setShowCommandPalette(false)} commands={commands} />
     </div>
   );
 };
