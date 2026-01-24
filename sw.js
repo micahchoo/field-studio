@@ -157,8 +157,8 @@ async function handleImageRequest(request) {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  // Match archive.local (legacy) OR current origin WITH /iiif/ path
-  if (url.host === 'archive.local' || url.pathname.includes('/iiif/image/')) {
+  // Match archive.local (legacy) OR any path containing /image/ followed by IIIF patterns
+  if (url.host === 'archive.local' || (url.pathname.includes('/image/') && (url.pathname.endsWith('/info.json') || /\/default\.(jpg|jpeg|png|webp|gif)$/.test(url.pathname)))) {
     event.respondWith(handleImageRequest(event.request));
   }
 });

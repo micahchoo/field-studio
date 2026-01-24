@@ -29,49 +29,71 @@ export interface StorageEstimate {
 }
 
 class StorageService {
-  private dbPromise: Promise<IDBPDatabase<BiiifDB>>;
+  private _dbPromise: Promise<IDBPDatabase<BiiifDB>> | null = null;
 
   constructor() {
-    this.dbPromise = openDB<BiiifDB>(DB_NAME, 2, { // Bumped version
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          db.createObjectStore(FILES_STORE);
-          db.createObjectStore(PROJECT_STORE);
+    this._initDB();
+  }
+
+  private _initDB() {
+      this._dbPromise = openDB<BiiifDB>(DB_NAME, 2, { 
+        upgrade(db, oldVersion) {
+            if (oldVersion < 1) {
+                db.createObjectStore(FILES_STORE);
+                db.createObjectStore(PROJECT_STORE);
+            }
+            if (oldVersion < 2) {
+                db.createObjectStore(DERIVATIVES_STORE);
+            }
+        },
+        blocked: () => {
+            console.warn('IDB blocked: Another connection is open with an older version.');
+        },
+        blocking: () => {
+            console.warn('IDB blocking: A new version is trying to open. Closing this connection.');
+            this._dbPromise = null; 
+        },
+        terminated: () => {
+            console.error('IDB terminated: Browser closed the connection.');
+            this._dbPromise = null;
         }
-        if (oldVersion < 2) {
-          db.createObjectStore(DERIVATIVES_STORE);
-        }
-      },
-    });
+      });
+  }
+
+  private async getDB(): Promise<IDBPDatabase<BiiifDB>> {
+      if (!this._dbPromise) {
+          this._initDB();
+      }
+      return this._dbPromise!;
   }
 
   async saveAsset(file: File | Blob, id: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     await db.put(FILES_STORE, file, id);
   }
 
   async saveDerivative(id: string, sizeKey: 'thumb' | 'small' | 'medium', blob: Blob): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     await db.put(DERIVATIVES_STORE, blob, `${id}_${sizeKey}`);
   }
 
   async getAsset(id: string): Promise<Blob | undefined> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     return await db.get(FILES_STORE, id);
   }
 
   async getDerivative(id: string, sizeKey: string): Promise<Blob | undefined> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     return await db.get(DERIVATIVES_STORE, `${id}_${sizeKey}`);
   }
 
   async saveProject(root: IIIFItem): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     await db.put(PROJECT_STORE, root, 'root');
   }
 
   async loadProject(): Promise<IIIFItem | undefined> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     try {
         return await db.get(PROJECT_STORE, 'root');
     } catch (e) {
@@ -81,7 +103,7 @@ class StorageService {
   }
 
   async clear(): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     await db.clear(FILES_STORE);
     await db.clear(DERIVATIVES_STORE);
     await db.clear(PROJECT_STORE);
@@ -158,7 +180,7 @@ class StorageService {
    * Get all asset IDs stored in the database
    */
   async getAllAssetIds(): Promise<string[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     return await db.getAllKeys(FILES_STORE);
   }
 
@@ -166,7 +188,7 @@ class StorageService {
    * Delete a specific asset
    */
   async deleteAsset(id: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     await db.delete(FILES_STORE, id);
     // Also delete derivatives
     const derivativeKeys = ['thumb', 'small', 'medium'];

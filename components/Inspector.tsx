@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
@@ -15,6 +15,7 @@ interface InspectorProps {
   onClose: () => void;
   isMobile?: boolean;
 }
+
 
 const IIIF_SPECS: Record<string, { 
     desc: string, 
@@ -36,6 +37,39 @@ const IIIF_SPECS: Record<string, {
     desc: 'A structural division within a manifest, like a chapter or section.',
     implication: 'Provides navigation structure for long or complex objects.'
   }
+};
+
+const DebouncedInput = ({ value, onChange, ...props }: any) => {
+  const [innerValue, setInnerValue] = useState(value);
+  useEffect(() => { setInnerValue(value); }, [value]);
+
+  useEffect(() => {
+    // Only fire if value actually changed from prop
+    if (innerValue === value) return;
+    
+    const timeout = setTimeout(() => {
+      onChange(innerValue);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [innerValue, value, onChange]);
+
+  return <input {...props} value={innerValue} onChange={e => setInnerValue(e.target.value)} />;
+};
+
+const DebouncedTextarea = ({ value, onChange, ...props }: any) => {
+  const [innerValue, setInnerValue] = useState(value);
+  useEffect(() => { setInnerValue(value); }, [value]);
+
+  useEffect(() => {
+    if (innerValue === value) return;
+    
+    const timeout = setTimeout(() => {
+      onChange(innerValue);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [innerValue, value, onChange]);
+
+  return <textarea {...props} value={innerValue} onChange={e => setInnerValue(e.target.value)} />;
 };
 
 export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose, isMobile }) => {
@@ -84,8 +118,8 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
   };
 
   const inspectorStyles = isMobile 
-    ? `fixed inset-0 z-[1100] bg-white flex flex-col animate-in slide-in-from-bottom duration-300`
-    : `w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 animate-in slide-in-from-right-2 duration-300 shrink-0`;
+    ? `fixed inset-0 z-[1100] bg-white flex flex-col animate-slide-in-right`
+    : `w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 animate-slide-in-right shrink-0`;
 
   return (
     <aside className={inspectorStyles} aria-label="Resource Inspector">
@@ -135,24 +169,24 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                 )}
 
                 <div className="space-y-4">
-                    <div>
+                    <div className="snappy-transition focus-within:scale-[1.01]">
                         <label htmlFor="archival-label" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Archival Label</label>
-                        <input 
+                        <DebouncedInput 
                             id="archival-label"
                             type="text" 
                             value={label} 
-                            onChange={e => onUpdateResource({ label: { [settings.language]: [e.target.value] } })} 
-                            className={`w-full text-sm p-4 rounded-lg outline-none font-bold shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
+                            onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })} 
+                            className={`w-full text-sm p-4 rounded-lg outline-none font-bold shadow-sm border snappy-transition ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
                         />
                     </div>
 
-                    <div>
+                    <div className="snappy-transition focus-within:scale-[1.01]">
                         <label htmlFor="scientific-summary" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Scientific Summary</label>
-                        <textarea 
+                        <DebouncedTextarea 
                             id="scientific-summary"
                             value={summary} 
-                            onChange={e => onUpdateResource({ summary: { [settings.language]: [e.target.value] } })} 
-                            className={`w-full text-sm p-4 rounded-lg outline-none min-h-[100px] leading-relaxed shadow-sm border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
+                            onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })} 
+                            className={`w-full text-sm p-4 rounded-lg outline-none min-h-[100px] leading-relaxed shadow-sm border snappy-transition ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white text-slate-900 border-slate-300 focus:ring-2 focus:ring-iiif-blue'}`} 
                             placeholder="Describe context..."
                         />
                     </div>
@@ -184,18 +218,18 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                                 const mKey = getIIIFValue(md.label, settings.language);
                                 const mVal = getIIIFValue(md.value, settings.language);
                                 return (
-                                    <div key={idx} className={`group relative p-3 rounded-lg border transition-colors shadow-sm ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}>
-                                        <input 
+                                    <div key={idx} className={`group relative p-3 rounded-lg border snappy-transition shadow-sm focus-within:scale-[1.02] ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-white'}`}>
+                                        <DebouncedInput 
                                             aria-label={`Field name for index ${idx + 1}`}
                                             className={`w-full text-[10px] font-black uppercase bg-transparent outline-none mb-1 border-b ${settings.fieldMode ? 'text-slate-500 border-slate-800 focus:border-slate-700' : 'text-slate-500 border-transparent focus:border-slate-200'}`}
                                             value={mKey}
-                                            onChange={e => handleUpdateMetadataField(idx, e.target.value, mVal)}
+                                            onChange={(val: string) => handleUpdateMetadataField(idx, val, mVal)}
                                         />
-                                        <input 
+                                        <DebouncedInput 
                                             aria-label={`Field value for ${mKey}`}
                                             className={`w-full text-xs font-bold bg-transparent outline-none ${settings.fieldMode ? 'text-white' : 'text-slate-800'}`}
                                             value={mVal}
-                                            onChange={e => handleUpdateMetadataField(idx, mKey, e.target.value)}
+                                            onChange={(val: string) => handleUpdateMetadataField(idx, mKey, val)}
                                         />
                                         <button 
                                             aria-label={`Remove field ${mKey}`}

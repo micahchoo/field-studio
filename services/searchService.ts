@@ -34,26 +34,19 @@ class SearchService {
   }
 
   reset() {
-    // Since we are using Vite with node_modules, FlexSearch should be imported directly.
-    // However, depending on the build, it might be a default export or named.
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let Document = (FlexSearch as any).Document;
-
-    // If not found on top level, try default (common in some CJS/ESM interop scenarios)
-    if (!Document && (FlexSearch as any).default) {
-        Document = (FlexSearch as any).default.Document;
-    }
+    const FS = (FlexSearch as any);
+    // FlexSearch 0.7.31 often exports 'Document' on the default object, or the default object IS the library.
+    // In Vite, FS might be the module namespace, or the default export itself.
+    const Document = FS.Document || FS.default?.Document || FS.default;
 
     if (!Document) {
-      // Fallback: If FlexSearch is the Document constructor itself (rare but possible in some builds)
-      // or if we are using a specific build.
-      // Let's assume standard usage from npm package first.
-      console.error("FlexSearch Document constructor not found. FlexSearch keys:", Object.keys(FlexSearch));
+      console.error("FlexSearch Document constructor not found. Keys:", Object.keys(FS));
       return;
     }
 
     try {
+      // @ts-ignore - FlexSearch types might be mismatched
       this.index = new Document({
         document: {
           id: "id",

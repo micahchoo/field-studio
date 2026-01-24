@@ -34,7 +34,8 @@ const MainApp: React.FC = () => {
   const { batchUpdate } = useBulkOperations();
 
   // Derive root from vault for compatibility with existing code
-  const root = exportRoot();
+  // Memoize root to prevent infinite loops since exportRoot() returns new references
+  const root = useMemo(() => exportRoot(), [state]);
 
   // Legacy setRoot bridge - calls loadRoot to normalize into vault
   const setRoot = useCallback((newRoot: IIIFItem | null) => {
@@ -217,6 +218,15 @@ const MainApp: React.FC = () => {
   return (
     <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans ${settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-100'}`}>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[2000] focus:bg-iiif-blue focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">Skip to content</a>
+      
+      {/* Global Saving Indicator - Snappy Feedback */}
+      <div className={`fixed top-4 right-4 z-[2000] pointer-events-none transition-all duration-300 ${saveStatus === 'saving' ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
+        <div className="bg-white/90 backdrop-blur shadow-lg border border-slate-200 rounded-full px-3 py-1.5 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-iiif-blue animate-pulse"/>
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Saving...</span>
+        </div>
+      </div>
+
       <div className="flex-1 flex min-h-0 relative">
         {/* Mobile Header Affordance */}
         {isMobile && (

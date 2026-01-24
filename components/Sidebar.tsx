@@ -29,9 +29,9 @@ const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick:
     onClick={onClick} 
     aria-current={active ? 'page' : undefined}
     aria-label={`${label} View`}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${active ? (fieldMode ? 'bg-yellow-400 text-black font-black border-2 border-black' : 'bg-iiif-blue text-white shadow-sm') : (fieldMode ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200')}`}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium snappy-transition group active:scale-95 ${active ? (fieldMode ? 'bg-yellow-400 text-black font-black border-2 border-black shadow-md' : 'bg-iiif-blue text-white shadow-md transform scale-[1.02]') : (fieldMode ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:translate-x-1')}`}
   >
-    <Icon name={icon} className={active ? (fieldMode ? "text-black" : "text-white") : "text-slate-500"} />
+    <Icon name={icon} className={`transition-transform duration-300 ${active ? (fieldMode ? "text-black" : "text-white") : "text-slate-500 group-hover:scale-110"}`} />
     <span className={fieldMode ? "text-lg" : "text-sm"}>{label}</span>
   </button>
 );
@@ -123,7 +123,7 @@ const TreeItem: React.FC<{
         aria-expanded={hasChildren ? expanded : undefined}
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        className={`flex items-center gap-2 cursor-pointer transition-all border-l-4 outline-none focus:ring-2 focus:ring-iiif-blue/50 ${fieldMode ? 'py-3' : 'py-1.5 border-l-2'} ${isSelected ? (fieldMode ? 'bg-yellow-400 border-yellow-600 text-black font-bold' : 'bg-slate-800 border-iiif-blue text-white shadow-inner') : (fieldMode ? 'border-transparent text-slate-200 hover:bg-slate-800' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50')}`}
+        className={`flex items-center gap-2 cursor-pointer snappy-transition border-l-4 outline-none focus-visible-ring group ${fieldMode ? 'py-3' : 'py-1.5 border-l-2'} ${isSelected ? (fieldMode ? 'bg-yellow-400 border-yellow-600 text-black font-bold shadow-md scale-[1.01]' : 'bg-slate-800 border-iiif-blue text-white shadow-inner') : (fieldMode ? 'border-transparent text-slate-200 hover:bg-slate-800 hover:border-slate-700' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border-slate-700')}`}
         style={{ paddingLeft: level * (fieldMode ? 20 : 12) + 4 }}
         onClick={() => onSelect(item.id)}
       >
@@ -131,19 +131,19 @@ const TreeItem: React.FC<{
           aria-label={expanded ? `Collapse ${displayLabel}` : `Expand ${displayLabel}`}
           aria-expanded={expanded}
           tabIndex={-1}
-          className={`p-1 rounded hover:bg-white/10 ${!hasChildren ? 'invisible' : ''}`} 
+          className={`p-1 rounded hover:bg-white/10 transition-transform active:scale-95 ${!hasChildren ? 'invisible' : ''}`} 
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
         >
-          <Icon name={expanded ? "expand_more" : "chevron_right"} className={fieldMode ? "text-xl" : "text-[16px]"} />
+          <Icon name={expanded ? "expand_more" : "chevron_right"} className={`transition-transform duration-200 ${expanded ? 'rotate-0' : '-rotate-90'} ${fieldMode ? "text-xl" : "text-[16px]"}`} />
         </button>
         <Icon 
           name={viewType === 'files' ? 'folder' : config.icon} 
-          className={`${fieldMode ? 'text-2xl' : 'text-[18px]'} ${!isSelected ? config.colorClass : ''}`} 
+          className={`transition-colors ${fieldMode ? 'text-2xl' : 'text-[18px]'} ${!isSelected ? config.colorClass : ''} group-hover:brightness-125`} 
         />
-        <span className={`${fieldMode ? "text-base font-bold" : "text-[11px] font-medium"} truncate`}>{displayLabel}</span>
+        <span className={`${fieldMode ? "text-base font-bold" : "text-[11px] font-medium"} truncate transition-colors`}>{displayLabel}</span>
       </div>
       {hasChildren && expanded && (
-        <div role="group">
+        <div role="group" className="animate-fade-in origin-top">
           {children.map((child: any) => (
             <TreeItem key={child.id} item={child} level={level + 1} selectedId={selectedId} onSelect={onSelect} viewType={viewType} fieldMode={fieldMode} root={root} onStructureUpdate={onStructureUpdate} filterText={filterText} filterType={filterType}/>
           ))}

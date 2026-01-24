@@ -105,6 +105,7 @@ function upgradeCollection(v2: any): IIIFCollection {
     id: v2['@id'] || v2.id,
     type: 'Collection',
     label: upgradeLanguageValue(v2.label),
+    items: [],
   };
 
   // Optional properties
@@ -673,3 +674,11 @@ export function getVersionInfo(manifest: any): {
     label: version === 'unknown' ? 'Unknown Version' : `IIIF Presentation ${version}`
   };
 }
+
+export const specBridge = {
+  importManifest,
+  getVersionInfo,
+  detectVersion,
+  needsUpgrade,
+  upgradeToV3
+};

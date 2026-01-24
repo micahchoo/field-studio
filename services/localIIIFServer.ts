@@ -46,10 +46,12 @@ export class LocalIIIFServer {
             };
         }
 
-        const pathParts = urlObj.pathname.split('/iiif/image/');
+        // Support flexible base URLs by splitting on the last occurrence of /image/
+        const pathParts = urlObj.pathname.split('/image/');
         if (pathParts.length < 2) return { error: "Invalid IIIF URL" };
 
-        const params = pathParts[1].split('/');
+        const params = pathParts[pathParts.length - 1].split('/');
+
         const identifier = decodeURIComponent(params[0]);
 
         const file = this.images.get(identifier);

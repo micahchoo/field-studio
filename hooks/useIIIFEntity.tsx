@@ -142,23 +142,30 @@ export const VaultProvider: React.FC<VaultProviderProps> = ({
     }
   }, [initialRoot]);
 
+  // Stable actions
+  const loadRoot = useCallback((root: IIIFItem) => {
+    const normalized = normalize(root);
+    setState(normalized);
+  }, []);
+
+  const dispatchAction = useCallback((action: Action) => dispatcher.dispatch(action), [dispatcher]);
+  const undo = useCallback(() => dispatcher.undo(), [dispatcher]);
+  const redo = useCallback(() => dispatcher.redo(), [dispatcher]);
+
   // Memoized context value
   const contextValue = useMemo<VaultContextValue>(() => ({
     state,
     dispatcher,
     getEntity: (id: string) => getEntity(state, id),
-    dispatch: (action: Action) => dispatcher.dispatch(action),
-    undo: () => dispatcher.undo(),
-    redo: () => dispatcher.redo(),
+    dispatch: dispatchAction,
+    undo,
+    redo,
     canUndo: undoRedoStatus.canUndo,
     canRedo: undoRedoStatus.canRedo,
-    loadRoot: (root: IIIFItem) => {
-      const normalized = normalize(root);
-      setState(normalized);
-    },
+    loadRoot,
     exportRoot: () => denormalize(state),
     rootId: state.rootId
-  }), [state, dispatcher, undoRedoStatus]);
+  }), [state, dispatcher, undoRedoStatus, loadRoot, dispatchAction, undo, redo]);
 
   return (
     <VaultContext.Provider value={contextValue}>
