@@ -114,8 +114,41 @@ const DebouncedTextarea = ({ value, onChange, ...props }: any) => {
 };
 
 export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose, isMobile }) => {
-  const [tab, setTab] = useState<'metadata' | 'provenance' | 'geo' | 'learn'>('metadata');
+  // Persist tab state per resource type in localStorage
+  const getStoredTab = (resourceType: string): 'metadata' | 'provenance' | 'geo' | 'learn' => {
+    try {
+      const stored = localStorage.getItem(`inspector-tab-${resourceType}`);
+      if (stored && ['metadata', 'provenance', 'geo', 'learn'].includes(stored)) {
+        return stored as 'metadata' | 'provenance' | 'geo' | 'learn';
+      }
+    } catch (e) {
+      // localStorage may be unavailable
+    }
+    return 'metadata';
+  };
+
+  const [tab, setTab] = useState<'metadata' | 'provenance' | 'geo' | 'learn'>(() =>
+    resource ? getStoredTab(resource.type) : 'metadata'
+  );
   const [showAddMenu, setShowAddMenu] = useState(false);
+
+  // Restore tab when resource type changes
+  useEffect(() => {
+    if (resource?.type) {
+      setTab(getStoredTab(resource.type));
+    }
+  }, [resource?.type]);
+
+  // Persist tab when it changes
+  useEffect(() => {
+    if (resource?.type && tab) {
+      try {
+        localStorage.setItem(`inspector-tab-${resource.type}`, tab);
+      } catch (e) {
+        // localStorage may be unavailable
+      }
+    }
+  }, [tab, resource?.type]);
 
   if (!visible || !resource) return null;
 

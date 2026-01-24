@@ -40,6 +40,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
   const [showAnnotationTool, setShowAnnotationTool] = useState(false);
   const [showFilmstrip, setShowFilmstrip] = useState(true);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
+  const [rotation, setRotation] = useState(0);
 
   // Extract search service from manifest
   const searchService = useMemo(() => {
@@ -59,6 +60,21 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
         onComposerOpened?.();
     }
   }, [autoOpenComposer, item]);
+
+  // Component unmount cleanup - ensure OSD is destroyed
+  useEffect(() => {
+    return () => {
+      if (viewerRef.current) {
+        try {
+          viewerRef.current.removeAllHandlers();
+          viewerRef.current.destroy();
+        } catch (e) {
+          // Ignore cleanup errors on unmount
+        }
+        viewerRef.current = null;
+      }
+    };
+  }, []);
 
   const paintingBody = item?.items?.[0]?.items?.[0]?.body as any;
   const mimeType = paintingBody?.format || '';
@@ -105,8 +121,19 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
   }, [item, paintingBody?.id]);
 
   useEffect(() => {
+      // Track if component is mounted for cleanup safety
+      let isMounted = true;
+
       if (mediaType === 'image' && item && osdContainerRef.current) {
-          if (viewerRef.current) viewerRef.current.destroy();
+          // Destroy existing viewer before creating new one
+          if (viewerRef.current) {
+            try {
+              viewerRef.current.destroy();
+            } catch (e) {
+              console.warn('Error destroying OSD viewer:', e);
+            }
+            viewerRef.current = null;
+          }
 
           let tileSource: any = null;
           if (serviceId) {
@@ -115,19 +142,40 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
               tileSource = { type: 'image', url: resolvedImageUrl };
           }
 
-          if (tileSource) {
-              viewerRef.current = OpenSeadragon({
-                  element: osdContainerRef.current,
-                  prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
-                  tileSources: tileSource,
-                  gestureSettingsMouse: { clickToZoom: false },
-                  showNavigationControl: false,
-                  blendTime: 0.1,
-              });
+          if (tileSource && isMounted) {
+              try {
+                viewerRef.current = OpenSeadragon({
+                    element: osdContainerRef.current,
+                    prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
+                    tileSources: tileSource,
+                    gestureSettingsMouse: { clickToZoom: false },
+                    showNavigationControl: false,
+                    blendTime: 0.1,
+                    // Memory optimization settings
+                    immediateRender: true,
+                    imageLoaderLimit: 2,
+                    maxImageCacheCount: 50,
+                });
+              } catch (e) {
+                console.error('Error initializing OSD viewer:', e);
+              }
           }
-
-          return () => { if (viewerRef.current) viewerRef.current.destroy(); };
       }
+
+      // Comprehensive cleanup function
+      return () => {
+        isMounted = false;
+        if (viewerRef.current) {
+          try {
+            // Remove all handlers before destroying
+            viewerRef.current.removeAllHandlers();
+            viewerRef.current.destroy();
+          } catch (e) {
+            console.warn('Error during OSD cleanup:', e);
+          }
+          viewerRef.current = null;
+        }
+      };
   }, [item?.id, mediaType, serviceId, resolvedImageUrl]);
 
   const handleShareView = () => {
@@ -230,6 +278,21 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
     viewerRef.current.viewport.fitBounds(rect, false);
   };
 
+  // Rotation controls
+  const handleRotate = useCallback((degrees: number) => {
+    if (!viewerRef.current) return;
+    const newRotation = (rotation + degrees + 360) % 360;
+    setRotation(newRotation);
+    viewerRef.current.viewport.setRotation(newRotation);
+  }, [rotation]);
+
+  const handleResetView = useCallback(() => {
+    if (!viewerRef.current) return;
+    setRotation(0);
+    viewerRef.current.viewport.setRotation(0);
+    viewerRef.current.viewport.goHome(false);
+  }, []);
+
   if (!item) return <div className="flex-1 flex items-center justify-center bg-slate-900 text-slate-500 italic">Select a canvas to inspect.</div>;
 
   return (
@@ -251,13 +314,44 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
         <div className="flex items-center gap-2">
             <button onClick={() => setShowComposer(true)} className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-bold mr-2 border border-indigo-500 shadow-lg"><Icon name="layers" className="text-xs"/> Compose</button>
             {mediaType === 'image' && (
-              <button
-                onClick={() => setShowAnnotationTool(true)}
-                className="p-2 text-slate-400 hover:text-white"
-                title="Draw Annotations"
-              >
-                <Icon name="draw" />
-              </button>
+              <>
+                <div className="flex items-center border-r border-slate-700 pr-2 mr-1">
+                  <button
+                    onClick={() => handleRotate(-90)}
+                    className="p-2 text-slate-400 hover:text-white"
+                    title="Rotate Counter-Clockwise (90°)"
+                    aria-label="Rotate counter-clockwise"
+                  >
+                    <Icon name="rotate_left" />
+                  </button>
+                  <button
+                    onClick={() => handleRotate(90)}
+                    className="p-2 text-slate-400 hover:text-white"
+                    title="Rotate Clockwise (90°)"
+                    aria-label="Rotate clockwise"
+                  >
+                    <Icon name="rotate_right" />
+                  </button>
+                  <button
+                    onClick={handleResetView}
+                    className="p-2 text-slate-400 hover:text-white"
+                    title="Reset View"
+                    aria-label="Reset view to default"
+                  >
+                    <Icon name="restart_alt" />
+                  </button>
+                  {rotation !== 0 && (
+                    <span className="text-[10px] text-slate-500 ml-1">{rotation}°</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowAnnotationTool(true)}
+                  className="p-2 text-slate-400 hover:text-white"
+                  title="Draw Annotations"
+                >
+                  <Icon name="draw" />
+                </button>
+              </>
             )}
             {searchService && (
               <button

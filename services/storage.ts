@@ -28,11 +28,65 @@ export interface StorageEstimate {
   usageDetails?: any;
 }
 
+export interface StorageWarning {
+  type: 'quota_warning' | 'quota_critical' | 'save_failed';
+  message: string;
+  usagePercent: number;
+}
+
+// Threshold for storage warnings (90% = warning, 95% = critical)
+const STORAGE_WARNING_THRESHOLD = 0.9;
+const STORAGE_CRITICAL_THRESHOLD = 0.95;
+
 class StorageService {
   private _dbPromise: Promise<IDBPDatabase<BiiifDB>> | null = null;
+  private _warningCallback: ((warning: StorageWarning) => void) | null = null;
+  private _lastWarningTime = 0;
+  private _warningCooldown = 60000; // Only warn once per minute
 
   constructor() {
     this._initDB();
+  }
+
+  // Set a callback to receive storage warnings
+  setWarningCallback(callback: (warning: StorageWarning) => void): void {
+    this._warningCallback = callback;
+  }
+
+  // Check storage quota and emit warning if necessary
+  async checkStorageQuota(): Promise<{ ok: boolean; usagePercent: number }> {
+    const estimate = await this.getEstimate();
+    if (!estimate || estimate.quota === 0) {
+      return { ok: true, usagePercent: 0 };
+    }
+
+    const usagePercent = estimate.usage / estimate.quota;
+    const now = Date.now();
+
+    if (usagePercent >= STORAGE_CRITICAL_THRESHOLD) {
+      if (now - this._lastWarningTime > this._warningCooldown && this._warningCallback) {
+        this._lastWarningTime = now;
+        this._warningCallback({
+          type: 'quota_critical',
+          message: `Storage is ${Math.round(usagePercent * 100)}% full. Export your data immediately to prevent data loss.`,
+          usagePercent
+        });
+      }
+      return { ok: false, usagePercent };
+    }
+
+    if (usagePercent >= STORAGE_WARNING_THRESHOLD) {
+      if (now - this._lastWarningTime > this._warningCooldown && this._warningCallback) {
+        this._lastWarningTime = now;
+        this._warningCallback({
+          type: 'quota_warning',
+          message: `Storage is ${Math.round(usagePercent * 100)}% full. Consider exporting your data.`,
+          usagePercent
+        });
+      }
+    }
+
+    return { ok: true, usagePercent };
   }
 
   private _initDB() {
@@ -68,8 +122,27 @@ class StorageService {
   }
 
   async saveAsset(file: File | Blob, id: string): Promise<void> {
-    const db = await this.getDB();
-    await db.put(FILES_STORE, file, id);
+    // Check storage quota before saving large assets
+    const { ok, usagePercent } = await this.checkStorageQuota();
+    if (!ok && usagePercent >= STORAGE_CRITICAL_THRESHOLD) {
+      console.warn('Storage critically full, attempting to save asset anyway');
+    }
+
+    try {
+      const db = await this.getDB();
+      await db.put(FILES_STORE, file, id);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        if (this._warningCallback) {
+          this._warningCallback({
+            type: 'save_failed',
+            message: `Failed to save asset: Storage quota exceeded. Free up space by exporting and clearing data.`,
+            usagePercent: 1
+          });
+        }
+      }
+      throw error;
+    }
   }
 
   async saveDerivative(id: string, sizeKey: 'thumb' | 'small' | 'medium', blob: Blob): Promise<void> {
@@ -88,8 +161,29 @@ class StorageService {
   }
 
   async saveProject(root: IIIFItem): Promise<void> {
-    const db = await this.getDB();
-    await db.put(PROJECT_STORE, root, 'root');
+    // Check storage quota before saving
+    const { ok, usagePercent } = await this.checkStorageQuota();
+    if (!ok && usagePercent >= STORAGE_CRITICAL_THRESHOLD) {
+      // Still attempt save but warn user
+      console.warn('Storage critically full, attempting save anyway');
+    }
+
+    try {
+      const db = await this.getDB();
+      await db.put(PROJECT_STORE, root, 'root');
+    } catch (error) {
+      // Check if it's a quota exceeded error
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        if (this._warningCallback) {
+          this._warningCallback({
+            type: 'save_failed',
+            message: 'Storage quota exceeded. Please export your data and clear storage.',
+            usagePercent: 1
+          });
+        }
+      }
+      throw error;
+    }
   }
 
   async loadProject(): Promise<IIIFItem | undefined> {

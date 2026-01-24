@@ -27,6 +27,10 @@ export interface AuthRequiredResult {
 
 export type ExtendedFetchResult = FetchResult | AuthRequiredResult;
 
+export interface FetchOptions {
+  signal?: AbortSignal;
+}
+
 /**
  * Check if result requires authentication
  */
@@ -37,15 +41,17 @@ export const requiresAuth = (result: ExtendedFetchResult): result is AuthRequire
 /**
  * Fetch a remote IIIF resource or wrap a media URL in a virtual manifest
  */
-export const fetchRemoteManifest = async (url: string): Promise<IIIFItem> => {
-  const result = await fetchRemoteResource(url);
+export const fetchRemoteManifest = async (url: string, options?: FetchOptions): Promise<IIIFItem> => {
+  const result = await fetchRemoteResource(url, options);
   return result.item;
 };
 
 /**
  * Extended fetch that returns metadata about the fetch
+ * @param url - URL to fetch
+ * @param options - Optional fetch options including AbortSignal for timeout/cancellation
  */
-export const fetchRemoteResource = async (url: string): Promise<FetchResult> => {
+export const fetchRemoteResource = async (url: string, options?: FetchOptions): Promise<FetchResult> => {
   // Check if URL is a direct media file (image, audio, video)
   if (virtualManifestFactory.isMediaUrl(url)) {
     console.log('[RemoteLoader] Detected media URL, creating virtual manifest:', url);
@@ -68,7 +74,10 @@ export const fetchRemoteResource = async (url: string): Promise<FetchResult> => 
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    const response = await fetch(targetUrl, { headers });
+    const response = await fetch(targetUrl, {
+      headers,
+      signal: options?.signal
+    });
 
     // Handle 401 - check for auth services
     if (response.status === 401) {

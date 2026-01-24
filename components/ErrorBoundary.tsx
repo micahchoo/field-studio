@@ -6,6 +6,12 @@ import { Icon } from './Icon';
 interface Props {
   // Made children optional to fix "Property 'children' is missing" error in index.tsx
   children?: ReactNode;
+  // Optional fallback component for custom error display
+  fallback?: ReactNode | ((error: Error | null, retry: () => void) => ReactNode);
+  // Optional callback when error occurs
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  // Optional retry callback
+  onRetry?: () => void;
 }
 
 interface State {
@@ -31,11 +37,30 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
     // Fix: setState is now correctly inherited from Component
     this.setState({ errorInfo });
+    // Call onError callback if provided
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
   }
+
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+    if (this.props.onRetry) {
+      this.props.onRetry();
+    }
+  };
 
   public render() {
     // Accessing state from this.state
     if (this.state.hasError) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        if (typeof this.props.fallback === 'function') {
+          return this.props.fallback(this.state.error, this.handleRetry);
+        }
+        return this.props.fallback;
+      }
+
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-lg w-full rounded-xl shadow-2xl overflow-hidden border border-red-100">
@@ -81,3 +106,58 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+// View-specific error fallback component for per-view error boundaries
+interface ViewErrorFallbackProps {
+  viewName: string;
+  error: Error | null;
+  onRetry: () => void;
+  onSwitchView?: () => void;
+}
+
+export const ViewErrorFallback: React.FC<ViewErrorFallbackProps> = ({ viewName, error, onRetry, onSwitchView }) => {
+  return (
+    <div className="flex-1 flex items-center justify-center p-8 bg-slate-50">
+      <div className="bg-white max-w-md w-full rounded-xl shadow-lg border border-amber-200 overflow-hidden">
+        <div className="bg-amber-50 p-4 flex items-center gap-3 border-b border-amber-200">
+          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0">
+            <Icon name="warning" className="text-xl" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-amber-900">{viewName} View Error</h2>
+            <p className="text-amber-700 text-xs">This view encountered a problem.</p>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {error && (
+            <div className="bg-slate-100 rounded-lg p-3 overflow-auto max-h-32">
+              <code className="text-red-600 font-mono text-xs">{error.message}</code>
+            </div>
+          )}
+
+          <p className="text-slate-600 text-sm">
+            Your data is safe. You can try again or switch to a different view.
+          </p>
+
+          <div className="flex gap-2 justify-end pt-2">
+            {onSwitchView && (
+              <button
+                onClick={onSwitchView}
+                className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded text-sm font-medium flex items-center gap-1"
+              >
+                <Icon name="swap_horiz" className="text-sm" /> Switch View
+              </button>
+            )}
+            <button
+              onClick={onRetry}
+              className="px-3 py-1.5 bg-amber-500 text-white rounded text-sm font-bold hover:bg-amber-600 flex items-center gap-1"
+            >
+              <Icon name="refresh" className="text-sm" /> Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

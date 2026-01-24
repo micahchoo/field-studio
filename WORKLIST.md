@@ -1,12 +1,61 @@
 # IIIF Field Archive Studio - Implementation Worklist
 
-**Last Updated**: 2026-01-23 (Wiring audit complete)
+**Last Updated**: 2026-01-24 (Comprehensive audit complete)
 **Spec Version**: Technical Specification v3.0
-**Current Phase**: Phase 4 - Discovery, Access, and Advanced Integration
+**Current Phase**: Phase 5 - Integration & Polish
 
 ---
 
-## 🚀 Active Sprint: Discovery & Access
+## ✅ Completed: Integration & Polish Sprint
+
+All tasks in this sprint have been completed.
+
+### Completed Tasks
+
+- [x] **Wire Archival Export Formats** - OCFL/BagIt/Activity Log already wired in ExportDialog ✅
+- [x] **Type Guards** - Added isCanvas(), isManifest(), isCollection(), isRange(), isAnnotation() to types.ts ✅
+- [x] **AVPlayer Keyboard Shortcuts** - Space/arrows for play/pause/seek/volume, WCAG compliant ✅
+- [x] **Sidebar Tree Filter** - Already implemented with text and type filtering ✅
+- [x] **Inspector Tab Persistence** - Added localStorage persistence per resource type ✅
+- [x] **Viewer Rotation Controls** - Added 90° CW/CCW buttons with reset view ✅
+
+---
+
+## 🚀 Active Sprint: Performance & Data Quality
+
+### High Priority (Next Batch)
+
+- [ ] **ManifestTree Virtualization** - Windowed rendering for 1000+ items
+  - **Rationale**: UI freezes when displaying large archives
+  - **Effort**: High | **Impact**: High (performance)
+
+- [ ] **Duplicate Detection in Ingest** - Hash files during import
+  - **Rationale**: Wasted storage, confusion from duplicate files
+  - **Effort**: Medium | **Impact**: Medium (data quality)
+
+- [ ] **Rubber-band Selection** - Drag-to-select in ArchiveView
+  - **Rationale**: Tedious multi-select for large sets
+  - **Effort**: Medium | **Impact**: Medium (UX)
+
+- [ ] **BatchEditor Undo Snapshot** - Create restore point before apply
+  - **Rationale**: No way to recover from batch operation mistakes
+  - **Effort**: Low | **Impact**: Medium (data safety)
+
+---
+
+## ✅ Completed: Stability & Robustness Sprint
+
+- [x] **Per-View Error Boundaries** - Each view wrapped in ErrorBoundary ✅
+- [x] **Storage Quota Warning** - Checks at 90%/95%, toast warnings ✅
+- [x] **OSD Memory Leak Fix** - Proper cleanup with destroy() ✅
+- [x] **Tree Depth Limit** - MAX_NESTING_DEPTH=15 in CollectionsView ✅
+- [x] **Keyboard Tree Navigation** - Full WCAG nav in ManifestTree ✅
+- [x] **Unsaved Changes Warning** - beforeunload in MetadataSpreadsheet ✅
+- [x] **Fetch Timeout** - 30s AbortController in ExternalImportDialog ✅
+
+---
+
+## ✅ Completed: Discovery & Access Sprint
 
 These tasks focus on implementing the advanced IIIF APIs (Authorization, Content Search, Content State) to enable deep linking, secure access, and rich discovery.
 
@@ -171,7 +220,15 @@ graph LR
 - [x] **CanvasComposer Undo/Redo** - ✅ Full undo/redo with history and Cmd+Z/Cmd+Shift+Z keyboard shortcuts.
 - [x] **ArchiveView Virtualization** - ✅ Grid and List views now use windowed rendering for performance with large collections.
 
-
+### Stability & Robustness (Audit-Driven Sprint) ✅ SPRINT COMPLETE
+- [x] **Per-View Error Boundaries** - Wrap each view in ErrorBoundary to prevent full app crash. ✅
+- [x] **Storage Quota Warning** - Check IndexedDB quota before saves, warn when > 90% full. ✅
+- [x] **OSD Memory Leak Fix** - Ensure proper OpenSeadragon cleanup in Viewer.tsx. ✅
+- [x] **Tree Depth Limit** - Prevent stack overflow in CollectionsView.tsx with deep nesting. ✅
+- [x] **Keyboard Tree Navigation** - Add arrow key navigation to Sidebar/ManifestTree (WCAG). ✅
+- [x] **Unsaved Changes Warning** - Add beforeunload handler to MetadataSpreadsheet.tsx. ✅
+- [x] **Fetch Timeout** - Add 30s timeout to ExternalImportDialog.tsx network requests. ✅
+- [ ] **ManifestTree Virtualization** - Windowed rendering for large trees.
 
 ## 📋 Feature Backlog
 

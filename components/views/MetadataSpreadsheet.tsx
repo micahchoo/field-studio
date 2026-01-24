@@ -45,6 +45,20 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
   const [showAddMenu, setShowAddMenu] = useState<{ id: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Warn user before navigating away with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   // CSV Export function
   const handleExportCSV = () => {
     if (filteredItems.length === 0) {

@@ -169,6 +169,73 @@ export function getIIIFValue(map?: Record<string, string[]>, preferredLang: stri
 }
 
 // ============================================================================
+// Type Guards - Safe type narrowing for IIIF resources
+// ============================================================================
+
+/**
+ * Type guard for Canvas resources
+ */
+export function isCanvas(item: IIIFItem | null | undefined): item is IIIFCanvas {
+  return item?.type === 'Canvas';
+}
+
+/**
+ * Type guard for Manifest resources
+ */
+export function isManifest(item: IIIFItem | null | undefined): item is IIIFManifest {
+  return item?.type === 'Manifest';
+}
+
+/**
+ * Type guard for Collection resources
+ */
+export function isCollection(item: IIIFItem | null | undefined): item is IIIFCollection {
+  return item?.type === 'Collection';
+}
+
+/**
+ * Type guard for Range resources
+ */
+export function isRange(item: IIIFItem | null | undefined): item is IIIFRange {
+  return item?.type === 'Range';
+}
+
+/**
+ * Type guard for Annotation resources
+ */
+export function isAnnotation(item: any): item is IIIFAnnotation {
+  return item?.type === 'Annotation';
+}
+
+/**
+ * Type guard for AnnotationPage resources
+ */
+export function isAnnotationPage(item: any): item is IIIFAnnotationPage {
+  return item?.type === 'AnnotationPage';
+}
+
+/**
+ * Type guard for TextualBody annotation bodies
+ */
+export function isTextualBody(body: IIIFAnnotationBody): body is IIIFTextualBody {
+  return body?.type === 'TextualBody';
+}
+
+/**
+ * Type guard for ExternalWebResource annotation bodies
+ */
+export function isExternalWebResource(body: IIIFAnnotationBody): body is IIIFExternalWebResource {
+  return body?.type !== 'TextualBody' && 'id' in body;
+}
+
+/**
+ * Type guard for SpecificResource targets
+ */
+export function isSpecificResource(target: any): target is IIIFSpecificResource {
+  return target?.type === 'SpecificResource';
+}
+
+// ============================================================================
 // LanguageString - Immutable wrapper for IIIF Language Maps
 // ============================================================================
 

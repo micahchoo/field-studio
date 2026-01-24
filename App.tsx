@@ -23,6 +23,7 @@ import { PersonaSettings } from './components/PersonaSettings';
 import { CommandPalette } from './components/CommandPalette';
 import { AuthDialog } from './components/AuthDialog';
 import { Icon } from './components/Icon';
+import { ErrorBoundary, ViewErrorFallback } from './components/ErrorBoundary';
 import { buildTree, ingestTree } from './services/iiifBuilder';
 import { AuthService, AuthState } from './services/authService';
 import { storage } from './services/storage';
@@ -193,6 +194,15 @@ const MainApp: React.FC = () => {
   }, [loadRoot, showToast]);
 
   useEffect(() => {
+      // Set up storage quota warning callback
+      storage.setWarningCallback((warning) => {
+        if (warning.type === 'quota_critical' || warning.type === 'save_failed') {
+          showToast(warning.message, 'error');
+        } else if (warning.type === 'quota_warning') {
+          showToast(warning.message, 'info');
+        }
+      });
+
       storage.loadProject().then(async (proj) => {
         if (proj) loadRoot(proj); // Load into vault
 
@@ -347,22 +357,74 @@ const MainApp: React.FC = () => {
         
         <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''}`}>
             {currentMode === 'archive' && (
-              <ArchiveView 
-                root={root} onUpdate={handleUpdateRoot} 
-                onSelect={(item) => { setSelectedId(item.id); if (!isMobile) setShowInspector(true); }} 
-                onOpen={(item) => { setSelectedId(item.id); setCurrentMode('viewer'); }} 
-                onBatchEdit={(ids) => { setBatchIds(ids); setShowBatchEditor(true); }} 
-                validationIssues={validationIssuesMap} fieldMode={settings.fieldMode} 
-                onReveal={(id, mode) => handleReveal(id, mode as AppMode)}
-                onCatalogSelection={handleArchiveCatalog}
-              />
+              <ErrorBoundary
+                key="archive-view"
+                fallback={(error, retry) => (
+                  <ViewErrorFallback viewName="Archive" error={error} onRetry={retry} onSwitchView={() => setCurrentMode('collections')} />
+                )}
+              >
+                <ArchiveView
+                  root={root} onUpdate={handleUpdateRoot}
+                  onSelect={(item) => { setSelectedId(item.id); if (!isMobile) setShowInspector(true); }}
+                  onOpen={(item) => { setSelectedId(item.id); setCurrentMode('viewer'); }}
+                  onBatchEdit={(ids) => { setBatchIds(ids); setShowBatchEditor(true); }}
+                  validationIssues={validationIssuesMap} fieldMode={settings.fieldMode}
+                  onReveal={(id, mode) => handleReveal(id, mode as AppMode)}
+                  onCatalogSelection={handleArchiveCatalog}
+                />
+              </ErrorBoundary>
             )}
-            {currentMode === 'collections' && <CollectionsView root={root} onUpdate={handleUpdateRoot} abstractionLevel={settings.abstractionLevel} onReveal={(id, mode) => handleReveal(id, mode as AppMode)} onSynthesize={handleManifestSynthesis} />}
-            {currentMode === 'metadata' && <MetadataSpreadsheet root={root} onUpdate={handleUpdateRoot} filterIds={pipelineContext.filterIds} onClearFilter={() => setPipelineContext({...pipelineContext, filterIds: null})} />}
-            {currentMode === 'boards' && <BoardView root={root} />}
-            {currentMode === 'viewer' && <Viewer item={selectedItem?.type === 'Canvas' ? selectedItem : null} onUpdate={handleItemUpdate} autoOpenComposer={pipelineContext.preloadedManifest === selectedId} onComposerOpened={() => setPipelineContext({...pipelineContext, preloadedManifest: null})} />}
-            {currentMode === 'search' && <SearchView root={root} onSelect={(id) => handleReveal(id, 'archive')} onRevealMap={(id) => { setSelectedId(id); handleReveal(id, 'archive'); }} />}
-            
+            {currentMode === 'collections' && (
+              <ErrorBoundary
+                key="collections-view"
+                fallback={(error, retry) => (
+                  <ViewErrorFallback viewName="Structure" error={error} onRetry={retry} onSwitchView={() => setCurrentMode('archive')} />
+                )}
+              >
+                <CollectionsView root={root} onUpdate={handleUpdateRoot} abstractionLevel={settings.abstractionLevel} onReveal={(id, mode) => handleReveal(id, mode as AppMode)} onSynthesize={handleManifestSynthesis} />
+              </ErrorBoundary>
+            )}
+            {currentMode === 'metadata' && (
+              <ErrorBoundary
+                key="metadata-view"
+                fallback={(error, retry) => (
+                  <ViewErrorFallback viewName="Metadata Catalog" error={error} onRetry={retry} onSwitchView={() => setCurrentMode('archive')} />
+                )}
+              >
+                <MetadataSpreadsheet root={root} onUpdate={handleUpdateRoot} filterIds={pipelineContext.filterIds} onClearFilter={() => setPipelineContext({...pipelineContext, filterIds: null})} />
+              </ErrorBoundary>
+            )}
+            {currentMode === 'boards' && (
+              <ErrorBoundary
+                key="boards-view"
+                fallback={(error, retry) => (
+                  <ViewErrorFallback viewName="Boards" error={error} onRetry={retry} onSwitchView={() => setCurrentMode('archive')} />
+                )}
+              >
+                <BoardView root={root} />
+              </ErrorBoundary>
+            )}
+            {currentMode === 'viewer' && (
+              <ErrorBoundary
+                key="viewer-view"
+                fallback={(error, retry) => (
+                  <ViewErrorFallback viewName="Viewer" error={error} onRetry={retry} onSwitchView={() => setCurrentMode('archive')} />
+                )}
+              >
+                <Viewer item={selectedItem?.type === 'Canvas' ? selectedItem : null} onUpdate={handleItemUpdate} autoOpenComposer={pipelineContext.preloadedManifest === selectedId} onComposerOpened={() => setPipelineContext({...pipelineContext, preloadedManifest: null})} />
+              </ErrorBoundary>
+            )}
+            {currentMode === 'search' && (
+              <ErrorBoundary
+                key="search-view"
+                fallback={(error, retry) => (
+                  <ViewErrorFallback viewName="Search" error={error} onRetry={retry} onSwitchView={() => setCurrentMode('archive')} />
+                )}
+              >
+                <SearchView root={root} onSelect={(id) => handleReveal(id, 'archive')} onRevealMap={(id) => { setSelectedId(id); handleReveal(id, 'archive'); }} />
+              </ErrorBoundary>
+            )}
+
             <ContextualHelp mode={currentMode} isInspectorOpen={showInspector && !!selectedItem && !settings.fieldMode} />
         </main>
 

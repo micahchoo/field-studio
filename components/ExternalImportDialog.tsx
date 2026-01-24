@@ -11,20 +11,44 @@ interface ExternalImportDialogProps {
   onAuthRequired?: (resourceId: string, authServices: AuthService[]) => void;
 }
 
+// Fetch timeout in milliseconds (30 seconds)
+const FETCH_TIMEOUT_MS = 30000;
+
 export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onImport, onClose, onAuthRequired }) => {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<IIIFItem | null>(null);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Cleanup abort controller on unmount
+  React.useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleFetch = async () => {
     if (!url) return;
+
+    // Abort any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller with timeout
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    const timeoutId = setTimeout(() => abortController.abort(), FETCH_TIMEOUT_MS);
+
     setLoading(true);
     setError(null);
     setPreview(null);
 
     try {
-      const result = await fetchRemoteResource(url);
+      const result = await fetchRemoteResource(url, { signal: abortController.signal });
 
       // Check if authentication is required
       if (requiresAuth(result)) {
@@ -38,8 +62,13 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
 
       setPreview(result.item);
     } catch (e: any) {
-      setError(e.message || "Failed to load manifest");
+      if (e.name === 'AbortError') {
+        setError('Request timed out after 30 seconds. The server may be slow or unavailable.');
+      } else {
+        setError(e.message || "Failed to load manifest");
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

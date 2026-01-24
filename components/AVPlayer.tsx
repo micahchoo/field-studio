@@ -56,6 +56,7 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
   className = ''
 }) => {
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<AVState>({
     currentTime: 0,
     duration: 0,
@@ -223,35 +224,71 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
     seek(media.currentTime + delta);
   }, [seek]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
+  // Keyboard shortcuts - scoped to player container for WCAG compliance
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Don't handle if focus is on an input element
+    if (e.target instanceof HTMLInputElement) return;
 
-      switch (e.key) {
-        case ' ':
-        case 'k':
-          e.preventDefault();
-          togglePlayPause();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          seekRelative(-5);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          seekRelative(5);
-          break;
-        case 'm':
-          e.preventDefault();
-          toggleMute();
-          break;
-      }
-    };
+    const media = mediaRef.current;
+    if (!media) return;
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlayPause, toggleMute, seekRelative]);
+    switch (e.key) {
+      case ' ':
+      case 'k':
+      case 'K':
+        e.preventDefault();
+        togglePlayPause();
+        break;
+      case 'ArrowLeft':
+      case 'j':
+      case 'J':
+        e.preventDefault();
+        seekRelative(-10);
+        break;
+      case 'ArrowRight':
+      case 'l':
+      case 'L':
+        e.preventDefault();
+        seekRelative(10);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setVolume(Math.min(1, state.volume + 0.1));
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setVolume(Math.max(0, state.volume - 0.1));
+        break;
+      case 'm':
+      case 'M':
+        e.preventDefault();
+        toggleMute();
+        break;
+      case 'Home':
+        e.preventDefault();
+        seek(timeMode?.start || 0);
+        break;
+      case 'End':
+        e.preventDefault();
+        seek(timeMode?.end || state.duration);
+        break;
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        // Number keys seek to percentage (0=0%, 5=50%, 9=90%)
+        e.preventDefault();
+        const percent = parseInt(e.key) / 10;
+        seek(state.duration * percent);
+        break;
+    }
+  }, [togglePlayPause, toggleMute, seekRelative, seek, setVolume, state.volume, state.duration, timeMode]);
 
   // Progress bar click
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -274,7 +311,14 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
     : 0;
 
   return (
-    <div className={`flex flex-col bg-black ${className}`}>
+    <div
+      ref={containerRef}
+      className={`flex flex-col bg-black ${className} focus:outline-none focus-visible:ring-2 focus-visible:ring-iiif-blue focus-visible:ring-inset`}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      role="application"
+      aria-label={`${mediaType === 'video' ? 'Video' : 'Audio'} player. Press Space to play/pause, arrow keys to seek, Up/Down for volume.`}
+    >
       {/* Main Player */}
       <div
         className="relative group"

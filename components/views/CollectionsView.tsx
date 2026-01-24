@@ -7,6 +7,9 @@ import { MuseumLabel } from '../MuseumLabel';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { autoStructureService } from '../../services/autoStructure';
 
+// Maximum nesting depth to prevent stack overflow and performance issues
+const MAX_NESTING_DEPTH = 15;
+
 interface CollectionsViewProps {
   root: IIIFItem | null;
   onUpdate: (newRoot: IIIFItem) => void;
@@ -230,20 +233,24 @@ const TreeNode: React.FC<{
     onDrop: (draggedId: string, targetId: string) => void;
     level: number;
 }> = ({ node, selectedId, onSelect, onDrop, level }) => {
-    const [expanded, setExpanded] = React.useState(true);
+    const [expanded, setExpanded] = React.useState(level < 5); // Auto-collapse deep levels
     const [isDragOver, setIsDragOver] = React.useState(false);
     const isSelected = node.id === selectedId;
     const children = (node as any).items || (node as any).annotations || [];
-    
+    const isAtDepthLimit = level >= MAX_NESTING_DEPTH;
+
     const config = RESOURCE_TYPE_CONFIG[node.type] || RESOURCE_TYPE_CONFIG['Content'];
+
+    // Prevent drop if it would exceed depth limit
+    const canAcceptDrop = node.type !== 'Canvas' && !isAtDepthLimit;
 
     return (
         <div style={{ paddingLeft: level > 0 ? 12 : 0 }} className="mb-0.5">
             <div
                 draggable onDragStart={e => e.dataTransfer.setData('resourceId', node.id)}
-                onDragOver={e => { if (node.type !== 'Canvas') { e.preventDefault(); setIsDragOver(true); } }}
+                onDragOver={e => { if (canAcceptDrop) { e.preventDefault(); setIsDragOver(true); } }}
                 onDragLeave={() => setIsDragOver(false)}
-                onDrop={e => { e.preventDefault(); setIsDragOver(false); onDrop(e.dataTransfer.getData('resourceId'), node.id); }}
+                onDrop={e => { e.preventDefault(); setIsDragOver(false); if (canAcceptDrop) onDrop(e.dataTransfer.getData('resourceId'), node.id); }}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all select-none border ${isDragOver ? 'bg-blue-100 border-blue-500' : isSelected ? `bg-white border-blue-400 shadow-md font-bold` : 'hover:bg-slate-50 text-slate-700 border-transparent'}`}
                 onClick={() => onSelect(node.id)}
             >
@@ -252,10 +259,22 @@ const TreeNode: React.FC<{
                 </div>
                 <Icon name={config.icon} className={`text-[18px] ${isSelected ? config.colorClass : 'text-slate-400'}`} />
                 <span className={`text-sm truncate`}>{getIIIFValue(node.label) || 'Untitled'}</span>
+                {isAtDepthLimit && children.length > 0 && (
+                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
+                        Depth limit
+                    </span>
+                )}
             </div>
-            {expanded && children.length > 0 && (
+            {expanded && children.length > 0 && !isAtDepthLimit && (
                 <div className="border-l border-slate-200 ml-4 mt-0.5 space-y-0.5">
                     {children.map((child: any) => <TreeNode key={child.id} node={child} selectedId={selectedId} onSelect={onSelect} onDrop={onDrop} level={level + 1} />)}
+                </div>
+            )}
+            {/* Show collapsed placeholder when at depth limit */}
+            {expanded && children.length > 0 && isAtDepthLimit && (
+                <div className="ml-4 mt-1 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+                    <Icon name="warning" className="text-amber-500" />
+                    <span>{children.length} nested items not shown (depth limit reached)</span>
                 </div>
             )}
         </div>
