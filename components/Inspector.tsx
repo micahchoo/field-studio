@@ -5,6 +5,7 @@ import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
 import { ProvenancePanel } from './ProvenancePanel';
+import { GeoEditor } from './GeoEditor';
 import { RESOURCE_TYPE_CONFIG, isFieldVisible, getFieldsByCategory } from '../constants';
 
 interface InspectorProps {
@@ -113,7 +114,7 @@ const DebouncedTextarea = ({ value, onChange, ...props }: any) => {
 };
 
 export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose, isMobile }) => {
-  const [tab, setTab] = useState<'metadata' | 'provenance' | 'learn'>('metadata');
+  const [tab, setTab] = useState<'metadata' | 'provenance' | 'geo' | 'learn'>('metadata');
   const [showAddMenu, setShowAddMenu] = useState(false);
 
   if (!visible || !resource) return null;
@@ -183,7 +184,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
 
         {/* Tabs */}
         <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white'}`}>
-            {['metadata', 'provenance', 'learn'].map(t => (
+            {['metadata', 'provenance', 'geo', 'learn'].map(t => (
                 <button
                   key={t}
                   className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? (settings.fieldMode ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-iiif-blue border-b-2 border-iiif-blue bg-blue-50/20') : 'text-slate-400 hover:text-slate-600'}`}
@@ -193,7 +194,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                   aria-controls={`inspector-tab-${t}`}
                   id={`tab-${t}`}
                 >
-                  {t === 'provenance' ? 'History' : t}
+                  {t === 'provenance' ? 'History' : t === 'geo' ? 'Location' : t}
                 </button>
             ))}
         </div>
@@ -399,6 +400,26 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
         {tab === 'provenance' && (
             <div role="tabpanel" id="inspector-tab-provenance" aria-labelledby="tab-provenance">
                 <ProvenancePanel resourceId={resource.id} fieldMode={settings.fieldMode} />
+            </div>
+        )}
+
+        {tab === 'geo' && (
+            <div role="tabpanel" id="inspector-tab-geo" aria-labelledby="tab-geo" className="space-y-4 animate-in fade-in duration-300">
+                <div className={`border rounded-lg overflow-hidden ${settings.fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                    <GeoEditor
+                        item={resource}
+                        onChange={(navPlace) => onUpdateResource({ navPlace } as any)}
+                        height={300}
+                        editable={true}
+                    />
+                </div>
+                <div className={`text-[10px] ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <p className="font-bold uppercase tracking-wider mb-1">About navPlace</p>
+                    <p className="leading-relaxed">
+                        The navPlace property associates a IIIF resource with a geographic location using GeoJSON.
+                        This enables map-based discovery and navigation of archival materials.
+                    </p>
+                </div>
             </div>
         )}
 

@@ -352,6 +352,13 @@ class IIIFAuthService {
   }
 
   /**
+   * Alias for getValidToken (for remoteLoader compatibility)
+   */
+  getStoredToken(resourceId: string): string | null {
+    return this.getValidToken(resourceId);
+  }
+
+  /**
    * Clear token for a resource
    */
   clearToken(resourceId: string) {

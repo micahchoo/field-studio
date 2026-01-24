@@ -3,18 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { IIIFItem, getIIIFValue } from '../types';
 import { exportService, ExportOptions, VirtualFile } from '../services/exportService';
 import { staticSiteExporter, StaticSiteConfig } from '../services/staticSiteExporter';
+import { archivalPackageService, ArchivalPackageOptions } from '../services/archivalPackageService';
+import { activityStreamService } from '../services/activityStream';
 import { validator, ValidationIssue } from '../services/validator';
 import { Icon } from './Icon';
 import { ExportDryRun } from './ExportDryRun';
 import FileSaver from 'file-saver';
+import JSZip from 'jszip';
 
 interface ExportDialogProps {
   root: IIIFItem | null;
   onClose: () => void;
 }
 
-type ExportStep = 'config' | 'wax-config' | 'dry-run' | 'exporting';
-type ExportFormat = 'static-site' | 'raw-iiif' | 'wax-site';
+type ExportStep = 'config' | 'wax-config' | 'archival-config' | 'dry-run' | 'exporting';
+type ExportFormat = 'static-site' | 'raw-iiif' | 'wax-site' | 'ocfl' | 'bagit' | 'activity-log';
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => {
   const [step, setStep] = useState<ExportStep>('config');
@@ -39,6 +42,17 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
     includeSearch: true,
     includeViewer: true,
     template: 'gallery'
+  });
+
+  // Archival package configuration (OCFL/BagIt)
+  const [archivalConfig, setArchivalConfig] = useState<Partial<ArchivalPackageOptions>>({
+    includeMedia: true,
+    digestAlgorithm: 'sha256',
+    organization: '',
+    description: '',
+    externalId: '',
+    versionMessage: 'Initial export from IIIF Field Studio',
+    user: { name: '', email: '' }
   });
 
   useEffect(() => {
@@ -113,6 +127,113 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
     }
   };
 
+  const handleActivityLogExport = async () => {
+    setStep('exporting');
+    setErrorMsg(null);
+    setProgress({ status: 'Gathering activity history...', percent: 0 });
+
+    try {
+      setProgress({ status: 'Exporting activity log...', percent: 30 });
+
+      // Get all activities
+      const activities = await activityStreamService.exportAll();
+
+      if (activities.length === 0) {
+        throw new Error('No activities recorded yet. Make some changes to your manifests first.');
+      }
+
+      setProgress({ status: 'Generating Change Discovery collection...', percent: 50 });
+
+      // Create IIIF Change Discovery collection
+      const baseUrl = window.location.origin;
+      const collection = await activityStreamService.exportAsChangeDiscovery(baseUrl);
+
+      setProgress({ status: 'Creating download...', percent: 80 });
+
+      // Create ZIP with collection and all activities
+      const zip = new JSZip();
+      zip.file('collection.json', JSON.stringify(collection, null, 2));
+      zip.file('activities.json', JSON.stringify(activities, null, 2));
+
+      // Add individual page files if many activities
+      if (activities.length > 100) {
+        const pageSize = 100;
+        const pages = Math.ceil(activities.length / pageSize);
+        for (let i = 0; i < pages; i++) {
+          const page = await activityStreamService.exportPage(baseUrl, i);
+          zip.file(`page-${i}.json`, JSON.stringify(page, null, 2));
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      FileSaver.saveAs(blob, `activity-log-${new Date().toISOString().split('T')[0]}.zip`);
+
+      setProgress({ status: 'Complete!', percent: 100 });
+      await new Promise(r => setTimeout(r, 500));
+      onClose();
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Failed to export activity log');
+      setStep('config');
+    }
+  };
+
+  const handleArchivalExport = async () => {
+    if (!root) return;
+    setStep('exporting');
+    setErrorMsg(null);
+    setProgress({ status: 'Initializing archival package...', percent: 0 });
+
+    try {
+      const options: ArchivalPackageOptions = {
+        includeMedia: archivalConfig.includeMedia ?? true,
+        digestAlgorithm: archivalConfig.digestAlgorithm || 'sha256',
+        organization: archivalConfig.organization,
+        description: archivalConfig.description,
+        externalId: archivalConfig.externalId,
+        versionMessage: archivalConfig.versionMessage,
+        user: archivalConfig.user?.name ? archivalConfig.user as any : undefined
+      };
+
+      setProgress({ status: `Creating ${format.toUpperCase()} package...`, percent: 20 });
+
+      const result = format === 'ocfl'
+        ? await archivalPackageService.exportOCFL(root, options)
+        : await archivalPackageService.exportBagIt(root, options);
+
+      if (!result.success && result.errors.length > 0) {
+        throw new Error(result.errors.join('; '));
+      }
+
+      setProgress({ status: 'Compressing files...', percent: 60 });
+
+      // Create ZIP from result files
+      const zip = new JSZip();
+      for (const file of result.files) {
+        if (typeof file.content === 'string') {
+          zip.file(file.path, file.content);
+        } else {
+          zip.file(file.path, file.content);
+        }
+      }
+
+      setProgress({ status: 'Generating download...', percent: 80 });
+      const blob = await zip.generateAsync({ type: 'blob' });
+
+      const filename = format === 'ocfl'
+        ? `ocfl-${new Date().toISOString().split('T')[0]}.zip`
+        : `bagit-${new Date().toISOString().split('T')[0]}.zip`;
+
+      FileSaver.saveAs(blob, filename);
+
+      setProgress({ status: 'Complete!', percent: 100 });
+      await new Promise(r => setTimeout(r, 500));
+      onClose();
+    } catch (e: any) {
+      setErrorMsg(e.message || `Failed to create ${format.toUpperCase()} package`);
+      setStep('archival-config');
+    }
+  };
+
   const criticalErrors = integrityIssues.filter(i => i.level === 'error');
 
   return (
@@ -131,7 +252,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                     <div>
                         <h2 id="export-dialog-title" className="text-lg font-black text-slate-800 uppercase tracking-tighter">Archive Export</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            {step === 'config' ? 'Step 1: Format Selection' : step === 'wax-config' ? 'Step 2: Site Configuration' : step === 'dry-run' ? 'Step 2: Integrity & Preview' : 'Step 3: Generating'}
+                            {step === 'config' ? 'Step 1: Format Selection' : step === 'wax-config' ? 'Step 2: Site Configuration' : step === 'archival-config' ? 'Step 2: Package Configuration' : step === 'dry-run' ? 'Step 2: Integrity & Preview' : 'Step 3: Generating'}
                         </p>
                     </div>
                 </div>
@@ -192,6 +313,55 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                             </button>
                         </div>
 
+                        {/* Archival Preservation Formats */}
+                        <div>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <Icon name="archive" className="text-sm" /> Digital Preservation
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    role="radio"
+                                    aria-checked={format === 'ocfl'}
+                                    className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'ocfl' ? 'border-amber-600 bg-amber-50' : 'border-slate-100 hover:border-slate-200'}`}
+                                    onClick={() => setFormat('ocfl')}
+                                >
+                                    <Icon name="inventory_2" className={`text-2xl mb-3 ${format === 'ocfl' ? 'text-amber-600' : 'text-slate-400'}`} />
+                                    <div className="font-bold text-sm text-slate-800 mb-1">OCFL Package</div>
+                                    <p className="text-[10px] text-slate-500 leading-tight">Oxford Common File Layout 1.1 with versioning.</p>
+                                    {format === 'ocfl' && <div className="absolute top-4 right-4 text-amber-600"><Icon name="check_circle"/></div>}
+                                </button>
+                                <button
+                                    role="radio"
+                                    aria-checked={format === 'bagit'}
+                                    className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'bagit' ? 'border-purple-600 bg-purple-50' : 'border-slate-100 hover:border-slate-200'}`}
+                                    onClick={() => setFormat('bagit')}
+                                >
+                                    <Icon name="shopping_bag" className={`text-2xl mb-3 ${format === 'bagit' ? 'text-purple-600' : 'text-slate-400'}`} />
+                                    <div className="font-bold text-sm text-slate-800 mb-1">BagIt Bag</div>
+                                    <p className="text-[10px] text-slate-500 leading-tight">RFC 8493 compliant with checksums.</p>
+                                    {format === 'bagit' && <div className="absolute top-4 right-4 text-purple-600"><Icon name="check_circle"/></div>}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Activity Log Export */}
+                        <div>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <Icon name="history" className="text-sm" /> Change Tracking
+                            </h3>
+                            <button
+                                role="radio"
+                                aria-checked={format === 'activity-log'}
+                                className={`p-5 rounded-2xl border-2 text-left transition-all relative group w-full ${format === 'activity-log' ? 'border-cyan-600 bg-cyan-50' : 'border-slate-100 hover:border-slate-200'}`}
+                                onClick={() => setFormat('activity-log')}
+                            >
+                                <Icon name="sync_alt" className={`text-2xl mb-3 ${format === 'activity-log' ? 'text-cyan-600' : 'text-slate-400'}`} />
+                                <div className="font-bold text-sm text-slate-800 mb-1">Activity Log (Change Discovery)</div>
+                                <p className="text-[10px] text-slate-500 leading-tight">IIIF Change Discovery API 1.0 format. Tracks all create/update/delete operations for sync.</p>
+                                {format === 'activity-log' && <div className="absolute top-4 right-4 text-cyan-600"><Icon name="check_circle"/></div>}
+                            </button>
+                        </div>
+
                         {format === 'wax-site' && (
                             <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
                                 <div className="flex items-center gap-2 text-green-800 font-bold text-sm mb-2">
@@ -218,6 +388,124 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 </div>
                             </label>
                         )}
+                    </div>
+                )}
+
+                {step === 'archival-config' && (
+                    <div className="space-y-6 animate-in slide-in-from-right-4">
+                        <div className="text-center mb-6">
+                            <Icon name={format === 'ocfl' ? 'inventory_2' : 'shopping_bag'} className={`text-4xl mb-2 ${format === 'ocfl' ? 'text-amber-600' : 'text-purple-600'}`} />
+                            <h3 className="text-lg font-bold text-slate-800">
+                                {format === 'ocfl' ? 'OCFL Package Settings' : 'BagIt Bag Settings'}
+                            </h3>
+                            <p className="text-sm text-slate-500">Configure your digital preservation package</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Digest Algorithm</label>
+                                <select
+                                    value={archivalConfig.digestAlgorithm || 'sha256'}
+                                    onChange={e => setArchivalConfig({ ...archivalConfig, digestAlgorithm: e.target.value as 'sha256' | 'sha512' })}
+                                    className="w-full border rounded-lg p-2 text-sm"
+                                >
+                                    <option value="sha256">SHA-256 (Recommended)</option>
+                                    <option value="sha512">SHA-512</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Organization</label>
+                                <input
+                                    type="text"
+                                    value={archivalConfig.organization || ''}
+                                    onChange={e => setArchivalConfig({ ...archivalConfig, organization: e.target.value })}
+                                    className="w-full border rounded-lg p-2 text-sm"
+                                    placeholder="Your Institution"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
+                            <textarea
+                                value={archivalConfig.description || ''}
+                                onChange={e => setArchivalConfig({ ...archivalConfig, description: e.target.value })}
+                                className="w-full border rounded-lg p-2 text-sm"
+                                rows={2}
+                                placeholder="Description of this archival package..."
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">External Identifier</label>
+                                <input
+                                    type="text"
+                                    value={archivalConfig.externalId || ''}
+                                    onChange={e => setArchivalConfig({ ...archivalConfig, externalId: e.target.value })}
+                                    className="w-full border rounded-lg p-2 text-sm"
+                                    placeholder="Optional external ID"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Version Message</label>
+                                <input
+                                    type="text"
+                                    value={archivalConfig.versionMessage || ''}
+                                    onChange={e => setArchivalConfig({ ...archivalConfig, versionMessage: e.target.value })}
+                                    className="w-full border rounded-lg p-2 text-sm"
+                                    placeholder="Initial version"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">User Name</label>
+                                <input
+                                    type="text"
+                                    value={archivalConfig.user?.name || ''}
+                                    onChange={e => setArchivalConfig({ ...archivalConfig, user: { ...archivalConfig.user, name: e.target.value } })}
+                                    className="w-full border rounded-lg p-2 text-sm"
+                                    placeholder="Your name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">User Email</label>
+                                <input
+                                    type="email"
+                                    value={archivalConfig.user?.email || ''}
+                                    onChange={e => setArchivalConfig({ ...archivalConfig, user: { ...archivalConfig.user, email: e.target.value } })}
+                                    className="w-full border rounded-lg p-2 text-sm"
+                                    placeholder="your@email.com"
+                                />
+                            </div>
+                        </div>
+
+                        <label className="flex items-center gap-3 cursor-pointer p-4 bg-slate-50 rounded-xl border">
+                            <input
+                                type="checkbox"
+                                checked={archivalConfig.includeMedia ?? true}
+                                onChange={e => setArchivalConfig({ ...archivalConfig, includeMedia: e.target.checked })}
+                                className={`rounded ${format === 'ocfl' ? 'text-amber-600' : 'text-purple-600'}`}
+                            />
+                            <div>
+                                <span className="text-sm font-bold text-slate-700">Include Media Files</span>
+                                <p className="text-xs text-slate-500">Bundle original images/audio/video with the package</p>
+                            </div>
+                        </label>
+
+                        <div className={`p-4 rounded-xl border ${format === 'ocfl' ? 'bg-amber-50 border-amber-200' : 'bg-purple-50 border-purple-200'}`}>
+                            <div className={`flex items-center gap-2 font-bold text-sm mb-2 ${format === 'ocfl' ? 'text-amber-800' : 'text-purple-800'}`}>
+                                <Icon name="info" /> About {format === 'ocfl' ? 'OCFL' : 'BagIt'}
+                            </div>
+                            <p className={`text-xs ${format === 'ocfl' ? 'text-amber-700' : 'text-purple-700'}`}>
+                                {format === 'ocfl'
+                                    ? 'OCFL (Oxford Common File Layout) is a specification for storing digital objects in repositories with versioning, fixity, and long-term preservation in mind.'
+                                    : 'BagIt is a hierarchical file packaging format for storage and transfer of arbitrary digital content. It includes manifest files with checksums for integrity verification.'
+                                }
+                            </p>
+                        </div>
                     </div>
                 )}
 
@@ -408,10 +696,26 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                     <>
                         <button onClick={onClose} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Cancel</button>
                         <button
-                            onClick={() => format === 'wax-site' ? setStep('wax-config') : setStep('dry-run')}
-                            className="bg-iiif-blue text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-700 shadow-xl flex items-center gap-2 transition-all active:scale-95"
+                            onClick={() => {
+                                if (format === 'wax-site') setStep('wax-config');
+                                else if (format === 'ocfl' || format === 'bagit') setStep('archival-config');
+                                else if (format === 'activity-log') handleActivityLogExport();
+                                else setStep('dry-run');
+                            }}
+                            className={`text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl flex items-center gap-2 transition-all active:scale-95 ${format === 'activity-log' ? 'bg-cyan-600 hover:bg-cyan-700' : 'bg-iiif-blue hover:bg-blue-700'}`}
                         >
-                            {format === 'wax-site' ? 'Configure Site' : 'Start Dry Run'} <Icon name="arrow_forward" />
+                            {format === 'wax-site' ? 'Configure Site' : format === 'ocfl' || format === 'bagit' ? 'Configure Package' : format === 'activity-log' ? 'Export Log' : 'Start Dry Run'} <Icon name={format === 'activity-log' ? 'download' : 'arrow_forward'} />
+                        </button>
+                    </>
+                )}
+                {step === 'archival-config' && (
+                    <>
+                        <button onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back</button>
+                        <button
+                            onClick={handleArchivalExport}
+                            className={`text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl flex items-center gap-2 transition-all active:scale-95 ${format === 'ocfl' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+                        >
+                            Export {format.toUpperCase()} <Icon name="download" />
                         </button>
                     </>
                 )}

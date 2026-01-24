@@ -1,15 +1,17 @@
 
 import React, { useState } from 'react';
 import { IIIFItem } from '../types';
-import { fetchRemoteManifest } from '../services/remoteLoader';
+import { fetchRemoteResource, requiresAuth, AuthRequiredResult } from '../services/remoteLoader';
+import { AuthService } from '../services/authService';
 import { Icon } from './Icon';
 
 interface ExternalImportDialogProps {
   onImport: (item: IIIFItem) => void;
   onClose: () => void;
+  onAuthRequired?: (resourceId: string, authServices: AuthService[]) => void;
 }
 
-export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onImport, onClose }) => {
+export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onImport, onClose, onAuthRequired }) => {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +24,19 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
     setPreview(null);
 
     try {
-      const item = await fetchRemoteManifest(url);
-      setPreview(item);
+      const result = await fetchRemoteResource(url);
+
+      // Check if authentication is required
+      if (requiresAuth(result)) {
+        if (onAuthRequired) {
+          onAuthRequired(result.resourceId, result.authServices);
+        } else {
+          setError('This resource requires authentication, but auth is not configured.');
+        }
+        return;
+      }
+
+      setPreview(result.item);
     } catch (e: any) {
       setError(e.message || "Failed to load manifest");
     } finally {

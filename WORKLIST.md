@@ -1,6 +1,6 @@
 # IIIF Field Archive Studio - Implementation Worklist
 
-**Last Updated**: 2026-01-23
+**Last Updated**: 2026-01-23 (Wiring audit complete)
 **Spec Version**: Technical Specification v3.0
 **Current Phase**: Phase 4 - Discovery, Access, and Advanced Integration
 
@@ -15,19 +15,19 @@ These tasks focus on implementing the advanced IIIF APIs (Authorization, Content
   - **Mechanics**: COMPLETED: Enhanced `services/contentState.ts` with full Content State API 1.0 implementation. `ShareButton.tsx` updated with Copy View Link, Embed Code, JSON export, and drag-and-drop. Added `useContentStateFromUrl` and `useContentStateDrop` hooks.
   - **Source**: `IIIF Content State API 1.0`, `ARCHITECTURE_INSPIRATION.md` (Deep Linking Pattern).
 
-- [ ] **Authorization Flow 2.0** - Support for restricted content. ⚠️ PARTIAL
+- [x] **Authorization Flow 2.0** - Support for restricted content. ✅
   - **Rationale**: Enable access to sensitive field materials while respecting archival access controls (Expert: Technical Expert).
-  - **Mechanics**: PARTIAL: `services/authService.ts` implements probe-first pattern. `components/AuthDialog.tsx` exists but is **disconnected** (not mounted in App or Viewer).
+  - **Mechanics**: COMPLETED: `services/authService.ts` implements probe-first pattern. `components/AuthDialog.tsx` now mounted in App.tsx with `onAuthRequired` callback from ExternalImportDialog. Triggers on 401 responses during remote manifest loading.
   - **Source**: `IIIF Authorization Flow API 2.0`, `ARCHITECTURE_INSPIRATION.md` (Probe-First Authorization).
 
-- [ ] **Content Search API 2.0** - In-object search. ⚠️ PARTIAL
+- [x] **Content Search API 2.0** - In-object search. ✅
   - **Rationale**: Scalable search for large collections beyond client-side limits (Expert: Solutions Architect).
-  - **Mechanics**: PARTIAL: `services/contentSearchService.ts` implements client. `components/SearchPanel.tsx` exists but is **unused**. App uses global `SearchView.tsx` instead of dedicated content search UI.
+  - **Mechanics**: COMPLETED: `services/contentSearchService.ts` implements client. `components/SearchPanel.tsx` now integrated into Viewer.tsx with search button in toolbar. Shows search results with hit highlighting and navigation to matching regions.
   - **Source**: `IIIF Content Search API 2.0`, `ARCHITECTURE_INSPIRATION.md` (Annotation-Based Search).
 
-- [ ] **Advanced AV Support** - Richer audio/video presentation. ⚠️ PARTIAL
+- [x] **Advanced AV Support** - Richer audio/video presentation. ✅
   - **Rationale**: Support complex archival objects like oral histories with transcripts or music with scores (Expert: Technical Expert).
-  - **Mechanics**: PARTIAL: `services/avService.ts` implements logic. `components/AVPlayer.tsx` is fully built but **not rendered** in `Viewer.tsx` (only generic icons shown).
+  - **Mechanics**: COMPLETED: `services/avService.ts` implements logic. `components/AVPlayer.tsx` now rendered in `Viewer.tsx` for audio/video canvases with placeholderCanvas, accompanyingCanvas, and timeMode support.
   - **Source**: `Presentation API 3.0` (Audio Recipe), `ARCHITECTURE_INSPIRATION.md` (Canvas-Bound Accompaniment).
 
 ---
@@ -118,16 +118,16 @@ graph LR
 
 ## ✅ Completed Items
 
-### Recent Accomplishments (Phase 4 - Discovery & Access) ⚠️ SPRINT PARTIAL
-- [ ] **Content Search API 2.0** - SearchService2 client ready. `SearchPanel` disconnected.
-- [ ] **Advanced AV Support** - Logic ready. `AVPlayer` disconnected from Viewer.
-- [ ] **Authorization Flow 2.0** - Service ready. `AuthDialog` disconnected.
+### Recent Accomplishments (Phase 4 - Discovery & Access) ✅ SPRINT COMPLETE
+- [x] **Content Search API 2.0** - `SearchPanel` now integrated into Viewer.tsx with search button for manifests with search services.
+- [x] **Advanced AV Support** - `AVPlayer` now rendered in Viewer.tsx for audio/video canvases.
+- [x] **Authorization Flow 2.0** - `AuthDialog` now mounted in App.tsx with probe-first auth flow.
 - [x] **Content State API 1.0** - Full deep linking with share button, embed code, drag-and-drop.
 
 ### Recent Accomplishments (Phase 5 - Ingest & Integration Enhancements) ✅
 - [x] **Virtual Manifest Factory** - Auto-wrap images/audio/video URLs in IIIF Manifests for seamless import.
-- [x] **OCFL/BagIt Archival Export** - Digital preservation packages with checksums and inventories.
-- [ ] **NavPlace Geospatial Workbench** - Map-based editing. ⚠️ PARTIAL: `GeoEditor` disconnected.
+- [x] **OCFL/BagIt Archival Export** - Digital preservation packages with checksums and inventories. Now integrated into ExportDialog.tsx with full configuration UI.
+- [x] **NavPlace Geospatial Workbench** - Map-based editing. ✅ `GeoEditor` now wired into Inspector.tsx as "Location" tab.
 - [x] **Static Site Export (Wax Pattern)** - Full static exhibition generator with IIIF tiles, Lunr.js search, item pages.
 - [x] **Static Export: Offline Viewer Bundling** - Self-contained exports with local viewer assets.
 - [x] **Ingest: Smart Sidecar Detection** - Auto-linking of transcriptions/captions during ingest.
@@ -138,14 +138,14 @@ graph LR
 - [x] **Performance: Background Tile Pre-generation** - Web Worker pool for tile generation.
 - [x] **Archival: Provenance PREMIS Export** - Full PREMIS 3.0 compliant XML export.
 - [x] **Spec Bridge: V2/V3 Import** - Auto-upgrade IIIF v2 manifests.
-- [ ] **Selector Abstraction** - Service ready. ⚠️ PARTIAL: UI integration incomplete.
+- [x] **Selector Abstraction** - ✅ Now integrated into Viewer.tsx for region parsing, share URLs, and evidence extraction.
 - [x] **Migrate App.tsx to Vault** - Full migration to Vault state management.
 - [x] **UX: Metadata Complexity Slider** - Progressive disclosure of metadata fields.
 - [ ] **Search: Autocomplete Service** - Logic ready. ⚠️ PARTIAL: UI disconnected.
-- [ ] **Annotation: Polygon Tool** - Component ready. ⚠️ PARTIAL: Unused in Composer.
-- [ ] **Extension Preservation** - ⚠️ PARTIAL: SpecBridge cleans unknown properties.
+- [x] **Annotation: Polygon Tool** - ✅ `PolygonAnnotationTool` now wired into Viewer.tsx with draw button in toolbar.
+- [x] **Extension Preservation** - ✅ SpecBridge now preserves vendor extension properties during v2→v3 upgrade.
 - [ ] **Content-Addressable Storage (Hashing)** - Service ready. ⚠️ PARTIAL: Unused.
-- [ ] **Activity Stream** - Service ready. ⚠️ PARTIAL: Unused.
+- [x] **Activity Stream** - ✅ Now integrated into ExportDialog as "Activity Log (Change Discovery)" export format.
 - [x] **Ingest: Visual Preview Wizard** - 6-step ingest flow with preview.
 - [ ] **CSV/Spreadsheet Sync** - Component ready. ⚠️ PARTIAL: Unused.
 
@@ -162,7 +162,14 @@ graph LR
 - [x] **3-Panel Layout** - Resizable workspace.
 - [x] **Field Mode** - High-contrast, touch-optimized UI.
 - [x] **Archive Views** - Grid, List, Map, and Timeline visualizations.
-- [ ] **Command Palette** - Quick navigation (Cmd+K). ⚠️ PARTIAL (Disconnected)
+- [x] **Command Palette** - Quick navigation (Cmd+K). ✅ Fully integrated with keyboard shortcuts.
+
+### UX/Performance Improvements (Audit-Driven)
+- [x] **URL Deep Linking** - ✅ View state (mode, selected ID) now persisted in URL for browser history navigation.
+- [x] **CSV Export/Import** - ✅ MetadataSpreadsheet now supports CSV export and import for batch editing.
+- [x] **Canvas Filmstrip** - ✅ Viewer now includes filmstrip navigation for Manifests with multiple canvases.
+- [x] **CanvasComposer Undo/Redo** - ✅ Full undo/redo with history and Cmd+Z/Cmd+Shift+Z keyboard shortcuts.
+- [x] **ArchiveView Virtualization** - ✅ Grid and List views now use windowed rendering for performance with large collections.
 
 
 

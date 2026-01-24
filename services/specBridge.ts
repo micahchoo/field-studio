@@ -100,12 +100,25 @@ export function upgradeToV3(input: any): IIIFItem {
  * Upgrade a v2 Collection to v3
  */
 function upgradeCollection(v2: any): IIIFCollection {
+  // Known v2/v3 collection properties that we handle explicitly
+  const knownCollectionKeys = [
+    '@context', '@id', '@type', 'id', 'type', 'label', 'description', 'summary',
+    'metadata', 'thumbnail', 'attribution', 'requiredStatement', 'license', 'rights',
+    'logo', 'provider', 'navDate', 'viewingHint', 'behavior',
+    'manifests', 'collections', 'members', 'items'
+  ];
+
+  // Extract extension properties to preserve
+  const extensions = extractExtensions(v2, knownCollectionKeys);
+
   const v3: IIIFCollection = {
     '@context': 'http://iiif.io/api/presentation/3/context.json',
     id: v2['@id'] || v2.id,
     type: 'Collection',
     label: upgradeLanguageValue(v2.label),
     items: [],
+    // Spread extensions to preserve vendor properties
+    ...extensions
   };
 
   // Optional properties
@@ -148,12 +161,26 @@ function upgradeCollection(v2: any): IIIFCollection {
  * Upgrade a v2 Manifest to v3
  */
 function upgradeManifest(v2: any): IIIFManifest {
+  // Known v2/v3 manifest properties that we handle explicitly
+  const knownManifestKeys = [
+    '@context', '@id', '@type', 'id', 'type', 'label', 'description', 'summary',
+    'metadata', 'thumbnail', 'attribution', 'requiredStatement', 'license', 'rights',
+    'logo', 'provider', 'navDate', 'viewingHint', 'behavior', 'viewingDirection',
+    'sequences', 'items', 'structures', 'related', 'homepage', 'seeAlso', 'rendering',
+    'within', 'partOf', 'service', 'services'
+  ];
+
+  // Extract extension properties to preserve
+  const extensions = extractExtensions(v2, knownManifestKeys);
+
   const v3: IIIFManifest = {
     '@context': 'http://iiif.io/api/presentation/3/context.json',
     id: v2['@id'] || v2.id,
     type: 'Manifest',
     label: upgradeLanguageValue(v2.label),
-    items: []
+    items: [],
+    // Spread extensions to preserve vendor properties
+    ...extensions
   };
 
   // Optional properties
@@ -232,13 +259,25 @@ function upgradeManifest(v2: any): IIIFManifest {
  * Upgrade a v2 Canvas to v3
  */
 function upgradeCanvas(v2: any): IIIFCanvas {
+  // Known v2/v3 canvas properties that we handle explicitly
+  const knownCanvasKeys = [
+    '@id', '@type', 'id', 'type', 'label', 'description', 'summary',
+    'metadata', 'thumbnail', 'navDate', 'width', 'height', 'duration',
+    'viewingHint', 'behavior', 'images', 'items', 'otherContent', 'annotations'
+  ];
+
+  // Extract extension properties to preserve
+  const extensions = extractExtensions(v2, knownCanvasKeys);
+
   const v3: IIIFCanvas = {
     id: v2['@id'] || v2.id,
     type: 'Canvas',
     label: upgradeLanguageValue(v2.label),
     width: v2.width,
     height: v2.height,
-    items: []
+    items: [],
+    // Spread extensions to preserve vendor properties
+    ...extensions
   };
 
   // Optional properties
@@ -300,11 +339,22 @@ function upgradeImageAnnotation(v2: any, canvasId: string, index: number): any {
  * Upgrade a v2 Range to v3
  */
 function upgradeRange(v2: any): any {
+  // Known v2/v3 range properties that we handle explicitly
+  const knownRangeKeys = [
+    '@id', '@type', 'id', 'type', 'label', 'description', 'summary',
+    'metadata', 'viewingHint', 'behavior', 'canvases', 'ranges', 'members', 'items'
+  ];
+
+  // Extract extension properties to preserve
+  const extensions = extractExtensions(v2, knownRangeKeys);
+
   const v3: any = {
     id: v2['@id'] || v2.id,
     type: 'Range',
     label: upgradeLanguageValue(v2.label),
-    items: []
+    items: [],
+    // Spread extensions to preserve vendor properties
+    ...extensions
   };
 
   if (v2.description) v3.summary = upgradeLanguageValue(v2.description);
@@ -623,29 +673,69 @@ function normalizeResourceType(type: any): string {
 }
 
 /**
- * Clean up a v3 manifest (remove legacy properties)
+ * Clean up a v3 manifest (remove legacy properties, preserve extensions)
+ *
+ * IIIF allows vendor extensions. Properties that:
+ * - Start with a namespace prefix (e.g., "oa:", "dc:")
+ * - Are in an "extensions" array
+ * - Have namespaced keys (contain ":")
+ * - Start with underscore (internal app properties)
+ *
+ * These are preserved as they may be important vendor data.
  */
 function cleanV3(input: any): IIIFItem {
   const cleaned = { ...input };
 
-  // Remove v2 properties that might have been left behind
-  delete cleaned['@id'];
-  delete cleaned['@type'];
-  delete cleaned.sequences;
-  delete cleaned.otherContent;
-  delete cleaned.images;
-  delete cleaned.within;
-  delete cleaned.attribution;
-  delete cleaned.license;
-  delete cleaned.logo;
-  delete cleaned.related;
-  delete cleaned.description;
+  // Only remove v2 properties that have v3 equivalents (already transformed)
+  // These are the legacy properties that are replaced, not vendor extensions
+  const v2OnlyProperties = [
+    '@id',      // → id
+    '@type',    // → type
+    'sequences', // → items
+    'otherContent', // → annotations
+    'images',   // → items (annotation pages)
+    'within',   // → partOf
+    'attribution', // → requiredStatement
+    'license',  // → rights
+    'logo',     // → provider.logo
+    'related',  // → homepage
+    'description' // → summary
+  ];
+
+  for (const prop of v2OnlyProperties) {
+    delete cleaned[prop];
+  }
 
   // Ensure id and type are present
   if (!cleaned.id && input['@id']) cleaned.id = input['@id'];
   if (!cleaned.type && input['@type']) cleaned.type = normalizeType(input['@type']);
 
   return cleaned;
+}
+
+/**
+ * Extract unknown/extension properties from an object
+ * These are properties not in the standard IIIF spec that should be preserved
+ */
+function extractExtensions(obj: any, knownKeys: string[]): Record<string, any> {
+  const extensions: Record<string, any> = {};
+
+  for (const key of Object.keys(obj)) {
+    // Skip known keys
+    if (knownKeys.includes(key)) continue;
+
+    // Skip v2 legacy keys (they'll be transformed)
+    if (key.startsWith('@')) continue;
+
+    // Preserve extension properties:
+    // - Namespaced keys (contain ":")
+    // - Keys starting with underscore (app internal)
+    // - "extensions" array
+    // - Any other unknown property (vendor extension)
+    extensions[key] = obj[key];
+  }
+
+  return extensions;
 }
 
 // ============================================================================

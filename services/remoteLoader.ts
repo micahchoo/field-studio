@@ -2,6 +2,7 @@
 import { IIIFItem } from '../types';
 import { virtualManifestFactory } from './virtualManifestFactory';
 import { specBridge } from './specBridge';
+import { authService, AuthService } from './authService';
 
 export interface RemoteResource {
   id: string;
@@ -16,6 +17,22 @@ export interface FetchResult {
   isVirtualManifest: boolean;
   originalUrl: string;
 }
+
+export interface AuthRequiredResult {
+  requiresAuth: true;
+  resourceId: string;
+  authServices: AuthService[];
+  status: number;
+}
+
+export type ExtendedFetchResult = FetchResult | AuthRequiredResult;
+
+/**
+ * Check if result requires authentication
+ */
+export const requiresAuth = (result: ExtendedFetchResult): result is AuthRequiredResult => {
+  return 'requiresAuth' in result && result.requiresAuth === true;
+};
 
 /**
  * Fetch a remote IIIF resource or wrap a media URL in a virtual manifest
@@ -45,8 +62,34 @@ export const fetchRemoteResource = async (url: string): Promise<FetchResult> => 
     }
   }
 
-  const fetchWithValidation = async (targetUrl: string) => {
-    const response = await fetch(targetUrl);
+  const fetchWithValidation = async (targetUrl: string, accessToken?: string): Promise<{ data: IIIFItem; isVirtual: boolean } | AuthRequiredResult> => {
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(targetUrl, { headers });
+
+    // Handle 401 - check for auth services
+    if (response.status === 401) {
+      try {
+        const data = await response.json();
+        // Extract auth services from response (IIIF Auth 2.0 pattern)
+        const services = authService.extractAuthServices(data);
+        if (services.length > 0) {
+          return {
+            requiresAuth: true,
+            resourceId: url,
+            authServices: services,
+            status: 401
+          };
+        }
+      } catch (e) {
+        // JSON parse failed, no auth services available
+      }
+      throw new Error(`HTTP error! status: 401 - Authentication required`);
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -82,7 +125,15 @@ export const fetchRemoteResource = async (url: string): Promise<FetchResult> => 
   };
 
   try {
-    const result = await fetchWithValidation(url);
+    // Try with stored token if available
+    const storedToken = authService.getStoredToken(url);
+    const result = await fetchWithValidation(url, storedToken || undefined);
+
+    // If auth is required, return that result
+    if ('requiresAuth' in result) {
+      return result;
+    }
+
     return {
       item: result.data,
       isVirtualManifest: result.isVirtual,
@@ -101,6 +152,12 @@ export const fetchRemoteResource = async (url: string): Promise<FetchResult> => 
            // Using allorigins.win as a public proxy to bypass CORS for client-side usage
            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
            const result = await fetchWithValidation(proxyUrl);
+
+           // If auth is required, return that result
+           if ('requiresAuth' in result) {
+             return result;
+           }
+
            return {
              item: result.data,
              isVirtualManifest: result.isVirtual,

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IIIFCanvas, IIIFAnnotation, IIIFItem, IIIFAnnotationPage } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
@@ -11,22 +11,99 @@ interface CanvasComposerProps {
 }
 
 interface PlacedResource {
-  id: string; 
+  id: string;
   resource: IIIFItem;
   x: number; y: number; w: number; h: number;
   opacity: number;
   locked: boolean;
 }
 
+// Local undo/redo history for composition changes
+interface HistoryState {
+  past: PlacedResource[][];
+  present: PlacedResource[];
+  future: PlacedResource[][];
+}
+
+const MAX_HISTORY = 50;
+
 export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate, onClose }) => {
   const { showToast } = useToast();
-  const [layers, setLayers] = useState<PlacedResource[]>([]);
+  const [history, setHistory] = useState<HistoryState>({ past: [], present: [], future: [] });
   const [canvasDimensions, setCanvasDimensions] = useState({ w: canvas.width || 2000, h: canvas.height || 2000 });
   const [scale, setScale] = useState(0.25);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [bgMode, setBgMode] = useState<'grid' | 'dark' | 'light'>('grid');
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Derived layers from history
+  const layers = history.present;
+
+  // Update layers with history tracking
+  const updateLayers = useCallback((updater: PlacedResource[] | ((prev: PlacedResource[]) => PlacedResource[])) => {
+    setHistory(prev => {
+      const newPresent = typeof updater === 'function' ? updater(prev.present) : updater;
+      // Don't record if nothing changed
+      if (JSON.stringify(newPresent) === JSON.stringify(prev.present)) return prev;
+      return {
+        past: [...prev.past.slice(-MAX_HISTORY + 1), prev.present],
+        present: newPresent,
+        future: []
+      };
+    });
+  }, []);
+
+  // Set layers without history (for initial load)
+  const setLayersInitial = useCallback((layers: PlacedResource[]) => {
+    setHistory({ past: [], present: layers, future: [] });
+  }, []);
+
+  // Undo/Redo functions
+  const canUndo = history.past.length > 0;
+  const canRedo = history.future.length > 0;
+
+  const undo = useCallback(() => {
+    setHistory(prev => {
+      if (prev.past.length === 0) return prev;
+      const newPast = [...prev.past];
+      const newPresent = newPast.pop()!;
+      return {
+        past: newPast,
+        present: newPresent,
+        future: [prev.present, ...prev.future]
+      };
+    });
+  }, []);
+
+  const redo = useCallback(() => {
+    setHistory(prev => {
+      if (prev.future.length === 0) return prev;
+      const newFuture = [...prev.future];
+      const newPresent = newFuture.shift()!;
+      return {
+        past: [...prev.past, prev.present],
+        present: newPresent,
+        future: newFuture
+      };
+    });
+  }, []);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   useEffect(() => {
     const existing: PlacedResource[] = [];
@@ -39,8 +116,8 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
 
           existing.push({
             id: anno.id,
-            resource: { 
-                id: (anno.body as any).id || '', 
+            resource: {
+                id: (anno.body as any).id || '',
                 type: (anno.body as any).type || 'Image',
                 _blobUrl: (anno.body as any).id?.includes('blob:') ? (anno.body as any).id : undefined,
                 label: (anno.body as any).label || { none: ['Archive Layer'] }
@@ -49,8 +126,8 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
           });
       });
     }
-    setLayers(existing);
-  }, [canvas.id]);
+    setLayersInitial(existing);
+  }, [canvas.id, setLayersInitial]);
 
   const handleSave = () => {
     const newCanvas = { ...canvas };
@@ -74,13 +151,13 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
       const target = idx + (dir === 'up' ? -1 : 1);
       if (target >= 0 && target < layers.length) {
           [newLayers[idx], newLayers[target]] = [newLayers[target], newLayers[idx]];
-          setLayers(newLayers);
+          updateLayers(newLayers);
       }
   };
 
   const alignActive = (type: 'center' | 'top' | 'left' | 'fill') => {
       if (!activeId) return;
-      setLayers(prev => prev.map(l => {
+      updateLayers(prev => prev.map(l => {
           if (l.id !== activeId) return l;
           switch(type) {
               case 'center': return { ...l, x: (canvasDimensions.w - l.w)/2, y: (canvasDimensions.h - l.h)/2 };
@@ -114,6 +191,10 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex bg-white/5 border border-white/10 rounded p-1" role="group" aria-label="Undo/Redo">
+              <button onClick={undo} disabled={!canUndo} aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)" className={`p-1 ${canUndo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="undo"/></button>
+              <button onClick={redo} disabled={!canRedo} aria-label="Redo (Ctrl+Shift+Z)" title="Redo (Ctrl+Shift+Z)" className={`p-1 ${canRedo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="redo"/></button>
+          </div>
           <div className="flex bg-white/5 border border-white/10 rounded p-1">
               <button onClick={() => setScale(s => s * 0.8)} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></button>
               <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center" aria-live="polite">{Math.round(scale * 100)}%</span>
@@ -146,10 +227,10 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-[11px] font-bold text-white truncate max-w-[140px]">{l.resource.label?.['none']?.[0]}</span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); setLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer" aria-label={l.locked ? "Unlock Layer" : "Lock Layer"}><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></button>
+                                <button onClick={(e) => { e.stopPropagation(); updateLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer" aria-label={l.locked ? "Unlock Layer" : "Lock Layer"}><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></button>
                                 <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'down'); }} className="p-1 hover:bg-white/10 rounded" title="Move Back" aria-label="Move Layer Back"><Icon name="arrow_downward" className="text-[14px]"/></button>
                                 <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'up'); }} className="p-1 hover:bg-white/10 rounded" title="Move Forward" aria-label="Move Layer Forward"><Icon name="arrow_upward" className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); setLayers(prev => prev.filter(x => x.id !== l.id)); }} className="p-1 hover:bg-red-500 text-white rounded" title="Remove Layer" aria-label="Remove Layer"><Icon name="delete" className="text-[14px]"/></button>
+                                <button onClick={(e) => { e.stopPropagation(); updateLayers(prev => prev.filter(x => x.id !== l.id)); }} className="p-1 hover:bg-red-500 text-white rounded" title="Remove Layer" aria-label="Remove Layer"><Icon name="delete" className="text-[14px]"/></button>
                             </div>
                         </div>
                         <div className={`space-y-3 ${l.locked ? 'opacity-40 pointer-events-none' : ''}`}>
@@ -157,13 +238,13 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, onUpdate
                                 {['x','y','w','h'].map(f => (
                                     <div key={f} className="space-y-1">
                                         <span className="text-[8px] font-black text-white/30 uppercase block">{f}</span>
-                                        <input type="number" aria-label={`Layer ${f} coordinate`} value={(l as any)[f]} onChange={e => setLayers(layers.map(x => x.id === l.id ? {...x, [f]: Number(e.target.value)} : x))} className="w-full bg-black/40 text-white text-[10px] border-none rounded p-1 outline-none"/>
+                                        <input type="number" aria-label={`Layer ${f} coordinate`} value={(l as any)[f]} onChange={e => updateLayers(layers.map(x => x.id === l.id ? {...x, [f]: Number(e.target.value)} : x))} className="w-full bg-black/40 text-white text-[10px] border-none rounded p-1 outline-none"/>
                                     </div>
                                 ))}
                             </div>
                             <div className="space-y-1">
                                 <div className="flex justify-between text-[8px] font-black text-white/30 uppercase"><span>Opacity</span><span>{Math.round(l.opacity * 100)}%</span></div>
-                                <input type="range" aria-label="Layer Opacity" min="0" max="1" step="0.05" value={l.opacity} onChange={e => setLayers(layers.map(x => x.id === l.id ? {...x, opacity: Number(e.target.value)} : x))} className="w-full accent-indigo-500" />
+                                <input type="range" aria-label="Layer Opacity" min="0" max="1" step="0.05" value={l.opacity} onChange={e => updateLayers(layers.map(x => x.id === l.id ? {...x, opacity: Number(e.target.value)} : x))} className="w-full accent-indigo-500" />
                             </div>
                         </div>
                         {activeId === l.id && !l.locked && (

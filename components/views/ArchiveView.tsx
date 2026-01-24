@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { IIIFItem, IIIFCanvas, ResourceState, getIIIFValue, IIIFCollection, AppMode } from '../../types';
 import { ValidationIssue } from '../../services/validator';
 import { Icon } from '../Icon';
@@ -9,6 +9,100 @@ import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { Viewer } from './Viewer';
+
+// Virtualization hook for efficient rendering of large lists
+const useVirtualization = (totalItems: number, itemHeight: number, containerRef: React.RefObject<HTMLDivElement | null>, overscan = 5) => {
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateVisibleRange = () => {
+      const scrollTop = container.scrollTop;
+      const viewportHeight = container.clientHeight;
+
+      const start = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+      const visibleCount = Math.ceil(viewportHeight / itemHeight);
+      const end = Math.min(totalItems, start + visibleCount + overscan * 2);
+
+      setVisibleRange(prev => {
+        if (prev.start === start && prev.end === end) return prev;
+        return { start, end };
+      });
+    };
+
+    updateVisibleRange();
+    container.addEventListener('scroll', updateVisibleRange, { passive: true });
+    window.addEventListener('resize', updateVisibleRange);
+
+    return () => {
+      container.removeEventListener('scroll', updateVisibleRange);
+      window.removeEventListener('resize', updateVisibleRange);
+    };
+  }, [totalItems, itemHeight, containerRef, overscan]);
+
+  return visibleRange;
+};
+
+// Grid virtualization for 2D layouts
+const useGridVirtualization = (
+  totalItems: number,
+  itemSize: { width: number; height: number },
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  columnsOverride?: number,
+  overscan = 2
+) => {
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
+  const [columns, setColumns] = useState(columnsOverride || 4);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateVisibleRange = () => {
+      const scrollTop = container.scrollTop;
+      const viewportHeight = container.clientHeight;
+      const viewportWidth = container.clientWidth;
+
+      // Calculate columns based on container width
+      const gap = 16; // 1rem gap
+      const padding = 48; // 1.5rem padding on each side
+      const availableWidth = viewportWidth - padding;
+      const calculatedColumns = columnsOverride || Math.max(1, Math.floor(availableWidth / (itemSize.width + gap)));
+      setColumns(calculatedColumns);
+
+      const rowHeight = itemSize.height + gap;
+      const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+      const visibleRows = Math.ceil(viewportHeight / rowHeight);
+      const endRow = startRow + visibleRows + overscan * 2;
+
+      const start = startRow * calculatedColumns;
+      const end = Math.min(totalItems, endRow * calculatedColumns);
+
+      setVisibleRange(prev => {
+        if (prev.start === start && prev.end === end) return prev;
+        return { start, end };
+      });
+    };
+
+    updateVisibleRange();
+    container.addEventListener('scroll', updateVisibleRange, { passive: true });
+    window.addEventListener('resize', updateVisibleRange);
+
+    // Use ResizeObserver for container size changes
+    const resizeObserver = new ResizeObserver(updateVisibleRange);
+    resizeObserver.observe(container);
+
+    return () => {
+      container.removeEventListener('scroll', updateVisibleRange);
+      window.removeEventListener('resize', updateVisibleRange);
+      resizeObserver.disconnect();
+    };
+  }, [totalItems, itemSize, containerRef, columnsOverride, overscan]);
+
+  return { visibleRange, columns };
+};
 
 interface ArchiveViewProps {
   root: IIIFItem | null;
@@ -44,6 +138,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, id: string } | null>(null);
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = window.innerWidth < 768;
 
   const assets = useMemo(() => {
@@ -78,12 +173,46 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       }
   }, [selectedIds, assets]);
 
-  const filteredAssets = assets.filter(a => 
+  const filteredAssets = assets.filter(a =>
     getIIIFValue(a.label).toLowerCase().includes(filter.toLowerCase())
   ).sort((a, b) => {
       if (sortBy === 'name') return getIIIFValue(a.label).localeCompare(getIIIFValue(b.label));
       return (b.navDate || '').localeCompare(a.navDate || '');
   });
+
+  // Virtualization for grid view - estimate item size based on mode
+  const gridItemSize = useMemo(() => {
+    if (activeItem && !isMobile) return { width: 160, height: 180 }; // Compact when detail view is open
+    if (fieldMode) return { width: 200, height: 220 };
+    return { width: 140, height: 160 };
+  }, [activeItem, isMobile, fieldMode]);
+
+  const { visibleRange: gridVisibleRange, columns: gridColumns } = useGridVirtualization(
+    filteredAssets.length,
+    gridItemSize,
+    scrollContainerRef,
+    undefined,
+    3
+  );
+
+  // Virtualization for list view
+  const listVisibleRange = useVirtualization(
+    filteredAssets.length,
+    56, // Approximate row height
+    scrollContainerRef,
+    10
+  );
+
+  // Get visible items based on current view
+  const visibleAssets = useMemo(() => {
+    if (view === 'grid') {
+      return filteredAssets.slice(gridVisibleRange.start, gridVisibleRange.end);
+    }
+    if (view === 'list') {
+      return filteredAssets.slice(listVisibleRange.start, listVisibleRange.end);
+    }
+    return filteredAssets;
+  }, [view, filteredAssets, gridVisibleRange, listVisibleRange]);
 
   const handleCreateManifestFromSelection = () => {
       if (!root || !onUpdate || selectedIds.size === 0) return;
@@ -275,10 +404,14 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <div className={`flex-1 overflow-y-auto custom-scrollbar pb-24 ${view === 'map' || view === 'timeline' ? 'p-0' : 'p-6'} transition-all duration-300 ${!isMobile && activeItem ? 'w-1/3 max-w-sm border-r border-slate-200' : ''}`}>
+        <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto custom-scrollbar pb-24 ${view === 'map' || view === 'timeline' ? 'p-0' : 'p-6'} transition-all duration-300 ${!isMobile && activeItem ? 'w-1/3 max-w-sm border-r border-slate-200' : ''}`}>
             {view === 'grid' && (
-            <div className={`grid gap-4 ${!isMobile && activeItem ? 'grid-cols-1 lg:grid-cols-2' : (fieldMode ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8')}`}>
-                {filteredAssets.map((asset) => {
+            <VirtualizedGrid
+              items={filteredAssets}
+              visibleRange={gridVisibleRange}
+              columns={gridColumns}
+              itemSize={gridItemSize}
+              renderItem={(asset) => {
                 const dna = getFileDNA(asset);
                 const isSelected = selectedIds.has(asset.id);
                 const paintingBody = asset.items?.[0]?.items?.[0]?.body as any;
@@ -286,11 +419,11 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                 const config = RESOURCE_TYPE_CONFIG['Canvas'];
 
                 return (
-                    <div 
-                    key={asset.id} 
+                    <div
+                    key={asset.id}
                     onContextMenu={(e) => handleContextMenu(e, asset.id)}
                     className={`group relative rounded-lg shadow-sm cursor-pointer transition-all ${
-                        fieldMode 
+                        fieldMode
                             ? (isSelected ? 'bg-slate-800 border-4 border-yellow-400 p-2' : 'bg-slate-800 border border-slate-700 p-3')
                             : (isSelected ? 'bg-blue-50 border border-iiif-blue ring-2 ring-iiif-blue p-2' : `bg-white border p-2 hover:shadow-md border-slate-200`)
                     }`}
@@ -312,10 +445,13 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                     </div>
                     </div>
                 );
-                })}
-            </div>
+              }}
+              fieldMode={fieldMode}
+              activeItem={activeItem}
+              isMobile={isMobile}
+            />
             )}
-            {view === 'list' && <AssetList assets={filteredAssets} onSelect={handleItemClick} selectedIds={selectedIds} fieldMode={fieldMode} />}
+            {view === 'list' && <VirtualizedList assets={filteredAssets} visibleRange={listVisibleRange} onSelect={handleItemClick} selectedIds={selectedIds} fieldMode={fieldMode} />}
             {view === 'map' && <MapView root={root} onSelect={(item: IIIFItem) => onSelect(item)} />}
             {view === 'timeline' && <TimelineView root={root} onSelect={(item: IIIFItem) => onSelect(item)} />}
         </div>
@@ -342,6 +478,169 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
               <div className="h-px bg-slate-100 my-1"></div>
               <button onClick={() => handleDelete([contextMenu.id])} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-red-600"><Icon name="delete" className="text-red-400"/> Remove from Archive</button>
           </div>
+      )}
+    </div>
+  );
+};
+
+// Virtualized Grid component for efficient rendering
+interface VirtualizedGridProps {
+  items: IIIFCanvas[];
+  visibleRange: { start: number; end: number };
+  columns: number;
+  itemSize: { width: number; height: number };
+  renderItem: (item: IIIFCanvas) => React.ReactNode;
+  fieldMode: boolean;
+  activeItem: IIIFCanvas | null;
+  isMobile: boolean;
+}
+
+const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({
+  items,
+  visibleRange,
+  columns,
+  itemSize,
+  renderItem,
+  fieldMode,
+  activeItem,
+  isMobile
+}) => {
+  const gap = 16;
+  const rowHeight = itemSize.height + gap;
+  const totalRows = Math.ceil(items.length / columns);
+  const totalHeight = totalRows * rowHeight;
+
+  const startRow = Math.floor(visibleRange.start / columns);
+  const topSpacer = startRow * rowHeight;
+
+  const visibleItems = items.slice(visibleRange.start, visibleRange.end);
+  const endRow = Math.ceil(visibleRange.end / columns);
+  const bottomSpacer = Math.max(0, (totalRows - endRow) * rowHeight);
+
+  // Determine grid columns class
+  const gridColsClass = !isMobile && activeItem
+    ? 'grid-cols-1 lg:grid-cols-2'
+    : fieldMode
+      ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+      : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8';
+
+  return (
+    <div>
+      {topSpacer > 0 && <div style={{ height: topSpacer }} aria-hidden="true" />}
+      <div className={`grid gap-4 ${gridColsClass}`}>
+        {visibleItems.map(renderItem)}
+      </div>
+      {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
+      {items.length === 0 && (
+        <div className="p-8 text-center text-slate-400 italic">No items found</div>
+      )}
+    </div>
+  );
+};
+
+// Virtualized List component for efficient table rendering
+interface VirtualizedListProps {
+  assets: IIIFCanvas[];
+  visibleRange: { start: number; end: number };
+  onSelect: any;
+  selectedIds: Set<string>;
+  fieldMode: boolean;
+}
+
+const VirtualizedList: React.FC<VirtualizedListProps> = ({
+  assets,
+  visibleRange,
+  onSelect,
+  selectedIds,
+  fieldMode
+}) => {
+  const rowHeight = 56;
+  const totalHeight = assets.length * rowHeight;
+  const topSpacer = visibleRange.start * rowHeight;
+  const visibleItems = assets.slice(visibleRange.start, visibleRange.end);
+  const bottomSpacer = Math.max(0, (assets.length - visibleRange.end) * rowHeight);
+
+  return (
+    <div className={`border rounded-lg shadow-sm overflow-hidden flex flex-col ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className={`${fieldMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-500'} border-b ${fieldMode ? 'border-slate-700' : 'border-slate-200'} sticky top-0 z-10`}>
+            <tr>
+              <th className="px-4 py-3 font-medium w-10">
+                <Icon name="check_box_outline_blank" className="opacity-50" />
+              </th>
+              <th className="px-4 py-3 font-medium">Label</th>
+              <th className="px-4 py-3 font-medium w-32">Type</th>
+              <th className="px-4 py-3 font-medium w-40">Date</th>
+              <th className="px-4 py-3 font-medium w-32 text-right">Dimensions</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${fieldMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+            {topSpacer > 0 && (
+              <tr aria-hidden="true">
+                <td colSpan={5} style={{ height: topSpacer, padding: 0 }} />
+              </tr>
+            )}
+            {visibleItems.map((asset) => {
+              const isSelected = selectedIds.has(asset.id);
+              const label = getIIIFValue(asset.label) || 'Untitled';
+              const config = RESOURCE_TYPE_CONFIG[asset.type] || RESOURCE_TYPE_CONFIG['Canvas'];
+              const date = asset.navDate ? new Date(asset.navDate).toLocaleDateString() : '-';
+              const dims = asset.width && asset.height ? `${asset.width} x ${asset.height}` : (asset.duration ? `${asset.duration}s` : '-');
+
+              return (
+                <tr
+                  key={asset.id}
+                  className={`cursor-pointer transition-colors group ${
+                    fieldMode
+                      ? (isSelected ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800')
+                      : (isSelected ? 'bg-blue-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50')
+                  }`}
+                  onClick={(e) => onSelect(e, asset)}
+                  style={{ height: rowHeight }}
+                >
+                  <td className="px-4 py-3">
+                    <Icon
+                      name={isSelected ? "check_box" : "check_box_outline_blank"}
+                      className={`${isSelected ? 'text-iiif-blue' : (fieldMode ? 'text-slate-600' : 'text-slate-300')} group-hover:text-iiif-blue transition-colors`}
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded flex items-center justify-center shrink-0 overflow-hidden ${fieldMode ? 'bg-black' : 'bg-slate-100'}`}>
+                        {(asset as any).thumbnail?.[0]?.id || asset._blobUrl ? (
+                          <img src={(asset as any).thumbnail?.[0]?.id || asset._blobUrl} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <Icon name={config.icon} className={`${config.colorClass} opacity-70`} />
+                        )}
+                      </div>
+                      <span className="truncate max-w-[200px] md:max-w-md" title={label}>{label}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-[10px] uppercase font-black px-2 py-1 rounded border ${
+                      fieldMode
+                        ? 'bg-slate-950 border-slate-800 text-slate-400'
+                        : 'bg-slate-100 border-slate-200 text-slate-500'
+                    }`}>
+                      {asset.type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs opacity-70">{date}</td>
+                  <td className="px-4 py-3 font-mono text-xs opacity-70 text-right">{dims}</td>
+                </tr>
+              );
+            })}
+            {bottomSpacer > 0 && (
+              <tr aria-hidden="true">
+                <td colSpan={5} style={{ height: bottomSpacer, padding: 0 }} />
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {assets.length === 0 && (
+        <div className="p-8 text-center text-slate-400 italic">No items found</div>
       )}
     </div>
   );

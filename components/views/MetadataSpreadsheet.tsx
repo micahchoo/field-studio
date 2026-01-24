@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { IIIFItem, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { RESOURCE_TYPE_CONFIG, RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP } from '../../constants';
+import FileSaver from 'file-saver';
 
 interface MetadataSpreadsheetProps {
   root: IIIFItem | null;
@@ -42,6 +43,105 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showSystemItems, setShowSystemItems] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState<{ id: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // CSV Export function
+  const handleExportCSV = () => {
+    if (filteredItems.length === 0) {
+      showToast('No items to export', 'error');
+      return;
+    }
+
+    // Build CSV header
+    const headers = ['ID', 'Type', 'Title', 'Summary', 'Rights', 'Date', ...columns.filter(c => !['Title', 'Summary', 'Date', 'Rights'].includes(c))];
+
+    // Build CSV rows
+    const rows = filteredItems.map(item => {
+      const row = [
+        item.id,
+        item.type,
+        `"${(item.label || '').replace(/"/g, '""')}"`,
+        `"${(item.summary || '').replace(/"/g, '""')}"`,
+        item.rights,
+        item.navDate,
+        ...columns.filter(c => !['Title', 'Summary', 'Date', 'Rights'].includes(c)).map(col => `"${(item.metadata[col] || '').replace(/"/g, '""')}"`)
+      ];
+      return row.join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    FileSaver.saveAs(blob, `metadata-export-${new Date().toISOString().split('T')[0]}.csv`);
+    showToast(`Exported ${filteredItems.length} items to CSV`, 'success');
+  };
+
+  // CSV Import function
+  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const lines = text.split('\n').filter(line => line.trim());
+        if (lines.length < 2) throw new Error('CSV must have header and at least one data row');
+
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+        const idIndex = headers.findIndex(h => h.toLowerCase() === 'id');
+        const titleIndex = headers.findIndex(h => h.toLowerCase() === 'title');
+        const summaryIndex = headers.findIndex(h => h.toLowerCase() === 'summary');
+
+        if (idIndex === -1) throw new Error('CSV must have an ID column');
+
+        let updatedCount = 0;
+        const newItems = [...items];
+
+        for (let i = 1; i < lines.length; i++) {
+          // Simple CSV parsing (handles quoted fields)
+          const values: string[] = [];
+          let current = '';
+          let inQuotes = false;
+          for (const char of lines[i]) {
+            if (char === '"') inQuotes = !inQuotes;
+            else if (char === ',' && !inQuotes) {
+              values.push(current.trim().replace(/^"|"$/g, ''));
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          values.push(current.trim().replace(/^"|"$/g, ''));
+
+          const id = values[idIndex];
+          const itemIndex = newItems.findIndex(item => item.id === id);
+          if (itemIndex === -1) continue;
+
+          // Update fields
+          if (titleIndex !== -1 && values[titleIndex]) newItems[itemIndex].label = values[titleIndex];
+          if (summaryIndex !== -1 && values[summaryIndex]) newItems[itemIndex].summary = values[summaryIndex];
+
+          // Update metadata fields
+          headers.forEach((header, idx) => {
+            if (['id', 'type', 'title', 'summary', 'rights', 'date'].includes(header.toLowerCase())) return;
+            if (values[idx]) {
+              newItems[itemIndex].metadata[header] = values[idx];
+            }
+          });
+          updatedCount++;
+        }
+
+        setItems(newItems);
+        setHasUnsavedChanges(true);
+        showToast(`Updated ${updatedCount} items from CSV`, 'success');
+      } catch (err: any) {
+        showToast(`CSV import failed: ${err.message}`, 'error');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be imported again
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   useEffect(() => {
       if (!root) {
@@ -208,12 +308,35 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                     <Icon name="warning" className="text-xs"/> Pending Sync
                 </span>
             )}
-            <button 
-                onClick={handleSave} 
-                className="px-6 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 shadow-md flex items-center gap-2 transition-all active:scale-95"
-            >
-                <Icon name="save" /> Commit Changes
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportCSV}
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 flex items-center gap-2 transition-all"
+                title="Export to CSV"
+              >
+                <Icon name="download" /> Export CSV
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 flex items-center gap-2 transition-all"
+                title="Import from CSV"
+              >
+                <Icon name="upload" /> Import CSV
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+              <button
+                  onClick={handleSave}
+                  className="px-6 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 shadow-md flex items-center gap-2 transition-all active:scale-95"
+              >
+                  <Icon name="save" /> Commit Changes
+              </button>
+            </div>
         </div>
       </div>
 

@@ -1,24 +1,30 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage, IIIFSpecificResource, IIIFItem, getIIIFValue } from '../../types';
+import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage, IIIFSpecificResource, IIIFItem, IIIFManifest, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
 import { CanvasComposer } from '../CanvasComposer';
+import { AVPlayer } from '../AVPlayer';
+import { PolygonAnnotationTool } from '../PolygonAnnotationTool';
+import { SearchPanel } from '../SearchPanel';
 import { contentStateService } from '../../services/contentState';
+import { contentSearchService, SearchService, SearchResult } from '../../services/contentSearchService';
+import { parseTarget, getSpatialRegion, createSpatialTarget, createSpecificResource } from '../../services/selectors';
 
 declare const OpenSeadragon: any;
 
 interface ViewerProps {
   item: IIIFCanvas | null;
   manifestItems?: IIIFCanvas[];
+  manifest?: IIIFManifest | null;
   onSelect?: (id: string) => void;
   onUpdate: (item: Partial<IIIFCanvas>) => void;
   autoOpenComposer?: boolean;
   onComposerOpened?: () => void;
 }
 
-export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, onUpdate, autoOpenComposer, onComposerOpened }) => {
+export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, onSelect, onUpdate, autoOpenComposer, onComposerOpened }) => {
   const { showToast } = useToast();
   const viewerRef = useRef<any>(null);
   const osdContainerRef = useRef<HTMLDivElement>(null);
@@ -26,10 +32,25 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
   const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio' | 'other'>('other');
   const [annotations, setAnnotations] = useState<IIIFAnnotation[]>([]);
   const [showTranscriptionPanel, setShowTranscriptionPanel] = useState(false);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isOcring, setIsOcring] = useState(false);
   const [showWorkbench, setShowWorkbench] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [showAnnotationTool, setShowAnnotationTool] = useState(false);
+  const [showFilmstrip, setShowFilmstrip] = useState(true);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
+
+  // Extract search service from manifest
+  const searchService = useMemo(() => {
+    if (!manifest?.service) return null;
+    const services = Array.isArray(manifest.service) ? manifest.service : [manifest.service];
+    for (const svc of services) {
+      const extracted = contentSearchService.extractSearchService(svc);
+      if (extracted) return extracted;
+    }
+    return null;
+  }, [manifest]);
 
   // Anticipatory Logic: If synthesize was clicked in Collections, open Composer immediately
   useEffect(() => {
@@ -113,18 +134,26 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
     if (!item || !viewerRef.current) return;
     const bounds = viewerRef.current.viewport.getBounds();
     const imageRect = viewerRef.current.viewport.viewportToImageRectangle(bounds);
-    const xywh = `xywh=${Math.round(imageRect.x)},${Math.round(imageRect.y)},${Math.round(imageRect.width)},${Math.round(imageRect.height)}`;
-    
+
+    // Use selectors service to create spatial target
+    const targetId = createSpatialTarget(
+      item.id,
+      Math.round(imageRect.x),
+      Math.round(imageRect.y),
+      Math.round(imageRect.width),
+      Math.round(imageRect.height)
+    );
+
     const state = {
         type: "Annotation",
         motivation: "contentState",
         target: {
-            id: `${item.id}#${xywh}`,
+            id: targetId,
             type: "Canvas",
             partOf: [{ id: item._parentId || "root", type: "Manifest" }]
         }
     };
-    
+
     const url = contentStateService.generateLink(window.location.href, state);
     navigator.clipboard.writeText(url);
     showToast("Shareable view link copied to clipboard", "success");
@@ -132,13 +161,23 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
 
   const handleExtractEvidence = (quality: string = 'default') => {
       if (!viewerRef.current || !item) return;
-      
+
       const bounds = viewerRef.current.viewport.getBounds();
       const imageRect = viewerRef.current.viewport.viewportToImageRectangle(bounds);
-      const xywh = `xywh=${Math.round(imageRect.x)},${Math.round(imageRect.y)},${Math.round(imageRect.width)},${Math.round(imageRect.height)}`;
-      
-      const derivedImageUrl = serviceId 
-        ? `${serviceId}/${xywh.split('=')[1]}/max/0/${quality}.jpg`
+      const x = Math.round(imageRect.x);
+      const y = Math.round(imageRect.y);
+      const w = Math.round(imageRect.width);
+      const h = Math.round(imageRect.height);
+
+      // Use selectors service to create target
+      const targetWithSelector = createSpecificResource(item.id, {
+        type: 'fragment',
+        spatial: { x, y, width: w, height: h, unit: 'pixel' },
+        original: ''
+      });
+
+      const derivedImageUrl = serviceId
+        ? `${serviceId}/${x},${y},${w},${h}/max/0/${quality}.jpg`
         : resolvedImageUrl;
 
       const newAnno: IIIFAnnotation = {
@@ -152,11 +191,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
               format: "image/jpeg",
               label: { en: ["Derived Analytical View"] }
           },
-          target: {
-              type: "SpecificResource",
-              source: item.id,
-              selector: { type: "FragmentSelector", value: xywh }
-          }
+          target: targetWithSelector as any
       };
 
       saveAnnotation(newAnno);
@@ -183,12 +218,15 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
       onUpdate({ annotations: updatedAnnos });
   };
 
-  const zoomToRegion = (xywh: string) => {
+  const zoomToRegion = (selectorValue: string) => {
     if (!viewerRef.current || !item) return;
-    const parts = xywh.replace('xywh=', '').split(',').map(Number);
-    if (parts.length !== 4) return;
-    const [x, y, w, h] = parts;
-    const rect = viewerRef.current.viewport.imageToViewportRectangle(x, y, w, h);
+
+    // Use selectors service to parse the target
+    const region = getSpatialRegion(`${item.id}#${selectorValue.replace(/^#/, '')}`);
+    if (!region) return;
+
+    const { x, y, width, height } = region;
+    const rect = viewerRef.current.viewport.imageToViewportRectangle(x, y, width, height);
     viewerRef.current.viewport.fitBounds(rect, false);
   };
 
@@ -212,16 +250,140 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
         
         <div className="flex items-center gap-2">
             <button onClick={() => setShowComposer(true)} className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-bold mr-2 border border-indigo-500 shadow-lg"><Icon name="layers" className="text-xs"/> Compose</button>
+            {mediaType === 'image' && (
+              <button
+                onClick={() => setShowAnnotationTool(true)}
+                className="p-2 text-slate-400 hover:text-white"
+                title="Draw Annotations"
+              >
+                <Icon name="draw" />
+              </button>
+            )}
+            {searchService && (
+              <button
+                onClick={() => setShowSearchPanel(!showSearchPanel)}
+                className={`p-2 ${showSearchPanel ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
+                title="Search in Manifest"
+              >
+                <Icon name="search" />
+              </button>
+            )}
             <button onClick={() => setShowWorkbench(true)} className="p-2 text-slate-400 hover:text-white"><Icon name="tune" /></button>
             <button onClick={() => setShowTranscriptionPanel(!showTranscriptionPanel)} className={`p-2 ${showTranscriptionPanel ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}><Icon name="description" /></button>
+            {manifestItems && manifestItems.length > 1 && (
+              <button
+                onClick={() => setShowFilmstrip(!showFilmstrip)}
+                className={`p-2 ${showFilmstrip ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
+                title="Toggle Canvas Navigator"
+              >
+                <Icon name="view_carousel" />
+              </button>
+            )}
         </div>
       </div>
 
       <div className="flex-1 flex min-h-0 relative">
         <div className="flex-1 relative bg-black overflow-hidden flex">
-            <div ref={osdContainerRef} className="flex-1 h-full" />
+            {/* Image viewer (OpenSeadragon) */}
+            {mediaType === 'image' && (
+              <div ref={osdContainerRef} className="flex-1 h-full" />
+            )}
+
+            {/* Audio/Video player */}
+            {(mediaType === 'video' || mediaType === 'audio') && paintingBody?.id && (
+              <AVPlayer
+                canvas={item as any}
+                src={paintingBody.id}
+                mediaType={mediaType}
+                poster={item?.thumbnail?.[0]?.id}
+                showAccompanying={true}
+                className="flex-1"
+              />
+            )}
+
+            {/* Fallback for unsupported media */}
+            {mediaType === 'other' && (
+              <div className="flex-1 flex items-center justify-center text-slate-500">
+                <div className="text-center">
+                  <Icon name="help_outline" className="text-4xl mb-2" />
+                  <p className="text-sm">Unsupported media type</p>
+                  <p className="text-xs text-slate-600 mt-1">{mimeType || 'Unknown format'}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Canvas Navigator Filmstrip */}
+            {showFilmstrip && manifestItems && manifestItems.length > 1 && (
+              <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800 p-2 z-10">
+                <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+                  {manifestItems.map((canvas, idx) => {
+                    const thumbUrl = canvas.thumbnail?.[0]?.id ||
+                      (canvas.items?.[0]?.items?.[0]?.body as any)?.id ||
+                      canvas._blobUrl;
+                    const isActive = canvas.id === item?.id;
+                    return (
+                      <button
+                        key={canvas.id}
+                        onClick={() => onSelect?.(canvas.id)}
+                        className={`shrink-0 w-16 h-16 rounded border-2 overflow-hidden transition-all ${
+                          isActive
+                            ? 'border-blue-500 ring-2 ring-blue-500/50'
+                            : 'border-slate-700 hover:border-slate-500 opacity-70 hover:opacity-100'
+                        }`}
+                        title={getIIIFValue(canvas.label) || `Canvas ${idx + 1}`}
+                      >
+                        {thumbUrl ? (
+                          <img
+                            src={thumbUrl}
+                            alt={getIIIFValue(canvas.label) || `Canvas ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                            <span className="text-xs text-slate-500">{idx + 1}</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="text-center mt-1">
+                  <span className="text-[10px] text-slate-500">
+                    {manifestItems.findIndex(c => c.id === item?.id) + 1} / {manifestItems.length}
+                  </span>
+                </div>
+              </div>
+            )}
         </div>
         
+        {/* Content Search Panel */}
+        {showSearchPanel && searchService && manifest && (
+            <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col animate-in slide-in-from-right duration-200">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Search in Manifest</h3>
+                    <button onClick={() => setShowSearchPanel(false)}><Icon name="close" className="text-slate-500 text-sm" /></button>
+                </div>
+                <SearchPanel
+                    manifest={manifest}
+                    searchService={searchService}
+                    currentCanvasId={item?.id}
+                    onResultSelect={(result) => {
+                      // Navigate to the canvas containing the result
+                      if (result.canvasId && onSelect) {
+                        onSelect(result.canvasId);
+                        // If result has spatial region, zoom to it
+                        if (result.region) {
+                          const xywh = `xywh=${result.region.x},${result.region.y},${result.region.w},${result.region.h}`;
+                          setTimeout(() => zoomToRegion(xywh), 500);
+                        }
+                      }
+                      showToast(`Found: "${result.text}"`, 'info');
+                    }}
+                    onResultsChange={setSearchResults}
+                />
+            </div>
+        )}
+
         {showTranscriptionPanel && (
             <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col animate-in slide-in-from-right duration-200">
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
@@ -258,6 +420,18 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, onSelect, o
 
       {showWorkbench && item && <ImageRequestWorkbench canvas={item} onClose={() => setShowWorkbench(false)} />}
       {showComposer && item && <CanvasComposer canvas={item} onUpdate={onUpdate} onClose={() => setShowComposer(false)} />}
+      {showAnnotationTool && item && resolvedImageUrl && (
+        <PolygonAnnotationTool
+          canvas={item}
+          imageUrl={resolvedImageUrl}
+          onCreateAnnotation={(anno) => {
+            saveAnnotation(anno);
+            showToast('Annotation created successfully', 'success');
+          }}
+          onClose={() => setShowAnnotationTool(false)}
+          existingAnnotations={annotations}
+        />
+      )}
     </div>
   );
 };

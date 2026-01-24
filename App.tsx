@@ -21,8 +21,10 @@ import { ExternalImportDialog } from './components/ExternalImportDialog';
 import { BatchEditor } from './components/BatchEditor';
 import { PersonaSettings } from './components/PersonaSettings';
 import { CommandPalette } from './components/CommandPalette';
+import { AuthDialog } from './components/AuthDialog';
 import { Icon } from './components/Icon';
 import { buildTree, ingestTree } from './services/iiifBuilder';
+import { AuthService, AuthState } from './services/authService';
 import { storage } from './services/storage';
 import { validator, ValidationIssue } from './services/validator';
 import { contentStateService } from './services/contentState';
@@ -54,6 +56,8 @@ const MainApp: React.FC = () => {
   const [showBatchEditor, setShowBatchEditor] = useState(false);
   const [showPersonaSettings, setShowPersonaSettings] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [pendingAuth, setPendingAuth] = useState<{ resourceId: string; authServices: AuthService[] } | null>(null);
   const [batchIds, setBatchIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stagingTree, setStagingTree] = useState<FileTree | null>(null);
@@ -63,6 +67,45 @@ const MainApp: React.FC = () => {
 
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth <= 1024;
+
+  // URL Deep Linking - Parse URL on mount and sync state to URL
+  useEffect(() => {
+    const parseUrlState = () => {
+      const hash = window.location.hash.slice(1);
+      if (!hash) return;
+
+      const params = new URLSearchParams(hash);
+      const mode = params.get('mode') as AppMode | null;
+      const id = params.get('id');
+
+      if (mode && ['archive', 'collections', 'metadata', 'search', 'viewer', 'boards'].includes(mode)) {
+        setCurrentMode(mode);
+      }
+      if (id) {
+        setSelectedId(id);
+      }
+    };
+
+    // Parse on mount
+    parseUrlState();
+
+    // Handle browser back/forward
+    const handlePopState = () => parseUrlState();
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Update URL when view or selection changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('mode', currentMode);
+    if (selectedId) params.set('id', selectedId);
+
+    const newHash = `#${params.toString()}`;
+    if (window.location.hash !== newHash) {
+      window.history.pushState(null, '', newHash);
+    }
+  }, [currentMode, selectedId]);
 
   // Enable undo/redo keyboard shortcuts (Cmd+Z, Cmd+Shift+Z)
   useUndoRedoShortcuts();
@@ -240,6 +283,27 @@ const MainApp: React.FC = () => {
 
   const selectedItem = selectedId ? findItem(root, selectedId) : null;
 
+  // Auth handlers
+  const handleAuthRequired = useCallback((resourceId: string, authServices: AuthService[]) => {
+    setPendingAuth({ resourceId, authServices });
+    setShowAuthDialog(true);
+  }, []);
+
+  const handleAuthComplete = useCallback((state: AuthState) => {
+    if (state.status === 'authenticated') {
+      showToast('Authentication successful. Please retry your request.', 'success');
+    } else if (state.status === 'degraded') {
+      showToast('Limited access granted. Some content may be unavailable.', 'info');
+    }
+    setShowAuthDialog(false);
+    setPendingAuth(null);
+  }, [showToast]);
+
+  const handleAuthClose = useCallback(() => {
+    setShowAuthDialog(false);
+    setPendingAuth(null);
+  }, []);
+
   return (
     <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans ${settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-100'}`}>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[2000] focus:bg-iiif-blue focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">Skip to content</a>
@@ -332,7 +396,7 @@ const MainApp: React.FC = () => {
           localStorage.setItem('iiif-field-setup-complete', 'true');
           setShowOnboarding(false);
       }} />}
-      {showExternalImport && <ExternalImportDialog onImport={(it) => handleUpdateRoot(root?.type === 'Collection' ? { ...root, items: [...(root.items || []), it] } as any : it as any)} onClose={() => setShowExternalImport(false)} />}
+      {showExternalImport && <ExternalImportDialog onImport={(it) => handleUpdateRoot(root?.type === 'Collection' ? { ...root, items: [...(root.items || []), it] } as any : it as any)} onClose={() => setShowExternalImport(false)} onAuthRequired={handleAuthRequired} />}
       
       {showBatchEditor && root && <BatchEditor ids={batchIds} root={root} onApply={(ids, updatesMap, ren) => {
           // Use vault batch update instead of deep clone
@@ -362,6 +426,16 @@ const MainApp: React.FC = () => {
       {showPersonaSettings && <PersonaSettings settings={settings} onUpdate={upd => setSettings(s => ({ ...s, ...upd }))} onClose={() => setShowPersonaSettings(false)} />}
 
       <CommandPalette isOpen={showCommandPalette} onClose={() => setShowCommandPalette(false)} commands={commands} />
+
+      {/* IIIF Authorization Dialog */}
+      {showAuthDialog && pendingAuth && (
+        <AuthDialog
+          authServices={pendingAuth.authServices}
+          resourceId={pendingAuth.resourceId}
+          onComplete={handleAuthComplete}
+          onClose={handleAuthClose}
+        />
+      )}
     </div>
   );
 };
