@@ -74,10 +74,17 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
 
   const handleDryRun = async () => {
       if (!root) return;
+      // Skip dry run for archival formats - they have their own export flow
+      if (format === 'ocfl' || format === 'bagit' || format === 'activity-log') {
+          const issueMap = validator.validateTree(root);
+          setIntegrityIssues(Object.values(issueMap).flat());
+          setVirtualFiles([]);
+          return;
+      }
       setProcessing(true);
       try {
           // Map 'wax-site' to 'static-site' for the legacy export service
-          const exportFormat = format === 'wax-site' ? 'static-site' : format;
+          const exportFormat: 'static-site' | 'raw-iiif' = format === 'wax-site' ? 'static-site' : (format === 'static-site' || format === 'raw-iiif' ? format : 'raw-iiif');
           const files = await exportService.prepareExport(root, { format: exportFormat, includeAssets, ignoreErrors });
           setVirtualFiles(files);
           
@@ -95,7 +102,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
     setStep('exporting');
     setErrorMsg(null);
     try {
-        const blob = await exportService.exportArchive(root, { format: format === 'wax-site' ? 'static-site' : format, includeAssets, ignoreErrors }, (p) => {
+        const exportFormat: 'static-site' | 'raw-iiif' = format === 'wax-site' ? 'static-site' : (format === 'static-site' || format === 'raw-iiif' ? format : 'raw-iiif');
+        const blob = await exportService.exportArchive(root, { format: exportFormat, includeAssets, ignoreErrors }, (p) => {
             setProgress(p);
         });
         FileSaver.saveAs(blob, `archive-export-${new Date().toISOString().split('T')[0]}.zip`);

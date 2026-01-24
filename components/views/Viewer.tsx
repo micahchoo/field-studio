@@ -183,26 +183,19 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
     const bounds = viewerRef.current.viewport.getBounds();
     const imageRect = viewerRef.current.viewport.viewportToImageRectangle(bounds);
 
-    // Use selectors service to create spatial target
-    const targetId = createSpatialTarget(
-      item.id,
-      Math.round(imageRect.x),
-      Math.round(imageRect.y),
-      Math.round(imageRect.width),
-      Math.round(imageRect.height)
-    );
-
-    const state = {
-        type: "Annotation",
-        motivation: "contentState",
-        target: {
-            id: targetId,
-            type: "Canvas",
-            partOf: [{ id: item._parentId || "root", type: "Manifest" }]
+    // Build ViewportState for sharing
+    const viewportState = {
+        manifestId: item._parentId || "root",
+        canvasId: item.id,
+        region: {
+            x: Math.round(imageRect.x),
+            y: Math.round(imageRect.y),
+            w: Math.round(imageRect.width),
+            h: Math.round(imageRect.height)
         }
     };
 
-    const url = contentStateService.generateLink(window.location.href, state);
+    const url = contentStateService.generateLink(window.location.href, viewportState);
     navigator.clipboard.writeText(url);
     showToast("Shareable view link copied to clipboard", "success");
   };

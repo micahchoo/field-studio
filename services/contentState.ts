@@ -189,18 +189,23 @@ export const contentStateService = {
    */
   parseContentState: (state: ContentState): ViewportState | null => {
     try {
-      const target = Array.isArray(state.target) ? state.target[0] : state.target;
+      // Unwrap arrays recursively to get a single target
+      let target: ContentStateTarget = state.target;
+      while (Array.isArray(target)) {
+        target = target[0];
+      }
 
       if (typeof target === 'string') {
         // Simple URI target
         return { manifestId: target, canvasId: target };
       }
 
-      if (target.type !== 'SpecificResource') {
+      if (!target || typeof target !== 'object' || target.type !== 'SpecificResource') {
         return null;
       }
 
-      const source = target.source;
+      const specificResource = target as SpecificResource;
+      const source = specificResource.source;
       const canvasId = typeof source === 'string' ? source : source.id;
       const manifestId = typeof source === 'object' && source.partOf?.[0]?.id
         ? source.partOf[0].id
@@ -209,10 +214,10 @@ export const contentStateService = {
       const viewport: ViewportState = { manifestId, canvasId };
 
       // Parse selectors
-      const selectors = Array.isArray(target.selector)
-        ? target.selector
-        : target.selector
-          ? [target.selector]
+      const selectors = Array.isArray(specificResource.selector)
+        ? specificResource.selector
+        : specificResource.selector
+          ? [specificResource.selector]
           : [];
 
       for (const selector of selectors) {

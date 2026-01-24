@@ -22,7 +22,8 @@ const RECENT_SEARCHES_KEY = 'iiif-field-recent-searches';
 const MAX_RECENT_SEARCHES = 10;
 
 class SearchService {
-  private index: any;
+  private index: any = null;
+  private isHealthy: boolean = false;
   private itemMap: Map<string, { item: IIIFItem | IIIFAnnotation; parent?: string }> = new Map();
   private labelIndex: Map<string, Set<string>> = new Map(); // word → item IDs for autocomplete
   private typeCount: Map<string, number> = new Map(); // type → count
@@ -34,6 +35,13 @@ class SearchService {
   }
 
   reset() {
+    // Clear existing state
+    this.index = null;
+    this.isHealthy = false;
+    this.itemMap.clear();
+    this.labelIndex.clear();
+    this.typeCount.clear();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const FS = (FlexSearch as any);
     // FlexSearch 0.7.31 often exports 'Document' on the default object, or the default object IS the library.
@@ -55,17 +63,17 @@ class SearchService {
         },
         tokenize: "forward"
       });
+      this.isHealthy = true;
     } catch (e) {
       console.error("Failed to initialize FlexSearch index", e);
+      this.index = null;
+      this.isHealthy = false;
     }
-    this.itemMap.clear();
-    this.labelIndex.clear();
-    this.typeCount.clear();
   }
 
   buildIndex(root: IIIFItem | null) {
     this.reset();
-    if (!root) return;
+    if (!root || !this.isHealthy) return;
     this.traverse(root, []);
     console.log(`Indexed ${this.itemMap.size} items.`);
   }
@@ -148,7 +156,7 @@ class SearchService {
   }
 
   search(query: string, filterType?: string): SearchResult[] {
-    if (!query) return [];
+    if (!query || !this.isHealthy) return [];
 
     // Record this search
     this.addRecentSearch(query);
@@ -255,46 +263,55 @@ class SearchService {
   }
 
   /**
+   * Generic helper for scoring and filtering word suggestions
+   */
+  private getScoredSuggestions<T extends { word: string }>(
+    scoreFn: (word: string, ids: Set<string>) => T | null,
+    sortFn: (a: T, b: T) => number,
+    limit: number
+  ): string[] {
+    const suggestions: T[] = [];
+
+    for (const [word, ids] of this.labelIndex) {
+      const scored = scoreFn(word, ids);
+      if (scored) suggestions.push(scored);
+    }
+
+    suggestions.sort(sortFn);
+    return suggestions.slice(0, limit).map(s => s.word);
+  }
+
+  /**
    * Get word suggestions based on prefix matching
    */
   private getWordSuggestions(prefix: string, limit: number): string[] {
-    const suggestions: { word: string; count: number }[] = [];
-
-    for (const [word, ids] of this.labelIndex) {
-      if (word.startsWith(prefix) && word !== prefix) {
-        suggestions.push({ word, count: ids.size });
-      }
-    }
-
-    // Sort by frequency (most common first)
-    suggestions.sort((a, b) => b.count - a.count);
-
-    return suggestions.slice(0, limit).map(s => s.word);
+    return this.getScoredSuggestions(
+      (word, ids) => word.startsWith(prefix) && word !== prefix
+        ? { word, count: ids.size }
+        : null,
+      (a, b) => b.count - a.count,
+      limit
+    );
   }
 
   /**
    * Get fuzzy suggestions using Levenshtein distance
    */
   private getFuzzySuggestions(query: string, limit: number): string[] {
-    const suggestions: { word: string; distance: number; count: number }[] = [];
     const maxDistance = Math.min(2, Math.floor(query.length / 3));
 
-    for (const [word, ids] of this.labelIndex) {
-      if (Math.abs(word.length - query.length) > maxDistance) continue;
-
-      const distance = this.levenshteinDistance(query, word);
-      if (distance > 0 && distance <= maxDistance) {
-        suggestions.push({ word, distance, count: ids.size });
-      }
-    }
-
-    // Sort by distance first, then by frequency
-    suggestions.sort((a, b) => {
-      if (a.distance !== b.distance) return a.distance - b.distance;
-      return b.count - a.count;
-    });
-
-    return suggestions.slice(0, limit).map(s => s.word);
+    return this.getScoredSuggestions(
+      (word, ids) => {
+        if (Math.abs(word.length - query.length) > maxDistance) return null;
+        const distance = this.levenshteinDistance(query, word);
+        if (distance > 0 && distance <= maxDistance) {
+          return { word, distance, count: ids.size };
+        }
+        return null;
+      },
+      (a, b) => a.distance !== b.distance ? a.distance - b.distance : b.count - a.count,
+      limit
+    );
   }
 
   /**

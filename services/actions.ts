@@ -53,9 +53,7 @@ export type Action =
   | { type: 'REMOVE_ANNOTATION'; canvasId: string; annotationId: string }
   | { type: 'UPDATE_CANVAS_DIMENSIONS'; canvasId: string; width: number; height: number }
   | { type: 'MOVE_ITEM'; itemId: string; newParentId: string; index?: number }
-  | { type: 'BATCH_UPDATE'; updates: Array<{ id: string; changes: Partial<IIIFItem> }> }
-  | { type: 'SET_ROOT'; root: IIIFItem }
-  | { type: 'MERGE_ITEM'; targetId: string; sourceItem: IIIFItem };
+  | { type: 'BATCH_UPDATE'; updates: Array<{ id: string; changes: Partial<IIIFItem> }> };
 
 export interface ActionResult {
   success: boolean;
@@ -288,15 +286,18 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
         }
 
         const entity = getEntity(state, action.id);
+        const oldViewingDirection = entity && 'viewingDirection' in entity
+          ? (entity as IIIFManifest).viewingDirection
+          : undefined;
         const changes: PropertyChange[] = [{
           property: 'viewingDirection',
-          oldValue: (entity as any)?.viewingDirection,
+          oldValue: oldViewingDirection,
           newValue: action.viewingDirection
         }];
 
         return {
           success: true,
-          state: updateEntity(state, action.id, { viewingDirection: action.viewingDirection as any }),
+          state: updateEntity(state, action.id, { viewingDirection: action.viewingDirection } as Partial<IIIFManifest>),
           changes
         };
       }
@@ -316,7 +317,7 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
           state: updateEntity(state, action.canvasId, {
             width: action.width,
             height: action.height
-          } as any),
+          } as Partial<IIIFCanvas>),
           changes
         };
       }
@@ -424,9 +425,11 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
           currentState = updateEntity(currentState, update.id, update.changes);
           for (const [prop, value] of Object.entries(update.changes)) {
             const entity = getEntity(state, update.id);
+            // Dynamic property access requires casting through unknown
+            const oldValue = entity ? (entity as unknown as Record<string, unknown>)[prop] : undefined;
             allChanges.push({
               property: prop,
-              oldValue: (entity as any)?.[prop],
+              oldValue,
               newValue: value
             });
           }

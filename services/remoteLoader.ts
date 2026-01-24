@@ -43,6 +43,9 @@ export const requiresAuth = (result: ExtendedFetchResult): result is AuthRequire
  */
 export const fetchRemoteManifest = async (url: string, options?: FetchOptions): Promise<IIIFItem> => {
   const result = await fetchRemoteResource(url, options);
+  if (requiresAuth(result)) {
+    throw new Error('Authentication required');
+  }
   return result.item;
 };
 
@@ -51,7 +54,7 @@ export const fetchRemoteManifest = async (url: string, options?: FetchOptions): 
  * @param url - URL to fetch
  * @param options - Optional fetch options including AbortSignal for timeout/cancellation
  */
-export const fetchRemoteResource = async (url: string, options?: FetchOptions): Promise<FetchResult> => {
+export const fetchRemoteResource = async (url: string, options?: FetchOptions): Promise<ExtendedFetchResult> => {
   // Check if URL is a direct media file (image, audio, video)
   if (virtualManifestFactory.isMediaUrl(url)) {
     console.log('[RemoteLoader] Detected media URL, creating virtual manifest:', url);

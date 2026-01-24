@@ -441,7 +441,7 @@ class StaticSiteExporter {
     if (!imageId) return files;
 
     // Try to get the image from storage
-    const imageData = await storage.getFile(imageId);
+    const imageData = await storage.getAsset(imageId);
 
     if (imageData) {
       // Generate info.json (Level 0 - static tiles)

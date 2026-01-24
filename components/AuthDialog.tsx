@@ -89,7 +89,12 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
         if (tokenService) {
           try {
             const tokenResponse = await authService.requestToken(tokenService);
-            authService.storeToken(resourceId, tokenResponse.accessToken, tokenResponse.expiresIn);
+            // Check if we got a valid token response (not an error)
+            if (tokenResponse.type === 'AuthAccessToken2' && 'accessToken' in tokenResponse) {
+              authService.storeToken(resourceId, tokenResponse.accessToken, tokenResponse.expiresIn);
+            } else {
+              throw new Error('Invalid token response');
+            }
 
             // Re-probe to verify access
             await probeForAccess();

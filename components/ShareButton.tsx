@@ -193,7 +193,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         aria-label="Share this view"
         title="Share this view"
       >
-        <Icon name="share" style={{ fontSize: '24px' }} />
+        <Icon name="share" className="text-2xl" />
       </button>
     );
   }
@@ -225,9 +225,9 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         aria-haspopup="menu"
         title="Share (drag to share via drag-and-drop)"
       >
-        <Icon name="share" style={{ fontSize: '16px' }} />
+        <Icon name="share" className="text-base" />
         <span>{PATTERNS.shareButton.label}</span>
-        <Icon name="expand_more" style={{ fontSize: '16px', opacity: 0.5 }} />
+        <Icon name="expand_more" className="text-base opacity-50" />
       </button>
 
       {showMenu && (

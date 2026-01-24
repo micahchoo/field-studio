@@ -47,7 +47,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const autocompleteService = searchService
     ? contentSearchService.extractAutocompleteService(searchService)
     : null;

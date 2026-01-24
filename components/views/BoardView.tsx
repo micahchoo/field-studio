@@ -114,7 +114,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
    */
   const exportBoardAsManifest = useCallback(() => {
     if (items.length === 0) {
-      showToast("No items on board to export", "warning");
+      showToast("No items on board to export", "info");
       return;
     }
 

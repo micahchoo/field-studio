@@ -16,7 +16,7 @@ import { IIIFCanvas, IIIFManifest, IIIFAnnotation, LanguageMap } from '../types'
 // Types
 // ============================================================================
 
-export interface AVCanvas extends IIIFCanvas {
+export interface AVCanvas extends Omit<IIIFCanvas, 'placeholderCanvas' | 'accompanyingCanvas'> {
   /** Duration in seconds for time-based media */
   duration?: number;
   /** Poster frame / placeholder canvas */
@@ -109,14 +109,14 @@ class AVService {
   /**
    * Get the placeholder canvas for a time-based canvas
    */
-  getPlaceholderCanvas(canvas: IIIFCanvas): PlaceholderCanvas | null {
+  getPlaceholderCanvas(canvas: AVCanvas | IIIFCanvas): PlaceholderCanvas | null {
     return (canvas as AVCanvas).placeholderCanvas || null;
   }
 
   /**
    * Get the accompanying canvas for a canvas
    */
-  getAccompanyingCanvas(canvas: IIIFCanvas): AccompanyingCanvas | null {
+  getAccompanyingCanvas(canvas: AVCanvas | IIIFCanvas): AccompanyingCanvas | null {
     return (canvas as AVCanvas).accompanyingCanvas || null;
   }
 
