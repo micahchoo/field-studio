@@ -20,4 +20,4 @@ export default defineConfig(({ mode }) => {
         include: ['flexsearch']
       }
     };
-});
+}); 
