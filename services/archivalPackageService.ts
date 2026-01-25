@@ -9,7 +9,7 @@
  * for repository ingest.
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, getIIIFValue } from '../types';
+import { IIIFItem, IIIFManifest, IIIFCanvas, getIIIFValue, isCanvas } from '../types';
 import { storage } from './storage';
 
 // ============================================================================
@@ -490,8 +490,8 @@ class ArchivalPackageService {
     const canvases: IIIFCanvas[] = [];
 
     const traverse = (item: IIIFItem) => {
-      if (item.type === 'Canvas') {
-        canvases.push(item as IIIFCanvas);
+      if (isCanvas(item)) {
+        canvases.push(item);
       }
       if (item.items) {
         for (const child of item.items) {

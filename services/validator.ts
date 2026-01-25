@@ -1,4 +1,16 @@
-import { IIIFItem, IIIFManifest, IIIFCollection, IIIFCanvas, getIIIFValue } from '../types';
+import { IIIFItem, IIIFManifest, IIIFCollection, IIIFCanvas, getIIIFValue, isCanvas, isManifest, isCollection } from '../types';
+import {
+  validateResource as schemaValidateResource,
+  IIIF_SCHEMA,
+  isBehaviorAllowed,
+  getRecommendedProperties
+} from '../utils/iiifSchema';
+import { isValidHttpUri } from '../utils/iiifTypes';
+import {
+  validateBehaviors,
+  doesInheritBehavior,
+  findBehaviorConflicts
+} from '../utils/iiifBehaviors';
 
 export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
 
@@ -12,8 +24,18 @@ export interface ValidationIssue {
   fixable: boolean;
 }
 
+/**
+ * ValidationService provides tree-aware IIIF validation.
+ *
+ * This service builds on the centralized schema validation from utils/iiifSchema.ts
+ * and adds tree-context validation:
+ * - Duplicate ID detection across the tree
+ * - Behavior inheritance conflicts
+ * - Content presence checks (painting annotations)
+ * - UX-focused warnings for recommended properties
+ */
 export class ValidationService {
-  
+
   validateTree(root: IIIFItem | null): Record<string, ValidationIssue[]> {
       const issueMap: Record<string, ValidationIssue[]> = {};
       if (!root) return issueMap;
@@ -55,6 +77,37 @@ export class ValidationService {
     return Object.values(map).some(arr => arr.some(s => s && s.trim().length > 0));
   }
 
+  /**
+   * Map schema validation errors to ValidationIssue format
+   */
+  private mapSchemaErrors(item: IIIFItem, schemaErrors: string[]): ValidationIssue[] {
+    return schemaErrors.map(err => {
+      let category: IssueCategory = 'Structure';
+      let fixable = false;
+
+      if (err.includes('id') || err.includes('type')) {
+        category = 'Identity';
+        fixable = true;
+      } else if (err.includes('width') || err.includes('height') || err.includes('duration')) {
+        category = 'Content';
+        fixable = true;
+      } else if (err.includes('behavior') || err.includes('Behavior')) {
+        category = 'Structure';
+        fixable = true;
+      }
+
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        itemId: item.id,
+        itemLabel: getIIIFValue(item.label) || 'Untitled',
+        level: 'error' as const,
+        category,
+        message: err,
+        fixable
+      };
+    });
+  }
+
   validateItem(item: IIIFItem, parent?: IIIFItem, parentType?: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
     const addIssue = (level: 'error' | 'warning', category: IssueCategory, message: string, fixable: boolean = false) => {
@@ -69,77 +122,92 @@ export class ValidationService {
         });
     };
 
-    // Behavior inheritance validation (spec §3.4)
-    if (item.behavior && parentType) {
-        // Manifests DO NOT inherit from Collections
-        if (item.type === 'Manifest' && parentType === 'Collection') {
-            // This is OK - no inheritance expected
+    // Run centralized schema validation first
+    const schemaErrors = schemaValidateResource(item);
+    issues.push(...this.mapSchemaErrors(item, schemaErrors));
+
+    // Behavior validation using centralized behavior utilities
+    if (item.behavior) {
+        // Use the comprehensive behavior validation
+        const behaviorValidation = validateBehaviors(
+            item.type,
+            item.behavior,
+            parentType,
+            parent?.behavior
+        );
+
+        // Add behavior errors
+        for (const err of behaviorValidation.errors) {
+            addIssue('error', 'Structure', err, true);
         }
-        // Canvases inherit from Manifest, NOT from Ranges
-        if (item.type === 'Canvas' && parentType === 'Range') {
-            addIssue('warning', 'Structure', 'Canvas behavior should inherit from Manifest, not Range. Check behavior consistency.', false);
+
+        // Add behavior warnings
+        for (const warn of behaviorValidation.warnings) {
+            addIssue('warning', 'Structure', warn, false);
         }
-        // Collections inherit from parent Collection
-        if (item.type === 'Collection' && parentType === 'Collection' && parent?.behavior) {
-            const parentBehaviors = new Set(parent.behavior);
-            const conflicting = item.behavior.filter(b => {
-                const opposites: Record<string, string> = {
-                    'auto-advance': 'no-auto-advance',
-                    'no-auto-advance': 'auto-advance',
-                    'repeat': 'no-repeat',
-                    'no-repeat': 'repeat'
-                };
-                return opposites[b] && parentBehaviors.has(opposites[b]);
-            });
-            if (conflicting.length > 0) {
-                addIssue('warning', 'Structure', `Behavior conflicts with parent: ${conflicting.join(', ')}. Child overrides parent.`, false);
-            }
+
+        // Check for disjoint set conflicts
+        const conflicts = findBehaviorConflicts(item.behavior);
+        for (const conflict of conflicts) {
+            addIssue('error', 'Structure', conflict, true);
         }
     }
 
-    if (!item.id) addIssue('error', 'Identity', 'Required property "id" is missing.', true);
-    if (!item.type) addIssue('error', 'Identity', 'Required property "type" is missing.');
-    
+    // Check behavior inheritance context
+    if (parentType) {
+        // Canvases should inherit from Manifest, not Range
+        if (item.type === 'Canvas' && parentType === 'Range') {
+            addIssue('warning', 'Structure', 'Canvas behavior should inherit from Manifest, not Range. Check behavior consistency.', false);
+        }
+
+        // Check if inheritance is expected
+        if (item.behavior && parent?.behavior && doesInheritBehavior(item.type, parentType)) {
+            // Inheritance is expected - already handled by validateBehaviors
+        }
+    }
+
+    // ID must be HTTP(S) URI
     if (item.id && !item.id.startsWith('http')) {
         addIssue('error', 'Identity', 'ID must be a valid HTTP(S) URI.', true);
     }
 
     const isMajorResource = ['Collection', 'Manifest', 'Range'].includes(item.type);
-    
+
+    // Label requirements - add friendly messages beyond schema validation
     if (!this.hasContent(item.label)) {
         if (isMajorResource) {
-            addIssue('error', 'Metadata', `Required property "label" is missing or empty on ${item.type}.`, true);
-        } else if (item.type === 'Canvas') {
+            // Schema already catches required label, but we add context
+        } else if (isCanvas(item)) {
             addIssue('warning', 'Metadata', 'A Canvas should have a label for navigation.', true);
         }
     }
 
-    const raw = item as any;
-    
-    if (item.type === 'Collection') {
-        if (raw.structures) addIssue('error', 'Structure', 'Property "structures" is not allowed on a Collection.', true);
-        if (raw.height || raw.width) addIssue('error', 'Content', 'Spatial dimensions are not allowed on a Collection.', true);
-        if (!raw.items) addIssue('error', 'Structure', 'Collection must have an "items" array.', true);
-    }
-
-    if (item.type === 'Manifest') {
-        if (raw.height || raw.width) addIssue('error', 'Content', 'Spatial dimensions are not allowed on a Manifest. Use Canvases.', true);
-        if (!raw.items || raw.items.length === 0) addIssue('error', 'Structure', 'Manifest MUST have at least one Canvas in "items".', true);
-    }
-
-    if (item.type === 'Canvas') {
-        if ((raw.width && !raw.height) || (!raw.width && raw.height)) {
-            addIssue('error', 'Content', 'Canvas dimensions MUST include both width and height.', true);
-        }
-        if (!raw.width && !raw.height && !raw.duration) {
-            addIssue('error', 'Content', 'Canvas missing all dimensions.', true);
-        }
+    // Canvas-specific: check for painting content
+    if (isCanvas(item)) {
+        const raw = item as IIIFCanvas;
         const hasPainting = raw.items?.some((p: any) => p.items?.some((a: any) => a.motivation === 'painting'));
         if (!hasPainting) {
             addIssue('warning', 'Content', 'Canvas has no "painting" content. It will appear blank.');
         }
     }
 
+    // Manifest-specific: check for at least one canvas
+    if (isManifest(item)) {
+        const raw = item as IIIFManifest;
+        if (!raw.items || raw.items.length === 0) {
+            addIssue('error', 'Structure', 'Manifest MUST have at least one Canvas in "items".', true);
+        }
+    }
+
+    // Collection-specific: check for items
+    if (isCollection(item)) {
+        const raw = item as IIIFCollection;
+        if (!raw.items) {
+            addIssue('error', 'Structure', 'Collection must have an "items" array.', true);
+        }
+    }
+
+    // Recommended properties warnings
     if (isMajorResource && !this.hasContent(item.summary)) {
         addIssue('warning', 'Metadata', 'Adding a "summary" improves search.', true);
     }

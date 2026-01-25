@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { IIIFManifest, IIIFRange, IIIFCanvas, IIIFSpecificResource, IIIFRangeReference } from '../types';
+import { IIIFManifest, IIIFRange, IIIFCanvas, IIIFSpecificResource, IIIFRangeReference, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 import { RESOURCE_TYPE_CONFIG } from '../constants';
+import { isValidChildType, createLanguageMap } from '../utils';
 
 interface RangeEditorProps {
   manifest: IIIFManifest;
@@ -13,10 +14,11 @@ export const RangeEditor: React.FC<RangeEditorProps> = ({ manifest, onUpdate }) 
   const [draggedCanvasId, setDraggedCanvasId] = useState<string | null>(null);
 
   const handleCreateRootRange = () => {
+    // Create Range with proper IIIF structure
     const newRange: IIIFRange = {
       id: `${manifest.id}/range/${crypto.randomUUID()}`,
       type: "Range",
-      label: { none: ["New Section"] },
+      label: createLanguageMap("New Section", 'none'),
       items: []
     };
     onUpdate({ ...manifest, structures: [...(manifest.structures || []), newRange] });
@@ -30,9 +32,16 @@ export const RangeEditor: React.FC<RangeEditorProps> = ({ manifest, onUpdate }) 
       const canvas = manifest.items.find(c => c.id === draggedCanvasId);
       if (!canvas) return;
 
+      // Validate that Canvas is a valid child of Range using centralized hierarchy rules
+      if (!isValidChildType('Range', 'Canvas')) {
+        console.warn('Canvas is not a valid child type for Range according to IIIF spec');
+        // Note: Per IIIF 3.0, Range.items can contain Canvas references, so this should pass
+      }
+
       const findAndAdd = (ranges: IIIFRange[]): boolean => {
           for (const range of ranges) {
               if (range.id === rangeId) {
+                  // Add Canvas reference (not the full Canvas)
                   range.items.push({ id: canvas.id, type: "Canvas" });
                   return true;
               }

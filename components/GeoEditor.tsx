@@ -53,10 +53,23 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
 
   // Initialize map
   useEffect(() => {
-    if (!mapRef.current || leafletMapRef.current) return;
+    if (!mapRef.current) return;
+
+    // Check if map is already initialized on this container (React Strict Mode double-mount)
+    if (leafletMapRef.current) {
+      return;
+    }
+
+    // Also check if container already has Leaflet initialized (DOM check)
+    if ((mapRef.current as any)._leaflet_id) {
+      return;
+    }
 
     // Dynamic import of Leaflet
     const initMap = async () => {
+      // Double-check refs are still valid after async
+      if (!mapRef.current || leafletMapRef.current) return;
+
       // @ts-ignore - Leaflet loaded via CDN
       const L = (await import('leaflet' as any)).default as LeafletModule;
 
@@ -67,6 +80,11 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
       });
+
+      // Final check before creating map
+      if ((mapRef.current as any)._leaflet_id) {
+        return;
+      }
 
       // Create map
       const map = L.map(mapRef.current!, {

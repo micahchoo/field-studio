@@ -13,9 +13,16 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Static-First Infrastructure (Wax)"
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, getIIIFValue } from '../types';
+import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, getIIIFValue, isCanvas, isManifest, isCollection } from '../types';
 import { storage } from './storage';
 import { searchService } from './searchService';
+import {
+  isPaintingMotivation,
+  generateInfoJson,
+  generateStandardSizes,
+  createImageServiceReference,
+  ImageApiProfile
+} from '../utils';
 
 // ============================================================================
 // Types
@@ -141,9 +148,9 @@ class StaticSiteExporter {
 
       // 5. Generate IIIF tiles and derivatives
       for (const item of items) {
-        if (item.type === 'Canvas') {
+        if (isCanvas(item)) {
           try {
-            const tileFiles = await this.generateTiles(item as IIIFCanvas, cfg);
+            const tileFiles = await this.generateTiles(item, cfg);
             files.push(...tileFiles);
             imageCount += tileFiles.filter(f => f.type === 'image').length;
           } catch (e) {
@@ -165,7 +172,7 @@ class StaticSiteExporter {
       }
 
       // 7. Generate collection manifest
-      if (root.type === 'Collection') {
+      if (isCollection(root)) {
         const collectionJson = this.generateCollectionManifest(root as IIIFCollection, manifests, cfg);
         files.push({
           path: 'iiif/collection.json',
@@ -247,7 +254,7 @@ class StaticSiteExporter {
     const items: IIIFItem[] = [];
 
     const traverse = (node: IIIFItem) => {
-      if (node.type === 'Canvas') {
+      if (isCanvas(node)) {
         items.push(node);
       }
       if (node.items) {
@@ -268,8 +275,8 @@ class StaticSiteExporter {
     const manifests: IIIFManifest[] = [];
 
     const traverse = (node: IIIFItem) => {
-      if (node.type === 'Manifest') {
-        manifests.push(node as IIIFManifest);
+      if (isManifest(node)) {
+        manifests.push(node);
       }
       if (node.items) {
         for (const child of node.items) {
@@ -445,7 +452,7 @@ class StaticSiteExporter {
 
     if (imageData) {
       // Generate info.json (Level 0 - static tiles)
-      const infoJson = this.generateInfoJson(canvas, pid, cfg);
+      const infoJson = this.generateImageServiceInfo(canvas, pid, cfg);
       files.push({
         path: `img/derivatives/iiif/${pid}/info.json`,
         content: JSON.stringify(infoJson, null, 2),
@@ -476,25 +483,26 @@ class StaticSiteExporter {
 
   /**
    * Generate IIIF Image API info.json (Level 0)
+   * Uses centralized Image API utilities for spec compliance
    */
-  private generateInfoJson(canvas: IIIFCanvas, pid: string, cfg: StaticSiteConfig): object {
-    return {
-      '@context': 'http://iiif.io/api/image/3/context.json',
-      id: `${cfg.baseUrl}/img/derivatives/iiif/${pid}`,
-      type: 'ImageService3',
-      protocol: 'http://iiif.io/api/image',
-      profile: 'level0',
-      width: canvas.width || 1000,
-      height: canvas.height || 1000,
-      sizes: [
-        { width: cfg.thumbnailWidth, height: Math.round((canvas.height || 1000) * cfg.thumbnailWidth / (canvas.width || 1000)) },
-        { width: cfg.fullWidth, height: Math.round((canvas.height || 1000) * cfg.fullWidth / (canvas.width || 1000)) }
-      ],
-      tiles: cfg.tileSizes.map(size => ({
-        width: size,
-        scaleFactors: [1, 2, 4, 8]
-      }))
-    };
+  private generateImageServiceInfo(canvas: IIIFCanvas, pid: string, cfg: StaticSiteConfig): object {
+    const width = canvas.width || 1000;
+    const height = canvas.height || 1000;
+
+    // Use centralized info.json generation
+    return generateInfoJson(
+      `${cfg.baseUrl}/img/derivatives/iiif/${pid}`,
+      width,
+      height,
+      'level0',
+      {
+        sizes: generateStandardSizes(width, height, [cfg.thumbnailWidth, cfg.fullWidth]),
+        tiles: cfg.tileSizes.map(size => ({
+          width: size,
+          scaleFactors: [1, 2, 4, 8]
+        }))
+      }
+    );
   }
 
   /**
@@ -514,11 +522,8 @@ class StaticSiteExporter {
             ...anno,
             body: anno.body ? {
               ...(typeof anno.body === 'object' ? anno.body : { id: anno.body }),
-              service: [{
-                id: `${cfg.baseUrl}/img/derivatives/iiif/${pid}`,
-                type: 'ImageService3',
-                profile: 'level0'
-              }]
+              // Use centralized service reference creation
+              service: [createImageServiceReference(`${cfg.baseUrl}/img/derivatives/iiif/${pid}`, 'level0')]
             } : anno.body
           }))
         }))
@@ -1035,7 +1040,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
   private getPaintingAnnotation(canvas: IIIFCanvas): any {
     const page = canvas.items?.[0];
     if (!page || !(page as any).items) return null;
-    return (page as any).items.find((a: any) => a.motivation === 'painting');
+    return (page as any).items.find((a: any) => isPaintingMotivation(a.motivation));
   }
 
   private getParentManifestSlug(item: IIIFItem): string {

@@ -3,6 +3,11 @@ import React, { useState, useMemo } from 'react';
 import { IIIFItem, IIIFCollection, AppMode, ViewType, IIIFManifest, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 import { CONSTANTS, RESOURCE_TYPE_CONFIG } from '../constants';
+import {
+  isValidChildType,
+  getRelationshipType,
+  getValidChildTypes
+} from '../utils/iiifHierarchy';
 
 interface SidebarProps {
   root: IIIFItem | null;
@@ -95,7 +100,23 @@ const TreeItem: React.FC<{
 
       const findAndInsert = (parent: any) => {
           if (parent.id === item.id) {
-              if (parent.type !== 'Collection' && parent.type !== 'Manifest') return false; 
+              // Use centralized IIIF hierarchy validation
+              if (!draggedNode) return false;
+
+              // Validate parent-child relationship using IIIF 3.0 rules
+              if (!isValidChildType(parent.type, draggedNode.type)) {
+                const validChildren = getValidChildTypes(parent.type);
+                console.warn(
+                  `Cannot drop ${draggedNode.type} into ${parent.type}. ` +
+                  `Valid children: ${validChildren.join(', ') || 'none'}`
+                );
+                return false;
+              }
+
+              // Log relationship type for debugging
+              const relationship = getRelationshipType(parent.type, draggedNode.type);
+              console.log(`Creating ${relationship} relationship: ${parent.type} → ${draggedNode.type}`);
+
               if (!parent.items) parent.items = [];
               parent.items.push(draggedNode);
               return true;

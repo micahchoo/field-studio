@@ -23,6 +23,7 @@ import {
   IIIFAnnotationPage,
   LanguageString
 } from '../types';
+import { getAllowedProperties } from '../utils/iiifSchema';
 
 // ============================================================================
 // Types
@@ -41,13 +42,30 @@ export interface NormalizedState {
     Annotation: Record<string, IIIFAnnotation>;
   };
 
-  /** Parent → child ID references */
+  /** Parent → child ID references (for hierarchical ownership: Manifest→Canvas, Canvas→AnnotationPage) */
   references: Record<string, string[]>;
 
-  /** Child → parent ID reverse lookup */
+  /** Child → parent ID reverse lookup (for hierarchical ownership only) */
   reverseRefs: Record<string, string>;
 
-  /** Root entity ID */
+  /**
+   * Collection membership - tracks which Collections reference which resources
+   * This is separate from hierarchical ownership because:
+   * - Collections REFERENCE Manifests (many-to-many)
+   * - Manifests OWN Canvases (one-to-many, hierarchical)
+   *
+   * Key: Collection ID, Value: Array of referenced resource IDs (Manifests or nested Collections)
+   */
+  collectionMembers: Record<string, string[]>;
+
+  /**
+   * Reverse lookup: which Collections contain this resource?
+   * Key: resource ID (Manifest or Collection), Value: Array of Collection IDs that reference it
+   * A Manifest can be in multiple Collections (non-hierarchical, many-to-many)
+   */
+  memberOfCollections: Record<string, string[]>;
+
+  /** Root entity ID (usually a top-level Collection) */
   rootId: string | null;
 
   /** Entity type index for O(1) type lookup */
@@ -67,18 +85,17 @@ export interface NormalizedState {
  */
 const KNOWN_IIIF_PROPERTIES: Record<EntityType | 'common', Set<string>> = {
   common: new Set([
-    '@context', 'id', 'type', 'label', 'summary', 'metadata', 'requiredStatement',
-    'rights', 'navDate', 'thumbnail', 'behavior', 'provider', 'homepage', 'seeAlso',
-    'rendering', 'service', 'services', 'partOf', 'items', 'annotations',
+    // Core JSON-LD / Internal
+    '@context', 'id', 'type', 
     // Internal properties (prefixed with _)
     '_fileRef', '_blobUrl', '_parentId', '_state', '_filename'
   ]),
-  Collection: new Set(['viewingDirection']),
-  Manifest: new Set(['viewingDirection', 'structures', 'start', 'supplementary', 'placeholderCanvas', 'accompanyingCanvas']),
-  Canvas: new Set(['width', 'height', 'duration']),
-  Range: new Set(['supplementary', 'start', 'viewingDirection']),
-  AnnotationPage: new Set([]),
-  Annotation: new Set(['motivation', 'body', 'target', 'bodyValue'])
+  Collection: new Set(getAllowedProperties('Collection')),
+  Manifest: new Set(getAllowedProperties('Manifest')),
+  Canvas: new Set(getAllowedProperties('Canvas')),
+  Range: new Set(getAllowedProperties('Range')),
+  AnnotationPage: new Set(getAllowedProperties('AnnotationPage')),
+  Annotation: new Set([...getAllowedProperties('Annotation'), 'bodyValue'])
 };
 
 // ============================================================================
@@ -165,6 +182,8 @@ export function createEmptyState(): NormalizedState {
     },
     references: {},
     reverseRefs: {},
+    collectionMembers: {},
+    memberOfCollections: {},
     rootId: null,
     typeIndex: {},
     extensions: {}
@@ -216,7 +235,7 @@ function normalizeItem(
   switch (type) {
     case 'Collection': {
       const collection = item as IIIFCollection;
-      const childIds: string[] = [];
+      const memberIds: string[] = [];
 
       // Store without nested items
       state.entities.Collection[id] = {
@@ -224,15 +243,25 @@ function normalizeItem(
         items: [] // Will be reconstructed on denormalize
       };
 
-      // Normalize children
+      // Process Collection members (referenced resources, not owned)
+      // Collections reference Manifests/Collections - this is many-to-many, not hierarchical
       if (collection.items) {
         for (const child of collection.items) {
-          childIds.push(child.id);
-          normalizeItem(child, state, id);
+          memberIds.push(child.id);
+
+          // Track membership (Collection → resources)
+          if (!state.memberOfCollections[child.id]) {
+            state.memberOfCollections[child.id] = [];
+          }
+          state.memberOfCollections[child.id].push(id);
+
+          // Normalize the child (but don't set reverseRefs for Collection members)
+          normalizeItem(child, state, null); // null parentId - not hierarchical ownership
         }
       }
 
-      state.references[id] = childIds;
+      // Store collection membership
+      state.collectionMembers[id] = memberIds;
       break;
     }
 
@@ -392,10 +421,11 @@ function denormalizeItem(state: NormalizedState, id: string): IIIFItem {
   switch (type) {
     case 'Collection': {
       const collection = cloneAsRecord(state.entities.Collection[id]);
-      const childIds = state.references[id] || [];
+      // Use collectionMembers for Collection items (not hierarchical references)
+      const memberIds = state.collectionMembers[id] || [];
 
-      collection.items = childIds
-        .map(childId => denormalizeItem(state, childId))
+      collection.items = memberIds
+        .map(memberId => denormalizeItem(state, memberId))
         .filter(Boolean);
 
       // Apply preserved extensions
@@ -563,6 +593,116 @@ export function getDescendants(state: NormalizedState, id: string): string[] {
 }
 
 // ============================================================================
+// Collection Membership Queries (Non-hierarchical, many-to-many)
+// ============================================================================
+
+/**
+ * Get all Collections that reference a given resource (Manifest or nested Collection)
+ * Supports the IIIF 3.0 model where same Manifest can be in multiple Collections
+ */
+export function getCollectionsContaining(state: NormalizedState, resourceId: string): string[] {
+  return state.memberOfCollections[resourceId] || [];
+}
+
+/**
+ * Get all members (Manifests/Collections) referenced by a Collection
+ */
+export function getCollectionMembers(state: NormalizedState, collectionId: string): string[] {
+  return state.collectionMembers[collectionId] || [];
+}
+
+/**
+ * Check if a Manifest is standalone (not in any Collection)
+ */
+export function isOrphanManifest(state: NormalizedState, manifestId: string): boolean {
+  const type = state.typeIndex[manifestId];
+  if (type !== 'Manifest') return false;
+  const memberships = state.memberOfCollections[manifestId] || [];
+  return memberships.length === 0;
+}
+
+/**
+ * Get all standalone Manifests (not referenced by any Collection)
+ */
+export function getOrphanManifests(state: NormalizedState): IIIFManifest[] {
+  return Object.values(state.entities.Manifest).filter(
+    manifest => isOrphanManifest(state, manifest.id)
+  );
+}
+
+/**
+ * Add a resource to a Collection (creates a reference, not ownership)
+ */
+export function addToCollection(
+  state: NormalizedState,
+  collectionId: string,
+  resourceId: string
+): NormalizedState {
+  // Verify both entities exist
+  if (!state.typeIndex[collectionId] || !state.typeIndex[resourceId]) {
+    console.warn('Cannot add to collection: entity not found');
+    return state;
+  }
+
+  // Update collection members
+  const currentMembers = state.collectionMembers[collectionId] || [];
+  if (currentMembers.includes(resourceId)) {
+    return state; // Already a member
+  }
+
+  const newCollectionMembers = {
+    ...state.collectionMembers,
+    [collectionId]: [...currentMembers, resourceId]
+  };
+
+  // Update reverse lookup
+  const currentMemberships = state.memberOfCollections[resourceId] || [];
+  const newMemberOfCollections = {
+    ...state.memberOfCollections,
+    [resourceId]: [...currentMemberships, collectionId]
+  };
+
+  return {
+    ...state,
+    collectionMembers: newCollectionMembers,
+    memberOfCollections: newMemberOfCollections
+  };
+}
+
+/**
+ * Remove a resource from a Collection (removes reference, not the resource itself)
+ */
+export function removeFromCollection(
+  state: NormalizedState,
+  collectionId: string,
+  resourceId: string
+): NormalizedState {
+  // Update collection members
+  const currentMembers = state.collectionMembers[collectionId] || [];
+  const newMembers = currentMembers.filter(id => id !== resourceId);
+
+  const newCollectionMembers = {
+    ...state.collectionMembers,
+    [collectionId]: newMembers
+  };
+
+  // Update reverse lookup
+  const currentMemberships = state.memberOfCollections[resourceId] || [];
+  const newMemberships = currentMemberships.filter(id => id !== collectionId);
+
+  const newMemberOfCollections = {
+    ...state.memberOfCollections,
+    [resourceId]: newMemberships
+  };
+
+  return {
+    ...state,
+    collectionMembers: newCollectionMembers,
+    memberOfCollections: newMemberOfCollections
+  };
+}
+
+// ============================================================================
 // Update Functions (Immutable)
 // ============================================================================
 
@@ -705,12 +845,29 @@ export function removeEntity(
     }
   }
 
+  // Remove from collection membership (non-hierarchical references)
+  const newCollectionMembers: Record<string, string[]> = {};
+  for (const [collId, members] of Object.entries(state.collectionMembers)) {
+    if (!toRemove.has(collId)) {
+      newCollectionMembers[collId] = members.filter(mid => !toRemove.has(mid));
+    }
+  }
+
+  const newMemberOfCollections: Record<string, string[]> = {};
+  for (const [resId, collections] of Object.entries(state.memberOfCollections)) {
+    if (!toRemove.has(resId)) {
+      newMemberOfCollections[resId] = collections.filter(cid => !toRemove.has(cid));
+    }
+  }
+
   return {
     ...state,
     entities: newEntities,
     typeIndex: newTypeIndex,
     references: newReferences,
     reverseRefs: newReverseRefs,
+    collectionMembers: newCollectionMembers,
+    memberOfCollections: newMemberOfCollections,
     rootId: toRemove.has(state.rootId!) ? null : state.rootId
   };
 }
@@ -855,6 +1012,54 @@ export class Vault {
    */
   getChildren(id: string): string[] {
     return getChildIds(this.state, id);
+  }
+
+  // ============================================================================
+  // Collection Membership (Non-hierarchical, many-to-many)
+  // ============================================================================
+
+  /**
+   * Get all Collections that contain a resource
+   */
+  getCollectionsContaining(resourceId: string): string[] {
+    return getCollectionsContaining(this.state, resourceId);
+  }
+
+  /**
+   * Get all members of a Collection
+   */
+  getCollectionMembers(collectionId: string): string[] {
+    return getCollectionMembers(this.state, collectionId);
+  }
+
+  /**
+   * Check if a Manifest is standalone (not in any Collection)
+   */
+  isOrphanManifest(manifestId: string): boolean {
+    return isOrphanManifest(this.state, manifestId);
+  }
+
+  /**
+   * Get all standalone Manifests
+   */
+  getOrphanManifests(): IIIFManifest[] {
+    return getOrphanManifests(this.state);
+  }
+
+  /**
+   * Add a resource to a Collection (reference, not ownership)
+   */
+  addToCollection(collectionId: string, resourceId: string): void {
+    this.state = addToCollection(this.state, collectionId, resourceId);
+    this.notify();
+  }
+
+  /**
+   * Remove a resource from a Collection (removes reference only)
+   */
+  removeFromCollection(collectionId: string, resourceId: string): void {
+    this.state = removeFromCollection(this.state, collectionId, resourceId);
+    this.notify();
   }
 
   /**

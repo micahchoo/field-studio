@@ -1,5 +1,20 @@
 
 import { searchService } from './searchService';
+import {
+  generateInfoJson,
+  generateStandardTiles,
+  validateRegion,
+  validateSize,
+  validateRotation,
+  validateQuality,
+  validateFormat,
+  getImageMimeType,
+  IMAGE_API_CONTEXT,
+  COMPLIANCE_LEVELS,
+  ImageApiProfile,
+  ImageFormat,
+  ImageQuality
+} from '../utils';
 
 export class LocalIIIFServer {
   private static instance: LocalIIIFServer;
@@ -58,7 +73,7 @@ export class LocalIIIFServer {
         if (!file) return { error: "Image not found or not loaded" };
 
         if (params[1] === 'info.json') {
-            const info = await this.generateInfoJson(identifier, file);
+            const info = await this.generateImageInfoJson(identifier, file);
             return { json: info };
         }
 
@@ -77,27 +92,29 @@ export class LocalIIIFServer {
     }
   }
 
-  private async generateInfoJson(id: string, file: File | Blob): Promise<any> {
+  private async generateImageInfoJson(id: string, file: File | Blob): Promise<any> {
       const bitmap = await createImageBitmap(file);
-      // DYNAMICALLY USE CURRENT ORIGIN
-      return {
-          "@context": "http://iiif.io/api/image/3/context.json",
-          "id": `${window.location.origin}/iiif/image/${id}`,
-          "type": "ImageService3",
-          "protocol": "http://iiif.io/api/image",
-          "profile": "level2",
-          "width": bitmap.width,
-          "height": bitmap.height,
-          "tiles": [{ "width": 512, "scaleFactors": [1, 2, 4, 8] }],
-      };
+      const baseId = `${window.location.origin}/iiif/image/${id}`;
+
+      // Use centralized info.json generation with level2 profile
+      return generateInfoJson(
+          baseId,
+          bitmap.width,
+          bitmap.height,
+          'level2',
+          {
+              tiles: generateStandardTiles(512, [1, 2, 4, 8]),
+              extraFeatures: ['regionByPx', 'regionByPct', 'sizeByW', 'sizeByH', 'sizeByWh', 'rotationBy90s']
+          }
+      );
   }
 
   private async processImage(
-      file: File | Blob, 
-      region: string, 
-      size: string, 
-      rotation: string, 
-      quality: string, 
+      file: File | Blob,
+      region: string,
+      size: string,
+      rotation: string,
+      quality: string,
       format: string
   ): Promise<string> {
       const bitmap = await createImageBitmap(file);
@@ -105,26 +122,132 @@ export class LocalIIIFServer {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Canvas context failed");
 
-      let rx = 0, ry = 0, rw = bitmap.width, rh = bitmap.height;
-      if (region !== 'full' && region !== 'square' && !region.startsWith('pct:')) {
-          const p = region.split(',').map(Number);
-          if (p.length === 4) { rx=p[0]; ry=p[1]; rw=p[2]; rh=p[3]; }
+      // Validate parameters using centralized validation
+      const regionResult = validateRegion(region, bitmap.width, bitmap.height);
+      if (!regionResult.valid) {
+          throw new Error(regionResult.error);
       }
 
+      const sizeResult = validateSize(size, bitmap.width, bitmap.height, true);
+      if (!sizeResult.valid) {
+          throw new Error(sizeResult.error);
+      }
+
+      const rotationResult = validateRotation(rotation, true, true);
+      if (!rotationResult.valid) {
+          throw new Error(rotationResult.error);
+      }
+
+      const qualityResult = validateQuality(quality, ['default', 'color', 'gray', 'bitonal']);
+      if (!qualityResult.valid) {
+          throw new Error(qualityResult.error);
+      }
+
+      const formatResult = validateFormat(format, ['jpg', 'png', 'webp', 'gif']);
+      if (!formatResult.valid) {
+          throw new Error(formatResult.error);
+      }
+
+      // Process region
+      let rx = 0, ry = 0, rw = bitmap.width, rh = bitmap.height;
+      if (regionResult.parsed) {
+          const rp = regionResult.parsed;
+          if (rp.type === 'pixels') {
+              rx = rp.x!; ry = rp.y!; rw = rp.w!; rh = rp.h!;
+          } else if (rp.type === 'percent') {
+              rx = Math.floor(bitmap.width * rp.x! / 100);
+              ry = Math.floor(bitmap.height * rp.y! / 100);
+              rw = Math.floor(bitmap.width * rp.w! / 100);
+              rh = Math.floor(bitmap.height * rp.h! / 100);
+          } else if (rp.type === 'square') {
+              const minDim = Math.min(bitmap.width, bitmap.height);
+              rx = Math.floor((bitmap.width - minDim) / 2);
+              ry = Math.floor((bitmap.height - minDim) / 2);
+              rw = rh = minDim;
+          }
+      }
+
+      // Clamp region to image bounds
+      rw = Math.min(rw, bitmap.width - rx);
+      rh = Math.min(rh, bitmap.height - ry);
+
+      // Process size
       let sw = rw, sh = rh;
-      if (size !== 'max' && !size.startsWith('pct:') && size.indexOf(',') > -1) {
-         const p = size.split(',');
-         if (p[0] && p[1]) { sw = Number(p[0]); sh = Number(p[1]); }
-         else if (p[0]) { sw = Number(p[0]); sh = (sw / rw) * rh; }
+      if (sizeResult.parsed) {
+          const sp = sizeResult.parsed;
+          if (sp.type === 'width') {
+              sw = sp.width!;
+              sh = Math.round((sw / rw) * rh);
+          } else if (sp.type === 'height') {
+              sh = sp.height!;
+              sw = Math.round((sh / rh) * rw);
+          } else if (sp.type === 'widthHeight') {
+              sw = sp.width!;
+              sh = sp.height!;
+          } else if (sp.type === 'percent') {
+              sw = Math.round(rw * sp.percent! / 100);
+              sh = Math.round(rh * sp.percent! / 100);
+          } else if (sp.type === 'confined') {
+              const scaleW = sp.width! / rw;
+              const scaleH = sp.height! / rh;
+              const scale = Math.min(scaleW, scaleH);
+              sw = Math.round(rw * scale);
+              sh = Math.round(rh * scale);
+          }
       }
 
       canvas.width = sw;
       canvas.height = sh;
-      ctx.drawImage(bitmap, rx, ry, rw, rh, 0, 0, sw, sh);
 
-      let mime = 'image/jpeg';
-      if (format === 'png') mime = 'image/png';
-      if (format === 'webp') mime = 'image/webp';
+      // Handle rotation
+      if (rotationResult.parsed && (rotationResult.parsed.degrees !== 0 || rotationResult.parsed.mirror)) {
+          const degrees = rotationResult.parsed.degrees;
+          const mirror = rotationResult.parsed.mirror;
+
+          // For 90/270 degree rotations, swap canvas dimensions
+          if (degrees === 90 || degrees === 270) {
+              canvas.width = sh;
+              canvas.height = sw;
+          }
+
+          ctx.save();
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+
+          if (mirror) {
+              ctx.scale(-1, 1);
+          }
+
+          ctx.rotate((degrees * Math.PI) / 180);
+
+          if (degrees === 90 || degrees === 270) {
+              ctx.drawImage(bitmap, rx, ry, rw, rh, -sh / 2, -sw / 2, sh, sw);
+          } else {
+              ctx.drawImage(bitmap, rx, ry, rw, rh, -sw / 2, -sh / 2, sw, sh);
+          }
+
+          ctx.restore();
+      } else {
+          ctx.drawImage(bitmap, rx, ry, rw, rh, 0, 0, sw, sh);
+      }
+
+      // Handle quality (grayscale/bitonal)
+      if (quality === 'gray' || quality === 'bitonal') {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          for (let i = 0; i < data.length; i += 4) {
+              const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+              if (quality === 'bitonal') {
+                  const bw = gray > 128 ? 255 : 0;
+                  data[i] = data[i + 1] = data[i + 2] = bw;
+              } else {
+                  data[i] = data[i + 1] = data[i + 2] = gray;
+              }
+          }
+          ctx.putImageData(imageData, 0, 0);
+      }
+
+      // Get MIME type using centralized utility
+      const mime = getImageMimeType(format as ImageFormat);
 
       return new Promise((resolve) => {
           canvas.toBlob(blob => {

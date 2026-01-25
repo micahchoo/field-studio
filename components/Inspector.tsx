@@ -7,6 +7,13 @@ import { ShareButton } from './ShareButton';
 import { ProvenancePanel } from './ProvenancePanel';
 import { GeoEditor } from './GeoEditor';
 import { RESOURCE_TYPE_CONFIG, isFieldVisible, getFieldsByCategory } from '../constants';
+import {
+  isPropertyAllowed,
+  getPropertyRequirement,
+  getAllowedBehaviors,
+  VIEWING_DIRECTIONS,
+  canHaveViewingDirection
+} from '../utils/iiifSchema';
 
 interface InspectorProps {
   resource: IIIFItem | null;
@@ -154,6 +161,9 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
 
   const config = RESOURCE_TYPE_CONFIG[resource.type] || RESOURCE_TYPE_CONFIG['Content'];
   const spec = IIIF_SPECS[resource.type];
+
+  // Helper to check if a field is allowed by the schema for this resource type
+  const isAllowed = (field: string) => isPropertyAllowed(resource.type, field);
   
   const label = getIIIFValue(resource.label, settings.language) || '';
   const summary = getIIIFValue(resource.summary, settings.language) || '';
@@ -319,7 +329,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                     </div>
 
                     {/* Standard Fields (visible at standard+ complexity) */}
-                    {isFieldVisible('rights', settings.metadataComplexity) && (
+                    {isAllowed('rights') && isFieldVisible('rights', settings.metadataComplexity) && (
                         <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
                             <label htmlFor="rights-field" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                 Rights Statement
@@ -339,7 +349,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                         </div>
                     )}
 
-                    {isFieldVisible('navDate', settings.metadataComplexity) && (
+                    {isAllowed('navDate') && isFieldVisible('navDate', settings.metadataComplexity) && (
                         <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
                             <label htmlFor="navdate-field" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                 Navigation Date
@@ -358,7 +368,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                     )}
 
                     {/* Advanced Fields (visible at advanced complexity only) */}
-                    {isFieldVisible('behavior', settings.metadataComplexity) && (
+                    {isAllowed('behavior') && isFieldVisible('behavior', settings.metadataComplexity) && (
                         <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
                             <label className={`block text-[10px] font-black mb-2 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                 Behaviors
@@ -392,7 +402,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                     )}
 
                     {/* Required Statement (standard+) */}
-                    {isFieldVisible('requiredStatement', settings.metadataComplexity) && (
+                    {isAllowed('requiredStatement') && isFieldVisible('requiredStatement', settings.metadataComplexity) && (
                         <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
                             <label className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                 Required Statement (Attribution)
@@ -424,7 +434,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                         </div>
                     )}
 
-                    {isFieldVisible('viewingDirection', settings.metadataComplexity) && (resource.type === 'Manifest' || resource.type === 'Range') && (
+                    {isAllowed('viewingDirection') && isFieldVisible('viewingDirection', settings.metadataComplexity) && (
                         <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
                             <label htmlFor="viewingdir-field" className={`block text-[10px] font-black mb-1 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                 Viewing Direction

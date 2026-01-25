@@ -10,6 +10,7 @@
  */
 
 import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, IIIFAnnotation } from '../types';
+import { isImageService3, IMAGE_API_PROTOCOL, createImageServiceReference } from '../utils';
 
 // ============================================================================
 // Types
@@ -128,7 +129,8 @@ const REQUIREMENTS: ViewerRequirement[] = [
         if (anno.body && !Array.isArray(anno.body)) {
           const services = (anno.body as any).service || [];
           for (const svc of services) {
-            if (svc.type === 'ImageService3' && !svc.protocol) {
+            // Use centralized type check for ImageService3
+            if (isImageService3(svc) && !svc.protocol) {
               return false;
             }
           }
@@ -138,7 +140,7 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer'],
     severity: 'warning',
-    recommendation: 'Add protocol: "http://iiif.io/api/image" to ImageService3'
+    recommendation: `Add protocol: "${IMAGE_API_PROTOCOL}" to ImageService3`
   },
 
   // Thumbnail requirements
@@ -390,12 +392,8 @@ class ViewerCompatibilityService {
                 id: `${baseUrl}/image/test1/full/max/0/default.jpg`,
                 type: 'Image',
                 format: 'image/jpeg',
-                service: [{
-                  id: `${baseUrl}/image/test1`,
-                  type: 'ImageService3',
-                  protocol: 'http://iiif.io/api/image',
-                  profile: 'level2'
-                }]
+                // Use centralized ImageService3 reference creation
+                service: [createImageServiceReference(`${baseUrl}/image/test1`, 'level2')]
               }
             }]
           }],
@@ -433,12 +431,8 @@ class ViewerCompatibilityService {
                 id: `${baseUrl}/image/test2/full/max/0/default.jpg`,
                 type: 'Image',
                 format: 'image/jpeg',
-                service: [{
-                  id: `${baseUrl}/image/test2`,
-                  type: 'ImageService3',
-                  protocol: 'http://iiif.io/api/image',
-                  profile: 'level2'
-                }]
+                // Use centralized ImageService3 reference creation
+                service: [createImageServiceReference(`${baseUrl}/image/test2`, 'level2')]
               }
             }]
           }]

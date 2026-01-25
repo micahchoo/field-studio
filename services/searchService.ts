@@ -1,6 +1,9 @@
 
-import FlexSearch from 'flexsearch';
-import { IIIFItem, IIIFAnnotation, IIIFCanvas } from '../types';
+import * as FlexSearchModule from 'flexsearch';
+import { IIIFItem, IIIFAnnotation, IIIFCanvas, isCanvas } from '../types';
+
+// FlexSearch has inconsistent exports across bundlers - try all patterns
+const FlexSearch = (FlexSearchModule as any).default || FlexSearchModule;
 
 export interface SearchResult {
   id: string;
@@ -44,9 +47,11 @@ class SearchService {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const FS = (FlexSearch as any);
-    // FlexSearch 0.7.31 often exports 'Document' on the default object, or the default object IS the library.
-    // In Vite, FS might be the module namespace, or the default export itself.
-    const Document = FS.Document || FS.default?.Document || FS.default;
+    // FlexSearch 0.7.31 has inconsistent exports across bundlers - try all patterns
+    const Document = FS.Document ||
+                     FS.default?.Document ||
+                     FS.default ||
+                     (typeof FS === 'function' ? FS : null);
 
     if (!Document) {
       console.error("FlexSearch Document constructor not found. Keys:", Object.keys(FS));
@@ -112,8 +117,8 @@ class SearchService {
     }
 
     // Index Annotations (specifically for Canvases)
-    if (item.type === 'Canvas' && (item as IIIFCanvas).annotations) {
-      (item as IIIFCanvas).annotations?.forEach(page => {
+    if (isCanvas(item) && item.annotations) {
+      item.annotations.forEach(page => {
         page.items.forEach(anno => {
           let text = '';
           if (Array.isArray(anno.body)) {

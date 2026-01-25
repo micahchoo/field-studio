@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { IIIFItem, IIIFCollection, IIIFManifest } from '../types';
 import { Icon } from './Icon';
+import { getRelationshipType } from '../utils/iiifHierarchy';
 
 interface ManifestTreeProps {
   root: IIIFItem | null;
@@ -31,14 +32,17 @@ const flattenTree = (
 // Get icon based on IIIF type
 const getIcon = (type: string) => {
   switch (type) {
-    case 'Collection': return 'folder';
-    case 'Manifest': return 'menu_book';
-    case 'Canvas': return 'image';
+    case 'Collection': return 'library_books'; // Collections are curated lists
+    case 'Manifest': return 'menu_book';       // Manifests are atomic units (books)
+    case 'Canvas': return 'image';              // Canvases are owned by Manifests
     case 'Range': return 'segment';
     case 'AnnotationPage': return 'notes';
     default: return 'description';
   }
 };
+
+// Relationship type is now imported from utils/iiifHierarchy.ts
+// This centralizes IIIF 3.0 hierarchy logic across the application
 
 export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, onSelect }) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
@@ -292,13 +296,27 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
           {/* Positioned container for visible items */}
           <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
             {visibleItems.map((flatItem, index) => {
-              const { item, level } = flatItem;
+              const { item, level, parentId } = flatItem;
               const isSelected = item.id === selectedId;
               const isFocused = item.id === focusedId;
               const label = item.label?.['en']?.[0] || item.label?.['none']?.[0] || 'Untitled';
               const children = (item as any).items || [];
               const hasChildren = children.length > 0;
               const isExpanded = expandedIds.has(item.id);
+
+              // Get parent type to determine relationship using centralized IIIF hierarchy logic
+              const parentItem = parentId ? flatItems.find(f => f.id === parentId)?.item : null;
+              const relationshipType = getRelationshipType(parentItem?.type || null, item.type);
+              const isReference = relationshipType === 'reference'; // 'reference' indicates many-to-many (Collection→Manifest)
+
+              // Type-specific colors
+              const typeColors = {
+                Collection: { bg: 'bg-amber-500/20', text: 'text-amber-400', selectedBg: 'bg-amber-500' },
+                Manifest: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', selectedBg: 'bg-emerald-500' },
+                Canvas: { bg: 'bg-blue-500/20', text: 'text-blue-400', selectedBg: 'bg-blue-500' },
+                Range: { bg: 'bg-purple-500/20', text: 'text-purple-400', selectedBg: 'bg-purple-500' },
+              };
+              const colors = typeColors[item.type as keyof typeof typeColors] || { bg: 'bg-slate-500/20', text: 'text-slate-400', selectedBg: 'bg-slate-500' };
 
               return (
                 <div
@@ -318,7 +336,7 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
                   onFocus={() => setFocusedId(item.id)}
                   className={`flex items-center gap-2 cursor-pointer transition-colors outline-none select-none ${
                     isFocused ? 'ring-2 ring-iiif-blue/50 ring-inset' : ''
-                  } ${isSelected ? 'bg-iiif-blue text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+                  } ${isSelected ? `${colors.selectedBg} text-white` : 'text-slate-400 hover:bg-slate-800'}`}
                   style={{
                     height: ITEM_HEIGHT,
                     paddingLeft: level * 12 + 8,
@@ -338,8 +356,26 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
                   ) : (
                     <span className="w-5 flex-shrink-0" />
                   )}
-                  <Icon name={getIcon(item.type)} className="text-sm flex-shrink-0" />
+
+                  {/* Icon with reference indicator */}
+                  <div className="relative flex-shrink-0">
+                    <Icon name={getIcon(item.type)} className={`text-sm ${isSelected ? 'text-white' : colors.text}`} />
+                    {/* Show link badge for referenced items (Collections reference Manifests) */}
+                    {isReference && (
+                      <Icon name="link" className="absolute -bottom-0.5 -right-0.5 text-[8px] text-amber-400" />
+                    )}
+                  </div>
+
                   <span className="text-xs truncate font-medium">{label}</span>
+
+                  {/* Type indicator for Collections and Manifests */}
+                  {(item.type === 'Collection' || item.type === 'Manifest') && (
+                    <span className={`ml-auto text-[8px] font-bold uppercase px-1 py-0.5 rounded ${
+                      isSelected ? 'bg-white/20 text-white' : colors.bg + ' ' + colors.text
+                    }`}>
+                      {item.type === 'Collection' ? 'C' : 'M'}
+                    </span>
+                  )}
                 </div>
               );
             })}

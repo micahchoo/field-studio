@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ValidationIssue, IssueCategory } from '../services/validator';
 import { Icon } from './Icon';
-import { IIIFItem, getIIIFValue } from '../types';
+import { IIIFItem, getIIIFValue, isCanvas } from '../types';
+import { createLanguageMap } from '../utils';
 
 interface QCDashboardProps {
   issuesMap: Record<string, ValidationIssue[]>;
@@ -104,14 +105,17 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
       const traverseAndFix = (node: IIIFItem): boolean => {
           if (node.id === issue.itemId) {
               if (issue.message.includes('label')) {
-                  node.label = { none: [node.id.split('/').pop() || 'Fixed Resource'] };
+                  // Use centralized language map creation
+                  node.label = createLanguageMap(node.id.split('/').pop() || 'Fixed Resource', 'none');
                   solved = true;
               }
               if (issue.message.includes('summary')) {
-                  node.summary = { none: [`Summary for ${getIIIFValue(node.label) || 'resource'}`] };
+                  // Use centralized language map creation
+                  node.summary = createLanguageMap(`Summary for ${getIIIFValue(node.label) || 'resource'}`, 'none');
                   solved = true;
               }
               if (issue.message.includes('HTTP')) {
+                  // Generate valid HTTP URI for IIIF resources
                   node.id = `http://archive.local/iiif/resource/${crypto.randomUUID()}`;
                   solved = true;
               }
@@ -131,7 +135,16 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
               if (issue.message.includes('items')) {
                   if (!node.items) node.items = [];
                   if (node.type === 'Manifest' && node.items.length === 0) {
-                      node.items.push({ id: `${node.id}/canvas/1`, type: 'Canvas', label: { none: ['Page 1'] }, width: 2000, height: 2000, items: [] });
+                      // Create minimal Canvas with proper IIIF structure
+                      const canvasId = `${node.id}/canvas/1`;
+                      node.items.push({
+                          id: canvasId,
+                          type: 'Canvas' as const,
+                          label: createLanguageMap('Page 1', 'none'),
+                          width: 2000,
+                          height: 2000,
+                          items: []
+                      });
                   }
                   solved = true;
               }
@@ -141,7 +154,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
           for (const child of children) if (traverseAndFix(child)) return true;
           return false;
       };
-      
+
       traverseAndFix(newRoot);
       if (solved) onUpdate(newRoot);
   };

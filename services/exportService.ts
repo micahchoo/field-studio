@@ -2,6 +2,13 @@
 import JSZip from 'jszip';
 import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFAnnotation } from '../types';
 import { validator } from './validator';
+import {
+  generateInfoJson,
+  generateStandardSizes,
+  generateStandardTiles,
+  createImageServiceReference,
+  ImageApiProfile
+} from '../utils';
 
 export interface ExportOptions {
     includeAssets: boolean;
@@ -64,7 +71,7 @@ class ExportService {
 
                                 virtualFiles.push({
                                     path: infoJsonPath,
-                                    content: this.generateImageInfoJson(assetId, width, height),
+                                    content: this.generateImageInfoJsonForExport(assetId, width, height),
                                     type: 'info'
                                 });
 
@@ -84,12 +91,10 @@ class ExportService {
                             const painting = child.items?.[0]?.items?.[0] as unknown as IIIFAnnotation;
                             if (painting && painting.body && !Array.isArray(painting.body)) {
                                 (painting.body as any).id = `../../images/${assetId}/full/max/0/default.jpg`;
-                                (painting.body as any).service = [{
-                                    id: `../../images/${assetId}`,
-                                    type: "ImageService3",
-                                    protocol: "http://iiif.io/api/image",
-                                    profile: "level0"
-                                }];
+                                // Use centralized service reference creation
+                                (painting.body as any).service = [
+                                    createImageServiceReference(`../../images/${assetId}`, 'level0')
+                                ];
                             }
                         }
                     }
@@ -179,29 +184,20 @@ class ExportService {
 
     /**
      * Generates IIIF Image API Level 0 info.json
-     * Spec §8.1: Required properties for ImageService3
+     * Uses centralized Image API utilities for spec compliance
      */
-    private generateImageInfoJson(assetId: string, width: number, height: number): string {
-        const info = {
-            "@context": "http://iiif.io/api/image/3/context.json",
-            "id": `images/${assetId}`,
-            "type": "ImageService3",
-            "protocol": "http://iiif.io/api/image",
-            "profile": "level0",
-            "width": width,
-            "height": height,
-            "sizes": [
-                { "width": 150, "height": Math.floor((height / width) * 150) },
-                { "width": 600, "height": Math.floor((height / width) * 600) },
-                { "width": 1200, "height": Math.floor((height / width) * 1200) }
-            ],
-            "tiles": [
-                {
-                    "width": 512,
-                    "scaleFactors": [1, 2, 4, 8]
-                }
-            ]
-        };
+    private generateImageInfoJsonForExport(assetId: string, width: number, height: number): string {
+        // Use centralized info.json generation for Level 0 compliance
+        const info = generateInfoJson(
+            `images/${assetId}`,
+            width,
+            height,
+            'level0',
+            {
+                sizes: generateStandardSizes(width, height, [150, 600, 1200]),
+                tiles: generateStandardTiles(512, [1, 2, 4, 8])
+            }
+        );
         return JSON.stringify(info, null, 2);
     }
 

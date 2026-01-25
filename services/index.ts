@@ -23,6 +23,36 @@ export type { Action, ActionResult } from './actions';
 export { contentStateService } from './contentState';
 export type { ViewportState, SpecificResource, ContentStateTarget } from './contentState';
 
+// Vault - Normalized state management for IIIF resources
+export {
+  Vault,
+  getVault,
+  resetVault,
+  normalize,
+  denormalize,
+  createEmptyState,
+  getEntity,
+  getEntityType,
+  getParentId,
+  getChildIds,
+  getEntitiesByType,
+  getAncestors,
+  getDescendants,
+  updateEntity,
+  addEntity,
+  removeEntity,
+  moveEntity,
+  reorderChildren,
+  // Collection membership (IIIF 3.0 non-hierarchical model)
+  getCollectionsContaining,
+  getCollectionMembers,
+  isOrphanManifest,
+  getOrphanManifests,
+  addToCollection,
+  removeFromCollection
+} from './vault';
+export type { NormalizedState, EntityType, VaultSnapshot } from './vault';
+
 // ============================================================================
 // Builders & Transformers
 // ============================================================================
@@ -31,6 +61,23 @@ export { buildTree, ingestTree } from './iiifBuilder';
 export { specBridge } from './specBridge';
 
 export { autoStructureService } from './autoStructure';
+
+// Ingest Analyzer - Two-pass folder analysis
+export {
+  analyzeForIngest,
+  overrideNodeType,
+  applyAnalysisToTree,
+  getProposedManifests,
+  getProposedCollections
+} from './ingestAnalyzer';
+export type {
+  ProposedIIIFType,
+  DetectionReason,
+  IngestPreviewNode,
+  FolderStats,
+  IngestAnalysisResult,
+  IngestConfig
+} from './ingestAnalyzer';
 
 // ============================================================================
 // Import/Export

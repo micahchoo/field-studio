@@ -6,6 +6,22 @@ import { load } from 'js-yaml';
 import { extractMetadata } from './metadataHarvester';
 import { getTileWorkerPool, generateDerivativeAsync } from './tileWorker';
 import { fileIntegrity, HashLookupResult } from './fileIntegrity';
+import {
+  isValidChildType,
+  getRelationshipType,
+  isStandaloneType
+} from '../utils/iiifHierarchy';
+import {
+  getMimeType,
+  getContentTypeFromFilename,
+  isImageMime,
+  isTimeBasedMime,
+  suggestBehaviors,
+  validateResource,
+  DEFAULT_VIEWING_DIRECTION,
+  createImageServiceReference,
+  IMAGE_API_PROTOCOL
+} from '../utils';
 
 /**
  * Queue for background tile pre-generation
@@ -77,19 +93,48 @@ const generateDerivative = async (file: Blob, width: number): Promise<Blob | nul
 };
 
 const processNode = async (
-    node: FileTree, 
-    baseUrl: string, 
-    report: IngestReport, 
+    node: FileTree,
+    baseUrl: string,
+    report: IngestReport,
     onProgress?: (msg: string, percent: number) => void
 ): Promise<IIIFItem> => {
+    // Determine IIIF type using this priority:
+    // 1. Explicit iiifIntent from analyzer preview (user-confirmed)
+    // 2. Marker file detection (info.yml with type field)
+    // 3. Leaf detection: folders with only media files → Manifest
+    // 4. Has subdirectories → Collection
+    // 5. Root or underscore prefix → Collection
+    // 6. Default: Manifest if has media, Collection otherwise
+
     let type: 'Collection' | 'Manifest' = 'Manifest';
-    if (node.iiifIntent) {
-      type = node.iiifIntent as any;
+
+    if (node.iiifIntent && (node.iiifIntent === 'Collection' || node.iiifIntent === 'Manifest')) {
+      // User-confirmed type from ingest preview
+      type = node.iiifIntent;
     } else {
-      if (node.name === 'root' || node.name.startsWith('_') || (node.directories.size > 0 && node.files.size === 0)) {
-        type = 'Collection';
-      } else {
+      // Auto-detection fallback
+      const hasSubdirs = node.directories.size > 0;
+      const isExplicitCollection = node.name === 'root' || node.name.startsWith('_');
+
+      // Count media files
+      const mediaFiles = Array.from(node.files.keys()).filter(fn => {
+        const ext = fn.split('.').pop()?.toLowerCase() || '';
+        return !!MIME_TYPE_MAP[ext];
+      });
+      const isLeaf = !hasSubdirs && mediaFiles.length > 0;
+
+      if (isLeaf) {
+        // Leaf detection: folder with only media files → Manifest
         type = 'Manifest';
+      } else if (isExplicitCollection || hasSubdirs) {
+        // Has subdirs or explicit marker → Collection
+        type = 'Collection';
+      } else if (mediaFiles.length > 0) {
+        // Has media but no subdirs → Manifest
+        type = 'Manifest';
+      } else {
+        // Empty or no clear indicator → Collection (can be populated later)
+        type = 'Collection';
       }
     }
 
@@ -222,12 +267,10 @@ const processNode = async (
                     id: `${baseUrl}/image/${assetId}/full/max/0/default.jpg`,
                     type: iiifType as any,
                     format: MIME_TYPE_MAP[ext]?.format || 'image/jpeg',
-                    service: isImage ? [{
-                        id: `${baseUrl}/image/${assetId}`,
-                        type: "ImageService3",
-                        protocol: "http://iiif.io/api/image",
-                        profile: "level2"
-                    }] : undefined
+                    // Use centralized Image API service reference
+                    service: isImage ? [
+                        createImageServiceReference(`${baseUrl}/image/${assetId}`, 'level2')
+                    ] : undefined
                 }
             };
 
@@ -302,11 +345,38 @@ const processNode = async (
         };
         return manifest;
     } else {
+        // This is a Collection - process subdirectories
         const items: IIIFItem[] = [];
+
+        // If this Collection has files at its level, create a "loose files" Manifest for them
+        const mediaFiles = Array.from(node.files.keys()).filter(fn => {
+            const ext = fn.split('.').pop()?.toLowerCase() || '';
+            const mime = MIME_TYPE_MAP[ext];
+            return mime && mime.motivation === 'painting';
+        });
+
+        if (mediaFiles.length > 0) {
+            // Create a virtual node for loose files
+            const looseFilesNode: FileTree = {
+                name: `${cleanName} - Files`,
+                path: node.path,
+                files: new Map(Array.from(node.files.entries()).filter(([fn]) => {
+                    const ext = fn.split('.').pop()?.toLowerCase() || '';
+                    const mime = MIME_TYPE_MAP[ext];
+                    return mime && mime.motivation === 'painting';
+                })),
+                directories: new Map(),
+                iiifIntent: 'Manifest' // Force this to be a manifest
+            };
+            items.push(await processNode(looseFilesNode, baseUrl, report, onProgress));
+        }
+
+        // Process subdirectories
         for (const [name, dir] of node.directories.entries()) {
-            if (name.startsWith('+') || name.startsWith('!')) continue; 
+            if (name.startsWith('+') || name.startsWith('!')) continue;
             items.push(await processNode(dir, baseUrl, report, onProgress));
         }
+
         report.collectionsCreated++;
         const collection: IIIFCollection = {
             "@context": "http://iiif.io/api/presentation/3/context.json",
@@ -337,10 +407,29 @@ export const ingestTree = async (
     if (existingRoot && existingRoot.type === 'Collection') {
         const rootClone = JSON.parse(JSON.stringify(existingRoot)) as IIIFCollection;
         if (!rootClone.items) rootClone.items = [];
+
         if (newRoot.type === 'Collection' && tree.name === 'root') {
-            rootClone.items.push(...(newRoot as IIIFCollection).items);
+            // When importing a root collection, merge its items using IIIF hierarchy rules
+            const newItems = (newRoot as IIIFCollection).items || [];
+            for (const item of newItems) {
+                // Validate each item can be added to a Collection
+                if (isValidChildType('Collection', item.type)) {
+                    const relationship = getRelationshipType('Collection', item.type);
+                    console.log(`Adding ${item.type} to Collection with ${relationship} relationship`);
+                    rootClone.items.push(item);
+                } else {
+                    report.warnings.push(`Skipped ${item.type} - not valid child of Collection`);
+                }
+            }
         } else {
-            rootClone.items.push(newRoot);
+            // Validate the new root can be added to existing Collection
+            if (isValidChildType('Collection', newRoot.type)) {
+                const relationship = getRelationshipType('Collection', newRoot.type);
+                console.log(`Adding ${newRoot.type} to existing Collection with ${relationship} relationship`);
+                rootClone.items.push(newRoot);
+            } else {
+                report.warnings.push(`Cannot add ${newRoot.type} to existing Collection - invalid child type`);
+            }
         }
         await storage.saveProject(rootClone);
 

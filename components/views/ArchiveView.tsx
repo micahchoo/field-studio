@@ -9,6 +9,11 @@ import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { Viewer } from './Viewer';
+import {
+  isValidChildType,
+  getRelationshipType,
+  findCanvasParent
+} from '../../utils/iiifHierarchy';
 
 // Virtualization hook for efficient rendering of large lists
 const useVirtualization = (totalItems: number, itemHeight: number, containerRef: React.RefObject<HTMLDivElement | null>, overscan = 5) => {
@@ -240,29 +245,58 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       if (!root || !onUpdate || selectedIds.size === 0) return;
       const newRoot = JSON.parse(JSON.stringify(root)) as IIIFCollection;
       const canvasesToMove: any[] = [];
-      
+
+      // Validate that selected items are Canvases (the only valid child of Manifest)
       const removeCanvases = (parent: any) => {
           const list = parent.items || parent.annotations || [];
           for (let i = list.length - 1; i >= 0; i--) {
-              if (selectedIds.has(list[i].id)) {
-                  canvasesToMove.push(list.splice(i, 1)[0]);
-              } else if (list[i].items || list[i].annotations) {
-                  removeCanvases(list[i]);
+              const item = list[i];
+              if (selectedIds.has(item.id)) {
+                  // Only move Canvases - use IIIF hierarchy validation
+                  if (item.type === 'Canvas' && isValidChildType('Manifest', item.type)) {
+                      canvasesToMove.push(list.splice(i, 1)[0]);
+                  } else {
+                      console.warn(`Cannot move ${item.type} into Manifest - only Canvas is valid`);
+                  }
+              } else if (item.items || item.annotations) {
+                  removeCanvases(item);
               }
           }
       };
-      
+
       removeCanvases(newRoot);
+
+      if (canvasesToMove.length === 0) {
+          showToast("No Canvases selected - only Canvases can be grouped into a Manifest", "error");
+          return;
+      }
+
       const manifestId = `https://archive.local/iiif/manifest/${crypto.randomUUID()}`;
+
+      // Create new Manifest with proper IIIF 3.0 structure
+      // Manifest → Canvas is an OWNERSHIP relationship (exclusive)
+      const relationship = getRelationshipType('Manifest', 'Canvas');
+      console.log(`Creating Manifest with ${canvasesToMove.length} Canvases (${relationship} relationship)`);
+
       const newManifest: any = {
-          id: manifestId, type: 'Manifest', label: { none: ['Selection Bundle'] }, items: canvasesToMove
+          "@context": "http://iiif.io/api/presentation/3/context.json",
+          id: manifestId,
+          type: 'Manifest',
+          label: { none: ['Selection Bundle'] },
+          items: canvasesToMove,
+          behavior: ['individuals'] // Default behavior for new Manifests
       };
-      
+
+      // Validate that Manifest can be added to Collection (REFERENCE relationship)
       if (!newRoot.items) newRoot.items = [];
-      newRoot.items.push(newManifest);
-      onUpdate(newRoot);
-      setSelectedIds(new Set([manifestId]));
-      showToast("Group synthesized into Manifest", "success");
+      if (isValidChildType(newRoot.type, 'Manifest')) {
+          newRoot.items.push(newManifest);
+          onUpdate(newRoot);
+          setSelectedIds(new Set([manifestId]));
+          showToast(`Grouped ${canvasesToMove.length} Canvases into new Manifest`, "success");
+      } else {
+          showToast(`Cannot add Manifest to ${newRoot.type}`, "error");
+      }
   };
 
   const handleItemClick = (e: React.MouseEvent, asset: IIIFItem) => {

@@ -20,6 +20,15 @@
  */
 
 import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, LanguageMap } from '../types';
+import {
+  isValidViewingDirection,
+  isBehaviorValidForType,
+  isValidHttpUri,
+  createLanguageMap,
+  DEFAULT_VIEWING_DIRECTION,
+  isImageService3,
+  IMAGE_API_PROTOCOL
+} from '../utils';
 
 // ============================================================================
 // Version Detection
@@ -129,7 +138,7 @@ function upgradeCollection(v2: any): IIIFCollection {
   if (v2.license) v3.rights = v2.license;
   if (v2.logo) v3.provider = [{ id: '', type: 'Agent', label: { none: ['Provider'] }, logo: upgradeLogo(v2.logo) }];
   if (v2.navDate) v3.navDate = v2.navDate;
-  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint);
+  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint, 'Collection');
 
   // Upgrade child items (manifests and sub-collections)
   const items: IIIFItem[] = [];
@@ -191,8 +200,13 @@ function upgradeManifest(v2: any): IIIFManifest {
   if (v2.license) v3.rights = v2.license;
   if (v2.logo) v3.provider = [{ id: '', type: 'Agent', label: { none: ['Provider'] }, logo: upgradeLogo(v2.logo) }];
   if (v2.navDate) v3.navDate = v2.navDate;
-  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint);
-  if (v2.viewingDirection) v3.viewingDirection = v2.viewingDirection;
+  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint, 'Manifest');
+  if (v2.viewingDirection) {
+    // Validate viewingDirection against IIIF 3.0 spec
+    v3.viewingDirection = isValidViewingDirection(v2.viewingDirection)
+      ? v2.viewingDirection
+      : DEFAULT_VIEWING_DIRECTION;
+  }
 
   // v2 sequences → v3 items (Canvases)
   // In v2, manifest.sequences[0].canvases contains the canvases
@@ -205,7 +219,7 @@ function upgradeManifest(v2: any): IIIFManifest {
 
     // Copy sequence-level viewingHint/viewingDirection if not on manifest
     if (!v3.behavior && primarySequence.viewingHint) {
-      v3.behavior = upgradeViewingHint(primarySequence.viewingHint);
+      v3.behavior = upgradeViewingHint(primarySequence.viewingHint, 'Manifest');
     }
     if (!v3.viewingDirection && primarySequence.viewingDirection) {
       v3.viewingDirection = primarySequence.viewingDirection;
@@ -286,7 +300,7 @@ function upgradeCanvas(v2: any): IIIFCanvas {
   if (v2.thumbnail) v3.thumbnail = upgradeThumbnail(v2.thumbnail);
   if (v2.navDate) v3.navDate = v2.navDate;
   if (v2.duration) v3.duration = v2.duration;
-  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint);
+  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint, 'Canvas');
 
   // v2 images → v3 items (AnnotationPage with painting annotations)
   if (v2.images && v2.images.length > 0) {
@@ -359,7 +373,7 @@ function upgradeRange(v2: any): any {
 
   if (v2.description) v3.summary = upgradeLanguageValue(v2.description);
   if (v2.metadata) v3.metadata = upgradeMetadata(v2.metadata);
-  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint);
+  if (v2.viewingHint) v3.behavior = upgradeViewingHint(v2.viewingHint, 'Range');
 
   // v2 canvases → v3 items (Canvas references)
   if (v2.canvases) {
@@ -493,8 +507,9 @@ function upgradeLogo(v2Logo: any): any[] {
 
 /**
  * Upgrade v2 viewingHint to v3 behavior
+ * Uses centralized behavior validation from utils/iiifBehaviors
  */
-function upgradeViewingHint(v2Hint: any): string[] {
+function upgradeViewingHint(v2Hint: any, targetType: string = 'Manifest'): string[] {
   if (!v2Hint) return [];
 
   const hints = Array.isArray(v2Hint) ? v2Hint : [v2Hint];
@@ -512,7 +527,7 @@ function upgradeViewingHint(v2Hint: any): string[] {
 
   return hints
     .map(h => behaviorMap[h] || h)
-    .filter(Boolean);
+    .filter(b => b && isBehaviorValidForType(b, targetType));
 }
 
 /**
@@ -531,10 +546,16 @@ function upgradeService(v2Service: any): any {
 
   // Determine service type from profile/context
   let type = 'Service';
-  if (context?.includes('image') || profile?.includes('image')) {
-    type = 'ImageService2';
-    if (context?.includes('/3') || profile?.includes('level')) {
+  const isImageService = context?.includes('image') || profile?.includes('image') ||
+                         context?.includes(IMAGE_API_PROTOCOL) || profile?.includes('level');
+
+  if (isImageService) {
+    // Upgrade to ImageService3 if it looks like a v3 service or has level profile
+    if (context?.includes('/3') || profile?.includes('level0') ||
+        profile?.includes('level1') || profile?.includes('level2')) {
       type = 'ImageService3';
+    } else {
+      type = 'ImageService2';
     }
   } else if (context?.includes('search') || profile?.includes('search')) {
     type = 'SearchService2';
@@ -542,10 +563,23 @@ function upgradeService(v2Service: any): any {
     type = 'AuthCookieService1';
   }
 
+  // Normalize profile to standard level format for ImageService3
+  let normalizedProfile = typeof profile === 'string' ? profile : profile?.[0];
+  if (type === 'ImageService3' && normalizedProfile) {
+    // Ensure profile is in correct format (level0, level1, level2)
+    if (normalizedProfile.includes('level0') || normalizedProfile.includes('level1.json')) {
+      normalizedProfile = 'level0';
+    } else if (normalizedProfile.includes('level1') && !normalizedProfile.includes('level1.json')) {
+      normalizedProfile = 'level1';
+    } else if (normalizedProfile.includes('level2')) {
+      normalizedProfile = 'level2';
+    }
+  }
+
   return {
     id: v2Service['@id'] || v2Service.id,
     type,
-    profile: typeof profile === 'string' ? profile : profile?.[0],
+    profile: normalizedProfile,
     ...(v2Service.width && { width: v2Service.width }),
     ...(v2Service.height && { height: v2Service.height }),
     ...(v2Service.tiles && { tiles: v2Service.tiles }),

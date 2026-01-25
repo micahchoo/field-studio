@@ -91,9 +91,35 @@ export interface IIIFCanvas extends IIIFItem {
   items: IIIFAnnotationPage[];
 }
 
+/**
+ * IIIF Collection - A curated list of references to Manifests and other Collections
+ *
+ * IMPORTANT: In IIIF 3.0, Collections are "cheap overlays" - they reference
+ * resources by ID, not contain them. The same Manifest can appear in multiple
+ * Collections without duplication. Collections are organizational views, not
+ * ownership containers.
+ *
+ * @see https://iiif.io/api/presentation/3.0/#51-collection
+ */
 export interface IIIFCollection extends IIIFItem {
   type: "Collection";
+  /**
+   * Items can be full IIIFItems (when denormalized) or IIIFReference stubs.
+   * When normalized, these are just ID references.
+   */
   items: IIIFItem[];
+}
+
+/**
+ * A reference to a IIIF resource (used in Collections and Ranges)
+ * This is how Collections "point to" Manifests without embedding them.
+ */
+export interface IIIFReference {
+  id: string;
+  type: "Collection" | "Manifest" | "Canvas" | "Range";
+  label?: Record<string, string[]>;
+  /** When true, this is a stub reference, not a full resource */
+  _isReference?: boolean;
 }
 
 export interface IIIFManifest extends IIIFItem {

@@ -176,15 +176,43 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
     setState(prev => ({ ...prev, isBuffering: false }));
   };
 
+  // Error state
+  const [error, setError] = useState<string | null>(null);
+
+  // Handle media errors
+  const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement | HTMLAudioElement>) => {
+    const media = e.currentTarget;
+    const errorCode = media?.error?.code;
+    const errorMessages: Record<number, string> = {
+      1: 'Media loading aborted',
+      2: 'Network error while loading media',
+      3: 'Media decoding failed',
+      4: 'Media format not supported'
+    };
+    const message = errorMessages[errorCode || 0] || 'Unknown media error';
+    console.warn('[AVPlayer] Media error:', message, media?.error);
+    setError(message);
+    setState(prev => ({ ...prev, isPlaying: false, isBuffering: false }));
+  }, []);
+
   // Controls
-  const togglePlayPause = useCallback(() => {
+  const togglePlayPause = useCallback(async () => {
     const media = mediaRef.current;
     if (!media) return;
 
-    if (state.isPlaying) {
-      media.pause();
-    } else {
-      media.play();
+    try {
+      if (state.isPlaying) {
+        media.pause();
+      } else {
+        // play() returns a Promise that can reject
+        await media.play();
+      }
+      setError(null);
+    } catch (e) {
+      const err = e as Error;
+      console.warn('[AVPlayer] Play failed:', err.message);
+      setError('Unable to play media: ' + err.message);
+      setState(prev => ({ ...prev, isPlaying: false }));
     }
   }, [state.isPlaying]);
 
@@ -344,6 +372,23 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
           </div>
         )}
 
+        {/* Error Display */}
+        {error && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+            <div className="text-center text-white p-6">
+              <Icon name="error_outline" className="text-5xl text-red-400 mb-3" />
+              <p className="text-lg font-medium mb-2">Media Error</p>
+              <p className="text-sm text-slate-300 mb-4">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Media Element */}
         {mediaType === 'video' ? (
           <video
@@ -360,6 +405,7 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
             onEnded={handleEnded}
             onWaiting={handleWaiting}
             onCanPlay={handleCanPlay}
+            onError={handleError}
           />
         ) : (
           <div className="w-full aspect-video bg-slate-900 flex items-center justify-center">
@@ -375,6 +421,7 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
               onEnded={handleEnded}
               onWaiting={handleWaiting}
               onCanPlay={handleCanPlay}
+              onError={handleError}
             />
             <div className="text-white text-center">
               <Icon name="audiotrack" className="text-6xl opacity-50 mb-4" />

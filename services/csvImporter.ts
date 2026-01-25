@@ -1,4 +1,10 @@
-import { IIIFItem, IIIFCanvas, getIIIFValue } from '../types';
+import { IIIFItem, IIIFCanvas, getIIIFValue, isCanvas } from '../types';
+import {
+  isValidNavDate,
+  formatNavDate,
+  createLanguageMap,
+  isValidRightsUri
+} from '../utils';
 
 export interface CSVColumnMapping {
   csvColumn: string;
@@ -158,8 +164,8 @@ class CSVImporterService {
   }
 
   private collectCanvases(item: IIIFItem, map: Map<string, IIIFCanvas>) {
-    if (item.type === 'Canvas') {
-      const canvas = item as IIIFCanvas;
+    if (isCanvas(item)) {
+      const canvas = item;
       const label = canvas.label?.['none']?.[0] || canvas.label?.['en']?.[0] || '';
       map.set(label, canvas);
       map.set(label.toLowerCase(), canvas);
@@ -188,12 +194,23 @@ class CSVImporterService {
 
   private applyPropertyToCanvas(canvas: IIIFCanvas, property: string, value: string, language: string) {
     if (property === 'label') {
-      canvas.label = this.toLanguageMap(value, language);
+      canvas.label = createLanguageMap(value, language);
     } else if (property === 'summary') {
-      (canvas as any).summary = this.toLanguageMap(value, language);
+      (canvas as any).summary = createLanguageMap(value, language);
     } else if (property === 'navDate') {
-      canvas.navDate = this.parseDate(value);
+      // Parse the date value and format it as ISO 8601
+      const parsedDate = new Date(value);
+      if (!isNaN(parsedDate.getTime())) {
+        canvas.navDate = formatNavDate(parsedDate);
+      } else {
+        // If not parseable, store as-is (let validator catch it)
+        canvas.navDate = value;
+      }
     } else if (property === 'rights') {
+      // Validate rights URI if it looks like a URL
+      if (value.startsWith('http') && !isValidRightsUri(value)) {
+        console.warn(`Rights URI "${value}" is not a known Creative Commons or Rights Statements URI`);
+      }
       (canvas as any).rights = value;
     } else if (property.startsWith('metadata.')) {
       const metaKey = property.replace('metadata.', '');
@@ -204,44 +221,31 @@ class CSVImporterService {
       );
 
       if (existing) {
-        existing.value = this.toLanguageMap(value, language);
+        existing.value = createLanguageMap(value, language);
       } else {
         canvas.metadata.push({
-          label: { en: [this.capitalizeFirst(metaKey)] },
-          value: this.toLanguageMap(value, language)
+          label: createLanguageMap(this.capitalizeFirst(metaKey), 'en'),
+          value: createLanguageMap(value, language)
         });
       }
     } else if (property.startsWith('requiredStatement.')) {
       const part = property.replace('requiredStatement.', '');
       if (!(canvas as any).requiredStatement) {
-        (canvas as any).requiredStatement = { label: { en: ['Attribution'] }, value: { en: [''] } };
+        (canvas as any).requiredStatement = {
+          label: createLanguageMap('Attribution', 'en'),
+          value: createLanguageMap('', 'en')
+        };
       }
       if (part === 'label') {
-        (canvas as any).requiredStatement.label = this.toLanguageMap(value, language);
+        (canvas as any).requiredStatement.label = createLanguageMap(value, language);
       } else if (part === 'value') {
-        (canvas as any).requiredStatement.value = this.toLanguageMap(value, language);
+        (canvas as any).requiredStatement.value = createLanguageMap(value, language);
       }
     }
-  }
-
-  private toLanguageMap(value: string, language: string): Record<string, string[]> {
-    return { [language]: [value] };
   }
 
   private capitalizeFirst(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  private parseDate(value: string): string {
-    try {
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        return date.toISOString();
-      }
-    } catch (e) {
-      // Ignore invalid date
-    }
-    return value;
   }
 
   // ============================================================================

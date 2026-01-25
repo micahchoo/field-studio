@@ -33,6 +33,17 @@ import {
   LanguageMap
 } from '../types';
 import { provenanceService, PropertyChange } from './provenanceService';
+import {
+  isValidChildType,
+  getRelationshipType,
+  getValidChildTypes
+} from '../utils/iiifHierarchy';
+import {
+  validateBehaviors as centralizedValidateBehaviors,
+  findBehaviorConflicts,
+  isValidViewingDirection,
+  isValidNavDate
+} from '../utils';
 
 // ============================================================================
 // Action Types
@@ -91,37 +102,24 @@ function validateLanguageMap(label: LanguageMap | undefined, fieldName: string):
 }
 
 /**
- * Validate behavior values
+ * IIIF 3.0 Behavior Validation
+ *
+ * Uses centralized behavior validation from utils/iiifBehaviors.ts
+ * which implements the complete IIIF Presentation API 3.0 specification.
  */
 function validateBehavior(behavior: string[], entityType: string): string | null {
-  const validBehaviors: Record<string, string[]> = {
-    Collection: ['multi-part', 'together', 'auto-advance', 'no-auto-advance', 'repeat', 'no-repeat', 'unordered', 'individuals', 'continuous', 'paged'],
-    Manifest: ['auto-advance', 'no-auto-advance', 'repeat', 'no-repeat', 'unordered', 'individuals', 'continuous', 'paged'],
-    Canvas: ['auto-advance', 'no-auto-advance', 'facing-pages', 'non-paged'],
-    Range: ['auto-advance', 'no-auto-advance', 'repeat', 'no-repeat', 'unordered', 'individuals', 'continuous', 'paged', 'sequence', 'thumbnail-nav', 'no-nav', 'hidden']
-  };
+  // Use centralized behavior validation
+  const validationResult = centralizedValidateBehaviors(entityType, behavior);
 
-  const allowed = validBehaviors[entityType] || [];
-  const invalid = behavior.filter(b => !allowed.includes(b));
-
-  if (invalid.length > 0) {
-    return `Invalid behavior(s) for ${entityType}: ${invalid.join(', ')}`;
+  // Return first error if any
+  if (validationResult.errors.length > 0) {
+    return validationResult.errors[0];
   }
 
-  // Check for conflicts
-  const conflictPairs = [
-    ['auto-advance', 'no-auto-advance'],
-    ['repeat', 'no-repeat'],
-    ['individuals', 'continuous'],
-    ['individuals', 'paged'],
-    ['continuous', 'paged'],
-    ['multi-part', 'together']
-  ];
-
-  for (const [a, b] of conflictPairs) {
-    if (behavior.includes(a) && behavior.includes(b)) {
-      return `Conflicting behaviors: ${a} and ${b}`;
-    }
+  // Check for disjoint set conflicts using centralized utility
+  const conflicts = findBehaviorConflicts(behavior);
+  if (conflicts.length > 0) {
+    return conflicts[0];
   }
 
   return null;
@@ -231,12 +229,9 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
       }
 
       case 'UPDATE_NAV_DATE': {
-        // Validate ISO 8601 date if provided
-        if (action.navDate) {
-          const date = new Date(action.navDate);
-          if (isNaN(date.getTime())) {
-            return { success: false, state, error: 'navDate must be a valid ISO 8601 date' };
-          }
+        // Use centralized navDate validation
+        if (action.navDate && !isValidNavDate(action.navDate)) {
+          return { success: false, state, error: 'navDate must be a valid ISO 8601 date-time' };
         }
 
         const entity = getEntity(state, action.id);
@@ -276,12 +271,12 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
       }
 
       case 'UPDATE_VIEWING_DIRECTION': {
-        const validDirections = ['left-to-right', 'right-to-left', 'top-to-bottom', 'bottom-to-top'];
-        if (!validDirections.includes(action.viewingDirection)) {
+        // Use centralized viewingDirection validation
+        if (!isValidViewingDirection(action.viewingDirection)) {
           return {
             success: false,
             state,
-            error: `Invalid viewing direction: ${action.viewingDirection}`
+            error: `Invalid viewing direction: ${action.viewingDirection}. Must be: left-to-right, right-to-left, top-to-bottom, or bottom-to-top`
           };
         }
 
@@ -406,6 +401,30 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
       }
 
       case 'MOVE_ITEM': {
+        // Validate the move using centralized IIIF hierarchy rules
+        const itemToMove = getEntity(state, action.itemId);
+        const newParent = getEntity(state, action.newParentId);
+
+        if (!itemToMove) {
+          return { success: false, state, error: `Item not found: ${action.itemId}` };
+        }
+        if (!newParent) {
+          return { success: false, state, error: `Parent not found: ${action.newParentId}` };
+        }
+
+        // Check if move is valid according to IIIF spec
+        if (!isValidChildType(newParent.type, itemToMove.type)) {
+          const validChildren = getValidChildTypes(newParent.type);
+          return {
+            success: false,
+            state,
+            error: `Cannot move ${itemToMove.type} into ${newParent.type}. Valid children: ${validChildren.join(', ') || 'none'}`
+          };
+        }
+
+        // Determine relationship type for the move
+        const relationshipType = getRelationshipType(newParent.type, itemToMove.type);
+
         return {
           success: true,
           state: moveEntity(state, action.itemId, action.newParentId, action.index),
@@ -413,6 +432,10 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
             property: '_parentId',
             oldValue: state.reverseRefs[action.itemId],
             newValue: action.newParentId
+          }, {
+            property: '_relationshipType',
+            oldValue: null,
+            newValue: relationshipType
           }]
         };
       }

@@ -1,8 +1,9 @@
 
-import { IIIFItem } from '../types';
+import { IIIFItem, isManifest, isCollection } from '../types';
 import { virtualManifestFactory } from './virtualManifestFactory';
 import { specBridge } from './specBridge';
 import { authService, AuthService } from './authService';
+import { validateResource } from '../utils/iiifSchema';
 
 export interface RemoteResource {
   id: string;
@@ -118,19 +119,50 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
       return { data: manifest, isVirtual: true };
     }
 
-    const data = await response.json();
+    // Check if response is actually JSON (not HTML error page)
+    if (contentType.includes('text/html')) {
+      throw new Error(`Expected JSON but received HTML. The URL may not point to a valid IIIF resource: ${targetUrl}`);
+    }
+
+    // Parse JSON with better error handling
+    let data: any;
+    try {
+      const text = await response.text();
+      if (!text || text.trim().length === 0) {
+        throw new Error('Empty response received');
+      }
+      // Check if it looks like HTML (common error)
+      if (text.trim().startsWith('<') || text.trim().startsWith('<!DOCTYPE')) {
+        throw new Error(`Received HTML instead of JSON. The URL may not point to a valid IIIF resource.`);
+      }
+      data = JSON.parse(text);
+    } catch (parseError: any) {
+      if (parseError.message.includes('HTML')) {
+        throw parseError;
+      }
+      throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+    }
 
     // Use specBridge for v2/v3 compatibility
     const upgraded = specBridge.importManifest(data);
 
-    // Basic IIIF validation/normalization
-    if (!upgraded.type || (upgraded.type !== 'Manifest' && upgraded.type !== 'Collection')) {
-       // Try to infer or fallback to Manifest if it looks like one (has sequences or items)
+    // Type inference if missing
+    if (!upgraded.type) {
+       // Try to infer from structure
        if ((upgraded as any).sequences || upgraded.items) {
-           if (!upgraded.type) upgraded.type = 'Manifest';
-       } else {
-           throw new Error("Resource does not appear to be a valid IIIF Manifest or Collection");
+           upgraded.type = 'Manifest';
        }
+    }
+
+    // Validate against IIIF 3.0 schema using centralized validation
+    if (!isManifest(upgraded as IIIFItem) && !isCollection(upgraded as IIIFItem)) {
+       throw new Error("Resource does not appear to be a valid IIIF Manifest or Collection");
+    }
+
+    // Run schema validation (log warnings, don't fail on warnings)
+    const validationErrors = validateResource(upgraded as IIIFItem);
+    if (validationErrors.length > 0) {
+       console.warn('[RemoteLoader] IIIF validation issues:', validationErrors);
     }
 
     return { data: upgraded as IIIFItem, isVirtual: false };
