@@ -396,7 +396,9 @@ export const ingestTree = async (
     // Use the captures baseUrl from the tree if provided, else fallback to current origin.
     let baseUrl = tree.iiifBaseUrl;
     if (!baseUrl) {
-      baseUrl = `${window.location.origin}/iiif`;
+      // Respect the site base path (e.g. /field-studio/)
+      const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+      baseUrl = `${window.location.origin}${basePath}/iiif`;
     } else {
       // Clean up potential trailing slash to keep path construction predictable
       baseUrl = baseUrl.replace(/\/$/, '');
