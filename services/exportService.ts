@@ -49,11 +49,24 @@ export interface CanopyConfig {
     featured: string[];  // Array of manifest IDs for homepage featured section
 }
 
+export interface ImageApiOptions {
+    /** Generate grayscale versions of images */
+    includeGrayscale?: boolean;
+    /** Generate WebP format in addition to JPEG */
+    includeWebP?: boolean;
+    /** Generate square crop for thumbnails */
+    includeSquare?: boolean;
+    /** Tile size in pixels (default: 512) */
+    tileSize?: number;
+}
+
 export interface ExportOptions {
     includeAssets: boolean;
     format: 'static-site' | 'raw-iiif' | 'canopy';
     ignoreErrors?: boolean;
     canopyConfig?: CanopyConfig;
+    /** Additional IIIF Image API options */
+    imageApiOptions?: ImageApiOptions;
 }
 
 export interface ExportProgress {
@@ -68,15 +81,177 @@ export interface VirtualFile {
 }
 
 class ExportService {
-    
+
+    /**
+     * Resizes an image using Canvas API
+     * Returns a Blob of the resized image in the specified format
+     */
+    private async resizeImage(
+        file: File | Blob,
+        targetWidth: number,
+        targetHeight: number,
+        format: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg',
+        quality: number = 0.85
+    ): Promise<Blob> {
+        const bitmap = await createImageBitmap(file);
+        const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Could not get canvas context');
+        }
+        ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+        bitmap.close();
+        return await canvas.convertToBlob({ type: format, quality });
+    }
+
+    /**
+     * Converts an image to grayscale
+     * IIIF Image API 3.0 §4.4: gray quality
+     */
+    private async convertToGrayscale(file: File | Blob, width: number, height: number): Promise<Blob> {
+        const bitmap = await createImageBitmap(file);
+        const canvas = new OffscreenCanvas(width, height);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Could not get canvas context');
+        }
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close();
+
+        // Apply grayscale filter using ImageData
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            // Standard luminance formula: 0.299*R + 0.587*G + 0.114*B
+            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            data[i] = gray;     // R
+            data[i + 1] = gray; // G
+            data[i + 2] = gray; // B
+            // Alpha (data[i + 3]) remains unchanged
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        return await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
+    }
+
+    /**
+     * Extracts a square crop from the center of an image
+     * IIIF Image API 3.0 §4.1: square region
+     */
+    private async extractSquareRegion(file: File | Blob, width: number, height: number): Promise<Blob> {
+        const bitmap = await createImageBitmap(file);
+        const squareSize = Math.min(width, height);
+
+        // Center the square crop
+        const offsetX = Math.floor((width - squareSize) / 2);
+        const offsetY = Math.floor((height - squareSize) / 2);
+
+        const canvas = new OffscreenCanvas(squareSize, squareSize);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Could not get canvas context');
+        }
+        ctx.drawImage(bitmap, offsetX, offsetY, squareSize, squareSize, 0, 0, squareSize, squareSize);
+        bitmap.close();
+
+        return await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
+    }
+
+    /**
+     * Generates a single tile from an image
+     * region: {x, y, w, h} in original image coordinates
+     * size: {w, h} output tile dimensions
+     */
+    private async generateTile(
+        file: File | Blob,
+        region: { x: number; y: number; w: number; h: number },
+        size: { w: number; h: number }
+    ): Promise<Blob> {
+        const bitmap = await createImageBitmap(file, region.x, region.y, region.w, region.h);
+        const canvas = new OffscreenCanvas(size.w, size.h);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Could not get canvas context');
+        }
+        ctx.drawImage(bitmap, 0, 0, size.w, size.h);
+        bitmap.close();
+        return await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
+    }
+
+    /**
+     * Generates a complete tile pyramid for deep zoom viewing
+     * Returns an array of {path, blob} for each tile
+     */
+    private async generateTilePyramid(
+        file: File | Blob,
+        width: number,
+        height: number,
+        assetId: string,
+        basePath: string,
+        tileSize: number = 512
+    ): Promise<{ path: string; blob: Blob }[]> {
+        const tiles: { path: string; blob: Blob }[] = [];
+
+        // Calculate scale factors needed
+        // Start from full resolution and halve until we reach a size <= tileSize
+        const scaleFactors: number[] = [];
+        let maxDim = Math.max(width, height);
+        let scaleFactor = 1;
+        while (maxDim / scaleFactor > tileSize) {
+            scaleFactors.push(scaleFactor);
+            scaleFactor *= 2;
+        }
+        scaleFactors.push(scaleFactor); // Add final scale factor
+
+        for (const sf of scaleFactors) {
+            const scaledWidth = Math.ceil(width / sf);
+            const scaledHeight = Math.ceil(height / sf);
+
+            // Calculate number of tiles at this scale
+            const tilesX = Math.ceil(scaledWidth / tileSize);
+            const tilesY = Math.ceil(scaledHeight / tileSize);
+
+            for (let y = 0; y < tilesY; y++) {
+                for (let x = 0; x < tilesX; x++) {
+                    // Calculate region in original image coordinates
+                    const regionX = x * tileSize * sf;
+                    const regionY = y * tileSize * sf;
+                    const regionW = Math.min(tileSize * sf, width - regionX);
+                    const regionH = Math.min(tileSize * sf, height - regionY);
+
+                    // Calculate output tile size
+                    const outW = Math.ceil(regionW / sf);
+                    const outH = Math.ceil(regionH / sf);
+
+                    // Generate tile
+                    const tileBlob = await this.generateTile(
+                        file,
+                        { x: regionX, y: regionY, w: regionW, h: regionH },
+                        { w: outW, h: outH }
+                    );
+
+                    // IIIF Image API path format: {region}/{size}/{rotation}/{quality}.{format}
+                    // Region: x,y,w,h
+                    // Size: w,h or w, or ,h or max or ^w,h etc.
+                    const regionStr = `${regionX},${regionY},${regionW},${regionH}`;
+                    const sizeStr = `${outW},${outH}`;
+                    const tilePath = `${basePath}/${assetId}/${regionStr}/${sizeStr}/0/default.jpg`;
+
+                    tiles.push({ path: tilePath, blob: tileBlob });
+                }
+            }
+        }
+
+        return tiles;
+    }
+
     /**
      * Synthesizes the final archive structure without compressing it.
      * Used for Dry Runs.
      */
     async prepareExport(root: IIIFItem, options: ExportOptions): Promise<VirtualFile[]> {
         const virtualFiles: VirtualFile[] = [];
-        const processedRoot = JSON.parse(JSON.stringify(root)); 
-        
+
         // Canopy requires specific directory naming (plural) and assets/iiif/ path
         const getDirName = (type: string) => {
             if (options.format === 'canopy') {
@@ -87,36 +262,123 @@ class ExportService {
 
         // Base path for IIIF files: assets/iiif/ for Canopy, iiif/ for others
         const iiifBasePath = options.format === 'canopy' ? 'assets/iiif' : 'iiif';
+        // For Canopy, use localhost:8765 as base URL for local dev server
+        // This matches the serve:iiif script in package.json
+        const baseUrl = options.format === 'canopy'
+            ? (options.canopyConfig?.baseUrl || 'http://localhost:8765')
+            : '';
+
+        // For Canopy: Build a map of all items with their new IDs
+        const idMap = new Map<string, string>(); // oldId -> newId
+
+        if (options.format === 'canopy') {
+            // First pass: build ID mapping for all collections and manifests
+            const buildIdMap = (item: IIIFItem) => {
+                const idVal = item.id.split('/').pop() || 'unknown';
+                const typeDir = getDirName(item.type);
+                const newId = `${baseUrl}/iiif/${typeDir}/${idVal}.json`;
+                idMap.set(item.id, newId);
+
+                if (item.items) {
+                    item.items.forEach(child => {
+                        if (child.type === 'Collection' || child.type === 'Manifest') {
+                            buildIdMap(child as IIIFItem);
+                        }
+                    });
+                }
+            };
+            buildIdMap(root);
+        }
+
+        // Helper to rewrite all IDs in a JSON structure
+        const rewriteIds = (obj: any, manifestIdVal: string): any => {
+            if (obj === null || obj === undefined) return obj;
+            if (typeof obj !== 'object') return obj;
+
+            if (Array.isArray(obj)) {
+                return obj.map(item => rewriteIds(item, manifestIdVal));
+            }
+
+            const result: any = {};
+            for (const [key, value] of Object.entries(obj)) {
+                if (key === 'id' && typeof value === 'string') {
+                    // Check if this ID is in our map
+                    if (idMap.has(value)) {
+                        result[key] = idMap.get(value);
+                    } else if (value.includes('/canvas/') || value.includes('/annotation') || value.includes('/page/')) {
+                        // Rewrite canvas and annotation IDs to use new manifest base
+                        const path = value.split('/').slice(-3).join('/'); // Get last parts like canvas/1/annotation/painting
+                        result[key] = `${baseUrl}/iiif/manifests/${manifestIdVal}.json/${path}`;
+                    } else {
+                        result[key] = value;
+                    }
+                } else if (key === 'target' && typeof value === 'string') {
+                    // Rewrite annotation targets
+                    if (value.includes('/canvas/')) {
+                        const path = value.split('/').slice(-2).join('/');
+                        result[key] = `${baseUrl}/iiif/manifests/${manifestIdVal}.json/${path}`;
+                    } else {
+                        result[key] = value;
+                    }
+                } else {
+                    result[key] = rewriteIds(value, manifestIdVal);
+                }
+            }
+            return result;
+        };
+
+        // Collect image processing tasks for async generation
+        const imageProcessingTasks: Array<{
+            file: File;
+            assetId: string;
+            imagesBasePath: string;
+            imgWidth: number;
+            imgHeight: number;
+        }> = [];
 
         const processItem = (item: IIIFItem, originalItem: IIIFItem) => {
             const originalId = item.id;
             let idVal = originalId.split('/').pop() || 'unknown';
             let typeDir = getDirName(item.type);
 
-            // Rewrite self ID for Canopy to match the served path
+            // Deep clone the item for processing
+            let processedItem = JSON.parse(JSON.stringify(item));
+
+            // Rewrite self ID
             if (options.format === 'canopy') {
-                const baseUrl = options.canopyConfig?.baseUrl || '';
-                // Ensure ID starts with / if no baseUrl, or matches baseUrl
-                item.id = `${baseUrl}/iiif/${typeDir}/${idVal}.json`;
+                processedItem.id = idMap.get(originalId) || `${baseUrl}/iiif/${typeDir}/${idVal}.json`;
             }
-            
-            if (item.items) {
-                item.items.forEach((child, idx) => {
+
+            if (processedItem.items) {
+                processedItem.items = processedItem.items.map((child: any, idx: number) => {
                     if (child.type === 'Collection' || child.type === 'Manifest') {
-                        const childIdVal = child.id.split('/').pop();
-                        const childType = getDirName(child.type);
-                        
+                        // For Collections: replace embedded content with reference only
                         if (options.format === 'canopy') {
-                            const baseUrl = options.canopyConfig?.baseUrl || '';
-                            child.id = `${baseUrl}/iiif/${childType}/${childIdVal}.json`;
+                            const childNewId = idMap.get(child.id);
+                            return {
+                                id: childNewId || child.id,
+                                type: child.type,
+                                label: child.label
+                            };
                         } else {
-                            child.id = `../${childType}/${childIdVal}.json`;
+                            const childIdVal = child.id.split('/').pop();
+                            const childType = getDirName(child.type);
+                            return {
+                                id: `../${childType}/${childIdVal}.json`,
+                                type: child.type,
+                                label: child.label
+                            };
                         }
                     } else if (child.type === 'Canvas') {
+                        // Process canvas content and assets
                         const origCanvas = (originalItem as any).items?.[idx] as IIIFCanvas;
+                        let processedCanvas = options.format === 'canopy'
+                            ? rewriteIds(child, idVal)
+                            : JSON.parse(JSON.stringify(child));
+
                         if (origCanvas && origCanvas._fileRef && origCanvas._fileRef.name && options.includeAssets) {
                             const filename = origCanvas._fileRef.name;
-                            const baseFileName = filename.replace(/\.[^/.]+$/, ''); // Remove extension
+                            const baseFileName = filename.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '_');
                             const assetId = `${idVal}-${baseFileName}`;
                             const assetPath = `assets/${filename}`;
 
@@ -127,69 +389,232 @@ class ExportService {
                                 type: 'asset'
                             });
 
-                            // Generate IIIF Image API Level 0 info.json
+                            // Generate IIIF Image API info.json and derivatives
                             if (origCanvas._fileRef.type.startsWith('image/')) {
                                 const imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
-                                const infoJsonPath = `${imagesBasePath}/${assetId}/info.json`;
-                                const width = origCanvas.width || 2000;
-                                const height = origCanvas.height || 2000;
+                                const imgWidth = origCanvas.width || 2000;
+                                const imgHeight = origCanvas.height || 2000;
 
-                                virtualFiles.push({
-                                    path: infoJsonPath,
-                                    content: this.generateImageInfoJsonForExport(assetId, width, height, options.format === 'canopy'),
-                                    type: 'info'
+                                // Queue for async derivative generation
+                                imageProcessingTasks.push({
+                                    file: origCanvas._fileRef,
+                                    assetId,
+                                    imagesBasePath,
+                                    imgWidth,
+                                    imgHeight
                                 });
 
-                                // Add pre-generated size derivatives (Level 0 requirement)
-                                // Uses DEFAULT_DERIVATIVE_SIZES from presets
-                                const sizes = DEFAULT_DERIVATIVE_SIZES;
-                                for (const size of sizes) {
-                                    const sizeHeight = Math.floor((height / width) * size);
-                                    virtualFiles.push({
-                                        path: `${imagesBasePath}/${assetId}/full/${size},/0/default.jpg`,
-                                        content: origCanvas._fileRef, // TODO: Generate actual derivatives
-                                        type: 'asset'
-                                    });
-                                }
+                                // Generate info.json with tile support for deep zoom
+                                // Passes IIIF Image API options for extra qualities/formats
+                                virtualFiles.push({
+                                    path: `${imagesBasePath}/${assetId}/info.json`,
+                                    content: this.generateImageInfoJsonForExport(
+                                        assetId,
+                                        imgWidth,
+                                        imgHeight,
+                                        options.format === 'canopy',
+                                        true, // includeTiles
+                                        options.imageApiOptions
+                                    ),
+                                    type: 'info'
+                                });
                             }
 
-                            // Update painting annotation body to use Level 0 Image API
-                            const painting = child.items?.[0]?.items?.[0] as unknown as IIIFAnnotation;
+                            // Update painting annotation body with ImageService for deep zoom
+                            const painting = processedCanvas.items?.[0]?.items?.[0];
                             if (painting && painting.body && !Array.isArray(painting.body)) {
+                                const imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
+                                const imgWidth = origCanvas.width || 2000;
+                                const imgHeight = origCanvas.height || 2000;
+
                                 if (options.format === 'canopy') {
-                                    const baseUrl = options.canopyConfig?.baseUrl || '';
-                                    (painting.body as any).id = `${baseUrl}/iiif/images/${assetId}/full/max/0/default.jpg`;
-                                    (painting.body as any).service = [
+                                    // Use ImageService for deep zoom support
+                                    painting.body.id = `${baseUrl}/iiif/images/${assetId}/full/max/0/default.jpg`;
+                                    painting.body.width = imgWidth;
+                                    painting.body.height = imgHeight;
+                                    painting.body.service = [
                                         createImageServiceReference(`${baseUrl}/iiif/images/${assetId}`, 'level0')
                                     ];
                                 } else {
-                                    (painting.body as any).id = `../../images/${assetId}/full/max/0/default.jpg`;
-                                    (painting.body as any).service = [
+                                    painting.body.id = `../../images/${assetId}/full/max/0/default.jpg`;
+                                    painting.body.width = imgWidth;
+                                    painting.body.height = imgHeight;
+                                    painting.body.service = [
                                         createImageServiceReference(`../../images/${assetId}`, 'level0')
                                     ];
                                 }
                             }
+
+                            // Update canvas dimensions if not set properly
+                            if (!processedCanvas.width || processedCanvas.width === 2000) {
+                                processedCanvas.width = origCanvas.width || 2000;
+                                processedCanvas.height = origCanvas.height || 2000;
+                            }
+
+                            // Update thumbnail references
+                            if (processedCanvas.thumbnail && Array.isArray(processedCanvas.thumbnail)) {
+                                const thumbWidth = 150;
+                                const aspectRatio = (origCanvas?.height || 2000) / (origCanvas?.width || 2000);
+                                const thumbHeight = Math.floor(thumbWidth * aspectRatio);
+                                processedCanvas.thumbnail = processedCanvas.thumbnail.map((thumb: any) => ({
+                                    ...thumb,
+                                    id: options.format === 'canopy'
+                                        ? `${baseUrl}/iiif/images/${assetId}/full/${thumbWidth},${thumbHeight}/0/default.jpg`
+                                        : `../../images/${assetId}/full/${thumbWidth},${thumbHeight}/0/default.jpg`,
+                                    width: thumbWidth,
+                                    height: thumbHeight
+                                }));
+                            }
                         }
+
+                        // Remove internal _fileRef from output
+                        delete processedCanvas._fileRef;
+                        return processedCanvas;
                     }
+                    return child;
                 });
             }
 
+            // Remove internal properties
+            delete processedItem._fileRef;
+
             virtualFiles.push({
                 path: `${iiifBasePath}/${typeDir}/${idVal}.json`,
-                content: JSON.stringify(item, null, 2),
+                content: JSON.stringify(processedItem, null, 2),
                 type: 'json'
             });
-            
+
+            // Recursively process child Collections and Manifests
             if (originalItem.items) {
-                originalItem.items.forEach((origChild, idx) => {
+                originalItem.items.forEach((origChild) => {
                     if (origChild.type === 'Collection' || origChild.type === 'Manifest') {
-                         processItem(item.items![idx], origChild);
+                        processItem(origChild as IIIFItem, origChild as IIIFItem);
                     }
                 });
             }
         };
 
-        processItem(processedRoot, root);
+        processItem(root, root);
+
+        // Process all image derivatives asynchronously
+        // Implements IIIF Image API 3.0 §4 Image Requests
+        const imageApiOpts = options.imageApiOptions || {};
+        const tileSize = imageApiOpts.tileSize || 512;
+
+        for (const task of imageProcessingTasks) {
+            const { file, assetId, imagesBasePath, imgWidth, imgHeight } = task;
+            const aspectRatio = imgHeight / imgWidth;
+
+            // === FULL REGION DERIVATIVES ===
+
+            // Add full/max/0/default.jpg (original size) - §4.2 Size: max
+            virtualFiles.push({
+                path: `${imagesBasePath}/${assetId}/full/max/0/default.jpg`,
+                content: file,
+                type: 'asset'
+            });
+
+            // Generate actual resized derivatives - §4.2 Size: w,h
+            for (const targetWidth of DEFAULT_DERIVATIVE_SIZES) {
+                if (targetWidth < imgWidth) {
+                    const targetHeight = Math.floor(targetWidth * aspectRatio);
+                    try {
+                        const resizedBlob = await this.resizeImage(file, targetWidth, targetHeight);
+                        virtualFiles.push({
+                            path: `${imagesBasePath}/${assetId}/full/${targetWidth},${targetHeight}/0/default.jpg`,
+                            content: resizedBlob,
+                            type: 'asset'
+                        });
+
+                        // Generate WebP version if enabled - §4.5 Format: webp
+                        if (imageApiOpts.includeWebP) {
+                            const webpBlob = await this.resizeImage(file, targetWidth, targetHeight, 'image/webp', 0.85);
+                            virtualFiles.push({
+                                path: `${imagesBasePath}/${assetId}/full/${targetWidth},${targetHeight}/0/default.webp`,
+                                content: webpBlob,
+                                type: 'asset'
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to resize ${assetId} to ${targetWidth}x${targetHeight}`, e);
+                        virtualFiles.push({
+                            path: `${imagesBasePath}/${assetId}/full/${targetWidth},${targetHeight}/0/default.jpg`,
+                            content: file,
+                            type: 'asset'
+                        });
+                    }
+                }
+            }
+
+            // === GRAYSCALE QUALITY - §4.4 Quality: gray ===
+            if (imageApiOpts.includeGrayscale) {
+                try {
+                    // Generate grayscale at full size
+                    const grayBlob = await this.convertToGrayscale(file, imgWidth, imgHeight);
+                    virtualFiles.push({
+                        path: `${imagesBasePath}/${assetId}/full/max/0/gray.jpg`,
+                        content: grayBlob,
+                        type: 'asset'
+                    });
+
+                    // Generate grayscale at smaller sizes
+                    for (const targetWidth of DEFAULT_DERIVATIVE_SIZES) {
+                        if (targetWidth < imgWidth) {
+                            const targetHeight = Math.floor(targetWidth * aspectRatio);
+                            const resizedGray = await this.convertToGrayscale(file, targetWidth, targetHeight);
+                            virtualFiles.push({
+                                path: `${imagesBasePath}/${assetId}/full/${targetWidth},${targetHeight}/0/gray.jpg`,
+                                content: resizedGray,
+                                type: 'asset'
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Failed to generate grayscale for ${assetId}`, e);
+                }
+            }
+
+            // === SQUARE REGION - §4.1 Region: square ===
+            if (imageApiOpts.includeSquare) {
+                try {
+                    const squareSize = Math.min(imgWidth, imgHeight);
+                    const squareBlob = await this.extractSquareRegion(file, imgWidth, imgHeight);
+                    virtualFiles.push({
+                        path: `${imagesBasePath}/${assetId}/square/max/0/default.jpg`,
+                        content: squareBlob,
+                        type: 'asset'
+                    });
+
+                    // Generate smaller square thumbnails (common use case)
+                    for (const targetSize of [150, 300, 600]) {
+                        if (targetSize < squareSize) {
+                            const smallSquare = await this.resizeImage(squareBlob, targetSize, targetSize);
+                            virtualFiles.push({
+                                path: `${imagesBasePath}/${assetId}/square/${targetSize},${targetSize}/0/default.jpg`,
+                                content: smallSquare,
+                                type: 'asset'
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Failed to generate square region for ${assetId}`, e);
+                }
+            }
+
+            // === TILES FOR DEEP ZOOM - §5.4 Tiles ===
+            try {
+                const tiles = await this.generateTilePyramid(file, imgWidth, imgHeight, assetId, imagesBasePath, tileSize);
+                for (const tile of tiles) {
+                    virtualFiles.push({
+                        path: tile.path,
+                        content: tile.blob,
+                        type: 'asset'
+                    });
+                }
+            } catch (e) {
+                console.warn(`Failed to generate tiles for ${assetId}`, e);
+            }
+        }
 
         if (options.format === 'static-site') {
             // Bundle Universal Viewer assets for offline use
@@ -206,19 +631,77 @@ class ExportService {
                 type: 'html'
             });
         } else if (options.format === 'canopy' && options.canopyConfig) {
+            // Generate canopy.yml configuration
             virtualFiles.push({
                 path: 'canopy.yml',
                 content: this.generateCanopyConfig(root, options.canopyConfig),
-                type: 'info' // Using 'info' type for YAML config
+                type: 'info'
             });
+
+            // Generate README with instructions
             virtualFiles.push({
                 path: 'README.md',
                 content: this.generateCanopyReadme(options.canopyConfig),
                 type: 'info'
             });
+
+            // Bundle all template files (package.json, components, layouts, workflows)
+            const templateFiles = this.generateCanopyTemplateFiles(options.canopyConfig);
+            virtualFiles.push(...templateFiles);
+
+            // Generate content files (index.mdx, about/index.mdx)
+            const contentFiles = this.generateContentFiles(root, options.canopyConfig);
+            virtualFiles.push(...contentFiles);
+
+            // Generate facet collections for metadata filtering
+            if (options.canopyConfig.metadata.length > 0) {
+                const facetFiles = this.generateFacetCollections(root, options.canopyConfig);
+                virtualFiles.push(...facetFiles);
+            }
         }
 
         return virtualFiles;
+    }
+
+    /**
+     * Bundles all Canopy template files for a complete, ready-to-run site
+     */
+    private generateCanopyTemplateFiles(config: CanopyConfig): VirtualFile[] {
+        const files: VirtualFile[] = [];
+
+        // Root config files
+        files.push({ path: 'package.json', content: CANOPY_PACKAGE_JSON, type: 'info' });
+        files.push({ path: '.gitignore', content: CANOPY_GITIGNORE, type: 'info' });
+        files.push({ path: 'LICENSE', content: CANOPY_LICENSE, type: 'info' });
+
+        // App scripts and styles
+        files.push({ path: 'app/scripts/canopy-build.mts', content: CANOPY_BUILD_SCRIPT, type: 'info' });
+        files.push({ path: 'app/styles/index.css', content: CANOPY_STYLES_INDEX, type: 'info' });
+        files.push({ path: 'app/styles/custom.css', content: CANOPY_STYLES_CUSTOM, type: 'info' });
+
+        // App components
+        files.push({ path: 'app/components/mdx.tsx', content: CANOPY_MDX_COMPONENTS, type: 'info' });
+        files.push({ path: 'app/components/Example.tsx', content: CANOPY_EXAMPLE_COMPONENT, type: 'info' });
+        files.push({ path: 'app/components/Example.client.tsx', content: CANOPY_EXAMPLE_CLIENT, type: 'info' });
+
+        // Content layouts (customized _app.mdx with title)
+        files.push({ path: 'content/_app.mdx', content: generateCanopyAppMdx(config.title), type: 'info' });
+        files.push({ path: 'content/_layout.mdx', content: CANOPY_CONTENT_LAYOUT, type: 'info' });
+        files.push({ path: 'content/about/_layout.mdx', content: CANOPY_CONTENT_ABOUT_LAYOUT, type: 'info' });
+        files.push({ path: 'content/works/_layout.mdx', content: CANOPY_CONTENT_WORKS_LAYOUT, type: 'info' });
+        files.push({ path: 'content/search/_layout.mdx', content: CANOPY_CONTENT_SEARCH_LAYOUT, type: 'info' });
+        files.push({ path: 'content/search/_result-article.mdx', content: CANOPY_SEARCH_RESULT_ARTICLE, type: 'info' });
+        files.push({ path: 'content/search/_result-figure.mdx', content: CANOPY_SEARCH_RESULT_FIGURE, type: 'info' });
+
+        // Static assets
+        files.push({ path: 'assets/robots.txt', content: CANOPY_ROBOTS_TXT, type: 'info' });
+        files.push({ path: 'assets/canopy.svg', content: CANOPY_LOGO_SVG, type: 'info' });
+
+        // GitHub Actions workflows
+        files.push({ path: '.github/workflows/deploy-pages.yml', content: CANOPY_DEPLOY_WORKFLOW, type: 'info' });
+        files.push({ path: '.github/workflows/update-canopy-app.yml', content: CANOPY_UPDATE_WORKFLOW, type: 'info' });
+
+        return files;
     }
 
     /**
@@ -428,53 +911,110 @@ This collection contains **${manifestCount} items** organized by metadata includ
     }
 
     private generateCanopyReadme(config: CanopyConfig): string {
-        return `# Canopy IIIF Site Export
+        const featuredInfo = config.featured.length > 0
+            ? `*   **Featured Items**: ${config.featured.length} items selected for homepage`
+            : '';
 
-This package contains your IIIF collection data and configuration, ready to be deployed with Canopy IIIF.
+        return `# ${config.title} - Canopy IIIF Site
+
+This is a complete, ready-to-run Canopy IIIF site exported from IIIF Field Studio.
 
 ## 🚀 Quick Start
 
-1.  **Get the Template**
-    If you haven't already, fork or clone the [Canopy IIIF Template](https://github.com/canopy-iiif/template).
+This export includes everything you need - no need to clone the template separately!
 
-2.  **Install Your Data**
-    Copy the files from this export into your Canopy project directory:
-    
-    *   Replace \`canopy.yml\` with the one from this export.
-    *   Copy the \`iiif/\` folder into your project root (merge if it exists).
+1.  **Extract** this archive to a folder
 
-3.  **Run It**
-    From your Canopy project directory:
+2.  **Install dependencies**
     \`\`\`bash
     npm install
+    \`\`\`
+
+3.  **Start the development environment**
+
+    You need to run TWO commands in separate terminals:
+
+    **Terminal 1 - Start the IIIF file server:**
+    \`\`\`bash
+    npm run serve:iiif
+    \`\`\`
+    This serves your IIIF files at http://localhost:8765
+
+    **Terminal 2 - Start the Canopy build:**
+    \`\`\`bash
     npm run dev
     \`\`\`
 
+    Or use the combined command (requires both terminals):
+    \`\`\`bash
+    npm start
+    \`\`\`
+
+4.  **Open** http://localhost:5001 in your browser
+
+## 🌐 Deploy to GitHub Pages
+
+Before deploying, update the URLs in \`canopy.yml\`:
+
+1.  Change the collection URL from \`http://localhost:8765/iiif/...\` to your GitHub Pages URL
+    (e.g., \`https://username.github.io/repo-name/iiif/...\`)
+
+2.  Create a new GitHub repository and push this folder
+
+3.  GitHub Actions will automatically build and deploy your site
+
 ## ⚙️ Configuration
 
-Your site settings have been saved to \`canopy.yml\`:
+Your site settings are in \`canopy.yml\`:
 
 *   **Title**: ${config.title}
 *   **Theme**: ${config.theme.accentColor} / ${config.theme.grayColor} (${config.theme.appearance})
 *   **Search**: ${config.search.enabled ? 'Enabled' : 'Disabled'}
+*   **Metadata Facets**: ${config.metadata.length > 0 ? config.metadata.join(', ') : 'None configured'}
+${featuredInfo}
 
 ## 📦 Contents
 
-*   \`canopy.yml\`: Main configuration file.
-*   \`iiif/collections/\`: Your IIIF Collection data.
-*   \`iiif/manifests/\`: Your IIIF Manifest data.
-*   \`assets/\`: (If selected) Associated media files.
+\`\`\`
+├── canopy.yml              # Site configuration
+├── package.json            # Dependencies
+├── content/
+│   ├── index.mdx           # Homepage
+│   ├── about/index.mdx     # About page
+│   ├── _app.mdx            # Site header/footer
+│   ├── works/_layout.mdx   # Manifest page layout
+│   └── search/_layout.mdx  # Search results layout
+├── assets/
+│   └── iiif/
+│       ├── collections/    # IIIF Collection JSON
+│       ├── manifests/      # IIIF Manifest JSON
+│       ├── images/         # Image derivatives
+│       └── api/facet/      # Metadata facet collections
+├── app/
+│   ├── scripts/            # Build scripts
+│   ├── styles/             # Custom CSS
+│   └── components/         # Custom components
+└── .github/workflows/      # Auto-deploy workflows
+\`\`\`
 
-For more documentation, visit [Canopy IIIF](https://canopy-iiif.github.io/docs).
+## 📖 Documentation
+
+*   [Canopy IIIF Docs](https://canopy-iiif.github.io/app/docs/)
+*   [IIIF Field Studio](https://github.com/micahchoo/field-studio)
+
+---
+*Generated with IIIF Field Studio*
 `;
     }
 
     private generateCanopyConfig(root: IIIFItem, config: CanopyConfig): string {
         const rootIdVal = root.id.split('/').pop();
         const rootType = root.type.toLowerCase() + 's'; // Plural for Canopy
-        const rootPath = config.baseUrl
-            ? `${config.baseUrl}/iiif/${rootType}/${rootIdVal}.json`
-            : `/iiif/${rootType}/${rootIdVal}.json`;
+
+        // For local development, IIIF files are served from http://localhost:8765/iiif/
+        // When deployed, use the baseUrl (or site URL) instead
+        const iiifBaseUrl = config.baseUrl || 'http://localhost:8765';
+        const rootPath = `${iiifBaseUrl}/iiif/${rootType}/${rootIdVal}.json`;
 
         // Determine correct key based on root item type
         const entryKey = root.type === 'Manifest' ? 'manifest:' : 'collection:';
@@ -482,9 +1022,7 @@ For more documentation, visit [Canopy IIIF](https://canopy-iiif.github.io/docs).
         // Convert featured manifest IDs to Canopy format
         const featuredPaths = config.featured.map(id => {
             const idVal = id.split('/').pop();
-            return config.baseUrl
-                ? `${config.baseUrl}/iiif/manifests/${idVal}.json`
-                : `/iiif/manifests/${idVal}.json`;
+            return `${iiifBaseUrl}/iiif/manifests/${idVal}.json`;
         });
 
         // YAML construction manually to avoid extra dependencies
@@ -492,6 +1030,8 @@ For more documentation, visit [Canopy IIIF](https://canopy-iiif.github.io/docs).
             `title: "${config.title.replace(/"/g, '\\"')}"`,
             ...(config.baseUrl ? [`baseUrl: "${config.baseUrl}"`] : []),
             '',
+            '# IIIF Collection source (uses local server during development)',
+            '# Update to your deployed URL for production',
             entryKey,
             `  - ${rootPath}`,
             '',
@@ -566,23 +1106,108 @@ For more documentation, visit [Canopy IIIF](https://canopy-iiif.github.io/docs).
     }
 
     /**
-     * Generates IIIF Image API Level 0 info.json
-     * Uses centralized Image API utilities for spec compliance
+     * Generates IIIF Image API info.json with optional tile support for deep zoom
+     * Implements IIIF Image API 3.0 §5 Image Information
+     *
+     * @param assetId - Unique identifier for this image
+     * @param width - Actual image width in pixels
+     * @param height - Actual image height in pixels
+     * @param isCanopy - Whether this is for Canopy export (uses absolute localhost URLs)
+     * @param includeTiles - Whether to include tile definitions for deep zoom support
+     * @param imageApiOptions - Additional IIIF Image API options
+     * @param rights - Optional rights/license URI for the image
      */
-    private generateImageInfoJsonForExport(assetId: string, width: number, height: number, isCanopy: boolean = false): string {
-        // Use centralized info.json generation for Level 0 compliance
-        // For Canopy, use iiif/images path; for others, use images path
-        const basePath = isCanopy ? `iiif/images/${assetId}` : `images/${assetId}`;
-        const info = generateInfoJson(
-            basePath,
+    private generateImageInfoJsonForExport(
+        assetId: string,
+        width: number,
+        height: number,
+        isCanopy: boolean = false,
+        includeTiles: boolean = false,
+        imageApiOptions?: ImageApiOptions,
+        rights?: string
+    ): string {
+        // For Canopy, use absolute localhost URL; for others, use relative path
+        const basePath = isCanopy
+            ? `http://localhost:8765/iiif/images/${assetId}`
+            : `images/${assetId}`;
+
+        // Calculate scale factors for tile pyramid
+        const tileSize = imageApiOptions?.tileSize || 512;
+        const scaleFactors: number[] = [];
+        if (includeTiles) {
+            let maxDim = Math.max(width, height);
+            let sf = 1;
+            while (maxDim / sf > tileSize) {
+                scaleFactors.push(sf);
+                sf *= 2;
+            }
+            scaleFactors.push(sf);
+        }
+
+        // Build extra formats array based on options
+        const extraFormats: string[] = [];
+        if (imageApiOptions?.includeWebP) {
+            extraFormats.push('webp');
+        }
+
+        // Build extra qualities array
+        const extraQualities: string[] = [];
+        if (imageApiOptions?.includeGrayscale) {
+            extraQualities.push('gray');
+            extraQualities.push('color'); // Explicitly declare color support
+        }
+
+        // Build extra features based on what we support
+        const extraFeatures: string[] = [];
+        if (imageApiOptions?.includeSquare) {
+            extraFeatures.push('regionSquare');
+        }
+        // We support these features for Level 0 pre-generated content
+        extraFeatures.push('sizeByWh'); // We pre-generate specific w,h sizes
+
+        // Generate info.json with full IIIF Image API 3.0 compliance
+        const info: any = {
+            '@context': 'http://iiif.io/api/image/3/context.json',
+            id: basePath,
+            type: 'ImageService3',
+            protocol: 'http://iiif.io/api/image',
+            profile: 'level0',
             width,
             height,
-            'level0',
-            {
-                sizes: generateStandardSizes(width, height, DEFAULT_DERIVATIVE_SIZES),
-                tiles: generateStandardTiles(512, [1, 2, 4, 8])
-            }
-        );
+            // Pre-generated sizes for quick loading (§5.3)
+            sizes: generateStandardSizes(width, height, DEFAULT_DERIVATIVE_SIZES)
+        };
+
+        // Add tiles for deep zoom if requested (§5.4)
+        if (includeTiles && scaleFactors.length > 0) {
+            info.tiles = [{
+                width: tileSize,
+                height: tileSize,
+                scaleFactors: scaleFactors
+            }];
+        }
+
+        // Add preferred formats hint (§5.5)
+        if (extraFormats.length > 0) {
+            info.preferredFormats = ['webp', 'jpg']; // WebP is more efficient
+            info.extraFormats = extraFormats;
+        }
+
+        // Add extra qualities (§5.7)
+        if (extraQualities.length > 0) {
+            info.extraQualities = extraQualities;
+        }
+
+        // Add extra features (§5.7)
+        if (extraFeatures.length > 0) {
+            info.extraFeatures = extraFeatures;
+        }
+
+        // Add rights information if available (§5.6)
+        if (rights) {
+            info.rights = rights;
+        }
+
         return JSON.stringify(info, null, 2);
     }
 

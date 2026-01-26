@@ -231,7 +231,21 @@ const processNode = async (
 
             await storage.saveAsset(file, assetId);
 
+            // Get actual image dimensions for proper canvas sizing
+            let imageWidth = 2000;
+            let imageHeight = 2000;
+
             if (file.type.startsWith('image/')) {
+                // Read actual dimensions from image file
+                try {
+                    const bitmap = await createImageBitmap(file);
+                    imageWidth = bitmap.width;
+                    imageHeight = bitmap.height;
+                    bitmap.close(); // Free memory
+                } catch (e) {
+                    console.warn(`Could not read image dimensions for ${file.name}, using defaults`);
+                }
+
                 // Generate thumbnail immediately for UI display
                 const thumb = await generateDerivative(file, 150);
                 if (thumb) await storage.saveDerivative(assetId, 'thumb', thumb);
@@ -319,7 +333,8 @@ const processNode = async (
                 id: canvasId,
                 type: "Canvas",
                 label: { none: [file.name] },
-                width: 2000, height: 2000,
+                width: imageWidth,
+                height: imageHeight,
                 items: annos,
                 annotations: supplementingPages, // Canvas.annotations for non-painting content
                 thumbnail: thumbnails,

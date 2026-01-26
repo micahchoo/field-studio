@@ -11,7 +11,9 @@ export const CANOPY_PACKAGE_JSON = `{
   "main": "app/scripts/canopy-build.mjs",
   "scripts": {
     "build": "tsx app/scripts/canopy-build.mts",
-    "dev": "tsx app/scripts/canopy-build.mts"
+    "dev": "tsx app/scripts/canopy-build.mts",
+    "serve:iiif": "npx serve assets -l 8765 --cors",
+    "start": "concurrently \\"npm run serve:iiif\\" \\"sleep 2 && npm run dev\\""
   },
   "dependencies": {
     "@canopy-iiif/app": "^1.6.0",
@@ -19,7 +21,9 @@ export const CANOPY_PACKAGE_JSON = `{
     "swiper": "^11.2.10",
     "esbuild": "^0.21.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "concurrently": "^9.0.0",
+    "serve": "^14.0.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",
