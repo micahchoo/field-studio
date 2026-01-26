@@ -291,6 +291,8 @@ export {
   hasDeepZoomCapability,
   getImageServiceInfo,
   resolveHierarchicalThumb,
+  resolveHierarchicalThumbs,
+  resolveLeafCanvases,
 } from './imageSourceResolver';
 export type {
   IIIFCanvasLike,

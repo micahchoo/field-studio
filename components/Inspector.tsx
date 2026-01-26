@@ -14,8 +14,10 @@ import {
   VIEWING_DIRECTIONS,
   canHaveViewingDirection,
   getAllowedProperties,
-  PROPERTY_MATRIX
+  PROPERTY_MATRIX,
+  validateResourceFull
 } from '../utils/iiifSchema';
+import { suggestBehaviors } from '../utils/iiifBehaviors';
 import { resolvePreviewUrl } from '../utils/imageSourceResolver';
 
 interface InspectorProps {
@@ -125,11 +127,11 @@ const DebouncedTextarea = ({ value, onChange, ...props }: any) => {
 
 export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource, settings, visible, onClose, isMobile }) => {
   // Persist tab state per resource type in localStorage
-  const getStoredTab = (resourceType: string): 'metadata' | 'provenance' | 'geo' | 'learn' => {
+  const getStoredTab = (resourceType: string): 'metadata' | 'provenance' | 'geo' | 'learn' | 'structure' => {
     try {
       const stored = localStorage.getItem(`inspector-tab-${resourceType}`);
-      if (stored && ['metadata', 'provenance', 'geo', 'learn'].includes(stored)) {
-        return stored as 'metadata' | 'provenance' | 'geo' | 'learn';
+      if (stored && ['metadata', 'provenance', 'geo', 'learn', 'structure'].includes(stored)) {
+        return stored as 'metadata' | 'provenance' | 'geo' | 'learn' | 'structure';
       }
     } catch (e) {
       // localStorage may be unavailable
@@ -137,10 +139,20 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
     return 'metadata';
   };
 
-  const [tab, setTab] = useState<'metadata' | 'provenance' | 'geo' | 'learn'>(() =>
+  const [tab, setTab] = useState<'metadata' | 'provenance' | 'geo' | 'learn' | 'structure'>(() =>
     resource ? getStoredTab(resource.type) : 'metadata'
   );
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [validation, setValidation] = useState<{valid: boolean, errors: string[], warnings: string[]} | null>(null);
+
+  // Run validation when resource changes
+  useEffect(() => {
+    if (resource) {
+      setValidation(validateResourceFull(resource));
+    } else {
+      setValidation(null);
+    }
+  }, [resource]);
 
   // Restore tab when resource type changes
   useEffect(() => {
@@ -167,6 +179,23 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
 
   // Helper to check if a field is allowed by the schema for this resource type
   const isAllowed = (field: string) => isPropertyAllowed(resource.type, field);
+
+  const handleSuggestBehaviors = () => {
+    if (!resource) return;
+    
+    // Determine characteristics
+    const characteristics = {
+      hasDuration: !!(resource as any).duration,
+      hasPageSequence: resource.type === 'Manifest' && (resource as IIIFManifest).items?.length > 1,
+      hasWidth: !!(resource as any).width,
+      hasHeight: !!(resource as any).height,
+    };
+
+    const suggestions = suggestBehaviors(resource.type, characteristics);
+    if (suggestions.length > 0) {
+      onUpdateResource({ behavior: Array.from(new Set([...(resource.behavior || []), ...suggestions])) });
+    }
+  };
   
   const label = getIIIFValue(resource.label, settings.language) || '';
   const summary = getIIIFValue(resource.summary, settings.language) || '';
@@ -234,7 +263,7 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
 
         {/* Tabs */}
         <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white'}`}>
-            {['metadata', 'provenance', 'geo', 'learn'].map(t => (
+            {['metadata', 'structure', 'provenance', 'geo', 'learn'].filter(t => t !== 'structure' || (resource?.type === 'Manifest')).map(t => (
                 <button
                   key={t}
                   className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? (settings.fieldMode ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-iiif-blue border-b-2 border-iiif-blue bg-blue-50/20') : 'text-slate-400 hover:text-slate-600'}`}
@@ -253,6 +282,28 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
       <div className={`flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar min-h-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'}`}>
         {tab === 'metadata' && (
             <div role="tabpanel" id="inspector-tab-metadata" aria-labelledby="tab-metadata" className="space-y-6">
+                {/* Validation Status */}
+                {validation && (validation.errors.length > 0 || validation.warnings.length > 0) && (
+                    <div className={`p-3 rounded-lg border text-[10px] space-y-2 ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-orange-50 border-orange-200'}`}>
+                        <div className="flex items-center gap-2 font-black uppercase tracking-widest text-orange-600">
+                            <Icon name="report_problem" className="text-sm" />
+                            <span>Spec Validation</span>
+                        </div>
+                        {validation.errors.map((err, i) => (
+                            <div key={`err-${i}`} className="flex gap-2 text-red-500 font-bold">
+                                <span>•</span>
+                                <span>{err}</span>
+                            </div>
+                        ))}
+                        {validation.warnings.map((warn, i) => (
+                            <div key={`warn-${i}`} className={`flex gap-2 font-bold ${settings.fieldMode ? 'text-slate-400' : 'text-orange-700'}`}>
+                                <span>•</span>
+                                <span>{warn}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 {imageUrl && (
                     <div className={`aspect-video rounded-xl overflow-hidden border shadow-inner relative group ring-1 shrink-0 ${settings.fieldMode ? 'bg-slate-900 border-slate-800 ring-slate-800' : 'bg-slate-900 border-slate-200 ring-slate-100'}`}>
                         <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
@@ -415,12 +466,20 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
                     {/* Advanced Fields (visible at advanced complexity only) */}
                     {isAllowed('behavior') && isFieldVisible('behavior', settings.metadataComplexity) && (
                         <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                            <label className={`block text-[10px] font-black mb-2 uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                Behaviors
-                                <span className={`ml-2 text-[8px] font-mono px-1.5 py-0.5 rounded ${settings.fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-purple-100 text-purple-600'}`}>
-                                    advanced
-                                </span>
-                            </label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className={`block text-[10px] font-black uppercase tracking-widest ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    Behaviors
+                                    <span className={`ml-2 text-[8px] font-mono px-1.5 py-0.5 rounded ${settings.fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-purple-100 text-purple-600'}`}>
+                                        advanced
+                                    </span>
+                                </label>
+                                <button 
+                                    onClick={handleSuggestBehaviors}
+                                    className={`text-[8px] font-black uppercase px-2 py-1 rounded border snappy-transition ${settings.fieldMode ? 'border-slate-700 text-yellow-400 hover:bg-slate-800' : 'border-slate-200 text-iiif-blue hover:bg-blue-50'}`}
+                                >
+                                    Auto-Suggest
+                                </button>
+                            </div>
                             <div className="flex flex-wrap gap-1">
                                 {(resource.behavior || []).map((b, i) => (
                                     <span key={i} className={`text-[9px] font-bold px-2 py-1 rounded-full ${settings.fieldMode ? 'bg-slate-800 text-yellow-400' : 'bg-purple-100 text-purple-700'}`}>
@@ -521,6 +580,37 @@ export const Inspector: React.FC<InspectorProps> = ({ resource, onUpdateResource
         {tab === 'provenance' && (
             <div role="tabpanel" id="inspector-tab-provenance" aria-labelledby="tab-provenance">
                 <ProvenancePanel resourceId={resource.id} fieldMode={settings.fieldMode} />
+            </div>
+        )}
+
+        {tab === 'structure' && resource?.type === 'Manifest' && (
+            <div role="tabpanel" id="inspector-tab-structure" aria-labelledby="tab-structure" className="space-y-4 animate-in fade-in duration-300">
+                <div className={`p-4 rounded-xl border ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <h3 className={`text-xs font-black uppercase mb-3 ${settings.fieldMode ? 'text-yellow-400' : 'text-iiif-blue'}`}>Table of Contents</h3>
+                    {(resource as IIIFManifest).structures && (resource as IIIFManifest).structures!.length > 0 ? (
+                        <div className="space-y-2">
+                            {(resource as IIIFManifest).structures!.map((range, idx) => (
+                                <div key={range.id} className={`p-2 rounded border text-[10px] ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                                    <div className="flex items-center gap-2 font-bold mb-1">
+                                        <Icon name="segment" className="text-xs opacity-50" />
+                                        {getIIIFValue(range.label, settings.language) || `Range ${idx + 1}`}
+                                    </div>
+                                    <div className="flex gap-1 flex-wrap pl-5">
+                                        {range.items?.map((item: any, i: number) => (
+                                            <span key={i} className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 text-[8px] font-mono">
+                                                {item.type === 'Canvas' ? 'Canvas' : 'Range'}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-[10px] text-slate-400 italic py-4 text-center">
+                            No structural ranges defined for this manifest.
+                        </div>
+                    )}
+                </div>
             </div>
         )}
 

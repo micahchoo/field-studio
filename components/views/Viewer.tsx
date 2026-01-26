@@ -15,6 +15,48 @@ import { VIEWPORT_DEFAULTS } from '../../constants/viewport';
 
 declare const OpenSeadragon: any;
 
+/**
+ * Extract bounding box from SVG selector value
+ */
+function extractSvgBoundingBox(svgValue: string): { x: number; y: number; width: number; height: number } | null {
+  // Extract path d attribute
+  const pathMatch = svgValue.match(/d="([^"]+)"/);
+  if (!pathMatch) return null;
+
+  const pathData = pathMatch[1];
+  const points: { x: number; y: number }[] = [];
+
+  // Parse path commands - handle M/L/Z paths
+  const commands = pathData.match(/[MLZ][\d.,\s-]*/gi);
+  if (!commands) return null;
+
+  for (const cmd of commands) {
+    const type = cmd[0].toUpperCase();
+    if (type === 'Z') continue;
+
+    const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+    if (coords.length >= 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+      points.push({ x: coords[0], y: coords[1] });
+    }
+  }
+
+  if (points.length === 0) return null;
+
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+}
+
 interface ViewerProps {
   item: IIIFCanvas | null;
   manifestItems?: IIIFCanvas[];
@@ -247,7 +289,11 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
       const currentAnnos = [...annotations, newAnno];
       setAnnotations(currentAnnos);
 
-      const updatedAnnos = item.annotations || [];
+      // Create a deep copy to avoid mutating the original item
+      const updatedAnnos: IIIFAnnotationPage[] = item.annotations
+          ? item.annotations.map(page => ({ ...page, items: [...page.items] }))
+          : [];
+
       if (updatedAnnos.length === 0) {
           updatedAnnos.push({
               id: `${item.id}/page/annotations`,
@@ -255,7 +301,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
               items: [newAnno]
           });
       } else {
-          updatedAnnos[0].items.push(newAnno);
+          updatedAnnos[0] = { ...updatedAnnos[0], items: [...updatedAnnos[0].items, newAnno] };
       }
 
       onUpdate({ annotations: updatedAnnos });
@@ -579,17 +625,39 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                     ) : (
                         annotations.map(anno => {
                             const bodyText = (anno.body as any).label?.en?.[0] || (anno.body as any).value || 'Archive Evidence';
-                            const selector = (anno.target as any).selector?.value || '';
-                            const isRegion = selector.includes('xywh=');
+                            const target = anno.target as any;
+                            const selectorType = target?.selector?.type;
+                            const selectorValue = target?.selector?.value || '';
+                            const isXywhRegion = selectorValue.includes('xywh=');
+                            const isSvgSelector = selectorType === 'SvgSelector';
+                            const isZoomable = isXywhRegion || isSvgSelector;
                             const bodyImg = (anno.body as any).id;
                             const isText = (anno.body as any).type === 'TextualBody';
-                            
+
+                            const handleZoom = () => {
+                              if (!viewerRef.current || !item) return;
+                              if (isXywhRegion) {
+                                zoomToRegion(selectorValue);
+                              } else if (isSvgSelector) {
+                                // Extract bounding box from SVG path and zoom to it
+                                const bbox = extractSvgBoundingBox(selectorValue);
+                                if (bbox) {
+                                  const rect = viewerRef.current.viewport.imageToViewportRectangle(
+                                    bbox.x, bbox.y, bbox.width, bbox.height
+                                  );
+                                  viewerRef.current.viewport.fitBounds(rect.scale(1.2), false);
+                                }
+                              }
+                            };
+
                             return (
-                                <div key={anno.id} onClick={() => isRegion && zoomToRegion(selector)} className="bg-slate-800 p-3 rounded border border-slate-700 cursor-pointer hover:border-blue-500 transition-all group">
+                                <div key={anno.id} onClick={() => isZoomable && handleZoom()} className="bg-slate-800 p-3 rounded border border-slate-700 cursor-pointer hover:border-blue-500 transition-all group">
                                     {bodyImg && bodyImg.includes('/iiif/') && <img src={bodyImg} className="w-full aspect-video object-cover rounded mb-2 border border-slate-600" />}
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className={`text-[9px] font-black uppercase tracking-tighter ${isText ? 'text-green-400' : 'text-blue-400'}`}>{isText ? 'Transcription' : (anno.motivation === 'painting' ? 'Layer' : 'Supplement')}</span>
-                                        {isRegion && <Icon name="zoom_in" className="text-xs text-slate-500 group-hover:text-blue-400"/>}
+                                        <span className={`text-[9px] font-black uppercase tracking-tighter ${isText ? 'text-green-400' : 'text-blue-400'}`}>
+                                          {isText ? (isSvgSelector ? 'Polygon' : 'Transcription') : (anno.motivation === 'painting' ? 'Layer' : 'Supplement')}
+                                        </span>
+                                        {isZoomable && <Icon name={isSvgSelector ? 'pentagon' : 'zoom_in'} className="text-xs text-slate-500 group-hover:text-blue-400"/>}
                                     </div>
                                     <p className={`text-slate-200 text-xs ${isText ? 'font-mono whitespace-pre-wrap leading-relaxed' : 'font-bold'}`}>{bodyText}</p>
                                 </div>

@@ -1,0 +1,302 @@
+# Canopy Configuration & Overview
+
+## Configuration
+
+Canopy reads settings from `canopy.yml` in the repository root. Edit this file after walking through the [Get Started guide](/get-started). The minimal `canopy.yml` includes a global site title, a list of IIIF Collection and Manifest URIs, metadata fields to index, featured items, as well as a theme block. These settings are not strictly required, yet they form the basis of most Canopy sites.
+
+```yaml filename="canopy.yml" copy
+title: Example Site
+collection:
+  - https://example.org/iiif/collections/a
+  - https://example.org/iiif/collections/b
+manifest:
+  - https://example.org/iiif/manifest/delta
+  - https://example.org/iiif/manifest/echo
+  - https://example.edu/api/manifest/foxtrot
+metadata:
+  - Subject
+  - Creator
+featured:
+  - https://example.org/iiif/manifest/alpha
+  - https://example.org/iiif/manifest/bravo
+  - https://example.edu/api/manifest/foxtrot
+theme:
+  accentColor: violet
+  grayColor: mauve
+  appearance: light
+```
+
+### Basic
+
+#### Title
+
+```yaml
+title: Example Site
+```
+
+- Applied across the site.
+- Feeds title in header and `head` element automatically.
+- Defaults to `Site title` when the key is missing.
+- Can be overriden in `content/_app.mdx` via the `title` prop on the `CanopyHeader` component and in `Meta` component via the `siteTitle` prop.
+
+#### Collection
+
+```yaml
+collection:
+  - https://example.org/iiif/collections/a
+  - https://example.org/iiif/collections/b
+```
+
+- Not strictly required but provides one URI or multiple IIIF Collection URIs.
+- URIs must match the Collection `id` values.
+- Each Manifest listed in the Collections becomes a page in the site.
+- Collections can be Presentation API 2.x or 3.0.
+- Collections may be nested (i.e., contain other Collections).
+- When Collections are configured, Canopy traverses them first, gathers all nested manifests, and then deduplicates against any standalone manifest list (see below).
+
+#### Manifest (direct)
+
+Directly list individual IIIF Manifest URIs to include in the build. This is useful in cases where some Manifests are not part of a Collection or when you want to curate disparate sources.
+
+```yaml
+manifest:
+  - https://example.org/iiif/manifest/echo
+  - https://example.edu/api/manifest/foxtrot
+```
+
+- Not required and can be used alongside `collection` or on its own.
+- URIs must match the Manifest `id` values.
+- Manifest can be Presentation API 2.x or 3.0.
+
+#### Metadata
+
+```yaml
+metadata:
+  - Subject
+  - Creator
+```
+
+- Optional list of manifest metadata labels (matched case-insensitively at build time; `subject`, `Subject`, and `SUBJECT` are treated the same).
+- Drives related sliders, metadata callouts, and `/api/facet/**` IIIF collections.
+- Set it to an empty list to turn off facets without deleting the key.
+
+#### Featured
+
+```yaml
+featured:
+  - https://example.org/iiif/manifest/alpha
+  - https://example.org/iiif/manifest/bravo
+  - https://example.edu/api/manifest/foxtrot
+```
+
+- Optional list of manifest URIs for the homepage hero and other highlighted slots.
+- Entries should belong to your configured collections; Canopy normalizes IDs to avoid duplicates.
+
+## Theme
+
+Canopy reads a `theme` configuration to pick the accent palette, gray palette, and default appearance (light or dark mode).
+The values feed a CSS variable set used in styling so every component inherits the same colors. Reference all color names in lowercase. If you omit a value, Canopy falls back to `indigo` and `slate` with a `light` appearance.
+
+#### **See a full list of supported colors in the [Theme](/docs/theme) docs.**
+
+```yaml
+theme:
+  accentColor: violet
+  grayColor: mauve
+  appearance: light
+```
+
+- `accentColor`: Styles buttons, links, and highlights (e.g., `indigo`, `tomato`, `cyan`).
+- `grayColor`: Sets the neutrals, foreground, and background colors (e.g., `slate`, `sand`, `gray`).
+- `appearance`: Controls the site's dark or light mode; options are `light` (default) or `dark`.
+
+## Search
+
+Search settings live in the `search` block. The build uses them to control FlexSearch indexing, result layouts, and tab order.
+
+```yaml
+search:
+  page:
+    title: Discover everything
+    description: Browse every work and MDX page in one place.
+  results:
+    work:
+      layout: grid
+      result: figure
+    page:
+      layout: list
+      result: article
+  index:
+    metadata:
+      enabled: true
+      all: false
+    summary:
+      enabled: true
+    annotations:
+      enabled: false
+      motivation:
+        - commenting
+        - tagging
+```
+
+### Results layout
+
+- `search.results.<type>` defines how each tab renders and maps to `type` values of the documents. By default only `work` is used for all IIIF Manifests in listed collections. Add other types like `page` to render MDX pages with dedicated layouts. Custom `type` values are supported too.
+- `layout` accepts `grid` or `list`. [Works](/search?q=&type=work) are rendered as cards in a grid by default; [pages](/search?q=&type=page) use a search engine style vertical list.
+- `result` accepts `figure` or `article` and maps to `_result-figure.mdx` and `_results-article.mdx` templates in `/content/docs/search/`.
+- The order of `search.results.<type>` entries fixes the tab order on the search page.
+- Each tab corresponds to the `type` query parameter (`/search?type=work`). If a tab is selected while no records of that type exist, the results list appears empty even though other types may have matches. Clear the `type` param or switch tabs to return to the combined view.
+
+#### Custom types
+
+A team developing a project with contextual essays might want to add a custom `essay` type tab with a dedicated layout. This would correspond to all content documents with the `type` value of `essay`, ex:
+
+### Page metadata
+
+- `search.page.title` sets the `<title>`/OpenGraph title for `/search` whenever `_layout.mdx` does not render custom front matter.
+- `search.page.description` feeds `<meta name="description">`, OpenGraph/Twitter descriptions, and the JSON-LD block on the search page.
+- Leave either value blank to fall back to the defaults (`Search` with no description) or update the strings in `canopy.yml` to localize the copy.
+
+```yaml
+search:
+  page:
+    title: Discover works
+    description: Search every narrative and work.
+  results:
+    work:
+      layout: grid
+      result: figure
+    essay:
+      layout: list
+      result: article
+    page:
+      layout: list
+      result: article
+```
+
+### Index
+
+Every manifest pulled from your configured collections becomes a `type: 'work'` record. The `label` (_title_) of all manifests is included in this index. You can further customize what is indexed for these records with the following options:
+
+#### Metadata
+
+Metadata fields set in `metadata` (ex: _Subject_) at the top level of your configuration are used by `search.index.metadata`. Set `search.index.metadata.enabled` to `false` when you want to exclude metadata values from the search index. Set `all: true` to index every metadata entry across all manifests even if it is not listed under `metadata`.
+
+#### Summary
+
+Manifests may contain rich context in their `summary` labels and these are indexed by default. Toggle `search.index.summary.enabled` to `false` if your manifests have long or invaluable summaries.
+
+#### Annotations
+
+Your collection and manifests may contain textual annotations. You can optionally add these as search results by setting `search.index.annotations.enabled` to `true` and turning on deep annotation indexing. When enabled, Canopy will write these to an annotations index. Annotations carry a `motivation` value, and you can filter motivations with the `motivation` list to determine which values should be included in the index.
+
+**Note:** Enabling the indexing of annotations will increase the size and scale of your search index. Build times will also be affected. As Canopy generates the search index for use in the browser, you should consider size of your index when developing your project.
+
+```yaml
+search:
+  index:
+    metadata:
+      enabled: true
+      all: false
+    summary:
+      enabled: true
+    annotations:
+      enabled: false
+      motivation:
+        - commenting
+        - tagging
+```
+
+## Extras
+
+### Frontmatter reference
+
+Control search inclusion, canonical overrides, and metadata per page via front matter. The [Content → Frontmatter guide](/docs/content/frontmatter) documents every supported key along with examples.
+
+### Base URL
+
+By default, Canopy generates relative URLs for sitemap links, IIIF Collection ids, and canonical URLs. You can override this behavior by setting an absolute `site.baseUrl` in your configuration. This is helpful in cases where your project is not hosted by GitHub Pages (which has the Base URL automatically determined) or if you want to include a path prefix. Canopy uses `http://localhost:5001` during local development with `npm run dev`.
+
+```yaml
+site:
+  baseUrl: https://example.org/canopy-project
+```
+
+---
+
+## Overview: Using Canopy IIIF
+
+Canopy renders static sites directly from IIIF **[Collections](https://iiif.io/api/presentation/3.0/#51-collection)** and **[Manifests](https://iiif.io/api/presentation/3.0/#52-manifest)**. These docs will walk you through the configuration options, content examples, and features available when building with Canopy. Canopy sites can be built in minutes and hosted anywhere static files can be served. The builder fetches manifests and generates layouts from Markdown files leaving you with a bundle of HTML, CSS, and basic javascript that can be deployed anywhere. All examples in this section are plain MDX so they can be copied directly into your own `content/` directory to get started.
+
+### About Collections and Manifests
+
+A IIIF Collection is a JSON document that lists other IIIF resources, typically Manifests or other Collections. Collections can represent any grouping of IIIF Manifests, such as an archive, library, or museum's digital holdings. Each Manifest within a Collection describes a single object (like a book, artwork, or video) and includes metadata, images, and structure.
+Canopy ingests one or more Collection URIs to build a project. Each Manifest listed in the Collection then becomes a page in the site with normalized metadata, thumbnails, and links.
+
+Below is a [simple example](https://iiif.io/api/cookbook/recipe/0032-collection/) of a IIIF Collection containing two Manifests including paintings by the American artist Winslow Homer:
+
+```yaml filename="collection.json" {3,9,14}
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://iiif.io/api/cookbook/recipe/0032-collection/collection.json",
+  "type": "Collection",
+  "label": {"en": ["Simple Collection Example"]},
+  "items":
+    [
+      {
+        "id": "https://iiif.io/api/cookbook/recipe/0032-collection/manifest-01.json",
+        "type": "Manifest",
+        "label": {"en": ["The Gulf Stream"]},
+      },
+      {
+        "id": "https://iiif.io/api/cookbook/recipe/0032-collection/manifest-02.json",
+        "type": "Manifest",
+        "label": {"en": ["Northeaster"]},
+      },
+    ],
+}
+```
+
+A IIIF Manifest provides detailed information about a single digital object, including its metadata (like title, creator, date), the images or media associated with it, and how those images are structured (for example, pages in a book or views of an artwork). Each Manifest is also a JSON document that adheres to the IIIF Presentation API specifications.
+
+```yaml filename="manifest-01.json"
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://iiif.io/api/cookbook/recipe/0032-collection/manifest-01.json",
+  "type": "Manifest",
+  "label": {"en": ["The Gulf Stream"]},
+  "metadata":
+    [
+      {
+        "label": {"en": ["Artist"]},
+        "value": {"en": ["Winslow Homer (1836–1910)"]},
+      },
+      {"label": {"en": ["Date"]}, "value": {"en": ["1899"]}},
+    ],
+  "items": [...],
+}
+```
+
+### Working with Canopy
+
+Canopy works with both Presentation 3.0 API and the older Presentation 2.x. If the collection noted above were provided to Canopy, the `canopy.yml` file would reference Collection URI **`id`** which is also the URL where the collection document is hosted:
+
+```yaml filename="canopy.yml"
+title: Works by Winslow Homer
+collection:
+  - https://iiif.io/api/cookbook/recipe/0032-collection/collection.json
+```
+
+As this collection references two manifests, each would have its own relative page on the site:
+
+- _/works/the-gulf-stream.html_
+- _/works/northeaster.html_
+
+In certain cases, Manifests may not be present in a Collection. You can still include these by manually adding their URIs directly to the `manifest` list in `canopy.yml`:
+
+```yaml filename="canopy.yml"
+title: Works by Winslow Homer
+manifest:
+  - https://iiif.io/api/cookbook/recipe/0032-collection/manifest-01.json
+  - https://iiif.io/api/cookbook/recipe/0032-collection/manifest-02.json
+```

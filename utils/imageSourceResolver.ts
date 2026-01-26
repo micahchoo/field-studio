@@ -12,7 +12,7 @@
  * 5. File reference (_fileRef) - returns the reference for blob creation
  */
 
-import { buildImageUri, type SizeParams } from './iiifImageApi';
+import { IIIFImageService, type SizeParams } from './iiifImageApi';
 
 // ============================================================================
 // Types
@@ -184,7 +184,20 @@ function buildServiceUrl(
     size = { type: 'max' };
   }
 
-  return buildImageUri(serviceId, {
+  // Use the new IIIFImageService class for robust URI building
+  // Parse baseUri and identifier from serviceId
+  const parts = serviceId.split('/');
+  const identifier = parts.pop() || '';
+  const baseUri = parts.join('/');
+
+  const service = new IIIFImageService({
+    baseUri,
+    identifier,
+    width: 0, // Not strictly needed for basic URI building if not canonicalizing
+    height: 0
+  });
+
+  return service.buildImageUri({
     region: { type: 'full' },
     size,
     rotation: { degrees: 0, mirror: false },

@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { IIIFItem, getIIIFValue } from '../types';
-import { exportService, ExportOptions, VirtualFile } from '../services/exportService';
-import { staticSiteExporter, StaticSiteConfig } from '../services/staticSiteExporter';
+import { exportService, ExportOptions, VirtualFile, CanopyConfig } from '../services/exportService';
 import { archivalPackageService, ArchivalPackageOptions } from '../services/archivalPackageService';
 import { activityStream as activityStreamService } from '../services/activityStream';
 import { validator, ValidationIssue } from '../services/validator';
@@ -16,12 +15,12 @@ interface ExportDialogProps {
   onClose: () => void;
 }
 
-type ExportStep = 'config' | 'wax-config' | 'archival-config' | 'dry-run' | 'exporting';
-type ExportFormat = 'static-site' | 'raw-iiif' | 'wax-site' | 'ocfl' | 'bagit' | 'activity-log';
+type ExportStep = 'config' | 'canopy-config' | 'archival-config' | 'dry-run' | 'exporting';
+type ExportFormat = 'raw-iiif' | 'canopy' | 'ocfl' | 'bagit' | 'activity-log';
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => {
   const [step, setStep] = useState<ExportStep>('config');
-  const [format, setFormat] = useState<ExportFormat>('static-site');
+  const [format, setFormat] = useState<ExportFormat>('canopy');
   const [includeAssets, setIncludeAssets] = useState(true);
   const [ignoreErrors, setIgnoreErrors] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -42,17 +41,21 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
   const [virtualFiles, setVirtualFiles] = useState<VirtualFile[]>([]);
   const [integrityIssues, setIntegrityIssues] = useState<ValidationIssue[]>([]);
 
-  // Wax static site configuration
-  const [waxConfig, setWaxConfig] = useState<Partial<StaticSiteConfig>>({
-    baseUrl: '',
+  // Canopy configuration
+  const [canopyConfig, setCanopyConfig] = useState<CanopyConfig>({
     title: root ? getIIIFValue(root.label) || 'IIIF Collection' : 'IIIF Collection',
-    description: '',
-    collectionName: 'objects',
-    thumbnailWidth: 250,
-    fullWidth: 1140,
-    includeSearch: true,
-    includeViewer: true,
-    template: 'gallery'
+    baseUrl: '',
+    theme: {
+        accentColor: 'indigo',
+        grayColor: 'slate',
+        appearance: 'light'
+    },
+    search: {
+        enabled: true,
+        indexSummary: true
+    },
+    metadata: [], // Will be populated from root items
+    featured: []  // Will be selected by user
   });
 
   // Archival package configuration (OCFL/BagIt)
@@ -83,9 +86,13 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
       }
       setProcessing(true);
       try {
-          // Map 'wax-site' to 'static-site' for the legacy export service
-          const exportFormat: 'static-site' | 'raw-iiif' = format === 'wax-site' ? 'static-site' : (format === 'static-site' || format === 'raw-iiif' ? format : 'raw-iiif');
-          const files = await exportService.prepareExport(root, { format: exportFormat, includeAssets, ignoreErrors });
+          const exportFormat = format === 'canopy' ? 'canopy' : 'raw-iiif';
+          const files = await exportService.prepareExport(root, { 
+              format: exportFormat, 
+              includeAssets, 
+              ignoreErrors,
+              canopyConfig: format === 'canopy' ? canopyConfig : undefined
+          });
           setVirtualFiles(files);
           
           const issueMap = validator.validateTree(root);
@@ -102,11 +109,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
     setStep('exporting');
     setErrorMsg(null);
     try {
-        const exportFormat: 'static-site' | 'raw-iiif' = format === 'wax-site' ? 'static-site' : (format === 'static-site' || format === 'raw-iiif' ? format : 'raw-iiif');
-        const blob = await exportService.exportArchive(root, { format: exportFormat, includeAssets, ignoreErrors }, (p) => {
+        const exportFormat = format === 'canopy' ? 'canopy' : 'raw-iiif';
+        const blob = await exportService.exportArchive(root, { 
+            format: exportFormat, 
+            includeAssets, 
+            ignoreErrors,
+            canopyConfig: format === 'canopy' ? canopyConfig : undefined
+        }, (p) => {
             setProgress(p);
         });
-        FileSaver.saveAs(blob, `archive-export-${new Date().toISOString().split('T')[0]}.zip`);
+        FileSaver.saveAs(blob, `canopy-export-${new Date().toISOString().split('T')[0]}.zip`);
         onClose();
     } catch (e: any) {
         setErrorMsg(e.message);
@@ -114,36 +126,21 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
     }
   };
 
-  const handleWaxExport = async () => {
-    if (!root) return;
-    setStep('exporting');
-    setErrorMsg(null);
-    setProgress({ status: 'Initializing static site generator...', percent: 0 });
-
-    try {
-        setProgress({ status: 'Collecting items and metadata...', percent: 10 });
-        const result = await staticSiteExporter.exportSite(root, waxConfig as any);
-
-        if (!result.success && result.errors.length > 0) {
-            throw new Error(result.errors.join('; '));
-        }
-
-        setProgress({ status: 'Generating IIIF tiles...', percent: 40 });
-        await new Promise(r => setTimeout(r, 500)); // Brief pause for UI
-
-        setProgress({ status: 'Building search index...', percent: 60 });
-        await new Promise(r => setTimeout(r, 300));
-
-        setProgress({ status: 'Compressing ZIP archive...', percent: 80 });
-        await staticSiteExporter.downloadAsZip(result, `${waxConfig.collectionName || 'site'}-${new Date().toISOString().split('T')[0]}.zip`);
-
-        setProgress({ status: 'Complete!', percent: 100 });
-        await new Promise(r => setTimeout(r, 500));
-        onClose();
-    } catch (e: any) {
-        setErrorMsg(e.message || 'Failed to generate static site');
-        setStep('wax-config');
-    }
+  const handleCanopyExport = async () => {
+      // Auto-extract metadata keys if empty
+      if (canopyConfig.metadata.length === 0 && root) {
+          const keys = new Set<string>();
+          const traverse = (item: IIIFItem) => {
+              item.metadata?.forEach(m => {
+                  const label = getIIIFValue(m.label);
+                  if (label) keys.add(label);
+              });
+              item.items?.forEach(traverse);
+          };
+          traverse(root);
+          setCanopyConfig(prev => ({ ...prev, metadata: Array.from(keys) }));
+      }
+      setStep('dry-run');
   };
 
   const handleActivityLogExport = async () => {
@@ -255,6 +252,40 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
 
   const criticalErrors = integrityIssues.filter(i => i.level === 'error');
 
+  // Helper to collect all manifests from the tree for featured items selection
+  const collectManifests = (item: IIIFItem): { id: string; label: string }[] => {
+    const manifests: { id: string; label: string }[] = [];
+    const traverse = (node: IIIFItem) => {
+      if (node.type === 'Manifest') {
+        manifests.push({
+          id: node.id,
+          label: getIIIFValue(node.label) || node.id.split('/').pop() || 'Untitled'
+        });
+      }
+      node.items?.forEach(child => {
+        if (child.type === 'Collection' || child.type === 'Manifest') {
+          traverse(child as IIIFItem);
+        }
+      });
+    };
+    traverse(item);
+    return manifests;
+  };
+
+  const availableManifests = root ? collectManifests(root) : [];
+
+  const toggleFeaturedItem = (manifestId: string) => {
+    setCanopyConfig(prev => {
+      const isSelected = prev.featured.includes(manifestId);
+      if (isSelected) {
+        return { ...prev, featured: prev.featured.filter(id => id !== manifestId) };
+      } else if (prev.featured.length < 6) {
+        return { ...prev, featured: [...prev.featured, manifestId] };
+      }
+      return prev; // Max 6 items reached
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" role="none">
         <div 
@@ -271,7 +302,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                     <div>
                         <h2 id="export-dialog-title" className="text-lg font-black text-slate-800 uppercase tracking-tighter">Archive Export</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            {step === 'config' ? 'Step 1: Format Selection' : step === 'wax-config' ? 'Step 2: Site Configuration' : step === 'archival-config' ? 'Step 2: Package Configuration' : step === 'dry-run' ? 'Step 2: Integrity & Preview' : 'Step 3: Generating'}
+                            {step === 'config' ? 'Step 1: Format Selection' : step === 'canopy-config' ? 'Step 2: Site Configuration' : step === 'archival-config' ? 'Step 2: Package Configuration' : step === 'dry-run' ? 'Step 2: Integrity & Preview' : 'Step 3: Generating'}
                         </p>
                     </div>
                 </div>
@@ -295,29 +326,18 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
 
                 {step === 'config' && (
                     <div className="space-y-8 animate-in slide-in-from-right-4">
-                        <div className="grid grid-cols-3 gap-4" role="radiogroup" aria-labelledby="export-format-label">
+                        <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-labelledby="export-format-label">
                             <span id="export-format-label" className="sr-only">Choose Export Format</span>
                             <button
                                 role="radio"
-                                aria-checked={format === 'static-site'}
-                                className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'static-site' ? 'border-iiif-blue bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
-                                onClick={() => setFormat('static-site')}
+                                aria-checked={format === 'canopy'}
+                                className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'canopy' ? 'border-iiif-blue bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
+                                onClick={() => setFormat('canopy')}
                             >
-                                <Icon name="language" className={`text-2xl mb-3 ${format === 'static-site' ? 'text-iiif-blue' : 'text-slate-400'}`} />
-                                <div className="font-bold text-sm text-slate-800 mb-1">Static Website</div>
-                                <p className="text-[10px] text-slate-500 leading-tight">Embedded viewer for instant browsing.</p>
-                                {format === 'static-site' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
-                            </button>
-                            <button
-                                role="radio"
-                                aria-checked={format === 'wax-site'}
-                                className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'wax-site' ? 'border-green-600 bg-green-50' : 'border-slate-100 hover:border-slate-200'}`}
-                                onClick={() => setFormat('wax-site')}
-                            >
-                                <Icon name="public" className={`text-2xl mb-3 ${format === 'wax-site' ? 'text-green-600' : 'text-slate-400'}`} />
-                                <div className="font-bold text-sm text-slate-800 mb-1">Wax Exhibition</div>
-                                <p className="text-[10px] text-slate-500 leading-tight">Full static site with pages, search & IIIF tiles.</p>
-                                {format === 'wax-site' && <div className="absolute top-4 right-4 text-green-600"><Icon name="check_circle"/></div>}
+                                <Icon name="public" className={`text-2xl mb-3 ${format === 'canopy' ? 'text-iiif-blue' : 'text-slate-400'}`} />
+                                <div className="font-bold text-sm text-slate-800 mb-1">Canopy IIIF Site</div>
+                                <p className="text-[10px] text-slate-500 leading-tight">Modern Next.js static site with search, mapping, and themes.</p>
+                                {format === 'canopy' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
                             </button>
                             <button
                                 role="radio"
@@ -381,19 +401,19 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                             </button>
                         </div>
 
-                        {format === 'wax-site' && (
-                            <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
-                                <div className="flex items-center gap-2 text-green-800 font-bold text-sm mb-2">
-                                    <Icon name="auto_awesome" /> Wax-Style Exhibition Site
+                        {format === 'canopy' && (
+                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                                <div className="flex items-center gap-2 text-blue-800 font-bold text-sm mb-2">
+                                    <Icon name="auto_awesome" /> Plug & Play Compatible
                                 </div>
-                                <p className="text-xs text-green-700">
-                                    Generates a complete static website compatible with GitHub Pages, Netlify, or any static host.
-                                    Includes pre-computed IIIF tiles, item pages, search index, and gallery views.
+                                <p className="text-xs text-blue-700">
+                                    Generates a <code>canopy-export</code> package ready to drop into the Canopy IIIF template.
+                                    Includes <code>canopy.yml</code> configuration and correctly structured IIIF data.
                                 </p>
                             </div>
                         )}
 
-                        {format !== 'wax-site' && (
+                        {format !== 'canopy' && (
                             <label className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer group hover:bg-slate-100 transition-colors">
                                 <input
                                     type="checkbox"
@@ -528,12 +548,12 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                     </div>
                 )}
 
-                {step === 'wax-config' && (
+                {step === 'canopy-config' && (
                     <div className="space-y-6 animate-in slide-in-from-right-4">
                         <div className="text-center mb-6">
-                            <Icon name="public" className="text-4xl text-green-600 mb-2" />
-                            <h3 className="text-lg font-bold text-slate-800">Configure Your Exhibition</h3>
-                            <p className="text-sm text-slate-500">Customize how your static site will be generated</p>
+                            <Icon name="public" className="text-4xl text-iiif-blue mb-2" />
+                            <h3 className="text-lg font-bold text-slate-800">Canopy Configuration</h3>
+                            <p className="text-sm text-slate-500">Configure your site settings and visual theme</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -541,107 +561,112 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Site Title</label>
                                 <input
                                     type="text"
-                                    value={waxConfig.title || ''}
-                                    onChange={e => setWaxConfig({ ...waxConfig, title: e.target.value })}
+                                    value={canopyConfig.title}
+                                    onChange={e => setCanopyConfig({ ...canopyConfig, title: e.target.value })}
                                     className="w-full border rounded-lg p-2 text-sm"
-                                    placeholder="My IIIF Collection"
+                                    placeholder="My Collection"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Collection Name</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Base URL</label>
                                 <input
                                     type="text"
-                                    value={waxConfig.collectionName || ''}
-                                    onChange={e => setWaxConfig({ ...waxConfig, collectionName: e.target.value.replace(/[^a-z0-9-]/gi, '-').toLowerCase() })}
+                                    value={canopyConfig.baseUrl}
+                                    onChange={e => setCanopyConfig({ ...canopyConfig, baseUrl: e.target.value })}
                                     className="w-full border rounded-lg p-2 text-sm"
-                                    placeholder="objects"
+                                    placeholder="Optional (e.g. https://...)"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
-                            <textarea
-                                value={waxConfig.description || ''}
-                                onChange={e => setWaxConfig({ ...waxConfig, description: e.target.value })}
-                                className="w-full border rounded-lg p-2 text-sm"
-                                rows={2}
-                                placeholder="A digital exhibition of..."
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">Base URL (optional)</label>
-                            <input
-                                type="text"
-                                value={waxConfig.baseUrl || ''}
-                                onChange={e => setWaxConfig({ ...waxConfig, baseUrl: e.target.value })}
-                                className="w-full border rounded-lg p-2 text-sm"
-                                placeholder="https://username.github.io/my-collection"
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Leave empty for relative paths (works locally)</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Thumbnail Width</label>
-                                <input
-                                    type="number"
-                                    value={waxConfig.thumbnailWidth || 250}
-                                    onChange={e => setWaxConfig({ ...waxConfig, thumbnailWidth: parseInt(e.target.value) || 250 })}
-                                    className="w-full border rounded-lg p-2 text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Full Image Width</label>
-                                <input
-                                    type="number"
-                                    value={waxConfig.fullWidth || 1140}
-                                    onChange={e => setWaxConfig({ ...waxConfig, fullWidth: parseInt(e.target.value) || 1140 })}
-                                    className="w-full border rounded-lg p-2 text-sm"
-                                />
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Theme Colors</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-slate-500 block mb-1">Accent Color</label>
+                                    <select
+                                        value={canopyConfig.theme.accentColor}
+                                        onChange={e => setCanopyConfig({ ...canopyConfig, theme: { ...canopyConfig.theme, accentColor: e.target.value } })}
+                                        className="w-full border rounded-lg p-2 text-sm capitalize"
+                                    >
+                                        {['indigo', 'violet', 'purple', 'plum', 'pink', 'tomato', 'orange', 'amber', 'lime', 'grass', 'teal', 'cyan'].map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-500 block mb-1">Background Tone</label>
+                                    <select
+                                        value={canopyConfig.theme.grayColor}
+                                        onChange={e => setCanopyConfig({ ...canopyConfig, theme: { ...canopyConfig.theme, grayColor: e.target.value } })}
+                                        className="w-full border rounded-lg p-2 text-sm capitalize"
+                                    >
+                                        {['slate', 'gray', 'zinc', 'neutral', 'stone', 'sand', 'mauve', 'olive', 'sage'].map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
                         <div className="flex gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 p-3 rounded-lg border border-slate-200 flex-1">
                                 <input
                                     type="checkbox"
-                                    checked={waxConfig.includeSearch}
-                                    onChange={e => setWaxConfig({ ...waxConfig, includeSearch: e.target.checked })}
-                                    className="rounded text-green-600"
+                                    checked={canopyConfig.theme.appearance === 'dark'}
+                                    onChange={e => setCanopyConfig({ ...canopyConfig, theme: { ...canopyConfig.theme, appearance: e.target.checked ? 'dark' : 'light' } })}
+                                    className="rounded text-iiif-blue"
                                 />
-                                <span className="text-sm text-slate-700">Include Search</span>
+                                <span className="text-sm text-slate-700">Dark Mode Default</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
+
+                            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 p-3 rounded-lg border border-slate-200 flex-1">
                                 <input
                                     type="checkbox"
-                                    checked={waxConfig.includeViewer}
-                                    onChange={e => setWaxConfig({ ...waxConfig, includeViewer: e.target.checked })}
-                                    className="rounded text-green-600"
+                                    checked={canopyConfig.search.enabled}
+                                    onChange={e => setCanopyConfig({ ...canopyConfig, search: { ...canopyConfig.search, enabled: e.target.checked } })}
+                                    className="rounded text-iiif-blue"
                                 />
-                                <span className="text-sm text-slate-700">Include Viewer Page</span>
+                                <span className="text-sm text-slate-700">Enable Search</span>
                             </label>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Template Style</label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['minimal', 'gallery', 'scholarly'] as const).map(t => (
-                                    <button
-                                        key={t}
-                                        onClick={() => setWaxConfig({ ...waxConfig, template: t })}
-                                        className={`p-3 rounded-lg border-2 text-sm font-medium capitalize transition-colors ${
-                                            waxConfig.template === t
-                                                ? 'border-green-600 bg-green-50 text-green-800'
-                                                : 'border-slate-200 hover:border-slate-300'
-                                        }`}
-                                    >
-                                        {t}
-                                    </button>
-                                ))}
+                        {/* Featured Items Picker */}
+                        {availableManifests.length > 0 && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    Featured Items <span className="font-normal text-slate-400">({canopyConfig.featured.length}/6 selected)</span>
+                                </label>
+                                <p className="text-xs text-slate-500 mb-3">Select up to 6 manifests to feature on the homepage.</p>
+                                <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
+                                    {availableManifests.map(manifest => (
+                                        <label
+                                            key={manifest.id}
+                                            className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors ${
+                                                canopyConfig.featured.includes(manifest.id) ? 'bg-blue-50' : ''
+                                            } ${
+                                                !canopyConfig.featured.includes(manifest.id) && canopyConfig.featured.length >= 6
+                                                    ? 'opacity-50 cursor-not-allowed' : ''
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={canopyConfig.featured.includes(manifest.id)}
+                                                onChange={() => toggleFeaturedItem(manifest.id)}
+                                                disabled={!canopyConfig.featured.includes(manifest.id) && canopyConfig.featured.length >= 6}
+                                                className="rounded text-iiif-blue"
+                                            />
+                                            <span className="text-sm text-slate-700 truncate flex-1">{manifest.label}</span>
+                                            {canopyConfig.featured.includes(manifest.id) && (
+                                                <span className="text-xs text-iiif-blue font-medium">
+                                                    #{canopyConfig.featured.indexOf(manifest.id) + 1}
+                                                </span>
+                                            )}
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 
@@ -716,14 +741,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                         <button onClick={onClose} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Cancel</button>
                         <button
                             onClick={() => {
-                                if (format === 'wax-site') setStep('wax-config');
+                                if (format === 'canopy') setStep('canopy-config');
                                 else if (format === 'ocfl' || format === 'bagit') setStep('archival-config');
                                 else if (format === 'activity-log') handleActivityLogExport();
                                 else setStep('dry-run');
                             }}
                             className={`text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl flex items-center gap-2 transition-all active:scale-95 ${format === 'activity-log' ? 'bg-cyan-600 hover:bg-cyan-700' : 'bg-iiif-blue hover:bg-blue-700'}`}
                         >
-                            {format === 'wax-site' ? 'Configure Site' : format === 'ocfl' || format === 'bagit' ? 'Configure Package' : format === 'activity-log' ? 'Export Log' : 'Start Dry Run'} <Icon name={format === 'activity-log' ? 'download' : 'arrow_forward'} />
+                            {format === 'canopy' ? 'Configure Site' : format === 'ocfl' || format === 'bagit' ? 'Configure Package' : format === 'activity-log' ? 'Export Log' : 'Start Dry Run'} <Icon name={format === 'activity-log' ? 'download' : 'arrow_forward'} />
                         </button>
                     </>
                 )}
@@ -738,14 +763,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                         </button>
                     </>
                 )}
-                {step === 'wax-config' && (
+                {step === 'canopy-config' && (
                     <>
                         <button onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back</button>
                         <button
-                            onClick={handleWaxExport}
-                            className="bg-green-600 text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-green-700 shadow-xl flex items-center gap-2 transition-all active:scale-95"
+                            onClick={handleCanopyExport}
+                            className="bg-iiif-blue text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-700 shadow-xl flex items-center gap-2 transition-all active:scale-95"
                         >
-                            Generate Site <Icon name="download" />
+                            Generate Site Config <Icon name="arrow_forward" />
                         </button>
                     </>
                 )}

@@ -1,0 +1,1118 @@
+// ============================================================================
+// Enhanced Implementation
+// ============================================================================
+
+/**
+ * IIIF Image API 3.0 Core Implementation
+ * 
+ * Complete implementation of IIIF Image API 3.0 specification with
+ * support for all features, compliance levels, and extensions.
+ */
+
+// ============================================================================
+// Enhanced Types
+// ============================================================================
+
+export type ImageApiProfile = 'level0' | 'level1' | 'level2';
+export type ImageQuality = 'default' | 'color' | 'gray' | 'bitonal';
+export type ImageFormat = 'jpg' | 'tif' | 'png' | 'webp' | 'gif' | 'jp2' | 'pdf';
+export type ImageApiFeature = 
+  | 'baseUriRedirect' | 'canonicalLinkHeader' | 'cors' | 'jsonldMediaType' | 'profileLinkHeader'
+  | 'regionByPx' | 'regionByPct' | 'regionSquare'
+  | 'sizeByWhListed' | 'sizeByW' | 'sizeByH' | 'sizeByPct' | 'sizeByWh' | 'sizeByForcedWh' | 'sizeByWhListed' | 'sizeByConfinedWh' | 'sizeUpscaling'
+  | 'rotationBy90s' | 'rotationArbitrary' | 'mirroring'
+  | 'defaultQuality' | 'colorQuality' | 'grayQuality' | 'bitonalQuality'
+  | 'jpgFormat' | 'pngFormat' | 'tifFormat' | 'gifFormat' | 'jp2Format' | 'pdfFormat' | 'webpFormat';
+
+export interface SizeInfo {
+  width: number;
+  height: number;
+}
+
+export interface TileInfo {
+  width: number;
+  height?: number;
+  scaleFactors: number[];
+}
+
+export interface IIIFImageServiceConfig {
+  baseUri: string;
+  identifier: string;
+  width: number;
+  height: number;
+  profile?: ImageApiProfile;
+  maxWidth?: number;
+  maxHeight?: number;
+  maxArea?: number;
+  tiles?: TileInfo[];
+  sizes?: SizeInfo[];
+  preferredFormats?: ImageFormat[];
+  rights?: string;
+  extraFeatures?: ImageApiFeature[];
+  extraFormats?: ImageFormat[];
+  extraQualities?: ImageQuality[];
+  contextExtensions?: string[];
+}
+
+export interface CanonicalUriOptions {
+  enforceCanonical: boolean;
+  serverLimits?: {
+    maxWidth?: number;
+    maxHeight?: number;
+    maxArea?: number;
+  };
+}
+
+export interface ImageTransformationOptions {
+  region: RegionParams;
+  size: SizeParams;
+  rotation: RotationParams;
+  quality: ImageQuality;
+  format: ImageFormat;
+  canonical?: boolean;
+}
+
+// ============================================================================
+// Core Implementation Class
+// ============================================================================
+
+export class IIIFImageService {
+  private config: IIIFImageServiceConfig;
+  private serviceUri: string;
+
+  constructor(config: IIIFImageServiceConfig) {
+    this.config = {
+      profile: 'level0',
+      ...config
+    };
+    this.serviceUri = `${this.config.baseUri}/${encodeIdentifier(this.config.identifier)}`;
+  }
+
+  /**
+   * Get the info.json document
+   */
+  getInfoJson(): ImageServiceInfo {
+    return generateInfoJson(
+      this.serviceUri,
+      this.config.width,
+      this.config.height,
+      this.config.profile,
+      {
+        sizes: this.config.sizes,
+        tiles: this.config.tiles,
+        maxWidth: this.config.maxWidth,
+        maxHeight: this.config.maxHeight,
+        extraFeatures: this.config.extraFeatures,
+        extraFormats: this.config.extraFormats,
+        extraQualities: this.config.extraQualities,
+        rights: this.config.rights
+      }
+    );
+  }
+
+  /**
+   * Build image request URI
+   */
+  buildImageUri(options: ImageTransformationOptions): string {
+    const region = formatRegion(options.region);
+    const size = formatSize(options.size);
+    const rotation = formatRotation(options.rotation);
+    
+    return `${this.serviceUri}/${region}/${size}/${rotation}/${options.quality}.${options.format}`;
+  }
+
+  /**
+   * Build canonical image URI
+   */
+  buildCanonicalUri(options: ImageTransformationOptions): string {
+    const canonicalParams = this.canonicalizeRequest(options);
+    return this.buildImageUri(canonicalParams);
+  }
+
+  /**
+   * Validate a request against this service's capabilities
+   */
+  validateRequest(request: Partial<ImageTransformationOptions>): ImageApiValidationResult {
+    const info = this.getInfoJson();
+    
+    // Convert to string format for validation
+    const params = {
+      region: request.region ? formatRegion(request.region) : 'full',
+      size: request.size ? formatSize(request.size) : 'max',
+      rotation: request.rotation ? formatRotation(request.rotation) : '0',
+      quality: request.quality || 'default',
+      format: request.format || 'jpg'
+    };
+
+    return validateImageRequest(params, info);
+  }
+
+  /**
+   * Calculate tile requests for all scales
+   */
+  getTileRequests(): TileRequest[][] {
+    const tileSets: TileRequest[][] = [];
+    const info = this.getInfoJson();
+    
+    if (!info.tiles) {
+      return tileSets;
+    }
+
+    for (const tileSet of info.tiles) {
+      const tileWidth = tileSet.width;
+      const tileHeight = tileSet.height || tileSet.width;
+      const requests: TileRequest[] = [];
+
+      for (const scaleFactor of tileSet.scaleFactors) {
+        const { columns, rows } = calculateTileCount(
+          info.width,
+          info.height,
+          tileWidth,
+          tileHeight,
+          scaleFactor
+        );
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < columns; x++) {
+            requests.push(
+              calculateTileRequest(
+                info.width,
+                info.height,
+                tileWidth,
+                tileHeight,
+                scaleFactor,
+                x,
+                y
+              )
+            );
+          }
+        }
+      }
+
+      tileSets.push(requests);
+    }
+
+    return tileSets;
+  }
+
+  /**
+   * Generate all pre-defined sizes as transformation options
+   */
+  getPredefinedSizes(): ImageTransformationOptions[] {
+    const info = this.getInfoJson();
+    const options: ImageTransformationOptions[] = [];
+
+    if (info.sizes) {
+      for (const size of info.sizes) {
+        options.push({
+          region: { type: 'full' },
+          size: { type: 'widthHeight', width: size.width, height: size.height },
+          rotation: { degrees: 0, mirror: false },
+          quality: 'default',
+          format: (info.preferredFormats?.[0] as ImageFormat) || 'jpg'
+        });
+      }
+    }
+
+    return options;
+  }
+
+  /**
+   * Convert request to canonical form
+   */
+  private canonicalizeRequest(options: ImageTransformationOptions): ImageTransformationOptions {
+    const canonical = { ...options };
+    
+    // Canonicalize region
+    if (canonical.region.type === 'percent') {
+      // Convert percent to pixels
+      const x = Math.round((canonical.region.x! / 100) * this.config.width);
+      const y = Math.round((canonical.region.y! / 100) * this.config.height);
+      const w = Math.round((canonical.region.w! / 100) * this.config.width);
+      const h = Math.round((canonical.region.h! / 100) * this.config.height);
+      
+      canonical.region = {
+        type: 'pixels',
+        x,
+        y,
+        w,
+        h
+      };
+    }
+
+    // Canonicalize size
+    const regionWidth = canonical.region.type === 'full' 
+      ? this.config.width 
+      : canonical.region.type === 'square'
+        ? Math.min(this.config.width, this.config.height)
+        : canonical.region.w!;
+    
+    const regionHeight = canonical.region.type === 'full'
+      ? this.config.height
+      : canonical.region.type === 'square'
+        ? Math.min(this.config.width, this.config.height)
+        : canonical.region.h!;
+
+    canonical.size = this.canonicalizeSize(canonical.size, regionWidth, regionHeight);
+
+    // Canonicalize rotation
+    canonical.rotation = this.canonicalizeRotation(canonical.rotation);
+
+    // Canonicalize quality (use 'default' if that's what's requested)
+    if (canonical.quality === 'default' && this.config.profile === 'level0') {
+      canonical.quality = 'default'; // Keep as-is for level0
+    }
+
+    return canonical;
+  }
+
+  private canonicalizeSize(
+    size: SizeParams,
+    regionWidth: number,
+    regionHeight: number
+  ): SizeParams {
+    // Implementation of canonical size according to spec section 4.8
+    const { maxWidth, maxHeight, maxArea } = this.config;
+    
+    let canonicalSize: SizeParams = { ...size };
+
+    switch (size.type) {
+      case 'max':
+        if (!size.upscale) {
+          canonicalSize = { type: 'max', upscale: false };
+        } else {
+          canonicalSize = { type: 'max', upscale: true };
+        }
+        break;
+
+      case 'width':
+      case 'height':
+      case 'percent':
+        // For these types, convert to w,h format
+        const result = calculateResultingSize(regionWidth, regionHeight, size);
+        canonicalSize = {
+          type: 'widthHeight',
+          width: result.width,
+          height: result.height,
+          upscale: size.upscale
+        };
+        break;
+
+      case 'confined':
+        // Convert to w,h format after calculation
+        const scaleW = size.width! / regionWidth;
+        const scaleH = size.height! / regionHeight;
+        const scale = Math.min(scaleW, scaleH);
+        canonicalSize = {
+          type: 'widthHeight',
+          width: Math.round(regionWidth * scale),
+          height: Math.round(regionHeight * scale),
+          upscale: size.upscale
+        };
+        break;
+
+      // widthHeight type is already canonical
+    }
+
+    // Apply server limits
+    if (maxWidth && canonicalSize.width! > maxWidth) {
+      const scale = maxWidth / canonicalSize.width!;
+      canonicalSize.width = maxWidth;
+      canonicalSize.height = Math.round(canonicalSize.height! * scale);
+    }
+
+    if (maxHeight && canonicalSize.height! > maxHeight) {
+      const scale = maxHeight / canonicalSize.height!;
+      canonicalSize.height = maxHeight;
+      canonicalSize.width = Math.round(canonicalSize.width! * scale);
+    }
+
+    if (maxArea && (canonicalSize.width! * canonicalSize.height!) > maxArea) {
+      const scale = Math.sqrt(maxArea / (canonicalSize.width! * canonicalSize.height!));
+      canonicalSize.width = Math.round(canonicalSize.width! * scale);
+      canonicalSize.height = Math.round(canonicalSize.height! * scale);
+    }
+
+    return canonicalSize;
+  }
+
+  private canonicalizeRotation(rotation: RotationParams): RotationParams {
+    // Try to use integer if possible (e.g., 90.0 -> 90)
+    let degrees = rotation.degrees;
+    if (Number.isInteger(degrees)) {
+      degrees = Math.round(degrees);
+    } else {
+      // Format according to floating point recommendations (section 4.7)
+      degrees = parseFloat(degrees.toFixed(6));
+    }
+
+    // Ensure within 0-360 range
+    degrees = ((degrees % 360) + 360) % 360;
+
+    return {
+      degrees,
+      mirror: rotation.mirror
+    };
+  }
+}
+
+// ============================================================================
+// Enhanced Utility Functions
+// ============================================================================
+
+/**
+ * Parse and normalize floating point values according to IIIF spec
+ */
+export function formatIIIFFloat(value: number): string {
+  // Remove trailing zeros and decimal point if integer
+  let str = value.toString();
+  
+  // Remove trailing zeros after decimal
+  str = str.replace(/(\.[0-9]*?)0+$/, '$1');
+  
+  // Remove decimal point if nothing after it
+  str = str.replace(/\.$/, '');
+  
+  // Add leading zero if less than 1
+  if (str.startsWith('.')) {
+    str = '0' + str;
+  } else if (str.startsWith('-.')) {
+    str = '-0' + str.substring(1);
+  }
+  
+  return str;
+}
+
+/**
+ * Calculate aspect ratio preserving size
+ */
+export function calculateSizeWithinBounds(
+  width: number,
+  height: number,
+  maxWidth?: number,
+  maxHeight?: number,
+  maxArea?: number
+): { width: number; height: number } {
+  let resultWidth = width;
+  let resultHeight = height;
+
+  // Apply width constraint
+  if (maxWidth && resultWidth > maxWidth) {
+    const scale = maxWidth / resultWidth;
+    resultWidth = maxWidth;
+    resultHeight = Math.round(resultHeight * scale);
+  }
+
+  // Apply height constraint
+  if (maxHeight && resultHeight > maxHeight) {
+    const scale = maxHeight / resultHeight;
+    resultHeight = maxHeight;
+    resultWidth = Math.round(resultWidth * scale);
+  }
+
+  // Apply area constraint
+  if (maxArea && (resultWidth * resultHeight) > maxArea) {
+    const scale = Math.sqrt(maxArea / (resultWidth * resultHeight));
+    resultWidth = Math.round(resultWidth * scale);
+    resultHeight = Math.round(resultHeight * scale);
+  }
+
+  return { width: resultWidth, height: resultHeight };
+}
+
+/**
+ * Generate Link header for canonical URI
+ */
+export function generateCanonicalLinkHeader(canonicalUri: string): string {
+  return `<${canonicalUri}>;rel="canonical"`;
+}
+
+/**
+ * Generate profile Link header
+ */
+export function generateProfileLinkHeader(profileUri: string): string {
+  return `<${profileUri}>;rel="profile"`;
+}
+
+/**
+ * Check if a region is entirely outside image bounds
+ */
+export function isRegionOutsideBounds(
+  region: RegionParams,
+  imageWidth: number,
+  imageHeight: number
+): boolean {
+  if (region.type === 'full' || region.type === 'square') {
+    return false;
+  }
+
+  if (region.type === 'pixels') {
+    return (
+      region.x! >= imageWidth ||
+      region.y! >= imageHeight ||
+      region.x! + region.w! <= 0 ||
+      region.y! + region.h! <= 0
+    );
+  }
+
+  // Percent
+  const x = (region.x! / 100) * imageWidth;
+  const y = (region.y! / 100) * imageHeight;
+  const w = (region.w! / 100) * imageWidth;
+  const h = (region.h! / 100) * imageHeight;
+
+  return (
+    x >= imageWidth ||
+    y >= imageHeight ||
+    x + w <= 0 ||
+    y + h <= 0
+  );
+}
+
+/**
+ * Calculate square region coordinates
+ */
+export function calculateSquareRegion(
+  imageWidth: number,
+  imageHeight: number,
+  position: 'center' | 'top' | 'bottom' = 'center'
+): { x: number; y: number; size: number } {
+  const size = Math.min(imageWidth, imageHeight);
+  
+  let x = 0;
+  let y = 0;
+  
+  if (imageWidth > imageHeight) {
+    // Wider than tall
+    x = Math.floor((imageWidth - size) / 2);
+  } else if (imageHeight > imageWidth) {
+    // Taller than wide
+    switch (position) {
+      case 'center':
+        y = Math.floor((imageHeight - size) / 2);
+        break;
+      case 'top':
+        y = 0;
+        break;
+      case 'bottom':
+        y = imageHeight - size;
+        break;
+    }
+  }
+  
+  return { x, y, size };
+}
+
+/**
+ * Mirror coordinates for mirrored rotation
+ */
+export function applyMirroring(
+  x: number,
+  width: number
+): number {
+  return width - x - 1;
+}
+
+/**
+ * Calculate rotated dimensions
+ */
+export function calculateRotatedDimensions(
+  width: number,
+  height: number,
+  degrees: number
+): { width: number; height: number } {
+  const rad = (degrees * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  
+  return {
+    width: Math.round(width * cos + height * sin),
+    height: Math.round(width * sin + height * cos)
+  };
+}
+
+// ============================================================================
+// Server Response Helpers
+// ============================================================================
+
+export interface IIIFServerResponse {
+  status: number;
+  headers: Record<string, string>;
+  body?: Buffer | string;
+  redirect?: string;
+}
+
+/**
+ * Create success response with appropriate headers
+ */
+export function createImageResponse(
+  imageData: Buffer,
+  format: ImageFormat,
+  canonicalUri?: string,
+  profile?: string
+): IIIFServerResponse {
+  const headers: Record<string, string> = {
+    'Content-Type': FORMAT_MIME_TYPES[format],
+    'Content-Length': imageData.length.toString(),
+  };
+
+  if (canonicalUri) {
+    headers['Link'] = generateCanonicalLinkHeader(canonicalUri);
+  }
+
+  if (profile) {
+    headers['Link'] = (headers['Link'] ? headers['Link'] + ', ' : '') + 
+                      generateProfileLinkHeader(profile);
+  }
+
+  return {
+    status: 200,
+    headers,
+    body: imageData
+  };
+}
+
+/**
+ * Create info.json response
+ */
+export function createInfoJsonResponse(
+  info: ImageServiceInfo,
+  acceptHeader?: string
+): IIIFServerResponse {
+  let contentType: string;
+  
+  if (acceptHeader && acceptHeader.includes('application/ld+json')) {
+    contentType = `application/ld+json;profile="${IMAGE_API_CONTEXT}"`;
+  } else {
+    contentType = 'application/json';
+  }
+  
+  const body = JSON.stringify(info, null, 2);
+  
+  const headers: Record<string, string> = {
+    'Content-Type': contentType,
+    'Content-Length': Buffer.byteLength(body).toString(),
+  };
+  
+  // Add profile link header
+  const profileUri = COMPLIANCE_LEVELS[info.profile].uri;
+  headers['Link'] = generateProfileLinkHeader(profileUri);
+  
+  return {
+    status: 200,
+    headers,
+    body
+  };
+}
+
+/**
+ * Create error response
+ */
+export function createErrorResponse(
+  statusCode: number,
+  message: string,
+  details?: string
+): IIIFServerResponse {
+  const errorBody = JSON.stringify({
+    error: {
+      code: statusCode,
+      message,
+      details
+    }
+  });
+  
+  return {
+    status: statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(errorBody).toString()
+    },
+    body: errorBody
+  };
+}
+
+/**
+ * Create redirect response
+ */
+export function createRedirectResponse(
+  location: string,
+  permanent: boolean = false
+): IIIFServerResponse {
+  return {
+    status: permanent ? 301 : 302,
+    headers: {
+      'Location': location
+    }
+  };
+}
+
+// ============================================================================
+// Compliance Level Utilities
+// ============================================================================
+
+/**
+ * Determine appropriate compliance level based on features
+ */
+export function determineComplianceLevel(
+  features: ImageApiFeature[],
+  formats: ImageFormat[] = ['jpg'],
+  qualities: ImageQuality[] = ['default']
+): ImageApiProfile {
+  // Check level 2 requirements
+  const level2Features = COMPLIANCE_LEVELS.level2.requiredFeatures;
+  const level2Formats = COMPLIANCE_LEVELS.level2.requiredFormats;
+  const level2Qualities = COMPLIANCE_LEVELS.level2.requiredQualities;
+  
+  const hasLevel2Features = level2Features.every(f => features.includes(f));
+  const hasLevel2Formats = level2Formats.every(f => formats.includes(f));
+  const hasLevel2Qualities = level2Qualities.every(q => qualities.includes(q));
+  
+  if (hasLevel2Features && hasLevel2Formats && hasLevel2Qualities) {
+    return 'level2';
+  }
+  
+  // Check level 1 requirements
+  const level1Features = COMPLIANCE_LEVELS.level1.requiredFeatures;
+  const hasLevel1Features = level1Features.every(f => features.includes(f));
+  
+  if (hasLevel1Features) {
+    return 'level1';
+  }
+  
+  return 'level0';
+}
+
+/**
+ * Get all available features for a profile including extras
+ */
+export function getAllAvailableFeatures(
+  profile: ImageApiProfile,
+  extraFeatures: ImageApiFeature[] = []
+): ImageApiFeature[] {
+  const baseFeatures = [...COMPLIANCE_LEVELS[profile].requiredFeatures];
+  const allFeatures = new Set([...baseFeatures, ...extraFeatures]);
+  return Array.from(allFeatures);
+}
+
+// ============================================================================
+// URI Normalization and Canonicalization
+// ============================================================================
+
+/**
+ * Normalize URI path components
+ */
+export function normalizeUriPath(path: string): string {
+  // Remove duplicate slashes
+  path = path.replace(/\/+/g, '/');
+  
+  // Remove trailing slash (except for root)
+  if (path.endsWith('/') && path !== '/') {
+    path = path.substring(0, path.length - 1);
+  }
+  
+  return path;
+}
+
+/**
+ * Ensure base URI doesn't have trailing slash
+ */
+export function normalizeBaseUri(baseUri: string): string {
+  return baseUri.endsWith('/') ? baseUri.substring(0, baseUri.length - 1) : baseUri;
+}
+
+/**
+ * Parse and validate complete IIIF URI
+ */
+export function parseAndValidateUri(
+  uri: string,
+  info?: ImageServiceInfo
+): {
+  valid: boolean;
+  parsed?: ReturnType<typeof parseImageUri>;
+  validation?: ImageApiValidationResult;
+  canonicalUri?: string;
+} {
+  const parsed = parseImageUri(uri);
+  if (!parsed) {
+    return { valid: false };
+  }
+  
+  const validation = validateImageRequest(
+    {
+      region: parsed.region,
+      size: parsed.size,
+      rotation: parsed.rotation,
+      quality: parsed.quality,
+      format: parsed.format as ImageFormat
+    },
+    info
+  );
+  
+  let canonicalUri: string | undefined;
+  if (validation.valid && info) {
+    // Build canonical URI
+    const region = validateRegion(parsed.region, info.width, info.height);
+    const size = validateSize(parsed.size, undefined, undefined, 
+      info.extraFeatures?.includes('sizeUpscaling'));
+    const rotation = validateRotation(parsed.rotation,
+      info.extraFeatures?.includes('rotationArbitrary'),
+      info.extraFeatures?.includes('mirroring') || info.profile === 'level2');
+    
+    if (region.valid && size.valid && rotation.valid) {
+      const canonicalParams: ImageTransformationOptions = {
+        region: region.parsed!,
+        size: size.parsed!,
+        rotation: rotation.parsed!,
+        quality: parsed.quality as ImageQuality,
+        format: parsed.format as ImageFormat
+      };
+      
+      const service = new IIIFImageService({
+        baseUri: parsed.baseUri.replace(`/${parsed.identifier}`, ''),
+        identifier: parsed.identifier,
+        width: info.width,
+        height: info.height,
+        profile: info.profile,
+        maxWidth: info.maxWidth,
+        maxHeight: info.maxHeight,
+        extraFeatures: info.extraFeatures
+      });
+      
+      canonicalUri = service.buildCanonicalUri(canonicalParams);
+    }
+  }
+  
+  return {
+    valid: validation.valid,
+    parsed,
+    validation,
+    canonicalUri
+  };
+}
+
+// ============================================================================
+// Extension Support
+// ============================================================================
+
+/**
+ * Check if a feature is supported
+ */
+export function supportsFeature(
+  info: ImageServiceInfo,
+  feature: ImageApiFeature
+): boolean {
+  const profileFeatures = COMPLIANCE_LEVELS[info.profile].requiredFeatures;
+  const extraFeatures = info.extraFeatures || [];
+  
+  return profileFeatures.includes(feature) || extraFeatures.includes(feature);
+}
+
+/**
+ * Check if a format is supported
+ */
+export function supportsFormat(
+  info: ImageServiceInfo,
+  format: ImageFormat
+): boolean {
+  const profileFormats = COMPLIANCE_LEVELS[info.profile].requiredFormats;
+  const extraFormats = info.extraFormats || [];
+  
+  return profileFormats.includes(format) || extraFormats.includes(format);
+}
+
+/**
+ * Check if a quality is supported
+ */
+export function supportsQuality(
+  info: ImageServiceInfo,
+  quality: ImageQuality
+): boolean {
+  const profileQualities = COMPLIANCE_LEVELS[info.profile].requiredQualities;
+  const extraQualities = info.extraQualities || [];
+  
+  return profileQualities.includes(quality) || extraQualities.includes(quality);
+}
+
+/**
+ * Get all supported formats
+ */
+export function getAllSupportedFormats(info: ImageServiceInfo): ImageFormat[] {
+  const profileFormats = COMPLIANCE_LEVELS[info.profile].requiredFormats;
+  const extraFormats = info.extraFormats || [];
+  
+  return Array.from(new Set([...profileFormats, ...extraFormats]));
+}
+
+/**
+ * Get all supported qualities
+ */
+export function getAllSupportedQualities(info: ImageServiceInfo): ImageQuality[] {
+  const profileQualities = COMPLIANCE_LEVELS[info.profile].requiredQualities;
+  const extraQualities = info.extraQualities || [];
+  
+  return Array.from(new Set([...profileQualities, ...extraQualities]));
+}
+
+// ============================================================================
+// Image Transformation Pipeline
+// ============================================================================
+
+/**
+ * Apply IIIF transformation pipeline in correct order
+ */
+export interface TransformationPipeline {
+  region?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  size?: {
+    width: number;
+    height: number;
+    upscale: boolean;
+  };
+  rotation?: {
+    degrees: number;
+    mirror: boolean;
+  };
+  quality?: ImageQuality;
+  format?: ImageFormat;
+}
+
+/**
+ * Calculate transformation pipeline from request
+ */
+export function calculateTransformationPipeline(
+  request: ImageTransformationOptions,
+  imageWidth: number,
+  imageHeight: number
+): TransformationPipeline {
+  const pipeline: TransformationPipeline = {};
+  
+  // Region
+  if (request.region.type === 'full') {
+    pipeline.region = {
+      x: 0,
+      y: 0,
+      width: imageWidth,
+      height: imageHeight
+    };
+  } else if (request.region.type === 'square') {
+    const size = Math.min(imageWidth, imageHeight);
+    const x = imageWidth > size ? Math.floor((imageWidth - size) / 2) : 0;
+    const y = imageHeight > size ? Math.floor((imageHeight - size) / 2) : 0;
+    pipeline.region = { x, y, width: size, height: size };
+  } else if (request.region.type === 'pixels') {
+    pipeline.region = {
+      x: request.region.x!,
+      y: request.region.y!,
+      width: request.region.w!,
+      height: request.region.h!
+    };
+  } else if (request.region.type === 'percent') {
+    pipeline.region = {
+      x: Math.round((request.region.x! / 100) * imageWidth),
+      y: Math.round((request.region.y! / 100) * imageHeight),
+      width: Math.round((request.region.w! / 100) * imageWidth),
+      height: Math.round((request.region.h! / 100) * imageHeight)
+    };
+  }
+  
+  // Size
+  if (pipeline.region) {
+    const result = calculateResultingSize(
+      pipeline.region.width,
+      pipeline.region.height,
+      request.size
+    );
+    pipeline.size = {
+      width: result.width,
+      height: result.height,
+      upscale: request.size.upscale || false
+    };
+  }
+  
+  // Rotation
+  pipeline.rotation = {
+    degrees: request.rotation.degrees,
+    mirror: request.rotation.mirror
+  };
+  
+  // Quality
+  pipeline.quality = request.quality;
+  
+  // Format
+  pipeline.format = request.format;
+  
+  return pipeline;
+}
+
+/**
+ * Generate transformation description for debugging
+ */
+export function describeTransformation(pipeline: TransformationPipeline): string {
+  const parts: string[] = [];
+  
+  if (pipeline.region) {
+    parts.push(`Region: ${pipeline.region.x},${pipeline.region.y},${pipeline.region.width},${pipeline.region.height}`);
+  }
+  
+  if (pipeline.size) {
+    parts.push(`Size: ${pipeline.size.width}x${pipeline.size.height}${pipeline.size.upscale ? ' (upscaled)' : ''}`);
+  }
+  
+  if (pipeline.rotation) {
+    parts.push(`Rotation: ${pipeline.rotation.degrees}°${pipeline.rotation.mirror ? ' mirrored' : ''}`);
+  }
+  
+  if (pipeline.quality) {
+    parts.push(`Quality: ${pipeline.quality}`);
+  }
+  
+  if (pipeline.format) {
+    parts.push(`Format: ${pipeline.format}`);
+  }
+  
+  return parts.join(' | ');
+}
+
+// ============================================================================
+// Default Configurations
+// ============================================================================
+
+/**
+ * Create default configuration for common use cases
+ */
+export function createDefaultConfig(
+  baseUri: string,
+  identifier: string,
+  width: number,
+  height: number
+): IIIFImageServiceConfig {
+  // Generate standard sizes
+  const sizes = generateStandardSizes(width, height);
+  
+  // Generate standard tiles
+  const tiles = generateStandardTiles();
+  
+  return {
+    baseUri,
+    identifier,
+    width,
+    height,
+    profile: 'level2',
+    sizes,
+    tiles,
+    preferredFormats: ['webp', 'jpg', 'png'],
+    extraFeatures: [
+      'sizeUpscaling',
+      'rotationArbitrary',
+      'regionByPct',
+      'sizeByConfinedWh'
+    ],
+    extraFormats: ['webp', 'tif'],
+    extraQualities: ['color', 'gray', 'bitonal']
+  };
+}
+
+/**
+ * Create minimal configuration for static files
+ */
+export function createStaticConfig(
+  baseUri: string,
+  identifier: string,
+  width: number,
+  height: number
+): IIIFImageServiceConfig {
+  const sizes = generateStandardSizes(width, height);
+  
+  return {
+    baseUri,
+    identifier,
+    width,
+    height,
+    profile: 'level0',
+    sizes,
+    // No tiles, no extra features - just static files
+    preferredFormats: ['jpg']
+  };
+}
+
+// ============================================================================
+// Export all utilities
+// ============================================================================
+
+export default {
+  // Core classes
+  IIIFImageService,
+  
+  // Validation
+  validateRegion,
+  validateSize,
+  validateRotation,
+  validateQuality,
+  validateFormat,
+  validateImageRequest,
+  validateInfoJson,
+  
+  // URI building
+  buildImageUri,
+  buildInfoUri,
+  parseImageUri,
+  
+  // Info.json
+  generateInfoJson,
+  generateStandardSizes,
+  generateStandardTiles,
+  
+  // Tiles
+  calculateTileRequest,
+  calculateTileCount,
+  buildTileUri,
+  getAllTileUris,
+  
+  // Compliance
+  checkComplianceLevel,
+  getFeaturesForProfile,
+  getFormatsForProfile,
+  getQualitiesForProfile,
+  determineComplianceLevel,
+  
+  // Service reference
+  createImageServiceReference,
+  isImageService3,
+  
+  // Utilities
+  getImageMimeType,
+  getFormatFromMime,
+  calculateResultingSize,
+  encodeIdentifier,
+  decodeIdentifier,
+  formatIIIFFloat,
+  calculateSizeWithinBounds,
+  
+  // Server helpers
+  createImageResponse,
+  createInfoJsonResponse,
+  createErrorResponse,
+  createRedirectResponse,
+  
+  // Feature support
+  supportsFeature,
+  supportsFormat,
+  supportsQuality,
+  getAllSupportedFormats,
+  getAllSupportedQualities,
+  
+  // Default configs
+  createDefaultConfig,
+  createStaticConfig,
+  
+  // Constants
+  IMAGE_API_CONTEXT,
+  IMAGE_API_PROTOCOL,
+  COMPLIANCE_LEVELS,
+  FORMAT_MIME_TYPES,
+  FEATURE_DESCRIPTIONS
+};

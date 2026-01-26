@@ -1081,3 +1081,78 @@ export function encodeIdentifier(identifier: string): string {
 export function decodeIdentifier(encoded: string): string {
   return decodeURIComponent(encoded);
 }
+
+// ============================================================================
+// Core Implementation Class
+// ============================================================================
+
+export interface IIIFImageServiceConfig {
+  baseUri: string;
+  identifier: string;
+  width: number;
+  height: number;
+  profile?: ImageApiProfile;
+  maxWidth?: number;
+  maxHeight?: number;
+  maxArea?: number;
+  tiles?: TileInfo[];
+  sizes?: SizeInfo[];
+  preferredFormats?: ImageFormat[];
+  rights?: string;
+  extraFeatures?: ImageApiFeature[];
+  extraFormats?: ImageFormat[];
+  extraQualities?: ImageQuality[];
+  contextExtensions?: string[];
+}
+
+export class IIIFImageService {
+  private config: IIIFImageServiceConfig;
+  private serviceUri: string;
+
+  constructor(config: IIIFImageServiceConfig) {
+    this.config = {
+      profile: 'level0',
+      ...config
+    };
+    this.serviceUri = `${this.config.baseUri}/${encodeIdentifier(this.config.identifier)}`;
+  }
+
+  /**
+   * Get the info.json document
+   */
+  getInfoJson(): ImageServiceInfo {
+    return generateInfoJson(
+      this.serviceUri,
+      this.config.width,
+      this.config.height,
+      this.config.profile,
+      {
+        sizes: this.config.sizes,
+        tiles: this.config.tiles,
+        maxWidth: this.config.maxWidth,
+        maxHeight: this.config.maxHeight,
+        extraFeatures: this.config.extraFeatures,
+        extraFormats: this.config.extraFormats,
+        extraQualities: this.config.extraQualities,
+        rights: this.config.rights
+      }
+    );
+  }
+
+  /**
+   * Build image request URI
+   */
+  buildImageUri(options: {
+    region: RegionParams | string;
+    size: SizeParams | string;
+    rotation: RotationParams | string;
+    quality: ImageQuality;
+    format: ImageFormat;
+  }): string {
+    const region = typeof options.region === 'string' ? options.region : formatRegion(options.region);
+    const size = typeof options.size === 'string' ? options.size : formatSize(options.size);
+    const rotation = typeof options.rotation === 'string' ? options.rotation : formatRotation(options.rotation);
+    
+    return `${this.serviceUri}/${region}/${size}/${rotation}/${options.quality}.${options.format}`;
+  }
+}
