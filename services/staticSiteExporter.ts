@@ -15,7 +15,8 @@
 
 import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, getIIIFValue, isCanvas, isManifest, isCollection } from '../types';
 import { storage } from './storage';
-import { searchService } from './searchService';
+import { searchService, LunrDocument } from './searchService';
+import { fieldRegistry, DEFAULT_SEARCH_CONFIG } from './fieldRegistry';
 import {
   isPaintingMotivation,
   generateInfoJson,
@@ -23,6 +24,7 @@ import {
   createImageServiceReference,
   ImageApiProfile
 } from '../utils';
+import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES } from '../constants';
 
 // ============================================================================
 // Types
@@ -37,15 +39,17 @@ export interface StaticSiteConfig {
   description?: string;
   /** Collection name (used in paths) */
   collectionName: string;
+  /** Derivative preset name (wax-compatible, level0-static, etc.) */
+  derivativePreset?: string;
   /** Tile sizes to generate */
   tileSizes: number[];
   /** Thumbnail width */
   thumbnailWidth: number;
   /** Full image width */
   fullWidth: number;
-  /** Include search index */
+  /** Include search index (always true for static exports) */
   includeSearch: boolean;
-  /** Search fields to index */
+  /** Search fields to index (uses FieldRegistry defaults if not specified) */
   searchFields: string[];
   /** Include Universal Viewer */
   includeViewer: boolean;
@@ -67,29 +71,23 @@ export interface StaticFile {
   type: 'html' | 'json' | 'yaml' | 'js' | 'css' | 'image';
 }
 
-export interface LunrDocument {
-  lunr_id: string;
-  pid: string;
-  title: string;
-  content: string;
-  thumbnail?: string;
-  url: string;
-  [key: string]: string | undefined;
-}
+// LunrDocument is now imported from searchService
 
 // ============================================================================
 // Default Configuration
 // ============================================================================
 
+// Default config uses level0-static preset and FieldRegistry search fields
 const DEFAULT_CONFIG: StaticSiteConfig = {
   baseUrl: '',
   title: 'IIIF Collection',
   collectionName: 'objects',
+  derivativePreset: 'level0-static',
   tileSizes: [256],
   thumbnailWidth: 250,
   fullWidth: 1140,
-  includeSearch: true,
-  searchFields: ['label', 'summary', 'metadata.title', 'metadata.creator', 'metadata.date'],
+  includeSearch: true,  // Always true for WAX-compatible exports
+  searchFields: DEFAULT_SEARCH_CONFIG.fields,  // Uses FieldRegistry defaults
   includeViewer: true,
   template: 'gallery'
 };
@@ -181,23 +179,22 @@ class StaticSiteExporter {
         });
       }
 
-      // 8. Generate search index
-      if (cfg.includeSearch) {
-        const searchIndex = this.generateSearchIndex(items, cfg);
-        files.push({
-          path: 'search/index.json',
-          content: JSON.stringify(searchIndex, null, 2),
-          type: 'json'
-        });
+      // 8. Generate search index (always included for WAX-compatible exports)
+      // Uses searchService.exportLunrIndex() with FieldRegistry configuration
+      const searchIndex = this.generateSearchIndex(root, cfg);
+      files.push({
+        path: 'search/index.json',
+        content: JSON.stringify(searchIndex, null, 2),
+        type: 'json'
+      });
 
-        // Lunr.js configuration
-        const lunrConfig = this.generateLunrConfig(cfg);
-        files.push({
-          path: 'js/lunr-config.js',
-          content: lunrConfig,
-          type: 'js'
-        });
-      }
+      // Lunr.js configuration
+      const lunrConfig = this.generateLunrConfig(root, cfg);
+      files.push({
+        path: 'js/lunr-config.js',
+        content: lunrConfig,
+        type: 'js'
+      });
 
       // 9. Generate index page (gallery)
       const indexPage = this.generateIndexPage(items, cfg);
@@ -432,10 +429,14 @@ class StaticSiteExporter {
 
   /**
    * Generate IIIF tiles for a canvas (Level 0 - pre-computed)
+   * Uses derivative preset configuration for size generation
    */
   private async generateTiles(canvas: IIIFCanvas, cfg: StaticSiteConfig): Promise<StaticFile[]> {
     const files: StaticFile[] = [];
     const pid = this.slugify(canvas.id);
+
+    // Get derivative preset for size configuration
+    const preset = getDerivativePreset(cfg.derivativePreset);
 
     // Get the painting annotation's body (the image)
     const paintingAnno = this.getPaintingAnnotation(canvas);
@@ -459,8 +460,17 @@ class StaticSiteExporter {
         type: 'json'
       });
 
-      // Generate size variants
-      for (const width of [cfg.thumbnailWidth, cfg.fullWidth, ...cfg.tileSizes]) {
+      // Generate size variants using preset configuration
+      // Combines preset sizes with any additional tile sizes from config
+      const allSizes = new Set([
+        cfg.thumbnailWidth,
+        cfg.fullWidth,
+        ...preset.sizes,
+        ...cfg.tileSizes
+      ]);
+
+      for (const width of allSizes) {
+        if (width <= 0) continue;  // Skip invalid sizes (e.g., Level 2 dynamic fullWidth=0)
         // Note: In a real implementation, we'd use canvas/sharp to resize
         // For now, we store the original and let the browser scale
         files.push({
@@ -483,11 +493,21 @@ class StaticSiteExporter {
 
   /**
    * Generate IIIF Image API info.json (Level 0)
-   * Uses centralized Image API utilities for spec compliance
+   * Uses centralized Image API utilities and derivative presets for spec compliance
    */
   private generateImageServiceInfo(canvas: IIIFCanvas, pid: string, cfg: StaticSiteConfig): object {
     const width = canvas.width || 1000;
     const height = canvas.height || 1000;
+
+    // Get derivative preset for size configuration
+    const preset = getDerivativePreset(cfg.derivativePreset);
+
+    // Combine preset sizes with config overrides
+    const targetWidths = [
+      cfg.thumbnailWidth,
+      cfg.fullWidth > 0 ? cfg.fullWidth : preset.fullWidth,
+      ...preset.sizes.filter(s => s > 0)
+    ].filter((v, i, a) => v > 0 && a.indexOf(v) === i);  // Dedupe and filter zeros
 
     // Use centralized info.json generation
     return generateInfoJson(
@@ -496,10 +516,10 @@ class StaticSiteExporter {
       height,
       'level0',
       {
-        sizes: generateStandardSizes(width, height, [cfg.thumbnailWidth, cfg.fullWidth]),
+        sizes: generateStandardSizes(width, height, targetWidths),
         tiles: cfg.tileSizes.map(size => ({
           width: size,
-          scaleFactors: [1, 2, 4, 8]
+          scaleFactors: preset.scaleFactors
         }))
       }
     );
@@ -571,76 +591,45 @@ class StaticSiteExporter {
   }
 
   /**
-   * Generate Lunr.js search index
+   * Generate Lunr.js search index using the centralized searchService
+   * Follows WAX pattern with configurable fields and diacritic normalization
    */
-  private generateSearchIndex(items: IIIFItem[], cfg: StaticSiteConfig): object {
-    const documents: LunrDocument[] = items.map((item, index) => {
-      const pid = this.slugify(item.id);
-      const label = getIIIFValue(item.label) || '';
-      const summary = getIIIFValue((item as any).summary) || '';
+  private generateSearchIndex(root: IIIFItem, cfg: StaticSiteConfig): object {
+    // Build search config from configured fields
+    const searchConfig = fieldRegistry.buildSearchConfig(cfg.searchFields);
 
-      // Build content from all searchable fields
-      const contentParts: string[] = [label, summary];
-
-      if (item.metadata) {
-        for (const entry of item.metadata) {
-          const fieldName = getIIIFValue(entry.label) || '';
-          const fieldValue = getIIIFValue(entry.value) || '';
-          if (cfg.searchFields.some(f => f.includes(fieldName.toLowerCase()))) {
-            contentParts.push(fieldValue);
-          }
-        }
-      }
-
-      return {
-        lunr_id: String(index),
-        pid,
-        title: this.normalizeForSearch(label),
-        content: this.normalizeForSearch(contentParts.join(' ')),
-        thumbnail: `img/derivatives/iiif/${pid}/full/${cfg.thumbnailWidth},/0/default.jpg`,
-        url: `${cfg.collectionName}/${pid}.html`
-      };
-    });
+    // Use searchService.exportLunrIndex for consistent indexing
+    const lunrExport = searchService.exportLunrIndex(
+      root,
+      searchConfig,
+      cfg.baseUrl,
+      cfg.collectionName
+    );
 
     return {
-      documents,
-      fields: ['title', 'content'],
-      ref: 'lunr_id'
+      documents: lunrExport.documents,
+      fields: lunrExport.fields.map(f => f.name),
+      ref: lunrExport.ref
     };
   }
 
   /**
    * Generate Lunr.js configuration script
+   * Uses searchService for consistent configuration
    */
-  private generateLunrConfig(cfg: StaticSiteConfig): string {
-    return `// Lunr.js Search Configuration
-// Generated by IIIF Field Studio
+  private generateLunrConfig(root: IIIFItem, cfg: StaticSiteConfig): string {
+    // Build search config from configured fields
+    const searchConfig = fieldRegistry.buildSearchConfig(cfg.searchFields);
 
-var store = [];
-var idx;
+    // Use searchService to generate consistent Lunr.js config
+    const lunrExport = searchService.exportLunrIndex(
+      root,
+      searchConfig,
+      cfg.baseUrl,
+      cfg.collectionName
+    );
 
-fetch('${cfg.baseUrl}/search/index.json')
-  .then(response => response.json())
-  .then(data => {
-    store = data.documents;
-    idx = lunr(function() {
-      this.ref('lunr_id');
-      this.field('title', { boost: 10 });
-      this.field('content');
-
-      data.documents.forEach(doc => {
-        this.add(doc);
-      });
-    });
-  });
-
-function search(query) {
-  if (!idx) return [];
-  return idx.search(query).map(result => {
-    return store.find(doc => doc.lunr_id === result.ref);
-  });
-}
-`;
+    return lunrExport.lunrConfigJs;
   }
 
   /**

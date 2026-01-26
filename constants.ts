@@ -329,12 +329,231 @@ export const DEFAULT_ZOOM_CONFIG = {
   step: 0.1
 };
 
+// ============================================================================
+// Derivative Presets (WAX-compatible)
+// ============================================================================
+
+/**
+ * Derivative preset configuration for image size generation.
+ * Replaces hardcoded [150, 600, 1200] values throughout the codebase.
+ *
+ * Based on WAX pattern: DEFAULT_VARIANTS = { 'thumbnail' => 250, 'fullwidth' => 1140 }
+ */
+export interface DerivativePreset {
+  /** Unique preset identifier */
+  name: string;
+  /** Human-readable label */
+  label: string;
+  /** Description of use case */
+  description: string;
+  /** Thumbnail width (smallest size) */
+  thumbnailWidth: number;
+  /** Standard derivative widths to generate */
+  sizes: number[];
+  /** Full-width size for detail views */
+  fullWidth: number;
+  /** Tile size for deep zoom (Level 0) */
+  tileSize: number;
+  /** Scale factors for tile pyramid */
+  scaleFactors: number[];
+}
+
+/**
+ * Named derivative presets for different use cases
+ */
+export const DERIVATIVE_PRESETS: Record<string, DerivativePreset> = {
+  /**
+   * WAX-compatible preset - matches minicomp/wax defaults
+   * Optimized for static Jekyll sites
+   */
+  'wax-compatible': {
+    name: 'wax-compatible',
+    label: 'WAX Compatible',
+    description: 'Matches minicomp/wax defaults for static Jekyll sites',
+    thumbnailWidth: 250,
+    sizes: [250, 1140],
+    fullWidth: 1140,
+    tileSize: 256,
+    scaleFactors: [1, 2, 4, 8]
+  },
+
+  /**
+   * Level 0 static preset - pre-generated sizes for serverless deployment
+   * Default preset for Field Studio exports
+   */
+  'level0-static': {
+    name: 'level0-static',
+    label: 'Level 0 Static',
+    description: 'Pre-generated sizes for static/serverless hosting (default)',
+    thumbnailWidth: 150,
+    sizes: [150, 600, 1200],
+    fullWidth: 1200,
+    tileSize: 512,
+    scaleFactors: [1, 2, 4, 8]
+  },
+
+  /**
+   * Level 2 dynamic preset - relies on image server for on-demand sizing
+   * Minimal derivatives, server generates others
+   */
+  'level2-dynamic': {
+    name: 'level2-dynamic',
+    label: 'Level 2 Dynamic',
+    description: 'Minimal derivatives for Level 2 image server deployment',
+    thumbnailWidth: 150,
+    sizes: [150],
+    fullWidth: 0,  // Server generates on demand
+    tileSize: 512,
+    scaleFactors: [1, 2, 4, 8, 16]
+  },
+
+  /**
+   * Mobile-optimized preset - smaller sizes for bandwidth efficiency
+   */
+  'mobile-optimized': {
+    name: 'mobile-optimized',
+    label: 'Mobile Optimized',
+    description: 'Smaller derivatives optimized for mobile viewing',
+    thumbnailWidth: 100,
+    sizes: [100, 400, 800],
+    fullWidth: 800,
+    tileSize: 256,
+    scaleFactors: [1, 2, 4]
+  },
+
+  /**
+   * Archive quality preset - larger sizes for preservation
+   */
+  'archive-quality': {
+    name: 'archive-quality',
+    label: 'Archive Quality',
+    description: 'Larger derivatives for archival and print use',
+    thumbnailWidth: 250,
+    sizes: [250, 800, 1600, 3200],
+    fullWidth: 3200,
+    tileSize: 512,
+    scaleFactors: [1, 2, 4, 8, 16]
+  }
+};
+
+/**
+ * Default derivative preset name
+ */
+export const DEFAULT_DERIVATIVE_PRESET = 'level0-static';
+
+/**
+ * Get a derivative preset by name, with fallback to default
+ */
+export function getDerivativePreset(name?: string): DerivativePreset {
+  if (name && DERIVATIVE_PRESETS[name]) {
+    return DERIVATIVE_PRESETS[name];
+  }
+  return DERIVATIVE_PRESETS[DEFAULT_DERIVATIVE_PRESET];
+}
+
+/**
+ * Default derivative sizes (for backwards compatibility)
+ * @deprecated Use getDerivativePreset() instead
+ */
+export const DEFAULT_DERIVATIVE_SIZES = [150, 600, 1200];
+
+/**
+ * Default background generation sizes (for backwards compatibility)
+ * @deprecated Use getDerivativePreset().sizes instead
+ */
+export const DEFAULT_BACKGROUND_SIZES = [600, 1200];
+
+// ============================================================================
+// Structure View Visual Hierarchy
+// ============================================================================
+
+/**
+ * Visual hierarchy configuration for the Structure view.
+ * Emphasizes the Manifest > Canvas > AnnotationPage relationship.
+ */
+export type VisualProminence = 'primary' | 'secondary' | 'tertiary' | 'reference' | 'minimal';
+export type CardSize = 'large' | 'medium' | 'badge' | 'container' | 'inline';
+
+export interface VisualHierarchyConfig {
+  prominence: VisualProminence;
+  cardSize: CardSize;
+  showThumbnail: boolean;
+  showChildCount?: boolean;
+  showAnnotationCount?: boolean;
+  showCount?: boolean;
+  showReferenceIndicator?: boolean;
+}
+
+export const STRUCTURE_VISUAL_HIERARCHY: Record<string, VisualHierarchyConfig> = {
+  Manifest: {
+    prominence: 'primary',
+    cardSize: 'large',
+    showThumbnail: true,
+    showChildCount: true
+  },
+  Canvas: {
+    prominence: 'secondary',
+    cardSize: 'medium',
+    showThumbnail: true,
+    showAnnotationCount: true
+  },
+  AnnotationPage: {
+    prominence: 'tertiary',
+    cardSize: 'badge',
+    showThumbnail: false,
+    showCount: true
+  },
+  Collection: {
+    prominence: 'reference',
+    cardSize: 'container',
+    showThumbnail: true,
+    showReferenceIndicator: true
+  },
+  Annotation: {
+    prominence: 'minimal',
+    cardSize: 'inline',
+    showThumbnail: false
+  },
+  Range: {
+    prominence: 'tertiary',
+    cardSize: 'badge',
+    showThumbnail: false,
+    showChildCount: true
+  }
+};
+
+/**
+ * Get visual hierarchy config for a resource type
+ */
+export function getVisualHierarchy(type: string): VisualHierarchyConfig {
+  return STRUCTURE_VISUAL_HIERARCHY[type] || {
+    prominence: 'minimal',
+    cardSize: 'inline',
+    showThumbnail: false
+  };
+}
+
+/**
+ * Card size dimensions for the Structure view grid
+ */
+export const STRUCTURE_CARD_SIZES: Record<CardSize, { minWidth: number; aspectRatio: string }> = {
+  large: { minWidth: 200, aspectRatio: '3/4' },
+  medium: { minWidth: 150, aspectRatio: '1/1' },
+  badge: { minWidth: 80, aspectRatio: '1/1' },
+  container: { minWidth: 250, aspectRatio: 'auto' },
+  inline: { minWidth: 0, aspectRatio: 'auto' }
+};
+
+// ============================================================================
+// Resource Type Configuration
+// ============================================================================
+
 export const RESOURCE_TYPE_CONFIG: Record<string, { icon: string; colorClass: string; bgClass: string; borderClass: string; label: string; metaphor: string }> = {
-  'Collection': { 
-    icon: 'folder', 
-    colorClass: 'text-amber-600', 
-    bgClass: 'bg-amber-100', 
-    borderClass: 'border-amber-200', 
+  'Collection': {
+    icon: 'folder',
+    colorClass: 'text-amber-600',
+    bgClass: 'bg-amber-100',
+    borderClass: 'border-amber-200',
     label: 'Collection',
     metaphor: 'Box / Folder'
   },

@@ -11,6 +11,7 @@ import { SearchPanel } from '../SearchPanel';
 import { contentStateService } from '../../services/contentState';
 import { contentSearchService, SearchService, SearchResult } from '../../services/contentSearchService';
 import { parseTarget, getSpatialRegion, createSpatialTarget, createSpecificResource } from '../../services/selectors';
+import { VIEWPORT_DEFAULTS } from '../../constants/viewport';
 
 declare const OpenSeadragon: any;
 
@@ -41,6 +42,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
   const [showFilmstrip, setShowFilmstrip] = useState(true);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(100); // Percentage for display
 
   // Extract search service from manifest
   const searchService = useMemo(() => {
@@ -286,6 +288,77 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
     viewerRef.current.viewport.goHome(false);
   }, []);
 
+  // OSD zoom controls
+  const handleZoomIn = useCallback(() => {
+    if (!viewerRef.current) return;
+    viewerRef.current.viewport.zoomBy(VIEWPORT_DEFAULTS.ZOOM_STEP);
+    viewerRef.current.viewport.applyConstraints();
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    if (!viewerRef.current) return;
+    viewerRef.current.viewport.zoomBy(1 / VIEWPORT_DEFAULTS.ZOOM_STEP);
+    viewerRef.current.viewport.applyConstraints();
+  }, []);
+
+  // Track OSD zoom level for display
+  useEffect(() => {
+    if (!viewerRef.current) return;
+
+    const updateZoom = () => {
+      if (viewerRef.current) {
+        const zoom = viewerRef.current.viewport.getZoom();
+        const homeZoom = viewerRef.current.viewport.getHomeZoom();
+        setZoomLevel(Math.round((zoom / homeZoom) * 100));
+      }
+    };
+
+    viewerRef.current.addHandler('zoom', updateZoom);
+    viewerRef.current.addHandler('open', updateZoom);
+
+    return () => {
+      if (viewerRef.current) {
+        viewerRef.current.removeHandler('zoom', updateZoom);
+        viewerRef.current.removeHandler('open', updateZoom);
+      }
+    };
+  }, [item?.id, mediaType]);
+
+  // Keyboard shortcuts for viewer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input
+      if (document.activeElement?.tagName.match(/INPUT|TEXTAREA/)) return;
+
+      // Zoom shortcuts
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      if (e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+        e.preventDefault();
+        handleResetView();
+      }
+
+      // Rotation shortcuts (R and Shift+R)
+      if (e.key === 'r' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        handleRotate(90);
+      }
+      if (e.key === 'R' && e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        handleRotate(-90);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleZoomIn, handleZoomOut, handleResetView, handleRotate]);
+
   if (!item) return <div className="flex-1 flex items-center justify-center bg-slate-900 text-slate-500 italic">Select a canvas to inspect.</div>;
 
   return (
@@ -307,11 +380,35 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
         <div className="flex items-center gap-2">
             {mediaType === 'image' && (
               <>
+                {/* Zoom Controls */}
+                <div className="flex items-center bg-slate-800 rounded border border-slate-700 px-1">
+                  <button
+                    onClick={handleZoomOut}
+                    className="p-1.5 text-slate-400 hover:text-white"
+                    title="Zoom Out (-)"
+                    aria-label="Zoom out"
+                  >
+                    <Icon name="remove" className="text-sm" />
+                  </button>
+                  <span className="px-2 text-[10px] font-mono text-slate-400 min-w-[40px] text-center">
+                    {zoomLevel}%
+                  </span>
+                  <button
+                    onClick={handleZoomIn}
+                    className="p-1.5 text-slate-400 hover:text-white"
+                    title="Zoom In (+)"
+                    aria-label="Zoom in"
+                  >
+                    <Icon name="add" className="text-sm" />
+                  </button>
+                </div>
+
+                {/* Rotation Controls */}
                 <div className="flex items-center border-r border-slate-700 pr-2 mr-1">
                   <button
                     onClick={() => handleRotate(-90)}
                     className="p-2 text-slate-400 hover:text-white"
-                    title="Rotate Counter-Clockwise (90°)"
+                    title="Rotate Counter-Clockwise (Shift+R)"
                     aria-label="Rotate counter-clockwise"
                   >
                     <Icon name="rotate_left" />
@@ -319,7 +416,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                   <button
                     onClick={() => handleRotate(90)}
                     className="p-2 text-slate-400 hover:text-white"
-                    title="Rotate Clockwise (90°)"
+                    title="Rotate Clockwise (R)"
                     aria-label="Rotate clockwise"
                   >
                     <Icon name="rotate_right" />
@@ -327,7 +424,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                   <button
                     onClick={handleResetView}
                     className="p-2 text-slate-400 hover:text-white"
-                    title="Reset View"
+                    title="Reset View (Ctrl/Cmd+0)"
                     aria-label="Reset view to default"
                   >
                     <Icon name="restart_alt" />

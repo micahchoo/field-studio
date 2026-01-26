@@ -14,6 +14,7 @@ import {
   getRelationshipType,
   findCanvasParent
 } from '../../utils/iiifHierarchy';
+import { resolveThumbUrl } from '../../utils/imageSourceResolver';
 
 // Virtualization hook for efficient rendering of large lists
 const useVirtualization = (totalItems: number, itemHeight: number, containerRef: React.RefObject<HTMLDivElement | null>, overscan = 5) => {
@@ -657,8 +658,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
               renderItem={(asset) => {
                 const dna = getFileDNA(asset);
                 const isSelected = selectedIds.has(asset.id);
-                const paintingBody = asset.items?.[0]?.items?.[0]?.body as any;
-                const imageUrl = asset.thumbnail?.[0]?.id || paintingBody?.id || asset._blobUrl;
+                const imageUrl = resolveThumbUrl(asset, 200);
                 const config = RESOURCE_TYPE_CONFIG['Canvas'];
 
                 return (
@@ -856,8 +856,8 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
                   <td className="px-4 py-3 font-medium">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded flex items-center justify-center shrink-0 overflow-hidden ${fieldMode ? 'bg-black' : 'bg-slate-100'}`}>
-                        {(asset as any).thumbnail?.[0]?.id || asset._blobUrl ? (
-                          <img src={(asset as any).thumbnail?.[0]?.id || asset._blobUrl} className="w-full h-full object-cover" loading="lazy" />
+                        {resolveThumbUrl(asset, 64) ? (
+                          <img src={resolveThumbUrl(asset, 64)!} className="w-full h-full object-cover" loading="lazy" />
                         ) : (
                           <Icon name={config.icon} className={`${config.colorClass} opacity-70`} />
                         )}

@@ -46,6 +46,15 @@ export {
   // Statistics
   countResourcesByType,
   getTreeDepth,
+  // Cross-collection reference tracking
+  buildReferenceMap,
+  getReferencingCollections,
+  // Range helpers
+  createRange,
+  createNestedRange,
+  addRangeToManifest,
+  getManifestRanges,
+  flattenRangeCanvasIds,
 } from './iiifHierarchy';
 export type { IIIFRelationshipType } from './iiifHierarchy';
 
@@ -271,3 +280,21 @@ export type {
   TileRequest,
   ImageApiValidationResult,
 } from './iiifImageApi';
+
+// ============================================================================
+// Image Source Resolver
+// ============================================================================
+export {
+  resolveImageSource,
+  resolveThumbUrl,
+  resolvePreviewUrl,
+  hasDeepZoomCapability,
+  getImageServiceInfo,
+  resolveHierarchicalThumb,
+} from './imageSourceResolver';
+export type {
+  IIIFCanvasLike,
+  IIIFItemLike,
+  ImageSourceResult,
+  ResolveImageOptions,
+} from './imageSourceResolver';

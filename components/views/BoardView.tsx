@@ -4,6 +4,7 @@ import { IIIFManifest, IIIFItem, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation,
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { saveAs } from 'file-saver';
+import { useViewport, usePanZoomGestures } from '../../hooks';
 import { useHistory } from '../../hooks/useHistory';
 import { PolygonAnnotationTool } from '../PolygonAnnotationTool';
 import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
@@ -43,11 +44,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [connectingStart, setConnectingStart] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [viewState, setViewState] = useState({ x: 0, y: 0, scale: 1 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPan, setLastPan] = useState({ x: 0, y: 0 });
-  
+
   const [mode, setMode] = useState<'edit' | 'view'>('edit');
+
+  // Unified viewport management
+  const viewport = useViewport({
+    minScale: 0.1,
+    maxScale: 5,
+    initialScale: 1,
+  });
+
+  // Convenience access to viewport state
+  const viewState = viewport.viewport;
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -60,11 +68,22 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Pan/zoom gesture handling
+  const gestures = usePanZoomGestures(containerRef, viewport, {
+    enabled: true,
+    panButton: 'middle',
+    requireCtrlForZoom: true, // Ctrl+wheel to zoom, plain wheel to pan
+    enableWheelPan: true,
+  });
+
+  // Derived isPanning from gestures
+  const isPanning = gestures.isPanning || tool === 'pan';
+
   // Convert screen coordinates to canvas coordinates (accounting for pan/zoom)
   const getCanvasCoords = useCallback((e: React.MouseEvent | MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
-    
+
     let x = (e.clientX - rect.left - viewState.x) / viewState.scale;
     let y = (e.clientY - rect.top - viewState.y) / viewState.scale;
 
@@ -128,10 +147,9 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-      // Middle click or Pan tool or Spacebar
-      if (e.button === 1 || tool === 'pan' || e.shiftKey) {
-          setIsPanning(true);
-          setLastPan({ x: e.clientX, y: e.clientY });
+      // Middle click or Pan tool or Spacebar or Shift for panning
+      if (e.button === 1 || tool === 'pan' || e.shiftKey || gestures.isPanModeActive) {
+          gestures.handlers.onMouseDown(e);
           return;
       }
 
@@ -163,11 +181,9 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
   };
 
   const handleMouseMove = useCallback((e: React.MouseEvent | MouseEvent) => {
-    if (isPanning) {
-        const dx = e.clientX - lastPan.x;
-        const dy = e.clientY - lastPan.y;
-        setViewState(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-        setLastPan({ x: e.clientX, y: e.clientY });
+    // Panning is handled by gesture system
+    if (gestures.isPanning) {
+        gestures.handlers.onMouseMove(e as React.MouseEvent);
         return;
     }
 
@@ -175,23 +191,22 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
 
     const coords = getCanvasCoords(e as React.MouseEvent);
     setMousePos(coords);
-    
+
     if (draggingId && tool === 'select') {
         updateBoard(prev => ({
             ...prev,
             items: prev.items.map(it => it.id === draggingId ? { ...it, x: coords.x, y: coords.y } : it)
         }));
     }
-  }, [draggingId, connectingStart, tool, getCanvasCoords, isPanning, lastPan, viewState.scale, updateBoard]);
+  }, [draggingId, connectingStart, tool, getCanvasCoords, gestures, updateBoard]);
 
   const handleGlobalMouseUp = useCallback(() => {
     setDraggingId(null);
     setConnectingStart(null);
-    setIsPanning(false);
   }, []);
 
   useEffect(() => {
-      if (draggingId || connectingStart || isPanning) {
+      if (draggingId || connectingStart) {
           window.addEventListener('mousemove', handleMouseMove as any);
           window.addEventListener('mouseup', handleGlobalMouseUp);
           return () => {
@@ -199,20 +214,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
               window.removeEventListener('mouseup', handleGlobalMouseUp);
           };
       }
-  }, [draggingId, connectingStart, isPanning, handleMouseMove, handleGlobalMouseUp]);
-
-  const handleWheel = (e: React.WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-          e.preventDefault();
-          const zoomFactor = -e.deltaY * 0.001;
-          const newScale = Math.min(Math.max(0.1, viewState.scale + zoomFactor), 5);
-          
-          setViewState(prev => ({ ...prev, scale: newScale }));
-      } else {
-          // Pan
-          setViewState(prev => ({ ...prev, x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
-      }
-  };
+  }, [draggingId, connectingStart, handleMouseMove, handleGlobalMouseUp]);
 
   const handleItemDown = (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
@@ -343,15 +345,24 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
 
           // Tools
           if (e.key.toLowerCase() === 'v') setTool('select');
-          if (e.key.toLowerCase() === 'h' || e.code === 'Space') setTool('pan');
+          if (e.key.toLowerCase() === 'h') setTool('pan');
           if (e.key.toLowerCase() === 'c') setTool('connect');
           if (e.key.toLowerCase() === 't') setTool('note');
 
+          // Space for pan mode
+          if (e.code === 'Space' && !e.repeat) {
+              e.preventDefault();
+              gestures.setPanModeActive(true);
+          }
+
           // View
           if (e.key === '\\') setMode(prev => prev === 'edit' ? 'view' : 'edit');
-          if (e.key === '=' || e.key === '+') setViewState(prev => ({ ...prev, scale: Math.min(5, prev.scale * 1.2) }));
-          if (e.key === '-') setViewState(prev => ({ ...prev, scale: Math.max(0.1, prev.scale * 0.8) }));
-          if ((e.metaKey || e.ctrlKey) && e.key === '0') setViewState({ x: 0, y: 0, scale: 1 });
+          if (e.key === '=' || e.key === '+') viewport.zoomIn();
+          if (e.key === '-') viewport.zoomOut();
+          if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+              e.preventDefault();
+              viewport.reset();
+          }
 
           // Edit
           if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
@@ -376,9 +387,20 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
               if (e.key.toLowerCase() === 'v') alignItem(activeId, 'center-v');
           }
       };
+
+      const handleKeyUp = (e: KeyboardEvent) => {
+          if (e.code === 'Space') {
+              gestures.setPanModeActive(false);
+          }
+      };
+
       window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, activeId, deleteItem, viewState, duplicateItem, reorderItem, alignItem]);
+      window.addEventListener('keyup', handleKeyUp);
+      return () => {
+          window.removeEventListener('keydown', handleKeyDown);
+          window.removeEventListener('keyup', handleKeyUp);
+      };
+  }, [undo, redo, activeId, deleteItem, viewport, duplicateItem, reorderItem, alignItem, gestures]);
 
   /**
    * Export board as IIIF Manifest
@@ -546,7 +568,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
                 {mode === 'view' ? 'View Mode' : 'Edit Mode'}
             </button>
             <div className="text-xs font-bold text-slate-400 border-l pl-4">
-                <span>{Math.round(viewState.scale * 100)}% Zoom</span>
+                <span>{viewport.scalePercent}% Zoom</span>
             </div>
             <button onClick={exportBoardAsManifest} className="flex items-center gap-2 px-4 py-2 bg-iiif-blue text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all">
                 <Icon name="file_download" className="text-sm"/> Export
@@ -555,13 +577,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null }> = ({ root }) => {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        <div 
-            ref={containerRef} 
-            className={`flex-1 relative overflow-hidden bg-slate-100 ${tool === 'pan' || isPanning ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'}`} 
-            onDrop={handleDrop} 
-            onDragOver={e => e.preventDefault()} 
+        <div
+            ref={containerRef}
+            className={`flex-1 relative overflow-hidden bg-slate-100 ${tool === 'pan' || isPanning || gestures.isPanModeActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'}`}
+            onDrop={handleDrop}
+            onDragOver={e => e.preventDefault()}
             onMouseDown={handleMouseDown}
-            onWheel={handleWheel}
+            onMouseMove={(e) => {
+                if (gestures.isPanning) gestures.handlers.onMouseMove(e);
+            }}
+            onMouseUp={gestures.handlers.onMouseUp}
+            onMouseLeave={gestures.handlers.onMouseLeave}
+            onWheel={gestures.handlers.onWheel}
             style={{ backgroundImage: 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)', backgroundSize: `${24 * viewState.scale}px ${24 * viewState.scale}px`, backgroundPosition: `${viewState.x}px ${viewState.y}px` }}
         >
                 <div style={{ transform: `translate(${viewState.x}px, ${viewState.y}px) scale(${viewState.scale})`, transformOrigin: '0 0', width: '100%', height: '100%' }}>

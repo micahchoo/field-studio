@@ -1,7 +1,7 @@
 
 import { FileTree, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFItem, IngestReport, IngestResult, IIIFAnnotationPage, IIIFAnnotation, IIIFMotivation, IIIFRange } from '../types';
 import { storage } from './storage';
-import { DEFAULT_INGEST_PREFS, MIME_TYPE_MAP } from '../constants';
+import { DEFAULT_INGEST_PREFS, MIME_TYPE_MAP, getDerivativePreset, DEFAULT_BACKGROUND_SIZES } from '../constants';
 import { load } from 'js-yaml';
 import { extractMetadata } from './metadataHarvester';
 import { getTileWorkerPool, generateDerivativeAsync } from './tileWorker';
@@ -237,10 +237,11 @@ const processNode = async (
                 if (thumb) await storage.saveDerivative(assetId, 'thumb', thumb);
 
                 // Queue larger derivatives for background generation
+                // Uses DEFAULT_BACKGROUND_SIZES from presets (replaces hardcoded [600, 1200])
                 tileGenerationQueue.push({
                     assetId,
                     file,
-                    sizes: [600, 1200] // Pre-generate medium sizes in background
+                    sizes: DEFAULT_BACKGROUND_SIZES
                 });
             }
 

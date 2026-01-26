@@ -8,6 +8,8 @@
  * @see https://iiif.io/api/image/3.0/
  */
 
+import { DEFAULT_DERIVATIVE_SIZES } from '../constants';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -771,7 +773,7 @@ export function generateInfoJson(
 /**
  * Generate standard sizes for Level 0 compliance
  */
-export function generateStandardSizes(width: number, height: number, targetWidths: number[] = [150, 600, 1200]): SizeInfo[] {
+export function generateStandardSizes(width: number, height: number, targetWidths: number[] = DEFAULT_DERIVATIVE_SIZES): SizeInfo[] {
   const aspectRatio = height / width;
   return targetWidths
     .filter(w => w <= width) // Don't generate sizes larger than original

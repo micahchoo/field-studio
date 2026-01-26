@@ -1,6 +1,7 @@
 
 import * as FlexSearchModule from 'flexsearch';
-import { IIIFItem, IIIFAnnotation, IIIFCanvas, isCanvas } from '../types';
+import { IIIFItem, IIIFAnnotation, IIIFCanvas, isCanvas, getIIIFValue } from '../types';
+import { fieldRegistry, DEFAULT_SEARCH_CONFIG, SearchIndexConfig } from './fieldRegistry';
 
 // FlexSearch has inconsistent exports across bundlers - try all patterns
 const FlexSearch = (FlexSearchModule as any).default || FlexSearchModule;
@@ -19,6 +20,33 @@ export interface AutocompleteResult {
   type: 'recent' | 'suggestion' | 'type';
   count?: number;
   icon?: string;
+}
+
+/**
+ * Lunr.js document format for static site exports (WAX-compatible)
+ */
+export interface LunrDocument {
+  lunr_id: string;
+  pid: string;
+  title: string;
+  content: string;
+  thumbnail?: string;
+  url: string;
+  [key: string]: string | undefined;
+}
+
+/**
+ * Lunr.js export result for static site generation
+ */
+export interface LunrExportResult {
+  /** Array of documents for the search index */
+  documents: LunrDocument[];
+  /** Field configuration for Lunr.js index building */
+  fields: Array<{ name: string; boost: number }>;
+  /** Reference field name */
+  ref: string;
+  /** JavaScript code for Lunr.js configuration */
+  lunrConfigJs: string;
 }
 
 const RECENT_SEARCHES_KEY = 'iiif-field-recent-searches';
@@ -441,6 +469,202 @@ class SearchService {
       typeCounts: Object.fromEntries(this.typeCount),
       uniqueWords: this.labelIndex.size
     };
+  }
+
+  // ============================================================================
+  // Lunr.js Export for Static Sites (WAX-compatible)
+  // ============================================================================
+
+  /**
+   * Export search index for static site generation (Lunr.js format)
+   *
+   * Follows WAX pattern:
+   * - Assigns sequential lunr_id for document indexing
+   * - Per-collection configurable search_fields
+   * - Normalizes diacritics for consistent search
+   *
+   * @param root - IIIF root item to index
+   * @param config - Search configuration (fields, boosts, normalization)
+   * @param baseUrl - Base URL for generated URLs
+   * @param collectionName - Collection name for URL paths
+   */
+  exportLunrIndex(
+    root: IIIFItem,
+    config: SearchIndexConfig = DEFAULT_SEARCH_CONFIG,
+    baseUrl: string = '',
+    collectionName: string = 'objects'
+  ): LunrExportResult {
+    const documents: LunrDocument[] = [];
+    let lunrId = 0;
+
+    // Collect all indexable items (canvases)
+    const items = this.collectIndexableItems(root);
+
+    for (const item of items) {
+      const pid = fieldRegistry.generatePid(item.id);
+      const label = getIIIFValue(item.label) || '';
+      const summary = getIIIFValue((item as any).summary) || '';
+
+      // Build content from all configured search fields
+      const contentParts: string[] = [];
+
+      for (const fieldKey of config.fields) {
+        const value = this.extractFieldValue(item, fieldKey);
+        if (value) {
+          contentParts.push(value);
+        }
+      }
+
+      // Normalize content if configured (WAX pattern - diacritic removal)
+      const normalizedTitle = config.normalizeDiacritics
+        ? fieldRegistry.normalizeForSearch(label)
+        : label;
+      const normalizedContent = config.normalizeDiacritics
+        ? fieldRegistry.normalizeForSearch(contentParts.join(' '))
+        : contentParts.join(' ');
+
+      documents.push({
+        lunr_id: String(lunrId),
+        pid,
+        title: normalizedTitle,
+        content: normalizedContent,
+        thumbnail: `img/derivatives/iiif/${pid}/full/150,/0/default.jpg`,
+        url: `${collectionName}/${pid}.html`
+      });
+
+      lunrId++;
+    }
+
+    // Build field configuration with boosts
+    const fields = config.fields
+      .filter(f => fieldRegistry.getField(f)?.indexable !== false)
+      .map(f => ({
+        name: f === 'label' ? 'title' : (f === 'summary' ? 'content' : f),
+        boost: config.boosts[f] || 1
+      }));
+
+    // Deduplicate fields (title and content are always present)
+    const uniqueFields = [
+      { name: 'title', boost: config.boosts['label'] || 10 },
+      { name: 'content', boost: config.boosts['summary'] || 1 }
+    ];
+
+    // Generate Lunr.js configuration JavaScript
+    const lunrConfigJs = this.generateLunrConfigJs(baseUrl, uniqueFields);
+
+    return {
+      documents,
+      fields: uniqueFields,
+      ref: 'lunr_id',
+      lunrConfigJs
+    };
+  }
+
+  /**
+   * Collect all indexable items from the IIIF tree
+   */
+  private collectIndexableItems(root: IIIFItem): IIIFItem[] {
+    const items: IIIFItem[] = [];
+
+    const traverse = (node: IIIFItem) => {
+      // Index canvases (leaf items with content)
+      if (isCanvas(node)) {
+        items.push(node);
+      }
+      if (node.items) {
+        for (const child of node.items) {
+          traverse(child);
+        }
+      }
+    };
+
+    traverse(root);
+    return items;
+  }
+
+  /**
+   * Extract a field value from an IIIF item
+   */
+  private extractFieldValue(item: IIIFItem, fieldKey: string): string {
+    if (fieldKey === 'label') {
+      return getIIIFValue(item.label) || '';
+    }
+
+    if (fieldKey === 'summary') {
+      return getIIIFValue((item as any).summary) || '';
+    }
+
+    if (fieldKey === 'navDate') {
+      return (item as any).navDate || '';
+    }
+
+    if (fieldKey === 'rights') {
+      return (item as any).rights || '';
+    }
+
+    if (fieldKey.startsWith('metadata.')) {
+      const metaKey = fieldKey.replace('metadata.', '').toLowerCase();
+      const metadata = item.metadata || [];
+
+      for (const entry of metadata) {
+        const entryLabel = getIIIFValue(entry.label)?.toLowerCase();
+        if (entryLabel === metaKey) {
+          return getIIIFValue(entry.value) || '';
+        }
+      }
+      return '';
+    }
+
+    return '';
+  }
+
+  /**
+   * Generate Lunr.js configuration JavaScript for static site
+   */
+  private generateLunrConfigJs(baseUrl: string, fields: Array<{ name: string; boost: number }>): string {
+    const fieldConfig = fields
+      .map(f => `      this.field('${f.name}'${f.boost !== 1 ? `, { boost: ${f.boost} }` : ''});`)
+      .join('\n');
+
+    return `// Lunr.js Search Configuration
+// Generated by IIIF Field Studio (WAX-compatible)
+
+var store = [];
+var idx;
+
+fetch('${baseUrl}/search/index.json')
+  .then(response => response.json())
+  .then(data => {
+    store = data.documents;
+    idx = lunr(function() {
+      this.ref('lunr_id');
+${fieldConfig}
+
+      data.documents.forEach(doc => {
+        this.add(doc);
+      });
+    });
+  });
+
+function search(query) {
+  if (!idx) return [];
+  return idx.search(query).map(result => {
+    return store.find(doc => doc.lunr_id === result.ref);
+  });
+}
+
+function searchWithHighlight(query) {
+  if (!idx) return [];
+  return idx.search(query).map(result => {
+    const doc = store.find(d => d.lunr_id === result.ref);
+    return {
+      ...doc,
+      score: result.score,
+      matchData: result.matchData
+    };
+  });
+}
+`;
   }
 }
 

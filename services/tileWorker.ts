@@ -12,6 +12,8 @@
  * - Worker -> Main: { type: 'error', assetId, message }
  */
 
+import { DEFAULT_DERIVATIVE_SIZES } from '../constants';
+
 // Message types for worker communication
 export interface TileWorkerRequest {
   type: 'generate' | 'generateBatch';
@@ -218,7 +220,7 @@ export class TileWorkerPool {
   async generateDerivatives(
     assetId: string,
     file: Blob,
-    sizes: number[] = [150, 600, 1200]
+    sizes: number[] = DEFAULT_DERIVATIVE_SIZES
   ): Promise<{
     derivatives: Map<number, Blob>;
     originalWidth: number;

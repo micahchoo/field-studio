@@ -1,17 +1,20 @@
 
-import React, { useState, useMemo } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, getIIIFValue, isCollection, isManifest } from '../../types';
+import React, { useState, useMemo, useCallback } from 'react';
+import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, getIIIFValue, isCollection, isManifest, isCanvas } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { MuseumLabel } from '../MuseumLabel';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { autoStructureService } from '../../services/autoStructure';
+import { StructureCanvas } from '../StructureCanvas';
+import { resolveThumbUrl, resolveHierarchicalThumb } from '../../utils/imageSourceResolver';
 import {
   findAllOfType,
   findCollectionsContaining,
   isValidChildType,
   getRelationshipType,
-  getValidChildTypes
+  getValidChildTypes,
+  buildReferenceMap
 } from '../../utils/iiifHierarchy';
 
 // Maximum nesting depth to prevent stack overflow and performance issues
@@ -25,9 +28,9 @@ interface CollectionsViewProps {
   onSynthesize?: (id: string) => void;
   onSelect?: (id: string) => void;
   selectedId?: string | null;
+  inspectorVisible?: boolean;
+  onToggleInspector?: () => void;
 }
-
-// findAllOfType and findCollectionsContaining are now imported from utils/iiifHierarchy
 
 export const CollectionsView: React.FC<CollectionsViewProps> = ({
   root,
@@ -36,18 +39,42 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   onReveal,
   onSynthesize,
   onSelect,
-  selectedId: externalSelectedId
+  selectedId: externalSelectedId,
+  inspectorVisible = false,
+  onToggleInspector
 }) => {
   const { showToast } = useToast();
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(root?.id || null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [structureViewMode, setStructureViewMode] = useState<'grid' | 'list'>('grid');
+  const [multiSelectedIds, setMultiSelectedIds] = useState<Set<string>>(new Set());
 
   const selectedId = externalSelectedId !== undefined ? externalSelectedId : internalSelectedId;
 
-  const handleSelect = (id: string) => {
+  const handleSelect = useCallback((id: string) => {
     setInternalSelectedId(id);
+    setMultiSelectedIds(new Set([id]));
     onSelect?.(id);
-  };
+  }, [onSelect]);
+
+  const handleMultiSelect = useCallback((ids: string[], additive: boolean) => {
+    if (additive) {
+      setMultiSelectedIds(prev => {
+        const newSet = new Set(prev);
+        ids.forEach(id => {
+          if (newSet.has(id)) {
+            newSet.delete(id);
+          } else {
+            newSet.add(id);
+          }
+        });
+        return newSet;
+      });
+    } else {
+      setMultiSelectedIds(new Set(ids));
+    }
+  }, []);
 
   // Gather stats about the archive
   const stats = useMemo(() => {
@@ -56,6 +83,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     const manifests = findAllOfType(root, 'Manifest').length;
     const canvases = findAllOfType(root, 'Canvas').length;
     return { collections, manifests, canvases };
+  }, [root]);
+
+  // Build reference map for cross-collection tracking
+  const referenceMap = useMemo(() => {
+    if (!root) return new Map<string, string[]>();
+    return buildReferenceMap(root);
   }, [root]);
 
   // Get all manifests for "Add to Collection" feature
@@ -70,7 +103,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     return findAllOfType(root, 'Collection') as IIIFCollection[];
   }, [root]);
 
-  const findNode = (node: IIIFItem, id: string): IIIFItem | null => {
+  const findNode = useCallback((node: IIIFItem, id: string): IIIFItem | null => {
     if (node.id === id) return node;
     const children = (node as any).items || (node as any).annotations || [];
     for (const child of children) {
@@ -78,11 +111,11 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       if (found) return found;
     }
     return null;
-  };
+  }, []);
 
-  const cloneTree = (node: IIIFItem): IIIFItem => JSON.parse(JSON.stringify(node));
+  const cloneTree = useCallback((node: IIIFItem): IIIFItem => JSON.parse(JSON.stringify(node)), []);
 
-  const handleAutoStructure = () => {
+  const handleAutoStructure = useCallback(() => {
     if (!selectedId || !root) return;
     const newRoot = cloneTree(root);
     const target = findNode(newRoot, selectedId);
@@ -94,9 +127,9 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     } else {
       showToast("Select a Manifest to auto-structure", "info");
     }
-  };
+  }, [selectedId, root, cloneTree, findNode, onUpdate, showToast]);
 
-  const handleCreateType = (type: 'Collection' | 'Manifest', parentId: string | null) => {
+  const handleCreateType = useCallback((type: 'Collection' | 'Manifest', parentId: string | null) => {
     if (!root) return;
     const newRoot = cloneTree(root);
     const target = parentId ? findNode(newRoot, parentId) : newRoot;
@@ -123,10 +156,9 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       type,
       label: { none: [`New ${type}`] },
       items: [],
-      behavior: type === 'Manifest' ? ['individuals'] : undefined // Default behavior for Manifests
+      behavior: type === 'Manifest' ? ['individuals'] : undefined
     };
 
-    // Log relationship type
     const relationship = getRelationshipType(target.type, type);
     console.log(`Creating ${relationship} relationship: ${target.type} → ${type}`);
 
@@ -134,9 +166,9 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     target.items.push(newItem);
     onUpdate(newRoot);
     showToast(`New ${type} added (${relationship} relationship)`, "success");
-  };
+  }, [root, cloneTree, findNode, onUpdate, showToast]);
 
-  const handleUpdate = (id: string, updates: Partial<IIIFItem>) => {
+  const handleUpdate = useCallback((id: string, updates: Partial<IIIFItem>) => {
     if (!root) return;
     const newRoot = cloneTree(root);
     const target = findNode(newRoot, id);
@@ -144,13 +176,9 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       Object.assign(target, updates);
       onUpdate(newRoot);
     }
-  };
+  }, [root, cloneTree, findNode, onUpdate]);
 
-  /**
-   * Add an existing Manifest to a Collection
-   * This creates a REFERENCE - the same Manifest can be in multiple Collections
-   */
-  const handleAddManifestToCollection = (manifestId: string, collectionId: string) => {
+  const handleAddManifestToCollection = useCallback((manifestId: string, collectionId: string) => {
     if (!root) return;
     const newRoot = cloneTree(root);
     const collection = findNode(newRoot, collectionId);
@@ -161,31 +189,24 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       return;
     }
 
-    // Check if already in this collection
     const existingRef = (collection as IIIFCollection).items?.find(item => item.id === manifestId);
     if (existingRef) {
       showToast("Manifest is already in this Collection", "info");
       return;
     }
 
-    // Add reference to the manifest (not a copy - same ID)
-    // In IIIF 3.0, Collections reference resources by ID
     if (!(collection as IIIFCollection).items) {
       (collection as IIIFCollection).items = [];
     }
 
-    // Clone manifest for the collection (they share the same ID)
     (collection as IIIFCollection).items.push(JSON.parse(JSON.stringify(manifest)));
 
     onUpdate(newRoot);
     showToast(`Added "${getIIIFValue(manifest.label)}" to "${getIIIFValue(collection.label)}"`, "success");
     setShowAddToCollection(false);
-  };
+  }, [root, cloneTree, findNode, onUpdate, showToast]);
 
-  /**
-   * Remove a reference from a Collection (doesn't delete the Manifest)
-   */
-  const handleRemoveFromCollection = (manifestId: string, collectionId: string) => {
+  const handleRemoveFromCollection = useCallback((manifestId: string, collectionId: string) => {
     if (!root) return;
     const newRoot = cloneTree(root);
     const collection = findNode(newRoot, collectionId);
@@ -200,9 +221,9 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       onUpdate(newRoot);
       showToast("Removed from Collection", "success");
     }
-  };
+  }, [root, cloneTree, findNode, onUpdate, showToast]);
 
-  const handleReorderDrag = (draggedId: string, targetId: string) => {
+  const handleReorderDrag = useCallback((draggedId: string, targetId: string) => {
     if (!root || draggedId === targetId) return;
     const newRoot = cloneTree(root);
     let draggedNode: any = null;
@@ -220,10 +241,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
 
     const findAndInsert = (parent: any) => {
       if (parent.id === targetId) {
-        // Use centralized IIIF hierarchy validation
         if (!draggedNode) return false;
 
-        // Validate parent-child relationship using IIIF 3.0 rules
         if (!isValidChildType(parent.type, draggedNode.type)) {
           const validChildren = getValidChildTypes(parent.type);
           showToast(
@@ -234,7 +253,6 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           return false;
         }
 
-        // Log relationship type for debugging
         const relationship = getRelationshipType(parent.type, draggedNode.type);
         console.log(`Creating ${relationship} relationship: ${parent.type} → ${draggedNode.type}`);
 
@@ -255,22 +273,86 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
         showToast("Structure reorganized", "success");
       }
     }
-  };
+  }, [root, cloneTree, onUpdate, showToast]);
+
+  // Handle reorder within StructureCanvas
+  const handleStructureReorder = useCallback((fromIndex: number, toIndex: number) => {
+    if (!root || !selectedId) return;
+    const newRoot = cloneTree(root);
+    const parent = findNode(newRoot, selectedId);
+
+    if (!parent || !parent.items) return;
+
+    const [moved] = parent.items.splice(fromIndex, 1);
+    parent.items.splice(toIndex, 0, moved);
+    onUpdate(newRoot);
+  }, [root, selectedId, cloneTree, findNode, onUpdate]);
+
+  // Handle remove items
+  const handleRemoveItems = useCallback((ids: string[]) => {
+    if (!root || !selectedId) return;
+    const newRoot = cloneTree(root);
+    const parent = findNode(newRoot, selectedId);
+
+    if (!parent || !parent.items) return;
+
+    parent.items = parent.items.filter((item: IIIFItem) => !ids.includes(item.id));
+    onUpdate(newRoot);
+    setMultiSelectedIds(new Set());
+    showToast(`Removed ${ids.length} item(s)`, "success");
+  }, [root, selectedId, cloneTree, findNode, onUpdate, showToast]);
+
+  // Handle duplicate items
+  const handleDuplicateItems = useCallback((ids: string[]) => {
+    if (!root || !selectedId) return;
+    const newRoot = cloneTree(root);
+    const parent = findNode(newRoot, selectedId);
+
+    if (!parent || !parent.items) return;
+
+    const duplicates: IIIFItem[] = [];
+    ids.forEach(id => {
+      const item = parent.items.find((i: IIIFItem) => i.id === id);
+      if (item) {
+        const duplicate = JSON.parse(JSON.stringify(item));
+        duplicate.id = `${item.id}_copy_${crypto.randomUUID().slice(0, 8)}`;
+        if (duplicate.label) {
+          const originalLabel = getIIIFValue(duplicate.label);
+          duplicate.label = { none: [`${originalLabel} (Copy)`] };
+        }
+        duplicates.push(duplicate);
+      }
+    });
+
+    parent.items.push(...duplicates);
+    onUpdate(newRoot);
+    showToast(`Duplicated ${ids.length} item(s)`, "success");
+  }, [root, selectedId, cloneTree, findNode, onUpdate, showToast]);
 
   const selectedNode = root && selectedId ? findNode(root, selectedId) : null;
   const nodeConfig = selectedNode ? (RESOURCE_TYPE_CONFIG[selectedNode.type] || RESOURCE_TYPE_CONFIG['Content']) : RESOURCE_TYPE_CONFIG['Content'];
 
-  // Find which collections contain the selected item (if it's a Manifest)
+  // Find which collections contain the selected item
   const containingCollections = useMemo(() => {
     if (!root || !selectedNode || selectedNode.type !== 'Manifest') return [];
     return findCollectionsContaining(root, selectedNode.id);
   }, [root, selectedNode]);
+
+  // Get reference count for selected item
+  const referenceCount = selectedNode ? (referenceMap.get(selectedNode.id)?.length || 0) : 0;
 
   return (
     <div className="flex flex-col h-full bg-slate-100">
       {/* Header */}
       <div className="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 shadow-sm z-20">
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          >
+            <Icon name={sidebarCollapsed ? "menu" : "menu_open"} className="text-slate-500" />
+          </button>
           <div className="p-2 bg-iiif-blue/10 rounded-lg text-iiif-blue">
             <Icon name="account_tree" className="text-2xl" />
           </div>
@@ -302,27 +384,92 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           >
             <Icon name="note_add" className="text-emerald-600" /> Manifest
           </button>
+          {onToggleInspector && (
+            <button
+              onClick={onToggleInspector}
+              className={`p-2 rounded-lg transition-colors ${inspectorVisible ? 'bg-iiif-blue text-white' : 'hover:bg-slate-100 text-slate-500'}`}
+              title={inspectorVisible ? "Hide Inspector" : "Show Inspector"}
+            >
+              <Icon name="info" />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="flex-1 flex min-h-0">
-        {/* Tree Panel */}
-        <div className="w-80 flex flex-col border-r border-slate-200 bg-white shadow-inner overflow-y-auto p-4 custom-scrollbar">
-          {root ? (
-            <TreeNode
-              node={root}
-              selectedId={selectedId}
-              onSelect={handleSelect}
-              onDrop={handleReorderDrag}
-              level={0}
-            />
-          ) : null}
+        {/* Left Pane - Tree Sidebar */}
+        <div
+          className={`flex flex-col border-r border-slate-200 bg-white shadow-inner transition-all duration-300 ${
+            sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-72'
+          }`}
+        >
+          <div className="h-10 border-b bg-slate-50 flex items-center px-3 shrink-0">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Archive Tree</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+            {root ? (
+              <TreeNode
+                node={root}
+                selectedId={selectedId}
+                onSelect={handleSelect}
+                onDrop={handleReorderDrag}
+                level={0}
+                referenceMap={referenceMap}
+              />
+            ) : null}
+          </div>
         </div>
 
-        {/* Detail Panel */}
-        <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-          {selectedNode ? (
+        {/* Middle Pane - Structure Canvas */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {selectedNode && (isManifest(selectedNode) || isCollection(selectedNode)) ? (
             <>
+              <StructureCanvas
+                item={selectedNode}
+                onReorder={handleStructureReorder}
+                onSelect={handleSelect}
+                onMultiSelect={handleMultiSelect}
+                selectedIds={multiSelectedIds}
+                viewMode={structureViewMode}
+                onViewModeChange={setStructureViewMode}
+                onRemove={handleRemoveItems}
+                onDuplicate={handleDuplicateItems}
+              />
+
+              {/* Bottom Toolbar for multi-selection */}
+              {multiSelectedIds.size > 1 && (
+                <div className="h-14 bg-white border-t flex items-center justify-between px-4 shrink-0 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-slate-700">
+                      {multiSelectedIds.size} items selected
+                    </span>
+                    <button
+                      onClick={() => setMultiSelectedIds(new Set())}
+                      className="text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      Clear selection
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDuplicateItems(Array.from(multiSelectedIds))}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      <Icon name="content_copy" className="text-sm" /> Duplicate
+                    </button>
+                    <button
+                      onClick={() => handleRemoveItems(Array.from(multiSelectedIds))}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Icon name="delete" className="text-sm" /> Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : selectedNode ? (
+            /* Detail Panel for non-container types */
+            <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
               <div className="h-14 bg-white border-b px-6 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                   <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1 ${nodeConfig.bgClass} ${nodeConfig.colorClass}`}>
@@ -348,174 +495,36 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                       <Icon name="visibility" className="text-sm" /> View
                     </button>
                   )}
-                  {selectedNode.type === 'Manifest' && (
-                    <button
-                      onClick={() => {
-                        const firstCanvas = (selectedNode as any).items?.[0];
-                        if (firstCanvas) {
-                          onReveal?.(firstCanvas.id, 'viewer');
-                        }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-iiif-blue hover:bg-slate-100 rounded-lg transition-all"
-                      title="Open the first canvas of this manifest in the viewer"
-                    >
-                      <Icon name="play_arrow" className="text-sm" /> Preview
-                    </button>
-                  )}
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-10 bg-slate-100/50">
                 <div className="max-w-4xl mx-auto space-y-6">
-                  {/* IIIF Hierarchy Info for Collections */}
-                  {selectedNode.type === 'Collection' && (
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 bg-amber-100 rounded-xl">
-                          <Icon name="library_books" className="text-2xl text-amber-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-amber-800 mb-1">Collection: Curated References</h3>
-                          <p className="text-sm text-amber-700 leading-relaxed">
-                            In IIIF, Collections are <strong>organizational overlays</strong> that reference Manifests and other Collections.
-                            The same Manifest can appear in multiple Collections - they're pointers, not containers.
-                          </p>
-                          <div className="mt-3 flex items-center gap-4 text-xs text-amber-600">
-                            <span className="flex items-center gap-1">
-                              <Icon name="description" className="text-sm" />
-                              {((selectedNode as IIIFCollection).items?.filter(i => i.type === 'Manifest').length || 0)} Manifests
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Icon name="folder" className="text-sm" />
-                              {((selectedNode as IIIFCollection).items?.filter(i => i.type === 'Collection').length || 0)} Sub-Collections
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Add existing Manifest to this Collection */}
-                      <div className="mt-4 pt-4 border-t border-amber-200">
-                        <button
-                          onClick={() => setShowAddToCollection(!showAddToCollection)}
-                          className="flex items-center gap-2 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-sm font-medium transition-all"
-                        >
-                          <Icon name="add_link" /> Add Existing Manifest to Collection
-                        </button>
-
-                        {showAddToCollection && (
-                          <div className="mt-3 p-3 bg-white rounded-lg border border-amber-200">
-                            <p className="text-xs text-slate-500 mb-2">Select a Manifest to add to this Collection:</p>
-                            <div className="max-h-48 overflow-y-auto space-y-1">
-                              {allManifests
-                                .filter(m => !(selectedNode as IIIFCollection).items?.some(i => i.id === m.id))
-                                .map(manifest => (
-                                  <button
-                                    key={manifest.id}
-                                    onClick={() => handleAddManifestToCollection(manifest.id, selectedNode.id)}
-                                    className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 rounded text-left text-sm"
-                                  >
-                                    <Icon name="description" className="text-emerald-500" />
-                                    <span className="truncate">{getIIIFValue(manifest.label)}</span>
-                                  </button>
-                                ))}
-                              {allManifests.filter(m => !(selectedNode as IIIFCollection).items?.some(i => i.id === m.id)).length === 0 && (
-                                <p className="text-xs text-slate-400 italic p-2">All Manifests are already in this Collection</p>
-                              )}
-                            </div>
+                  {/* Canvas Preview */}
+                  {selectedNode.type === 'Canvas' && (
+                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+                      <div className="aspect-video bg-slate-900 rounded-xl overflow-hidden mb-4">
+                        {resolveThumbUrl(selectedNode, 800) ? (
+                          <img
+                            src={resolveThumbUrl(selectedNode, 800) || ''}
+                            alt={getIIIFValue(selectedNode.label)}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-500">
+                            <Icon name="image" className="text-4xl" />
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* IIIF Hierarchy Info for Manifests */}
-                  {selectedNode.type === 'Manifest' && (
-                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200 p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 bg-emerald-100 rounded-xl">
-                          <Icon name="menu_book" className="text-2xl text-emerald-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-emerald-800 mb-1">Manifest: Atomic Publishing Unit</h3>
-                          <p className="text-sm text-emerald-700 leading-relaxed">
-                            Manifests are the <strong>primary shareable unit</strong> in IIIF - like a complete book or artwork.
-                            They can exist standalone or be referenced by multiple Collections.
-                          </p>
-                          <div className="mt-3 flex items-center gap-4 text-xs text-emerald-600">
-                            <span className="flex items-center gap-1">
-                              <Icon name="image" className="text-sm" />
-                              {((selectedNode as IIIFManifest).items?.length || 0)} Canvases
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Show which Collections contain this Manifest */}
-                      {containingCollections.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-emerald-200">
-                          <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-2">
-                            Appears in {containingCollections.length} Collection{containingCollections.length !== 1 ? 's' : ''}:
-                          </h4>
-                          <div className="space-y-1">
-                            {containingCollections.map(coll => (
-                              <div
-                                key={coll.id}
-                                className="flex items-center justify-between p-2 bg-white rounded-lg border border-emerald-100"
-                              >
-                                <span className="flex items-center gap-2 text-sm">
-                                  <Icon name="folder" className="text-amber-500" />
-                                  {getIIIFValue(coll.label)}
-                                </span>
-                                <button
-                                  onClick={() => handleRemoveFromCollection(selectedNode.id, coll.id)}
-                                  className="p-1 text-slate-400 hover:text-red-500 rounded"
-                                  title="Remove from this Collection"
-                                >
-                                  <Icon name="link_off" className="text-sm" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                      <h3 className="font-bold text-lg text-slate-800">{getIIIFValue(selectedNode.label)}</h3>
+                      {isCanvas(selectedNode) && (
+                        <p className="text-sm text-slate-500 mt-1">
+                          {selectedNode.width} x {selectedNode.height}px
+                          {selectedNode.items && ` · ${selectedNode.items.reduce((sum, ap) => sum + (ap.items?.length || 0), 0)} annotations`}
+                        </p>
                       )}
                     </div>
                   )}
-
-                  {/* Behavior Policies */}
-                  <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-8">
-                    <h3 className="text-xl font-black text-slate-800 flex items-center gap-3 border-b pb-4">
-                      <Icon name="auto_fix_high" className="text-iiif-blue" /> Structural Modeling
-                    </h3>
-
-                    <div className="p-6 bg-slate-50 rounded-xl border border-slate-100">
-                      <h4 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Behavior Policies</h4>
-                      <p className="text-xs text-slate-500 mb-4">
-                        Behaviors tell IIIF viewers how to display the content. Choose the one that best matches your material.
-                      </p>
-                      <div className="grid grid-cols-1 gap-3">
-                        {([
-                          { key: 'individuals', label: 'Individuals', desc: 'Each canvas is shown separately (photos, single pages)' },
-                          { key: 'paged', label: 'Paged', desc: 'Two-page spreads like an open book (manuscripts, books)' },
-                          { key: 'continuous', label: 'Continuous', desc: 'Scrolling view for long content (scrolls, panoramas)' },
-                          { key: 'unordered', label: 'Unordered', desc: 'No specific order (collections of related items)' }
-                        ] as const).map(b => (
-                          <button
-                            key={b.key}
-                            onClick={() => handleUpdate(selectedId!, { behavior: [b.key] })}
-                            className={`p-4 rounded-lg border text-left transition-all ${selectedNode.behavior?.includes(b.key) ? 'bg-iiif-blue text-white border-iiif-blue shadow-lg' : 'bg-white text-slate-600 border-slate-200 hover:border-iiif-blue hover:bg-blue-50'}`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-bold">{b.label}</span>
-                              {selectedNode.behavior?.includes(b.key) && <Icon name="check_circle" className="text-sm" />}
-                            </div>
-                            <span className={`text-xs ${selectedNode.behavior?.includes(b.key) ? 'text-white/80' : 'text-slate-400'}`}>
-                              {b.desc}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
 
                   <MuseumLabel title="IIIF Hierarchy Model" type="field-note">
                     <strong>Collections</strong> are curated lists that reference resources.
@@ -524,10 +533,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                   </MuseumLabel>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-300 italic">
-              Select a structural node to configure
+            <div className="h-full flex items-center justify-center text-slate-300 italic bg-slate-50">
+              Select a structural node to view its contents
             </div>
           )}
         </div>
@@ -536,14 +545,24 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   );
 };
 
-const TreeNode: React.FC<{
+interface TreeNodeProps {
   node: IIIFItem;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDrop: (draggedId: string, targetId: string) => void;
   level: number;
-}> = ({ node, selectedId, onSelect, onDrop, level }) => {
-  const [expanded, setExpanded] = React.useState(level < 5);
+  referenceMap: Map<string, string[]>;
+}
+
+const TreeNode: React.FC<TreeNodeProps> = ({
+  node,
+  selectedId,
+  onSelect,
+  onDrop,
+  level,
+  referenceMap
+}) => {
+  const [expanded, setExpanded] = React.useState(level < 3);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const isSelected = node.id === selectedId;
   const children = (node as any).items || (node as any).annotations || [];
@@ -551,12 +570,15 @@ const TreeNode: React.FC<{
 
   const config = RESOURCE_TYPE_CONFIG[node.type] || RESOURCE_TYPE_CONFIG['Content'];
 
-  // Determine node relationship type
-  const isCollection = node.type === 'Collection';
-  const isManifest = node.type === 'Manifest';
+  const nodeIsCollection = node.type === 'Collection';
+  const nodeIsManifest = node.type === 'Manifest';
+  const canAcceptDrop = (nodeIsCollection || nodeIsManifest) && !isAtDepthLimit;
 
-  // Can accept drops into Collections and Manifests
-  const canAcceptDrop = (isCollection || isManifest) && !isAtDepthLimit;
+  // Get reference count
+  const refCount = referenceMap.get(node.id)?.length || 0;
+
+  // Get thumbnail
+  const thumbUrl = resolveHierarchicalThumb(node, 40);
 
   return (
     <div style={{ paddingLeft: level > 0 ? 12 : 0 }} className="mb-0.5">
@@ -576,21 +598,33 @@ const TreeNode: React.FC<{
           <Icon name={expanded ? "expand_more" : "chevron_right"} className="text-[14px]" />
         </div>
 
-        {/* Icon with relationship indicator */}
-        <div className="relative">
-          <Icon name={config.icon} className={`text-[18px] ${isSelected ? config.colorClass : 'text-slate-400'}`} />
-          {/* Show link icon for Collection items (they're references, not owned) */}
-          {isCollection && level > 0 && (
-            <Icon name="link" className="absolute -bottom-1 -right-1 text-[10px] text-amber-500" />
-          )}
-        </div>
+        {/* Thumbnail */}
+        {thumbUrl ? (
+          <div className="w-6 h-6 rounded bg-slate-100 overflow-hidden shrink-0">
+            <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="relative">
+            <Icon name={config.icon} className={`text-[18px] ${isSelected ? config.colorClass : 'text-slate-400'}`} />
+            {nodeIsCollection && level > 0 && (
+              <Icon name="link" className="absolute -bottom-1 -right-1 text-[10px] text-amber-500" />
+            )}
+          </div>
+        )}
 
-        <span className="text-sm truncate">{getIIIFValue(node.label) || 'Untitled'}</span>
+        <span className="text-sm truncate flex-1">{getIIIFValue(node.label) || 'Untitled'}</span>
+
+        {/* Reference badge */}
+        {refCount > 1 && (
+          <span className="text-[9px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full font-bold" title={`Referenced in ${refCount} Collections`}>
+            {refCount}
+          </span>
+        )}
 
         {/* Type badge */}
-        <span className={`ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-          isCollection ? 'bg-amber-100 text-amber-600' :
-          isManifest ? 'bg-emerald-100 text-emerald-600' :
+        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
+          nodeIsCollection ? 'bg-amber-100 text-amber-600' :
+          nodeIsManifest ? 'bg-emerald-100 text-emerald-600' :
           'bg-slate-100 text-slate-500'
         }`}>
           {node.type === 'Collection' ? 'COLL' :
@@ -615,6 +649,7 @@ const TreeNode: React.FC<{
               onSelect={onSelect}
               onDrop={onDrop}
               level={level + 1}
+              referenceMap={referenceMap}
             />
           ))}
         </div>

@@ -3,11 +3,9 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
 import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage } from '../types';
-
-interface Point {
-  x: number;
-  y: number;
-}
+import { useViewport, usePanZoomGestures, useViewportKeyboard } from '../hooks';
+import { ViewportControls } from './ViewportControls';
+import type { Point } from '../constants/viewport';
 
 interface PolygonAnnotationToolProps {
   canvas: IIIFCanvas;
@@ -103,12 +101,12 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
   existingAnnotations = []
 }) => {
   const { showToast } = useToast();
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const [mode, setMode] = useState<DrawingMode>('polygon');
   const [points, setPoints] = useState<Point[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [scale, setScale] = useState(0.5);
   const [annotationText, setAnnotationText] = useState('');
   const [motivation, setMotivation] = useState<'commenting' | 'tagging' | 'describing'>('commenting');
   const [showExisting, setShowExisting] = useState(true);
@@ -116,10 +114,38 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
   // For freehand drawing
   const [freehandPoints, setFreehandPoints] = useState<Point[]>([]);
 
+  // Unified viewport management
+  const viewport = useViewport({
+    minScale: 0.1,
+    maxScale: 3,
+    initialScale: 0.5,
+  });
+
+  // Get scale from viewport
+  const scale = viewport.viewport.scale;
+
+  // Pan/zoom gesture handling - enable space+drag for panning
+  const gestures = usePanZoomGestures(containerRef, viewport, {
+    enabled: mode === 'select', // Only enable free panning in select mode
+    panButton: 'middle', // Middle-click always pans
+    requireCtrlForZoom: false,
+  });
+
+  // Keyboard shortcuts for viewport
+  useViewportKeyboard(containerRef, viewport, gestures, {
+    enabled: true,
+    enableZoom: true,
+    enablePan: true,
+    enableRotation: false,
+    enableReset: true,
+    enableSpacePan: true,
+  });
+
   const getCanvasCoords = useCallback((e: React.MouseEvent): Point => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
 
+    // Simple coordinate conversion - canvas uses CSS scale transform
     return {
       x: (e.clientX - rect.left) / scale,
       y: (e.clientY - rect.top) / scale
@@ -174,12 +200,18 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
   }, [mode, isDrawing, getCanvasCoords]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (mode === 'freehand') {
+    // Middle-click or shift+click for panning
+    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+      gestures.handlers.onMouseDown(e);
+      return;
+    }
+
+    if (mode === 'freehand' && e.button === 0) {
       const point = getCanvasCoords(e);
       setFreehandPoints([point]);
       setIsDrawing(true);
     }
-  }, [mode, getCanvasCoords]);
+  }, [mode, getCanvasCoords, gestures.handlers]);
 
   const handleMouseUp = useCallback(() => {
     if (mode === 'freehand' && isDrawing) {
@@ -349,13 +381,13 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
 
           {/* Zoom */}
           <div className="flex bg-white/5 border border-white/10 rounded p-1">
-            <button onClick={() => setScale(s => Math.max(0.1, s * 0.8))} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white">
+            <button onClick={viewport.zoomOut} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white">
               <Icon name="remove"/>
             </button>
             <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center">
-              {Math.round(scale * 100)}%
+              {viewport.scalePercent}%
             </span>
-            <button onClick={() => setScale(s => Math.min(2, s * 1.2))} aria-label="Zoom In" className="p-1 text-white/40 hover:text-white">
+            <button onClick={viewport.zoomIn} aria-label="Zoom In" className="p-1 text-white/40 hover:text-white">
               <Icon name="add"/>
             </button>
           </div>
@@ -377,9 +409,24 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* Canvas Area */}
         <div
+          ref={containerRef}
           className="flex-1 relative overflow-auto flex items-center justify-center p-10 bg-slate-900"
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+          onMouseMove={(e) => {
+            handleMouseMove(e);
+            if (gestures.isPanning) gestures.handlers.onMouseMove(e);
+          }}
+          onMouseUp={(e) => {
+            handleMouseUp();
+            gestures.handlers.onMouseUp(e);
+          }}
+          onMouseLeave={gestures.handlers.onMouseLeave}
+          onWheel={(e) => {
+            // Allow wheel zoom anywhere in the canvas area
+            const rect = containerRef.current?.getBoundingClientRect();
+            if (rect) {
+              viewport.zoomAtPoint(e.deltaY, { x: e.clientX, y: e.clientY }, rect);
+            }
+          }}
         >
           <div
             ref={canvasRef}
@@ -572,12 +619,14 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
       <div className="h-8 bg-slate-950 border-t border-white/5 flex items-center justify-between px-6 text-[10px] text-white/30 uppercase font-black tracking-widest">
         <div className="flex gap-4">
           <span>SVG Selector Mode</span>
-          <span>{mode === 'polygon' ? 'Click to add points, click first point to close' : mode === 'rectangle' ? 'Click and drag to draw rectangle' : mode === 'freehand' ? 'Click and drag to draw freehand' : 'Select existing annotations'}</span>
+          <span>{mode === 'polygon' ? 'Click to add points, click first point to close' : mode === 'rectangle' ? 'Click and drag to draw rectangle' : mode === 'freehand' ? 'Click and drag to draw freehand' : 'Pan/zoom with mouse'}</span>
         </div>
         <div className="flex gap-4">
           <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Esc</kbd> Cancel</span>
           <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Cmd+Z</kbd> Undo</span>
           <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Enter</kbd> Close shape</span>
+          <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">+/-</kbd> Zoom</span>
+          <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Scroll</kbd> Zoom</span>
         </div>
       </div>
     </div>

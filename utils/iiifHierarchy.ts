@@ -427,3 +427,142 @@ export function getTreeDepth(root: IIIFItem): number {
 
   return getDepth(root, 1);
 }
+
+// ============================================================================
+// Cross-Collection Reference Tracking
+// ============================================================================
+
+/**
+ * Build a map of resource IDs to the Collections that reference them.
+ * This enables showing "Referenced in N collections" badges and navigation.
+ *
+ * @param root - The root IIIF item to traverse
+ * @returns Map<resourceId, collectionIds[]>
+ */
+export function buildReferenceMap(root: IIIFItem): Map<string, string[]> {
+  const refs = new Map<string, string[]>();
+
+  const traverse = (item: IIIFItem, parentCollectionId?: string) => {
+    // Track references from Collections to their children
+    if (parentCollectionId) {
+      if (item.type === 'Collection' || item.type === 'Manifest') {
+        const existing = refs.get(item.id) || [];
+        if (!existing.includes(parentCollectionId)) {
+          refs.set(item.id, [...existing, parentCollectionId]);
+        }
+      }
+    }
+
+    // Recurse into children
+    const items = (item as any).items || [];
+    items.forEach((child: IIIFItem) => traverse(
+      child,
+      item.type === 'Collection' ? item.id : parentCollectionId
+    ));
+  };
+
+  traverse(root);
+  return refs;
+}
+
+/**
+ * Get all Collections that reference a given resource ID
+ */
+export function getReferencingCollections(
+  root: IIIFItem,
+  targetId: string
+): IIIFCollection[] {
+  const refMap = buildReferenceMap(root);
+  const collectionIds = refMap.get(targetId) || [];
+
+  return collectionIds
+    .map(id => findNodeById(root, id))
+    .filter((node): node is IIIFCollection => node !== null && isCollection(node));
+}
+
+// ============================================================================
+// Range Helpers
+// ============================================================================
+
+/**
+ * Create a new Range with the given canvases
+ */
+export function createRange(
+  label: string,
+  canvasIds: string[],
+  options: { behavior?: string[]; id?: string } = {}
+): IIIFRange {
+  const id = options.id || `https://archive.local/iiif/range/${crypto.randomUUID()}`;
+
+  return {
+    id,
+    type: 'Range',
+    label: { none: [label] },
+    behavior: options.behavior,
+    items: canvasIds.map(canvasId => ({
+      id: canvasId,
+      type: 'Canvas' as const
+    }))
+  };
+}
+
+/**
+ * Create a nested Range (chapter with sub-sections)
+ */
+export function createNestedRange(
+  label: string,
+  childRanges: IIIFRange[],
+  options: { behavior?: string[]; id?: string } = {}
+): IIIFRange {
+  const id = options.id || `https://archive.local/iiif/range/${crypto.randomUUID()}`;
+
+  return {
+    id,
+    type: 'Range',
+    label: { none: [label] },
+    behavior: options.behavior,
+    items: childRanges
+  };
+}
+
+/**
+ * Add a Range to a Manifest's structures
+ */
+export function addRangeToManifest(
+  manifest: IIIFManifest,
+  range: IIIFRange
+): IIIFManifest {
+  const structures = manifest.structures || [];
+
+  return {
+    ...manifest,
+    structures: [...structures, range]
+  };
+}
+
+/**
+ * Get all Ranges from a Manifest
+ */
+export function getManifestRanges(manifest: IIIFManifest): IIIFRange[] {
+  return manifest.structures || [];
+}
+
+/**
+ * Flatten all canvas IDs referenced by a Range (including nested ranges)
+ */
+export function flattenRangeCanvasIds(range: IIIFRange): string[] {
+  const ids: string[] = [];
+
+  const traverse = (item: any) => {
+    if (item.type === 'Canvas' || (typeof item === 'object' && item.type === 'Canvas')) {
+      ids.push(item.id);
+    } else if (item.type === 'Range') {
+      (item.items || []).forEach(traverse);
+    } else if (typeof item === 'string') {
+      ids.push(item);
+    }
+  };
+
+  (range.items || []).forEach(traverse);
+  return ids;
+}

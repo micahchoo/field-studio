@@ -9,6 +9,7 @@ import {
   createImageServiceReference,
   ImageApiProfile
 } from '../utils';
+import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES } from '../constants';
 
 export interface ExportOptions {
     includeAssets: boolean;
@@ -76,7 +77,8 @@ class ExportService {
                                 });
 
                                 // Add pre-generated size derivatives (Level 0 requirement)
-                                const sizes = [150, 600, 1200];
+                                // Uses DEFAULT_DERIVATIVE_SIZES from presets
+                                const sizes = DEFAULT_DERIVATIVE_SIZES;
                                 for (const size of sizes) {
                                     const sizeHeight = Math.floor((height / width) * size);
                                     virtualFiles.push({
@@ -194,7 +196,7 @@ class ExportService {
             height,
             'level0',
             {
-                sizes: generateStandardSizes(width, height, [150, 600, 1200]),
+                sizes: generateStandardSizes(width, height, DEFAULT_DERIVATIVE_SIZES),
                 tiles: generateStandardTiles(512, [1, 2, 4, 8])
             }
         );

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IIIFCanvas, IIIFAnnotation, IIIFItem, IIIFAnnotationPage } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
+import { useViewport, usePanZoomGestures, useViewportKeyboard } from '../hooks';
 
 interface CanvasComposerProps {
   canvas: IIIFCanvas;
@@ -32,7 +33,6 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
   const { showToast } = useToast();
   const [history, setHistory] = useState<HistoryState>({ past: [], present: [], future: [] });
   const [canvasDimensions, setCanvasDimensions] = useState({ w: canvas.width || 2000, h: canvas.height || 2000 });
-  const [scale, setScale] = useState(0.25);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [bgMode, setBgMode] = useState<'grid' | 'dark' | 'light'>('grid');
   const [sidebarTab, setSidebarTab] = useState<'layers' | 'library'>('layers');
@@ -40,6 +40,33 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Unified viewport management
+  const viewport = useViewport({
+    minScale: 0.1,
+    maxScale: 2,
+    initialScale: 0.25,
+  });
+
+  // Get scale from viewport for use throughout component
+  const scale = viewport.viewport.scale;
+
+  // Pan/zoom gesture handling for the workspace
+  const gestures = usePanZoomGestures(containerRef, viewport, {
+    enabled: !isResizing, // Disable during layer resize
+    panButton: 'middle', // Middle-click to pan
+    requireCtrlForZoom: false, // Allow direct wheel zoom
+  });
+
+  // Keyboard shortcuts for viewport (zoom only, undo/redo handled separately)
+  useViewportKeyboard(containerRef, viewport, gestures, {
+    enabled: true,
+    enableZoom: true,
+    enablePan: true,
+    enableRotation: false,
+    enableReset: true,
+    enableSpacePan: true,
+  });
 
   // Derived layers from history
   const layers = history.present;
@@ -252,9 +279,9 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
               <button onClick={redo} disabled={!canRedo} aria-label="Redo (Ctrl+Shift+Z)" title="Redo (Ctrl+Shift+Z)" className={`p-1 ${canRedo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="redo"/></button>
           </div>
           <div className="flex bg-white/5 border border-white/10 rounded p-1">
-              <button onClick={() => setScale(s => s * 0.8)} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></button>
-              <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center" aria-live="polite">{Math.round(scale * 100)}%</span>
-              <button onClick={() => setScale(s => s * 1.2) } aria-label="Zoom In" className="p-1 text-white/40 hover:text-white"><Icon name="add"/></button>
+              <button onClick={viewport.zoomOut} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></button>
+              <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center" aria-live="polite">{viewport.scalePercent}%</span>
+              <button onClick={viewport.zoomIn} aria-label="Zoom In" className="p-1 text-white/40 hover:text-white"><Icon name="add"/></button>
           </div>
           <button onClick={onClose} aria-label="Cancel and close workspace" className="px-4 py-2 text-white/40 hover:text-white font-bold text-sm">Cancel</button>
           <button onClick={handleSave} aria-label="Apply composition to canvas" className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-black uppercase tracking-widest text-xs hover:bg-indigo-500 shadow-xl transition-all">Apply Composition</button>
@@ -345,10 +372,23 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
             )}
         </div>
 
-        <div 
-            className={`flex-1 relative overflow-auto flex items-center justify-center p-20 custom-scrollbar shadow-inner ${bgMode === 'light' ? 'bg-slate-200' : bgMode === 'dark' ? 'bg-slate-900' : 'bg-black'}`} 
+        <div
+            ref={containerRef}
+            className={`flex-1 relative overflow-auto flex items-center justify-center p-20 custom-scrollbar shadow-inner ${bgMode === 'light' ? 'bg-slate-200' : bgMode === 'dark' ? 'bg-slate-900' : 'bg-black'}`}
             onDragOver={e => e.preventDefault()}
+            onMouseDown={(e) => {
+                // Handle middle-click or shift+click for panning
+                if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+                    gestures.handlers.onMouseDown(e);
+                }
+            }}
             onMouseMove={(e) => {
+                // Handle panning
+                if (gestures.isPanning) {
+                    gestures.handlers.onMouseMove(e);
+                    return;
+                }
+                // Handle layer resizing
                 if (isResizing && activeId && resizeHandle) {
                     const layer = layers.find(l => l.id === activeId);
                     if (layer) {
@@ -366,7 +406,19 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                     }
                 }
             }}
-            onMouseUp={() => { setIsResizing(false); setResizeHandle(null); }}
+            onMouseUp={(e) => {
+                setIsResizing(false);
+                setResizeHandle(null);
+                gestures.handlers.onMouseUp(e);
+            }}
+            onMouseLeave={gestures.handlers.onMouseLeave}
+            onWheel={(e) => {
+                // Allow wheel zoom anywhere in the workspace
+                const rect = containerRef.current?.getBoundingClientRect();
+                if (rect) {
+                    viewport.zoomAtPoint(e.deltaY, { x: e.clientX, y: e.clientY }, rect);
+                }
+            }}
             onDrop={(e) => {
                 e.preventDefault();
                 const itemId = e.dataTransfer.getData('application/iiif-item-id');
@@ -472,8 +524,10 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
       <div className="h-8 bg-slate-950 border-t border-white/5 flex items-center justify-between px-6 text-[10px] text-white/30 uppercase font-black tracking-widest">
           <div className="flex gap-4"><span>Archive Synthesis Engine</span><span>{layers.length} Active Parts</span></div>
           <div className="flex gap-4">
-              <span className="flex items-center gap-1"><Icon name="mouse" className="text-[10px]"/> Adjust values in sidebar</span>
-              <span className="flex items-center gap-1"><Icon name="save" className="text-[10px]"/> Synthesis anchors automatically</span>
+              <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Scroll</kbd> Zoom</span>
+              <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">+/-</kbd> Zoom</span>
+              <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Shift+Drag</kbd> Pan</span>
+              <span><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Cmd+Z</kbd> Undo</span>
           </div>
       </div>
     </div>
