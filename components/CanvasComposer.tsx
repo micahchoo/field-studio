@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { IIIFCanvas, IIIFAnnotation, IIIFItem, IIIFAnnotationPage } from '../types';
+import { IIIFCanvas, IIIFAnnotation, IIIFItem, IIIFAnnotationPage, getIIIFValue } from '../types';
 import { DEFAULT_INGEST_PREFS } from '../constants';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
@@ -358,7 +358,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                       className={`p-4 rounded-xl border transition-all cursor-pointer group outline-none focus:ring-2 focus:ring-indigo-500 ${activeId === l.id ? 'bg-indigo-600/20 border-indigo-500' : 'bg-white/5 border-white/5 hover:border-white/20'}`}
                     >
                         <div className="flex justify-between items-center mb-3">
-                            <span className="text-[11px] font-bold text-white truncate max-w-[140px]">{l.resource.label?.['none']?.[0]}</span>
+                            <span className="text-[11px] font-bold text-white truncate max-w-[140px]">{getIIIFValue(l.resource.label, 'none')}</span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={(e) => { e.stopPropagation(); updateLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer" aria-label={l.locked ? "Unlock Layer" : "Lock Layer"}><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></button>
                                 <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'down'); }} className="p-1 hover:bg-white/10 rounded" title="Move Back" aria-label="Move Layer Back"><Icon name="arrow_downward" className="text-[14px]"/></button>
@@ -409,7 +409,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                                 )}
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs font-bold text-white truncate">{item.label?.['none']?.[0] || 'Untitled'}</div>
+                                <div className="text-xs font-bold text-white truncate">{getIIIFValue(item.label, 'none') || 'Untitled'}</div>
                                 <div className="text-[10px] text-white/40 truncate">{item.type}</div>
                             </div>
                             <Icon name="add_circle" className="text-white/20 group-hover:text-indigo-400 ml-auto"/>
@@ -540,7 +540,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                                 <span className="text-[10px] text-white/50 mt-2">Audio Layer</span>
                             </div>
                         ) : l.resource._blobUrl ? (
-                            <img src={l.resource._blobUrl} className="w-full h-full object-fill pointer-events-none" alt={l.resource.label?.['none']?.[0] || 'Layer Image'} />
+                            <img src={l.resource._blobUrl} className="w-full h-full object-fill pointer-events-none" alt={getIIIFValue(l.resource.label, 'none') || 'Layer Image'} />
                         ) : (
                             <div className="w-full h-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20"><Icon name="image" className="text-4xl"/></div>
                         )}

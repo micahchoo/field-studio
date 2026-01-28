@@ -1,5 +1,5 @@
 
-import { FileTree, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFItem, IngestReport, IngestResult, IIIFAnnotationPage, IIIFAnnotation, IIIFMotivation, IIIFRange } from '../types';
+import { FileTree, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFItem, IngestReport, IngestResult, IIIFAnnotationPage, IIIFAnnotation, IIIFMotivation, IIIFRange, isCollection } from '../types';
 import { storage } from './storage';
 import { DEFAULT_INGEST_PREFS, IMAGE_QUALITY, MIME_TYPE_MAP, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '../constants';
 import { load } from 'js-yaml';
@@ -426,11 +426,11 @@ export const ingestTree = async (
     
     const newRoot = await processNode(tree, baseUrl, report, onProgress);
 
-    if (existingRoot && existingRoot.type === 'Collection') {
+    if (existingRoot && isCollection(existingRoot)) {
         const rootClone = JSON.parse(JSON.stringify(existingRoot)) as IIIFCollection;
         if (!rootClone.items) rootClone.items = [];
 
-        if (newRoot.type === 'Collection' && tree.name === 'root') {
+        if (isCollection(newRoot) && tree.name === 'root') {
             // When importing a root collection, merge its items using IIIF hierarchy rules
             const newItems = (newRoot as IIIFCollection).items || [];
             for (const item of newItems) {

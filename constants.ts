@@ -239,7 +239,17 @@ export const IIIF_SPEC = {
     }
   },
   SEARCH_2: {
+    CONTEXT: 'http://iiif.io/api/search/2/context.json',
     PROFILE: 'http://iiif.io/api/search/2/search'
+  },
+  AUTH_2: {
+    CONTEXT: 'http://iiif.io/api/auth/2/context.json'
+  },
+  DISCOVERY_1: {
+    CONTEXT: 'http://iiif.io/api/discovery/1/context.json'
+  },
+  CONTENT_STATE_1: {
+    CONTEXT: 'http://iiif.io/api/content-state/1/context.json'
   }
 };
 

@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { IIIFItem, IIIFCanvas, AppMode, AppSettings } from '../types';
+import { IIIFItem, IIIFCanvas, AppMode, AppSettings, isCanvas } from '../types';
 import { ValidationIssue } from '../services/validator';
 import { ArchiveView } from './views/ArchiveView';
 import { BoardView } from './views/BoardView';
@@ -182,7 +182,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           )}
         >
           <Viewer
-            item={selectedItem?.type === 'Canvas' ? selectedItem as IIIFCanvas : null}
+            item={selectedItem && isCanvas(selectedItem) ? selectedItem : null}
             onUpdate={onUpdateItem}
             autoOpenComposer={preloadedManifest === selectedId}
             onComposerOpened={onComposerOpened}

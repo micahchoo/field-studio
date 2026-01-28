@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { IIIFItem, IIIFCanvas, ResourceState, getIIIFValue, IIIFCollection, AppMode } from '../../types';
+import { IIIFItem, IIIFCanvas, ResourceState, getIIIFValue, IIIFCollection, AppMode, isCanvas } from '../../types';
 import { ValidationIssue } from '../../services/validator';
 import { Icon } from '../Icon';
 import { MapView } from './MapView';
 import { TimelineView } from './TimelineView';
 import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
-import { RESOURCE_TYPE_CONFIG } from '../../constants';
+import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG } from '../../constants';
 import { Viewer } from './Viewer';
 import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '../../hooks';
 import {
@@ -190,7 +190,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
               const item = list[i];
               if (idsToGroup.has(item.id)) {
                   // Only move Canvases - use IIIF hierarchy validation
-                  if (item.type === 'Canvas' && isValidChildType('Manifest', item.type)) {
+                  if (isCanvas(item) && isValidChildType('Manifest', item.type)) {
                       canvasesToMove.push(list.splice(i, 1)[0]);
                   } else {
                       console.warn(`Cannot move ${item.type} into Manifest - only Canvas is valid`);
@@ -208,7 +208,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           return;
       }
 
-      const manifestId = `https://archive.local/iiif/manifest/${crypto.randomUUID()}`;
+      const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
+      const manifestId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, crypto.randomUUID());
 
       // Create new Manifest with proper IIIF 3.0 structure
       // Manifest → Canvas is an OWNERSHIP relationship (exclusive)
@@ -216,7 +217,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       console.log(`Creating Manifest with ${canvasesToMove.length} Canvases (${relationship} relationship)`);
 
       const newManifest: any = {
-          "@context": "http://iiif.io/api/presentation/3/context.json",
+          "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
           id: manifestId,
           type: 'Manifest',
           label: { none: ['Selection Bundle'] },

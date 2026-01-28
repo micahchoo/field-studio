@@ -5,7 +5,7 @@
  * per IIIF Presentation API 3.0 recommendations.
  */
 
-import { IIIFItem, IIIFManifest, IIIFCollection, getIIIFValue } from '../types';
+import { IIIFItem, IIIFManifest, IIIFCollection, getIIIFValue, isManifest, isCollection } from '../types';
 import { resolveHierarchicalThumbs, resolveLeafCanvases } from './imageSourceResolver';
 
 /**
@@ -57,7 +57,7 @@ export function generateThumbnailMetadata(
 export function generateSummary(item: IIIFItem): string {
   const label = getIIIFValue(item.label) || 'Untitled';
 
-  if (item.type === 'Manifest') {
+  if (isManifest(item)) {
     const manifest = item as IIIFManifest;
     const canvasCount = manifest.items?.length || 0;
     const hasStructures = manifest.structures && manifest.structures.length > 0;
@@ -73,13 +73,13 @@ export function generateSummary(item: IIIFItem): string {
     return `Manifest containing ${canvasCount} canvas${canvasCount !== 1 ? 'es' : ''}${structureInfo}`;
   }
 
-  if (item.type === 'Collection') {
+  if (isCollection(item)) {
     const collection = item as IIIFCollection;
     const itemCount = collection.items?.length || 0;
 
     // Count manifests vs sub-collections
-    const manifestCount = collection.items?.filter(i => i.type === 'Manifest').length || 0;
-    const subCollectionCount = collection.items?.filter(i => i.type === 'Collection').length || 0;
+    const manifestCount = collection.items?.filter(i => isManifest(i)).length || 0;
+    const subCollectionCount = collection.items?.filter(i => isCollection(i)).length || 0;
 
     if (itemCount === 0) {
       return `Empty collection: ${label}`;
@@ -114,7 +114,7 @@ export function enrichIIIFMetadata(
   const { thumbWidth = 200, forceUpdate = false, includeSummary = true } = options;
 
   // Only enrich manifests and collections
-  if (item.type !== 'Manifest' && item.type !== 'Collection') {
+  if (!isManifest(item) && !isCollection(item)) {
     return item;
   }
 
@@ -152,7 +152,7 @@ export function enrichTreeMetadata(
 ): IIIFItem {
   const enrich = (item: IIIFItem): void => {
     // Enrich this item if it's a manifest or collection
-    if (item.type === 'Manifest' || item.type === 'Collection') {
+    if (isManifest(item) || isCollection(item)) {
       enrichIIIFMetadata(item, options);
     }
 

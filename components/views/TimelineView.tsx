@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import { IIIFItem, IIIFCanvas } from '../../types';
+import { IIIFItem, IIIFCanvas, isCanvas, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
 
 interface TimelineViewProps {
@@ -23,7 +23,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) =>
 
     const items: IIIFCanvas[] = [];
     const traverse = (item: IIIFItem) => {
-      if (item.type === 'Canvas' && (item as IIIFCanvas).navDate) {
+      if (isCanvas(item) && (item as IIIFCanvas).navDate) {
         items.push(item as IIIFCanvas);
       }
       if (item.items) {
@@ -215,7 +215,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) =>
                     {zoomLevel === 'day' && (
                       <div className="p-1.5">
                         <div className="text-[10px] text-slate-600 truncate">
-                          {item.label?.['none']?.[0] || 'Untitled'}
+                          {getIIIFValue(item.label, 'none') || 'Untitled'}
                         </div>
                         <div className="text-[9px] text-slate-400">
                           {new Date(item.navDate!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

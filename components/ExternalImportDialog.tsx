@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { IIIFItem } from '../types';
+import { IIIFItem, getIIIFValue, isCollection } from '../types';
 import { fetchRemoteResource, requiresAuth, AuthRequiredResult } from '../services/remoteLoader';
 import { AuthService } from '../services/authService';
 import { Icon } from './Icon';
@@ -132,18 +132,18 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
                    {(preview as any).thumbnail?.[0]?.id ? (
                        <img src={(preview as any).thumbnail[0].id} className="w-full h-full object-cover" />
                    ) : (
-                       <Icon name={preview.type === 'Collection' ? 'folder' : 'menu_book'} className="text-slate-300 text-3xl"/>
+                       <Icon name={isCollection(preview) ? 'folder' : 'menu_book'} className="text-slate-300 text-3xl"/>
                    )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${preview.type === 'Collection' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                    <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${isCollection(preview) ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
                       {preview.type}
                     </span>
                   </div>
-                  <h3 className="font-bold text-slate-800 line-clamp-1">{preview.label?.['none']?.[0] || preview.label?.['en']?.[0] || 'Untitled'}</h3>
+                  <h3 className="font-bold text-slate-800 line-clamp-1">{getIIIFValue(preview.label, 'none') || getIIIFValue(preview.label, 'en') || 'Untitled'}</h3>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                    {preview.summary?.['none']?.[0] || preview.summary?.['en']?.[0] || 'No description available.'}
+                    {getIIIFValue(preview.summary, 'none') || getIIIFValue(preview.summary, 'en') || 'No description available.'}
                   </p>
                 </div>
               </div>

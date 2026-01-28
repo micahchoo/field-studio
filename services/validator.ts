@@ -156,7 +156,7 @@ export class ValidationService {
     // Check behavior inheritance context
     if (parentType) {
         // Canvases should inherit from Manifest, not Range
-        if (item.type === 'Canvas' && parentType === 'Range') {
+        if (isCanvas(item) && parentType === 'Range') {
             addIssue('warning', 'Structure', 'Canvas behavior should inherit from Manifest, not Range. Check behavior consistency.', false);
         }
 

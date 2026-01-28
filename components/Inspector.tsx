@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue, IIIFAnnotation } from '../types';
+import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue, IIIFAnnotation, isManifest } from '../types';
 import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
@@ -172,7 +172,7 @@ const AnnotationItem = ({
 }) => {
   const body = anno.body as any;
   const target = anno.target as any;
-  const bodyText = body?.value || body?.label?.en?.[0] || 'Untitled';
+  const bodyText = body?.value || getIIIFValue(body?.label, 'en') || 'Untitled';
   const motivation = Array.isArray(anno.motivation) ? anno.motivation[0] : (anno.motivation || 'commenting');
   const hasSpatial = target?.selector?.type === 'SvgSelector' || (target?.selector?.value || '').includes('xywh=');
   
@@ -289,7 +289,7 @@ export const Inspector: React.FC<InspectorProps> = ({
     if (!resource) return;
     const characteristics = {
       hasDuration: !!(resource as any).duration,
-      hasPageSequence: resource.type === 'Manifest' && (resource as IIIFManifest).items?.length > 1,
+      hasPageSequence: isManifest(resource) && (resource as IIIFManifest).items?.length > 1,
       hasWidth: !!(resource as any).width,
       hasHeight: !!(resource as any).height,
     };
@@ -335,7 +335,7 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   // Determine available tabs
   const availableTabs = ['metadata', 'annotations'];
-  if (resource?.type === 'Manifest') availableTabs.push('structure');
+  if (resource && isManifest(resource)) availableTabs.push('structure');
   availableTabs.push('learn');
   if (designTab) availableTabs.push('design');
 
@@ -622,7 +622,7 @@ export const Inspector: React.FC<InspectorProps> = ({
           </div>
         )}
 
-        {tab === 'structure' && resource?.type === 'Manifest' && (
+        {tab === 'structure' && resource && isManifest(resource) && (
           <div role="tabpanel" className="space-y-4">
             <div className={`p-3 rounded-lg border ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
               <h3 className={`text-xs font-bold uppercase mb-2 ${settings.fieldMode ? 'text-yellow-400' : 'text-blue-600'}`}>Table of Contents</h3>

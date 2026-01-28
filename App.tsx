@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation } from './types';
+import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation, isCanvas } from './types';
 import { METADATA_TEMPLATES } from './constants';
 import { Sidebar } from './components/Sidebar';
 import { Inspector } from './components/Inspector';
@@ -497,8 +497,8 @@ const MainApp: React.FC = () => {
           visible={showInspector && !!selectedId}
           isMobile={isMobile}
           onClose={() => { setShowInspector(false); setSelectedId(null); }}
-          annotations={selectedItem?.type === 'Canvas'
-            ? (selectedItem as IIIFCanvas).annotations?.flatMap(page => page.items) || []
+          annotations={selectedItem && isCanvas(selectedItem)
+            ? selectedItem.annotations?.flatMap(page => page.items) || []
             : []}
         />
       </div>

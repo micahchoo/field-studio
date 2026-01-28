@@ -113,8 +113,8 @@ class SearchService {
   }
 
   private traverse(item: IIIFItem, path: string[]) {
-    const label = item.label?.['none']?.[0] || item.label?.['en']?.[0] || 'Untitled';
-    const summary = item.summary?.['none']?.[0] || item.summary?.['en']?.[0] || '';
+    const label = getIIIFValue(item.label, 'none') || getIIIFValue(item.label, 'en') || 'Untitled';
+    const summary = getIIIFValue(item.summary, 'none') || getIIIFValue(item.summary, 'en') || '';
 
     // Index current item
     this.index.add({

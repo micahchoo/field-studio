@@ -191,7 +191,7 @@ class CSVImporterService {
   private collectCanvases(item: IIIFItem, map: Map<string, IIIFCanvas>) {
     if (isCanvas(item)) {
       const canvas = item;
-      const label = canvas.label?.['none']?.[0] || canvas.label?.['en']?.[0] || '';
+      const label = getIIIFValue(canvas.label, 'none') || getIIIFValue(canvas.label, 'en') || '';
       map.set(label, canvas);
       map.set(label.toLowerCase(), canvas);
 
@@ -242,7 +242,7 @@ class CSVImporterService {
       if (!canvas.metadata) canvas.metadata = [];
 
       const existing = canvas.metadata.find(m =>
-        m.label?.['en']?.[0]?.toLowerCase() === metaKey.toLowerCase()
+        getIIIFValue(m.label, 'en').toLowerCase() === metaKey.toLowerCase()
       );
 
       if (existing) {

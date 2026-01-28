@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { IIIFItem, IIIFCanvas } from '../../types';
+import { IIIFItem, IIIFCanvas, isCanvas, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
 
 interface MapViewProps {
@@ -48,17 +48,20 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
 
     const items: GeoItem[] = [];
     const traverse = (item: IIIFItem) => {
-      if (item.type === 'Canvas') {
+      if (isCanvas(item)) {
         const canvas = item as IIIFCanvas;
         const locMeta = canvas.metadata?.find(m =>
-          m.label?.['en']?.[0]?.toLowerCase() === 'location' ||
-          m.label?.['en']?.[0]?.toLowerCase() === 'gps'
+          getIIIFValue(m.label, 'en')?.toLowerCase() === 'location' ||
+          getIIIFValue(m.label, 'en')?.toLowerCase() === 'gps'
         );
 
-        if (locMeta?.value?.['en']?.[0]) {
-          const coords = parseCoordinates(locMeta.value['en'][0]);
-          if (coords) {
-            items.push({ canvas, lat: coords.lat, lng: coords.lng });
+        if (locMeta) {
+          const locValue = getIIIFValue(locMeta.value, 'en');
+          if (locValue) {
+            const coords = parseCoordinates(locValue);
+            if (coords) {
+              items.push({ canvas, lat: coords.lat, lng: coords.lng });
+            }
           }
         }
       }
@@ -228,7 +231,7 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
               )}
               <div>
                 <div className="font-bold text-sm text-slate-800">
-                  {hoveredItem.canvas.label?.['none']?.[0] || 'Untitled'}
+                  {getIIIFValue(hoveredItem.canvas.label, 'none') || 'Untitled'}
                 </div>
                 <div className="text-xs text-slate-500">
                   {hoveredItem.lat.toFixed(4)}, {hoveredItem.lng.toFixed(4)}
@@ -268,7 +271,7 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
                     </div>
                     <div className="p-2">
                       <div className="text-xs font-medium text-slate-700 truncate">
-                        {item.canvas.label?.['none']?.[0] || 'Untitled'}
+                        {getIIIFValue(item.canvas.label, 'none') || 'Untitled'}
                       </div>
                     </div>
                   </div>

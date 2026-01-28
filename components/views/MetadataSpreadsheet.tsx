@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { IIIFItem, getIIIFValue } from '../../types';
+import { IIIFItem, getIIIFValue, isCanvas } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
@@ -300,7 +300,7 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                       metaKeys.add(key);
                       return acc;
                   }, {} as Record<string, string>),
-                  _blobUrl: node._blobUrl || (node as any).thumbnail?.[0]?.id || (node.type === 'Canvas' ? (node as any).items?.[0]?.items?.[0]?.body?.id : undefined)
+                  _blobUrl: node._blobUrl || (node as any).thumbnail?.[0]?.id || (isCanvas(node) ? (node as any).items?.[0]?.items?.[0]?.body?.id : undefined)
               });
           }
           

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { IIIFItem, getIIIFValue } from '../types';
+import { IIIFItem, getIIIFValue, isManifest, isCollection } from '../types';
 import { exportService, ExportOptions, VirtualFile, CanopyConfig, ImageApiOptions } from '../services/exportService';
 import { archivalPackageService, ArchivalPackageOptions } from '../services/archivalPackageService';
 import { activityStream as activityStreamService } from '../services/activityStream';
@@ -266,23 +266,23 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
 
   // Helper to collect all manifests from the tree for featured items selection
   const collectManifests = (item: IIIFItem): { id: string; label: string }[] => {
-    const manifests: { id: string; label: string }[] = [];
-    const traverse = (node: IIIFItem) => {
-      if (node.type === 'Manifest') {
-        manifests.push({
-          id: node.id,
-          label: getIIIFValue(node.label) || node.id.split('/').pop() || 'Untitled'
-        });
-      }
-      node.items?.forEach(child => {
-        if (child.type === 'Collection' || child.type === 'Manifest') {
-          traverse(child as IIIFItem);
-        }
+  const manifests: { id: string; label: string }[] = [];
+  const traverse = (node: IIIFItem) => {
+    if (isManifest(node)) {
+      manifests.push({
+        id: node.id,
+        label: getIIIFValue(node.label) || node.id.split('/').pop() || 'Untitled'
       });
-    };
-    traverse(item);
-    return manifests;
+    }
+    node.items?.forEach(child => {
+      if (isCollection(child) || isManifest(child)) {
+        traverse(child as IIIFItem);
+      }
+    });
   };
+  traverse(item);
+  return manifests;
+};
 
   const availableManifests = root ? collectManifests(root) : [];
 

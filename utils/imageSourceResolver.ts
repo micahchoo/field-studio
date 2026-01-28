@@ -14,6 +14,7 @@
 
 import { IIIFImageService, type SizeParams } from './iiifImageApi';
 import { getDerivativePreset, DEFAULT_DERIVATIVE_PRESET } from '../constants';
+import { isCanvas } from '../types';
 
 // ============================================================================
 // Types
@@ -460,7 +461,7 @@ export function resolveLeafCanvases(
 ): IIIFItemLike[] {
   if (!item || depth > 10) return [];
   
-  if (item.type === 'Canvas') {
+  if (isCanvas(item as any)) {
     return [item];
   }
 

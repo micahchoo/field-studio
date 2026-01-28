@@ -14,6 +14,7 @@
  */
 
 import { IIIFAnnotation, IIIFCanvas, LanguageMap } from '../types';
+import { IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Types
@@ -581,7 +582,7 @@ class ContentSearchService {
         }
 
         return {
-          '@context': 'http://iiif.io/api/search/2/context.json',
+          '@context': IIIF_SPEC.SEARCH_2.CONTEXT,
           id: `${manifestId}/search?q=${encodeURIComponent(query)}`,
           type: 'AnnotationPage',
           partOf: {
@@ -608,7 +609,7 @@ class ContentSearchService {
         const limited = terms.slice(0, 10);
 
         return {
-          '@context': 'http://iiif.io/api/search/2/context.json',
+          '@context': IIIF_SPEC.SEARCH_2.CONTEXT,
           id: `${manifestId}/autocomplete?q=${encodeURIComponent(query)}`,
           type: 'TermList',
           terms: limited

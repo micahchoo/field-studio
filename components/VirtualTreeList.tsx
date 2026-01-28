@@ -10,7 +10,7 @@
  */
 
 import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { IIIFItem } from '../types';
+import { IIIFItem, isCollection, isManifest, isCanvas } from '../types';
 import { FlattenedTreeNode, useTreeVirtualization } from '../hooks/useTreeVirtualization';
 import { Icon } from './Icon';
 import { StackedThumbnail } from './StackedThumbnail';
@@ -74,8 +74,8 @@ const TreeItem = React.memo<TreeItemProps>(({
 }) => {
   const config = RESOURCE_TYPE_CONFIG[node.node.type] || RESOURCE_TYPE_CONFIG['Content'];
   const thumbUrls = resolveHierarchicalThumbs(node.node, 40);
-  const nodeIsCollection = node.node.type === 'Collection';
-  const nodeIsManifest = node.node.type === 'Manifest';
+  const nodeIsCollection = isCollection(node.node);
+  const nodeIsManifest = isManifest(node.node);
 
   // Calculate indentation based on nesting level
   const indentPadding = node.level * 12;
@@ -148,9 +148,9 @@ const TreeItem = React.memo<TreeItemProps>(({
         nodeIsManifest ? 'bg-emerald-100 text-emerald-600' :
         'bg-slate-100 text-slate-500'
       }`}>
-        {node.node.type === 'Collection' ? 'COLL' :
-         node.node.type === 'Manifest' ? 'MAN' :
-         node.node.type === 'Canvas' ? 'CVS' : ''}
+        {isCollection(node.node) ? 'COLL' :
+         isManifest(node.node) ? 'MAN' :
+         isCanvas(node.node) ? 'CVS' : ''}
       </span>
     </div>
   );
@@ -256,8 +256,8 @@ export const VirtualTreeList: React.FC<VirtualTreeListProps> = ({
 
   // Check if drop is allowed
   const canAcceptDrop = useCallback((node: FlattenedTreeNode): boolean => {
-    const nodeIsCollection = node.node.type === 'Collection';
-    const nodeIsManifest = node.node.type === 'Manifest';
+    const nodeIsCollection = isCollection(node.node);
+    const nodeIsManifest = isManifest(node.node);
     return (nodeIsCollection || nodeIsManifest) && node.level < maxDepth;
   }, [maxDepth]);
 

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { IIIFManifest, IIIFItem, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation, ConnectionType, getIIIFValue, AppSettings } from '../../types';
-import { DEFAULT_INGEST_PREFS } from '../../constants';
+import { IIIFManifest, IIIFItem, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation, ConnectionType, getIIIFValue, AppSettings, LanguageString, isCanvas } from '../../types';
+import { DEFAULT_INGEST_PREFS, IIIF_SPEC, IIIF_CONFIG } from '../../constants';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { Inspector } from '../Inspector';
@@ -163,14 +163,14 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           return null;
       };
       const resource = findItem(root);
-      const label = resource?.label?.['none']?.[0] || 'New Item';
+      const label = resource?.label ? new LanguageString(resource.label).get() : 'New Item';
       
       // Better resolution strategy:
       // 1. Local blob (new uploads)
       // 2. Painting annotation body (full IIIF image)
       // 3. Thumbnail (fallback)
       let blob = (resource as any)._blobUrl;
-      if (!blob && resource?.type === 'Canvas') {
+      if (!blob && resource && isCanvas(resource)) {
           const painting = (resource as any).items?.[0]?.items?.[0]?.body;
           if (painting?.id) blob = painting.id;
       }
@@ -607,7 +607,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
     const boardWidth = Math.max(maxX - minX, DEFAULT_INGEST_PREFS.defaultCanvasWidth);
     const boardHeight = Math.max(maxY - minY, DEFAULT_INGEST_PREFS.defaultCanvasHeight);
 
-    const boardId = `urn:field-studio:board:${crypto.randomUUID()}`;
+    const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
+    const boardId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, `board-${crypto.randomUUID()}`);
     const canvasId = `${boardId}/canvas/1`;
 
     const paintingAnnotations: IIIFAnnotation[] = items.map((item, idx) => {
@@ -697,7 +698,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
     };
 
     const manifest: IIIFManifest = {
-      "@context": "http://iiif.io/api/presentation/3/context.json",
+      "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
       id: boardId,
       type: "Manifest",
       label: { none: [`Research Board - ${new Date().toLocaleDateString()}`] },

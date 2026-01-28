@@ -4,11 +4,6 @@
  * Transforms Field Studio projects into self-contained static websites
  * that can be deployed to GitHub Pages, S3, Netlify, or any static host.
  *
- * Based on the Wax (minicomp/wax) architecture:
- * - Pre-baked IIIF tiles (Level 0 - no image server required)
- * - Static HTML pages per item
- * - Lunr.js search index
- * - Metadata as JSON/YAML
  *
  * @see ARCHITECTURE_INSPIRATION.md - "Static-First Infrastructure (Wax)"
  */
@@ -26,7 +21,7 @@ import {
   getAllCanvases,
   getAllManifests
 } from '../utils';
-import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES } from '../constants';
+import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES, IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Types
@@ -525,14 +520,14 @@ class StaticSiteExporter {
     };
 
     return {
-      '@context': 'http://iiif.io/api/presentation/3/context.json',
+      '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
       id: `${cfg.baseUrl}/iiif/${slug}/manifest.json`,
       type: 'Manifest',
       label: manifest.label,
       summary: (manifest as any).summary,
       metadata: manifest.metadata,
       items: manifest.items?.map(item =>
-        item.type === 'Canvas' ? rewriteCanvas(item as IIIFCanvas) : item
+        isCanvas(item) ? rewriteCanvas(item as IIIFCanvas) : item
       )
     };
   }
@@ -546,7 +541,7 @@ class StaticSiteExporter {
     cfg: StaticSiteConfig
   ): object {
     return {
-      '@context': 'http://iiif.io/api/presentation/3/context.json',
+      '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
       id: `${cfg.baseUrl}/iiif/collection.json`,
       type: 'Collection',
       label: collection.label || { en: [cfg.title] },

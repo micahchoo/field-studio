@@ -15,6 +15,7 @@
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Types (Activity Streams 2.0 / IIIF Change Discovery 1.0)
@@ -68,7 +69,7 @@ export interface ActivityActor {
 export interface OrderedCollection {
   '@context': [
     'https://www.w3.org/ns/activitystreams',
-    'https://iiif.io/api/discovery/1/context.json'
+    'http://iiif.io/api/discovery/1/context.json'
   ];
   id: string;
   type: 'OrderedCollection';
@@ -81,7 +82,7 @@ export interface OrderedCollection {
 export interface OrderedCollectionPage {
   '@context': [
     'https://www.w3.org/ns/activitystreams',
-    'https://iiif.io/api/discovery/1/context.json'
+    'http://iiif.io/api/discovery/1/context.json'
   ];
   id: string;
   type: 'OrderedCollectionPage';
@@ -402,7 +403,7 @@ class ActivityStreamService {
     const collection: OrderedCollection = {
       '@context': [
         'https://www.w3.org/ns/activitystreams',
-        'https://iiif.io/api/discovery/1/context.json'
+        IIIF_SPEC.DISCOVERY_1.CONTEXT as 'http://iiif.io/api/discovery/1/context.json'
       ],
       id: collectionId,
       type: 'OrderedCollection',
@@ -438,7 +439,7 @@ class ActivityStreamService {
     const page: OrderedCollectionPage = {
       '@context': [
         'https://www.w3.org/ns/activitystreams',
-        'https://iiif.io/api/discovery/1/context.json'
+        IIIF_SPEC.DISCOVERY_1.CONTEXT as 'http://iiif.io/api/discovery/1/context.json'
       ],
       id: pageId,
       type: 'OrderedCollectionPage',

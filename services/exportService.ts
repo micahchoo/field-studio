@@ -1,6 +1,6 @@
 
 import JSZip from 'jszip';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFAnnotation } from '../types';
+import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFAnnotation, isCollection, isManifest, isCanvas } from '../types';
 import { validator } from './validator';
 import {
   generateInfoJson,
@@ -10,7 +10,7 @@ import {
   ImageApiProfile,
   getAllManifests
 } from '../utils';
-import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS } from '../constants';
+import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS, IIIF_SPEC } from '../constants';
 import {
   generateCanopyPackageJson,
   CANOPY_GITIGNORE,
@@ -288,7 +288,7 @@ class ExportService {
 
                 if (item.items) {
                     item.items.forEach(child => {
-                        if (child.type === 'Collection' || child.type === 'Manifest') {
+                        if (isCollection(child) || isManifest(child)) {
                             buildIdMap(child as IIIFItem);
                         }
                     });
@@ -358,7 +358,7 @@ class ExportService {
 
             if (processedItem.items) {
                 processedItem.items = processedItem.items.map((child: any, idx: number) => {
-                    if (child.type === 'Collection' || child.type === 'Manifest') {
+                    if (isCollection(child) || isManifest(child)) {
                         // For Collections: replace embedded content with reference only
                         if (options.format === 'canopy') {
                             const childNewId = idMap.get(child.id);
@@ -496,7 +496,7 @@ class ExportService {
             // Recursively process child Collections and Manifests
             if (originalItem.items) {
                 originalItem.items.forEach((origChild) => {
-                    if (origChild.type === 'Collection' || origChild.type === 'Manifest') {
+                    if (isCollection(origChild) || isManifest(origChild)) {
                         processItem(origChild as IIIFItem, origChild as IIIFItem);
                     }
                 });
@@ -728,7 +728,7 @@ class ExportService {
         const facetIndex: Record<string, Record<string, string[]>> = {};
 
         const collectFacets = (item: IIIFItem) => {
-            if (item.type === 'Manifest') {
+            if (isManifest(item)) {
                 const manifestId = item.id;
                 item.metadata?.forEach(meta => {
                     const label = this.getIIIFValue(meta.label);
@@ -743,7 +743,7 @@ class ExportService {
                 });
             }
             item.items?.forEach(child => {
-                if (child.type === 'Collection' || child.type === 'Manifest') {
+                if (isCollection(child) || isManifest(child)) {
                     collectFacets(child as IIIFItem);
                 }
             });
@@ -759,7 +759,7 @@ class ExportService {
                 const collectionId = `${baseUrl}/iiif/api/facet/${sanitizedLabel}/${sanitizedValue}.json`;
 
                 const collection: IIIFCollection = {
-                    '@context': 'http://iiif.io/api/presentation/3/context.json',
+                    '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
                     id: collectionId,
                     type: 'Collection',
                     label: { none: [`${label}: ${value}`] },
@@ -1033,7 +1033,7 @@ ${featuredInfo}
         const rootPath = `${iiifBaseUrl}/iiif/${rootType}/${rootIdVal}.json`;
 
         // Determine correct key based on root item type
-        const entryKey = root.type === 'Manifest' ? 'manifest:' : 'collection:';
+        const entryKey = isManifest(root) ? 'manifest:' : 'collection:';
 
         // Convert featured manifest IDs to Canopy format
         const featuredPaths = config.featured.map(id => {
@@ -1184,7 +1184,7 @@ ${featuredInfo}
 
         // Generate info.json with full IIIF Image API 3.0 compliance
         const info: any = {
-            '@context': 'http://iiif.io/api/image/3/context.json',
+            '@context': IIIF_SPEC.IMAGE_3.CONTEXT,
             id: basePath,
             type: 'ImageService3',
             protocol: 'http://iiif.io/api/image',

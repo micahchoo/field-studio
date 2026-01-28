@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest } from '../types';
+import { IIIFItem, IIIFCollection, IIIFManifest, getIIIFValue, isCollection, isManifest } from '../types';
 import { Icon } from './Icon';
 import { getRelationshipType, buildReferenceMap } from '../utils/iiifHierarchy';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
@@ -311,7 +311,7 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
               const { item, level, parentId } = flatItem;
               const isSelected = item.id === selectedId;
               const isFocused = item.id === focusedId;
-              const label = item.label?.['en']?.[0] || item.label?.['none']?.[0] || 'Untitled';
+              const label = getIIIFValue(item.label, 'en') || getIIIFValue(item.label, 'none') || 'Untitled';
               const children = (item as any).items || [];
               const hasChildren = children.length > 0;
               const isExpanded = expandedIds.has(item.id);
@@ -387,7 +387,7 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
                   <span className="text-xs truncate font-medium">{label}</span>
 
                   {/* Cross-collection references badge */}
-                  {(item.type === 'Collection' || item.type === 'Manifest') && (refMap.get(item.id)?.length || 0) > 1 && (
+                  {(isCollection(item) || isManifest(item)) && (refMap.get(item.id)?.length || 0) > 1 && (
                     <div 
                       className={`ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-bold ${
                         isSelected ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
@@ -400,11 +400,11 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
                   )}
 
                   {/* Type indicator for Collections and Manifests */}
-                  {(item.type === 'Collection' || item.type === 'Manifest') && (
-                    <span className={`${(item.type === 'Collection' || item.type === 'Manifest') && (refMap.get(item.id)?.length || 0) > 1 ? 'ml-1' : 'ml-auto'} text-[8px] font-bold uppercase px-1 py-0.5 rounded ${
+                  {(isCollection(item) || isManifest(item)) && (
+                    <span className={`${(isCollection(item) || isManifest(item)) && (refMap.get(item.id)?.length || 0) > 1 ? 'ml-1' : 'ml-auto'} text-[8px] font-bold uppercase px-1 py-0.5 rounded ${
                       isSelected ? 'bg-white/20 text-white' : colors.bg + ' ' + colors.text
                     }`}>
-                      {item.type === 'Collection' ? 'C' : 'M'}
+                      {isCollection(item) ? 'C' : 'M'}
                     </span>
                   )}
                 </div>

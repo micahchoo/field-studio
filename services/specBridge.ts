@@ -19,7 +19,7 @@
  * @see https://iiif.io/api/presentation/3.0/change-log/
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, LanguageMap } from '../types';
+import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, LanguageMap, isCanvas } from '../types';
 import {
   isValidViewingDirection,
   isBehaviorValidForType,
@@ -29,6 +29,7 @@ import {
   isImageService3,
   IMAGE_API_PROTOCOL
 } from '../utils';
+import { IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Version Detection
@@ -59,7 +60,7 @@ export function detectVersion(manifest: any): IIIFVersion {
   if (manifest.sequences) return '2.1';
 
   // If it has 'items' with type Canvas, likely v3
-  if (manifest.items?.some((i: any) => i.type === 'Canvas')) return '3.0';
+  if (manifest.items?.some((i: any) => isCanvas(i))) return '3.0';
 
   return 'unknown';
 }
@@ -121,7 +122,7 @@ function upgradeCollection(v2: any): IIIFCollection {
   const extensions = extractExtensions(v2, knownCollectionKeys);
 
   const v3: IIIFCollection = {
-    '@context': 'http://iiif.io/api/presentation/3/context.json',
+    '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
     id: v2['@id'] || v2.id,
     type: 'Collection',
     label: upgradeLanguageValue(v2.label),
@@ -183,7 +184,7 @@ function upgradeManifest(v2: any): IIIFManifest {
   const extensions = extractExtensions(v2, knownManifestKeys);
 
   const v3: IIIFManifest = {
-    '@context': 'http://iiif.io/api/presentation/3/context.json',
+    '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
     id: v2['@id'] || v2.id,
     type: 'Manifest',
     label: upgradeLanguageValue(v2.label),

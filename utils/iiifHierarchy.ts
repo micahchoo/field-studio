@@ -579,9 +579,9 @@ export function flattenRangeCanvasIds(range: IIIFRange): string[] {
   const ids: string[] = [];
 
   const traverse = (item: any) => {
-    if (item.type === 'Canvas' || (typeof item === 'object' && item.type === 'Canvas')) {
+    if (isCanvas(item) || (typeof item === 'object' && isCanvas(item))) {
       ids.push(item.id);
-    } else if (item.type === 'Range') {
+    } else if (isRange(item)) {
       (item.items || []).forEach(traverse);
     } else if (typeof item === 'string') {
       ids.push(item);

@@ -11,6 +11,8 @@
  * @see https://iiif.io/api/auth/2.0/
  */
 
+import { IIIF_SPEC } from '../constants';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -205,7 +207,7 @@ class IIIFAuthService {
     } catch (error) {
       console.error('[AuthService] Probe failed:', error);
       return {
-        '@context': 'http://iiif.io/api/auth/2/context.json',
+        '@context': IIIF_SPEC.AUTH_2.CONTEXT as 'http://iiif.io/api/auth/2/context.json',
         type: 'AuthProbeResult2',
         status: 500,
         note: { en: ['Failed to probe authentication service'] }

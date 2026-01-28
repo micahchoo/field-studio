@@ -9,6 +9,7 @@
  */
 
 import { IIIFItem, IIIFCanvas } from '../types';
+import { IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Types
@@ -177,7 +178,7 @@ export const contentStateService = {
     }
 
     return {
-      '@context': 'http://iiif.io/api/presentation/3/context.json',
+      '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT as 'http://iiif.io/api/presentation/3/context.json',
       type: 'Annotation',
       motivation: 'contentState',
       target

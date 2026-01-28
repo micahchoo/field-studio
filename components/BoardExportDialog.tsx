@@ -3,7 +3,7 @@ import { Icon } from './Icon';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { IIIFManifest, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation, IIIFItem, getIIIFValue } from '../types';
-import { DEFAULT_INGEST_PREFS } from '../constants';
+import { DEFAULT_INGEST_PREFS, IIIF_SPEC, IIIF_CONFIG } from '../constants';
 import { useToast } from './Toast';
 
 interface BoardItem {
@@ -108,7 +108,8 @@ export const BoardExportDialog: React.FC<BoardExportDialogProps> = ({
     const boardWidth = Math.max(maxX - minX, DEFAULT_INGEST_PREFS.defaultCanvasWidth);
     const boardHeight = Math.max(maxY - minY, DEFAULT_INGEST_PREFS.defaultCanvasHeight);
 
-    const boardId = `urn:field-studio:board:${crypto.randomUUID()}`;
+    const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
+    const boardId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, `board-${crypto.randomUUID()}`);
     const canvasId = `${boardId}/canvas/1`;
 
     const paintingAnnotations: IIIFAnnotation[] = items.map((item, idx) => {
@@ -206,7 +207,7 @@ export const BoardExportDialog: React.FC<BoardExportDialogProps> = ({
     };
 
     return {
-      "@context": "http://iiif.io/api/presentation/3/context.json",
+      "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
       id: boardId,
       type: "Manifest",
       label: { none: [`Research Board - ${new Date().toLocaleDateString()}`] },

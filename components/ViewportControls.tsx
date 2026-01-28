@@ -8,6 +8,7 @@
 import React from 'react';
 import type { UseViewportReturn } from '../hooks/useViewport';
 import { VIEWPORT_DEFAULTS } from '../constants/viewport';
+import { Icon } from './Icon';
 
 // ============================================================================
 // Types
@@ -104,7 +105,7 @@ export function ViewportControls({
             title="Zoom out (-)"
             aria-label="Zoom out"
           >
-            <span className={`material-icons ${iconSize}`}>remove</span>
+            <Icon name="remove" className={iconSize} />
           </button>
 
           {showZoomPercent && (
@@ -133,7 +134,7 @@ export function ViewportControls({
             title="Zoom in (+)"
             aria-label="Zoom in"
           >
-            <span className={`material-icons ${iconSize}`}>add</span>
+            <Icon name="add" className={iconSize} />
           </button>
         </>
       )}
@@ -161,7 +162,7 @@ export function ViewportControls({
           title="Fit to view"
           aria-label="Fit to view"
         >
-          <span className={`material-icons ${iconSize}`}>fit_screen</span>
+          <Icon name="fit_screen" className={iconSize} />
         </button>
       )}
 
@@ -179,7 +180,7 @@ export function ViewportControls({
             title="Rotate counter-clockwise (Shift+R)"
             aria-label="Rotate counter-clockwise"
           >
-            <span className={`material-icons ${iconSize}`}>rotate_left</span>
+            <Icon name="rotate_left" className={iconSize} />
           </button>
 
           <button
@@ -193,7 +194,7 @@ export function ViewportControls({
             title="Rotate clockwise (R)"
             aria-label="Rotate clockwise"
           >
-            <span className={`material-icons ${iconSize}`}>rotate_right</span>
+            <Icon name="rotate_right" className={iconSize} />
           </button>
         </>
       )}
@@ -211,7 +212,7 @@ export function ViewportControls({
           title="Reset view (Ctrl/Cmd+0)"
           aria-label="Reset view"
         >
-          <span className={`material-icons ${iconSize}`}>restart_alt</span>
+          <Icon name="restart_alt" className={iconSize} />
         </button>
       )}
     </div>
@@ -245,7 +246,7 @@ export function InlineZoomControls({
         className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
         title="Zoom out"
       >
-        <span className="material-icons text-sm">remove</span>
+        <Icon name="remove" className="text-sm" />
       </button>
       <span className="text-xs font-mono min-w-[36px] text-center">{scalePercent}%</span>
       <button
@@ -255,7 +256,7 @@ export function InlineZoomControls({
         className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
         title="Zoom in"
       >
-        <span className="material-icons text-sm">add</span>
+        <Icon name="add" className="text-sm" />
       </button>
     </div>
   );

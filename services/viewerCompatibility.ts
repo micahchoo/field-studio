@@ -9,7 +9,7 @@
  * - Clover
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, IIIFAnnotation } from '../types';
+import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, IIIFAnnotation, isCanvas, isRange } from '../types';
 import { isImageService3, createImageServiceReference } from '../utils';
 import { IIIF_CONFIG, IIIF_SPEC, getDerivativePreset } from '../constants';
 
@@ -207,7 +207,7 @@ const REQUIREMENTS: ViewerRequirement[] = [
       const range = item as any;
       if (!range.items) return false;
       return range.items.every((ref: any) =>
-        ref.id && (ref.type === 'Canvas' || ref.type === 'Range')
+        ref.id && (isCanvas(ref) || isRange(ref))
       );
     },
     viewers: ['mirador', 'universalviewer'],

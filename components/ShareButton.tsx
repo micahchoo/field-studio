@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { IIIFItem } from '../types';
+import { IIIFItem, getIIIFValue } from '../types';
 import { contentStateService, ViewportState } from '../services/contentState';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
@@ -148,7 +148,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         viewport
       );
       await navigator.share({
-        title: item.label?.['en']?.[0] || item.label?.['none']?.[0] || 'IIIF Resource',
+        title: getIIIFValue(item.label, 'en') || getIIIFValue(item.label, 'none') || 'IIIF Resource',
         text: 'View this resource in Field Studio',
         url: shareUrl,
       });

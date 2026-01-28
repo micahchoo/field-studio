@@ -43,7 +43,9 @@ import {
   IIIFAnnotation,
   IIIFAnnotationPage,
   LanguageMap,
-  LanguageString
+  LanguageString,
+  isManifest,
+  isCollection
 } from '../types';
 
 // ============================================================================
@@ -421,12 +423,12 @@ export function useCollection(id: string | null) {
   );
 
   const manifests = useMemo(() =>
-    children.filter(c => c.type === 'Manifest') as IIIFManifest[],
+    children.filter(isManifest),
     [children]
   );
 
   const subCollections = useMemo(() =>
-    children.filter(c => c.type === 'Collection') as IIIFCollection[],
+    children.filter(isCollection),
     [children]
   );
 

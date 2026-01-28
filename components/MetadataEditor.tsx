@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { IIIFItem, IIIFAnnotation, IIIFCanvas, AppSettings, getIIIFValue } from '../types';
+import { IIIFItem, IIIFAnnotation, IIIFCanvas, AppSettings, getIIIFValue, isManifest, isCollection } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
 import { RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP, BEHAVIOR_OPTIONS, BEHAVIOR_DEFINITIONS, BEHAVIOR_CONFLICTS, getConflictingBehaviors, DEFAULT_MAP_CONFIG } from '../constants';
@@ -31,8 +31,8 @@ export const MetadataEditor: React.FC<MetadataEditorProps> = ({ resource, onUpda
     );
   }
 
-  const label = resource.label?.[settings.language]?.[0] || resource.label?.['none']?.[0] || '';
-  const summary = resource.summary?.[settings.language]?.[0] || '';
+  const label = getIIIFValue(resource.label, settings.language) || getIIIFValue(resource.label, 'none') || '';
+  const summary = getIIIFValue(resource.summary, settings.language) || '';
   const inputClass = "w-full text-sm p-2.5 border border-slate-300 rounded bg-white text-slate-900 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none transition-all";
 
   const getDCHint = (lbl: string) => {
@@ -198,7 +198,7 @@ export const MetadataEditor: React.FC<MetadataEditorProps> = ({ resource, onUpda
                     </select>
                 </div>
 
-                {(resource.type === 'Manifest' || resource.type === 'Collection') && (
+                {(isManifest(resource) || isCollection(resource)) && (
                     <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 flex justify-between">
                             Viewing Direction <span className="text-[9px] text-slate-400 font-mono bg-slate-50 px-1 rounded">viewingDirection</span>

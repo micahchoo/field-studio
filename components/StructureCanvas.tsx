@@ -297,7 +297,7 @@ const StructureCard: React.FC<StructureItemProps> = ({
 
         {/* Type badge */}
         <div className={`absolute top-2 left-2 text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${config.bgClass} ${config.colorClass}`}>
-          {item.type === 'Canvas' ? 'CVS' : item.type === 'Manifest' ? 'MAN' : item.type === 'Collection' ? 'COLL' : item.type.slice(0, 3)}
+          {isCanvas(item) ? 'CVS' : isManifest(item) ? 'MAN' : isCollection(item) ? 'COLL' : item.type.slice(0, 3)}
         </div>
       </div>
 

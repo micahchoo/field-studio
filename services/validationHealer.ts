@@ -1,7 +1,7 @@
-import { IIIFItem, getIIIFValue } from '../types';
+import { IIIFItem, getIIIFValue, isCanvas, isManifest, isCollection } from '../types';
 import { ValidationIssue } from './validator';
 import { createLanguageMap, findNodeById, generateValidUri } from '../utils';
-import { DEFAULT_INGEST_PREFS } from '../constants';
+import { DEFAULT_INGEST_PREFS, IIIF_SPEC } from '../constants';
 import {
   getPropertyRequirement,
   isBehaviorAllowed,
@@ -415,7 +415,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   // Canvas dimension fixes (width/height)
   if (msg.includes('dimensions') || msg.includes('width') || msg.includes('height')) {
-    if (healed.type === 'Canvas') {
+    if (isCanvas(healed)) {
       // If only one dimension is present, set the other to match
       if ((healed as any).width && !(healed as any).height) {
         (healed as any).height = (healed as any).width;
@@ -434,7 +434,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   // Duration fixes
   if (msg.includes('duration')) {
-    if (healed.type === 'Canvas' && !(healed as any).duration) {
+    if (isCanvas(healed) && !(healed as any).duration) {
       // Canvas with time-based content should have duration
       (healed as any).duration = 0;
       return { success: true, updatedItem: healed, message: 'Added zero duration (update manually)' };
@@ -450,7 +450,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
     if (msg.includes('must have at least one item') || msg.includes('items array')) {
       if (!healed.items) healed.items = [];
 
-      if (healed.type === 'Manifest' && healed.items.length === 0) {
+      if (isManifest(healed) && healed.items.length === 0) {
         const canvasId = `${healed.id}/canvas/1`;
         healed.items.push({
           id: canvasId,
@@ -463,7 +463,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
         return { success: true, updatedItem: healed, message: 'Added placeholder canvas to empty Manifest' };
       }
 
-      if (healed.type === 'Collection' && healed.items.length === 0) {
+      if (isCollection(healed) && healed.items.length === 0) {
         // Create a placeholder manifest
         const manifestId = `${healed.id}/manifest/1`;
         healed.items.push({
@@ -496,7 +496,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // ==========================================================================
 
   // Collection structures fix (structures not allowed on Collection)
-  if (msg.includes('structures') && healed.type === 'Collection') {
+  if (msg.includes('structures') && isCollection(healed)) {
     delete (healed as any).structures;
     return { success: true, updatedItem: healed, message: 'Removed invalid structures property from Collection' };
   }
@@ -639,8 +639,8 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   if (msg.includes('@context') || msg.includes('context')) {
     if (msg.includes('must have') || msg.includes('missing')) {
-      if (healed.type === 'Collection' || healed.type === 'Manifest') {
-        (healed as any)['@context'] = 'http://iiif.io/api/presentation/3/context.json';
+      if (isCollection(healed) || isManifest(healed)) {
+        (healed as any)['@context'] = IIIF_SPEC.PRESENTATION_3.CONTEXT;
         return { success: true, updatedItem: healed, message: 'Added IIIF Presentation API 3.0 context' };
       }
     }

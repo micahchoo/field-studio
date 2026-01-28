@@ -6,7 +6,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { IIIFCanvas } from '../types';
+import { IIIFCanvas, getIIIFValue } from '../types';
 import { Icon } from './Icon';
 import { StackedThumbnail } from './StackedThumbnail';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
@@ -109,7 +109,7 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
               {(!isHorizontal || isFocused) && (
                 <div className={`text-left min-w-0 ${isFocused ? 'opacity-100' : 'opacity-70'} ${isHorizontal ? 'text-center' : 'flex-1'}`}>
                   <div className={`text-xs font-medium truncate max-w-[80px] ${fieldMode ? 'text-white' : 'text-slate-700'}`}>
-                    {item.label?.none?.[0] || item.label?.en?.[0] || 'Untitled'}
+                    {getIIIFValue(item.label, 'none') || getIIIFValue(item.label, 'en') || 'Untitled'}
                   </div>
                   {!isHorizontal && (
                     <div className={`text-[10px] ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>

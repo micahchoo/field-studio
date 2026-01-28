@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Icon } from './Icon';
-import { IIIFItem } from '../types';
+import { IIIFItem, getIIIFValue } from '../types';
 import { ValidationIssue } from '../services/validator';
 
 interface StatusBarProps {
@@ -45,7 +45,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ totalItems, selectedItem, 
         {selectedItem && (
              <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800 text-slate-300">
                 <Icon name="check_circle" className="text-[14px] text-green-500" />
-                <span className="truncate max-w-[200px]">Selected: {selectedItem.label?.['none']?.[0] || 'Untitled'}</span>
+                <span className="truncate max-w-[200px]">Selected: {getIIIFValue(selectedItem.label, 'none') || 'Untitled'}</span>
             </div>
         )}
       </div>

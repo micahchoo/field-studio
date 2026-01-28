@@ -3,7 +3,7 @@ import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, g
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { MuseumLabel } from '../MuseumLabel';
-import { RESOURCE_TYPE_CONFIG } from '../../constants';
+import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG } from '../../constants';
 import { autoStructureService } from '../../services/autoStructure';
 import { StructureCanvas } from '../StructureCanvas';
 import { resolveThumbUrl, resolveHierarchicalThumb, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
@@ -125,11 +125,11 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const cloneTree = useCallback((node: IIIFItem): IIIFItem => JSON.parse(JSON.stringify(node)), []);
 
   const handleAutoStructure = useCallback(() => {
-    if (!selectedId || !root) return;
-    const newRoot = cloneTree(root);
-    const target = findNode(selectedId);
-    if (target && target.type === 'Manifest') {
-      const updated = autoStructureService.generateRangesFromPatterns(target as IIIFManifest);
+  if (!selectedId || !root) return;
+  const newRoot = cloneTree(root);
+  const target = findNode(selectedId);
+  if (target && isManifest(target)) {
+    const updated = autoStructureService.generateRangesFromPatterns(target as IIIFManifest);
       Object.assign(target, updated);
       onUpdate(newRoot);
       showToast("Auto-generated Table of Contents", "success");
@@ -160,9 +160,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     }
 
     const newId = crypto.randomUUID();
+    const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
     const newItem: any = {
-      "@context": "http://iiif.io/api/presentation/3/context.json",
-      id: `https://archive.local/iiif/${type.toLowerCase()}/${newId}`,
+      "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
+      id: IIIF_CONFIG.ID_PATTERNS[type === 'Manifest' ? 'MANIFEST' : 'COLLECTION'](baseUrl, newId),
       type,
       label: { none: [`New ${type}`] },
       // Add summary for improved search (IIIF spec recommendation)
@@ -207,7 +208,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     const collection = findNode(collectionId);
     const manifest = findNode(manifestId);
 
-    if (!collection || !manifest || collection.type !== 'Collection') {
+    if (!collection || !manifest || !isCollection(collection)) {
       showToast("Cannot add to collection", "error");
       return;
     }
@@ -234,7 +235,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     const newRoot = cloneTree(root);
     const collection = findNode(collectionId);
 
-    if (!collection || collection.type !== 'Collection') return;
+    if (!collection || !isCollection(collection)) return;
 
     const coll = collection as IIIFCollection;
     const index = coll.items?.findIndex(item => item.id === manifestId) ?? -1;
@@ -509,7 +510,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                   >
                     <Icon name="inventory_2" className="text-sm" /> Archive
                   </button>
-                  {selectedNode.type === 'Canvas' && (
+                  {isCanvas(selectedNode) && (
                     <button
                       onClick={() => onReveal?.(selectedNode.id, 'viewer')}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-iiif-blue hover:bg-slate-100 rounded-lg transition-all"
@@ -524,7 +525,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
               <div className="flex-1 overflow-y-auto p-10 bg-slate-100/50">
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Canvas Preview */}
-                  {selectedNode.type === 'Canvas' && (
+                  {isCanvas(selectedNode) && (
                     <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
                       <div className="aspect-video bg-slate-900 rounded-xl overflow-hidden mb-4 flex items-center justify-center">
                         <StackedThumbnail 

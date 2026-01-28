@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage, IIIFSpecificResource, IIIFItem, IIIFManifest, getIIIFValue } from '../../types';
+import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage, IIIFSpecificResource, IIIFItem, IIIFManifest, getIIIFValue, LanguageString } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
@@ -575,7 +575,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
       
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${item?.label?.en?.[0] || item?.label?.none?.[0] || 'canvas'}.jpg`;
+      a.download = `${getIIIFValue(item?.label, 'en') || getIIIFValue(item?.label, 'none') || 'canvas'}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -919,7 +919,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                                 const target = anno.target as any;
                                 
                                 // W3C Web Annotation Data Model compliant parsing
-                                const bodyText = body?.value || body?.label?.en?.[0] || body?.label?.none?.[0] || 'Untitled Annotation';
+                                const bodyText = body?.value || getIIIFValue(body?.label, 'en') || getIIIFValue(body?.label, 'none') || 'Untitled Annotation';
                                 const bodyType = body?.type || 'TextualBody';
                                 const bodyFormat = body?.format || 'text/plain';
                                 const motivation = anno.motivation || 'commenting';
