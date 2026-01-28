@@ -75,8 +75,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         setCopied('view');
         showToast('View link copied to clipboard', 'success');
         setTimeout(() => setCopied(null), 2000);
+      } else {
+        showToast('Could not copy link - try again', 'warning');
       }
     } catch (error) {
+      console.error('[ShareButton] Copy view link failed:', error);
       showToast('Failed to copy link', 'error');
     }
   };
@@ -84,16 +87,17 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   const handleCopyCanvasLink = async () => {
     try {
       const viewport = getViewportState();
-      const link = contentStateService.generateCanvasLink(
-        window.location.origin + window.location.pathname,
-        viewport.manifestId,
-        viewport.canvasId
-      );
-      await navigator.clipboard.writeText(link);
+      if (!viewport.canvasId) {
+        showToast('No canvas selected', 'warning');
+        return;
+      }
+      // For canvas link, just copy the direct canvas URI without viewport
+      await navigator.clipboard.writeText(viewport.canvasId);
       setCopied('canvas');
-      showToast('Canvas link copied to clipboard', 'success');
+      showToast('Canvas URI copied to clipboard', 'success');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
+      console.error('[ShareButton] Copy canvas link failed:', error);
       showToast('Failed to copy link', 'error');
     }
   };
@@ -101,12 +105,19 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   const handleCopyEmbedCode = async () => {
     try {
       const viewport = getViewportState();
-      const embedCode = contentStateService.generateEmbedCode(viewport);
+      if (!viewport.manifestId || !viewport.canvasId) {
+        showToast('No content to embed', 'warning');
+        return;
+      }
+      const embedCode = contentStateService.generateEmbedCode(viewport, {
+        viewerUrl: window.location.origin + window.location.pathname
+      });
       await navigator.clipboard.writeText(embedCode);
       setCopied('embed');
       showToast('Embed code copied to clipboard', 'success');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
+      console.error('[ShareButton] Copy embed code failed:', error);
       showToast('Failed to copy embed code', 'error');
     }
   };
@@ -114,12 +125,17 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   const handleCopyJson = async () => {
     try {
       const viewport = getViewportState();
+      if (!viewport.manifestId || !viewport.canvasId) {
+        showToast('No content state to copy', 'warning');
+        return;
+      }
       const state = contentStateService.createContentState(viewport);
       await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
       setCopied('json');
       showToast('Content State JSON copied', 'success');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
+      console.error('[ShareButton] Copy JSON failed:', error);
       showToast('Failed to copy JSON', 'error');
     }
   };

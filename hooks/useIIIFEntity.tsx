@@ -142,15 +142,19 @@ export const VaultProvider: React.FC<VaultProviderProps> = ({
     }
   }, [initialRoot]);
 
-  // Stable actions
-  const loadRoot = useCallback((root: IIIFItem) => {
-    const normalized = normalize(root);
-    setState(normalized);
-  }, []);
-
+  // Stable actions - defined in dependency order to avoid TDZ issues
   const dispatchAction = useCallback((action: Action) => dispatcher.dispatch(action), [dispatcher]);
   const undo = useCallback(() => dispatcher.undo(), [dispatcher]);
   const redo = useCallback(() => dispatcher.redo(), [dispatcher]);
+
+  // loadRoot directly normalizes and dispatches - avoids circular dependency issues
+  const loadRoot = useCallback((root: IIIFItem) => {
+    // Normalize the tree first
+    const normalized = normalize(root);
+    // Then dispatch RELOAD_TREE to properly sync the vault state
+    // This ensures the typeIndex is fully rebuilt and all IDs are correctly indexed
+    dispatcher.dispatch(actions.reloadTree(root));
+  }, [dispatcher]);
 
   // Memoized context value
   const contextValue = useMemo<VaultContextValue>(() => ({
@@ -503,17 +507,28 @@ export function useHistory() {
  * Hook for accessing root entity
  */
 export function useRoot() {
-  const { state, rootId, loadRoot, exportRoot } = useVault();
+  const { state, rootId, loadRoot, exportRoot, dispatch } = useVault();
 
   const root = rootId ? getEntity(state, rootId) : null;
   const rootType = rootId ? getEntityType(state, rootId) : null;
+
+  /**
+   * Reload the vault from a modified tree (e.g., after healing).
+   * This re-normalizes the entire tree and rebuilds the typeIndex.
+   * Use this instead of individual entity updates when IDs might have changed
+   * or when healing has modified multiple entities.
+   */
+  const reloadTree = useCallback((modifiedRoot: IIIFItem) => {
+    return dispatch(actions.reloadTree(modifiedRoot));
+  }, [dispatch]);
 
   return {
     root,
     rootId,
     rootType,
     loadRoot,
-    exportRoot
+    exportRoot,
+    reloadTree
   };
 }
 

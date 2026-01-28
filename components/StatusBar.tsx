@@ -30,7 +30,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({ totalItems, selectedItem, 
   const statusIcon = errorCount > 0 ? 'error' : warningCount > 0 ? 'warning' : 'verified';
   const statusText = errorCount > 0 ? `${errorCount} Errors` : warningCount > 0 ? `${warningCount} Warnings` : 'IIIF Valid';
 
-  const usagePercent = storageUsage ? Math.min(100, (storageUsage.usage / storageUsage.quota) * 100) : 0;
+  const usagePercent = storageUsage && storageUsage.quota > 0
+    ? Math.min(100, (storageUsage.usage / storageUsage.quota) * 100)
+    : 0;
 
   return (
     <div className="h-7 bg-slate-950 border-t border-slate-800 flex items-center justify-between px-3 text-[11px] text-slate-400 select-none z-50">

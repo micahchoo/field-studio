@@ -1,8 +1,10 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { IIIFItem, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
+import { useNavigationGuard } from '../../hooks/useNavigationGuard';
+import { NavigationGuardDialog } from '../NavigationGuardDialog';
 import { RESOURCE_TYPE_CONFIG, RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP } from '../../constants';
 import FileSaver from 'file-saver';
 
@@ -11,6 +13,7 @@ interface MetadataSpreadsheetProps {
   onUpdate: (updatedRoot: IIIFItem) => void;
   filterIds?: string[] | null;
   onClearFilter?: () => void;
+  onNavigateAway?: (canNavigate: boolean) => void;
 }
 
 interface FlatItem {
@@ -33,7 +36,7 @@ const IIIF_PROPERTY_SUGGESTIONS = [
   "Language", "Coverage", "Publisher", "Contributor", "Relation"
 ];
 
-export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, onUpdate, filterIds, onClearFilter }) => {
+export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, onUpdate, filterIds, onClearFilter, onNavigateAway }) => {
   const { showToast } = useToast();
   const [items, setItems] = useState<FlatItem[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
@@ -43,9 +46,19 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showSystemItems, setShowSystemItems] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState<{ id: string } | null>(null);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [importProgress, setImportProgress] = useState<{ message: string; percent: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showNavigationDialog, setShowNavigationDialog] = useState(false);
+  const [pendingNavigationCallback, setPendingNavigationCallback] = useState<(() => void) | null>(null);
 
-  // Warn user before navigating away with unsaved changes
+  // Use navigation guard hook
+  const navigationGuard = useNavigationGuard({
+    hasUnsavedChanges,
+    confirmMessage: 'You have unsaved changes in the catalog. Save before leaving?'
+  });
+
+  // Warn user before navigating away with unsaved changes (browser close/refresh)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
@@ -57,6 +70,22 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Expose navigation guard to parent
+  useEffect(() => {
+    if (onNavigateAway) {
+      onNavigateAway(!hasUnsavedChanges);
+    }
+  }, [hasUnsavedChanges, onNavigateAway]);
+
+  const handleNavigationRequest = useCallback((callback: () => void) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigationCallback(() => callback);
+      setShowNavigationDialog(true);
+      return false;
+    }
+    return true;
   }, [hasUnsavedChanges]);
 
   // CSV Export function
@@ -89,29 +118,72 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
     showToast(`Exported ${filteredItems.length} items to CSV`, 'success');
   };
 
-  // CSV Import function
-  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // CSV Import function with validation and progress
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    // Validate file type and size
+    if (!file.name.endsWith('.csv') && !file.type.includes('csv')) {
+      showToast('Please select a valid CSV file', 'error');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      showToast('CSV file too large (max 10MB)', 'error');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setImportProgress({ message: 'Reading CSV file...', percent: 10 });
+
+    try {
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+      });
+
+      setImportProgress({ message: 'Parsing CSV data...', percent: 30 });
+
+      const lines = text.split('\n').filter(line => line.trim());
+      if (lines.length < 2) throw new Error('CSV must have header and at least one data row');
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const idIndex = headers.findIndex(h => h.toLowerCase() === 'id');
+      const titleIndex = headers.findIndex(h => h.toLowerCase() === 'title');
+      const summaryIndex = headers.findIndex(h => h.toLowerCase() === 'summary');
+
+      if (idIndex === -1) throw new Error('CSV must have an ID column');
+
+      setImportProgress({ message: `Processing ${lines.length - 1} rows...`, percent: 50 });
+
+      // Validate headers against known IIIF properties
+      const validIIIFProps = ['id', 'type', 'title', 'summary', 'rights', 'date', 'viewingdirection'];
+      const unknownHeaders = headers.filter(h => {
+        const lower = h.toLowerCase();
+        return !validIIIFProps.includes(lower) && !IIIF_PROPERTY_SUGGESTIONS.some(p => p.toLowerCase() === lower);
+      });
+      if (unknownHeaders.length > 0) {
+        console.warn('CSV import: Unknown headers detected:', unknownHeaders);
+      }
+
+      let updatedCount = 0;
+      const newItems = [...items];
+      const backupItems = JSON.stringify(items); // Backup for rollback
+      const totalRows = lines.length - 1;
+
       try {
-        const text = e.target?.result as string;
-        const lines = text.split('\n').filter(line => line.trim());
-        if (lines.length < 2) throw new Error('CSV must have header and at least one data row');
-
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-        const idIndex = headers.findIndex(h => h.toLowerCase() === 'id');
-        const titleIndex = headers.findIndex(h => h.toLowerCase() === 'title');
-        const summaryIndex = headers.findIndex(h => h.toLowerCase() === 'summary');
-
-        if (idIndex === -1) throw new Error('CSV must have an ID column');
-
-        let updatedCount = 0;
-        const newItems = [...items];
-
         for (let i = 1; i < lines.length; i++) {
+          // Update progress every 10 rows
+          if (i % 10 === 0) {
+            const percent = 50 + Math.floor((i / totalRows) * 40);
+            setImportProgress({ message: `Processing row ${i} of ${totalRows}...`, percent });
+            // Allow UI to update
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+
           // Simple CSV parsing (handles quoted fields)
           const values: string[] = [];
           let current = '';
@@ -128,34 +200,76 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
           values.push(current.trim().replace(/^"|"$/g, ''));
 
           const id = values[idIndex];
+          if (!id) continue; // Skip empty IDs
+          
+          // Validate ID format (basic URI check)
+          if (!id.includes('/') && !id.includes(':')) {
+            console.warn(`CSV import: Invalid ID format at row ${i}: ${id}`);
+            continue;
+          }
+
           const itemIndex = newItems.findIndex(item => item.id === id);
           if (itemIndex === -1) continue;
 
-          // Update fields
-          if (titleIndex !== -1 && values[titleIndex]) newItems[itemIndex].label = values[titleIndex];
-          if (summaryIndex !== -1 && values[summaryIndex]) newItems[itemIndex].summary = values[summaryIndex];
+          // Update fields with length limits
+          if (titleIndex !== -1 && values[titleIndex]) {
+            newItems[itemIndex].label = values[titleIndex].slice(0, 500); // Max 500 chars
+          }
+          if (summaryIndex !== -1 && values[summaryIndex]) {
+            newItems[itemIndex].summary = values[summaryIndex].slice(0, 2000); // Max 2000 chars
+          }
 
           // Update metadata fields
           headers.forEach((header, idx) => {
             if (['id', 'type', 'title', 'summary', 'rights', 'date'].includes(header.toLowerCase())) return;
             if (values[idx]) {
-              newItems[itemIndex].metadata[header] = values[idx];
+              // Sanitize header name (alphanumeric + spaces only)
+              const sanitizedHeader = header.replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 100);
+              if (sanitizedHeader) {
+                newItems[itemIndex].metadata[sanitizedHeader] = values[idx].slice(0, 1000); // Max 1000 chars per value
+              }
             }
           });
           updatedCount++;
         }
 
+        setImportProgress({ message: 'Finalizing...', percent: 95 });
+
         setItems(newItems);
         setHasUnsavedChanges(true);
+        setImportProgress(null);
         showToast(`Updated ${updatedCount} items from CSV`, 'success');
-      } catch (err: any) {
-        showToast(`CSV import failed: ${err.message}`, 'error');
+      } catch (err) {
+        // Rollback on error
+        setItems(JSON.parse(backupItems));
+        throw err;
       }
-    };
-    reader.readAsText(file);
+    } catch (err: any) {
+      setImportProgress(null);
+      showToast(`CSV import failed: ${err.message}`, 'error');
+    }
+
     // Reset input so same file can be imported again
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName.match(/INPUT|TEXTAREA|SELECT/)) return;
+      
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowShortcutsHelp(prev => !prev);
+      }
+      if (e.key === 'Escape') {
+        setShowShortcutsHelp(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
       if (!root) {
@@ -553,6 +667,28 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
           </div>
           <span>{filteredItems.length} Archive items listed</span>
       </div>
+
+      <NavigationGuardDialog
+        isOpen={showNavigationDialog}
+        title="Unsaved Changes"
+        message="You have unsaved changes in the catalog. Save before leaving?"
+        onConfirm={() => {
+          handleSave();
+          if (pendingNavigationCallback) {
+            pendingNavigationCallback();
+          }
+          setShowNavigationDialog(false);
+          setPendingNavigationCallback(null);
+        }}
+        onCancel={() => {
+          setHasUnsavedChanges(false);
+          if (pendingNavigationCallback) {
+            pendingNavigationCallback();
+          }
+          setShowNavigationDialog(false);
+          setPendingNavigationCallback(null);
+        }}
+      />
     </div>
   );
 };

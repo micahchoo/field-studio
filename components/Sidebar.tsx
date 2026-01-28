@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { IIIFItem, IIIFCollection, AppMode, ViewType, IIIFManifest, getIIIFValue } from '../types';
 import { Icon } from './Icon';
+import { Toolbar } from './Toolbar';
 import { CONSTANTS, RESOURCE_TYPE_CONFIG } from '../constants';
 import {
   isValidChildType,
@@ -25,16 +26,19 @@ interface SidebarProps {
   visible: boolean;
   onOpenExternalImport: () => void;
   onOpenSettings: () => void;
+  onToggleQuickHelp?: () => void;
   isMobile?: boolean;
   onClose?: () => void;
 }
 
-const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick: () => void; fieldMode: boolean; }> = ({ icon, label, active, onClick, fieldMode }) => (
-  <button 
-    onClick={onClick} 
+const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick: () => void; fieldMode: boolean; disabled?: boolean; title?: string }> = ({ icon, label, active, onClick, fieldMode, disabled, title }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    title={title}
     aria-current={active ? 'page' : undefined}
     aria-label={`${label} View`}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium snappy-transition group active:scale-95 ${active ? (fieldMode ? 'bg-yellow-400 text-black font-black border-2 border-black shadow-md' : 'bg-iiif-blue text-white shadow-md transform scale-[1.02]') : (fieldMode ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:translate-x-1')}`}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium snappy-transition group active:scale-95 ${active ? (fieldMode ? 'bg-yellow-400 text-black font-black border-2 border-black shadow-md' : 'bg-iiif-blue text-white shadow-md transform scale-[1.02]') : (fieldMode ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:translate-x-1')} ${disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent' : ''}`}
   >
     <Icon name={icon} className={`transition-transform duration-300 ${active ? (fieldMode ? "text-black" : "text-white") : "text-slate-500 group-hover:scale-110"}`} />
     <span className={fieldMode ? "text-lg" : "text-sm"}>{label}</span>
@@ -174,7 +178,7 @@ const TreeItem: React.FC<{
   );
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode, viewType, fieldMode, onSelect, onModeChange, onViewTypeChange, onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport, onOpenSettings, isMobile, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode, viewType, fieldMode, onSelect, onModeChange, onViewTypeChange, onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport, onOpenSettings, onToggleQuickHelp, isMobile, onClose }) => {
   const [filterText, setFilterText] = useState('');
   const [filterType, setFilterType] = useState('All');
   
@@ -210,6 +214,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
               <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => onModeChange('metadata')} fieldMode={fieldMode} />
               <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => onModeChange('boards')} fieldMode={fieldMode} />
               <NavItem icon="search" label="Search" active={currentMode === 'search'} onClick={() => onModeChange('search')} fieldMode={fieldMode} />
+              <NavItem
+                icon="visibility"
+                label="Viewer"
+                active={currentMode === 'viewer'}
+                onClick={() => selectedId ? onModeChange('viewer') : null}
+                fieldMode={fieldMode}
+                disabled={!selectedId}
+                title={selectedId ? "Open selected item in viewer" : "Select an item to view"}
+              />
             </nav>
 
             <div className="px-4 py-3 flex flex-col gap-2 bg-black/10 shrink-0 sticky top-0 z-10 backdrop-blur-sm">
@@ -251,28 +264,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
             </div>
         </div>
 
-        {/* Fixed Footer */}
-        <div className={`p-4 border-t space-y-3 shrink-0 ${fieldMode ? 'bg-black border-slate-700' : 'bg-slate-900 border-slate-800'}`}>
-          <div className="grid grid-cols-2 gap-2">
-              <label aria-label="Import local folder" className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl cursor-pointer transition-all border group ${fieldMode ? 'bg-slate-800 text-white border-slate-600 hover:bg-slate-700 hover:border-yellow-400' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white hover:border-slate-500'}`}>
-                  <Icon name="upload_file" className="text-xl group-hover:scale-110 transition-transform"/><span className="text-[10px] font-black uppercase tracking-tighter">Folder</span>
-                  <input type="file" multiple {...({ webkitdirectory: "" } as any)} className="hidden" onChange={onImport} aria-hidden="true" />
-              </label>
-              <button aria-label="Import remote manifest" onClick={onOpenExternalImport} className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl cursor-pointer transition-all border group ${fieldMode ? 'bg-slate-800 text-white border-slate-600 hover:bg-slate-700 hover:border-yellow-400' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white hover:border-slate-500'}`}>
-                  <Icon name="cloud_download" className="text-xl group-hover:scale-110 transition-transform"/><span className="text-[10px] font-black uppercase tracking-tighter">Remote</span>
-              </button>
-          </div>
-          <div className="flex gap-2">
-               <button aria-label="Export archive" onClick={onExportTrigger} className="flex-1 bg-iiif-blue text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">
-                  <Icon name="publish"/> Export
-               </button>
-               <button onClick={onOpenSettings} aria-label="Settings" className="p-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-all" title="Settings">
-                  <Icon name="tune" />
-               </button>
-               <button onClick={onToggleFieldMode} aria-label={fieldMode ? "Disable Field Mode" : "Enable Field Mode"} className={`p-3 rounded-xl transition-all border ${fieldMode ? 'bg-yellow-400 border-yellow-600 text-black' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`} title="Field Mode">
-                  <Icon name={fieldMode ? "visibility" : "visibility_off"} />
-               </button>
-          </div>
+        {/* Fixed Footer - Toolbar */}
+        <div className={`border-t shrink-0 ${fieldMode ? 'bg-black border-slate-700' : 'bg-slate-900 border-slate-800'}`}>
+          <Toolbar
+            fieldMode={fieldMode}
+            onImport={onImport}
+            onOpenExternalImport={onOpenExternalImport}
+            onExportTrigger={onExportTrigger}
+            onOpenSettings={onOpenSettings}
+            onToggleFieldMode={onToggleFieldMode}
+            onToggleQuickHelp={onToggleQuickHelp}
+          />
         </div>
       </aside>
     </>

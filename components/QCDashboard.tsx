@@ -4,6 +4,7 @@ import { Icon } from './Icon';
 import { IIIFItem, getIIIFValue, isCanvas } from '../types';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';
+import { safeHealAll } from '../services/validationHealer';
 
 interface QCDashboardProps {
   issuesMap: Record<string, ValidationIssue[]>;
@@ -111,13 +112,76 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
   // Use centralized healer service for consistent fix behavior across Inspector and QCDashboard
   const handleHeal = (issue: ValidationIssue) => {
       if (!root) return;
-      const { item: targetItem } = findItemAndPath(issue.itemId);
-      if (!targetItem) return;
+      
+      try {
+          const { item: targetItem } = findItemAndPath(issue.itemId);
+          if (!targetItem) {
+              console.warn('[QCDashboard] Could not find item to heal:', issue.itemId);
+              return;
+          }
 
-      const result = healIssue(targetItem, issue);
-      if (result.success && result.updatedItem) {
-          const newRoot = applyHealToTree(root, issue.itemId, result.updatedItem);
-          onUpdate(newRoot);
+          const result = healIssue(targetItem, issue);
+          if (result.success && result.updatedItem) {
+              const newRoot = applyHealToTree(root, issue.itemId, result.updatedItem);
+              if (newRoot) {
+                  onUpdate(newRoot);
+              } else {
+                  console.error('[QCDashboard] Failed to apply heal to tree');
+              }
+          } else if (result.error) {
+              console.error('[QCDashboard] Healing failed:', result.error);
+          }
+      } catch (error) {
+          console.error('[QCDashboard] Exception during healing:', error);
+      }
+  };
+
+  // Safe batch healing for "Heal All Fixable" button
+  const handleHealAllFixable = () => {
+      if (!root) return;
+      
+      const fixableIssues = categoryIssues.filter(i => i.fixable);
+      if (fixableIssues.length === 0) return;
+
+      // Track if any updates were made
+      let currentRoot = root;
+      let healedCount = 0;
+      let failedCount = 0;
+
+      for (const issue of fixableIssues) {
+          try {
+              const { item: targetItem } = findItemAndPath(issue.itemId);
+              if (!targetItem) {
+                  failedCount++;
+                  continue;
+              }
+
+              // Use safeHealAll for single-item batch healing
+              const result = safeHealAll(targetItem, [issue]);
+              if (result.success && result.updatedItem) {
+                  const newRoot = applyHealToTree(currentRoot, issue.itemId, result.updatedItem);
+                  if (newRoot) {
+                      currentRoot = newRoot;
+                      healedCount++;
+                  } else {
+                      failedCount++;
+                  }
+              } else {
+                  failedCount++;
+                  if (result.error) {
+                      console.error('[QCDashboard] Batch healing failed for issue:', issue.id, result.error);
+                  }
+              }
+          } catch (error) {
+              failedCount++;
+              console.error('[QCDashboard] Exception during batch healing:', error);
+          }
+      }
+
+      // Apply final state if any healing succeeded
+      if (healedCount > 0) {
+          onUpdate(currentRoot);
+          console.log(`[QCDashboard] Batch healing complete: ${healedCount} healed, ${failedCount} failed`);
       }
   };
 
@@ -179,8 +243,8 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                     <Icon name="list" className="text-slate-400"/>
                     Detected Violations in {activeCategory}
                 </h3>
-                <button 
-                    onClick={() => categoryIssues.filter(i => i.fixable).forEach(handleHeal)}
+                <button
+                    onClick={handleHealAllFixable}
                     className="text-[10px] font-black uppercase px-4 py-2 bg-iiif-blue text-white rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-95"
                 >
                     Heal All Fixable

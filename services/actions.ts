@@ -23,7 +23,8 @@ import {
   moveEntity,
   reorderChildren,
   getEntity,
-  VaultSnapshot
+  VaultSnapshot,
+  normalize
 } from './vault';
 import {
   IIIFItem,
@@ -64,7 +65,8 @@ export type Action =
   | { type: 'REMOVE_ANNOTATION'; canvasId: string; annotationId: string }
   | { type: 'UPDATE_CANVAS_DIMENSIONS'; canvasId: string; width: number; height: number }
   | { type: 'MOVE_ITEM'; itemId: string; newParentId: string; index?: number }
-  | { type: 'BATCH_UPDATE'; updates: Array<{ id: string; changes: Partial<IIIFItem> }> };
+  | { type: 'BATCH_UPDATE'; updates: Array<{ id: string; changes: Partial<IIIFItem> }> }
+  | { type: 'RELOAD_TREE'; root: IIIFItem };
 
 export interface ActionResult {
   success: boolean;
@@ -465,6 +467,25 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
         };
       }
 
+      case 'RELOAD_TREE': {
+        // Re-normalize the entire tree from a modified root
+        // This is used after healing operations to sync vault with modified tree
+        try {
+          const newState = normalize(action.root);
+          return {
+            success: true,
+            state: newState,
+            changes: [{ property: '_root', oldValue: state.rootId, newValue: newState.rootId }]
+          };
+        } catch (e) {
+          return {
+            success: false,
+            state,
+            error: e instanceof Error ? e.message : 'Failed to reload tree'
+          };
+        }
+      }
+
       default:
         return { success: false, state, error: `Unknown action type` };
     }
@@ -755,5 +776,8 @@ export const actions = {
     ({ type: 'MOVE_ITEM', itemId, newParentId, index }),
 
   batchUpdate: (updates: Array<{ id: string; changes: Partial<IIIFItem> }>): Action =>
-    ({ type: 'BATCH_UPDATE', updates })
+    ({ type: 'BATCH_UPDATE', updates }),
+
+  reloadTree: (root: IIIFItem): Action =>
+    ({ type: 'RELOAD_TREE', root })
 };

@@ -5,7 +5,7 @@ import {
   isBehaviorAllowed,
   getRecommendedProperties
 } from '../utils/iiifSchema';
-import { isValidHttpUri } from '../utils/iiifTypes';
+import { isValidHttpUri } from '../utils';
 import {
   validateBehaviors,
   doesInheritBehavior,

@@ -12,6 +12,26 @@
 
 import { IIIFManifest, IIIFCanvas, IIIFAnnotation, LanguageMap } from '../types';
 import { IIIF_SPEC } from '../constants';
+import {
+  getExtension,
+  getMimeType
+} from '../utils';
+
+// Extension arrays - keep local to avoid conflicts with centralized utils naming
+const LOCAL_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'tif', 'bmp', 'svg'];
+const LOCAL_AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'weba'];
+const LOCAL_VIDEO_EXTENSIONS = ['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'];
+const LOCAL_PDF_EXTENSIONS = ['pdf'];
+
+// Local MIME type mapping for extensions not fully covered by centralized utils
+const LOCAL_MIME_TYPES: Record<string, string> = {
+  // Additional document types
+  pdf: 'application/pdf',
+  // Additional video types
+  mov: 'video/quicktime',
+  avi: 'video/x-msvideo',
+  mkv: 'video/x-matroska'
+};
 
 // ============================================================================
 // Types
@@ -45,45 +65,6 @@ export interface VirtualManifestOptions {
 }
 
 // ============================================================================
-// Constants
-// ============================================================================
-
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'tif', 'bmp', 'svg'];
-const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'weba'];
-const VIDEO_EXTENSIONS = ['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'];
-const PDF_EXTENSIONS = ['pdf'];
-
-const MIME_TYPES: Record<string, string> = {
-  // Images
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  tiff: 'image/tiff',
-  tif: 'image/tiff',
-  bmp: 'image/bmp',
-  svg: 'image/svg+xml',
-  // Audio
-  mp3: 'audio/mpeg',
-  wav: 'audio/wav',
-  ogg: 'audio/ogg',
-  flac: 'audio/flac',
-  aac: 'audio/aac',
-  m4a: 'audio/mp4',
-  weba: 'audio/webm',
-  // Video
-  mp4: 'video/mp4',
-  webm: 'video/webm',
-  ogv: 'video/ogg',
-  mov: 'video/quicktime',
-  avi: 'video/x-msvideo',
-  mkv: 'video/x-matroska',
-  // Documents
-  pdf: 'application/pdf'
-};
-
-// ============================================================================
 // Virtual Manifest Factory
 // ============================================================================
 
@@ -94,10 +75,10 @@ class VirtualManifestFactory {
   isMediaUrl(url: string): boolean {
     const ext = this.getExtension(url);
     return (
-      IMAGE_EXTENSIONS.includes(ext) ||
-      AUDIO_EXTENSIONS.includes(ext) ||
-      VIDEO_EXTENSIONS.includes(ext) ||
-      PDF_EXTENSIONS.includes(ext)
+      LOCAL_IMAGE_EXTENSIONS.includes(ext) ||
+      LOCAL_AUDIO_EXTENSIONS.includes(ext) ||
+      LOCAL_VIDEO_EXTENSIONS.includes(ext) ||
+      LOCAL_PDF_EXTENSIONS.includes(ext)
     );
   }
 
@@ -105,39 +86,28 @@ class VirtualManifestFactory {
    * Check if a URL points to an image
    */
   isImageUrl(url: string): boolean {
-    return IMAGE_EXTENSIONS.includes(this.getExtension(url));
+    return LOCAL_IMAGE_EXTENSIONS.includes(this.getExtension(url));
   }
 
   /**
    * Check if a URL points to audio
    */
   isAudioUrl(url: string): boolean {
-    return AUDIO_EXTENSIONS.includes(this.getExtension(url));
+    return LOCAL_AUDIO_EXTENSIONS.includes(this.getExtension(url));
   }
 
   /**
    * Check if a URL points to video
    */
   isVideoUrl(url: string): boolean {
-    return VIDEO_EXTENSIONS.includes(this.getExtension(url));
+    return LOCAL_VIDEO_EXTENSIONS.includes(this.getExtension(url));
   }
 
   /**
-   * Get file extension from URL
+   * Get file extension from URL (delegates to centralized utility)
    */
   private getExtension(url: string): string {
-    try {
-      const urlObj = new URL(url);
-      const pathname = urlObj.pathname;
-      const lastDot = pathname.lastIndexOf('.');
-      if (lastDot === -1) return '';
-      return pathname.substring(lastDot + 1).toLowerCase().split('?')[0];
-    } catch {
-      // Handle relative URLs or malformed URLs
-      const lastDot = url.lastIndexOf('.');
-      if (lastDot === -1) return '';
-      return url.substring(lastDot + 1).toLowerCase().split('?')[0].split('#')[0];
-    }
+    return getExtension(url);
   }
 
   /**
@@ -160,19 +130,24 @@ class VirtualManifestFactory {
    */
   detectMediaType(url: string): MediaInfo['type'] {
     const ext = this.getExtension(url);
-    if (IMAGE_EXTENSIONS.includes(ext)) return 'image';
-    if (AUDIO_EXTENSIONS.includes(ext)) return 'audio';
-    if (VIDEO_EXTENSIONS.includes(ext)) return 'video';
-    if (PDF_EXTENSIONS.includes(ext)) return 'pdf';
+    if (LOCAL_IMAGE_EXTENSIONS.includes(ext)) return 'image';
+    if (LOCAL_AUDIO_EXTENSIONS.includes(ext)) return 'audio';
+    if (LOCAL_VIDEO_EXTENSIONS.includes(ext)) return 'video';
+    if (LOCAL_PDF_EXTENSIONS.includes(ext)) return 'pdf';
     return 'unknown';
   }
 
   /**
-   * Get MIME type from extension
+   * Get MIME type from extension (uses centralized utility with local fallback)
    */
   getMimeType(url: string): string {
+    // Try centralized utility first
+    const mimeFromUtils = getMimeType(url);
+    if (mimeFromUtils) return mimeFromUtils;
+    
+    // Fall back to local mapping for edge cases
     const ext = this.getExtension(url);
-    return MIME_TYPES[ext] || 'application/octet-stream';
+    return LOCAL_MIME_TYPES[ext] || 'application/octet-stream';
   }
 
   /**
@@ -293,7 +268,7 @@ class VirtualManifestFactory {
   }
 
   /**
-   * Create a language map from a string
+   * Create a language map from a string or return existing LanguageMap
    */
   private toLanguageMap(value: string | LanguageMap, lang: string = 'none'): LanguageMap {
     if (typeof value === 'string') {

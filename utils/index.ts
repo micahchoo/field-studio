@@ -300,3 +300,102 @@ export type {
   ImageSourceResult,
   ResolveImageOptions,
 } from './imageSourceResolver';
+
+// ============================================================================
+// IIIF Metadata Enricher (Stacked Thumbnails + Summary)
+// ============================================================================
+export {
+  generateThumbnailMetadata,
+  generateSummary,
+  enrichIIIFMetadata,
+  enrichTreeMetadata,
+  getStackedThumbnails,
+  batchEnrichMetadata,
+} from './iiifMetadataEnricher';
+export type {
+  ThumbnailSpec,
+} from './iiifMetadataEnricher';
+
+// ============================================================================
+// IIIF Traversal Utilities (Tree operations)
+// Re-exports from iiifHierarchy for backwards compatibility
+// New traversal utilities available in iiifTraversal module
+// ============================================================================
+export {
+  // Core traversal (from new iiifTraversal module)
+  traverse,
+  findParent,
+  flattenTree,
+  getTreeDepthStats,
+  buildTreeIndex,
+  getAllCanvases,
+  getAllManifests,
+  getAllCollections,
+  getAllLeafNodes,
+  getChildren,
+  safeTraverse,
+  findDuplicateIds,
+} from './iiifTraversal';
+export type {
+  TraversalOptions,
+  TraversalContext,
+  TraversalResult,
+  TreeIndex,
+} from './iiifTraversal';
+
+// ============================================================================
+// IIIF Validation Utilities (ID validation, duplicate detection)
+// New validation utilities in iiifValidation module
+// ============================================================================
+export {
+  // ID validation
+  generateValidUri,
+  convertToHttpUri,
+  // Duplicate detection
+  hasDuplicateIds,
+  // UUID generation
+  generateUUID,
+  generateResourceId,
+  // URI normalization
+  normalizeUri,
+  removeTrailingSlash,
+  getUriLastSegment,
+} from './iiifValidation';
+export type {
+  DuplicateIdResult,
+} from './iiifValidation';
+
+// ============================================================================
+// Media Type Utilities (MIME types, file detection)
+// New media type utilities in mediaTypes module
+// ============================================================================
+export {
+  // Constants (only new ones not in iiifTypes)
+  TEXT_EXTENSIONS,
+  MODEL_EXTENSIONS,
+  // MIME type functions
+  getMimeTypeString,
+  // File type detection (additional types not in iiifTypes)
+  isTextFile,
+  isModelFile,
+  isPdfFile,
+  // URL-based detection
+  isImageUrl,
+  isVideoUrl,
+  isAudioUrl,
+  isMediaUrl,
+  detectMediaType,
+  // MIME classification (additional types)
+  isImageMimeType,
+  isVideoMimeType,
+  isAudioMimeType,
+  isTimeBasedMimeType,
+  isVisualMimeType,
+  // Filename utilities
+  getFilenameFromUrl,
+  removeExtension,
+  getExtension,
+} from './mediaTypes';
+export type {
+  MimeTypeInfo,
+} from './mediaTypes';

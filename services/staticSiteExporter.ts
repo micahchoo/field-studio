@@ -22,7 +22,9 @@ import {
   generateInfoJson,
   generateStandardSizes,
   createImageServiceReference,
-  ImageApiProfile
+  ImageApiProfile,
+  getAllCanvases,
+  getAllManifests
 } from '../utils';
 import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES } from '../constants';
 
@@ -247,43 +249,15 @@ class StaticSiteExporter {
   /**
    * Collect all items (canvases) from the tree
    */
-  private collectItems(root: IIIFItem): IIIFItem[] {
-    const items: IIIFItem[] = [];
-
-    const traverse = (node: IIIFItem) => {
-      if (isCanvas(node)) {
-        items.push(node);
-      }
-      if (node.items) {
-        for (const child of node.items) {
-          traverse(child);
-        }
-      }
-    };
-
-    traverse(root);
-    return items;
+  private collectItems(root: IIIFItem): IIIFCanvas[] {
+    return getAllCanvases(root);
   }
 
   /**
    * Collect all manifests from the tree
    */
   private collectManifests(root: IIIFItem): IIIFManifest[] {
-    const manifests: IIIFManifest[] = [];
-
-    const traverse = (node: IIIFItem) => {
-      if (isManifest(node)) {
-        manifests.push(node);
-      }
-      if (node.items) {
-        for (const child of node.items) {
-          traverse(child);
-        }
-      }
-    };
-
-    traverse(root);
-    return manifests;
+    return getAllManifests(root);
   }
 
   /**

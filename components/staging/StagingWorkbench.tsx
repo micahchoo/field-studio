@@ -33,28 +33,48 @@ export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
       setIsProcessing(true);
       setProgress({ message: 'Building file tree...', percent: 20 });
 
-      // Small delay for UI
-      await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        // Small delay for UI
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      setProgress({ message: 'Detecting file sequences...', percent: 50 });
-      await new Promise(resolve => setTimeout(resolve, 100));
+        setProgress({ message: 'Detecting file sequences...', percent: 50 });
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Flatten tree to files
-      const flattenTree = (node: FileTree): File[] => {
-        const files: File[] = [];
-        node.files.forEach(f => files.push(f));
-        node.directories.forEach(dir => files.push(...flattenTree(dir)));
-        return files;
-      };
+        // Flatten tree to files
+        const flattenTree = (node: FileTree): File[] => {
+          const files: File[] = [];
+          node.files.forEach(f => files.push(f));
+          node.directories.forEach(dir => files.push(...flattenTree(dir)));
+          return files;
+        };
 
-      const files = flattenTree(initialTree);
-      const manifests = buildSourceManifests(files);
+        const files = flattenTree(initialTree);
+        
+        // Validate files exist
+        if (files.length === 0) {
+          throw new Error('No files found in the selected directory');
+        }
 
-      setProgress({ message: `Found ${manifests.manifests.length} manifests`, percent: 100 });
-      await new Promise(resolve => setTimeout(resolve, 300));
+        const manifests = buildSourceManifests(files);
 
-      setSourceManifests(manifests);
-      setIsProcessing(false);
+        // Validate manifests were created
+        if (!manifests || !manifests.manifests) {
+          throw new Error('Failed to build manifests from files');
+        }
+
+        setProgress({ message: `Found ${manifests.manifests.length} manifests`, percent: 100 });
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        setSourceManifests(manifests);
+      } catch (error) {
+        console.error('Error building source manifests:', error);
+        setProgress({
+          message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          percent: 0
+        });
+      } finally {
+        setIsProcessing(false);
+      }
     };
 
     build();

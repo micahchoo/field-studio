@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 import { CONSTANTS } from '../constants';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface Toast {
   id: string;
@@ -24,35 +24,96 @@ export const useToast = () => {
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const MAX_TOASTS = 3;
+  const MAX_HEIGHT = 300; // Maximum height in pixels
+
+  useEffect(() => {
+    return () => {
+      // Cleanup all timeouts on unmount
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current.clear();
+    };
+  }, []);
+
+  // Auto-dismiss toasts when clicking anywhere or limit exceeded
+  useEffect(() => {
+    const handleClick = () => {
+      // Dismiss oldest toast on click (progressive dismissal)
+      if (toasts.length > 0) {
+        const oldestId = toasts[0].id;
+        setToasts(prev => prev.filter(t => t.id !== oldestId));
+      }
+    };
+
+    // Only add listener when toasts are showing
+    if (toasts.length > 0) {
+      document.addEventListener('click', handleClick);
+      return () => document.removeEventListener('click', handleClick);
+    }
+  }, [toasts]);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
+    
+    setToasts(prev => {
+      // Aggressive limit to prevent overflow - remove oldest first
+      const newToasts = prev.length >= MAX_TOASTS
+        ? prev.slice(-MAX_TOASTS + 1) // Keep only the most recent, making room for new
+        : prev;
+      return [...newToasts, { id, message, type }];
+    });
+    
+    const timeout = setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
+      timeoutsRef.current.delete(timeout);
     }, CONSTANTS.TOAST_DURATION);
+    
+    timeoutsRef.current.add(timeout);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
-        {toasts.map(toast => (
-          <div 
+      <div
+        ref={containerRef}
+        className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-h-[300px] overflow-hidden"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {toasts.map((toast, index) => (
+          <div
             key={toast.id}
-            className={`pointer-events-auto min-w-[300px] p-4 rounded-lg shadow-xl border flex items-center justify-between gap-3 animate-bounce-in ${
+            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex items-center justify-between gap-3 animate-bounce-in ${
               toast.type === 'success' ? 'bg-white border-green-200 text-green-800' :
               toast.type === 'error' ? 'bg-white border-red-200 text-red-800' :
+              toast.type === 'warning' ? 'bg-white border-amber-200 text-amber-800' :
               'bg-slate-800 border-slate-700 text-white'
-            }`}
+            } ${index === 0 ? 'opacity-100' : 'opacity-90'}`}
+            style={{
+              transform: `scale(${1 - index * 0.05})`,
+              marginBottom: index > 0 ? '-8px' : '0'
+            }}
           >
-            <div className="flex items-center gap-3">
-              <Icon 
-                name={toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'} 
-                className={toast.type === 'success' ? 'text-green-500' : toast.type === 'error' ? 'text-red-500' : 'text-blue-400'}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Icon
+                name={toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : 'info'}
+                className={`shrink-0 ${toast.type === 'success' ? 'text-green-500' : toast.type === 'error' ? 'text-red-500' : toast.type === 'warning' ? 'text-amber-500' : 'text-blue-400'}`}
               />
-              <span className="text-sm font-medium">{toast.message}</span>
+              <span className="text-sm font-medium truncate">{toast.message}</span>
             </div>
+            <button
+              onClick={() => dismissToast(toast.id)}
+              className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors"
+              aria-label="Dismiss notification"
+            >
+              <Icon name="close" className="text-xs opacity-50 hover:opacity-100" />
+            </button>
           </div>
         ))}
       </div>

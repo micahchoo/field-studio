@@ -969,6 +969,29 @@ export class Vault {
   }
 
   /**
+   * Reload the vault from a potentially modified IIIF tree.
+   * Use this when the tree has been modified externally (e.g., by healing)
+   * and you need to sync the vault's normalized state.
+   *
+   * This is safer than individual updateEntity calls because it ensures
+   * all IDs are properly indexed and the typeIndex is fresh.
+   */
+  reload(root: IIIFItem): void {
+    this.state = normalize(root);
+    this.notify();
+  }
+
+  /**
+   * Check if an entity exists in the vault by ID.
+   * Useful for validating that healing hasn't broken ID references.
+   */
+  has(id: string): boolean {
+    const type = this.state.typeIndex[id];
+    if (!type) return false;
+    return !!this.state.entities[type][id];
+  }
+
+  /**
    * Export as nested IIIF tree
    */
   export(): IIIFItem | null {

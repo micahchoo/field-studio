@@ -427,3 +427,50 @@ Two-pane ingest interface:
 | `ArchivePane` | Organization workspace |
 | `CollectionCard` | Collection display |
 | `SendToCollectionModal` | Move/copy dialog |
+
+---
+
+## Documentation Gaps
+
+### 9 Undocumented Services
+
+The following services are implemented but not documented in Utility.md:
+
+| Service | File | Purpose | Documentation |
+|---------|------|---------|---------------|
+| `authService` | `services/authService.ts` | OAuth/OIDC authentication | [Services.md](./Services.md) |
+| `fieldRegistry` | `services/fieldRegistry.ts` | Custom metadata field registration | [Services.md](./Services.md) |
+| `guidanceService` | `services/guidanceService.ts` | User help system | [Services.md](./Services.md) |
+| `imageSourceResolver` | `services/imageSourceResolver.ts` | Server-side image resolution | [Services.md](./Services.md) |
+| `metadataHarvester` | `services/metadataHarvester.ts` | EXIF/IPTC extraction | [Services.md](./Services.md) |
+| `navPlaceService` | `services/navPlaceService.ts` | Geographic coordinate handling | [Services.md](./Services.md) |
+| `remoteLoader` | `services/remoteLoader.ts` | External manifest fetching | [Services.md](./Services.md) |
+| `selectors` | `services/selectors.ts` | Vault state selectors | [Services.md](./Services.md) |
+| `tileWorker` | `services/tileWorker.ts` | Web Worker tile generation | [Services.md](./Services.md) |
+
+See [Services.md](./Services.md) for complete documentation of these services.
+
+### 5 Additional Hooks
+
+The following hooks are implemented but not documented:
+
+| Hook | File | Purpose | Documentation |
+|------|------|---------|---------------|
+| `useURLState` | `hooks/useURLState.ts` | URL state management | [Hooks.md](./Hooks.md) |
+| `useResponsive` | `hooks/useResponsive.ts` | Mobile/tablet/desktop detection | [Hooks.md](./Hooks.md) |
+| `useViewportKeyboard` | `hooks/useViewportKeyboard.ts` | Viewport keyboard shortcuts | [Hooks.md](./Hooks.md) |
+| `useStructureKeyboard` | `hooks/useStructureKeyboard.ts` | Structure view navigation | [Hooks.md](./Hooks.md) |
+| `useStagingState` | `components/staging/hooks/useStagingState.ts` | Staging workbench state | [Hooks.md](./Hooks.md) |
+
+See [Hooks.md](./Hooks.md) for complete documentation of these hooks.
+
+### 2 Undocumented Views
+
+The following view components are implemented but not documented:
+
+| View | File | Purpose | Documentation |
+|------|------|---------|---------------|
+| `MapView` | `components/views/MapView.tsx` | Geographic visualization | [Components.md](./Components.md) |
+| `TimelineView` | `components/views/TimelineView.tsx` | Temporal visualization | [Components.md](./Components.md) |
+
+See [Components.md](./Components.md) for complete documentation of these views.

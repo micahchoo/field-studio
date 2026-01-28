@@ -1,6 +1,7 @@
 
 import * as FlexSearchModule from 'flexsearch';
 import { IIIFItem, IIIFAnnotation, IIIFCanvas, isCanvas, getIIIFValue } from '../types';
+import { getAllCanvases } from '../utils';
 import { fieldRegistry, DEFAULT_SEARCH_CONFIG, SearchIndexConfig } from './fieldRegistry';
 
 // FlexSearch has inconsistent exports across bundlers - try all patterns
@@ -564,22 +565,8 @@ class SearchService {
    * Collect all indexable items from the IIIF tree
    */
   private collectIndexableItems(root: IIIFItem): IIIFItem[] {
-    const items: IIIFItem[] = [];
-
-    const traverse = (node: IIIFItem) => {
-      // Index canvases (leaf items with content)
-      if (isCanvas(node)) {
-        items.push(node);
-      }
-      if (node.items) {
-        for (const child of node.items) {
-          traverse(child);
-        }
-      }
-    };
-
-    traverse(root);
-    return items;
+    // Use centralized traversal utility
+    return getAllCanvases(root);
   }
 
   /**

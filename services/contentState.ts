@@ -271,29 +271,51 @@ export const contentStateService = {
 
   /**
    * Generate a shareable URL with content state
+   * Per IIIF Content State API 1.0 spec
    */
   generateLink: (baseUrl: string, viewport: ViewportState): string => {
-    const state = contentStateService.createContentState(viewport);
-    const encoded = contentStateService.encode(state);
+    try {
+      // Validate viewport has required fields
+      if (!viewport.manifestId || !viewport.canvasId) {
+        console.warn('[ContentState] Invalid viewport state - missing manifestId or canvasId');
+        return window.location.href;
+      }
 
-    // Ensure the base URL is properly formed
-    let cleanBaseUrl = baseUrl;
+      // Ensure the base URL is properly formed
+      let cleanBaseUrl = baseUrl;
 
-    // Handle cases where pathname might be just "/" or missing
-    if (cleanBaseUrl.endsWith('/')) {
-      // Remove trailing slash for cleaner URL
-      cleanBaseUrl = cleanBaseUrl.slice(0, -1);
+      // Handle empty, null, undefined, or invalid base URLs
+      if (!cleanBaseUrl || cleanBaseUrl === '/' || cleanBaseUrl.trim() === '') {
+        cleanBaseUrl = window.location.origin + window.location.pathname;
+      }
+
+      // Handle relative URLs - prepend origin
+      if (!cleanBaseUrl.startsWith('http')) {
+        cleanBaseUrl = window.location.origin + (cleanBaseUrl.startsWith('/') ? '' : '/') + cleanBaseUrl;
+      }
+
+      // Remove trailing slashes for cleaner URLs
+      cleanBaseUrl = cleanBaseUrl.replace(/\/+$/, '');
+
+      // If it's just the origin with no path, add the app base path
+      const appBasePath = import.meta.env.BASE_URL || '/';
+      if (cleanBaseUrl === window.location.origin) {
+        cleanBaseUrl = window.location.origin + appBasePath.replace(/\/$/, '');
+      }
+
+      // Create content state and encode it
+      const state = contentStateService.createContentState(viewport);
+      const encoded = contentStateService.encode(state);
+
+      // Construct URL with iiif-content parameter
+      const url = new URL(cleanBaseUrl);
+      url.searchParams.set('iiif-content', encoded);
+      return url.toString();
+    } catch (e) {
+      console.error('[ContentState] URL generation failed', e);
+      // Return current URL as fallback - always safe
+      return window.location.href;
     }
-
-    // If it's just the origin with no path, add the app base path
-    const appBasePath = import.meta.env.BASE_URL || '/';
-    if (cleanBaseUrl === window.location.origin) {
-      cleanBaseUrl = window.location.origin + appBasePath.replace(/\/$/, '');
-    }
-
-    const url = new URL(cleanBaseUrl);
-    url.searchParams.set('iiif-content', encoded);
-    return url.toString();
   },
 
   /**

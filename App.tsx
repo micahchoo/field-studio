@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
-import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue } from './types';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation } from './types';
 import { METADATA_TEMPLATES } from './constants';
 import { Sidebar } from './components/Sidebar';
 import { Inspector } from './components/Inspector';
@@ -455,6 +456,7 @@ const MainApp: React.FC = () => {
           onOpenExternalImport={externalImport.open}
           onStructureUpdate={handleUpdateRoot}
           onOpenSettings={personaSettings.open}
+          onToggleQuickHelp={() => setShowQuickRef(prev => !prev)}
         />
 
         <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''}`}>
@@ -495,6 +497,9 @@ const MainApp: React.FC = () => {
           visible={showInspector && !!selectedId}
           isMobile={isMobile}
           onClose={() => { setShowInspector(false); setSelectedId(null); }}
+          annotations={selectedItem?.type === 'Canvas'
+            ? (selectedItem as IIIFCanvas).annotations?.flatMap(page => page.items) || []
+            : []}
         />
       </div>
 
@@ -576,7 +581,7 @@ const MainApp: React.FC = () => {
           currentMode === 'archive' ? QUICK_REF_ARCHIVE :
           currentMode === 'collections' ? QUICK_REF_STRUCTURE :
           currentMode === 'viewer' ? QUICK_REF_VIEWER :
-          viewType === 'board' ? QUICK_REF_BOARD :
+          currentMode === 'boards' ? QUICK_REF_BOARD :
           QUICK_REF_METADATA
         }
         isOpen={showQuickRef}
@@ -602,7 +607,9 @@ const MainApp: React.FC = () => {
 const App: React.FC = () => (
   <VaultProvider>
     <ToastProvider>
-      <MainApp />
+      <ErrorBoundary>
+        <MainApp />
+      </ErrorBoundary>
     </ToastProvider>
   </VaultProvider>
 );

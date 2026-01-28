@@ -51,3 +51,41 @@ export type { UseViewportKeyboardOptions, UseViewportKeyboardReturn } from './us
 // ============================================================================
 export { useStructureKeyboard, STRUCTURE_KEYBOARD_SHORTCUTS } from './useStructureKeyboard';
 export type { UseStructureKeyboardOptions, UseStructureKeyboardResult } from './useStructureKeyboard';
+
+// ============================================================================
+// Shared State & Navigation (UX Improvements)
+// ============================================================================
+export { useSharedSelection } from './useSharedSelection';
+export { useNavigationGuard } from './useNavigationGuard';
+
+// ============================================================================
+// Virtualization
+// ============================================================================
+export {
+  useVirtualization,
+  useGridVirtualization
+} from './useVirtualization';
+export type {
+  UseVirtualizationOptions,
+  UseVirtualizationReturn,
+  UseGridVirtualizationOptions,
+  UseGridVirtualizationReturn
+} from './useVirtualization';
+
+// ============================================================================
+// Tree Virtualization (Performance Optimization)
+// ============================================================================
+export {
+  useTreeVirtualization
+} from './useTreeVirtualization';
+export type {
+  FlattenedTreeNode,
+  UseTreeVirtualizationOptions,
+  UseTreeVirtualizationReturn
+} from './useTreeVirtualization';
+
+// ============================================================================
+// IIIF Traversal
+// ============================================================================
+export { useIIIFTraversal } from './useIIIFTraversal';
+export type { UseIIIFTraversalReturn } from './useIIIFTraversal';

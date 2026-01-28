@@ -16,6 +16,14 @@ import { VIEWPORT_DEFAULTS } from '../../constants/viewport';
 declare const OpenSeadragon: any;
 
 /**
+ * Parse SVG selector to extract path data for OSD overlay
+ */
+function parseSvgSelector(svgValue: string): string | null {
+  const pathMatch = svgValue.match(/d="([^"]+)"/);
+  return pathMatch ? pathMatch[1] : null;
+}
+
+/**
  * Extract bounding box from SVG selector value
  */
 function extractSvgBoundingBox(svgValue: string): { x: number; y: number; width: number; height: number } | null {
@@ -71,11 +79,14 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
   const { showToast } = useToast();
   const viewerRef = useRef<any>(null);
   const osdContainerRef = useRef<HTMLDivElement>(null);
+  const viewerContainerRef = useRef<HTMLDivElement>(null);
 
   const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio' | 'other'>('other');
   const [annotations, setAnnotations] = useState<IIIFAnnotation[]>([]);
   const [showTranscriptionPanel, setShowTranscriptionPanel] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showMetadataPanel, setShowMetadataPanel] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isOcring, setIsOcring] = useState(false);
   const [showWorkbench, setShowWorkbench] = useState(false);
@@ -220,28 +231,143 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
           viewerRef.current = null;
         }
       };
-  }, [item?.id, mediaType, serviceId, resolvedImageUrl]);
+    }, [item?.id, mediaType, serviceId, resolvedImageUrl]);
+  
+    const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  
+    // Annotation overlay management for OpenSeadragon
+    const annotationOverlayRef = useRef<SVGSVGElement | null>(null);
 
-  const handleShareView = () => {
-    if (!item || !viewerRef.current) return;
-    const bounds = viewerRef.current.viewport.getBounds();
-    const imageRect = viewerRef.current.viewport.viewportToImageRectangle(bounds);
+  useEffect(() => {
+    if (!viewerRef.current || mediaType !== 'image' || !item) return;
 
-    // Build ViewportState for sharing
-    const viewportState = {
+    const viewer = viewerRef.current;
+
+    // Create SVG overlay element
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.position = 'absolute';
+    svg.style.left = '0';
+    svg.style.top = '0';
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.pointerEvents = 'none';
+    svg.setAttribute('viewBox', `0 0 ${item.width || 1000} ${item.height || 1000}`);
+    svg.setAttribute('preserveAspectRatio', 'none');
+
+    // Get OSD canvas container
+    const canvasContainer = viewer.canvas?.parentElement || viewer.element;
+    if (canvasContainer) {
+      canvasContainer.style.position = 'relative';
+      canvasContainer.appendChild(svg);
+      annotationOverlayRef.current = svg;
+    }
+
+    return () => {
+      if (svg.parentElement) {
+        svg.parentElement.removeChild(svg);
+      }
+      annotationOverlayRef.current = null;
+    };
+  }, [item?.id, mediaType, item?.width, item?.height]);
+
+  // Update annotation overlays when annotations change
+  useEffect(() => {
+    const svg = annotationOverlayRef.current;
+    if (!svg || !item) return;
+
+    // Clear existing annotations
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
+
+    // Add annotation elements
+    annotations.forEach((anno, index) => {
+      const target = anno.target as any;
+      const selector = target?.selector;
+
+      if (!selector) return;
+
+      if (selector.type === 'SvgSelector') {
+        const pathData = parseSvgSelector(selector.value);
+        if (pathData) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', pathData);
+          path.setAttribute('fill', selectedAnnotationId === anno.id ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.2)');
+          path.setAttribute('stroke', selectedAnnotationId === anno.id ? '#3b82f6' : '#22c55e');
+          path.setAttribute('stroke-width', '2');
+          path.style.pointerEvents = 'auto';
+          path.style.cursor = 'pointer';
+          path.addEventListener('click', () => {
+            setSelectedAnnotationId(anno.id);
+          });
+          path.addEventListener('mouseenter', () => {
+            path.setAttribute('fill', 'rgba(59, 130, 246, 0.3)');
+          });
+          path.addEventListener('mouseleave', () => {
+            path.setAttribute('fill', selectedAnnotationId === anno.id ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.2)');
+          });
+          svg.appendChild(path);
+        }
+      } else if (selector.type === 'FragmentSelector' || selector.value?.includes('xywh=')) {
+        // Handle xywh fragment selectors
+        const value = selector.value || '';
+        const match = value.match(/xywh=([^&]+)/);
+        if (match) {
+          const coords = match[1].split(',').map(Number);
+          if (coords.length === 4) {
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', String(coords[0]));
+            rect.setAttribute('y', String(coords[1]));
+            rect.setAttribute('width', String(coords[2]));
+            rect.setAttribute('height', String(coords[3]));
+            rect.setAttribute('fill', selectedAnnotationId === anno.id ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.2)');
+            rect.setAttribute('stroke', selectedAnnotationId === anno.id ? '#3b82f6' : '#22c55e');
+            rect.setAttribute('stroke-width', '2');
+            rect.style.pointerEvents = 'auto';
+            rect.style.cursor = 'pointer';
+            rect.addEventListener('click', () => {
+              setSelectedAnnotationId(anno.id);
+            });
+            svg.appendChild(rect);
+          }
+        }
+      }
+    });
+
+    // Update viewBox to match current image
+    if (item.width && item.height) {
+      svg.setAttribute('viewBox', `0 0 ${item.width} ${item.height}`);
+    }
+  }, [annotations, item, selectedAnnotationId]);
+
+  const handleShareView = (annotationId?: string) => {
+    if (!item) return;
+    
+    const viewportState: any = {
         manifestId: item._parentId || "root",
         canvasId: item.id,
-        region: {
+    };
+
+    // Include current viewport region if OSD is available
+    if (viewerRef.current?.viewport) {
+        const bounds = viewerRef.current.viewport.getBounds();
+        const imageRect = viewerRef.current.viewport.viewportToImageRectangle(bounds);
+        viewportState.region = {
             x: Math.round(imageRect.x),
             y: Math.round(imageRect.y),
             w: Math.round(imageRect.width),
             h: Math.round(imageRect.height)
-        }
-    };
+        };
+    }
+
+    // Include annotation reference if provided or selected
+    if (annotationId || selectedAnnotationId) {
+        viewportState.annotationId = annotationId || selectedAnnotationId;
+    }
 
     const url = contentStateService.generateLink(window.location.href, viewportState);
     navigator.clipboard.writeText(url);
-    showToast("Shareable view link copied to clipboard", "success");
+    showToast(annotationId ? "Annotation permalink copied to clipboard" : "Shareable view link copied to clipboard", "success");
   };
 
   const handleExtractEvidence = (quality: string = 'default') => {
@@ -373,6 +499,9 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
   // Keyboard shortcuts for viewer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if annotation tool, composer, or workbench is open
+      if (showAnnotationTool || showComposer || showWorkbench) return;
+      
       // Skip if user is typing in an input
       if (document.activeElement?.tagName.match(/INPUT|TEXTAREA/)) return;
 
@@ -403,111 +532,248 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleZoomIn, handleZoomOut, handleResetView, handleRotate]);
+  }, [handleZoomIn, handleZoomOut, handleResetView, handleRotate, showAnnotationTool, showComposer, showWorkbench]);
+
+  // Fullscreen handler
+  const handleToggleFullscreen = useCallback(async () => {
+    if (!viewerContainerRef.current) return;
+    
+    try {
+      if (!document.fullscreenElement) {
+        await viewerContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      showToast('Fullscreen not supported', 'error');
+    }
+  }, [showToast]);
+
+  // Listen for fullscreen change events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Download current view handler
+  const handleDownload = useCallback(async () => {
+    if (!resolvedImageUrl) {
+      showToast('No image available to download', 'error');
+      return;
+    }
+
+    try {
+      // For blob URLs or direct images, create a download link
+      const response = await fetch(resolvedImageUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${item?.label?.en?.[0] || item?.label?.none?.[0] || 'canvas'}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast('Image downloaded', 'success');
+    } catch (err) {
+      // Fallback: open in new tab
+      window.open(resolvedImageUrl, '_blank');
+      showToast('Opening image in new tab', 'info');
+    }
+  }, [resolvedImageUrl, item, showToast]);
 
   if (!item) return <div className="flex-1 flex items-center justify-center bg-slate-900 text-slate-500 italic">Select a canvas to inspect.</div>;
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden relative">
-      <div className="h-14 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 z-20">
-        <div className="flex items-center gap-4">
-            <h2 className="text-white font-bold flex items-center gap-2">
-                <Icon name={mediaType === 'video' ? 'movie' : mediaType === 'audio' ? 'audiotrack' : 'image'} className="text-blue-400"/>
-                {getIIIFValue(item.label)}
-            </h2>
-            {mediaType === 'image' && (
-                <div className="flex bg-slate-800 rounded p-1 border border-slate-700 ml-4 gap-2">
-                    <button onClick={() => handleExtractEvidence('default')} className="text-[10px] font-black uppercase text-blue-400 hover:text-white flex items-center gap-1 px-2"><Icon name="content_cut" className="text-xs"/> Extract</button>
-                    <button onClick={handleShareView} className="text-[10px] font-black uppercase text-slate-400 hover:text-white flex items-center gap-1 px-2"><Icon name="share" className="text-xs"/> Share</button>
-                </div>
-            )}
+    <div ref={viewerContainerRef} className="flex-1 flex flex-col bg-slate-900 overflow-hidden relative">
+      <div className="h-14 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-20">
+        {/* Left: Title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <Icon name={mediaType === 'video' ? 'movie' : mediaType === 'audio' ? 'audiotrack' : 'image'} className="text-blue-400 shrink-0"/>
+          <h2 className="text-white font-bold truncate">
+            {getIIIFValue(item.label)}
+          </h2>
         </div>
         
-        <div className="flex items-center gap-2">
-            {mediaType === 'image' && (
-              <>
-                {/* Zoom Controls */}
-                <div className="flex items-center bg-slate-800 rounded border border-slate-700 px-1">
-                  <button
-                    onClick={handleZoomOut}
-                    className="p-1.5 text-slate-400 hover:text-white"
-                    title="Zoom Out (-)"
-                    aria-label="Zoom out"
-                  >
-                    <Icon name="remove" className="text-sm" />
-                  </button>
-                  <span className="px-2 text-[10px] font-mono text-slate-400 min-w-[40px] text-center">
-                    {zoomLevel}%
-                  </span>
-                  <button
-                    onClick={handleZoomIn}
-                    className="p-1.5 text-slate-400 hover:text-white"
-                    title="Zoom In (+)"
-                    aria-label="Zoom in"
-                  >
-                    <Icon name="add" className="text-sm" />
-                  </button>
-                </div>
-
-                {/* Rotation Controls */}
-                <div className="flex items-center border-r border-slate-700 pr-2 mr-1">
-                  <button
-                    onClick={() => handleRotate(-90)}
-                    className="p-2 text-slate-400 hover:text-white"
-                    title="Rotate Counter-Clockwise (Shift+R)"
-                    aria-label="Rotate counter-clockwise"
-                  >
-                    <Icon name="rotate_left" />
-                  </button>
-                  <button
-                    onClick={() => handleRotate(90)}
-                    className="p-2 text-slate-400 hover:text-white"
-                    title="Rotate Clockwise (R)"
-                    aria-label="Rotate clockwise"
-                  >
-                    <Icon name="rotate_right" />
-                  </button>
-                  <button
-                    onClick={handleResetView}
-                    className="p-2 text-slate-400 hover:text-white"
-                    title="Reset View (Ctrl/Cmd+0)"
-                    aria-label="Reset view to default"
-                  >
-                    <Icon name="restart_alt" />
-                  </button>
-                  {rotation !== 0 && (
-                    <span className="text-[10px] text-slate-500 ml-1">{rotation}°</span>
-                  )}
-                </div>
+        {/* Right: Toolbar */}
+        <div className="flex items-center gap-1">
+          {mediaType === 'image' && (
+            <>
+              {/* Group 1: Viewport Controls */}
+              <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700 p-0.5 mr-2">
+                {/* Zoom */}
                 <button
-                  onClick={() => setShowAnnotationTool(true)}
-                  className="p-2 text-slate-400 hover:text-white"
-                  title="Draw Annotations"
+                  onClick={handleZoomOut}
+                  disabled={!viewerRef.current}
+                  className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
+                  title="Zoom Out (-)"
+                  aria-label="Zoom out"
                 >
-                  <Icon name="draw" />
+                  <Icon name="remove" className="text-sm" />
                 </button>
-              </>
-            )}
-            {searchService && (
+                <span className="px-2 text-[10px] font-mono text-slate-400 min-w-[44px] text-center">
+                  {zoomLevel}%
+                </span>
+                <button
+                  onClick={handleZoomIn}
+                  disabled={!viewerRef.current}
+                  className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
+                  title="Zoom In (+)"
+                  aria-label="Zoom in"
+                >
+                  <Icon name="add" className="text-sm" />
+                </button>
+                <div className="w-px h-4 bg-slate-700 mx-1" />
+                {/* Rotation */}
+                <button
+                  onClick={() => handleRotate(-90)}
+                  disabled={!viewerRef.current}
+                  className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
+                  title="Rotate Counter-Clockwise (Shift+R)"
+                  aria-label="Rotate counter-clockwise"
+                >
+                  <Icon name="rotate_left" className="text-sm" />
+                </button>
+                <button
+                  onClick={() => handleRotate(90)}
+                  disabled={!viewerRef.current}
+                  className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
+                  title="Rotate Clockwise (R)"
+                  aria-label="Rotate clockwise"
+                >
+                  <Icon name="rotate_right" className="text-sm" />
+                </button>
+                {rotation !== 0 && (
+                  <>
+                    <div className="w-px h-4 bg-slate-700 mx-1" />
+                    <span className="text-[10px] text-slate-500 px-1">{rotation}°</span>
+                    <button
+                      onClick={handleResetView}
+                      disabled={!viewerRef.current}
+                      className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
+                      title="Reset View (Ctrl/Cmd+0)"
+                      aria-label="Reset view"
+                    >
+                      <Icon name="restart_alt" className="text-sm" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Group 2: Actions */}
+              <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700 p-0.5 mr-2">
+                <button
+                  onClick={() => handleExtractEvidence('default')}
+                  disabled={!viewerRef.current}
+                  className="px-2 py-1 text-[10px] font-bold uppercase text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 rounded"
+                  title="Extract Evidence from Current View"
+                >
+                  <Icon name="content_cut" className="text-xs"/> Extract
+                </button>
+                <div className="w-px h-4 bg-slate-700 mx-0.5" />
+                <button
+                  onClick={() => handleShareView()}
+                  disabled={!viewerRef.current}
+                  className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 rounded"
+                  title="Share Current View"
+                >
+                  <Icon name="share" className="text-xs"/> Share
+                </button>
+              </div>
+
+              {/* Group 3: Tools */}
               <button
-                onClick={() => setShowSearchPanel(!showSearchPanel)}
-                className={`p-2 ${showSearchPanel ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
-                title="Search in Manifest"
+                onClick={() => setShowTranscriptionPanel(true)}
+                className={`p-2 rounded-lg hover:bg-slate-800 relative ${annotations.length > 0 ? 'text-green-400' : 'text-slate-400'} hover:text-white`}
+                title={`${annotations.length} Annotation${annotations.length !== 1 ? 's' : ''}`}
               >
-                <Icon name="search" />
+                <Icon name="sticky_note_2" />
+                {annotations.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {annotations.length}
+                  </span>
+                )}
               </button>
-            )}
-            <button onClick={() => setShowWorkbench(true)} className="p-2 text-slate-400 hover:text-white"><Icon name="tune" /></button>
-            <button onClick={() => setShowTranscriptionPanel(!showTranscriptionPanel)} className={`p-2 ${showTranscriptionPanel ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}><Icon name="description" /></button>
-            {manifestItems && manifestItems.length > 1 && (
               <button
-                onClick={() => setShowFilmstrip(!showFilmstrip)}
-                className={`p-2 ${showFilmstrip ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
-                title="Toggle Canvas Navigator"
+                onClick={() => setShowAnnotationTool(true)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                title="Draw Annotations"
               >
-                <Icon name="view_carousel" />
+                <Icon name="draw" />
               </button>
-            )}
+              <button
+                onClick={() => setShowWorkbench(true)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                title="Image Request Workbench"
+              >
+                <Icon name="tune" />
+              </button>
+            </>
+          )}
+
+          {/* Universal Controls (all media types) */}
+          {searchService && (
+            <button
+              onClick={() => setShowSearchPanel(!showSearchPanel)}
+              className={`p-2 rounded-lg hover:bg-slate-800 ${showSearchPanel ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
+              title="Search in Manifest"
+            >
+              <Icon name="search" />
+            </button>
+          )}
+          <button
+            onClick={() => setShowMetadataPanel(!showMetadataPanel)}
+            className={`p-2 rounded-lg hover:bg-slate-800 ${showMetadataPanel ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
+            title="Canvas Metadata"
+            aria-label="Toggle metadata panel"
+          >
+            <Icon name="info" />
+          </button>
+          {mediaType === 'image' && (
+            <button
+              onClick={handleDownload}
+              disabled={!resolvedImageUrl}
+              className="p-2 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-800"
+              title="Download Image"
+              aria-label="Download image"
+            >
+              <Icon name="download" />
+            </button>
+          )}
+          <button
+            onClick={handleToggleFullscreen}
+            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+            title="Toggle Fullscreen"
+            aria-label="Toggle fullscreen"
+          >
+            <Icon name={isFullscreen ? 'fullscreen_exit' : 'fullscreen'} />
+          </button>
+          
+          <div className="w-px h-6 bg-slate-700 mx-1" />
+          
+          <button
+            onClick={() => setShowTranscriptionPanel(!showTranscriptionPanel)}
+            className={`p-2 rounded-lg hover:bg-slate-800 ${showTranscriptionPanel ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
+            title="Evidence & Notes"
+          >
+            <Icon name="description" />
+          </button>
+          {manifestItems && manifestItems.length > 1 && (
+            <button
+              onClick={() => setShowFilmstrip(!showFilmstrip)}
+              className={`p-2 rounded-lg hover:bg-slate-800 ${showFilmstrip ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
+              title="Toggle Canvas Navigator"
+            >
+              <Icon name="view_carousel" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -616,60 +882,353 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
         {showTranscriptionPanel && (
             <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col animate-in slide-in-from-right duration-200">
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Evidence & Notes</h3>
-                    <button onClick={() => setShowTranscriptionPanel(false)}><Icon name="close" className="text-slate-500 text-sm" /></button>
+                    <div className="flex items-center gap-2">
+                        <Icon name="sticky_note_2" className="text-slate-400 text-sm" />
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Annotations</h3>
+                        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{annotations.length}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowAnnotationTool(true)}
+                            className="text-[10px] bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1"
+                            title="Create New Annotation"
+                        >
+                            <Icon name="add" className="text-xs" /> New
+                        </button>
+                        <button onClick={() => setShowTranscriptionPanel(false)} className="p-1 hover:bg-slate-800 rounded">
+                            <Icon name="close" className="text-slate-500 text-sm" />
+                        </button>
+                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {annotations.length === 0 ? (
-                        <div className="text-center py-20 text-slate-600 italic text-sm">No evidence annotations yet.</div>
+                        <div className="text-center py-20 text-slate-600">
+                            <Icon name="sticky_note_2" className="text-4xl mb-3 mx-auto opacity-30" />
+                            <p className="text-sm italic mb-2">No annotations yet</p>
+                            <button
+                                onClick={() => setShowAnnotationTool(true)}
+                                className="text-xs text-blue-400 hover:text-blue-300 underline"
+                            >
+                                Create your first annotation
+                            </button>
+                        </div>
                     ) : (
-                        annotations.map(anno => {
-                            const bodyText = (anno.body as any).label?.en?.[0] || (anno.body as any).value || 'Archive Evidence';
-                            const target = anno.target as any;
-                            const selectorType = target?.selector?.type;
-                            const selectorValue = target?.selector?.value || '';
-                            const isXywhRegion = selectorValue.includes('xywh=');
-                            const isSvgSelector = selectorType === 'SvgSelector';
-                            const isZoomable = isXywhRegion || isSvgSelector;
-                            const bodyImg = (anno.body as any).id;
-                            const isText = (anno.body as any).type === 'TextualBody';
+                        <div className="space-y-3">
+                            {annotations.map(anno => {
+                                const body = anno.body as any;
+                                const target = anno.target as any;
+                                
+                                // W3C Web Annotation Data Model compliant parsing
+                                const bodyText = body?.value || body?.label?.en?.[0] || body?.label?.none?.[0] || 'Untitled Annotation';
+                                const bodyType = body?.type || 'TextualBody';
+                                const bodyFormat = body?.format || 'text/plain';
+                                const motivation = anno.motivation || 'commenting';
+                                
+                                // Parse selector for spatial/temporal targeting
+                                const selectorType = target?.selector?.type;
+                                const selectorValue = target?.selector?.value || '';
+                                const isXywhRegion = selectorValue.includes('xywh=');
+                                const isSvgSelector = selectorType === 'SvgSelector';
+                                const isTemporal = selectorValue.includes('t=');
+                                const hasSpatialTarget = isXywhRegion || isSvgSelector;
+                                
+                                // Derived image URL (for Image API annotations)
+                                const bodyImg = body?.id;
+                                const isImageBody = bodyType === 'Image' || bodyImg?.includes('/iiif/');
+                                const isTextBody = bodyType === 'TextualBody' || body?.value;
+                                
+                                // Generate JSON-LD representation
+                                const jsonLdRepr = JSON.stringify({
+                                    '@context': 'http://www.w3.org/ns/anno.jsonld',
+                                    id: anno.id,
+                                    type: 'Annotation',
+                                    motivation: motivation,
+                                    body: body,
+                                    target: target
+                                }, null, 2);
 
-                            const handleZoom = () => {
-                              if (!viewerRef.current || !item) return;
-                              if (isXywhRegion) {
-                                zoomToRegion(selectorValue);
-                              } else if (isSvgSelector) {
-                                // Extract bounding box from SVG path and zoom to it
-                                const bbox = extractSvgBoundingBox(selectorValue);
-                                if (bbox) {
-                                  const rect = viewerRef.current.viewport.imageToViewportRectangle(
-                                    bbox.x, bbox.y, bbox.width, bbox.height
-                                  );
-                                  viewerRef.current.viewport.fitBounds(rect.scale(1.2), false);
-                                }
-                              }
-                            };
+                                const handleZoom = () => {
+                                    if (!viewerRef.current || !item) return;
+                                    setSelectedAnnotationId(anno.id);
+                                    if (isXywhRegion) {
+                                        zoomToRegion(selectorValue);
+                                    } else if (isSvgSelector) {
+                                        const bbox = extractSvgBoundingBox(selectorValue);
+                                        if (bbox) {
+                                            const rect = viewerRef.current.viewport.imageToViewportRectangle(
+                                                bbox.x, bbox.y, bbox.width, bbox.height
+                                            );
+                                            viewerRef.current.viewport.fitBounds(rect.scale(1.2), false);
+                                        }
+                                    }
+                                };
 
-                            return (
-                                <div key={anno.id} onClick={() => isZoomable && handleZoom()} className="bg-slate-800 p-3 rounded border border-slate-700 cursor-pointer hover:border-blue-500 transition-all group">
-                                    {bodyImg && bodyImg.includes('/iiif/') && <img src={bodyImg} className="w-full aspect-video object-cover rounded mb-2 border border-slate-600" />}
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className={`text-[9px] font-black uppercase tracking-tighter ${isText ? 'text-green-400' : 'text-blue-400'}`}>
-                                          {isText ? (isSvgSelector ? 'Polygon' : 'Transcription') : (anno.motivation === 'painting' ? 'Layer' : 'Supplement')}
-                                        </span>
-                                        {isZoomable && <Icon name={isSvgSelector ? 'pentagon' : 'zoom_in'} className="text-xs text-slate-500 group-hover:text-blue-400"/>}
+                                const handleShareAnnotation = (e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    handleShareView(anno.id);
+                                };
+
+                                const handleCopyJsonLd = (e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(jsonLdRepr);
+                                    showToast('W3C Annotation JSON-LD copied to clipboard', 'success');
+                                };
+
+                                // Motivation badge colors
+                                const motivationColors: Record<string, string> = {
+                                    'commenting': 'text-blue-400 bg-blue-400/10',
+                                    'tagging': 'text-green-400 bg-green-400/10',
+                                    'describing': 'text-purple-400 bg-purple-400/10',
+                                    'identifying': 'text-yellow-400 bg-yellow-400/10',
+                                    'painting': 'text-pink-400 bg-pink-400/10',
+                                    'supplementing': 'text-cyan-400 bg-cyan-400/10'
+                                };
+                                const badgeClass = motivationColors[motivation as string] || 'text-slate-400 bg-slate-400/10';
+
+                                return (
+                                    <div
+                                        key={anno.id}
+                                        className={`bg-slate-800 rounded-lg border transition-all group ${selectedAnnotationId === anno.id ? 'border-blue-500 ring-1 ring-blue-500/30' : 'border-slate-700 hover:border-slate-600'}`}
+                                    >
+                                        {/* Image preview if available */}
+                                        {isImageBody && bodyImg && (
+                                            <div className="relative">
+                                                <img
+                                                    src={bodyImg}
+                                                    alt="Annotation content"
+                                                    className="w-full h-24 object-cover rounded-t-lg"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                                <div className="absolute top-2 right-2 flex gap-1">
+                                                    <button
+                                                        onClick={handleShareAnnotation}
+                                                        className="p-1.5 bg-black/60 hover:bg-black/80 rounded text-white text-xs"
+                                                        title="Copy annotation permalink"
+                                                    >
+                                                        <Icon name="link" className="text-xs" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="p-3">
+                                            {/* Header: Motivation + Target info */}
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded ${badgeClass}`}>
+                                                        {motivation}
+                                                    </span>
+                                                    {hasSpatialTarget && (
+                                                        <span className="text-[9px] text-slate-500 flex items-center gap-0.5">
+                                                            <Icon name={isSvgSelector ? 'pentagon' : 'crop_free'} className="text-[10px]" />
+                                                            {isSvgSelector ? 'Polygon' : 'Region'}
+                                                        </span>
+                                                    )}
+                                                    {isTemporal && (
+                                                        <span className="text-[9px] text-slate-500 flex items-center gap-0.5">
+                                                            <Icon name="schedule" className="text-[10px]" />
+                                                            Time
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {hasSpatialTarget && (
+                                                        <button
+                                                            onClick={handleZoom}
+                                                            className="p-1 text-slate-400 hover:text-blue-400 rounded"
+                                                            title="Zoom to annotation"
+                                                        >
+                                                            <Icon name="center_focus_strong" className="text-xs" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={handleShareAnnotation}
+                                                        className="p-1 text-slate-400 hover:text-blue-400 rounded"
+                                                        title="Copy permalink"
+                                                    >
+                                                        <Icon name="link" className="text-xs" />
+                                                    </button>
+                                                    <button
+                                                        onClick={handleCopyJsonLd}
+                                                        className="p-1 text-slate-400 hover:text-green-400 rounded"
+                                                        title="Copy W3C JSON-LD"
+                                                    >
+                                                        <Icon name="code" className="text-xs" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Body content */}
+                                            <div className={`text-slate-200 text-xs ${isTextBody ? 'font-mono whitespace-pre-wrap leading-relaxed' : 'font-medium'}`}>
+                                                {bodyText}
+                                            </div>
+                                            
+                                            {/* Format badge for text */}
+                                            {isTextBody && (
+                                                <div className="mt-2 flex items-center gap-2">
+                                                    <span className="text-[8px] text-slate-500 uppercase">{bodyFormat}</span>
+                                                    <span className="text-[8px] text-slate-600 font-mono truncate">{anno.id.split('/').pop()?.slice(0, 20)}...</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className={`text-slate-200 text-xs ${isText ? 'font-mono whitespace-pre-wrap leading-relaxed' : 'font-bold'}`}>{bodyText}</p>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+                
+                {/* Footer: W3C compliance note */}
+                <div className="p-3 border-t border-slate-800 bg-slate-950">
+                    <div className="flex items-center justify-between text-[9px] text-slate-500">
+                        <span className="flex items-center gap-1">
+                            <Icon name="verified" className="text-xs" />
+                            W3C Web Annotation compliant
+                        </span>
+                        <a
+                            href="https://www.w3.org/TR/annotation-model/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline"
+                        >
+                            Spec →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Metadata Panel */}
+        {showMetadataPanel && item && (
+            <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col animate-in slide-in-from-right duration-200">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Canvas Metadata</h3>
+                    <button onClick={() => setShowMetadataPanel(false)}><Icon name="close" className="text-slate-500 text-sm" /></button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {/* Basic Info */}
+                    <div className="space-y-3">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Basic Information</h4>
+                        <div className="bg-slate-800 p-3 rounded border border-slate-700 space-y-2">
+                            <div>
+                                <span className="text-[9px] text-slate-500 uppercase">ID</span>
+                                <p className="text-xs text-slate-300 font-mono break-all">{item.id}</p>
+                            </div>
+                            <div>
+                                <span className="text-[9px] text-slate-500 uppercase">Type</span>
+                                <p className="text-xs text-slate-300">{item.type}</p>
+                            </div>
+                            {(item.width || item.height) && (
+                                <div>
+                                    <span className="text-[9px] text-slate-500 uppercase">Dimensions</span>
+                                    <p className="text-xs text-slate-300">{item.width || '?'} × {item.height || '?'} px</p>
                                 </div>
-                            );
-                        })
+                            )}
+                            {item.duration && (
+                                <div>
+                                    <span className="text-[9px] text-slate-500 uppercase">Duration</span>
+                                    <p className="text-xs text-slate-300">{item.duration.toFixed(2)}s</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Metadata Properties */}
+                    {item.metadata && item.metadata.length > 0 && (
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Properties</h4>
+                            <div className="space-y-2">
+                                {item.metadata.map((meta, idx) => (
+                                    <div key={idx} className="bg-slate-800 p-3 rounded border border-slate-700">
+                                        <span className="text-[9px] text-slate-500 uppercase">{getIIIFValue(meta.label)}</span>
+                                        <p className="text-xs text-slate-300 mt-1">{getIIIFValue(meta.value)}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Summary */}
+                    {item.summary && (
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Summary</h4>
+                            <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                                <p className="text-xs text-slate-300">{getIIIFValue(item.summary)}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Required Statement */}
+                    {item.requiredStatement && (
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Required Statement</h4>
+                            <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                                <span className="text-[9px] text-slate-500 uppercase">{getIIIFValue(item.requiredStatement.label)}</span>
+                                <p className="text-xs text-slate-300 mt-1">{getIIIFValue(item.requiredStatement.value)}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Rights */}
+                    {item.rights && (
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Rights</h4>
+                            <div className="bg-slate-800 p-3 rounded border border-slate-700">
+                                <a href={item.rights} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline break-all">
+                                    {item.rights}
+                                </a>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* See Also */}
+                    {item.seeAlso && item.seeAlso.length > 0 && (
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">See Also</h4>
+                            <div className="space-y-2">
+                                {item.seeAlso.map((link, idx) => (
+                                    <a
+                                        key={idx}
+                                        href={link.id}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block bg-slate-800 p-3 rounded border border-slate-700 hover:border-blue-500 transition-all"
+                                    >
+                                        <span className="text-[9px] text-slate-500 uppercase">{link.format || 'Link'}</span>
+                                        <p className="text-xs text-blue-400 hover:underline break-all mt-1">{link.id}</p>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
         )}
       </div>
 
-      {showWorkbench && item && <ImageRequestWorkbench canvas={item} onClose={() => setShowWorkbench(false)} />}
+      {showWorkbench && item && (
+        <ImageRequestWorkbench
+          canvas={item}
+          onClose={() => setShowWorkbench(false)}
+          onApply={(url) => {
+            // Create a new derived image annotation from the Image API parameters
+            const derivedAnno: IIIFAnnotation = {
+              id: `${item.id}/annotation/derived-${crypto.randomUUID()}`,
+              type: "Annotation",
+              motivation: "painting",
+              label: { en: ["Derived Image"] },
+              body: {
+                id: url,
+                type: "Image",
+                format: "image/jpeg"
+              },
+              target: item.id
+            };
+            saveAnnotation(derivedAnno);
+            showToast("Derived image applied as new layer", "success");
+          }}
+        />
+      )}
       {showComposer && item && <CanvasComposer canvas={item} onUpdate={onUpdate} onClose={() => setShowComposer(false)} />}
       {showAnnotationTool && item && resolvedImageUrl && (
         <PolygonAnnotationTool

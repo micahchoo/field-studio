@@ -39,6 +39,16 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
   const [sidebarTab, setSidebarTab] = useState<'layers' | 'library'>('layers');
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
+  
+  // Track initial state for accurate resize calculations
+  const resizeStartRef = useRef<{
+    mouseX: number;
+    mouseY: number;
+    layerX: number;
+    layerY: number;
+    layerW: number;
+    layerH: number;
+  } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -162,39 +172,76 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
   }, [canvas.id, setLayersInitial]);
 
   const handleSave = () => {
-    const newCanvas = { ...canvas };
-    newCanvas.items = [{
+    // Build painting annotations from layers
+    const paintingAnnotations: IIIFAnnotation[] = layers.map(l => {
+      let body: any;
+      if (l.resource.type === 'Text' || l.resource._text) {
+        body = {
+          type: 'TextualBody',
+          value: l.resource._text || 'New Text Layer',
+          format: 'text/plain'
+        };
+      } else {
+        const format = l.resource.type === 'Video' ? 'video/mp4' : l.resource.type === 'Sound' ? 'audio/mpeg' : 'image/jpeg';
+        body = {
+          id: l.resource._blobUrl || l.resource.id,
+          type: l.resource.type,
+          format
+        };
+      }
+      
+      return {
+        id: l.id,
+        type: "Annotation",
+        motivation: "painting",
+        body,
+        target: `${canvas.id}#xywh=${Math.round(l.x)},${Math.round(l.y)},${Math.round(l.w)},${Math.round(l.h)}`
+      };
+    });
+
+    // Preserve existing non-painting annotations from all annotation pages
+    const existingNonPaintingAnnotations: IIIFAnnotation[] = [];
+    if (canvas.items) {
+      canvas.items.forEach((page: IIIFAnnotationPage) => {
+        if (page.items) {
+          page.items.forEach((anno: IIIFAnnotation) => {
+            // Keep annotations that are NOT painting motivation and NOT from our layer IDs
+            const isPainting = anno.motivation === 'painting' ||
+              (Array.isArray(anno.motivation) && anno.motivation.includes('painting'));
+            const isLayerAnnotation = layers.some(l => l.id === anno.id);
+            if (!isPainting || !isLayerAnnotation) {
+              existingNonPaintingAnnotations.push(anno);
+            }
+          });
+        }
+      });
+    }
+
+    // Create new items array with painting page first, then preserve other annotation pages
+    const newItems: IIIFAnnotationPage[] = [{
       id: `${canvas.id}/page/painting`,
       type: "AnnotationPage",
-      items: layers.map(l => {
-        let body: any;
-        if (l.resource.type === 'Text' || l.resource._text) {
-            body = {
-                type: 'TextualBody',
-                value: l.resource._text || 'New Text Layer',
-                format: 'text/plain'
-            };
-        } else {
-            const format = l.resource.type === 'Video' ? 'video/mp4' : l.resource.type === 'Sound' ? 'audio/mpeg' : 'image/jpeg';
-            body = { 
-                id: l.resource._blobUrl || l.resource.id, 
-                type: l.resource.type, 
-                format 
-            };
-        }
-        
-        return {
-            id: l.id, 
-            type: "Annotation", 
-            motivation: "painting",
-            body,
-            target: `${canvas.id}#xywh=${Math.round(l.x)},${Math.round(l.y)},${Math.round(l.w)},${Math.round(l.h)}`
-        };
-      })
+      items: paintingAnnotations
     }];
-    newCanvas.width = canvasDimensions.w;
-    newCanvas.height = canvasDimensions.h;
+
+    // Add back any non-painting annotations
+    if (existingNonPaintingAnnotations.length > 0) {
+      newItems.push({
+        id: `${canvas.id}/page/annotations`,
+        type: "AnnotationPage",
+        items: existingNonPaintingAnnotations
+      });
+    }
+
+    const newCanvas: IIIFCanvas = {
+      ...canvas,
+      width: canvasDimensions.w,
+      height: canvasDimensions.h,
+      items: newItems
+    };
+    
     onUpdate(newCanvas);
+    showToast("Composition saved successfully", "success");
     onClose();
   };
 
@@ -389,27 +436,41 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                     gestures.handlers.onMouseMove(e);
                     return;
                 }
-                // Handle layer resizing
-                if (isResizing && activeId && resizeHandle) {
-                    const layer = layers.find(l => l.id === activeId);
-                    if (layer) {
-                        const dx = e.movementX / scale;
-                        const dy = e.movementY / scale;
-                        updateLayers(prev => prev.map(l => {
-                            if (l.id !== activeId) return l;
-                            let { x, y, w, h } = l;
-                            if (resizeHandle.includes('e')) w += dx;
-                            if (resizeHandle.includes('w')) { x += dx; w -= dx; }
-                            if (resizeHandle.includes('s')) h += dy;
-                            if (resizeHandle.includes('n')) { y += dy; h -= dy; }
-                            return { ...l, x, y, w: Math.max(10, w), h: Math.max(10, h) };
-                        }));
-                    }
+                // Handle layer resizing with accurate coordinate transformation
+                if (isResizing && activeId && resizeHandle && resizeStartRef.current) {
+                    const start = resizeStartRef.current;
+                    const dx = (e.clientX - start.mouseX) / scale;
+                    const dy = (e.clientY - start.mouseY) / scale;
+                    
+                    updateLayers(prev => prev.map(l => {
+                        if (l.id !== activeId) return l;
+                        let { x, y, w, h } = {
+                            x: start.layerX,
+                            y: start.layerY,
+                            w: start.layerW,
+                            h: start.layerH
+                        };
+                        
+                        if (resizeHandle.includes('e')) w = Math.max(10, start.layerW + dx);
+                        if (resizeHandle.includes('w')) {
+                            const newW = Math.max(10, start.layerW - dx);
+                            x = start.layerX + (start.layerW - newW);
+                            w = newW;
+                        }
+                        if (resizeHandle.includes('s')) h = Math.max(10, start.layerH + dy);
+                        if (resizeHandle.includes('n')) {
+                            const newH = Math.max(10, start.layerH - dy);
+                            y = start.layerY + (start.layerH - newH);
+                            h = newH;
+                        }
+                        return { ...l, x, y, w, h };
+                    }));
                 }
             }}
             onMouseUp={(e) => {
                 setIsResizing(false);
                 setResizeHandle(null);
+                resizeStartRef.current = null;
                 gestures.handlers.onMouseUp(e);
             }}
             onMouseLeave={gestures.handlers.onMouseLeave}
@@ -505,8 +566,19 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                                                 }}
                                                 onMouseDown={(e) => {
                                                     e.stopPropagation();
-                                                    setIsResizing(true);
-                                                    setResizeHandle(h);
+                                                    const layer = layers.find(l => l.id === activeId);
+                                                    if (layer) {
+                                                        resizeStartRef.current = {
+                                                            mouseX: e.clientX,
+                                                            mouseY: e.clientY,
+                                                            layerX: layer.x,
+                                                            layerY: layer.y,
+                                                            layerW: layer.w,
+                                                            layerH: layer.h
+                                                        };
+                                                        setIsResizing(true);
+                                                        setResizeHandle(h);
+                                                    }
                                                 }}
                                             />
                                         ))}

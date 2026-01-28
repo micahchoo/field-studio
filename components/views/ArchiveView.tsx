@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { IIIFItem, IIIFCanvas, ResourceState, getIIIFValue, IIIFCollection, AppMode } from '../../types';
 import { ValidationIssue } from '../../services/validator';
@@ -9,6 +8,7 @@ import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { Viewer } from './Viewer';
+import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '../../hooks';
 import {
   isValidChildType,
   getRelationshipType,
@@ -16,100 +16,8 @@ import {
 } from '../../utils/iiifHierarchy';
 import { resolveThumbUrl, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
-
-// Virtualization hook for efficient rendering of large lists
-const useVirtualization = (totalItems: number, itemHeight: number, containerRef: React.RefObject<HTMLDivElement | null>, overscan = 5) => {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateVisibleRange = () => {
-      const scrollTop = container.scrollTop;
-      const viewportHeight = container.clientHeight;
-
-      const start = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-      const visibleCount = Math.ceil(viewportHeight / itemHeight);
-      const end = Math.min(totalItems, start + visibleCount + overscan * 2);
-
-      setVisibleRange(prev => {
-        if (prev.start === start && prev.end === end) return prev;
-        return { start, end };
-      });
-    };
-
-    updateVisibleRange();
-    container.addEventListener('scroll', updateVisibleRange, { passive: true });
-    window.addEventListener('resize', updateVisibleRange);
-
-    return () => {
-      container.removeEventListener('scroll', updateVisibleRange);
-      window.removeEventListener('resize', updateVisibleRange);
-    };
-  }, [totalItems, itemHeight, containerRef, overscan]);
-
-  return visibleRange;
-};
-
-// Grid virtualization for 2D layouts
-const useGridVirtualization = (
-  totalItems: number,
-  itemSize: { width: number; height: number },
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  columnsOverride?: number,
-  overscan = 2
-) => {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
-  const [columns, setColumns] = useState(columnsOverride || 4);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateVisibleRange = () => {
-      const scrollTop = container.scrollTop;
-      const viewportHeight = container.clientHeight;
-      const viewportWidth = container.clientWidth;
-
-      // Calculate columns based on container width
-      const gap = 16; // 1rem gap
-      const padding = 48; // 1.5rem padding on each side
-      const availableWidth = viewportWidth - padding;
-      const calculatedColumns = columnsOverride || Math.max(1, Math.floor(availableWidth / (itemSize.width + gap)));
-      setColumns(calculatedColumns);
-
-      const rowHeight = itemSize.height + gap;
-      const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-      const visibleRows = Math.ceil(viewportHeight / rowHeight);
-      const endRow = startRow + visibleRows + overscan * 2;
-
-      const start = startRow * calculatedColumns;
-      const end = Math.min(totalItems, endRow * calculatedColumns);
-
-      setVisibleRange(prev => {
-        if (prev.start === start && prev.end === end) return prev;
-        return { start, end };
-      });
-    };
-
-    updateVisibleRange();
-    container.addEventListener('scroll', updateVisibleRange, { passive: true });
-    window.addEventListener('resize', updateVisibleRange);
-
-    // Use ResizeObserver for container size changes
-    const resizeObserver = new ResizeObserver(updateVisibleRange);
-    resizeObserver.observe(container);
-
-    return () => {
-      container.removeEventListener('scroll', updateVisibleRange);
-      window.removeEventListener('resize', updateVisibleRange);
-      resizeObserver.disconnect();
-    };
-  }, [totalItems, itemSize, containerRef, columnsOverride, overscan]);
-
-  return { visibleRange, columns };
-};
+import { ContextMenu, ContextMenuSection } from '../ContextMenu';
+import { MultiSelectFilmstrip } from '../MultiSelectFilmstrip';
 
 interface ArchiveViewProps {
   root: IIIFItem | null;
@@ -151,10 +59,31 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
   const [view, setView] = useState<'grid' | 'list' | 'map' | 'timeline'>('grid');
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, id: string } | null>(null);
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
-  const [lastClickedId, setLastClickedId] = useState<string | null>(null); // For shift+click range selection
+  
+  // Context menu state with multi-selection support
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    targetId: string;
+    isMulti?: boolean;
+  } | null>(null);
+
+  // Use shared selection hook for cross-view persistence
+  const {
+    selectedIds,
+    lastClickedId,
+    handleSelectWithModifier,
+    selectRange,
+    toggle,
+    select,
+    selectAll: selectAllItems,
+    clear: clearSelection,
+    isSelected
+  } = useSharedSelection(true);
+
+  // Use IIIF traversal hook for efficient tree operations
+  const { getAllCanvases } = useIIIFTraversal(root);
 
   // Rubber-band selection state
   const [rubberBand, setRubberBand] = useState<RubberBandState>({
@@ -168,20 +97,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isMobile = window.innerWidth < 768;
+  const { isMobile } = useResponsive();
 
-  const assets = useMemo(() => {
-    if (!root) return [];
-    const results: IIIFCanvas[] = [];
-    const traverse = (item: IIIFItem) => {
-      if (item.type === 'Canvas') results.push(item as IIIFCanvas);
-      if (item.items) item.items.forEach(traverse);
-    };
-    traverse(root);
-    return results;
-  }, [root]);
+  // Get all Canvas items using the traversal hook
+  const assets = useMemo(() => getAllCanvases(), [getAllCanvases]);
 
-  const selectedAssets = useMemo(() => assets.filter(a => selectedIds.has(a.id)), [assets, selectedIds]);
+  const selectedAssets = useMemo(() => assets.filter(a => isSelected(a.id)), [assets, isSelected]);
 
   const selectionDNA = useMemo(() => {
     const dna = { hasGPS: false, hasTime: false, commonPrefix: '' };
@@ -192,15 +113,26 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
     return dna;
   }, [selectedAssets]);
 
+  // Update active item when selection changes
   useEffect(() => {
       if (selectedIds.size === 1) {
+          // Single selection: set as active item
           const id = Array.from(selectedIds)[0];
           const item = assets.find(a => a.id === id);
           setActiveItem(item || null);
+      } else if (selectedIds.size > 1) {
+          // Multi-selection: keep the first item as focused if it was previously active
+          // or if no active item is set, use the first selected
+          if (!activeItem || !selectedIds.has(activeItem.id)) {
+              const firstId = Array.from(selectedIds)[0];
+              const firstItem = assets.find(a => a.id === firstId);
+              setActiveItem(firstItem || null);
+          }
+          // Otherwise keep the current active item (allows focusing within multi-selection)
       } else {
           setActiveItem(null);
       }
-  }, [selectedIds, assets]);
+  }, [selectedIds, assets, activeItem]);
 
   const filteredAssets = assets.filter(a =>
     getIIIFValue(a.label).toLowerCase().includes(filter.toLowerCase())
@@ -216,21 +148,20 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
     return { width: 140, height: 160 };
   }, [activeItem, isMobile, fieldMode]);
 
-  const { visibleRange: gridVisibleRange, columns: gridColumns } = useGridVirtualization(
-    filteredAssets.length,
-    gridItemSize,
-    scrollContainerRef,
-    undefined,
-    3
-  );
+  const { visibleRange: gridVisibleRange, columns: gridColumns } = useGridVirtualization({
+    totalItems: filteredAssets.length,
+    itemSize: gridItemSize,
+    containerRef: scrollContainerRef,
+    overscan: 3
+  });
 
   // Virtualization for list view
-  const listVisibleRange = useVirtualization(
-    filteredAssets.length,
-    56, // Approximate row height
-    scrollContainerRef,
-    10
-  );
+  const { visibleRange: listVisibleRange } = useVirtualization({
+    totalItems: filteredAssets.length,
+    itemHeight: 56, // Approximate row height
+    containerRef: scrollContainerRef,
+    overscan: 10
+  });
 
   // Get visible items based on current view
   const visibleAssets = useMemo(() => {
@@ -243,8 +174,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
     return filteredAssets;
   }, [view, filteredAssets, gridVisibleRange, listVisibleRange]);
 
-  const handleCreateManifestFromSelection = () => {
-      if (!root || !onUpdate || selectedIds.size === 0) return;
+  const handleCreateManifestFromSelection = useCallback((specificIds?: string[]) => {
+      const idsToGroup = specificIds && specificIds.length > 0
+        ? new Set(specificIds)
+        : selectedIds;
+      
+      if (!root || !onUpdate || idsToGroup.size === 0) return;
       const newRoot = JSON.parse(JSON.stringify(root)) as IIIFCollection;
       const canvasesToMove: any[] = [];
 
@@ -253,7 +188,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           const list = parent.items || parent.annotations || [];
           for (let i = list.length - 1; i >= 0; i--) {
               const item = list[i];
-              if (selectedIds.has(item.id)) {
+              if (idsToGroup.has(item.id)) {
                   // Only move Canvases - use IIIF hierarchy validation
                   if (item.type === 'Canvas' && isValidChildType('Manifest', item.type)) {
                       canvasesToMove.push(list.splice(i, 1)[0]);
@@ -294,46 +229,33 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       if (isValidChildType(newRoot.type, 'Manifest')) {
           newRoot.items.push(newManifest);
           onUpdate(newRoot);
-          setSelectedIds(new Set([manifestId]));
+          select(manifestId);
           showToast(`Grouped ${canvasesToMove.length} Canvases into new Manifest`, "success");
       } else {
           showToast(`Cannot add Manifest to ${newRoot.type}`, "error");
       }
-  };
+  }, [root, onUpdate, selectedIds, select, showToast]);
 
   const handleItemClick = (e: React.MouseEvent, asset: IIIFItem) => {
-      if (e.shiftKey && lastClickedId) {
-          // Shift+click: range selection
-          e.stopPropagation();
-          const startIdx = filteredAssets.findIndex(a => a.id === lastClickedId);
-          const endIdx = filteredAssets.findIndex(a => a.id === asset.id);
-          if (startIdx !== -1 && endIdx !== -1) {
-              const [minIdx, maxIdx] = [Math.min(startIdx, endIdx), Math.max(startIdx, endIdx)];
-              const rangeIds = filteredAssets.slice(minIdx, maxIdx + 1).map(a => a.id);
-              const newSet = new Set(selectedIds);
-              rangeIds.forEach(id => newSet.add(id));
-              setSelectedIds(newSet);
-          }
-      } else if (e.metaKey || e.ctrlKey) {
-          // Ctrl/Cmd+click: toggle selection
-          e.stopPropagation();
-          const newSet = new Set(selectedIds);
-          if (newSet.has(asset.id)) newSet.delete(asset.id);
-          else newSet.add(asset.id);
-          setSelectedIds(newSet);
-          setLastClickedId(asset.id);
-      } else {
-          // Regular click: select single item
+      // Use the shared selection hook's modifier handler
+      handleSelectWithModifier(asset.id, e, filteredAssets);
+      
+      if (!e.shiftKey && !e.metaKey && !e.ctrlKey) {
+          // Regular click without modifiers - also trigger onSelect
           onSelect(asset);
-          setSelectedIds(new Set([asset.id]));
-          setLastClickedId(asset.id);
       }
   };
 
   const handleContextMenu = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, id });
+    // Check if this item is part of a multi-selection
+    const isMulti = selectedIds.size > 1 && selectedIds.has(id);
+    setContextMenu({ x: e.clientX, y: e.clientY, targetId: id, isMulti });
   };
+
+  const handleContextMenuClose = useCallback(() => {
+    setContextMenu(null);
+  }, []);
 
   const handleDelete = useCallback((idsToDelete: string[]) => {
       if (!onUpdate || !root) return;
@@ -351,9 +273,9 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       };
       traverseAndRemove(newRoot);
       onUpdate(newRoot);
-      setSelectedIds(new Set());
+      clearSelection();
       showToast("Archive modified", "success");
-  }, [onUpdate, root, showToast]);
+  }, [onUpdate, root, showToast, clearSelection]);
 
   // Keyboard shortcuts for selection
   useEffect(() => {
@@ -364,14 +286,14 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       // Ctrl/Cmd+A: Select all
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault();
-        setSelectedIds(new Set(filteredAssets.map(a => a.id)));
+        selectAllItems(filteredAssets.map(a => a.id));
         showToast(`Selected ${filteredAssets.length} items`, 'info');
       }
 
       // Escape: Clear selection and close detail view
       if (e.key === 'Escape') {
         if (selectedIds.size > 0) {
-          setSelectedIds(new Set());
+          clearSelection();
           setActiveItem(null);
         }
       }
@@ -385,7 +307,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [filteredAssets, selectedIds, showToast, handleDelete]);
+  }, [filteredAssets, selectedIds, showToast, handleDelete, selectAllItems, clearSelection]);
 
   useEffect(() => {
       const close = () => setContextMenu(null);
@@ -394,12 +316,14 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
   }, []);
 
   // Rubber-band selection handlers
-  // Rubber-band selection handlers
   const handleRubberBandStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     // Only start rubber-band on direct container clicks (not on items)
     if (e.target !== e.currentTarget && !(e.target as HTMLElement).classList.contains('rubber-band-area')) return;
     // Don't start if modifier keys are pressed (they're for item selection)
     if (e.metaKey || e.ctrlKey) return;
+
+    // Prevent browser default to stop text selection and image dragging
+    e.preventDefault();
 
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -465,7 +389,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       
       if (width >= 10 || height >= 10) {
         // Find items within the selection rectangle
-        const newSelectedIds = new Set<string>(e.shiftKey ? selectedIds : []);
+        const newSelectedIds = new Set<string>(e.shiftKey ? Array.from(selectedIds) : []);
         const containerRect = container.getBoundingClientRect();
 
         itemRefs.current.forEach((element, id) => {
@@ -498,7 +422,17 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           }
         });
 
-        setSelectedIds(newSelectedIds);
+        // Update selection via the hook
+        if (e.ctrlKey || e.metaKey) {
+          // Toggle mode - add/remove individually
+          newSelectedIds.forEach(id => {
+            if (!selectedIds.has(id)) toggle(id);
+          });
+        } else {
+          // Replace mode - clear and select new set
+          clearSelection();
+          newSelectedIds.forEach(id => select(id));
+        }
       }
       
       setRubberBand(prev => ({ ...prev, isSelecting: false }));
@@ -511,7 +445,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       window.removeEventListener('mousemove', handleGlobalMove);
       window.removeEventListener('mouseup', handleGlobalUp);
     };
-  }, [rubberBand.isSelecting, rubberBand.containerRect, rubberBand.startX, rubberBand.startY, rubberBand.currentX, rubberBand.currentY, selectedIds]);
+  }, [rubberBand.isSelecting, rubberBand.containerRect, rubberBand.startX, rubberBand.startY, rubberBand.currentX, rubberBand.currentY, selectedIds, clearSelection, toggle, select]);
 
   // Calculate rubber-band rectangle for rendering
   const rubberBandRect = useMemo(() => {
@@ -532,7 +466,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           <div className={`absolute z-[100] animate-in slide-in-from-bottom-4 duration-300 bottom-8 left-4 right-4 translate-x-0`}>
               <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-2xl rounded-2xl p-1 flex items-center gap-1 ring-4 ring-black/10 overflow-x-auto no-scrollbar max-w-full">
                   <div className="flex p-1 gap-1 shrink-0">
-                      <button onClick={handleCreateManifestFromSelection} className="flex items-center gap-2 px-4 py-2 hover:bg-slate-800 rounded-xl transition-all text-white group whitespace-nowrap">
+                      <button onClick={() => handleCreateManifestFromSelection()} className="flex items-center gap-2 px-4 py-2 hover:bg-slate-800 rounded-xl transition-all text-white group whitespace-nowrap">
                           <Icon name="auto_stories" className="text-green-400" />
                           <div className="text-left">
                               <div className="text-xs font-bold">Group</div>
@@ -557,7 +491,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
 
                       <div className="w-px h-8 bg-slate-700 mx-1"></div>
                       
-                      <button onClick={() => setSelectedIds(new Set())} className="p-3 text-slate-500 hover:text-white hover:bg-red-500/20 rounded-xl transition-all">
+                      <button onClick={clearSelection} className="p-3 text-slate-500 hover:text-white hover:bg-red-500/20 rounded-xl transition-all">
                           <Icon name="close" />
                       </button>
                   </div>
@@ -602,7 +536,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                   <span className="text-xs font-bold text-white">{selectedIds.size} selected</span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={handleCreateManifestFromSelection} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-700 rounded-lg transition-all text-white text-xs font-medium whitespace-nowrap">
+                  <button onClick={() => handleCreateManifestFromSelection()} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-700 rounded-lg transition-all text-white text-xs font-medium whitespace-nowrap">
                       <Icon name="auto_stories" className="text-green-400 text-sm" />
                       Group into Manifest
                   </button>
@@ -625,7 +559,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                   </button>
               </div>
               <div className="flex-1"></div>
-              <button onClick={() => setSelectedIds(new Set())} className="p-1.5 text-slate-400 hover:text-white hover:bg-red-500/20 rounded-lg transition-all" title="Clear selection">
+              <button onClick={clearSelection} className="p-1.5 text-slate-400 hover:text-white hover:bg-red-500/20 rounded-lg transition-all" title="Clear selection">
                   <Icon name="close" className="text-sm" />
               </button>
           </div>
@@ -636,6 +570,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           ref={scrollContainerRef}
           className={`flex-1 overflow-y-auto custom-scrollbar pb-24 ${view === 'map' || view === 'timeline' ? 'p-0' : 'p-6'} transition-all duration-300 ${!isMobile && activeItem ? 'w-1/3 max-w-sm border-r border-slate-200' : ''} ${rubberBand.isSelecting ? 'select-none cursor-crosshair' : ''} relative`}
           onMouseDown={view === 'grid' ? handleRubberBandStart : undefined}
+          onDragStart={(e) => rubberBand.isSelecting && e.preventDefault()}
         >
           {/* Rubber-band selection rectangle */}
           {rubberBandRect && (
@@ -658,7 +593,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
               itemSize={gridItemSize}
               renderItem={(asset) => {
                 const dna = getFileDNA(asset);
-                const isSelected = selectedIds.has(asset.id);
+                const selected = isSelected(asset.id);
                 const thumbUrls = resolveHierarchicalThumbs(asset, 200);
                 const config = RESOURCE_TYPE_CONFIG['Canvas'];
 
@@ -672,8 +607,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                     onContextMenu={(e) => handleContextMenu(e, asset.id)}
                     className={`group relative rounded-lg shadow-sm cursor-pointer transition-all ${
                         fieldMode
-                            ? (isSelected ? 'bg-slate-800 border-4 border-yellow-400 p-2' : 'bg-slate-800 border border-slate-700 p-3')
-                            : (isSelected ? 'bg-blue-50 border border-iiif-blue ring-2 ring-iiif-blue p-2' : `bg-white border p-2 hover:shadow-md border-slate-200`)
+                            ? (selected ? 'bg-slate-800 border-4 border-yellow-400 p-2' : 'bg-slate-800 border border-slate-700 p-3')
+                            : (selected ? 'bg-blue-50 border border-iiif-blue ring-2 ring-iiif-blue p-2' : `bg-white border p-2 hover:shadow-md border-slate-200`)
                     }`}
                     onClick={(e) => handleItemClick(e, asset)}
                     >
@@ -705,16 +640,16 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
             />
             </div>
             )}
-            {view === 'list' && <VirtualizedList assets={filteredAssets} visibleRange={listVisibleRange} onSelect={handleItemClick} selectedIds={selectedIds} fieldMode={fieldMode} />}
+            {view === 'list' && <VirtualizedList assets={filteredAssets} visibleRange={listVisibleRange} onSelect={handleItemClick} isSelected={isSelected} fieldMode={fieldMode} />}
             {view === 'map' && <MapView root={root} onSelect={(item: IIIFItem) => onSelect(item)} />}
             {view === 'timeline' && <TimelineView root={root} onSelect={(item: IIIFItem) => onSelect(item)} />}
         </div>
 
-        {!isMobile && activeItem && (
+        {!isMobile && selectedIds.size === 1 && activeItem && (
             <div className="flex-1 bg-slate-900 relative z-0 flex flex-col overflow-hidden shadow-2xl border-l border-slate-800">
                 <Viewer item={activeItem} onUpdate={() => {}} />
-                <button 
-                    onClick={() => setSelectedIds(new Set())}
+                <button
+                    onClick={clearSelection}
                     className="absolute top-3 right-3 z-50 p-2 bg-black/60 text-white/70 hover:text-white rounded-full hover:bg-red-500 transition-all backdrop-blur-md"
                     title="Close Detail View"
                 >
@@ -722,17 +657,218 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                 </button>
             </div>
         )}
+
+        {/* Multi-select filmstrip at bottom */}
+        {!isMobile && selectedIds.size > 1 && (
+          <div className="h-28 bg-slate-900 border-t border-slate-800 shadow-2xl shrink-0">
+              <MultiSelectFilmstrip
+                  items={selectedAssets}
+                  focusedId={activeItem?.id || null}
+                  onFocus={(item) => {
+                      setActiveItem(item);
+                      const element = itemRefs.current.get(item.id);
+                      if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                  }}
+                  onClear={clearSelection}
+                  fieldMode={fieldMode}
+                  orientation="horizontal"
+              />
+          </div>
+        )}
       </div>
 
-      {contextMenu && (
-          <div className="fixed z-[1000] bg-white border border-slate-200 shadow-2xl rounded-xl py-2 min-w-[200px]" style={{ left: contextMenu.x, top: contextMenu.y }}>
-              <button onClick={() => { const id = contextMenu.id as string; onReveal?.(id, 'collections'); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Icon name="account_tree" className="text-slate-400"/> Reveal in Structure</button>
-              <button onClick={() => { const id = contextMenu.id as string; onReveal?.(id, 'viewer'); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Icon name="auto_awesome_motion" className="text-slate-400"/> Open in Workbench</button>
-              <button onClick={() => { onCatalogSelection?.([contextMenu.id]); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"><Icon name="table_chart" className="text-slate-400"/> Edit in Catalog</button>
-              <div className="h-px bg-slate-100 my-1"></div>
-              <button onClick={() => handleDelete([contextMenu.id])} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-red-600"><Icon name="delete" className="text-red-400"/> Remove from Archive</button>
-          </div>
-      )}
+      {/* Comprehensive Context Menu */}
+      {contextMenu && (() => {
+        const targetIds = contextMenu.isMulti
+          ? Array.from(selectedIds)
+          : [contextMenu.targetId];
+        const targetAsset = assets.find(a => a.id === contextMenu.targetId);
+        const targetDNA = targetAsset ? getFileDNA(targetAsset) : { time: false, location: false, device: false };
+        const isMulti = contextMenu.isMulti || false;
+
+        const sections: ContextMenuSection[] = [
+          // Navigation Section
+          {
+            items: [
+              {
+                id: 'reveal-structure',
+                label: 'Reveal in Structure',
+                icon: 'account_tree',
+                onClick: () => onReveal?.(contextMenu.targetId, 'collections')
+              },
+              {
+                id: 'open-workbench',
+                label: 'Open in Workbench',
+                icon: 'auto_awesome_motion',
+                onClick: () => onReveal?.(contextMenu.targetId, 'viewer')
+              },
+              {
+                id: 'view-archive',
+                label: 'View in Archive',
+                icon: 'inventory_2',
+                onClick: () => onReveal?.(contextMenu.targetId, 'archive')
+              }
+            ]
+          },
+          // Edit Section
+          {
+            title: 'Edit',
+            items: [
+              {
+                id: 'edit-catalog',
+                label: isMulti ? 'Edit Selected in Catalog' : 'Edit in Catalog',
+                icon: 'table_chart',
+                shortcut: 'Ctrl+E',
+                onClick: () => onCatalogSelection?.(targetIds)
+              },
+              {
+                id: 'batch-edit',
+                label: 'Batch Edit',
+                icon: 'edit_note',
+                disabled: !isMulti && targetIds.length === 1,
+                onClick: () => onBatchEdit(targetIds)
+              },
+              {
+                id: 'duplicate',
+                label: isMulti ? `Duplicate ${targetIds.length} Items` : 'Duplicate',
+                icon: 'content_copy',
+                onClick: () => {
+                  // Duplicate logic - clone with new IDs
+                  if (!onUpdate || !root) return;
+                  const newRoot = JSON.parse(JSON.stringify(root)) as IIIFCollection;
+                  
+                  const duplicateInTree = (parent: any) => {
+                    const list = parent.items || parent.annotations || [];
+                    const toDuplicate: any[] = [];
+                    
+                    for (const item of list) {
+                      if (targetIds.includes(item.id)) {
+                        const duplicate = JSON.parse(JSON.stringify(item));
+                        duplicate.id = `${item.id}_copy_${crypto.randomUUID().slice(0, 8)}`;
+                        const originalLabel = getIIIFValue(duplicate.label);
+                        duplicate.label = { none: [`${originalLabel} (Copy)`] };
+                        toDuplicate.push(duplicate);
+                      }
+                      if (item.items || item.annotations) {
+                        duplicateInTree(item);
+                      }
+                    }
+                    
+                    list.push(...toDuplicate);
+                  };
+                  
+                  duplicateInTree(newRoot);
+                  onUpdate(newRoot);
+                  showToast(`Duplicated ${targetIds.length} item(s)`, 'success');
+                }
+              }
+            ]
+          },
+          // Organize Section
+          {
+            title: 'Organize',
+            items: [
+              {
+                id: 'group-manifest',
+                label: isMulti ? 'Group into New Manifest' : 'Add to New Manifest',
+                icon: 'auto_stories',
+                onClick: () => {
+                  // Add targetIds to selection and create manifest
+                  if (!isMulti) {
+                    select(contextMenu.targetId);
+                  }
+                  handleCreateManifestFromSelection();
+                }
+              },
+              {
+                id: 'select-all',
+                label: 'Select All',
+                icon: 'select_all',
+                shortcut: 'Ctrl+A',
+                onClick: () => {
+                  selectAllItems(filteredAssets.map(a => a.id));
+                  showToast(`Selected ${filteredAssets.length} items`, 'info');
+                }
+              },
+              {
+                id: 'clear-selection',
+                label: 'Clear Selection',
+                icon: 'deselect',
+                disabled: selectedIds.size === 0,
+                onClick: () => {
+                  clearSelection();
+                  setActiveItem(null);
+                }
+              }
+            ]
+          },
+          // View Section (conditional)
+          ...(targetDNA.location ? [{
+            title: 'View',
+            items: [
+              {
+                id: 'view-map',
+                label: isMulti ? 'View Selected on Map' : 'View on Map',
+                icon: 'explore',
+                onClick: () => setView('map')
+              }
+            ]
+          }] : []),
+          // Export Section
+          {
+            title: 'Export',
+            items: [
+              {
+                id: 'copy-id',
+                label: 'Copy IIIF ID',
+                icon: 'link',
+                onClick: () => {
+                  navigator.clipboard.writeText(contextMenu.targetId);
+                  showToast('IIIF ID copied to clipboard', 'success');
+                }
+              },
+              {
+                id: 'copy-json',
+                label: isMulti ? 'Copy JSON (First Item)' : 'Copy JSON',
+                icon: 'code',
+                onClick: () => {
+                  const asset = assets.find(a => a.id === contextMenu.targetId);
+                  if (asset) {
+                    navigator.clipboard.writeText(JSON.stringify(asset, null, 2));
+                    showToast('JSON copied to clipboard', 'success');
+                  }
+                }
+              }
+            ]
+          },
+          // Danger Section
+          {
+            items: [
+              {
+                id: 'delete',
+                label: isMulti ? `Delete ${targetIds.length} Items` : 'Remove from Archive',
+                icon: 'delete',
+                variant: 'danger',
+                shortcut: 'Del',
+                onClick: () => handleDelete(targetIds)
+              }
+            ]
+          }
+        ];
+
+        return (
+          <ContextMenu
+            isOpen={true}
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onClose={handleContextMenuClose}
+            sections={sections}
+            selectionCount={isMulti ? targetIds.length : 1}
+          />
+        );
+      })()}
     </div>
   );
 };
@@ -786,7 +922,10 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({
       </div>
       {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
       {items.length === 0 && (
-        <div className="p-8 text-center text-slate-400 italic">No items found</div>
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] text-slate-400">
+          <Icon name="inventory_2" className="text-6xl mb-4 opacity-20"/>
+          <p className="font-bold uppercase tracking-widest text-xs">No items found</p>
+        </div>
       )}
     </div>
   );
@@ -797,7 +936,7 @@ interface VirtualizedListProps {
   assets: IIIFCanvas[];
   visibleRange: { start: number; end: number };
   onSelect: any;
-  selectedIds: Set<string>;
+  isSelected: (id: string) => boolean;
   fieldMode: boolean;
 }
 
@@ -805,7 +944,7 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
   assets,
   visibleRange,
   onSelect,
-  selectedIds,
+  isSelected,
   fieldMode
 }) => {
   const rowHeight = 56;
@@ -836,7 +975,7 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
               </tr>
             )}
             {visibleItems.map((asset) => {
-              const isSelected = selectedIds.has(asset.id);
+              const selected = isSelected(asset.id);
               const label = getIIIFValue(asset.label) || 'Untitled';
               const config = RESOURCE_TYPE_CONFIG[asset.type] || RESOURCE_TYPE_CONFIG['Canvas'];
               const date = asset.navDate ? new Date(asset.navDate).toLocaleDateString() : '-';
@@ -847,16 +986,16 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
                   key={asset.id}
                   className={`cursor-pointer transition-colors group ${
                     fieldMode
-                      ? (isSelected ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800')
-                      : (isSelected ? 'bg-blue-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50')
+                      ? (selected ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800')
+                      : (selected ? 'bg-blue-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50')
                   }`}
                   onClick={(e) => onSelect(e, asset)}
                   style={{ height: rowHeight }}
                 >
                   <td className="px-4 py-3">
                     <Icon
-                      name={isSelected ? "check_box" : "check_box_outline_blank"}
-                      className={`${isSelected ? 'text-iiif-blue' : (fieldMode ? 'text-slate-600' : 'text-slate-300')} group-hover:text-iiif-blue transition-colors`}
+                      name={selected ? "check_box" : "check_box_outline_blank"}
+                      className={`${selected ? 'text-iiif-blue' : (fieldMode ? 'text-slate-600' : 'text-slate-300')} group-hover:text-iiif-blue transition-colors`}
                     />
                   </td>
                   <td className="px-4 py-3 font-medium">
@@ -892,9 +1031,11 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
         </table>
       </div>
       {assets.length === 0 && (
-        <div className="p-8 text-center text-slate-400 italic">No items found</div>
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] text-slate-400">
+          <Icon name="inventory_2" className="text-6xl mb-4 opacity-20"/>
+          <p className="font-bold uppercase tracking-widest text-xs">No items found</p>
+        </div>
       )}
     </div>
   );
 };
-

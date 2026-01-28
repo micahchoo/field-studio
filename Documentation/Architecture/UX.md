@@ -347,6 +347,215 @@ type AbstractionLevel = 'simple' | 'standard' | 'advanced';
 
 ---
 
+## Visual Hierarchy System
+
+**Location:** [`constants.ts:717-795`](../../constants.ts:717)
+
+The Structure view uses a sophisticated visual hierarchy to emphasize the Manifest > Canvas > AnnotationPage relationship.
+
+### Prominence Levels
+
+```typescript
+type VisualProminence = 'primary' | 'secondary' | 'tertiary' | 'reference' | 'minimal';
+```
+
+| Level | Description | Used By |
+|-------|-------------|---------|
+| **primary** | Most prominent, full card display | Manifest |
+| **secondary** | Clear visual hierarchy | Canvas |
+| **tertiary** | Subtle, badge-style | AnnotationPage, Range |
+| **reference** | Container style, secondary info | Collection |
+| **minimal** | Inline, lowest prominence | Annotation |
+
+### Card Sizes
+
+```typescript
+type CardSize = 'large' | 'medium' | 'badge' | 'container' | 'inline';
+
+const STRUCTURE_CARD_SIZES: Record<CardSize, { minWidth: number; aspectRatio: string }> = {
+  large: { minWidth: 200, aspectRatio: '3/4' },
+  medium: { minWidth: 150, aspectRatio: '1/1' },
+  badge: { minWidth: 80, aspectRatio: '1/1' },
+  container: { minWidth: 250, aspectRatio: 'auto' },
+  inline: { minWidth: 0, aspectRatio: 'auto' }
+};
+```
+
+### Per-Type Configuration
+
+```typescript
+const STRUCTURE_VISUAL_HIERARCHY: Record<string, VisualHierarchyConfig> = {
+  Manifest: {
+    prominence: 'primary',
+    cardSize: 'large',
+    showThumbnail: true,
+    showChildCount: true
+  },
+  Canvas: {
+    prominence: 'secondary',
+    cardSize: 'medium',
+    showThumbnail: true,
+    showAnnotationCount: true
+  },
+  AnnotationPage: {
+    prominence: 'tertiary',
+    cardSize: 'badge',
+    showThumbnail: false,
+    showCount: true
+  },
+  Collection: {
+    prominence: 'reference',
+    cardSize: 'container',
+    showThumbnail: true,
+    showReferenceIndicator: true
+  },
+  Annotation: {
+    prominence: 'minimal',
+    cardSize: 'inline',
+    showThumbnail: false
+  },
+  Range: {
+    prominence: 'tertiary',
+    cardSize: 'badge',
+    showThumbnail: false,
+    showChildCount: true
+  }
+};
+```
+
+**Helper Function:**
+```typescript
+import { getVisualHierarchy } from './constants';
+
+const config = getVisualHierarchy('Canvas');
+// Returns: { prominence: 'secondary', cardSize: 'medium', showThumbnail: true, ... }
+```
+
+---
+
+## BoardView Advanced Features
+
+**Component:** [`components/views/BoardView.tsx:23-68`](../../components/views/BoardView.tsx:23)
+
+### Extended BoardItem Properties
+
+The Board view supports advanced IIIF features beyond basic positioning:
+
+```typescript
+interface BoardItem {
+  // Basic properties
+  id: string;
+  resourceId: string;
+  x: number; y: number;
+  w: number; h: number;
+  resourceType: string;
+  label: string;
+  
+  // Advanced features
+  isMetadataNode?: boolean;      // Dynamic metadata linking nodes
+  annotations?: IIIFAnnotation[]; // Drawing annotations
+  layers?: any[];                 // Composed layers
+  
+  // Full IIIF properties
+  metadata?: IIIFItem['metadata'];
+  summary?: IIIFItem['summary'];
+  requiredStatement?: IIIFItem['requiredStatement'];
+  rights?: IIIFItem['rights'];
+  provider?: IIIFItem['provider'];
+  behavior?: IIIFItem['behavior'];
+}
+```
+
+#### `isMetadataNode`
+
+Dynamic metadata linking nodes enable non-linear relationships between items.
+
+```typescript
+// Metadata nodes appear with distinct styling
+isMetadataNode: true
+// Visual: Purple dashed border, tag icon
+// Use case: Link items by shared metadata values
+```
+
+### Connection Advanced Features
+
+```typescript
+interface Connection {
+  id: string;
+  fromId: string;
+  toId: string;
+  type: ConnectionType;
+  label?: string;
+  fromAnchor?: AnchorSide;  // 'T' | 'R' | 'B' | 'L'
+  toAnchor?: AnchorSide;
+  
+  // Advanced routing
+  waypoints?: { x: number, y: number }[];
+  style?: 'straight' | 'elbow' | 'curved';
+  direction?: 'auto' | 'horizontal-first' | 'vertical-first';
+  
+  // IIIF annotation motivation mapping
+  purpose?: string;
+  displayMode?: 'none' | 'purpose-only' | 'full';
+  
+  // Full IIIF properties
+  metadata?: IIIFItem['metadata'];
+  summary?: IIIFItem['summary'];
+  requiredStatement?: IIIFItem['requiredStatement'];
+  rights?: IIIFItem['rights'];
+}
+```
+
+#### Connection Routing Styles
+
+| Style | Description | Visual |
+|-------|-------------|--------|
+| `straight` | Direct line between anchors | ──────── |
+| `elbow` | Right-angle routing with midpoint | ─┐<br>&nbsp;&nbsp;&nbsp;└─ |
+| `curved` | Bezier curve | ╭────╮ |
+
+#### Waypoints
+
+Waypoints enable custom connection routing:
+
+```typescript
+waypoints: [
+  { x: 100, y: 200 },
+  { x: 150, y: 200 }
+]
+```
+
+- Maximum 5 waypoints per connection
+- Draggable in edit mode
+- Double-click to remove
+- Hold Shift to snap to 90° angles
+
+#### Direction Control
+
+```typescript
+direction: 'horizontal-first'  // Horizontal then vertical
+direction: 'vertical-first'    // Vertical then horizontal
+direction: 'auto'              // Based on relative positions
+```
+
+#### IIIF Purpose Mapping
+
+Connections can represent IIIF annotation motivations:
+
+```typescript
+purpose: 'commenting'      // User comments
+purpose: 'tagging'         // Keyword tags
+purpose: 'linking'         // Generic relationships
+purpose: 'identifying'     // Entity identification
+```
+
+Display modes control how purpose appears:
+- `none` - Hidden
+- `purpose-only` - Shows motivation only
+- `full` - Shows both label and motivation
+
+---
+
 ## Persona Settings
 
 **Component:** `components/PersonaSettings.tsx`

@@ -7,7 +7,8 @@ import {
   generateStandardSizes,
   generateStandardTiles,
   createImageServiceReference,
-  ImageApiProfile
+  ImageApiProfile,
+  getAllManifests
 } from '../utils';
 import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS } from '../constants';
 import {
@@ -893,17 +894,7 @@ This collection contains **${manifestCount} items** organized by metadata includ
      * Counts the total number of manifests in the tree
      */
     private countManifests(item: IIIFItem): number {
-        let count = 0;
-        const traverse = (node: IIIFItem) => {
-            if (node.type === 'Manifest') count++;
-            node.items?.forEach(child => {
-                if (child.type === 'Collection' || child.type === 'Manifest') {
-                    traverse(child as IIIFItem);
-                }
-            });
-        };
-        traverse(item);
-        return count;
+        return getAllManifests(item).length;
     }
 
     /**

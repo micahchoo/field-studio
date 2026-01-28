@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, getIIIFValue, isCollection, isManifest, isCanvas } from '../../types';
 import { Icon } from '../Icon';
@@ -9,6 +8,8 @@ import { autoStructureService } from '../../services/autoStructure';
 import { StructureCanvas } from '../StructureCanvas';
 import { resolveThumbUrl, resolveHierarchicalThumb, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
+import { useSharedSelection, useIIIFTraversal } from '../../hooks';
+import { VirtualTreeList } from '../VirtualTreeList';
 import {
   findAllOfType,
   findCollectionsContaining,
@@ -17,9 +18,6 @@ import {
   getValidChildTypes,
   buildReferenceMap
 } from '../../utils/iiifHierarchy';
-
-// Maximum nesting depth to prevent stack overflow and performance issues
-const MAX_NESTING_DEPTH = 15;
 
 interface CollectionsViewProps {
   root: IIIFItem | null;
@@ -49,7 +47,20 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [structureViewMode, setStructureViewMode] = useState<'grid' | 'list'>('grid');
-  const [multiSelectedIds, setMultiSelectedIds] = useState<Set<string>>(new Set());
+
+  // Use shared selection hook for cross-view persistence
+  const {
+    selectedIds: multiSelectedIds,
+    select,
+    deselect,
+    toggle,
+    selectAll: selectMultiple,
+    clear: clearMultiSelection,
+    isSelected
+  } = useSharedSelection(true);
+
+  // Use IIIF traversal hook for efficient tree operations
+  const { findNode, getAllManifests, getAllCollections } = useIIIFTraversal(root);
 
   // Sync internal selection with root when root changes
   useEffect(() => {
@@ -57,51 +68,37 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       setInternalSelectedId(root.id);
     } else if (root && internalSelectedId) {
       // Verify the selected ID still exists in the current tree
-      const findNode = (node: IIIFItem, id: string): IIIFItem | null => {
-        if (node.id === id) return node;
-        const children = (node as any).items || (node as any).annotations || [];
-        for (const child of children) {
-          const found = findNode(child, id);
-          if (found) return found;
-        }
-        return null;
-      };
-      if (!findNode(root, internalSelectedId)) {
+      if (!findNode(internalSelectedId)) {
         // Selected ID no longer exists, reset to root
         setInternalSelectedId(root.id);
-        setMultiSelectedIds(new Set());
+        clearMultiSelection();
       }
     } else if (!root) {
       setInternalSelectedId(null);
-      setMultiSelectedIds(new Set());
+      clearMultiSelection();
     }
-  }, [root?.id]);
+  }, [root?.id, findNode, internalSelectedId, clearMultiSelection]);
 
   const selectedId = externalSelectedId !== undefined ? externalSelectedId : internalSelectedId;
 
   const handleSelect = useCallback((id: string) => {
     setInternalSelectedId(id);
-    setMultiSelectedIds(new Set([id]));
+    // Also update shared selection for single selection mode
+    if (!multiSelectedIds.has(id)) {
+      clearMultiSelection();
+      select(id);
+    }
     onSelect?.(id);
-  }, [onSelect]);
+  }, [onSelect, multiSelectedIds, clearMultiSelection, select]);
 
   const handleMultiSelect = useCallback((ids: string[], additive: boolean) => {
     if (additive) {
-      setMultiSelectedIds(prev => {
-        const newSet = new Set(prev);
-        ids.forEach(id => {
-          if (newSet.has(id)) {
-            newSet.delete(id);
-          } else {
-            newSet.add(id);
-          }
-        });
-        return newSet;
-      });
+      ids.forEach(id => toggle(id));
     } else {
-      setMultiSelectedIds(new Set(ids));
+      clearMultiSelection();
+      ids.forEach(id => select(id));
     }
-  }, []);
+  }, [toggle, select, clearMultiSelection]);
 
   // Gather stats about the archive
   const stats = useMemo(() => {
@@ -118,34 +115,19 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     return buildReferenceMap(root);
   }, [root]);
 
-  // Get all manifests for "Add to Collection" feature
-  const allManifests = useMemo(() => {
-    if (!root) return [];
-    return findAllOfType(root, 'Manifest') as IIIFManifest[];
-  }, [root]);
+  // Get all manifests for "Add to Collection" feature - using traversal hook
+  const allManifests = useMemo(() => getAllManifests(), [getAllManifests]);
 
-  // Get all collections
-  const allCollections = useMemo(() => {
-    if (!root) return [];
-    return findAllOfType(root, 'Collection') as IIIFCollection[];
-  }, [root]);
+  // Get all collections - using traversal hook
+  const allCollections = useMemo(() => getAllCollections(), [getAllCollections]);
 
-  const findNode = useCallback((node: IIIFItem, id: string): IIIFItem | null => {
-    if (node.id === id) return node;
-    const children = (node as any).items || (node as any).annotations || [];
-    for (const child of children) {
-      const found = findNode(child, id);
-      if (found) return found;
-    }
-    return null;
-  }, []);
-
+  // Use findNode from traversal hook instead of local implementation
   const cloneTree = useCallback((node: IIIFItem): IIIFItem => JSON.parse(JSON.stringify(node)), []);
 
   const handleAutoStructure = useCallback(() => {
     if (!selectedId || !root) return;
     const newRoot = cloneTree(root);
-    const target = findNode(newRoot, selectedId);
+    const target = findNode(selectedId);
     if (target && target.type === 'Manifest') {
       const updated = autoStructureService.generateRangesFromPatterns(target as IIIFManifest);
       Object.assign(target, updated);
@@ -159,7 +141,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const handleCreateType = useCallback((type: 'Collection' | 'Manifest', parentId: string | null) => {
     if (!root) return;
     const newRoot = cloneTree(root);
-    const target = parentId ? findNode(newRoot, parentId) : newRoot;
+    const target = parentId ? findNode(parentId) : newRoot;
 
     if (!target) {
       showToast("Target not found", "error");
@@ -177,14 +159,28 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       return;
     }
 
+    const newId = crypto.randomUUID();
     const newItem: any = {
       "@context": "http://iiif.io/api/presentation/3/context.json",
-      id: `https://archive.local/iiif/${type.toLowerCase()}/${crypto.randomUUID()}`,
+      id: `https://archive.local/iiif/${type.toLowerCase()}/${newId}`,
       type,
       label: { none: [`New ${type}`] },
+      // Add summary for improved search (IIIF spec recommendation)
+      summary: { none: [`${type} created in ${getIIIFValue(target.label) || 'archive'}`] },
       items: [],
       behavior: type === 'Manifest' ? ['individuals'] : undefined
     };
+
+    // Try to inherit or generate thumbnail from parent if available
+    const parentThumbs = resolveHierarchicalThumbs(target, 200);
+    if (parentThumbs.length > 0) {
+      // Create thumbnail reference from parent's first available image
+      newItem.thumbnail = [{
+        id: parentThumbs[0],
+        type: "Image",
+        format: "image/jpeg"
+      }];
+    }
 
     const relationship = getRelationshipType(target.type, type);
     console.log(`Creating ${relationship} relationship: ${target.type} → ${type}`);
@@ -198,7 +194,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const handleUpdate = useCallback((id: string, updates: Partial<IIIFItem>) => {
     if (!root) return;
     const newRoot = cloneTree(root);
-    const target = findNode(newRoot, id);
+    const target = findNode(id);
     if (target) {
       Object.assign(target, updates);
       onUpdate(newRoot);
@@ -208,8 +204,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const handleAddManifestToCollection = useCallback((manifestId: string, collectionId: string) => {
     if (!root) return;
     const newRoot = cloneTree(root);
-    const collection = findNode(newRoot, collectionId);
-    const manifest = findNode(newRoot, manifestId);
+    const collection = findNode(collectionId);
+    const manifest = findNode(manifestId);
 
     if (!collection || !manifest || collection.type !== 'Collection') {
       showToast("Cannot add to collection", "error");
@@ -236,7 +232,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const handleRemoveFromCollection = useCallback((manifestId: string, collectionId: string) => {
     if (!root) return;
     const newRoot = cloneTree(root);
-    const collection = findNode(newRoot, collectionId);
+    const collection = findNode(collectionId);
 
     if (!collection || collection.type !== 'Collection') return;
 
@@ -306,7 +302,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const handleStructureReorder = useCallback((fromIndex: number, toIndex: number) => {
     if (!root || !selectedId) return;
     const newRoot = cloneTree(root);
-    const parent = findNode(newRoot, selectedId);
+    const parent = findNode(selectedId);
 
     if (!parent || !parent.items) return;
 
@@ -319,21 +315,21 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const handleRemoveItems = useCallback((ids: string[]) => {
     if (!root || !selectedId) return;
     const newRoot = cloneTree(root);
-    const parent = findNode(newRoot, selectedId);
+    const parent = findNode(selectedId);
 
     if (!parent || !parent.items) return;
 
     parent.items = parent.items.filter((item: IIIFItem) => !ids.includes(item.id));
     onUpdate(newRoot);
-    setMultiSelectedIds(new Set());
+    clearMultiSelection();
     showToast(`Removed ${ids.length} item(s)`, "success");
-  }, [root, selectedId, cloneTree, findNode, onUpdate, showToast]);
+  }, [root, selectedId, cloneTree, findNode, onUpdate, showToast, clearMultiSelection]);
 
   // Handle duplicate items
   const handleDuplicateItems = useCallback((ids: string[]) => {
     if (!root || !selectedId) return;
     const newRoot = cloneTree(root);
-    const parent = findNode(newRoot, selectedId);
+    const parent = findNode(selectedId);
 
     if (!parent || !parent.items) return;
 
@@ -356,7 +352,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     showToast(`Duplicated ${ids.length} item(s)`, "success");
   }, [root, selectedId, cloneTree, findNode, onUpdate, showToast]);
 
-  const selectedNode = root && selectedId ? findNode(root, selectedId) : null;
+  const selectedNode = root && selectedId ? findNode(selectedId) : null;
   const nodeConfig = selectedNode ? (RESOURCE_TYPE_CONFIG[selectedNode.type] || RESOURCE_TYPE_CONFIG['Content']) : RESOURCE_TYPE_CONFIG['Content'];
 
   // Find which collections contain the selected item
@@ -424,7 +420,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       </div>
 
       <div className="flex-1 flex min-h-0">
-        {/* Left Pane - Tree Sidebar */}
+        {/* Left Pane - Tree Sidebar with Virtualization */}
         <div
           className={`flex flex-col border-r border-slate-200 bg-white shadow-inner transition-all duration-300 ${
             sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-72'
@@ -433,18 +429,18 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <div className="h-10 border-b bg-slate-50 flex items-center px-3 shrink-0">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Archive Tree</span>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
-            {root ? (
-              <TreeNode
-                node={root}
-                selectedId={selectedId}
-                onSelect={handleSelect}
-                onDrop={handleReorderDrag}
-                level={0}
-                referenceMap={referenceMap}
-              />
-            ) : null}
-          </div>
+          {/* Virtualized Tree List - replaces recursive TreeNode */}
+          <VirtualTreeList
+            root={root}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onDrop={handleReorderDrag}
+            referenceMap={referenceMap}
+            rowHeight={40}
+            overscan={5}
+            className="flex-1 p-3 custom-scrollbar"
+            enableKeyboardNav={true}
+          />
         </div>
 
         {/* Middle Pane - Structure Canvas */}
@@ -471,7 +467,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                       {multiSelectedIds.size} items selected
                     </span>
                     <button
-                      onClick={() => setMultiSelectedIds(new Set())}
+                      onClick={clearMultiSelection}
                       className="text-xs text-slate-400 hover:text-slate-600"
                     >
                       Clear selection
@@ -557,126 +553,13 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-300 italic bg-slate-50">
-              Select a structural node to view its contents
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-slate-50">
+              <Icon name="account_tree" className="text-6xl mb-4 opacity-20"/>
+              <p className="font-bold uppercase tracking-widest text-xs">Select a structural node to view its contents</p>
             </div>
           )}
         </div>
       </div>
-    </div>
-  );
-};
-
-interface TreeNodeProps {
-  node: IIIFItem;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onDrop: (draggedId: string, targetId: string) => void;
-  level: number;
-  referenceMap: Map<string, string[]>;
-}
-
-const TreeNode: React.FC<TreeNodeProps> = ({
-  node,
-  selectedId,
-  onSelect,
-  onDrop,
-  level,
-  referenceMap
-}) => {
-  const [expanded, setExpanded] = React.useState(level < 3);
-  const [isDragOver, setIsDragOver] = React.useState(false);
-  const isSelected = node.id === selectedId;
-  const children = (node as any).items || (node as any).annotations || [];
-  const isAtDepthLimit = level >= MAX_NESTING_DEPTH;
-
-  const config = RESOURCE_TYPE_CONFIG[node.type] || RESOURCE_TYPE_CONFIG['Content'];
-
-  const nodeIsCollection = node.type === 'Collection';
-  const nodeIsManifest = node.type === 'Manifest';
-  const canAcceptDrop = (nodeIsCollection || nodeIsManifest) && !isAtDepthLimit;
-
-  // Get reference count
-  const refCount = referenceMap.get(node.id)?.length || 0;
-
-  // Get thumbnails
-  const thumbUrls = resolveHierarchicalThumbs(node, 40);
-
-  return (
-    <div style={{ paddingLeft: level > 0 ? 12 : 0 }} className="mb-0.5">
-      <div
-        draggable
-        onDragStart={e => e.dataTransfer.setData('resourceId', node.id)}
-        onDragOver={e => { if (canAcceptDrop) { e.preventDefault(); setIsDragOver(true); } }}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={e => { e.preventDefault(); setIsDragOver(false); if (canAcceptDrop) onDrop(e.dataTransfer.getData('resourceId'), node.id); }}
-        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all select-none border ${isDragOver ? 'bg-blue-100 border-blue-500' : isSelected ? 'bg-white border-blue-400 shadow-md font-bold' : 'hover:bg-slate-50 text-slate-700 border-transparent'}`}
-        onClick={() => onSelect(node.id)}
-      >
-        <div
-          className={`p-0.5 rounded hover:bg-black/10 ${!children.length ? 'invisible' : ''}`}
-          onClick={e => { e.stopPropagation(); setExpanded(!expanded); }}
-        >
-          <Icon name={expanded ? "expand_more" : "chevron_right"} className="text-[14px]" />
-        </div>
-
-        {/* Thumbnail */}
-        <StackedThumbnail 
-          urls={thumbUrls} 
-          size="xs" 
-          icon={config.icon}
-          placeholderBg="bg-transparent"
-        />
-
-        <span className="text-sm truncate flex-1">{getIIIFValue(node.label) || 'Untitled'}</span>
-
-        {/* Reference badge */}
-        {refCount > 1 && (
-          <span className="text-[9px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full font-bold" title={`Referenced in ${refCount} Collections`}>
-            {refCount}
-          </span>
-        )}
-
-        {/* Type badge */}
-        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-          nodeIsCollection ? 'bg-amber-100 text-amber-600' :
-          nodeIsManifest ? 'bg-emerald-100 text-emerald-600' :
-          'bg-slate-100 text-slate-500'
-        }`}>
-          {node.type === 'Collection' ? 'COLL' :
-           node.type === 'Manifest' ? 'MAN' :
-           node.type === 'Canvas' ? 'CVS' : ''}
-        </span>
-
-        {isAtDepthLimit && children.length > 0 && (
-          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
-            Depth limit
-          </span>
-        )}
-      </div>
-
-      {expanded && children.length > 0 && !isAtDepthLimit && (
-        <div className="border-l border-slate-200 ml-4 mt-0.5 space-y-0.5">
-          {children.map((child: any) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              onDrop={onDrop}
-              level={level + 1}
-              referenceMap={referenceMap}
-            />
-          ))}
-        </div>
-      )}
-
-      {expanded && children.length > 0 && isAtDepthLimit && (
-        <div className="ml-4 mt-1 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
-          <Icon name="warning" className="text-amber-500" />
-          <span>{children.length} nested items not shown (depth limit reached)</span>
-        </div>
-      )}
     </div>
   );
 };

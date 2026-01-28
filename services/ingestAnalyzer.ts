@@ -19,6 +19,7 @@
 import { FileTree } from '../types';
 import { MIME_TYPE_MAP } from '../constants';
 import { load } from 'js-yaml';
+import { traverse } from '../utils';
 
 // ============================================================================
 // Types
@@ -435,7 +436,7 @@ async function analyzeNode(
 export async function analyzeForIngest(tree: FileTree): Promise<IngestAnalysisResult> {
   const root = await analyzeNode(tree, 0, null);
 
-  // Compute summary statistics
+  // Compute summary statistics using centralized traverse
   let totalFolders = 0;
   let proposedManifests = 0;
   let proposedCollections = 0;
@@ -445,19 +446,16 @@ export async function analyzeForIngest(tree: FileTree): Promise<IngestAnalysisRe
   let hasMarkerFiles = false;
   let maxDepth = 0;
 
-  const traverse = (node: IngestPreviewNode) => {
+  traverse(root as any, (node: any, context) => {
     totalFolders++;
     if (node.proposedType === 'Manifest') proposedManifests++;
     if (node.proposedType === 'Collection') proposedCollections++;
-    totalImages += node.stats.imageCount;
-    totalVideos += node.stats.videoCount;
-    totalAudios += node.stats.audioCount;
-    if (node.detectionReasons.some(r => r.rule.includes('marker'))) hasMarkerFiles = true;
-    if (node.stats.depth > maxDepth) maxDepth = node.stats.depth;
-    node.children.forEach(traverse);
-  };
-
-  traverse(root);
+    totalImages += node.stats?.imageCount || 0;
+    totalVideos += node.stats?.videoCount || 0;
+    totalAudios += node.stats?.audioCount || 0;
+    if (node.detectionReasons?.some((r: DetectionReason) => r.rule.includes('marker'))) hasMarkerFiles = true;
+    if (context.depth > maxDepth) maxDepth = context.depth;
+  });
 
   // Check for config file at root
   let config: IngestConfig | undefined;
@@ -552,32 +550,16 @@ export function applyAnalysisToTree(
  * Get all manifests from the preview tree (for UI display)
  */
 export function getProposedManifests(root: IngestPreviewNode): IngestPreviewNode[] {
-  const manifests: IngestPreviewNode[] = [];
-
-  const traverse = (node: IngestPreviewNode) => {
-    if (node.proposedType === 'Manifest') {
-      manifests.push(node);
-    }
-    node.children.forEach(traverse);
-  };
-
-  traverse(root);
-  return manifests;
+  return traverse(root as any, (node: any) => {
+    return node.proposedType === 'Manifest' ? node : undefined;
+  }).filter((n): n is IngestPreviewNode => n !== undefined);
 }
 
 /**
  * Get all collections from the preview tree (for UI display)
  */
 export function getProposedCollections(root: IngestPreviewNode): IngestPreviewNode[] {
-  const collections: IngestPreviewNode[] = [];
-
-  const traverse = (node: IngestPreviewNode) => {
-    if (node.proposedType === 'Collection') {
-      collections.push(node);
-    }
-    node.children.forEach(traverse);
-  };
-
-  traverse(root);
-  return collections;
+  return traverse(root as any, (node: any) => {
+    return node.proposedType === 'Collection' ? node : undefined;
+  }).filter((n): n is IngestPreviewNode => n !== undefined);
 }

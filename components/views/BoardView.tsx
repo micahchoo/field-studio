@@ -13,13 +13,27 @@ import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
 import { CanvasComposer } from '../CanvasComposer';
 import { resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
+import { BoardDesignPanel } from '../BoardDesignPanel';
+import { ItemPreviewPanel } from '../ItemPreviewPanel';
+import { ItemDetailModal } from '../ItemDetailModal';
+import { BoardExportDialog } from '../BoardExportDialog';
 
 export type AnchorSide = 'T' | 'R' | 'B' | 'L';
 
 interface BoardItem {
-  id: string; resourceId: string; x: number; y: number; w: number; h: number;
-  resourceType: string; label: string; blobUrl?: string; blobUrls?: string[]; annotation?: string;
+  id: string;
+  resourceId: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  resourceType: string;
+  label: string;
+  blobUrl?: string;
+  blobUrls?: string[];
+  annotation?: string;
   isNote?: boolean;
+  isMetadataNode?: boolean; // For dynamic metadata linking
   annotations?: IIIFAnnotation[]; // Drawing annotations
   layers?: any[]; // Composed layers
   // Full IIIF properties
@@ -32,14 +46,20 @@ interface BoardItem {
 }
 
 interface Connection {
-  id: string; 
-  fromId: string; 
-  toId: string; 
-  type: ConnectionType; 
+  id: string;
+  fromId: string;
+  toId: string;
+  type: ConnectionType;
   label?: string;
   fromAnchor?: AnchorSide;
   toAnchor?: AnchorSide;
   waypoints?: { x: number, y: number }[];
+  // Visual properties
+  style?: 'straight' | 'elbow' | 'curved';
+  color?: string;
+  direction?: 'auto' | 'horizontal-first' | 'vertical-first';
+  purpose?: string; // IIIF motivation
+  displayMode?: 'none' | 'purpose-only' | 'full';
   // Full IIIF properties for connection (Annotation)
   metadata?: IIIFItem['metadata'];
   summary?: IIIFItem['summary'];
@@ -63,7 +83,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
 
   const { items, connections } = board;
 
-  const [tool, setTool] = useState<'select' | 'connect' | 'pan' | 'note'>('select');
+  // Tools: select (with pan via space/middle-mouse), connect, note
+  const [tool, setTool] = useState<'select' | 'connect' | 'note'>('select');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
@@ -84,14 +105,17 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [inspectorTab, setInspectorTab] = useState<'properties' | 'design'>('properties');
 
   // Tool Modals
   const [showAnnotationTool, setShowAnnotationTool] = useState(false);
   const [showWorkbench, setShowWorkbench] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showItemDetail, setShowItemDetail] = useState<BoardItem | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
 
   // Pan/zoom gesture handling
   const gestures = usePanZoomGestures(containerRef, viewport, {
@@ -101,8 +125,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
     enableWheelPan: true,
   });
 
-  // Derived isPanning from gestures
-  const isPanning = gestures.isPanning || tool === 'pan';
+  // Derived isPanning from gestures (pan is now part of select tool via space/middle-mouse)
+  const isPanning = gestures.isPanning;
 
   // Convert screen coordinates to canvas coordinates (accounting for pan/zoom)
   const getCanvasCoords = useCallback((e: React.MouseEvent | MouseEvent) => {
@@ -175,8 +199,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-      // Middle click or Pan tool or Spacebar or Shift for panning
-      if (e.button === 1 || tool === 'pan' || e.shiftKey || gestures.isPanModeActive) {
+      // Middle click or Spacebar or Shift for panning (pan merged into select)
+      if (e.button === 1 || e.shiftKey || gestures.isPanModeActive) {
           gestures.handlers.onMouseDown(e);
           return;
       }
@@ -249,8 +273,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
   const handleItemDown = (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
       if (mode === 'view') return;
-      if (tool === 'pan') return;
-      
+
       setActiveId(id);
       setSelectedConnectionId(null);
       if (tool === 'select') {
@@ -263,19 +286,24 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
 
   const handleItemUp = (id: string) => {
     if (tool === 'connect' && connectingStart && connectingStart !== id) {
-        const exists = connections.some(c => 
+        const exists = connections.some(c =>
             (c.fromId === connectingStart && c.toId === id && c.fromAnchor === activeAnchor?.side)
         );
         if (!exists) {
             updateBoard(prev => ({
                 ...prev,
-                connections: [...prev.connections, { 
-                    id: crypto.randomUUID(), 
-                    fromId: connectingStart, 
-                    toId: id, 
+                connections: [...prev.connections, {
+                    id: crypto.randomUUID(),
+                    fromId: connectingStart,
+                    toId: id,
                     type: 'relatesTo',
                     fromAnchor: activeAnchor?.side || 'B',
-                    toAnchor: 'T' // Default to top for now
+                    toAnchor: 'T',
+                    style: 'elbow', // Default to elbow style
+                    direction: 'auto',
+                    color: '#3b82f6',
+                    purpose: 'linking',
+                    displayMode: 'full'
                 }]
             }));
             showToast("Archive connection synthesized", "success");
@@ -328,14 +356,17 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
       showToast("Template applied", "success");
   };
 
+  // Anchor offset for external anchor positioning (increased for clearer visibility)
+  const ANCHOR_OFFSET = 24;
+
   const getAnchorPos = (id: string, side: AnchorSide = 'B') => {
       const it = items.find(i => i.id === id);
       if (!it) return { x: 0, y: 0 };
       switch (side) {
-          case 'T': return { x: it.x + it.w / 2, y: it.y };
-          case 'R': return { x: it.x + it.w, y: it.y + it.h / 2 };
-          case 'B': return { x: it.x + it.w / 2, y: it.y + it.h };
-          case 'L': return { x: it.x, y: it.y + it.h / 2 };
+          case 'T': return { x: it.x + it.w / 2, y: it.y - ANCHOR_OFFSET };
+          case 'R': return { x: it.x + it.w + ANCHOR_OFFSET, y: it.y + it.h / 2 };
+          case 'B': return { x: it.x + it.w / 2, y: it.y + it.h + ANCHOR_OFFSET };
+          case 'L': return { x: it.x - ANCHOR_OFFSET, y: it.y + it.h / 2 };
       }
   };
 
@@ -390,14 +421,107 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
   const activeItem = items.find(i => i.id === activeId);
   const activeConn = connections.find(c => c.id === selectedConnectionId);
 
+  // Fullscreen handling
+  const enterFullscreen = useCallback(async () => {
+    try {
+      if (boardContainerRef.current) {
+        await boardContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      }
+    } catch (e) {
+      console.error('Fullscreen failed:', e);
+    }
+  }, []);
+
+  const exitFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (e) {
+      console.error('Exit fullscreen failed:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Connection management
+  const updateConnection = useCallback((id: string, updates: Partial<Connection>) => {
+    updateBoard(prev => ({
+      ...prev,
+      connections: prev.connections.map(c => c.id === id ? { ...c, ...updates } : c)
+    }));
+  }, [updateBoard]);
+
+  const deleteConnection = useCallback((id: string) => {
+    updateBoard(prev => ({
+      ...prev,
+      connections: prev.connections.filter(c => c.id !== id)
+    }));
+    if (selectedConnectionId === id) setSelectedConnectionId(null);
+  }, [selectedConnectionId, updateBoard]);
+
+  const straightenConnection = useCallback((id: string) => {
+    updateBoard(prev => ({
+      ...prev,
+      connections: prev.connections.map(c => c.id === id ? { ...c, waypoints: [] } : c)
+    }));
+  }, [updateBoard]);
+
+  // Generate path for connection based on style
+  const generateConnectionPath = useCallback((
+    start: { x: number, y: number },
+    end: { x: number, y: number },
+    waypoints: { x: number, y: number }[] | undefined,
+    style: Connection['style'] = 'straight',
+    direction: Connection['direction'] = 'auto'
+  ): string => {
+    if (waypoints && waypoints.length > 0) {
+      // Use waypoints for manual routing
+      let path = `M ${start.x} ${start.y}`;
+      waypoints.forEach(wp => {
+        path += ` L ${wp.x} ${wp.y}`;
+      });
+      path += ` L ${end.x} ${end.y}`;
+      return path;
+    }
+
+    if (style === 'elbow') {
+      const midX = (start.x + end.x) / 2;
+      const midY = (start.y + end.y) / 2;
+
+      if (direction === 'horizontal-first' || (direction === 'auto' && Math.abs(end.x - start.x) > Math.abs(end.y - start.y))) {
+        return `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+      } else {
+        return `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
+      }
+    }
+
+    if (style === 'curved') {
+      const ctrlX = (start.x + end.x) / 2;
+      const ctrlY1 = start.y;
+      const ctrlY2 = end.y;
+      return `M ${start.x} ${start.y} C ${ctrlX} ${ctrlY1}, ${ctrlX} ${ctrlY2}, ${end.x} ${end.y}`;
+    }
+
+    // Default straight line
+    return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
           if (document.activeElement?.tagName.match(/INPUT|TEXTAREA/)) return;
 
-          // Tools
+          // Tools (V for select, C for connect, T for note - pan is via Space/middle-mouse)
           if (e.key.toLowerCase() === 'v') setTool('select');
-          if (e.key.toLowerCase() === 'h') setTool('pan');
           if (e.key.toLowerCase() === 'c') setTool('connect');
           if (e.key.toLowerCase() === 't') setTool('note');
 
@@ -408,7 +532,19 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           }
 
           // View
-          if (e.key === '\\') setMode(prev => prev === 'edit' ? 'view' : 'edit');
+          if (e.key === '\\') {
+            if (mode === 'edit') {
+              setMode('view');
+              enterFullscreen();
+            } else {
+              setMode('edit');
+              exitFullscreen();
+            }
+          }
+          if (e.key === 'Escape' && mode === 'view') {
+            setMode('edit');
+            exitFullscreen();
+          }
           if (e.key === '=' || e.key === '+') viewport.zoomIn();
           if (e.key === '-') viewport.zoomOut();
           if ((e.metaKey || e.ctrlKey) && e.key === '0') {
@@ -452,7 +588,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           window.removeEventListener('keydown', handleKeyDown);
           window.removeEventListener('keyup', handleKeyUp);
       };
-  }, [undo, redo, activeId, deleteItem, viewport, duplicateItem, reorderItem, alignItem, gestures]);
+  }, [undo, redo, activeId, deleteItem, viewport, duplicateItem, reorderItem, alignItem, gestures, mode, enterFullscreen, exitFullscreen]);
 
   /**
    * Export board as IIIF Manifest
@@ -573,8 +709,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
     showToast("Board exported as IIIF Manifest", "success");
   }, [items, connections, showToast, getAnchorPos]);
 
+  // View mode styles
+  const viewModeClass = mode === 'view' ? 'bg-slate-900' : 'bg-slate-100';
+
   return (
-    <div className="flex flex-col h-full bg-slate-100 overflow-hidden relative font-sans">
+    <div
+      ref={boardContainerRef}
+      className={`flex flex-col h-full overflow-hidden relative font-sans ${viewModeClass}`}
+      role="application"
+      aria-label="Research Board - Spatial canvas for organizing IIIF resources"
+    >
+      {/* Header - hidden in fullscreen view mode */}
+      {!(mode === 'view' && isFullscreen) && (
       <div className="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
@@ -587,11 +733,39 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           <div className="h-8 w-px bg-slate-200"></div>
           
           {mode === 'edit' && (
-            <div className="flex bg-slate-100 rounded-xl p-1 border border-slate-200">
-                <button onClick={() => setTool('select')} className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 ${tool === 'select' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}><Icon name="near_me" className="text-sm"/> Select</button>
-                <button onClick={() => setTool('pan')} className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 ${tool === 'pan' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}><Icon name="pan_tool" className="text-sm"/> Pan</button>
-                <button onClick={() => setTool('connect')} className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 ${tool === 'connect' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}><Icon name="mediation" className="text-sm"/> Connect</button>
-                <button onClick={() => setTool('note')} className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 ${tool === 'note' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}><Icon name="note_add" className="text-sm"/> Note</button>
+            <div className="flex items-center gap-3">
+                {/* Interaction Tools */}
+                <div className="flex bg-slate-100 rounded-xl p-1 border border-slate-200">
+                    <button
+                        onClick={() => setTool('select')}
+                        className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 transition-all ${tool === 'select' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}
+                        title="Select & Pan (V) - Hold Space to pan"
+                    >
+                        <Icon name="near_me" className="text-sm"/> Select
+                    </button>
+                </div>
+
+                <div className="w-px h-8 bg-slate-300" />
+
+                {/* Creation Tools */}
+                <div className="flex bg-slate-100 rounded-xl p-1 border border-slate-200 gap-1">
+                    <button
+                        onClick={() => setTool('connect')}
+                        className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 transition-all ${tool === 'connect' ? 'bg-white shadow-md text-iiif-blue' : 'text-slate-500 hover:text-slate-800'}`}
+                        title="Connect items (C)"
+                    >
+                        <Icon name="mediation" className="text-sm"/> Connect
+                    </button>
+                    <button
+                        onClick={() => setTool('note')}
+                        className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2 transition-all relative ${tool === 'note' ? 'bg-yellow-100 shadow-md text-yellow-700 border border-yellow-300' : 'text-slate-500 hover:text-slate-800 hover:bg-yellow-50'}`}
+                        title="Add sticky note (T)"
+                    >
+                        <Icon name="sticky_note_2" className="text-sm"/>
+                        <span>Note</span>
+                        {tool === 'note' && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border-2 border-white" />}
+                    </button>
+                </div>
             </div>
           )}
 
@@ -639,16 +813,17 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
             <div className="text-xs font-bold text-slate-400 border-l pl-4">
                 <span>{viewport.scalePercent}% Zoom</span>
             </div>
-            <button onClick={exportBoardAsManifest} className="flex items-center gap-2 px-4 py-2 bg-iiif-blue text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all">
+            <button onClick={() => setShowExportDialog(true)} className="flex items-center gap-2 px-4 py-2 bg-iiif-blue text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all">
                 <Icon name="file_download" className="text-sm"/> Export
             </button>
         </div>
       </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden">
         <div
             ref={containerRef}
-            className={`flex-1 relative overflow-hidden bg-slate-100 ${tool === 'pan' || isPanning || gestures.isPanModeActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'}`}
+            className={`flex-1 relative overflow-hidden bg-slate-100 ${isPanning || gestures.isPanModeActive ? 'cursor-grab active:cursor-grabbing' : tool === 'connect' ? 'cursor-crosshair' : tool === 'note' ? 'cursor-cell' : 'cursor-default'}`}
             onDrop={handleDrop}
             onDragOver={e => e.preventDefault()}
             onMouseDown={handleMouseDown}
@@ -659,96 +834,198 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
             onMouseLeave={gestures.handlers.onMouseLeave}
             onWheel={gestures.handlers.onWheel}
             style={{ backgroundImage: 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)', backgroundSize: `${24 * viewState.scale}px ${24 * viewState.scale}px`, backgroundPosition: `${viewState.x}px ${viewState.y}px` }}
+            role="region"
+            aria-label="Board canvas"
+            aria-describedby="board-instructions"
         >
-                <div style={{ transform: `translate(${viewState.x}px, ${viewState.y}px) scale(${viewState.scale})`, transformOrigin: '0 0', width: '100%', height: '100%' }}>
+          <div id="board-instructions" className="sr-only">
+            Use mouse to pan and zoom. Press V for select tool, H for pan, C for connect, T for note.
+            Drag items from archive to add them to the board.
+          </div>
+                <div
+                  style={{ transform: `translate(${viewState.x}px, ${viewState.y}px) scale(${viewState.scale})`, transformOrigin: '0 0', width: '100%', height: '100%' }}
+                  role="group"
+                  aria-label="Board items container"
+                >
                     <svg className="absolute inset-0 overflow-visible pointer-events-none z-10" style={{ width: '10000px', height: '10000px' }}>
                         {connections.map(c => {
                             const start = getAnchorPos(c.fromId, c.fromAnchor || 'B');
                             const end = getAnchorPos(c.toId, c.toAnchor || 'T');
                             const isSelected = selectedConnectionId === c.id;
+                            const strokeColor = c.color || (isSelected ? "#005596" : "#3b82f6");
 
-                            // Build path string for multi-segment connections
-                            let pathD = `M ${start?.x || 0} ${start?.y || 0}`;
-                            if (c.waypoints && c.waypoints.length > 0) {
-                                c.waypoints.forEach(wp => {
-                                    pathD += ` L ${wp.x} ${wp.y}`;
-                                });
-                            }
-                            pathD += ` L ${end?.x || 0} ${end?.y || 0}`;
+                            // Generate path based on style
+                            const pathD = generateConnectionPath(
+                              start || { x: 0, y: 0 },
+                              end || { x: 0, y: 0 },
+                              c.waypoints,
+                              c.style || 'elbow',
+                              c.direction
+                            );
 
                             return (
                                 <g key={c.id} className="pointer-events-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedConnectionId(c.id); setActiveId(null); }}>
-                                    <path 
+                                    {/* Hit area for easier selection */}
+                                    <path
                                         d={pathD}
                                         fill="none"
-                                        stroke={isSelected ? "#005596" : "#3b82f6"} 
-                                        strokeWidth={isSelected ? "5" : "2.5"} 
-                                        strokeDasharray={isSelected ? "none" : "6,4"} 
+                                        stroke="transparent"
+                                        strokeWidth="20"
+                                    />
+                                    <path
+                                        d={pathD}
+                                        fill="none"
+                                        stroke={strokeColor}
+                                        strokeWidth={isSelected ? "4" : "2.5"}
+                                        strokeDasharray="none"
                                         strokeLinejoin="round"
                                         strokeLinecap="round"
+                                        className="transition-all"
                                     />
-                                    
-                                    {/* Mid-point handle for transformation */}
-                                    {isSelected && !c.waypoints?.length && (
-                                        <circle 
-                                            cx={((start?.x || 0) + (end?.x || 0)) / 2} 
-                                            cy={((start?.y || 0) + (end?.y || 0)) / 2} 
-                                            r="4" 
-                                            fill="white" 
-                                            stroke="#005596" 
-                                            strokeWidth="2"
-                                            className="cursor-pointer"
-                                            onMouseDown={(e) => {
-                                                e.stopPropagation();
-                                                // Create a waypoint at current mid-point
-                                                const mid = { x: ((start?.x || 0) + (end?.x || 0)) / 2, y: ((start?.y || 0) + (end?.y || 0)) / 2 };
-                                                updateBoard(prev => ({
-                                                    ...prev,
-                                                    connections: prev.connections.map(conn => conn.id === c.id ? { ...conn, waypoints: [mid] } : conn)
-                                                }));
-                                            }}
-                                        />
-                                    )}
 
-                                    {/* Draggable waypoints */}
+                                    {/* Arrow marker at end */}
+                                    <circle
+                                        cx={end?.x || 0}
+                                        cy={end?.y || 0}
+                                        r="4"
+                                        fill={strokeColor}
+                                    />
+
+                                    {/* Segment midpoint handles for adding waypoints (max 10) */}
+                                    {isSelected && (!c.waypoints || c.waypoints.length < 10) && (() => {
+                                        // Build list of segments: start -> wp1 -> wp2 -> ... -> end
+                                        const points = [start, ...(c.waypoints || []), end].filter(Boolean) as { x: number; y: number }[];
+                                        const segmentMidpoints = [];
+                                        for (let i = 0; i < points.length - 1; i++) {
+                                            segmentMidpoints.push({
+                                                x: (points[i].x + points[i + 1].x) / 2,
+                                                y: (points[i].y + points[i + 1].y) / 2,
+                                                insertAfter: i // Insert after this index in waypoints array
+                                            });
+                                        }
+                                        return segmentMidpoints.map((seg, idx) => (
+                                            <g key={`seg-${idx}`}>
+                                                <circle
+                                                    cx={seg.x}
+                                                    cy={seg.y}
+                                                    r="22"
+                                                    fill="transparent"
+                                                    className="cursor-pointer"
+                                                    onMouseDown={(e) => {
+                                                        e.stopPropagation();
+                                                        const newWP = { x: seg.x, y: seg.y };
+                                                        updateBoard(prev => ({
+                                                            ...prev,
+                                                            connections: prev.connections.map(conn => {
+                                                                if (conn.id !== c.id) return conn;
+                                                                const wps = [...(conn.waypoints || [])];
+                                                                // Insert at the correct position
+                                                                wps.splice(seg.insertAfter, 0, newWP);
+                                                                return { ...conn, waypoints: wps };
+                                                            })
+                                                        }));
+                                                    }}
+                                                />
+                                                <circle
+                                                    cx={seg.x}
+                                                    cy={seg.y}
+                                                    r="5"
+                                                    fill="white"
+                                                    stroke={strokeColor}
+                                                    strokeWidth="2"
+                                                    strokeDasharray="2,2"
+                                                    className="pointer-events-none"
+                                                />
+                                            </g>
+                                        ));
+                                    })()}
+
+                                    {/* Draggable waypoints - 44px touch target */}
                                     {isSelected && c.waypoints?.map((wp, i) => (
-                                        <circle 
-                                            key={i}
-                                            cx={wp.x} cy={wp.y} r="5" 
-                                            fill="#005596" 
-                                            className="cursor-move"
-                                            onMouseDown={(e) => {
-                                                e.stopPropagation();
-                                                const handleWPMove = (me: MouseEvent) => {
-                                                    const coords = getCanvasCoords(me);
+                                        <g key={i}>
+                                            {/* Touch target */}
+                                            <circle
+                                                cx={wp.x} cy={wp.y} r="22"
+                                                fill="transparent"
+                                                className="cursor-move"
+                                                onMouseDown={(e) => {
+                                                    e.stopPropagation();
+                                                    const handleWPMove = (me: MouseEvent) => {
+                                                        let coords = getCanvasCoords(me);
+                                                        // Shift+drag: snap to 0°, 45°, 90°, 135°, 180°
+                                                        if (me.shiftKey) {
+                                                            const prev = i > 0 ? c.waypoints![i - 1] : start;
+                                                            const refX = prev?.x || 0;
+                                                            const refY = prev?.y || 0;
+                                                            const dx = coords.x - refX;
+                                                            const dy = coords.y - refY;
+                                                            const distance = Math.sqrt(dx * dx + dy * dy);
+                                                            const angle = Math.atan2(dy, dx);
+                                                            // Snap to nearest 45° (π/4 radians)
+                                                            const snapAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+                                                            coords = {
+                                                                x: refX + Math.cos(snapAngle) * distance,
+                                                                y: refY + Math.sin(snapAngle) * distance
+                                                            };
+                                                        }
+                                                        updateBoard(prev => ({
+                                                            ...prev,
+                                                            connections: prev.connections.map(conn => {
+                                                                if (conn.id !== c.id || !conn.waypoints) return conn;
+                                                                const newWPs = [...conn.waypoints];
+                                                                newWPs[i] = coords;
+                                                                return { ...conn, waypoints: newWPs };
+                                                            })
+                                                        }));
+                                                    };
+                                                    const handleWPUp = () => {
+                                                        window.removeEventListener('mousemove', handleWPMove);
+                                                        window.removeEventListener('mouseup', handleWPUp);
+                                                    };
+                                                    window.addEventListener('mousemove', handleWPMove);
+                                                    window.addEventListener('mouseup', handleWPUp);
+                                                }}
+                                                onDoubleClick={(e) => {
+                                                    e.stopPropagation();
                                                     updateBoard(prev => ({
                                                         ...prev,
-                                                        connections: prev.connections.map(conn => {
-                                                            if (conn.id !== c.id || !conn.waypoints) return conn;
-                                                            const newWPs = [...conn.waypoints];
-                                                            newWPs[i] = coords;
-                                                            return { ...conn, waypoints: newWPs };
-                                                        })
+                                                        connections: prev.connections.map(conn => conn.id === c.id ? { ...conn, waypoints: conn.waypoints?.filter((_, idx) => idx !== i) } : conn)
                                                     }));
-                                                };
-                                                const handleWPUp = () => {
-                                                    window.removeEventListener('mousemove', handleWPMove);
-                                                    window.removeEventListener('mouseup', handleWPUp);
-                                                };
-                                                window.addEventListener('mousemove', handleWPMove);
-                                                window.addEventListener('mouseup', handleWPUp);
-                                            }}
-                                            onDoubleClick={(e) => {
-                                                e.stopPropagation();
-                                                updateBoard(prev => ({
-                                                    ...prev,
-                                                    connections: prev.connections.map(conn => conn.id === c.id ? { ...conn, waypoints: conn.waypoints?.filter((_, idx) => idx !== i) } : conn)
-                                                }));
-                                            }}
-                                        />
+                                                }}
+                                            />
+                                            <circle
+                                                cx={wp.x} cy={wp.y} r="6"
+                                                fill={strokeColor}
+                                                stroke="white"
+                                                strokeWidth="2"
+                                                className="pointer-events-none"
+                                            />
+                                        </g>
                                     ))}
 
-                                    {c.label && <text x={((start?.x || 0) + (end?.x || 0))/2} y={((start?.y || 0) + (end?.y || 0))/2 - 10} textAnchor="middle" className="text-[10px] font-black uppercase fill-slate-700 bg-white">{c.label}</text>}
+                                    {/* Connection label */}
+                                    {(c.label || c.purpose) && c.displayMode !== 'none' && (
+                                      <g>
+                                        <rect
+                                          x={((start?.x || 0) + (end?.x || 0)) / 2 - 40}
+                                          y={((start?.y || 0) + (end?.y || 0)) / 2 - 22}
+                                          width="80"
+                                          height="16"
+                                          fill="white"
+                                          rx="4"
+                                          opacity="0.9"
+                                        />
+                                        <text
+                                          x={((start?.x || 0) + (end?.x || 0)) / 2}
+                                          y={((start?.y || 0) + (end?.y || 0)) / 2 - 10}
+                                          textAnchor="middle"
+                                          className="text-[9px] font-bold uppercase"
+                                          fill={strokeColor}
+                                        >
+                                          {c.displayMode === 'purpose-only' ? c.purpose : (c.label || c.purpose)}
+                                        </text>
+                                      </g>
+                                    )}
                                 </g>
                             );
                         })}
@@ -761,13 +1038,55 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                         )}
                     </svg>
 
-                    {items.map(it => (
-                        <div 
-                            key={it.id} 
+                    {items.map(it => {
+                        // Resource type gradient colors
+                        const typeGradient = it.resourceType === 'Canvas'
+                          ? 'from-green-500 to-emerald-600'
+                          : it.resourceType === 'Manifest'
+                            ? 'from-blue-500 to-indigo-600'
+                            : it.resourceType === 'Collection'
+                              ? 'from-amber-500 to-orange-600'
+                              : 'from-slate-500 to-slate-600';
+
+                        return (
+                        <div
+                            key={it.id}
                             onMouseDown={(e) => handleItemDown(e, it.id)}
                             onMouseUp={() => handleItemUp(it.id)}
-                            className={`absolute bg-white shadow-2xl rounded-2xl overflow-hidden group select-none transition-shadow ${activeId === it.id ? 'ring-4 ring-iiif-blue/20 border-iiif-blue' : 'border-slate-200'} border-2 z-20 ${it.isNote ? 'bg-yellow-50 border-yellow-200' : ''}`} 
+                            onDoubleClick={() => {
+                              if (mode === 'view') {
+                                setMode('edit');
+                                exitFullscreen();
+                              } else {
+                                setShowItemDetail(it);
+                              }
+                            }}
+                            className={`absolute shadow-2xl rounded-2xl overflow-hidden group select-none transition-all duration-200 ${
+                              activeId === it.id
+                                ? 'ring-4 ring-iiif-blue/30 shadow-iiif-blue/20'
+                                : 'hover:shadow-3xl'
+                            } ${
+                              it.isNote
+                                ? 'bg-yellow-50 border-2 border-yellow-300'
+                                : it.isMetadataNode
+                                  ? 'bg-purple-50 border-2 border-dashed border-purple-400'
+                                  : 'bg-white border border-slate-200/50'
+                            } z-20 backdrop-blur-sm`}
                             style={{ left: it.x, top: it.y, width: it.w, height: it.h }}
+                            role="button"
+                            aria-label={`${it.isNote ? 'Note' : it.resourceType}: ${it.label}`}
+                            aria-selected={activeId === it.id}
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Delete' || e.key === 'Backspace') {
+                                e.preventDefault();
+                                deleteItem(it.id);
+                              }
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setActiveId(it.id);
+                              }
+                            }}
                         >
                             {/* Anchor Points */}
                             {(tool === 'connect' || activeId === it.id) && (
@@ -781,13 +1100,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                                 const fromAnchor = activeAnchor?.side || 'B';
                                                 updateBoard(prev => ({
                                                     ...prev,
-                                                    connections: [...prev.connections, { 
-                                                        id: crypto.randomUUID(), 
-                                                        fromId: connectingStart, 
-                                                        toId: it.id, 
+                                                    connections: [...prev.connections, {
+                                                        id: crypto.randomUUID(),
+                                                        fromId: connectingStart,
+                                                        toId: it.id,
                                                         type: 'relatesTo',
                                                         fromAnchor,
-                                                        toAnchor: 'T'
+                                                        toAnchor: 'T',
+                                                        style: 'elbow',
+                                                        direction: 'auto',
+                                                        color: '#3b82f6',
+                                                        purpose: 'linking',
+                                                        displayMode: 'full'
                                                     }]
                                                 }));
                                                 setConnectingStart(null);
@@ -804,13 +1128,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                                 const fromAnchor = activeAnchor?.side || 'B';
                                                 updateBoard(prev => ({
                                                     ...prev,
-                                                    connections: [...prev.connections, { 
-                                                        id: crypto.randomUUID(), 
-                                                        fromId: connectingStart, 
-                                                        toId: it.id, 
+                                                    connections: [...prev.connections, {
+                                                        id: crypto.randomUUID(),
+                                                        fromId: connectingStart,
+                                                        toId: it.id,
                                                         type: 'relatesTo',
                                                         fromAnchor,
-                                                        toAnchor: 'B'
+                                                        toAnchor: 'B',
+                                                        style: 'elbow',
+                                                        direction: 'auto',
+                                                        color: '#3b82f6',
+                                                        purpose: 'linking',
+                                                        displayMode: 'full'
                                                     }]
                                                 }));
                                                 setConnectingStart(null);
@@ -827,13 +1156,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                                 const fromAnchor = activeAnchor?.side || 'B';
                                                 updateBoard(prev => ({
                                                     ...prev,
-                                                    connections: [...prev.connections, { 
-                                                        id: crypto.randomUUID(), 
-                                                        fromId: connectingStart, 
-                                                        toId: it.id, 
+                                                    connections: [...prev.connections, {
+                                                        id: crypto.randomUUID(),
+                                                        fromId: connectingStart,
+                                                        toId: it.id,
                                                         type: 'relatesTo',
                                                         fromAnchor,
-                                                        toAnchor: 'L'
+                                                        toAnchor: 'L',
+                                                        style: 'elbow',
+                                                        direction: 'auto',
+                                                        color: '#3b82f6',
+                                                        purpose: 'linking',
+                                                        displayMode: 'full'
                                                     }]
                                                 }));
                                                 setConnectingStart(null);
@@ -850,13 +1184,18 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                                 const fromAnchor = activeAnchor?.side || 'B';
                                                 updateBoard(prev => ({
                                                     ...prev,
-                                                    connections: [...prev.connections, { 
-                                                        id: crypto.randomUUID(), 
-                                                        fromId: connectingStart, 
-                                                        toId: it.id, 
+                                                    connections: [...prev.connections, {
+                                                        id: crypto.randomUUID(),
+                                                        fromId: connectingStart,
+                                                        toId: it.id,
                                                         type: 'relatesTo',
                                                         fromAnchor,
-                                                        toAnchor: 'R'
+                                                        toAnchor: 'R',
+                                                        style: 'elbow',
+                                                        direction: 'auto',
+                                                        color: '#3b82f6',
+                                                        purpose: 'linking',
+                                                        displayMode: 'full'
                                                     }]
                                                 }));
                                                 setConnectingStart(null);
@@ -867,22 +1206,36 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                 </>
                             )}
                             {it.isNote ? (
-                                <div className="h-full flex flex-col p-4 bg-yellow-50">
-                                    <textarea 
-                                        value={it.annotation} 
-                                        onChange={(e) => updateBoard(prev => ({...prev, items: prev.items.map(x => x.id === it.id ? {...x, annotation: e.target.value} : x)}))}
-                                        className="w-full h-full bg-transparent border-none outline-none resize-none font-handwriting text-slate-800 text-sm"
-                                        placeholder="Type note..."
-                                        onMouseDown={e => e.stopPropagation()} // Allow typing
-                                    />
+                                <div className="h-full flex flex-col">
+                                    {/* Note header with drag handle */}
+                                    <div className="h-6 bg-gradient-to-r from-yellow-400 to-amber-400 flex items-center px-2">
+                                      <Icon name="drag_indicator" className="text-yellow-800/50 text-xs" />
+                                    </div>
+                                    <div className="flex-1 p-3">
+                                      <textarea
+                                          value={it.annotation}
+                                          onChange={(e) => updateBoard(prev => ({...prev, items: prev.items.map(x => x.id === it.id ? {...x, annotation: e.target.value} : x)}))}
+                                          className="w-full h-full bg-transparent border-none outline-none resize-none font-handwriting text-slate-800 text-sm leading-relaxed rounded-lg p-2 focus:bg-yellow-100/50 transition-colors"
+                                          placeholder="Type your note here..."
+                                          onMouseDown={e => e.stopPropagation()}
+                                      />
+                                    </div>
+                                </div>
+                            ) : it.isMetadataNode ? (
+                                <div className="h-full flex flex-col items-center justify-center p-4">
+                                    <Icon name="sell" className="text-4xl text-purple-400 mb-2" />
+                                    <div className="text-xs font-bold text-purple-600 text-center">{it.label}</div>
+                                    <div className="text-[9px] text-purple-400 mt-1">Metadata Value</div>
                                 </div>
                             ) : (
                                 <div className="h-full flex flex-col relative">
+                                    {/* Type gradient header */}
+                                    <div className={`h-1.5 bg-gradient-to-r ${typeGradient}`} />
                                     <div className="flex-1 bg-slate-900 flex items-center justify-center relative overflow-hidden">
                                         {it.blobUrls && it.blobUrls.length > 0 ? (
-                                            <StackedThumbnail 
-                                                urls={it.blobUrls} 
-                                                size="xl" 
+                                            <StackedThumbnail
+                                                urls={it.blobUrls}
+                                                size="xl"
                                                 className="w-full h-full"
                                                 icon="description"
                                             />
@@ -891,12 +1244,14 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                         ) : (
                                             <Icon name="description" className="text-5xl text-slate-700 opacity-50"/>
                                         )}
-                                        <div className="absolute top-2 left-2 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest">
+                                        {/* Type badge */}
+                                        <div className={`absolute top-2 left-2 bg-gradient-to-r ${typeGradient} text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest shadow-lg`}>
                                             {it.resourceType}
                                         </div>
                                     </div>
-                                    <div className="p-3 bg-white border-t border-slate-100">
-                                        <div className="text-[10px] font-black text-slate-800 truncate uppercase tracking-tighter">{it.label}</div>
+                                    {/* Footer with label over dark gradient */}
+                                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+                                        <div className="text-[11px] font-bold text-white truncate drop-shadow-md">{it.label}</div>
                                     </div>
                                 </div>
                             )}
@@ -929,122 +1284,180 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                     <button onClick={(e) => { e.stopPropagation(); setShowComposer(true); }} className="p-1.5 bg-white text-slate-500 rounded hover:text-iiif-blue shadow-sm" title="Compose"><Icon name="auto_awesome_motion" className="text-xs"/></button>
                                 </div>
                             )}
-                            <button 
+                            <button
                                 onClick={(e) => { e.stopPropagation(); deleteItem(it.id); }}
-                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 z-30"
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 z-30 shadow-lg"
                             >
                                 <Icon name="close" className="text-xs"/>
                             </button>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
+
+                {/* Empty State with Tips */}
+                {items.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div className={`text-center p-10 rounded-3xl ${mode === 'view' ? 'bg-slate-800/95' : 'bg-white/95'} backdrop-blur-md shadow-2xl border ${mode === 'view' ? 'border-slate-700' : 'border-slate-200'} max-w-lg`}>
+                      <Icon name="dashboard" className={`text-6xl mb-6 ${mode === 'view' ? 'text-slate-500' : 'text-amber-500'}`} />
+                      <h2 className={`text-2xl font-black mb-3 ${mode === 'view' ? 'text-white' : 'text-slate-800'}`}>
+                        Start Your Research Board
+                      </h2>
+                      <p className={`text-sm mb-8 ${mode === 'view' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        Create spatial connections between your archival materials
+                      </p>
+                      <div className={`space-y-3 text-left ${mode === 'view' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <div className="flex items-center gap-4">
+                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Drag</kbd>
+                          <span className="text-sm">Drag media from the Archive panel</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-yellow-900/50 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>T</kbd>
+                          <span className="text-sm">Add sticky notes for annotations</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>C</kbd>
+                          <span className="text-sm">Connect items to show relationships</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Space</kbd>
+                          <span className="text-sm">Hold to pan around the board</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Floating Zoom Controls */}
+                <div className={`absolute bottom-4 right-4 flex items-center gap-1 rounded-xl shadow-lg z-30 ${mode === 'view' ? 'bg-slate-800/90' : 'bg-white/90'} backdrop-blur-sm p-1`}>
+                  <button
+                    onClick={viewport.zoomOut}
+                    className={`p-2 rounded-lg transition-colors ${mode === 'view' ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                    title="Zoom out (-)"
+                  >
+                    <Icon name="remove" />
+                  </button>
+                  <button
+                    onClick={viewport.reset}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold min-w-[60px] transition-colors ${mode === 'view' ? 'text-white hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-100'}`}
+                    title="Reset zoom (Cmd+0)"
+                  >
+                    {viewport.scalePercent}%
+                  </button>
+                  <button
+                    onClick={viewport.zoomIn}
+                    className={`p-2 rounded-lg transition-colors ${mode === 'view' ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                    title="Zoom in (+)"
+                  >
+                    <Icon name="add" />
+                  </button>
+                  <div className={`w-px h-6 mx-1 ${mode === 'view' ? 'bg-slate-700' : 'bg-slate-200'}`} />
+                  <button
+                    onClick={viewport.reset}
+                    className={`p-2 rounded-lg transition-colors ${mode === 'view' ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                    title="Reset zoom"
+                  >
+                    <Icon name="fit_screen" />
+                  </button>
+                </div>
+
+                {/* View Mode Exit Button */}
+                {mode === 'view' && (
+                  <button
+                    onClick={() => { setMode('edit'); exitFullscreen(); }}
+                    className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-white/90 text-slate-800 rounded-xl shadow-lg z-30 font-bold text-sm hover:bg-white transition-colors"
+                  >
+                    <Icon name="edit" />
+                    Exit View Mode
+                  </button>
+                )}
         </div>
 
-        {/* Inspector Panel */}
-        {(activeItem || activeConn) && (
-            <div className="w-80 bg-white border-l shadow-xl z-30 flex flex-col">
-                <div className="h-12 border-b flex items-center px-4 justify-between bg-slate-50">
-                    <div className="flex gap-4">
-                        <button onClick={() => setInspectorTab('properties')} className={`text-[10px] font-black uppercase tracking-widest py-3 border-b-2 transition-all ${inspectorTab === 'properties' ? 'text-iiif-blue border-iiif-blue' : 'text-slate-400 border-transparent'}`}>IIIF Properties</button>
-                        <button onClick={() => setInspectorTab('design')} className={`text-[10px] font-black uppercase tracking-widest py-3 border-b-2 transition-all ${inspectorTab === 'design' ? 'text-iiif-blue border-iiif-blue' : 'text-slate-400 border-transparent'}`}>Design</button>
-                    </div>
-                    <button onClick={() => { setActiveId(null); setSelectedConnectionId(null); }}><Icon name="close" className="text-slate-300 text-sm"/></button>
-                </div>
+        {/* Item Preview Panel */}
+        {activeItem && !showItemDetail && mode === 'edit' && (
+          <ItemPreviewPanel
+            item={activeItem}
+            onExpand={(item) => setShowItemDetail(item)}
+            fieldMode={settings.fieldMode}
+          />
+        )}
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    {inspectorTab === 'properties' ? (
-                        <div className="h-full">
-                            {activeItem ? (
-                                <Inspector 
-                                    resource={{
-                                        id: activeItem.resourceId,
-                                        type: activeItem.resourceType as any,
-                                        label: { none: [activeItem.label] },
-                                        metadata: activeItem.metadata,
-                                        summary: activeItem.summary,
-                                        requiredStatement: activeItem.requiredStatement,
-                                        rights: activeItem.rights,
-                                        provider: activeItem.provider,
-                                        behavior: activeItem.behavior
-                                    }}
-                                    onUpdateResource={(updates) => {
-                                        updateBoard(prev => ({
-                                            ...prev,
-                                            items: prev.items.map(it => it.id === activeId ? {
-                                                ...it,
-                                                label: updates.label ? getIIIFValue(updates.label) : it.label,
-                                                metadata: updates.metadata || it.metadata,
-                                                summary: updates.summary || it.summary,
-                                                requiredStatement: updates.requiredStatement || it.requiredStatement,
-                                                rights: updates.rights || it.rights,
-                                                provider: updates.provider || it.provider,
-                                                behavior: updates.behavior || it.behavior
-                                            } : it)
-                                        }));
-                                    }}
-                                    settings={settings}
-                                    visible={true}
-                                    onClose={() => setActiveId(null)}
-                                />
-                            ) : activeConn ? (
-                                <Inspector 
-                                    resource={{
-                                        id: activeConn.id,
-                                        type: 'Annotation',
-                                        label: { none: [activeConn.label || 'Connection'] },
-                                        metadata: activeConn.metadata,
-                                        summary: activeConn.summary,
-                                        requiredStatement: activeConn.requiredStatement,
-                                        rights: activeConn.rights
-                                    }}
-                                    onUpdateResource={(updates) => {
-                                        updateBoard(prev => ({
-                                            ...prev,
-                                            connections: prev.connections.map(c => c.id === selectedConnectionId ? {
-                                                ...c,
-                                                label: updates.label ? getIIIFValue(updates.label) : c.label,
-                                                metadata: updates.metadata || c.metadata,
-                                                summary: updates.summary || c.summary,
-                                                requiredStatement: updates.requiredStatement || c.requiredStatement,
-                                                rights: updates.rights || c.rights
-                                            } : c)
-                                        }));
-                                    }}
-                                    settings={settings}
-                                    visible={true}
-                                    onClose={() => setSelectedConnectionId(null)}
-                                />
-                            ) : null}
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {activeItem && (
-                                <>
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Alignment</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button onClick={() => alignItem(activeItem.id, 'center-h')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded text-xs flex items-center justify-center gap-2"><Icon name="align_horizontal_center"/> Center H</button>
-                                            <button onClick={() => alignItem(activeItem.id, 'center-v')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded text-xs flex items-center justify-center gap-2"><Icon name="align_vertical_center"/> Center V</button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Order</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button onClick={() => reorderItem(activeItem.id, 'forward')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded text-xs flex items-center justify-center gap-2"><Icon name="flip_to_front"/> Forward</button>
-                                            <button onClick={() => reorderItem(activeItem.id, 'backward')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded text-xs flex items-center justify-center gap-2"><Icon name="flip_to_back"/> Backward</button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Actions</label>
-                                        <button onClick={() => duplicateItem(activeItem.id)} className="w-full p-2 bg-slate-50 hover:bg-slate-100 rounded text-xs flex items-center justify-center gap-2 mb-2"><Icon name="content_copy"/> Duplicate</button>
-                                        <button onClick={() => deleteItem(activeItem.id)} className="w-full p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded text-xs flex items-center justify-center gap-2"><Icon name="delete"/> Delete</button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
+        {/* Unified Inspector Panel with Design Tab */}
+        {(activeItem || activeConn) && mode === 'edit' && (
+            <Inspector
+                resource={activeItem ? {
+                    id: activeItem.resourceId,
+                    type: activeItem.resourceType as any,
+                    label: { none: [activeItem.label] },
+                    metadata: activeItem.metadata,
+                    summary: activeItem.summary,
+                    requiredStatement: activeItem.requiredStatement,
+                    rights: activeItem.rights,
+                    provider: activeItem.provider,
+                    behavior: activeItem.behavior
+                } : activeConn ? {
+                    id: activeConn.id,
+                    type: 'Annotation',
+                    label: { none: [activeConn.label || 'Connection'] },
+                    metadata: activeConn.metadata,
+                    summary: activeConn.summary,
+                    requiredStatement: activeConn.requiredStatement,
+                    rights: activeConn.rights
+                } : null}
+                onUpdateResource={(updates) => {
+                    if (activeItem) {
+                        updateBoard(prev => ({
+                            ...prev,
+                            items: prev.items.map(it => it.id === activeId ? {
+                                ...it,
+                                label: updates.label ? getIIIFValue(updates.label) : it.label,
+                                metadata: updates.metadata || it.metadata,
+                                summary: updates.summary || it.summary,
+                                requiredStatement: updates.requiredStatement || it.requiredStatement,
+                                rights: updates.rights || it.rights,
+                                provider: updates.provider || it.provider,
+                                behavior: updates.behavior || it.behavior
+                            } : it)
+                        }));
+                    } else if (activeConn) {
+                        updateBoard(prev => ({
+                            ...prev,
+                            connections: prev.connections.map(c => c.id === selectedConnectionId ? {
+                                ...c,
+                                label: updates.label ? getIIIFValue(updates.label) : c.label,
+                                metadata: updates.metadata || c.metadata,
+                                summary: updates.summary || c.summary,
+                                requiredStatement: updates.requiredStatement || c.requiredStatement,
+                                rights: updates.rights || c.rights
+                            } : c)
+                        }));
+                    }
+                }}
+                settings={settings}
+                visible={true}
+                onClose={() => { setActiveId(null); setSelectedConnectionId(null); }}
+                designTab={
+                    <BoardDesignPanel
+                        activeItem={activeItem || null}
+                        activeConnection={activeConn || null}
+                        items={items}
+                        onAlignItem={alignItem}
+                        onReorderItem={reorderItem}
+                        onDuplicateItem={duplicateItem}
+                        onDeleteItem={deleteItem}
+                        onUpdateItem={(id, updates) => {
+                            updateBoard(prev => ({
+                                ...prev,
+                                items: prev.items.map(it => it.id === id ? { ...it, ...updates } : it)
+                            }));
+                        }}
+                        onUpdateConnection={updateConnection}
+                        onDeleteConnection={deleteConnection}
+                        onStraightenConnection={straightenConnection}
+                        fieldMode={settings.fieldMode}
+                    />
+                }
+            />
         )}
       </div>
 
@@ -1078,7 +1491,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           />
       )}
       {showComposer && activeItem && (
-          <CanvasComposer 
+          <CanvasComposer
             root={root}
             canvas={{
                 id: activeItem.resourceId,
@@ -1086,7 +1499,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                 height: DEFAULT_INGEST_PREFS.defaultCanvasHeight,
                 type: 'Canvas',
                 items: activeItem.layers ? [{ type: 'AnnotationPage', items: activeItem.layers }] : []
-            } as any} 
+            } as any}
             onUpdate={(updatedCanvas) => {
                 // Extract layers from the updated canvas
                 const newLayers = updatedCanvas.items?.[0]?.items || [];
@@ -1095,8 +1508,27 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                     items: prev.items.map(it => it.id === activeId ? { ...it, layers: newLayers } : it)
                 }));
                 showToast("Composition updated", "success");
-            }} 
-            onClose={() => setShowComposer(false)} 
+            }}
+            onClose={() => setShowComposer(false)}
+          />
+      )}
+
+      {/* Item Detail Modal */}
+      {showItemDetail && (
+          <ItemDetailModal
+            item={showItemDetail}
+            onClose={() => setShowItemDetail(null)}
+            fieldMode={settings.fieldMode}
+          />
+      )}
+
+      {/* Board Export Dialog */}
+      {showExportDialog && (
+          <BoardExportDialog
+            items={items}
+            connections={connections}
+            onClose={() => setShowExportDialog(false)}
+            fieldMode={settings.fieldMode}
           />
       )}
 
@@ -1112,7 +1544,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                       <h4 className="font-bold text-slate-500 mb-2 uppercase tracking-tight text-[10px]">Tools</h4>
                       <div className="grid grid-cols-2 gap-2 text-slate-700">
                           <div className="flex justify-between"><span>Select</span> <kbd className="bg-slate-100 px-1.5 rounded font-mono">V</kbd></div>
-                          <div className="flex justify-between"><span>Pan</span> <kbd className="bg-slate-100 px-1.5 rounded font-mono">H / Space</kbd></div>
+                          <div className="flex justify-between"><span>Pan</span> <kbd className="bg-slate-100 px-1.5 rounded font-mono">Space</kbd></div>
                           <div className="flex justify-between"><span>Connect</span> <kbd className="bg-slate-100 px-1.5 rounded font-mono">C</kbd></div>
                           <div className="flex justify-between"><span>Note</span> <kbd className="bg-slate-100 px-1.5 rounded font-mono">T</kbd></div>
                       </div>

@@ -413,3 +413,154 @@ Use cases:
 - Deep linking to specific regions
 - Sharing annotations
 - Embedding viewers with preset views
+
+---
+
+## Derivative Presets
+
+**Location:** [`constants.ts:582-702`](../../constants.ts:582)
+
+Field Studio uses configurable derivative presets for image size generation, replacing hardcoded `[150, 600, 1200]` values throughout the codebase.
+
+### Preset Interface
+
+```typescript
+interface DerivativePreset {
+  name: string;
+  label: string;
+  description: string;
+  thumbnailWidth: number;
+  sizes: number[];
+  fullWidth: number;
+  tileSize: number;
+  scaleFactors: number[];
+}
+```
+
+### Available Presets
+
+| Preset | Label | Best For |
+|--------|-------|----------|
+| `wax-compatible` | WAX Compatible | Jekyll/WAX static sites |
+| `level0-static` | Level 0 Static | Serverless/static hosting (default) |
+| `level2-dynamic` | Level 2 Dynamic | Dynamic image servers |
+| `mobile-optimized` | Mobile Optimized | Bandwidth-constrained environments |
+| `archive-quality` | Archive Quality | Preservation and print |
+
+### Preset Configurations
+
+```typescript
+const DERIVATIVE_PRESETS: Record<string, DerivativePreset> = {
+  'wax-compatible': {
+    name: 'wax-compatible',
+    label: 'WAX Compatible',
+    description: 'Matches minicomp/wax defaults for static Jekyll sites',
+    thumbnailWidth: 250,
+    sizes: [250, 1140],
+    fullWidth: 1140,
+    tileSize: 256,
+    scaleFactors: [1, 2, 4, 8]
+  },
+
+  'level0-static': {
+    name: 'level0-static',
+    label: 'Level 0 Static',
+    description: 'Pre-generated sizes for static/serverless hosting (default)',
+    thumbnailWidth: 150,
+    sizes: [150, 600, 1200],
+    fullWidth: 1200,
+    tileSize: 512,
+    scaleFactors: [1, 2, 4, 8]
+  },
+
+  'level2-dynamic': {
+    name: 'level2-dynamic',
+    label: 'Level 2 Dynamic',
+    description: 'Minimal derivatives for Level 2 image server deployment',
+    thumbnailWidth: 150,
+    sizes: [150],
+    fullWidth: 0,  // Server generates on demand
+    tileSize: 512,
+    scaleFactors: [1, 2, 4, 8, 16]
+  },
+
+  'mobile-optimized': {
+    name: 'mobile-optimized',
+    label: 'Mobile Optimized',
+    description: 'Smaller derivatives optimized for mobile viewing',
+    thumbnailWidth: 100,
+    sizes: [100, 400, 800],
+    fullWidth: 800,
+    tileSize: 256,
+    scaleFactors: [1, 2, 4]
+  },
+
+  'archive-quality': {
+    name: 'archive-quality',
+    label: 'Archive Quality',
+    description: 'Larger derivatives for archival and print use',
+    thumbnailWidth: 250,
+    sizes: [250, 800, 1600, 3200],
+    fullWidth: 3200,
+    tileSize: 512,
+    scaleFactors: [1, 2, 4, 8, 16]
+  }
+};
+```
+
+### Usage
+
+```typescript
+import { getDerivativePreset, DEFAULT_DERIVATIVE_PRESET } from './constants';
+
+// Get default preset
+const preset = getDerivativePreset();
+// Returns: level0-static preset
+
+// Get specific preset
+const waxPreset = getDerivativePreset('wax-compatible');
+
+// Use in export
+const sizes = preset.sizes;           // [150, 600, 1200]
+const thumbnail = preset.thumbnailWidth; // 150
+const tileSize = preset.tileSize;     // 512
+```
+
+### Export Options Integration
+
+```typescript
+interface ExportOptions {
+  format: 'standard' | 'canopy' | 'wax';
+  imageApiOptions?: {
+    derivativePreset?: string;  // Name of preset to use
+    generateTiles?: boolean;
+    tileSize?: number;
+  };
+}
+
+// Example: WAX export with wax-compatible preset
+const options: ExportOptions = {
+  format: 'wax',
+  imageApiOptions: {
+    derivativePreset: 'wax-compatible',
+    generateTiles: true
+  }
+};
+```
+
+### Backward Compatibility
+
+For existing code using deprecated constants:
+
+```typescript
+// Old (deprecated)
+import { DEFAULT_DERIVATIVE_SIZES } from './constants';
+const sizes = DEFAULT_DERIVATIVE_SIZES; // [150, 600, 1200]
+
+// New
+import { getDerivativePreset } from './constants';
+const preset = getDerivativePreset('level0-static');
+const sizes = preset.sizes; // [150, 600, 1200]
+```
+
+See [Deprecated.md](./Deprecated.md) for full migration guide.
