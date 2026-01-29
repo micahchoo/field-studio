@@ -89,3 +89,29 @@ export type {
 // ============================================================================
 export { useIIIFTraversal } from './useIIIFTraversal';
 export type { UseIIIFTraversalReturn } from './useIIIFTraversal';
+
+// ============================================================================
+// Resizable Panels
+// ============================================================================
+export { useResizablePanel } from './useResizablePanel';
+export type {
+  ResizablePanelConfig,
+  ResizablePanelState,
+  ResizablePanelActions,
+  UseResizablePanelReturn
+} from './useResizablePanel';
+
+// ============================================================================
+// Accessibility & Motion
+// ============================================================================
+export {
+  useReducedMotion,
+  useMotionDuration,
+  useMotionTransitions
+} from './useReducedMotion';
+export {
+  useFocusTrap
+} from './useFocusTrap';
+export type {
+  UseFocusTrapOptions
+} from './useFocusTrap';

@@ -409,6 +409,8 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
       showToast("Evidence extract added as annotation", "success");
   };
 
+  const handleExtractEvidenceDefault = useCallback(() => handleExtractEvidence('default'), [handleExtractEvidence]);
+  const handleShareViewCurrent = useCallback(() => handleShareView(), [handleShareView]);
 
   const saveAnnotation = (newAnno: IIIFAnnotation) => {
       if (!item) return;
@@ -452,6 +454,18 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
     setRotation(newRotation);
     viewerRef.current.viewport.setRotation(newRotation);
   }, [rotation]);
+
+  // Stable callback wrappers derived from main handlers
+  const handleRotateCCW = useCallback(() => handleRotate(-90), [handleRotate]);
+  const handleRotateCW = useCallback(() => handleRotate(90), [handleRotate]);
+  const handleOpenAnnotationTool = useCallback(() => setShowAnnotationTool(true), []);
+  const handleOpenWorkbench = useCallback(() => setShowWorkbench(true), []);
+  const handleOpenTranscriptionPanel = useCallback(() => setShowTranscriptionPanel(true), []);
+  const handleCloseTranscriptionPanel = useCallback(() => setShowTranscriptionPanel(false), []);
+  const handleToggleTranscriptionPanel = useCallback(() => setShowTranscriptionPanel(prev => !prev), []);
+  const handleToggleSearchPanel = useCallback(() => setShowSearchPanel(prev => !prev), []);
+  const handleToggleMetadataPanel = useCallback(() => setShowMetadataPanel(prev => !prev), []);
+  const handleToggleFilmstrip = useCallback(() => setShowFilmstrip(prev => !prev), []);
 
   const handleResetView = useCallback(() => {
     if (!viewerRef.current) return;
@@ -633,7 +647,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                 <div className="w-px h-4 bg-slate-700 mx-1" />
                 {/* Rotation */}
                 <button
-                  onClick={() => handleRotate(-90)}
+                  onClick={handleRotateCCW}
                   disabled={!viewerRef.current}
                   className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
                   title="Rotate Counter-Clockwise (Shift+R)"
@@ -642,7 +656,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                   <Icon name="rotate_left" className="text-sm" />
                 </button>
                 <button
-                  onClick={() => handleRotate(90)}
+                  onClick={handleRotateCW}
                   disabled={!viewerRef.current}
                   className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded"
                   title="Rotate Clockwise (R)"
@@ -670,7 +684,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
               {/* Group 2: Actions */}
               <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700 p-0.5 mr-2">
                 <button
-                  onClick={() => handleExtractEvidence('default')}
+                  onClick={handleExtractEvidenceDefault}
                   disabled={!viewerRef.current}
                   className="px-2 py-1 text-[10px] font-bold uppercase text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 rounded"
                   title="Extract Evidence from Current View"
@@ -679,7 +693,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                 </button>
                 <div className="w-px h-4 bg-slate-700 mx-0.5" />
                 <button
-                  onClick={() => handleShareView()}
+                  onClick={handleShareViewCurrent}
                   disabled={!viewerRef.current}
                   className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 rounded"
                   title="Share Current View"
@@ -690,7 +704,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
 
               {/* Group 3: Tools */}
               <button
-                onClick={() => setShowTranscriptionPanel(true)}
+                onClick={handleOpenTranscriptionPanel}
                 className={`p-2 rounded-lg hover:bg-slate-800 relative ${annotations.length > 0 ? 'text-green-400' : 'text-slate-400'} hover:text-white`}
                 title={`${annotations.length} Annotation${annotations.length !== 1 ? 's' : ''}`}
               >
@@ -702,14 +716,14 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
                 )}
               </button>
               <button
-                onClick={() => setShowAnnotationTool(true)}
+                onClick={handleOpenAnnotationTool}
                 className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
                 title="Draw Annotations"
               >
                 <Icon name="draw" />
               </button>
               <button
-                onClick={() => setShowWorkbench(true)}
+                onClick={handleOpenWorkbench}
                 className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
                 title="Image Request Workbench"
               >
@@ -721,7 +735,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
           {/* Universal Controls (all media types) */}
           {searchService && (
             <button
-              onClick={() => setShowSearchPanel(!showSearchPanel)}
+              onClick={handleToggleSearchPanel}
               className={`p-2 rounded-lg hover:bg-slate-800 ${showSearchPanel ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
               title="Search in Manifest"
             >
@@ -729,7 +743,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
             </button>
           )}
           <button
-            onClick={() => setShowMetadataPanel(!showMetadataPanel)}
+            onClick={handleToggleMetadataPanel}
             className={`p-2 rounded-lg hover:bg-slate-800 ${showMetadataPanel ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
             title="Canvas Metadata"
             aria-label="Toggle metadata panel"
@@ -759,7 +773,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
           <div className="w-px h-6 bg-slate-700 mx-1" />
           
           <button
-            onClick={() => setShowTranscriptionPanel(!showTranscriptionPanel)}
+            onClick={handleToggleTranscriptionPanel}
             className={`p-2 rounded-lg hover:bg-slate-800 ${showTranscriptionPanel ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
             title="Evidence & Notes"
           >
@@ -767,7 +781,7 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
           </button>
           {manifestItems && manifestItems.length > 1 && (
             <button
-              onClick={() => setShowFilmstrip(!showFilmstrip)}
+              onClick={handleToggleFilmstrip}
               className={`p-2 rounded-lg hover:bg-slate-800 ${showFilmstrip ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'}`}
               title="Toggle Canvas Navigator"
             >

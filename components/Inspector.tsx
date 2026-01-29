@@ -6,6 +6,7 @@ import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
 import { ProvenancePanel } from './ProvenancePanel';
 import { GeoEditor } from './GeoEditor';
+import { useResizablePanel } from '../hooks/useResizablePanel';
 import { RESOURCE_TYPE_CONFIG, isFieldVisible, getFieldsByCategory } from '../constants';
 import {
   isPropertyAllowed,
@@ -158,6 +159,83 @@ const DebouncedTextarea = ({ value, onChange, onFocus, onBlur, ...props }: any) 
   return <textarea {...props} value={innerValue} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />;
 };
 
+// Validated Field Component - shows inline validation feedback
+interface ValidatedFieldProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  issues: ValidationIssue[];
+  settings: AppSettings;
+  inputType: 'input' | 'textarea';
+  rows?: number;
+}
+
+const ValidatedField: React.FC<ValidatedFieldProps> = ({
+  label, value, onChange, issues, settings, inputType, rows
+}) => {
+  const hasError = issues.some(i => i.level === 'error');
+  const hasWarning = issues.some(i => i.level === 'warning');
+  
+  const borderColor = hasError
+    ? (settings.fieldMode ? 'border-red-500' : 'border-red-400')
+    : hasWarning
+      ? (settings.fieldMode ? 'border-amber-500' : 'border-amber-400')
+      : (settings.fieldMode ? 'border-slate-800 focus:border-yellow-400' : 'border-slate-300 focus:ring-2 focus:ring-blue-500');
+  
+  const inputClass = `w-full text-sm p-3 rounded-lg outline-none border ${borderColor} ${
+    settings.fieldMode ? 'bg-slate-900 text-white' : 'bg-white'
+  }`;
+
+  return (
+    <div>
+      <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${
+        settings.fieldMode ? 'text-slate-500' : 'text-slate-400'
+      }`}>
+        {label}
+        {hasError && <Icon name="error" className="text-red-500 ml-1 text-xs" />}
+        {hasWarning && !hasError && <Icon name="warning" className="text-amber-500 ml-1 text-xs" />}
+      </label>
+      {inputType === 'input' ? (
+        <DebouncedInput
+          type="text"
+          value={value}
+          onChange={onChange}
+          className={inputClass}
+        />
+      ) : (
+        <DebouncedTextarea
+          value={value}
+          onChange={onChange}
+          rows={rows || 3}
+          className={`${inputClass} resize-none`}
+        />
+      )}
+      {issues.length > 0 && (
+        <div className="mt-1.5 space-y-1">
+          {issues.map((issue, idx) => (
+            <div key={idx} className={`text-[10px] flex items-center gap-1 ${
+              issue.level === 'error' ? 'text-red-500' :
+              issue.level === 'warning' ? 'text-amber-500' :
+              'text-blue-500'
+            }`}>
+              <Icon name={issue.level === 'error' ? 'error' : issue.level === 'warning' ? 'warning' : 'info'} className="text-[10px]" />
+              {issue.message}
+              {issue.fixable && (
+                <button
+                  onClick={() => {/* handled by parent */}}
+                  className="ml-1 text-green-600 hover:underline"
+                >
+                  Fix
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Annotation Item Component
 const AnnotationItem = ({ 
   anno, 
@@ -207,16 +285,33 @@ const AnnotationItem = ({
   );
 };
 
-export const Inspector: React.FC<InspectorProps> = ({ 
-  resource, 
-  onUpdateResource, 
-  settings, 
-  visible, 
-  onClose, 
-  isMobile, 
+export const Inspector: React.FC<InspectorProps> = ({
+  resource,
+  onUpdateResource,
+  settings,
+  visible,
+  onClose,
+  isMobile,
   designTab,
   annotations = []
 }) => {
+  // Resizable panel hook for desktop
+  const {
+    size: inspectorWidth,
+    isResizing,
+    handleProps,
+    panelStyle,
+  } = useResizablePanel({
+    id: 'inspector',
+    defaultSize: 320,
+    minSize: 280,
+    maxSize: 480,
+    direction: 'horizontal',
+    side: 'left', // resize handle on left side of inspector (it's on the right of the screen)
+    collapseThreshold: 0,
+    persist: true,
+  });
+
   // Consolidated tabs: Metadata, Annotations, Structure, Learn
   const getStoredTab = (resourceType: string): 'metadata' | 'annotations' | 'structure' | 'learn' | 'design' => {
     try {
@@ -339,12 +434,16 @@ export const Inspector: React.FC<InspectorProps> = ({
   availableTabs.push('learn');
   if (designTab) availableTabs.push('design');
 
-  const inspectorStyles = isMobile 
+  const inspectorStyles = isMobile
     ? `fixed inset-0 z-[1100] bg-white flex flex-col animate-slide-in-right`
-    : `w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 animate-slide-in-right shrink-0`;
+    : `bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-30 animate-slide-in-right shrink-0 relative`;
 
   return (
-    <aside className={inspectorStyles} aria-label="Resource Inspector">
+    <aside
+      className={inspectorStyles}
+      style={isMobile ? undefined : panelStyle}
+      aria-label="Resource Inspector"
+    >
       {/* Header */}
       <div className={`h-14 flex items-center justify-between px-4 border-b shrink-0 ${settings.fieldMode ? 'bg-black text-white border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-center gap-2">
@@ -429,24 +528,35 @@ export const Inspector: React.FC<InspectorProps> = ({
               </div>
             )}
 
-            {/* Label & Summary */}
+            {/* Label & Summary with inline validation indicators */}
             <div className="space-y-3">
               <div>
-                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Label</label>
-                <DebouncedInput 
-                  type="text" 
-                  value={label} 
-                  onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })} 
-                  className={`w-full text-sm p-3 rounded-lg outline-none font-bold border ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500'}`} 
+                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Label
+                  {validationIssues.length > 0 && (
+                    <span className="ml-1 text-amber-500">
+                      <Icon name="warning" className="text-xs inline" />
+                    </span>
+                  )}
+                </label>
+                <DebouncedInput
+                  type="text"
+                  value={label}
+                  onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })}
+                  className={`w-full text-sm p-3 rounded-lg outline-none font-bold border ${
+                    validationIssues.length > 0
+                      ? (settings.fieldMode ? 'border-amber-500' : 'border-amber-400')
+                      : (settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500')
+                  }`}
                 />
               </div>
               <div>
                 <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Summary</label>
-                <DebouncedTextarea 
-                  value={summary} 
-                  onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })} 
+                <DebouncedTextarea
+                  value={summary}
+                  onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })}
                   rows={3}
-                  className={`w-full text-sm p-3 rounded-lg outline-none border resize-none ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500'}`} 
+                  className={`w-full text-sm p-3 rounded-lg outline-none border resize-none ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500'}`}
                 />
               </div>
             </div>
@@ -664,6 +774,35 @@ export const Inspector: React.FC<InspectorProps> = ({
           <div role="tabpanel">{designTab}</div>
         )}
       </div>
+
+      {/* Resize Handle - Desktop Only */}
+      {!isMobile && (
+        <div
+          {...handleProps}
+          className={`
+            absolute left-0 top-0 bottom-0 w-1 z-30 group
+            cursor-col-resize
+            transition-colors duration-150
+            hover:bg-slate-500/20
+            ${isResizing ? (settings.fieldMode ? 'bg-yellow-400/30' : 'bg-iiif-blue/30') : ''}
+            ${handleProps.className}
+          `}
+        >
+          {/* Visual drag indicator */}
+          <div
+            className={`
+              absolute left-0 top-1/2 -translate-y-1/2
+              w-1 h-12 rounded-full
+              transition-all duration-150
+              opacity-0 group-hover:opacity-100 group-focus:opacity-100
+              ${isResizing
+                ? (settings.fieldMode ? 'bg-yellow-400 opacity-100' : 'bg-iiif-blue opacity-100')
+                : (settings.fieldMode ? 'bg-slate-600 group-hover:bg-yellow-400' : 'bg-slate-500 group-hover:bg-iiif-blue')
+              }
+            `}
+          />
+        </div>
+      )}
     </aside>
   );
 };

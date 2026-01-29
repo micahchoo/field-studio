@@ -446,7 +446,7 @@ export function buildReferenceMap(root: IIIFItem): Map<string, string[]> {
   const traverse = (item: IIIFItem, parentCollectionId?: string) => {
     // Track references from Collections to their children
     if (parentCollectionId) {
-      if (item.type === 'Collection' || item.type === 'Manifest') {
+      if (isCollection(item) || isManifest(item)) {
         const existing = refs.get(item.id) || [];
         if (!existing.includes(parentCollectionId)) {
           refs.set(item.id, [...existing, parentCollectionId]);
@@ -458,7 +458,7 @@ export function buildReferenceMap(root: IIIFItem): Map<string, string[]> {
     const items = (item as any).items || [];
     items.forEach((child: IIIFItem) => traverse(
       child,
-      item.type === 'Collection' ? item.id : parentCollectionId
+      isCollection(item) ? item.id : parentCollectionId
     ));
   };
 

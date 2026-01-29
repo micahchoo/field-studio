@@ -3,12 +3,12 @@ import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, g
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { MuseumLabel } from '../MuseumLabel';
-import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG } from '../../constants';
+import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
 import { autoStructureService } from '../../services/autoStructure';
 import { StructureCanvas } from '../StructureCanvas';
 import { resolveThumbUrl, resolveHierarchicalThumb, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
-import { useSharedSelection, useIIIFTraversal } from '../../hooks';
+import { useSharedSelection, useIIIFTraversal, useResizablePanel } from '../../hooks';
 import { VirtualTreeList } from '../VirtualTreeList';
 import {
   findAllOfType,
@@ -18,6 +18,7 @@ import {
   getValidChildTypes,
   buildReferenceMap
 } from '../../utils/iiifHierarchy';
+import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
 
 interface CollectionsViewProps {
   root: IIIFItem | null;
@@ -45,8 +46,26 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const { showToast } = useToast();
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [structureViewMode, setStructureViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Resizable tree sidebar panel
+  const {
+    size: treeWidth,
+    isCollapsed: sidebarCollapsed,
+    isResizing: isTreeResizing,
+    toggleCollapse,
+    handleProps: treeHandleProps,
+    panelStyle: treePanelStyle,
+  } = useResizablePanel({
+    id: 'collections-tree',
+    defaultSize: 288,
+    minSize: 200,
+    maxSize: 500,
+    direction: 'horizontal',
+    side: 'right', // resize handle on right side of tree sidebar
+    collapseThreshold: 100,
+    persist: true,
+  });
 
   // Use shared selection hook for cross-view persistence
   const {
@@ -159,15 +178,15 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       return;
     }
 
-    const newId = crypto.randomUUID();
+    const newId = generateUUID();
     const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
     const newItem: any = {
       "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
       id: IIIF_CONFIG.ID_PATTERNS[type === 'Manifest' ? 'MANIFEST' : 'COLLECTION'](baseUrl, newId),
       type,
-      label: { none: [`New ${type}`] },
+      label: createLanguageMap(`New ${type}`),
       // Add summary for improved search (IIIF spec recommendation)
-      summary: { none: [`${type} created in ${getIIIFValue(target.label) || 'archive'}`] },
+      summary: createLanguageMap(`${type} created in ${getIIIFValue(target.label) || 'archive'}`),
       items: [],
       behavior: type === 'Manifest' ? ['individuals'] : undefined
     };
@@ -339,10 +358,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       const item = parent.items.find((i: IIIFItem) => i.id === id);
       if (item) {
         const duplicate = JSON.parse(JSON.stringify(item));
-        duplicate.id = `${item.id}_copy_${crypto.randomUUID().slice(0, 8)}`;
+        duplicate.id = `${item.id}_copy_${generateUUID().slice(0, 8)}`;
         if (duplicate.label) {
           const originalLabel = getIIIFValue(duplicate.label);
-          duplicate.label = { none: [`${originalLabel} (Copy)`] };
+          duplicate.label = createLanguageMap(`${originalLabel} (Copy)`);
         }
         duplicates.push(duplicate);
       }
@@ -371,7 +390,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       <div className="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 shadow-sm z-20">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={toggleCollapse}
             className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
           >
@@ -421,27 +440,57 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
       </div>
 
       <div className="flex-1 flex min-h-0">
-        {/* Left Pane - Tree Sidebar with Virtualization */}
+        {/* Left Pane - Resizable Tree Sidebar with Virtualization */}
         <div
-          className={`flex flex-col border-r border-slate-200 bg-white shadow-inner transition-all duration-300 ${
-            sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-72'
-          }`}
+          className="flex flex-col border-r border-slate-200 bg-white shadow-inner relative shrink-0"
+          style={treePanelStyle}
         >
-          <div className="h-10 border-b bg-slate-50 flex items-center px-3 shrink-0">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Archive Tree</span>
+          {!sidebarCollapsed && (
+            <>
+              <div className="h-10 border-b bg-slate-50 flex items-center px-3 shrink-0">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Archive Tree</span>
+              </div>
+              {/* Virtualized Tree List - replaces recursive TreeNode */}
+              <VirtualTreeList
+                root={root}
+                selectedId={selectedId}
+                onSelect={handleSelect}
+                onDrop={handleReorderDrag}
+                referenceMap={referenceMap}
+                rowHeight={40}
+                overscan={5}
+                className="flex-1 p-3 custom-scrollbar"
+                enableKeyboardNav={true}
+              />
+            </>
+          )}
+
+          {/* Resize Handle */}
+          <div
+            {...treeHandleProps}
+            className={`
+              absolute right-0 top-0 bottom-0 w-1 z-30 group
+              cursor-col-resize
+              transition-colors duration-150
+              hover:bg-slate-500/20
+              ${isTreeResizing ? 'bg-iiif-blue/30' : ''}
+              ${treeHandleProps.className}
+            `}
+          >
+            {/* Visual drag indicator */}
+            <div
+              className={`
+                absolute right-0 top-1/2 -translate-y-1/2
+                w-1 h-12 rounded-full
+                transition-all duration-150
+                opacity-0 group-hover:opacity-100 group-focus:opacity-100
+                ${isTreeResizing
+                  ? 'bg-iiif-blue opacity-100'
+                  : 'bg-slate-400 group-hover:bg-iiif-blue'
+                }
+              `}
+            />
           </div>
-          {/* Virtualized Tree List - replaces recursive TreeNode */}
-          <VirtualTreeList
-            root={root}
-            selectedId={selectedId}
-            onSelect={handleSelect}
-            onDrop={handleReorderDrag}
-            referenceMap={referenceMap}
-            rowHeight={40}
-            overscan={5}
-            className="flex-1 p-3 custom-scrollbar"
-            enableKeyboardNav={true}
-          />
         </div>
 
         {/* Middle Pane - Structure Canvas */}

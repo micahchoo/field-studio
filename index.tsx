@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { searchService } from './services/searchService';
+import { IIIF_SPEC } from './constants';
 
 // Global Error Handlers for debugging startup issues
 window.onerror = function(message, source, lineno, colno, error) {
@@ -36,7 +37,7 @@ if ('serviceWorker' in navigator) {
       const results = searchService.search(query);
       
       const iiifResponse = {
-        "@context": "http://iiif.io/api/search/2/context.json",
+        "@context": IIIF_SPEC.SEARCH_2.CONTEXT,
         "id": url,
         "type": "AnnotationPage",
         "items": results.map(res => ({

@@ -1,6 +1,6 @@
 
 import JSZip from 'jszip';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFAnnotation, isCollection, isManifest, isCanvas } from '../types';
+import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFAnnotation, isCollection, isManifest, isCanvas, getIIIFValue } from '../types';
 import { validator } from './validator';
 import {
   generateInfoJson,
@@ -731,8 +731,8 @@ class ExportService {
             if (isManifest(item)) {
                 const manifestId = item.id;
                 item.metadata?.forEach(meta => {
-                    const label = this.getIIIFValue(meta.label);
-                    const value = this.getIIIFValue(meta.value);
+                    const label = this.extractIIIFValue(meta.label);
+                    const value = this.extractIIIFValue(meta.value);
                     if (label && value && config.metadata.includes(label)) {
                         if (!facetIndex[label]) facetIndex[label] = {};
                         if (!facetIndex[label][value]) facetIndex[label][value] = [];
@@ -791,7 +791,7 @@ class ExportService {
     private generateContentFiles(root: IIIFItem, config: CanopyConfig): VirtualFile[] {
         const files: VirtualFile[] = [];
         const title = config.title;
-        const description = this.getIIIFValue((root as any).summary) || `A IIIF collection featuring ${this.countManifests(root)} items.`;
+        const description = this.extractIIIFValue((root as any).summary) || `A IIIF collection featuring ${this.countManifests(root)} items.`;
 
         // Generate homepage content/index.mdx
         // Include Featured component if user has selected featured items
@@ -910,18 +910,11 @@ This collection contains **${manifestCount} items** organized by metadata includ
 
     /**
      * Helper to extract value from IIIF InternationalString
+     * Uses centralized getIIIFValue utility from types for consistency
      */
-    private getIIIFValue(val: any): string {
-        if (!val) return '';
-        if (typeof val === 'string') return val;
-        if (val.none?.[0]) return val.none[0];
-        if (val.en?.[0]) return val.en[0];
-        // Try first available language
-        const keys = Object.keys(val);
-        if (keys.length > 0 && Array.isArray(val[keys[0]])) {
-            return val[keys[0]][0] || '';
-        }
-        return '';
+    private extractIIIFValue(val: any): string {
+        // Use the centralized utility function from types module
+        return getIIIFValue(val, 'none') || getIIIFValue(val, 'en') || '';
     }
 
     private generateCanopyReadme(config: CanopyConfig): string {
@@ -1187,7 +1180,7 @@ ${featuredInfo}
             '@context': IIIF_SPEC.IMAGE_3.CONTEXT,
             id: basePath,
             type: 'ImageService3',
-            protocol: 'http://iiif.io/api/image',
+            protocol: IIIF_SPEC.IMAGE_3.PROTOCOL,
             profile: 'level0',
             width,
             height,

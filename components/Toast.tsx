@@ -4,14 +4,23 @@ import { CONSTANTS } from '../constants';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+}
+
 interface Toast {
   id: string;
   message: string;
   type: ToastType;
+  action?: ToastAction;
+  persistent?: boolean;
 }
 
 interface ToastContextType {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, action?: ToastAction) => void;
+  showPersistentToast: (message: string, type: ToastType, action?: ToastAction) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -54,15 +63,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [toasts]);
 
-  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+  const showToast = useCallback((message: string, type: ToastType = 'info', action?: ToastAction) => {
     const id = Math.random().toString(36).substr(2, 9);
     
     setToasts(prev => {
       // Aggressive limit to prevent overflow - remove oldest first
       const newToasts = prev.length >= MAX_TOASTS
-        ? prev.slice(-MAX_TOASTS + 1) // Keep only the most recent, making room for new
+        ? prev.slice(-MAX_TOASTS + 1)
         : prev;
-      return [...newToasts, { id, message, type }];
+      return [...newToasts, { id, message, type, action }];
     });
     
     const timeout = setTimeout(() => {
@@ -73,12 +82,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     timeoutsRef.current.add(timeout);
   }, []);
 
+  const showPersistentToast = useCallback((message: string, type: ToastType, action?: ToastAction) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    
+    setToasts(prev => {
+      const newToasts = prev.length >= MAX_TOASTS
+        ? prev.slice(-MAX_TOASTS + 1)
+        : prev;
+      return [...newToasts, { id, message, type, action, persistent: true }];
+    });
+  }, []);
+
   const dismissToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, showPersistentToast }}>
       {children}
       <div
         ref={containerRef}
@@ -89,7 +109,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map((toast, index) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex items-center justify-between gap-3 animate-bounce-in ${
+            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex flex-col gap-2 animate-bounce-in ${
               toast.type === 'success' ? 'bg-white border-green-200 text-green-800' :
               toast.type === 'error' ? 'bg-white border-red-200 text-red-800' :
               toast.type === 'warning' ? 'bg-white border-amber-200 text-amber-800' :
@@ -100,20 +120,42 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               marginBottom: index > 0 ? '-8px' : '0'
             }}
           >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Icon
-                name={toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : 'info'}
-                className={`shrink-0 ${toast.type === 'success' ? 'text-green-500' : toast.type === 'error' ? 'text-red-500' : toast.type === 'warning' ? 'text-amber-500' : 'text-blue-400'}`}
-              />
-              <span className="text-sm font-medium truncate">{toast.message}</span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Icon
+                  name={toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : 'info'}
+                  className={`shrink-0 ${toast.type === 'success' ? 'text-green-500' : toast.type === 'error' ? 'text-red-500' : toast.type === 'warning' ? 'text-amber-500' : 'text-blue-400'}`}
+                />
+                <span className="text-sm font-medium truncate">{toast.message}</span>
+              </div>
+              <button
+                onClick={() => dismissToast(toast.id)}
+                className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors"
+                aria-label="Dismiss notification"
+              >
+                <Icon name="close" className="text-xs opacity-50 hover:opacity-100" />
+              </button>
             </div>
-            <button
-              onClick={() => dismissToast(toast.id)}
-              className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors"
-              aria-label="Dismiss notification"
-            >
-              <Icon name="close" className="text-xs opacity-50 hover:opacity-100" />
-            </button>
+            {toast.action && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    toast.action?.onClick();
+                    dismissToast(toast.id);
+                  }}
+                  className={`text-xs font-medium px-3 py-1.5 rounded transition-colors ${
+                    toast.action.variant === 'primary'
+                      ? 'bg-iiif-blue text-white hover:bg-iiif-blue/90'
+                      : toast.type === 'success' ? 'text-green-700 hover:bg-green-50' :
+                        toast.type === 'error' ? 'text-red-700 hover:bg-red-50' :
+                        toast.type === 'warning' ? 'text-amber-700 hover:bg-amber-50' :
+                        'text-blue-300 hover:bg-white/10'
+                  }`}
+                >
+                  {toast.action.label}
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { IIIFCanvas, IIIFItem } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
+import { IIIF_SPEC } from '../constants';
 
 interface ImageRequestWorkbenchProps {
   canvas: IIIFCanvas;
@@ -184,10 +185,10 @@ export const ImageRequestWorkbench: React.FC<ImageRequestWorkbenchProps> = ({ ca
                 <div className="text-[10px] text-slate-400 mb-2">{infoJsonUrl}</div>
                 <pre className="text-xs text-green-400 font-mono">
                   {JSON.stringify({
-                    "@context": "http://iiif.io/api/image/3/context.json",
+                    "@context": IIIF_SPEC.IMAGE_3.CONTEXT,
                     id: imageId,
                     type: "ImageService3",
-                    protocol: "http://iiif.io/api/image",
+                    protocol: IIIF_SPEC.IMAGE_3.PROTOCOL,
                     width: canvas.width || 0,
                     height: canvas.height || 0,
                     profile: "level2",

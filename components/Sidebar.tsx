@@ -9,6 +9,7 @@ import {
   getRelationshipType,
   getValidChildTypes
 } from '../utils/iiifHierarchy';
+import { useResizablePanel } from '../hooks/useResizablePanel';
 
 interface SidebarProps {
   root: IIIFItem | null;
@@ -181,10 +182,27 @@ const TreeItem: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode, viewType, fieldMode, onSelect, onModeChange, onViewTypeChange, onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport, onOpenSettings, onToggleQuickHelp, isMobile, onClose }) => {
   const [filterText, setFilterText] = useState('');
   const [filterType, setFilterType] = useState('All');
-  
-  const sidebarStyles = isMobile 
+
+  // Resizable panel hook for desktop
+  const {
+    size: sidebarWidth,
+    isResizing,
+    handleProps,
+    panelStyle,
+  } = useResizablePanel({
+    id: 'sidebar',
+    defaultSize: 256,
+    minSize: 200,
+    maxSize: 400,
+    direction: 'horizontal',
+    side: 'right', // resize handle on right side of sidebar
+    collapseThreshold: 0, // Don't auto-collapse, use visible prop instead
+    persist: true,
+  });
+
+  const sidebarStyles = isMobile
     ? `fixed inset-y-0 left-0 z-[1000] w-72 shadow-2xl transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}`
-    : `flex flex-col h-full border-r transition-all duration-300 shrink-0 w-64`;
+    : `flex flex-col h-full border-r shrink-0 relative`;
 
   const bgStyles = fieldMode ? 'bg-black border-slate-700' : 'bg-slate-900 border-slate-800 text-slate-300';
 
@@ -193,7 +211,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
       {isMobile && visible && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950]" onClick={onClose}></div>
       )}
-      <aside className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden`}>
+      <aside
+        className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden`}
+        style={isMobile ? undefined : panelStyle}
+      >
         {/* Fixed Header */}
         <div className={`flex items-center px-4 shrink-0 gap-3 ${fieldMode ? 'h-20 border-b border-slate-700' : 'h-14 border-b border-slate-800'}`}>
           <div className={`rounded flex items-center justify-center font-bold text-xs shadow-lg ${fieldMode ? 'w-10 h-10 bg-yellow-400 text-black' : 'w-8 h-8 bg-iiif-blue text-white'}`}>IIIF</div>
@@ -276,6 +297,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
             onToggleQuickHelp={onToggleQuickHelp}
           />
         </div>
+
+        {/* Resize Handle - Desktop Only */}
+        {!isMobile && (
+          <div
+            {...handleProps}
+            className={`
+              absolute right-0 top-0 bottom-0 w-1 z-30 group
+              cursor-col-resize
+              transition-colors duration-150
+              hover:bg-slate-500/20
+              ${isResizing ? (fieldMode ? 'bg-yellow-400/30' : 'bg-iiif-blue/30') : ''}
+              ${handleProps.className}
+            `}
+          >
+            {/* Visual drag indicator */}
+            <div
+              className={`
+                absolute right-0 top-1/2 -translate-y-1/2
+                w-1 h-12 rounded-full
+                transition-all duration-150
+                opacity-0 group-hover:opacity-100 group-focus:opacity-100
+                ${isResizing
+                  ? (fieldMode ? 'bg-yellow-400 opacity-100' : 'bg-iiif-blue opacity-100')
+                  : (fieldMode ? 'bg-slate-600 group-hover:bg-yellow-400' : 'bg-slate-500 group-hover:bg-iiif-blue')
+                }
+              `}
+            />
+          </div>
+        )}
       </aside>
     </>
   );

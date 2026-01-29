@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { IIIFManifest, IIIFItem, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation, ConnectionType, getIIIFValue, AppSettings, LanguageString, isCanvas } from '../../types';
-import { DEFAULT_INGEST_PREFS, IIIF_SPEC, IIIF_CONFIG } from '../../constants';
+import { DEFAULT_INGEST_PREFS, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { Inspector } from '../Inspector';
@@ -17,6 +17,7 @@ import { BoardDesignPanel } from '../BoardDesignPanel';
 import { ItemPreviewPanel } from '../ItemPreviewPanel';
 import { ItemDetailModal } from '../ItemDetailModal';
 import { BoardExportDialog } from '../BoardExportDialog';
+import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
 
 export type AnchorSide = 'T' | 'R' | 'B' | 'L';
 
@@ -182,17 +183,17 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
 
       updateBoard(prev => ({
           ...prev,
-          items: [...prev.items, { 
-            id: crypto.randomUUID(), 
-            resourceId: itemId, 
-            resourceType: resource?.type || 'Resource', 
-            label, 
+          items: [...prev.items, {
+            id: generateUUID(),
+            resourceId: itemId,
+            resourceType: resource?.type || 'Resource',
+            label,
             blobUrl: blob,
             blobUrls: blobUrls,
-            x: coords.x - 100, 
-            y: coords.y - 75, 
-            w: 200, 
-            h: 150 
+            x: coords.x - 100,
+            y: coords.y - 75,
+            w: 200,
+            h: 150
         }]
       }));
       showToast("Resource pinned to research board", "success");
@@ -212,8 +213,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           updateBoard(prev => ({
               ...prev,
               items: [...prev.items, {
-                  id: crypto.randomUUID(),
-                  resourceId: `urn:note:${crypto.randomUUID()}`,
+                  id: generateUUID(),
+                  resourceId: `urn:note:${generateUUID()}`,
                   resourceType: 'Annotation',
                   label: 'New Note',
                   annotation: 'Double click to edit...',
@@ -293,7 +294,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
             updateBoard(prev => ({
                 ...prev,
                 connections: [...prev.connections, {
-                    id: crypto.randomUUID(),
+                    id: generateUUID(),
                     fromId: connectingStart,
                     toId: id,
                     type: 'relatesTo',
@@ -322,8 +323,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
       if (type === 'grid') {
           for (let i = 0; i < 4; i++) {
               newItems.push({
-                  id: crypto.randomUUID(),
-                  resourceId: `urn:placeholder:${crypto.randomUUID()}`,
+                  id: generateUUID(),
+                  resourceId: `urn:placeholder:${generateUUID()}`,
                   resourceType: 'Canvas',
                   label: `Grid Item ${i+1}`,
                   x: startX + (i % 2) * 220,
@@ -334,8 +335,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
       } else if (type === 'sequence') {
           for (let i = 0; i < 3; i++) {
               newItems.push({
-                  id: crypto.randomUUID(),
-                  resourceId: `urn:placeholder:${crypto.randomUUID()}`,
+                  id: generateUUID(),
+                  resourceId: `urn:placeholder:${generateUUID()}`,
                   resourceType: 'Canvas',
                   label: `Step ${i+1}`,
                   x: startX + i * 250,
@@ -344,8 +345,8 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
               });
           }
       } else if (type === 'comparison') {
-          newItems.push({ id: crypto.randomUUID(), resourceId: `urn:p1:${crypto.randomUUID()}`, resourceType: 'Canvas', label: 'Object A', x: startX, y: startY, w: 300, h: 400 });
-          newItems.push({ id: crypto.randomUUID(), resourceId: `urn:p2:${crypto.randomUUID()}`, resourceType: 'Canvas', label: 'Object B', x: startX + 320, y: startY, w: 300, h: 400 });
+          newItems.push({ id: generateUUID(), resourceId: `urn:p1:${generateUUID()}`, resourceType: 'Canvas', label: 'Object A', x: startX, y: startY, w: 300, h: 400 });
+          newItems.push({ id: generateUUID(), resourceId: `urn:p2:${generateUUID()}`, resourceType: 'Canvas', label: 'Object B', x: startX + 320, y: startY, w: 300, h: 400 });
       }
 
       updateBoard(prev => ({
@@ -386,7 +387,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
   const duplicateItem = (id: string) => {
       const item = items.find(i => i.id === id);
       if (!item) return;
-      const newItem = { ...item, id: crypto.randomUUID(), x: item.x + 20, y: item.y + 20 };
+      const newItem = { ...item, id: generateUUID(), x: item.x + 20, y: item.y + 20 };
       updateBoard(prev => ({ ...prev, items: [...prev.items, newItem] }));
       setActiveId(newItem.id);
   };
@@ -608,7 +609,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
     const boardHeight = Math.max(maxY - minY, DEFAULT_INGEST_PREFS.defaultCanvasHeight);
 
     const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
-    const boardId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, `board-${crypto.randomUUID()}`);
+    const boardId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, `board-${generateUUID()}`);
     const canvasId = `${boardId}/canvas/1`;
 
     const paintingAnnotations: IIIFAnnotation[] = items.map((item, idx) => {
@@ -636,7 +637,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
         id: `${canvasId}/annotation/item-${idx}`,
         type: "Annotation",
         motivation: "painting",
-        label: { none: [item.label] },
+        label: createLanguageMap(item.label),
         body: body as any,
         target: `${canvasId}#xywh=${Math.round(normX)},${Math.round(normY)},${Math.round(item.w)},${Math.round(item.h)}`,
         metadata: item.metadata,
@@ -662,11 +663,11 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
           id: `${canvasId}/annotation/link-${idx}`,
           type: "Annotation",
           motivation: "linking",
-          label: { none: [conn.label || conn.type] },
+          label: createLanguageMap(conn.label || conn.type),
           body: {
             type: "TextualBody",
-            value: JSON.stringify({ 
-                relationshipType: conn.type, 
+            value: JSON.stringify({
+                relationshipType: conn.type,
                 label: conn.label,
                 fromAnchor: conn.fromAnchor,
                 toAnchor: conn.toAnchor,
@@ -1102,7 +1103,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                                 updateBoard(prev => ({
                                                     ...prev,
                                                     connections: [...prev.connections, {
-                                                        id: crypto.randomUUID(),
+                                                        id: generateUUID(),
                                                         fromId: connectingStart,
                                                         toId: it.id,
                                                         type: 'relatesTo',
@@ -1130,7 +1131,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                                 updateBoard(prev => ({
                                                     ...prev,
                                                     connections: [...prev.connections, {
-                                                        id: crypto.randomUUID(),
+                                                        id: generateUUID(),
                                                         fromId: connectingStart,
                                                         toId: it.id,
                                                         type: 'relatesTo',

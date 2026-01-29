@@ -593,3 +593,14 @@ export function isPaintingMotivation(motivation: string | string[]): boolean {
   }
   return motivation === 'painting';
 }
+
+// ============================================================================
+// UUID Generation
+// ============================================================================
+
+/**
+ * Generate a UUID v4 for IIIF resource IDs
+ */
+export function generateUUID(): string {
+  return crypto.randomUUID();
+}

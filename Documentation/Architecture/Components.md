@@ -69,7 +69,104 @@ Field Studio uses a hierarchical component structure with clear separation of co
 |-----------|------|---------|-------|
 | `ViewRouter` | `ViewRouter.tsx` | Mode-based view switching | ~3KB |
 | `Workspace` | `Workspace.tsx` | Main layout container | ~8KB |
-| `Sidebar` | `Sidebar.tsx` | Navigation sidebar | ~10KB |
+| `Sidebar` | `Sidebar.tsx` | Navigation sidebar (resizable) | ~10KB |
+| `ResizablePanel` | `ResizablePanel.tsx` | Resizable panel wrapper | ~16KB |
+
+---
+
+### Layout Components
+
+#### `ResizablePanel.tsx`
+
+Consistent resizable panel system for Sidebar, Inspector, and split panes.
+
+```typescript
+// ResizablePanel - Wrapper component with integrated resize handle
+interface ResizablePanelProps {
+  config: Omit<ResizablePanelConfig, 'onCollapse' | 'onExpand'>;
+  children: React.ReactNode;
+  className?: string;
+  visible?: boolean;
+  onVisibilityChange?: (visible: boolean) => void;
+  showCollapseButton?: boolean;
+  collapseButtonContent?: React.ReactNode;
+  fieldMode?: boolean;
+  'aria-label'?: string;
+}
+
+// ResizeHandle - Styled drag handle with visual feedback
+interface ResizeHandleProps {
+  direction: 'horizontal' | 'vertical';
+  side: 'left' | 'right' | 'top' | 'bottom';
+  isResizing: boolean;
+  fieldMode?: boolean;
+  handleProps: ReturnType<typeof useResizablePanel>['handleProps'];
+}
+
+// SplitPane - Two-pane split layout with resizable divider
+interface SplitPaneProps {
+  id: string;
+  direction: 'horizontal' | 'vertical';
+  primary: React.ReactNode;
+  secondary: React.ReactNode;
+  defaultSize?: number;
+  minSize?: number;
+  maxSize?: number;
+  className?: string;
+  fieldMode?: boolean;
+  collapsible?: boolean;
+  collapseThreshold?: number;
+}
+```
+
+**Features:**
+- Drag handle with visual feedback (blue/yellow for field mode)
+- Keyboard accessible (Arrow keys, Home/End)
+- Touch friendly with expanded hit areas
+- Collapse/expand support with smooth transitions
+- Persistence to localStorage
+- Consistent styling across light/dark/field modes
+
+**Exported Components:**
+| Component | Purpose |
+|-----------|---------|
+| `ResizablePanel` | High-level panel wrapper with handle |
+| `ResizeHandle` | Standalone resize handle |
+| `SplitPane` | Two-pane split layout |
+| `PANEL_DEFAULTS` | Default configurations |
+
+**Usage:**
+```tsx
+import { ResizablePanel, SplitPane, PANEL_DEFAULTS } from './components/ResizablePanel';
+
+// Resizable sidebar
+<ResizablePanel
+  config={PANEL_DEFAULTS.sidebar}
+  fieldMode={settings.fieldMode}
+  visible={sidebarVisible}
+  onVisibilityChange={setSidebarVisible}
+>
+  <SidebarContent />
+</ResizablePanel>
+
+// Split pane layout
+<SplitPane
+  id="collections"
+  direction="horizontal"
+  primary={<TreeSidebar />}
+  secondary={<MainContent />}
+  defaultSize={280}
+  minSize={200}
+  maxSize={500}
+/>
+```
+
+**Panel Default Configurations:**
+| Panel | Default | Min | Max | Collapse |
+|-------|---------|-----|-----|----------|
+| Sidebar | 256px | 200px | 400px | 100px |
+| Inspector | 320px | 280px | 480px | 200px |
+| Collections Tree | 280px | 200px | 500px | 100px |
 
 ---
 

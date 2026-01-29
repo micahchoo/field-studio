@@ -874,3 +874,417 @@ export const RESOURCE_TYPE_CONFIG: Record<string, { icon: string; colorClass: st
     metaphor: 'Collections of one/many persons annotations on a single page, book or genre'
   }
 };
+
+// ============================================================================
+// Accessibility & Motion Preferences
+// ============================================================================
+
+/**
+ * Reduced Motion Preferences
+ * Respects user system preferences for motion
+ */
+export const REDUCED_MOTION = {
+  /**
+   * Check if user prefers reduced motion
+   * Uses matchMedia API to detect system preference
+   */
+  prefersReducedMotion: (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  },
+
+  /**
+   * Get animation duration based on user preference
+   * @param normalDuration - Duration in ms for normal animation
+   * @returns Duration in ms (0 if reduced motion preferred)
+   */
+  getDuration: (normalDuration: number): number => {
+    if (typeof window === 'undefined') return normalDuration;
+    return REDUCED_MOTION.prefersReducedMotion() ? 0 : normalDuration;
+  },
+
+  /**
+   * Animation durations used throughout the app
+   */
+  DURATIONS: {
+    /** Fast transitions (buttons, hover states) */
+    fast: 150,
+    /** Normal transitions (modals, panels) */
+    normal: 300,
+    /** Slow transitions (page transitions) */
+    slow: 500,
+    /** Stagger delay for lists */
+    stagger: 50
+  },
+
+  /**
+   * CSS classes for transitions respecting motion preferences
+   * Use these instead of hardcoded transition classes
+   */
+  TRANSITIONS: {
+    /** Default transition */
+    default: 'transition-all motion-reduce:transition-none',
+    /** Colors only (opacity, background, border) */
+    colors: 'transition-colors motion-reduce:transition-none',
+    /** Transform only (scale, translate, rotate) */
+    transform: 'transition-transform motion-reduce:transition-none',
+    /** Opacity only */
+    opacity: 'transition-opacity motion-reduce:transition-none'
+  },
+
+  /**
+   * Easing curves for consistent animations
+   */
+  EASING: {
+    default: 'ease-out',
+    bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+    smooth: 'cubic-bezier(0.4, 0, 0.2, 1)'
+  }
+};
+
+// ============================================================================
+// Responsive Breakpoints
+// ============================================================================
+
+/**
+ * Responsive breakpoint configuration
+ * Centralizes breakpoint values for consistent responsive behavior
+ */
+export const BREAKPOINTS = {
+  /** Mobile portrait */
+  xs: 320,
+  /** Mobile landscape */
+  sm: 640,
+  /** Tablet portrait */
+  md: 768,
+  /** Tablet landscape / Small desktop */
+  lg: 1024,
+  /** Desktop */
+  xl: 1280,
+  /** Large desktop */
+  '2xl': 1536
+};
+
+/**
+ * Tailwind-compatible breakpoint strings for use in className
+ */
+export const BP = {
+  xs: 'xs:',
+  sm: 'sm:',
+  md: 'md:',
+  lg: 'lg:',
+  xl: 'xl:',
+  '2xl': '2xl:'
+};
+
+/**
+ * Check if viewport matches a breakpoint
+ * @param breakpoint - Breakpoint name or pixel value
+ * @returns boolean indicating if viewport matches
+ */
+export function isMinBreakpoint(breakpoint: keyof typeof BREAKPOINTS | number): boolean {
+  if (typeof window === 'undefined') return false;
+  const width = typeof breakpoint === 'number' ? breakpoint : BREAKPOINTS[breakpoint];
+  return window.innerWidth >= width;
+}
+
+/**
+ * Check if viewport is below a breakpoint
+ * @param breakpoint - Breakpoint name or pixel value
+ * @returns boolean indicating if viewport is below
+ */
+export function isMaxBreakpoint(breakpoint: keyof typeof BREAKPOINTS | number): boolean {
+  if (typeof window === 'undefined') return false;
+  const width = typeof breakpoint === 'number' ? breakpoint : BREAKPOINTS[breakpoint];
+  return window.innerWidth < width;
+}
+
+// ============================================================================
+// Keyboard Navigation
+// ============================================================================
+
+/**
+ * Keyboard shortcut configuration
+ * Centralizes keyboard navigation patterns
+ */
+export const KEYBOARD = {
+  /** Key codes for common navigation */
+  KEYS: {
+    ESCAPE: 'Escape',
+    ENTER: 'Enter',
+    SPACE: ' ',
+    TAB: 'Tab',
+    ARROW_UP: 'ArrowUp',
+    ARROW_DOWN: 'ArrowDown',
+    ARROW_LEFT: 'ArrowLeft',
+    ARROW_RIGHT: 'ArrowRight',
+    HOME: 'Home',
+    END: 'End',
+    PAGE_UP: 'PageUp',
+    PAGE_DOWN: 'PageDown',
+    DELETE: 'Delete',
+    BACKSPACE: 'Backspace'
+  },
+
+  /**
+   * Focus management utilities
+   */
+  FOCUS: {
+    /** CSS class for visible focus indicator */
+    visibleClass: 'focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2',
+    /** CSS class for focus within containers */
+    withinClass: 'focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2'
+  },
+
+  /**
+   * Common keyboard handler patterns
+   */
+  HANDLERS: {
+    /** Close on Escape */
+    escape: (handler: () => void) => (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handler();
+    },
+    /** Submit on Enter (not with modifiers) */
+    enter: (handler: () => void) => (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        handler();
+      }
+    },
+    /** Arrow key navigation */
+    arrow: (
+      handlers: { up?: () => void; down?: () => void; left?: () => void; right?: () => void }
+    ) => (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowUp': handlers.up?.(); break;
+        case 'ArrowDown': handlers.down?.(); break;
+        case 'ArrowLeft': handlers.left?.(); break;
+        case 'ArrowRight': handlers.right?.(); break;
+      }
+    }
+  }
+};
+
+// ============================================================================
+// Empty State Configuration
+// ============================================================================
+
+/**
+ * Empty state presets for common scenarios
+ * Ensures consistent messaging across the app
+ */
+export const EMPTY_STATES = {
+  /** No items in a collection/view */
+  NO_ITEMS: {
+    icon: 'inbox',
+    title: 'No Items',
+    message: 'This area is empty. Add items to get started.',
+    actionLabel: 'Add Item'
+  },
+
+  /** No search results */
+  NO_RESULTS: {
+    icon: 'search_off',
+    title: 'No Results',
+    message: 'No items match your search. Try different terms or filters.',
+    actionLabel: 'Clear Filters'
+  },
+
+  /** No selection */
+  NO_SELECTION: {
+    icon: 'touch_app',
+    title: 'Nothing Selected',
+    message: 'Select an item from the list to view details and edit.',
+    actionLabel: undefined
+  },
+
+  /** Error state */
+  ERROR: {
+    icon: 'error_outline',
+    title: 'Something Went Wrong',
+    message: 'We encountered an error. Please try again or contact support.',
+    actionLabel: 'Retry'
+  },
+
+  /** Loading state placeholder */
+  LOADING: {
+    icon: 'hourglass_empty',
+    title: 'Loading...',
+    message: 'Please wait while we load your data.',
+    actionLabel: undefined
+  },
+
+  /** No data (for imports/uploads) */
+  NO_DATA: {
+    icon: 'cloud_upload',
+    title: 'No Data Yet',
+    message: 'Import files or create new items to populate this view.',
+    actionLabel: 'Import'
+  },
+
+  /** Empty canvas/board */
+  EMPTY_CANVAS: {
+    icon: 'crop_free',
+    title: 'Empty Canvas',
+    message: 'Drag items here or use the toolbar to add content.',
+    actionLabel: 'Add Content'
+  }
+};
+
+// ============================================================================
+// Loading State Configuration
+// ============================================================================
+
+/**
+ * Loading state presets for consistent UX
+ */
+export const LOADING_STATES = {
+  /** Skeleton configuration */
+  SKELETON: {
+    /** Base pulse animation class */
+    pulseClass: 'animate-pulse motion-reduce:animate-none',
+    /** Background color */
+    bgClass: 'bg-slate-200 dark:bg-slate-700',
+    /** Rounded corners */
+    roundedClass: 'rounded-md'
+  },
+
+  /** Spinner sizes */
+  SPINNER: {
+    sm: 'w-4 h-4 border-2',
+    md: 'w-8 h-8 border-3',
+    lg: 'w-12 h-12 border-4',
+    xl: 'w-16 h-16 border-4'
+  },
+
+  /** Delay before showing loading state (prevents flash) */
+  DEBOUNCE_MS: 200,
+
+  /** Maximum time to show loading before showing error */
+  TIMEOUT_MS: 30000
+};
+
+// ============================================================================
+// Error Handling Configuration
+// ============================================================================
+
+/**
+ * Error handling patterns and messages
+ */
+export const ERROR_HANDLING = {
+  /** Default error messages by category */
+  MESSAGES: {
+    /** Generic errors */
+    generic: 'An unexpected error occurred. Please try again.',
+    /** Network errors */
+    network: 'Connection failed. Please check your internet connection.',
+    /** Validation errors */
+    validation: 'Please check your input and try again.',
+    /** Not found errors */
+    notFound: 'The requested item could not be found.',
+    /** Permission errors */
+    permission: 'You do not have permission to perform this action.',
+    /** Timeout errors */
+    timeout: 'The operation timed out. Please try again.',
+    /** Parse errors */
+    parse: 'Could not process the file. It may be corrupted or in an unexpected format.'
+  },
+
+  /** Retry configuration */
+  RETRY: {
+    /** Number of retry attempts */
+    maxAttempts: 3,
+    /** Delay between retries in ms */
+    delayMs: 1000,
+    /** Exponential backoff multiplier */
+    backoffMultiplier: 2
+  },
+
+  /** Error boundary fallback config */
+  FALLBACK: {
+    title: 'Something went wrong',
+    description: 'We apologize for the inconvenience. The error has been logged.',
+    actionLabel: 'Reload Application'
+  }
+};
+
+// ============================================================================
+// Accessibility Labels & ARIA Patterns
+// ============================================================================
+
+/**
+ * Common aria-label values for consistent accessibility
+ */
+export const ARIA_LABELS = {
+  /** Navigation */
+  close: 'Close',
+  goBack: 'Go back',
+  goForward: 'Go forward',
+  openMenu: 'Open menu',
+  closeMenu: 'Close menu',
+
+  /** Actions */
+  save: 'Save changes',
+  cancel: 'Cancel',
+  delete: 'Delete',
+  edit: 'Edit',
+  create: 'Create new',
+  duplicate: 'Duplicate',
+  move: 'Move',
+
+  /** Selection */
+  select: 'Select',
+  selectAll: 'Select all',
+  deselectAll: 'Deselect all',
+  clearSelection: 'Clear selection',
+
+  /** Search & Filter */
+  search: 'Search',
+  clearSearch: 'Clear search',
+  filter: 'Filter results',
+  clearFilters: 'Clear all filters',
+
+  /** View controls */
+  zoomIn: 'Zoom in',
+  zoomOut: 'Zoom out',
+  resetZoom: 'Reset zoom',
+  fullscreen: 'Enter fullscreen',
+  exitFullscreen: 'Exit fullscreen',
+
+  /** Navigation */
+  previous: 'Previous',
+  next: 'Next',
+  first: 'First',
+  last: 'Last',
+
+  /** Misc */
+  expand: 'Expand',
+  collapse: 'Collapse',
+  moreOptions: 'More options',
+  loading: 'Loading',
+  help: 'Help'
+};
+
+/**
+ * ARIA live region configurations
+ */
+export const ARIA_LIVE = {
+  /** For important updates that should be announced immediately */
+  assertive: { 'aria-live': 'assertive', 'aria-atomic': 'true' },
+  /** For non-critical updates */
+  polite: { 'aria-live': 'polite', 'aria-atomic': 'true' },
+  /** For status updates */
+  status: { role: 'status', 'aria-live': 'polite' },
+  /** For alerts */
+  alert: { role: 'alert', 'aria-live': 'assertive' }
+};
+
+/**
+ * Focus trap configuration for modals/dialogs
+ */
+export const FOCUS_TRAP = {
+  /** Selector for focusable elements */
+  focusableSelector: 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  /** Initial delay before focusing first element */
+  focusDelay: 50
+};

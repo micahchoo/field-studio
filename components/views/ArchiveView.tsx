@@ -6,7 +6,8 @@ import { MapView } from './MapView';
 import { TimelineView } from './TimelineView';
 import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
-import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG } from '../../constants';
+import { EmptyState } from '../EmptyState';
+import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
 import { Viewer } from './Viewer';
 import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '../../hooks';
 import {
@@ -18,6 +19,7 @@ import { resolveThumbUrl, resolveHierarchicalThumbs } from '../../utils/imageSou
 import { StackedThumbnail } from '../StackedThumbnail';
 import { ContextMenu, ContextMenuSection } from '../ContextMenu';
 import { MultiSelectFilmstrip } from '../MultiSelectFilmstrip';
+import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
 
 interface ArchiveViewProps {
   root: IIIFItem | null;
@@ -34,11 +36,11 @@ interface ArchiveViewProps {
 const getFileDNA = (item: IIIFItem) => {
     const has = { time: false, location: false, device: false };
     if (item.metadata) {
-        const date = item.navDate || item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'date created')?.value?.['en']?.[0];
+        const date = item.navDate || item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'date created')?.value && getIIIFValue(item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'date created')!.value, 'en');
         if (date) has.time = true;
-        const loc = item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'location')?.value?.['en']?.[0];
+        const loc = item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'location')?.value && getIIIFValue(item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'location')!.value, 'en');
         if (loc) has.location = true;
-        const camera = item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'camera')?.value?.['en']?.[0];
+        const camera = item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'camera')?.value && getIIIFValue(item.metadata.find(m => getIIIFValue(m.label).toLowerCase() === 'camera')!.value, 'en');
         if (camera) has.device = true;
     }
     return has;
@@ -56,7 +58,21 @@ interface RubberBandState {
 
 export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen, onBatchEdit, onUpdate, validationIssues = {}, fieldMode, onReveal, onCatalogSelection }) => {
   const { showToast } = useToast();
-  const [view, setView] = useState<'grid' | 'list' | 'map' | 'timeline'>('grid');
+  
+  // Load persisted view mode from localStorage
+  const [view, setView] = useState<'grid' | 'list' | 'map' | 'timeline'>(() => {
+    if (typeof window === 'undefined') return 'grid';
+    const saved = localStorage.getItem('field-studio:archive-view-mode');
+    if (saved && ['grid', 'list', 'map', 'timeline'].includes(saved)) {
+      return saved as 'grid' | 'list' | 'map' | 'timeline';
+    }
+    return 'grid';
+  });
+  
+  // Persist view mode changes to localStorage
+  useEffect(() => {
+    localStorage.setItem('field-studio:archive-view-mode', view);
+  }, [view]);
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name');
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
@@ -134,12 +150,16 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       }
   }, [selectedIds, assets, activeItem]);
 
-  const filteredAssets = assets.filter(a =>
-    getIIIFValue(a.label).toLowerCase().includes(filter.toLowerCase())
-  ).sort((a, b) => {
-      if (sortBy === 'name') return getIIIFValue(a.label).localeCompare(getIIIFValue(b.label));
-      return (b.navDate || '').localeCompare(a.navDate || '');
-  });
+  // Memoize expensive filter and sort operations
+  const filterLower = filter.toLowerCase();
+  const filteredAssets = useMemo(() => {
+    return assets.filter(a =>
+      getIIIFValue(a.label).toLowerCase().includes(filterLower)
+    ).sort((a, b) => {
+        if (sortBy === 'name') return getIIIFValue(a.label).localeCompare(getIIIFValue(b.label));
+        return (b.navDate || '').localeCompare(a.navDate || '');
+    });
+  }, [assets, filterLower, sortBy]);
 
   // Virtualization for grid view - estimate item size based on mode
   const gridItemSize = useMemo(() => {
@@ -209,7 +229,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       }
 
       const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
-      const manifestId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, crypto.randomUUID());
+      const manifestId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, generateUUID());
 
       // Create new Manifest with proper IIIF 3.0 structure
       // Manifest → Canvas is an OWNERSHIP relationship (exclusive)
@@ -220,7 +240,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
           id: manifestId,
           type: 'Manifest',
-          label: { none: ['Selection Bundle'] },
+          label: createLanguageMap('Selection Bundle'),
           items: canvasesToMove,
           behavior: ['individuals'] // Default behavior for new Manifests
       };
@@ -237,7 +257,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       }
   }, [root, onUpdate, selectedIds, select, showToast]);
 
-  const handleItemClick = (e: React.MouseEvent, asset: IIIFItem) => {
+  // Stable callback handlers for item interactions
+  const handleItemClick = useCallback((e: React.MouseEvent, asset: IIIFItem) => {
       // Use the shared selection hook's modifier handler
       handleSelectWithModifier(asset.id, e, filteredAssets);
       
@@ -245,14 +266,25 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           // Regular click without modifiers - also trigger onSelect
           onSelect(asset);
       }
-  };
+  }, [handleSelectWithModifier, filteredAssets, onSelect]);
 
-  const handleContextMenu = (e: React.MouseEvent, id: string) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault();
     // Check if this item is part of a multi-selection
     const isMulti = selectedIds.size > 1 && selectedIds.has(id);
     setContextMenu({ x: e.clientX, y: e.clientY, targetId: id, isMulti });
-  };
+  }, [selectedIds]);
+
+  // Stable view change handlers
+  const handleSetViewGrid = useCallback(() => setView('grid'), [setView]);
+  const handleSetViewList = useCallback(() => setView('list'), [setView]);
+  const handleSetViewMap = useCallback(() => setView('map'), [setView]);
+  const handleSetViewTimeline = useCallback(() => setView('timeline'), [setView]);
+
+  // Stable filter change handler with debounce
+  const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value);
+  }, [setFilter]);
 
   const handleContextMenuClose = useCallback(() => {
     setContextMenu(null);
@@ -517,15 +549,22 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
           {!isMobile && (
               <div className="relative">
                 <Icon name="search" className={`absolute left-3 top-2.5 text-lg ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                <input type="text" placeholder="Filter archive..." value={filter} onChange={(e) => setFilter(e.target.value)} className={`pl-10 pr-3 py-2 border rounded-md text-sm outline-none transition-all w-64 ${fieldMode ? 'bg-slate-800 border-slate-600 text-white focus:border-yellow-400 placeholder:text-slate-600' : 'bg-slate-100 border-transparent focus:bg-white focus:border-iiif-blue'}`} />
+                <input type="text" placeholder="Filter archive..." value={filter} onChange={handleFilterChange} className={`pl-10 pr-3 py-2 border rounded-md text-sm outline-none transition-all w-64 ${fieldMode ? 'bg-slate-800 border-slate-600 text-white focus:border-yellow-400 placeholder:text-slate-600' : 'bg-slate-100 border-transparent focus:bg-white focus:border-iiif-blue'}`} />
               </div>
           )}
           <div className={`flex p-1 rounded-md ${fieldMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-            {['grid', 'list', 'map', 'timeline'].map((v: any) => (
-              <button key={v} onClick={() => setView(v)} className={`p-2 rounded ${view === v ? (fieldMode ? 'bg-yellow-400 text-black font-bold' : 'bg-white text-iiif-blue shadow-sm') : 'text-slate-400'}`}>
-                <Icon name={v === 'grid' ? 'grid_view' : v === 'list' ? 'view_list' : v} />
-              </button>
-            ))}
+            <button onClick={handleSetViewGrid} className={`p-2 rounded ${view === 'grid' ? (fieldMode ? 'bg-yellow-400 text-black font-bold' : 'bg-white text-iiif-blue shadow-sm') : 'text-slate-400'}`}>
+              <Icon name="grid_view" />
+            </button>
+            <button onClick={handleSetViewList} className={`p-2 rounded ${view === 'list' ? (fieldMode ? 'bg-yellow-400 text-black font-bold' : 'bg-white text-iiif-blue shadow-sm') : 'text-slate-400'}`}>
+              <Icon name="view_list" />
+            </button>
+            <button onClick={handleSetViewMap} className={`p-2 rounded ${view === 'map' ? (fieldMode ? 'bg-yellow-400 text-black font-bold' : 'bg-white text-iiif-blue shadow-sm') : 'text-slate-400'}`}>
+              <Icon name="map" />
+            </button>
+            <button onClick={handleSetViewTimeline} className={`p-2 rounded ${view === 'timeline' ? (fieldMode ? 'bg-yellow-400 text-black font-bold' : 'bg-white text-iiif-blue shadow-sm') : 'text-slate-400'}`}>
+              <Icon name="timeline" />
+            </button>
           </div>
         </div>
       </div>
@@ -638,6 +677,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
               fieldMode={fieldMode}
               activeItem={activeItem}
               isMobile={isMobile}
+              filter={filter}
+              onClearFilter={() => setFilter('')}
             />
             </div>
             )}
@@ -747,9 +788,9 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
                     for (const item of list) {
                       if (targetIds.includes(item.id)) {
                         const duplicate = JSON.parse(JSON.stringify(item));
-                        duplicate.id = `${item.id}_copy_${crypto.randomUUID().slice(0, 8)}`;
+                        duplicate.id = `${item.id}_copy_${generateUUID().slice(0, 8)}`;
                         const originalLabel = getIIIFValue(duplicate.label);
-                        duplicate.label = { none: [`${originalLabel} (Copy)`] };
+                        duplicate.label = createLanguageMap(`${originalLabel} (Copy)`);
                         toDuplicate.push(duplicate);
                       }
                       if (item.items || item.annotations) {
@@ -884,6 +925,8 @@ interface VirtualizedGridProps {
   fieldMode: boolean;
   activeItem: IIIFCanvas | null;
   isMobile: boolean;
+  filter?: string;
+  onClearFilter?: () => void;
 }
 
 const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({
@@ -894,7 +937,9 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({
   renderItem,
   fieldMode,
   activeItem,
-  isMobile
+  isMobile,
+  filter,
+  onClearFilter
 }) => {
   const gap = 16;
   const rowHeight = itemSize.height + gap;
@@ -923,10 +968,17 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({
       </div>
       {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
       {items.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] text-slate-400">
-          <Icon name="inventory_2" className="text-6xl mb-4 opacity-20"/>
-          <p className="font-bold uppercase tracking-widest text-xs">No items found</p>
-        </div>
+        <EmptyState
+          icon="inventory_2"
+          title={filter ? 'No items match your filter' : 'No items in archive'}
+          message={filter
+            ? `Try adjusting your search for "${filter}" or clear the filter to see all items.`
+            : 'Import files to get started building your archive.'}
+          action={filter && onClearFilter
+            ? { label: 'Clear Filter', icon: 'clear', onClick: onClearFilter }
+            : undefined}
+          variant={fieldMode ? 'field-mode' : 'default'}
+        />
       )}
     </div>
   );
@@ -1032,11 +1084,37 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
         </table>
       </div>
       {assets.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] text-slate-400">
-          <Icon name="inventory_2" className="text-6xl mb-4 opacity-20"/>
-          <p className="font-bold uppercase tracking-widest text-xs">No items found</p>
-        </div>
+        <EmptyState
+          icon="inventory_2"
+          title="No items in archive"
+          message="Import files to get started building your archive."
+          variant={fieldMode ? 'field-mode' : 'default'}
+        />
       )}
+    </div>
+  );
+};
+
+// Skeleton loading component for grid
+interface SkeletonGridProps {
+  count?: number;
+  fieldMode?: boolean;
+}
+
+const SkeletonGrid: React.FC<SkeletonGridProps> = ({ count = 8, fieldMode }) => {
+  return (
+    <div className={`grid gap-4 ${fieldMode ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8'}`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={`animate-pulse rounded-lg border p-3 ${
+            fieldMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+          }`}
+        >
+          <div className={`aspect-square rounded mb-2 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+          <div className={`h-4 rounded w-3/4 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+        </div>
+      ))}
     </div>
   );
 };

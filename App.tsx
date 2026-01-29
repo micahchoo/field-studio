@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation, isCanvas } from './types';
+import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation, isCanvas, isCollection } from './types';
 import { METADATA_TEMPLATES } from './constants';
 import { Sidebar } from './components/Sidebar';
 import { Inspector } from './components/Inspector';
@@ -165,17 +165,17 @@ const MainApp: React.FC = () => {
   // ============================================================================
 
   const commands = useMemo(() => [
-    { id: 'archive', label: 'Go to Archive', icon: 'inventory_2', shortcut: '⌘1', action: () => setCurrentMode('archive'), section: 'Navigation' as const },
-    { id: 'collections', label: 'Go to Collections', icon: 'folder_special', shortcut: '⌘2', action: () => setCurrentMode('collections'), section: 'Navigation' as const },
-    { id: 'metadata', label: 'Go to Metadata', icon: 'table_chart', shortcut: '⌘3', action: () => setCurrentMode('metadata'), section: 'Navigation' as const },
-    { id: 'search', label: 'Go to Search', icon: 'search', shortcut: '⌘4', action: () => setCurrentMode('search'), section: 'Navigation' as const },
-    { id: 'export', label: 'Export Archive', icon: 'download', shortcut: '⌘E', action: exportDialog.open, section: 'Actions' as const },
-    { id: 'import', label: 'Import External IIIF', icon: 'cloud_download', action: externalImport.open, section: 'Actions' as const },
-    { id: 'settings', label: 'Open Settings', icon: 'settings', shortcut: '⌘,', action: personaSettings.open, section: 'Actions' as const },
-    { id: 'qc', label: 'Quality Control Dashboard', icon: 'fact_check', action: qcDashboard.open, section: 'Actions' as const },
-    { id: 'fieldmode', label: 'Toggle Field Mode', icon: 'contrast', action: toggleFieldMode, section: 'View' as const },
-    { id: 'sidebar', label: 'Toggle Sidebar', icon: 'side_navigation', action: () => setShowSidebar(s => !s), section: 'View' as const },
-    { id: 'inspector', label: 'Toggle Inspector', icon: 'info', action: () => setShowInspector(s => !s), section: 'View' as const },
+    { id: 'archive', label: 'Go to Archive', icon: 'inventory_2', shortcut: '⌘1', onExecute: () => setCurrentMode('archive'), section: 'Navigation' as const, description: 'Switch to Archive view' },
+    { id: 'collections', label: 'Go to Collections', icon: 'folder_special', shortcut: '⌘2', onExecute: () => setCurrentMode('collections'), section: 'Navigation' as const, description: 'Switch to Collections/Structure view' },
+    { id: 'metadata', label: 'Go to Metadata', icon: 'table_chart', shortcut: '⌘3', onExecute: () => setCurrentMode('metadata'), section: 'Navigation' as const, description: 'Switch to Metadata spreadsheet view' },
+    { id: 'search', label: 'Go to Search', icon: 'search', shortcut: '⌘4', onExecute: () => setCurrentMode('search'), section: 'Navigation' as const, description: 'Switch to Search view' },
+    { id: 'export', label: 'Export Archive', icon: 'download', shortcut: '⌘E', onExecute: exportDialog.open, section: 'Actions' as const, description: 'Export archive to IIIF package' },
+    { id: 'import', label: 'Import External IIIF', icon: 'cloud_download', onExecute: externalImport.open, section: 'Actions' as const, description: 'Import from external IIIF manifest or collection' },
+    { id: 'settings', label: 'Open Settings', icon: 'settings', shortcut: '⌘,', onExecute: personaSettings.open, section: 'Actions' as const, description: 'Open application settings' },
+    { id: 'qc', label: 'Quality Control Dashboard', icon: 'fact_check', onExecute: qcDashboard.open, section: 'Actions' as const, description: 'View and fix validation issues' },
+    { id: 'fieldmode', label: 'Toggle Field Mode', icon: 'contrast', onExecute: toggleFieldMode, section: 'View' as const, description: 'Toggle high-contrast field mode' },
+    { id: 'sidebar', label: 'Toggle Sidebar', icon: 'side_navigation', onExecute: () => setShowSidebar(s => !s), section: 'View' as const, description: 'Show or hide the sidebar' },
+    { id: 'inspector', label: 'Toggle Inspector', icon: 'info', onExecute: () => setShowInspector(s => !s), section: 'View' as const, description: 'Show or hide the inspector panel' },
   ], [exportDialog.open, externalImport.open, personaSettings.open, qcDashboard.open, toggleFieldMode]);
 
   // ============================================================================
@@ -545,7 +545,7 @@ const MainApp: React.FC = () => {
 
       {externalImport.isOpen && (
         <ExternalImportDialog
-          onImport={(it) => handleUpdateRoot(root?.type === 'Collection' ? { ...root, items: [...(root.items || []), it] } as any : it as any)}
+          onImport={(it) => handleUpdateRoot(root && isCollection(root) ? { ...root, items: [...(root.items || []), it] } as any : it as any)}
           onClose={externalImport.close}
           onAuthRequired={handleAuthRequired}
         />

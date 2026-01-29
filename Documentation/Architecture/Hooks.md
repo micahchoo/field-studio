@@ -592,6 +592,7 @@ function useSourceManifestsBuilder(
 | `useVirtualization` | `hooks/useVirtualization.ts` | List/grid virtualization | **New** |
 | `useIIIFTraversal` | `hooks/useIIIFTraversal.ts` | IIIF tree traversal | **New** |
 | `useSharedSelection` | `hooks/useSharedSelection.ts` | Cross-view selection | **New** |
+| `useResizablePanel` | `hooks/useResizablePanel.ts` | Panel resizing | **New** |
 
 ---
 
@@ -770,6 +771,172 @@ const selected = isSelected(item.id);
 - `ArchiveView` - Grid/list selection
 - `CollectionsView` - Multi-select in StructureCanvas
 - Enables cross-view selection persistence
+
+---
+
+### `useResizablePanel`
+
+Comprehensive panel resizing hook with drag, keyboard, and touch support. Provides consistent resizable behavior for Sidebar, Inspector, and split panes.
+
+```typescript
+interface ResizablePanelConfig {
+  /** Unique key for localStorage persistence */
+  id: string;
+  /** Default width/height in pixels */
+  defaultSize: number;
+  /** Minimum size in pixels */
+  minSize: number;
+  /** Maximum size in pixels */
+  maxSize: number;
+  /** Direction of resize: 'horizontal' for width, 'vertical' for height */
+  direction: 'horizontal' | 'vertical';
+  /** Which side the resize handle is on */
+  side: 'left' | 'right' | 'top' | 'bottom';
+  /** Size below which panel collapses (optional) */
+  collapseThreshold?: number;
+  /** Whether to persist size to localStorage */
+  persist?: boolean;
+  /** Callback when panel is collapsed */
+  onCollapse?: () => void;
+  /** Callback when panel is expanded */
+  onExpand?: () => void;
+}
+
+interface UseResizablePanelReturn {
+  /** Current size in pixels */
+  size: number;
+  /** Whether panel is collapsed */
+  isCollapsed: boolean;
+  /** Whether resize is in progress */
+  isResizing: boolean;
+  /** Start resizing (call on mousedown/touchstart) */
+  startResize: (e: React.MouseEvent | React.TouchEvent) => void;
+  /** Reset to default size */
+  resetSize: () => void;
+  /** Toggle collapsed state */
+  toggleCollapse: () => void;
+  /** Set size programmatically */
+  setSize: (size: number) => void;
+  /** Expand panel if collapsed */
+  expand: () => void;
+  /** Collapse panel */
+  collapse: () => void;
+  /** Props to spread on the resize handle element */
+  handleProps: {
+    onMouseDown: (e: React.MouseEvent) => void;
+    onTouchStart: (e: React.TouchEvent) => void;
+    onDoubleClick: () => void;
+    onKeyDown: (e: React.KeyboardEvent) => void;
+    tabIndex: number;
+    role: string;
+    'aria-label': string;
+    'aria-valuenow': number;
+    'aria-valuemin': number;
+    'aria-valuemax': number;
+    'aria-orientation': 'horizontal' | 'vertical';
+    style: React.CSSProperties;
+    className: string;
+  };
+  /** CSS style for the panel container */
+  panelStyle: React.CSSProperties;
+}
+
+function useResizablePanel(config: ResizablePanelConfig): UseResizablePanelReturn
+```
+
+**Features:**
+- Mouse drag resizing with cursor feedback
+- Touch drag resizing for mobile/tablet
+- Keyboard resizing (Arrow keys, Shift for larger steps, Home/End for min/max)
+- Double-click to reset to default size
+- localStorage persistence (optional)
+- Min/max size constraints with clamping
+- Collapse threshold support
+- Full accessibility (ARIA attributes, keyboard navigation)
+
+**Keyboard Shortcuts:**
+| Key | Action |
+|-----|--------|
+| `Arrow Left/Right` | Resize horizontal panels (±10px) |
+| `Arrow Up/Down` | Resize vertical panels (±10px) |
+| `Shift + Arrow` | Large resize step (±50px) |
+| `Home` | Set to minimum size |
+| `End` | Set to maximum size |
+| `Double-click` | Reset to default size |
+
+**Usage:**
+```tsx
+const {
+  size,
+  isCollapsed,
+  isResizing,
+  handleProps,
+  panelStyle,
+  toggleCollapse,
+} = useResizablePanel({
+  id: 'sidebar',
+  defaultSize: 256,
+  minSize: 200,
+  maxSize: 400,
+  direction: 'horizontal',
+  side: 'right',
+  collapseThreshold: 100,
+  persist: true,
+});
+
+return (
+  <aside style={panelStyle} className="relative">
+    {/* Panel content */}
+    <div className="flex-1">{children}</div>
+
+    {/* Resize handle */}
+    <div
+      {...handleProps}
+      className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
+        ${isResizing ? 'bg-blue-500' : 'hover:bg-blue-300'}`}
+    />
+  </aside>
+);
+```
+
+**Used in:**
+- `Sidebar.tsx` - Main navigation sidebar (200-400px)
+- `Inspector.tsx` - Property editor panel (280-480px)
+- `CollectionsView.tsx` - Tree sidebar with collapse support (200-500px)
+- `ResizablePanel.tsx` - Higher-level component wrapper
+
+**Default Configurations:**
+```typescript
+const PANEL_DEFAULTS = {
+  sidebar: {
+    id: 'sidebar',
+    defaultSize: 256,
+    minSize: 200,
+    maxSize: 400,
+    direction: 'horizontal',
+    side: 'right',
+    collapseThreshold: 100,
+  },
+  inspector: {
+    id: 'inspector',
+    defaultSize: 320,
+    minSize: 280,
+    maxSize: 480,
+    direction: 'horizontal',
+    side: 'left',
+    collapseThreshold: 200,
+  },
+  collectionsTree: {
+    id: 'collections-tree',
+    defaultSize: 280,
+    minSize: 200,
+    maxSize: 500,
+    direction: 'horizontal',
+    side: 'right',
+    collapseThreshold: 100,
+  },
+};
+```
 
 ---
 
