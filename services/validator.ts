@@ -85,13 +85,15 @@ export class ValidationService {
       let category: IssueCategory = 'Structure';
       let fixable = false;
 
-      if (err.includes('id') || err.includes('type')) {
+      // Use word boundaries to avoid matching substrings (e.g., 'id' in 'width')
+      const errLower = err.toLowerCase();
+      if (/\bid\b/.test(errLower) || /\btype\b/.test(errLower)) {
         category = 'Identity';
         fixable = true;
-      } else if (err.includes('width') || err.includes('height') || err.includes('duration')) {
+      } else if (/\bwidth\b/.test(errLower) || /\bheight\b/.test(errLower) || /\bduration\b/.test(errLower)) {
         category = 'Content';
         fixable = true;
-      } else if (err.includes('behavior') || err.includes('Behavior')) {
+      } else if (/\bbehaviou?r\b/i.test(err)) {
         category = 'Structure';
         fixable = true;
       }

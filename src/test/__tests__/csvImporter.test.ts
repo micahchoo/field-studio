@@ -8,19 +8,15 @@ import { describe, it, expect } from 'vitest';
 import {
   CSVImporterService,
   csvImporter,
-  parseCSV,
-  validateCSVColumns,
-  generateCSVTemplate,
-  type CSVRow,
-  type ColumnMapping,
 } from '../../../services/csvImporter';
-import type { IIIFManifest } from '../../../types';
+import type { IIIFManifest, IIIFCollection } from '../../../types';
 
 describe('CSVImporterService', () => {
   describe('parseCSV', () => {
     it('should parse simple CSV', () => {
       const csv = 'id,label\n1,Test Item\n2,Another Item';
-      const result = parseCSV(csv);
+      const service = new CSVImporterService();
+      const result = service.parseCSV(csv);
 
       expect(result.headers).toEqual(['id', 'label']);
       expect(result.rows).toHaveLength(2);
@@ -29,152 +25,195 @@ describe('CSVImporterService', () => {
 
     it('should handle quoted fields with commas', () => {
       const csv = 'id,label,description\n1,Item,"Description, with comma"';
-      const result = parseCSV(csv);
+      const service = new CSVImporterService();
+      const result = service.parseCSV(csv);
 
       expect(result.rows[0].description).toBe('Description, with comma');
     });
 
     it('should handle empty values', () => {
       const csv = 'id,label,optional\n1,Test,';
-      const result = parseCSV(csv);
+      const service = new CSVImporterService();
+      const result = service.parseCSV(csv);
 
       expect(result.rows[0].optional).toBe('');
     });
 
     it('should handle Windows line endings', () => {
       const csv = 'id,label\r\n1,Test\r\n2,Another';
-      const result = parseCSV(csv);
+      const service = new CSVImporterService();
+      const result = service.parseCSV(csv);
 
       expect(result.rows).toHaveLength(2);
     });
-  });
 
-  describe('validateCSVColumns', () => {
-    it('should validate supported columns', () => {
-      const headers = ['id', 'label', 'summary', 'rights'];
-      const result = validateCSVColumns(headers);
-
-      expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it('should warn about unknown columns', () => {
-      const headers = ['id', 'label', 'unknown_column'];
-      const result = validateCSVColumns(headers);
-
-      expect(result.valid).toBe(true);
-      expect(result.warnings?.length).toBeGreaterThan(0);
-    });
-
-    it('should require id column', () => {
-      const headers = ['label', 'summary'];
-      const result = validateCSVColumns(headers);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors?.some(e => e.includes('id'))).toBe(true);
-    });
-
-    it('should suggest column mappings', () => {
-      const headers = ['title', 'creator', 'date'];
-      const result = validateCSVColumns(headers);
-
-      expect(result.suggestions).toBeDefined();
-      expect(result.suggestions?.['title']).toBeDefined();
-    });
-  });
-
-  describe('generateCSVTemplate', () => {
-    it('should generate template with standard columns', () => {
-      const template = generateCSVTemplate();
-
-      expect(template).toContain('id');
-      expect(template).toContain('label');
-      expect(template).toContain('summary');
-    });
-
-    it('should include example row', () => {
-      const template = generateCSVTemplate();
-
-      expect(template).toContain('example');
-      expect(template.split('\n').length).toBeGreaterThan(1);
-    });
-
-    it('should include metadata columns when requested', () => {
-      const template = generateCSVTemplate({ includeMetadata: true });
-
-      expect(template).toContain('metadata');
-    });
-  });
-
-  describe('mapRowToMetadata', () => {
-    it('should map CSV row to IIIF metadata', () => {
-      const row: CSVRow = {
-        id: 'https://example.com/manifest',
-        label: 'Test Manifest',
-        'metadata.creator': 'John Doe',
-        'metadata.date': '2024',
-      };
-
-      const mapping: ColumnMapping[] = [
-        { csvColumn: 'id', iiifProperty: 'id' },
-        { csvColumn: 'label', iiifProperty: 'label' },
-        { csvColumn: 'metadata.creator', iiifProperty: 'metadata.creator' },
-        { csvColumn: 'metadata.date', iiifProperty: 'metadata.date' },
-      ];
-
+    it('should handle empty CSV', () => {
       const service = new CSVImporterService();
-      const result = service.mapRowToMetadata(row, mapping);
+      const result = service.parseCSV('');
 
-      expect(result.id).toBe('https://example.com/manifest');
-      expect(result.label).toEqual({ none: ['Test Manifest'] });
-      expect(result.metadata).toBeDefined();
-    });
-
-    it('should handle language-specific labels', () => {
-      const row: CSVRow = {
-        id: 'https://example.com/manifest',
-        'label:en': 'English Label',
-        'label:fr': 'French Label',
-      };
-
-      const mapping: ColumnMapping[] = [
-        { csvColumn: 'id', iiifProperty: 'id' },
-        { csvColumn: 'label:en', iiifProperty: 'label.en' },
-        { csvColumn: 'label:fr', iiifProperty: 'label.fr' },
-      ];
-
-      const service = new CSVImporterService();
-      const result = service.mapRowToMetadata(row, mapping);
-
-      expect(result.label?.en).toEqual(['English Label']);
-      expect(result.label?.fr).toEqual(['French Label']);
+      expect(result.headers).toEqual([]);
+      expect(result.rows).toHaveLength(0);
     });
   });
 
-  describe('importToManifest', () => {
-    it('should update manifest with CSV data', () => {
+  describe('detectFilenameColumn', () => {
+    it('should detect filename column', () => {
+      const service = new CSVImporterService();
+      const result = service.detectFilenameColumn(['id', 'filename', 'label']);
+
+      expect(result).toBe('filename');
+    });
+
+    it('should detect file column as fallback', () => {
+      const service = new CSVImporterService();
+      const result = service.detectFilenameColumn(['id', 'file', 'label']);
+
+      expect(result).toBe('file');
+    });
+
+    it('should return first column if no known filename column', () => {
+      const service = new CSVImporterService();
+      // 'name' is a known filename column candidate, so use columns without known names
+      const result = service.detectFilenameColumn(['custom', 'data', 'field']);
+
+      expect(result).toBe('custom');
+    });
+  });
+
+  describe('autoDetectMappings', () => {
+    it('should detect label mapping', () => {
+      const service = new CSVImporterService();
+      const mappings = service.autoDetectMappings(['filename', 'label', 'unknown'], 'filename');
+
+      const labelMapping = mappings.find(m => m.csvColumn === 'label');
+      expect(labelMapping).toBeDefined();
+      expect(labelMapping?.iiifProperty).toBe('label');
+    });
+
+    it('should detect description mapping to metadata.description', () => {
+      const service = new CSVImporterService();
+      const mappings = service.autoDetectMappings(['filename', 'description'], 'filename');
+
+      const descMapping = mappings.find(m => m.csvColumn === 'description');
+      expect(descMapping).toBeDefined();
+      // 'description' maps to 'metadata.description' in the aliases
+      expect(descMapping?.iiifProperty).toBe('metadata.description');
+    });
+
+    it('should skip filename and manifest columns', () => {
+      const service = new CSVImporterService();
+      const mappings = service.autoDetectMappings(['filename', 'manifest', 'label'], 'filename');
+
+      expect(mappings.some(m => m.csvColumn === 'filename')).toBe(false);
+      expect(mappings.some(m => m.csvColumn === 'manifest')).toBe(false);
+    });
+  });
+
+  describe('isFromStagingTemplate', () => {
+    it('should identify staging template format', () => {
+      const service = new CSVImporterService();
+      const result = service.isFromStagingTemplate(['filename', 'manifest', 'label']);
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false without filename column', () => {
+      const service = new CSVImporterService();
+      const result = service.isFromStagingTemplate(['id', 'label', 'summary']);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false without metadata properties', () => {
+      const service = new CSVImporterService();
+      const result = service.isFromStagingTemplate(['filename', 'manifest', 'other']);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('applyMappings', () => {
+    it('should apply mappings to manifest', () => {
       const manifest: IIIFManifest = {
         '@context': 'http://iiif.io/api/presentation/3/context.json',
         id: 'https://example.com/manifest',
         type: 'Manifest',
         label: { en: ['Original'] },
+        items: [
+          {
+            id: 'https://example.com/canvas1',
+            type: 'Canvas',
+            label: { none: ['image1.jpg'] },
+          }
+        ],
+      };
+
+      const rows = [
+        { filename: 'image1.jpg', title: 'Updated Title' }
+      ];
+
+      const service = new CSVImporterService();
+      const { updatedRoot, result } = service.applyMappings(
+        manifest,
+        rows,
+        'filename',
+        [{ csvColumn: 'title', iiifProperty: 'label', language: 'en' }]
+      );
+
+      expect(result.matched).toBe(1);
+    });
+
+    it('should track unmatched rows', () => {
+      const collection: IIIFCollection = {
+        '@context': 'http://iiif.io/api/presentation/3/context.json',
+        id: 'https://example.com/collection',
+        type: 'Collection',
+        label: { en: ['Test'] },
         items: [],
       };
 
-      const csvData = {
+      const rows = [
+        { filename: 'nonexistent.jpg', label: 'Test' }
+      ];
+
+      const service = new CSVImporterService();
+      const { result } = service.applyMappings(
+        collection,
+        rows,
+        'filename',
+        [{ csvColumn: 'label', iiifProperty: 'label', language: 'en' }]
+      );
+
+      expect(result.unmatched).toBe(1);
+    });
+  });
+
+  describe('exportCSV', () => {
+    it('should export items to CSV format', () => {
+      const manifest: IIIFManifest = {
+        '@context': 'http://iiif.io/api/presentation/3/context.json',
         id: 'https://example.com/manifest',
-        label: 'Updated Label',
-        summary: 'Updated Summary',
+        type: 'Manifest',
+        label: { en: ['Test Manifest'] },
+        items: [
+          {
+            id: 'https://example.com/canvas1',
+            type: 'Canvas',
+            label: { none: ['image1.jpg'] },
+          }
+        ],
       };
 
       const service = new CSVImporterService();
-      const updated = service.importToManifest(manifest, csvData);
+      const result = service.exportCSV(manifest, { properties: ['label'] });
 
-      expect(updated.label).toEqual({ none: ['Updated Label'] });
-      expect(updated.summary).toEqual({ none: ['Updated Summary'] });
+      expect(result.csv).toContain('id');
+      expect(result.csv).toContain('filename');
+      expect(result.csv).toContain('label');
+      expect(result.itemCount).toBe(1);
     });
 
-    it('should not change ID', () => {
+    it('should include specified properties', () => {
       const manifest: IIIFManifest = {
         '@context': 'http://iiif.io/api/presentation/3/context.json',
         id: 'https://example.com/manifest',
@@ -183,53 +222,57 @@ describe('CSVImporterService', () => {
         items: [],
       };
 
-      const csvData = {
-        id: 'https://example.com/different-id',
-        label: 'Updated',
-      };
-
       const service = new CSVImporterService();
-      const updated = service.importToManifest(manifest, csvData);
+      const result = service.exportCSV(manifest, { properties: ['label', 'summary'] });
 
-      expect(updated.id).toBe('https://example.com/manifest');
+      expect(result.columnCount).toBeGreaterThan(0);
     });
   });
 
-  describe('detectColumnTypes', () => {
-    it('should detect ID column', () => {
-      const rows: CSVRow[] = [
-        { id: 'https://example.com/1', label: 'Item 1' },
-        { id: 'https://example.com/2', label: 'Item 2' },
-      ];
+  describe('exportCSVSmart', () => {
+    it('should only include properties with values', () => {
+      const manifest: IIIFManifest = {
+        '@context': 'http://iiif.io/api/presentation/3/context.json',
+        id: 'https://example.com/manifest',
+        type: 'Manifest',
+        label: { en: ['Test'] },
+        items: [
+          {
+            id: 'https://example.com/canvas1',
+            type: 'Canvas',
+            label: { none: ['image1.jpg'] },
+            // no summary
+          }
+        ],
+      };
 
       const service = new CSVImporterService();
-      const types = service.detectColumnTypes(rows);
+      const result = service.exportCSVSmart(manifest);
 
-      expect(types['id']).toBe('uri');
+      expect(result.itemCount).toBe(1);
     });
+  });
 
-    it('should detect date columns', () => {
-      const rows: CSVRow[] = [
-        { date: '2024-01-15', label: 'Item' },
-        { date: '2023-12-01', label: 'Item' },
-      ];
-
+  describe('getSupportedProperties', () => {
+    it('should return supported properties', () => {
       const service = new CSVImporterService();
-      const types = service.detectColumnTypes(rows);
+      const properties = service.getSupportedProperties();
 
-      expect(types['date']).toBe('date');
+      expect(properties).toContain('label');
+      expect(properties).toContain('summary');
+      expect(properties.length).toBeGreaterThan(0);
     });
+  });
 
-    it('should detect number columns', () => {
-      const rows: CSVRow[] = [
-        { count: '10', label: 'Item' },
-        { count: '25', label: 'Item' },
-      ];
-
+  describe('getExportColumns', () => {
+    it('should return column definitions', () => {
       const service = new CSVImporterService();
-      const types = service.detectColumnTypes(rows);
+      const columns = service.getExportColumns();
 
-      expect(types['count']).toBe('number');
+      expect(columns.length).toBeGreaterThan(0);
+      expect(columns[0]).toHaveProperty('key');
+      expect(columns[0]).toHaveProperty('label');
+      expect(columns[0]).toHaveProperty('category');
     });
   });
 });
@@ -238,5 +281,11 @@ describe('csvImporter singleton', () => {
   it('should be exported', () => {
     expect(csvImporter).toBeDefined();
     expect(csvImporter).toBeInstanceOf(CSVImporterService);
+  });
+
+  it('should have all service methods', () => {
+    expect(csvImporter.parseCSV).toBeInstanceOf(Function);
+    expect(csvImporter.exportCSV).toBeInstanceOf(Function);
+    expect(csvImporter.applyMappings).toBeInstanceOf(Function);
   });
 });

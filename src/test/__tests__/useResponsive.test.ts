@@ -92,6 +92,13 @@ describe('useResponsive', () => {
   });
 
   it('should update on resize', () => {
+    // Set initial desktop width
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1280,
+    });
+
     const { result } = renderHook(() => useResponsive());
 
     expect(result.current.isDesktop).toBe(true);

@@ -99,7 +99,9 @@ describe('useAppSettings', () => {
     });
 
     expect(localStorageMock.setItem).toHaveBeenCalled();
-    const savedValue = JSON.parse(localStorageMock.setItem.mock.calls[0][1]);
+    // Get the last call which should have the updated value
+    const lastCall = localStorageMock.setItem.mock.calls[localStorageMock.setItem.mock.calls.length - 1];
+    const savedValue = JSON.parse(lastCall[1]);
     expect(savedValue.language).toBe('es');
   });
 

@@ -81,7 +81,7 @@ async function computeChecksum(data: ArrayBuffer): Promise<string> {
 // Provenance Service
 // ============================================================================
 
-class ProvenanceService {
+export class ProvenanceService {
   private provenanceMap: Map<string, ResourceProvenance> = new Map();
   private sessionAgent: ProvenanceAgent;
 

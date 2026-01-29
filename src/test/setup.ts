@@ -7,8 +7,73 @@
  * - Add custom matchers
  */
 
+import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { indexedDB } from 'fake-indexeddb';
+import { vi } from 'vitest';
+
+// Mock DOMPurify module before any imports use it
+const mockDOMPurify = {
+  sanitize: (input: string | unknown, config?: unknown): string | unknown => {
+    if (typeof input !== 'string') {
+      return String(input || '');
+    }
+    
+    // Basic HTML sanitization for tests
+    if (typeof config === 'object' && config !== null) {
+      const configObj = config as Record<string, unknown>;
+      
+      // If ALLOWED_TAGS is empty array, strip all HTML
+      if (Array.isArray(configObj.ALLOWED_TAGS) && configObj.ALLOWED_TAGS.length === 0) {
+        return input.replace(/<[^>]*>/g, '');
+      }
+      
+      // If specific tags are allowed, keep them and remove script tags
+      const allowedTags = configObj.ALLOWED_TAGS as string[] || [];
+      
+      // Remove script tags and their content first
+      let sanitized = input.replace(/<script[^>]*>.*?<\/script>/gi, '');
+      
+      // Remove event handlers from all tags
+      sanitized = sanitized.replace(/\son\w+="[^"]*"/gi, '');
+      sanitized = sanitized.replace(/\son\w+='[^']*'/gi, '');
+      
+      // Remove javascript: URLs
+      sanitized = sanitized.replace(/href="javascript:[^"]*"/gi, 'href="#"');
+      
+      // Keep only allowed tags - simple iterative approach
+      if (allowedTags.length > 0) {
+        const allowedSet = new Set(allowedTags.map(t => t.toLowerCase()));
+        const allTagsPattern = /<(\/?)(\w+)[^>]*>/gi;
+        sanitized = sanitized.replace(allTagsPattern, (match, slash, tagName) => {
+          if (allowedSet.has(tagName.toLowerCase())) {
+            return match;
+          }
+          return '';
+        });
+      }
+      
+      return sanitized;
+    }
+    
+    // Default: basic HTML sanitization - remove script tags only
+    return input.replace(/<script[^>]*>.*?<\/script>/gi, '');
+  },
+  addHook: () => {},
+  removeHook: () => {},
+  removeAllHooks: () => {},
+  isValid: () => true,
+  version: '3.0.0',
+  removed: [],
+  isSupported: true,
+};
+
+vi.mock('dompurify', () => ({
+  default: mockDOMPurify,
+}));
+
+// Also set it globally for any direct access
+(global as any).DOMPurify = mockDOMPurify;
 
 // Ensure indexedDB is available globally for the idb library
 global.indexedDB = indexedDB;
@@ -26,66 +91,10 @@ if (!global.crypto.randomUUID) {
   });
 }
 
-// Mock DOMPurify for sanitization tests
-const mockDOMPurify = {
-  sanitize: (input: string | unknown, config?: unknown): string | unknown => {
-    if (typeof input !== 'string') {
-      return String(input || '');
-    }
-    
-    // Basic HTML sanitization for tests
-    if (typeof config === 'object' && config !== null) {
-      const configObj = config as Record<string, unknown>;
-      
-      // If ALLOWED_TAGS is empty or not present, strip all HTML
-      if (configObj.ALLOWED_TAGS === undefined || 
-          (Array.isArray(configObj.ALLOWED_TAGS) && configObj.ALLOWED_TAGS.length === 0)) {
-        // Strip all HTML tags
-        return input.replace(/<[^>]*>/g, '');
-      }
-      
-      // If specific tags are allowed, keep them and remove script tags
-      const allowedTags = configObj.ALLOWED_TAGS as string[] || [];
-      
-      // Remove script tags and their content
-      let sanitized = input.replace(/<script[^>]*>.*?<\/script>/gi, '');
-      
-      // Remove event handlers from all tags
-      sanitized = sanitized.replace(/\son\w+="[^"]*"/gi, '');
-      sanitized = sanitized.replace(/\son\w+='[^']*'/gi, '');
-      
-      // Remove javascript: URLs
-      sanitized = sanitized.replace(/href="javascript:[^"]*"/gi, 'href="#"');
-      
-      // For annotation config, handle TextualBody objects
-      if (allowedTags.includes('p')) {
-        // Keep allowed tags, remove others
-        const tagPattern = new RegExp(`<(?!/?(?:${allowedTags.join('|')})[^>]*)[^>]+>`, 'gi');
-        sanitized = sanitized.replace(tagPattern, '');
-      }
-      
-      return sanitized;
-    }
-    
-    // Default: basic HTML sanitization
-    return input.replace(/<script[^>]*>.*?<\/script>/gi, '');
-  },
-  addHook: () => {},
-  removeHook: () => {},
-  removeAllHooks: () => {},
-  isValid: () => true,
-  version: '3.0.0',
-  removed: [],
-  isSupported: true,
-};
-
 // Mock window object if needed
 if (typeof window !== 'undefined') {
   (window as any).DOMPurify = mockDOMPurify;
 }
-
-// Also mock it for module imports
-(global as any).DOMPurify = mockDOMPurify;
 
 // Mock console methods to reduce noise during tests
 // Uncomment to suppress console output during tests

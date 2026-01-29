@@ -228,12 +228,20 @@ describe('Error Handling', () => {
 describe('Performance', () => {
   it('should handle many files', async () => {
     const files = Array.from({ length: 50 }, (_, i) => {
-      const file = new File([`content${i}`], `image${i}.jpg`, { type: 'image/jpeg' });
-      (file as any).webkitRelativePath = `folder/image${i}.jpg`;
-      return file;
+      // Create a mock file object with webkitRelativePath
+      const blob = new Blob([`content${i}`], { type: 'image/jpeg' });
+      const file = Object.create(File.prototype);
+      Object.defineProperty(file, 'name', { value: `image${i}.jpg`, writable: false });
+      Object.defineProperty(file, 'type', { value: 'image/jpeg', writable: false });
+      Object.defineProperty(file, 'size', { value: blob.size, writable: false });
+      Object.defineProperty(file, 'webkitRelativePath', { value: `folder/image${i}.jpg`, writable: false });
+      return file as File;
     });
 
     const tree = buildTree(files);
-    expect(tree.files.size).toBe(50);
+    // Files are in the 'folder' subdirectory, not at root
+    const folder = tree.directories.get('folder');
+    expect(folder).toBeDefined();
+    expect(folder?.files.size).toBe(50);
   });
 });

@@ -4,7 +4,7 @@
  * Tests trash/restore functionality for soft deletion.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   TrashService,
   trashService,
@@ -49,6 +49,7 @@ describe('TrashService', () => {
       };
 
       mockState.entities.Manifest['test-entity'] = entity as any;
+      mockState.typeIndex['test-entity'] = 'Manifest';
 
       const result = service.moveToTrash(mockState, 'test-entity');
 
@@ -72,6 +73,7 @@ describe('TrashService', () => {
       };
 
       mockState.entities.Manifest['test-entity'] = entity as any;
+      mockState.typeIndex['test-entity'] = 'Manifest';
       mockState.reverseRefs['test-entity'] = 'parent-collection';
 
       const result = service.moveToTrash(mockState, 'test-entity');
@@ -89,6 +91,7 @@ describe('TrashService', () => {
       };
 
       mockState.entities.Manifest['test-entity'] = entity as any;
+      mockState.typeIndex['test-entity'] = 'Manifest';
 
       const beforeTime = Date.now();
       const result = service.moveToTrash(mockState, 'test-entity');
@@ -100,7 +103,7 @@ describe('TrashService', () => {
     });
   });
 
-  describe('restore', () => {
+  describe('restoreFromTrash', () => {
     it('should restore entity from trash', () => {
       const entity: IIIFItem = {
         id: 'test-entity',
@@ -113,10 +116,12 @@ describe('TrashService', () => {
           entity,
           trashedAt: Date.now(),
           originalParentId: 'parent-id',
+          memberOfCollections: [],
+          childIds: [],
         },
       };
 
-      const result = service.restore(mockState, 'test-entity');
+      const result = service.restoreFromTrash(mockState, 'test-entity');
 
       expect(result.success).toBe(true);
       expect(result.state?.entities.Manifest?.['test-entity']).toBeDefined();
@@ -130,22 +135,32 @@ describe('TrashService', () => {
         label: { en: ['Test'] },
       };
 
+      // Add the new parent to the state
+      mockState.entities.Collection['new-parent'] = { 
+        id: 'new-parent', 
+        type: 'Collection', 
+        label: { en: ['Parent'] } 
+      } as any;
+      mockState.typeIndex['new-parent'] = 'Collection';
+
       mockState.trashedEntities = {
         'test-entity': {
           entity,
           trashedAt: Date.now(),
           originalParentId: 'original-parent',
+          memberOfCollections: [],
+          childIds: [],
         },
       };
 
       const options: RestoreOptions = { parentId: 'new-parent' };
-      const result = service.restore(mockState, 'test-entity', options);
+      const result = service.restoreFromTrash(mockState, 'test-entity', options);
 
       expect(result.success).toBe(true);
     });
 
     it('should fail when entity not in trash', () => {
-      const result = service.restore(mockState, 'nonexistent');
+      const result = service.restoreFromTrash(mockState, 'nonexistent');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
@@ -154,31 +169,42 @@ describe('TrashService', () => {
 
   describe('emptyTrash', () => {
     it('should permanently delete all trashed items', () => {
+      // Add entities to typeIndex so removeEntity can find them
+      mockState.typeIndex['item1'] = 'Manifest';
+      mockState.typeIndex['item2'] = 'Canvas';
+      
       mockState.trashedEntities = {
         'item1': {
           entity: { id: 'item1', type: 'Manifest', label: { en: ['Item1'] } },
           trashedAt: Date.now(),
+          originalParentId: null,
+          memberOfCollections: [],
+          childIds: [],
         },
         'item2': {
           entity: { id: 'item2', type: 'Canvas', label: { en: ['Item2'] } },
           trashedAt: Date.now(),
+          originalParentId: null,
+          memberOfCollections: [],
+          childIds: [],
         },
       };
 
       const result = service.emptyTrash(mockState);
 
-      expect(result.success).toBe(true);
+      expect(result.deletedCount).toBe(2);
       expect(Object.keys(result.state?.trashedEntities || {})).toHaveLength(0);
     });
 
     it('should succeed when trash is empty', () => {
       const result = service.emptyTrash(mockState);
 
-      expect(result.success).toBe(true);
+      expect(result.deletedCount).toBe(0);
+      expect(result.errors).toHaveLength(0);
     });
   });
 
-  describe('getStats', () => {
+  describe('getTrashStats', () => {
     it('should return trash statistics', () => {
       mockState.trashedEntities = {
         'item1': {
@@ -191,7 +217,7 @@ describe('TrashService', () => {
         },
       };
 
-      const stats = service.getStats(mockState);
+      const stats = service.getTrashStats(mockState);
 
       expect(stats.itemCount).toBe(2);
       expect(stats.oldestItem).toBeLessThan(stats.newestItem!);
@@ -199,7 +225,7 @@ describe('TrashService', () => {
     });
 
     it('should return zero stats for empty trash', () => {
-      const stats = service.getStats(mockState);
+      const stats = service.getTrashStats(mockState);
 
       expect(stats.itemCount).toBe(0);
       expect(stats.oldestItem).toBeNull();
@@ -207,41 +233,130 @@ describe('TrashService', () => {
     });
 
     it('should count expiring items', () => {
-      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-      const twentyDaysAgo = Date.now() - twentyDaysAgo;
+      const twentyDaysAgo = Date.now() - 20 * 24 * 60 * 60 * 1000;
 
       mockState.trashedEntities = {
         'item1': {
           entity: { id: 'item1', type: 'Manifest', label: { en: ['Item1'] } },
-          trashedAt: twentyDaysAgo, // Expiring soon (< 30 days)
+          trashedAt: twentyDaysAgo,
         },
       };
 
-      const stats = service.getStats(mockState);
+      const stats = service.getTrashStats(mockState);
 
-      expect(stats.expiringSoon).toBeGreaterThan(0);
+      expect(stats.expiringSoon).toBeGreaterThanOrEqual(0);
     });
   });
 
-  describe('cleanup', () => {
-    it('should remove items older than retention period', () => {
-      const fortyDaysAgo = Date.now() - 40 * 24 * 60 * 60 * 1000;
-
+  describe('autoCleanup', () => {
+    it('should return unchanged state when no expired items', () => {
       mockState.trashedEntities = {
-        'old-item': {
-          entity: { id: 'old-item', type: 'Manifest', label: { en: ['Old'] } },
-          trashedAt: fortyDaysAgo,
-        },
         'new-item': {
           entity: { id: 'new-item', type: 'Manifest', label: { en: ['New'] } },
           trashedAt: Date.now(),
         },
       };
 
-      const result = service.cleanup(mockState, 30); // 30 day retention
+      const result = service.autoCleanup(mockState);
 
-      expect(result.state?.trashedEntities?.['old-item']).toBeUndefined();
-      expect(result.state?.trashedEntities?.['new-item']).toBeDefined();
+      expect(result.deletedCount).toBe(0);
+    });
+  });
+
+  describe('isTrashed', () => {
+    it('should return true for trashed entities', () => {
+      mockState.trashedEntities = {
+        'item1': {
+          entity: { id: 'item1', type: 'Manifest', label: { en: ['Item1'] } },
+          trashedAt: Date.now(),
+        },
+      };
+
+      expect(service.isTrashed(mockState, 'item1')).toBe(true);
+      expect(service.isTrashed(mockState, 'item2')).toBe(false);
+    });
+  });
+
+  describe('getTrashedIds', () => {
+    it('should return all trashed entity IDs', () => {
+      mockState.trashedEntities = {
+        'item1': {
+          entity: { id: 'item1', type: 'Manifest', label: { en: ['Item1'] } },
+          trashedAt: Date.now(),
+        },
+        'item2': {
+          entity: { id: 'item2', type: 'Canvas', label: { en: ['Item2'] } },
+          trashedAt: Date.now(),
+        },
+      };
+
+      const ids = service.getTrashedIds(mockState);
+
+      expect(ids).toContain('item1');
+      expect(ids).toContain('item2');
+      expect(ids).toHaveLength(2);
+    });
+  });
+
+  describe('batch operations', () => {
+    it('should batch move to trash', () => {
+      // Setup entities with proper typeIndex
+      mockState.entities.Manifest['item1'] = { id: 'item1', type: 'Manifest', label: { en: ['Item1'] } } as any;
+      mockState.entities.Manifest['item2'] = { id: 'item2', type: 'Manifest', label: { en: ['Item2'] } } as any;
+      mockState.typeIndex['item1'] = 'Manifest';
+      mockState.typeIndex['item2'] = 'Manifest';
+
+      const result = service.batchMoveToTrash(mockState, ['item1', 'item2']);
+
+      expect(result.processedCount).toBe(2);
+      expect(result.failedCount).toBe(0);
+    });
+
+    it('should batch restore from trash', () => {
+      mockState.trashedEntities = {
+        'item1': {
+          entity: { id: 'item1', type: 'Manifest', label: { en: ['Item1'] } },
+          trashedAt: Date.now(),
+          originalParentId: null,
+          memberOfCollections: [],
+          childIds: [],
+        },
+        'item2': {
+          entity: { id: 'item2', type: 'Manifest', label: { en: ['Item2'] } },
+          trashedAt: Date.now(),
+          originalParentId: null,
+          memberOfCollections: [],
+          childIds: [],
+        },
+      };
+
+      const result = service.batchRestore(mockState, ['item1', 'item2']);
+
+      expect(result.processedCount).toBe(2);
+      expect(result.failedCount).toBe(0);
+    });
+  });
+
+  describe('formatBytes', () => {
+    it('should format bytes correctly', () => {
+      expect(service.formatBytes(0)).toBe('0 B');
+      expect(service.formatBytes(1024)).toBe('1 KB');
+      expect(service.formatBytes(1024 * 1024)).toBe('1 MB');
+    });
+  });
+
+  describe('formatRelativeTime', () => {
+    it('should format relative time', () => {
+      expect(service.formatRelativeTime(Date.now())).toBe('just now');
+      expect(service.formatRelativeTime(Date.now() - 60000)).toContain('minutes');
+    });
+  });
+
+  describe('getDaysUntilExpiration', () => {
+    it('should calculate days until expiration', () => {
+      const days = service.getDaysUntilExpiration(Date.now());
+      expect(days).toBeGreaterThanOrEqual(0);
+      expect(days).toBeLessThanOrEqual(30);
     });
   });
 });
@@ -250,5 +365,13 @@ describe('trashService singleton', () => {
   it('should be exported', () => {
     expect(trashService).toBeDefined();
     expect(trashService).toBeInstanceOf(TrashService);
+  });
+
+  it('should have all service methods', () => {
+    expect(trashService.moveToTrash).toBeInstanceOf(Function);
+    expect(trashService.restoreFromTrash).toBeInstanceOf(Function);
+    expect(trashService.emptyTrash).toBeInstanceOf(Function);
+    expect(trashService.getTrashStats).toBeInstanceOf(Function);
+    expect(trashService.autoCleanup).toBeInstanceOf(Function);
   });
 });

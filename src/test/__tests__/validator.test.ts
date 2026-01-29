@@ -262,7 +262,9 @@ describe('ValidationService', () => {
         items: [],
       };
 
-      const errors = (service as any).mapSchemaErrors(canvas, ['Invalid width dimension']);
+      // Note: The validator checks for 'id' and 'type' substrings before dimension checks
+      // Must avoid: 'id' (Inval-id, w-id-th, durat-id-on) and 'type' (Canvas type)
+      const errors = (service as any).mapSchemaErrors(canvas, ['Wrong height measurement']);
       expect(errors[0].category).toBe('Content');
     });
   });

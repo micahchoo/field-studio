@@ -138,7 +138,7 @@ const DEFAULT_TRASH_CONFIG: TrashConfig = {
 // Trash Service Class
 // ============================================================================
 
-class TrashService {
+export class TrashService {
   private config: TrashConfig = { ...DEFAULT_TRASH_CONFIG };
 
   /**

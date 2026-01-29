@@ -27,3 +27,6 @@ dist-ssr
 .Images iiif test
 _archived
 canopy template.zip
+
+# X-Fidelity analysis results
+.xfiResults/

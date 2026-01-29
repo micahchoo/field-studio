@@ -43,7 +43,7 @@ export const SUPPORTED_IIIF_PROPERTIES: string[] = CSV_SUPPORTED_PROPERTIES;
 
 export type SupportedIIIFProperty = string;
 
-class CSVImporterService {
+export class CSVImporterService {
 
   parseCSV(text: string): { headers: string[]; rows: Record<string, string>[] } {
     const lines = text.trim().split(/\r?\n/);
