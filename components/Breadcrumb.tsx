@@ -114,8 +114,15 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
       {/* Home/Root icon */}
       <button
         onClick={onHomeClick}
-        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-iiif-blue/50 focus:ring-offset-1"
         title="Go to root"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onHomeClick?.();
+          }
+        }}
       >
         <Icon name="home" className="text-lg" />
       </button>
@@ -135,30 +142,67 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
         if (showEllipsis) {
           return (
             <React.Fragment key={`ellipsis-${segment.id}`}>
-              {/* Truncation dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="px-2 py-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors font-medium"
-                  title="Show more"
-                >
-                  ...
-                </button>
+                {/* Truncation dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="px-2 py-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-iiif-blue/50 focus:ring-offset-1"
+                    title="Show more"
+                    tabIndex={0}
+                    aria-expanded={showDropdown}
+                    aria-haspopup="menu"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowDropdown(!showDropdown);
+                      } else if (e.key === 'Escape' && showDropdown) {
+                        setShowDropdown(false);
+                      }
+                    }}
+                  >
+                    ...
+                  </button>
                 
                 {showDropdown && (
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl py-2 min-w-[200px] z-50">
-                    {truncatedSegments.map((truncated) => (
+                  <div
+                    className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl py-2 min-w-[200px] z-50"
+                    role="menu"
+                  >
+                    {truncatedSegments.map((truncated, idx) => (
                       <button
                         key={truncated.id}
                         onClick={() => {
                           onNavigate(truncated.id);
                           setShowDropdown(false);
                         }}
-                        className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-sm"
+                        className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-sm focus:outline-none focus:bg-slate-100 focus:ring-2 focus:ring-inset focus:ring-iiif-blue/30"
                         title={truncated.fullLabel || truncated.label}
+                        role="menuitem"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onNavigate(truncated.id);
+                            setShowDropdown(false);
+                          } else if (e.key === 'Escape') {
+                            setShowDropdown(false);
+                          } else if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            const nextButton = dropdownRef.current?.querySelectorAll('button[role="menuitem"]')[idx + 1] as HTMLElement;
+                            nextButton?.focus();
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (idx === 0) {
+                              setShowDropdown(false);
+                            } else {
+                              const prevButton = dropdownRef.current?.querySelectorAll('button[role="menuitem"]')[idx - 1] as HTMLElement;
+                              prevButton?.focus();
+                            }
+                          }
+                        }}
                       >
-                        <Icon 
-                          name={getTypeIcon(truncated.type)} 
+                        <Icon
+                          name={getTypeIcon(truncated.type)}
                           className={`text-xs ${getTypeColor(truncated.type)}`}
                         />
                         <span className="truncate">{truncated.label}</span>
@@ -186,18 +230,28 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
             <button
               onClick={() => !segment.isCurrent && onNavigate(segment.id)}
               disabled={segment.isCurrent}
+              tabIndex={segment.isCurrent ? -1 : 0}
               className={`
                 flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all
-                ${segment.isCurrent 
-                  ? 'font-semibold text-slate-800 bg-slate-100 cursor-default' 
+                focus:outline-none focus:ring-2 focus:ring-iiif-blue/50 focus:ring-offset-1
+                ${segment.isCurrent
+                  ? 'font-semibold text-slate-800 bg-slate-100 cursor-default'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
                 }
               `}
               title={segment.fullLabel || segment.label}
               aria-current={segment.isCurrent ? 'page' : undefined}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (!segment.isCurrent) {
+                    onNavigate(segment.id);
+                  }
+                }
+              }}
             >
-              <Icon 
-                name={getTypeIcon(segment.type)} 
+              <Icon
+                name={getTypeIcon(segment.type)}
                 className={`text-xs ${getTypeColor(segment.type)}`}
               />
               <span className="truncate max-w-[120px] sm:max-w-[160px] md:max-w-[200px]">
@@ -215,7 +269,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
  * Helper function to build breadcrumb path from IIIF tree
  */
 export function buildBreadcrumbPath(
-  root: { id: string; label: any; type: string } | null,
+  root: any | null,
   targetId: string,
   getLabel: (item: any) => string
 ): BreadcrumbSegment[] {

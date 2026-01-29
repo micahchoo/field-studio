@@ -22,6 +22,15 @@ export interface FlattenedTreeNode {
   hasChildren: boolean;
   isExpanded: boolean;
   isLeaf: boolean;
+  /** ARIA attributes for accessibility */
+  aria: {
+    /** Total number of items at this level (for aria-setsize) */
+    setSize: number;
+    /** Position in set (1-indexed, for aria-posinset) */
+    posInSet: number;
+    /** Tree depth level (for aria-level) */
+    level: number;
+  };
 }
 
 /** Options for tree virtualization */
@@ -86,6 +95,7 @@ const DEFAULT_MAX_DEPTH = 15;
 /**
  * Flattens a tree structure based on current expansion state
  * Uses depth-first traversal to maintain visual order
+ * Includes ARIA attributes for accessibility
  */
 function flattenTree(
   root: IIIFItem,
@@ -93,6 +103,75 @@ function flattenTree(
   maxDepth: number
 ): FlattenedTreeNode[] {
   const flattened: FlattenedTreeNode[] = [];
+
+  // First pass: collect all nodes to calculate sibling counts
+  const collectSiblings = (node: IIIFItem): { id: string; siblings: IIIFItem[] }[] => {
+    const result: { id: string; siblings: IIIFItem[] }[] = [];
+    const children = (node as IIIFCollection | IIIFManifest).items || [];
+    
+    children.forEach((child, index) => {
+      result.push({ id: child.id, siblings: children });
+      // Recurse to collect grandchildren
+      const grandchildren = (child as IIIFCollection | IIIFManifest).items || [];
+      if (grandchildren.length > 0 && expandedIds.has(child.id)) {
+        result.push(...collectSiblings(child));
+      }
+    });
+    
+    return result;
+  };
+
+  // Build a map of parent -> children for sibling counting
+  const childrenMap = new Map<string | null, IIIFItem[]>();
+  childrenMap.set(null, [root]);
+  
+  const buildChildrenMap = (node: IIIFItem, parentId: string | null) => {
+    const children = (node as IIIFCollection | IIIFManifest).items || [];
+    childrenMap.set(node.id, children);
+    
+    if (expandedIds.has(node.id)) {
+      children.forEach(child => buildChildrenMap(child, node.id));
+    }
+  };
+  buildChildrenMap(root, null);
+
+  // Track position within each parent's children
+  const positionMap = new Map<string, { setSize: number; posInSet: number; level: number }>();
+  
+  const calculatePositions = (node: IIIFItem, level: number, parentId: string | null) => {
+    const siblings = childrenMap.get(parentId) || [];
+    const siblingsAtLevel = siblings.filter(s => {
+      // Filter to visible siblings (those whose parents are expanded)
+      if (parentId === null) return true;
+      return expandedIds.has(parentId) || parentId === root.id;
+    });
+    
+    const index = siblingsAtLevel.findIndex(s => s.id === node.id);
+    positionMap.set(node.id, {
+      setSize: siblingsAtLevel.length,
+      posInSet: index + 1, // 1-indexed for ARIA
+      level: level + 1 // 1-indexed for ARIA
+    });
+
+    const children = (node as IIIFCollection | IIIFManifest).items || [];
+    if (expandedIds.has(node.id) && level < maxDepth) {
+      children.forEach(child => calculatePositions(child, level + 1, node.id));
+    }
+  };
+  
+  // Only calculate positions if root is visible
+  const rootSiblings = childrenMap.get(null) || [];
+  const rootIndex = rootSiblings.findIndex(s => s.id === root.id);
+  positionMap.set(root.id, {
+    setSize: rootSiblings.length,
+    posInSet: rootIndex >= 0 ? rootIndex + 1 : 1,
+    level: 1
+  });
+  
+  if (expandedIds.has(root.id)) {
+    const rootChildren = (root as IIIFCollection | IIIFManifest).items || [];
+    rootChildren.forEach(child => calculatePositions(child, 1, root.id));
+  }
 
   const traverse = (
     node: IIIFItem,
@@ -102,6 +181,7 @@ function flattenTree(
     const children = (node as IIIFCollection | IIIFManifest).items || [];
     const hasChildren = children.length > 0;
     const isExpanded = expandedIds.has(node.id);
+    const pos = positionMap.get(node.id) || { setSize: 1, posInSet: 1, level: level + 1 };
 
     flattened.push({
       id: node.id,
@@ -111,7 +191,12 @@ function flattenTree(
       index: flattened.length,
       hasChildren,
       isExpanded: hasChildren ? isExpanded : false,
-      isLeaf: !hasChildren
+      isLeaf: !hasChildren,
+      aria: {
+        setSize: pos.setSize,
+        posInSet: pos.posInSet,
+        level: pos.level
+      }
     });
 
     // Recurse into children if expanded and not at depth limit

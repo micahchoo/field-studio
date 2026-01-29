@@ -6,6 +6,45 @@ export type ConnectionType = 'depicts' | 'transcribes' | 'relatesTo' | 'contradi
 export type AbstractionLevel = 'simple' | 'standard' | 'advanced';
 export type ResourceState = 'cached' | 'stub' | 'local-only' | 'stale' | 'conflict';
 
+// ============================================================================
+// Progressive Disclosure - UX Simplification (Phase 3)
+// ============================================================================
+
+/**
+ * UI Abstraction Configuration
+ * Controls progressive disclosure of UI complexity based on user expertise
+ */
+export interface UIAbstractionConfig {
+  level: AbstractionLevel;
+  showTechnicalIds: boolean;
+  showRawIIIF: boolean;
+  showAdvancedActions: boolean;
+  simplifiedLabels: boolean;
+}
+
+/**
+ * Consolidated View Modes (Phase 3)
+ * Reduces 6 legacy modes to 3 core modes with progressive disclosure
+ */
+export type CoreViewMode = 'workspace' | 'detail' | 'preview';
+
+/**
+ * Legacy View Modes (for backward compatibility)
+ * @deprecated Use CoreViewMode with abstraction levels instead
+ */
+export type LegacyViewMode = 'archive' | 'collections' | 'board' | 'map' | 'spreadsheet' | 'timeline';
+
+/**
+ * View mode mapping configuration
+ */
+export interface ViewModeConfig {
+  coreMode: CoreViewMode;
+  abstractionLevel: AbstractionLevel;
+  sidebarVisible: boolean;
+  inspectorVisible: boolean;
+  toolbarMode: 'minimal' | 'standard' | 'full';
+}
+
 export interface AppSettings {
   defaultBaseUrl: string;
   language: string;

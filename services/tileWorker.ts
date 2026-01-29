@@ -137,17 +137,29 @@ const workerScript = `
 const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
 const workerUrl = URL.createObjectURL(workerBlob);
 
+// Worker task with priority support
+interface WorkerTask {
+  request: TileWorkerRequest;
+  resolve: Function;
+  reject: Function;
+  priority: number; // Higher = more important
+  timestamp: number;
+}
+
 /**
  * TileWorkerPool - Manages a pool of web workers for parallel tile generation
+ * Implements backpressure with max 4 concurrent workers to prevent memory issues
  */
 export class TileWorkerPool {
   private workers: Worker[] = [];
-  private queue: Array<{ request: TileWorkerRequest; resolve: Function; reject: Function }> = [];
+  private queue: WorkerTask[] = [];
   private activeJobs: Map<string, { resolve: Function; reject: Function }> = new Map();
   private poolSize: number;
+  private maxConcurrent: number = 4; // Max 4 concurrent workers for backpressure
+  private activeWorkers: number = 0;
 
-  constructor(poolSize: number = navigator.hardwareConcurrency || 4) {
-    this.poolSize = Math.min(poolSize, 8); // Cap at 8 workers
+  constructor(poolSize: number = Math.min(navigator.hardwareConcurrency || 4, 4)) {
+    this.poolSize = Math.min(poolSize, this.maxConcurrent); // Cap at maxConcurrent
     this.initWorkers();
   }
 
@@ -188,6 +200,7 @@ export class TileWorkerPool {
     }
 
     this.activeJobs.delete(assetId);
+    this.activeWorkers--;
     this.processQueue();
   }
 
@@ -196,31 +209,87 @@ export class TileWorkerPool {
   }
 
   private processQueue() {
-    if (this.queue.length === 0) return;
+    // Process queue with backpressure - only run up to maxConcurrent workers
+    while (this.queue.length > 0 && this.activeWorkers < this.maxConcurrent) {
+      // Sort queue by priority (desc) then timestamp (asc) for FIFO within same priority
+      this.queue.sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority;
+        }
+        return a.timestamp - b.timestamp;
+      });
 
-    const availableWorker = this.workers.find((_, idx) =>
-      !Array.from(this.activeJobs.keys()).some(id =>
-        this.activeJobs.get(id) !== undefined
-      )
-    );
+      const task = this.queue.shift();
+      if (!task) continue;
 
-    if (availableWorker && this.activeJobs.size < this.poolSize) {
-      const job = this.queue.shift();
-      if (job) {
-        this.activeJobs.set(job.request.assetId, { resolve: job.resolve, reject: job.reject });
-        const workerIdx = this.workers.indexOf(availableWorker);
-        this.workers[workerIdx % this.poolSize].postMessage(job.request, [job.request.imageData]);
+      // Find an available worker
+      const availableWorker = this.workers.find(worker => {
+        // Check if worker is not currently processing
+        return !Array.from(this.activeJobs.values()).some(job =>
+          // Simple heuristic: workers are assigned round-robin
+          false
+        );
+      }) || this.workers[this.activeWorkers % this.poolSize];
+
+      if (availableWorker) {
+        this.activeWorkers++;
+        this.activeJobs.set(task.request.assetId, {
+          resolve: task.resolve,
+          reject: task.reject
+        });
+        
+        try {
+          availableWorker.postMessage(task.request, [task.request.imageData]);
+        } catch (err) {
+          // If transfer fails (already transferred), try without transfer
+          availableWorker.postMessage(task.request);
+        }
+      } else {
+        // Put back in queue if no worker available
+        this.queue.unshift(task);
+        break;
       }
     }
   }
 
   /**
+   * Get current queue statistics for monitoring backpressure
+   */
+  getQueueStats(): { queueLength: number; activeWorkers: number; maxConcurrent: number } {
+    return {
+      queueLength: this.queue.length,
+      activeWorkers: this.activeWorkers,
+      maxConcurrent: this.maxConcurrent
+    };
+  }
+
+  /**
+   * Wait for all pending tasks to complete
+   */
+  async flush(): Promise<void> {
+    if (this.queue.length === 0 && this.activeWorkers === 0) {
+      return;
+    }
+
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (this.queue.length === 0 && this.activeWorkers === 0) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    });
+  }
+
+  /**
    * Generate derivatives for an image file
+   * Implements backpressure - queues when at max capacity
    */
   async generateDerivatives(
     assetId: string,
     file: Blob,
-    sizes: number[] = DEFAULT_DERIVATIVE_SIZES
+    sizes: number[] = DEFAULT_DERIVATIVE_SIZES,
+    priority: number = 1
   ): Promise<{
     derivatives: Map<number, Blob>;
     originalWidth: number;
@@ -238,13 +307,70 @@ export class TileWorkerPool {
         quality: 0.8
       };
 
-      if (this.activeJobs.size < this.poolSize) {
+      const task: WorkerTask = {
+        request,
+        resolve,
+        reject,
+        priority,
+        timestamp: Date.now()
+      };
+
+      // Check if we can start immediately or need to queue
+      if (this.activeWorkers < this.maxConcurrent) {
+        this.activeWorkers++;
         this.activeJobs.set(assetId, { resolve, reject });
-        this.workers[this.activeJobs.size % this.poolSize].postMessage(request, [imageData]);
+        const worker = this.workers[this.activeJobs.size % this.poolSize];
+        
+        try {
+          worker.postMessage(request, [imageData]);
+        } catch (err) {
+          // Fallback if ArrayBuffer already detached
+          worker.postMessage(request);
+        }
       } else {
-        this.queue.push({ request, resolve, reject });
+        // Queue the task - backpressure applied
+        this.queue.push(task);
       }
     });
+  }
+
+  /**
+   * Generate derivatives for multiple images with batch backpressure
+   */
+  async generateDerivativesBatch(
+    items: Array<{ assetId: string; file: Blob; priority?: number }>,
+    sizes: number[] = DEFAULT_DERIVATIVE_SIZES,
+    onProgress?: (completed: number, total: number) => void
+  ): Promise<Map<string, { derivatives: Map<number, Blob>; originalWidth: number; originalHeight: number }>> {
+    const results = new Map<string, { derivatives: Map<number, Blob>; originalWidth: number; originalHeight: number }>();
+    const total = items.length;
+    let completed = 0;
+
+    // Process in chunks to maintain backpressure
+    const batchSize = this.maxConcurrent * 2; // Keep queue reasonably filled
+    
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      
+      const batchPromises = batch.map(async ({ assetId, file, priority = 1 }) => {
+        try {
+          const result = await this.generateDerivatives(assetId, file, sizes, priority);
+          results.set(assetId, result);
+          completed++;
+          onProgress?.(completed, total);
+          return { assetId, success: true };
+        } catch (err) {
+          completed++;
+          onProgress?.(completed, total);
+          return { assetId, success: false, error: err };
+        }
+      });
+
+      // Wait for batch to complete before starting next batch
+      await Promise.all(batchPromises);
+    }
+
+    return results;
   }
 
   /**

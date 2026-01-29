@@ -102,8 +102,8 @@ export { contentSearchService } from './contentSearchService';
 // ============================================================================
 // Validation & Quality
 // ============================================================================
-export { validator } from './validator';
-export type { ValidationIssue, IssueCategory } from './validator';
+export { validator, getValidationForField } from './validator';
+export type { ValidationIssue, IssueCategory, FieldValidation } from './validator';
 
 export { healIssue, healAllIssues, applyHealToTree, getFixDescription } from './validationHealer';
 export type { HealResult } from './validationHealer';

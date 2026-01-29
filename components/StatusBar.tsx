@@ -3,6 +3,7 @@ import React from 'react';
 import { Icon } from './Icon';
 import { IIIFItem, getIIIFValue } from '../types';
 import { ValidationIssue } from '../services/validator';
+import { useSharedSelection } from '../hooks/useSharedSelection';
 
 interface StatusBarProps {
   totalItems: number;
@@ -11,6 +12,12 @@ interface StatusBarProps {
   storageUsage: { usage: number; quota: number } | null;
   onOpenQC: () => void;
   saveStatus: 'saved' | 'saving' | 'error';
+  /** Optional external selection state (if not using global shared selection) */
+  selectionCount?: number;
+  /** Show cross-view selection count */
+  showSelectionCount?: boolean;
+  /** Callback to clear selection */
+  onClearSelection?: () => void;
 }
 
 const formatBytes = (bytes: number, decimals = 1) => {
@@ -22,7 +29,17 @@ const formatBytes = (bytes: number, decimals = 1) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-export const StatusBar: React.FC<StatusBarProps> = ({ totalItems, selectedItem, validationIssues, storageUsage, onOpenQC, saveStatus }) => {
+export const StatusBar: React.FC<StatusBarProps> = ({
+  totalItems,
+  selectedItem,
+  validationIssues,
+  storageUsage,
+  onOpenQC,
+  saveStatus,
+  selectionCount,
+  showSelectionCount = true,
+  onClearSelection
+}) => {
   const errorCount = validationIssues.filter(i => i.level === 'error').length;
   const warningCount = validationIssues.filter(i => i.level === 'warning').length;
   
@@ -34,6 +51,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({ totalItems, selectedItem, 
     ? Math.min(100, (storageUsage.usage / storageUsage.quota) * 100)
     : 0;
 
+  // Try to get selection from shared hook if not provided externally
+  let sharedSelectionCount = 0;
+  try {
+    const sharedSelection = useSharedSelection();
+    sharedSelectionCount = sharedSelection.count;
+  } catch {
+    // Hook not available in context, use prop
+  }
+  
+  const effectiveSelectionCount = selectionCount ?? sharedSelectionCount;
+  const hasMultiSelection = effectiveSelectionCount > 0;
+
   return (
     <div className="h-7 bg-slate-950 border-t border-slate-800 flex items-center justify-between px-3 text-[11px] text-slate-400 select-none z-50">
       <div className="flex items-center gap-4">
@@ -42,7 +71,23 @@ export const StatusBar: React.FC<StatusBarProps> = ({ totalItems, selectedItem, 
             <span>{totalItems} Items</span>
         </div>
         
-        {selectedItem && (
+        {showSelectionCount && hasMultiSelection && (
+          <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800">
+            <Icon name="check_box" className="text-[14px] text-iiif-blue" />
+            <span className="text-iiif-blue font-medium">{effectiveSelectionCount} selected</span>
+            {onClearSelection && (
+              <button
+                onClick={onClearSelection}
+                className="ml-1 hover:text-white transition-colors"
+                title="Clear selection"
+              >
+                <Icon name="close" className="text-[12px]" />
+              </button>
+            )}
+          </div>
+        )}
+        
+        {selectedItem && !hasMultiSelection && (
              <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800 text-slate-300">
                 <Icon name="check_circle" className="text-[14px] text-green-500" />
                 <span className="truncate max-w-[200px]">Selected: {getIIIFValue(selectedItem.label, 'none') || 'Untitled'}</span>

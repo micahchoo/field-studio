@@ -7,6 +7,7 @@
  * - State Management: useIIIFEntity (Vault)
  * - App State: useAppSettings, useURLState
  * - UI State: useDialogState, useInspectorTabs, useResponsive
+ * - Progressive Disclosure: useAbstractionLevel, useTerminology (Phase 3)
  */
 
 // ============================================================================
@@ -59,6 +60,20 @@ export { useSharedSelection } from './useSharedSelection';
 export { useNavigationGuard } from './useNavigationGuard';
 
 // ============================================================================
+// Progressive Disclosure (Phase 3 UX Simplification)
+// ============================================================================
+export {
+  useAbstractionLevel,
+  type UseAbstractionLevelReturn
+} from './useAbstractionLevel';
+export {
+  useTerminology,
+  useTerminologyWithLevel,
+  type UseTerminologyOptions,
+  type UseTerminologyReturn
+} from './useTerminology';
+
+// ============================================================================
 // Virtualization
 // ============================================================================
 export {
@@ -89,6 +104,18 @@ export type {
 // ============================================================================
 export { useIIIFTraversal } from './useIIIFTraversal';
 export type { UseIIIFTraversalReturn } from './useIIIFTraversal';
+
+// ============================================================================
+// Command Palette History
+// ============================================================================
+export { useCommandHistory } from './useCommandHistory';
+export type { CommandHistoryEntry } from './useCommandHistory';
+
+// ============================================================================
+// Breadcrumb Navigation
+// ============================================================================
+export { useBreadcrumbPath, useBreadcrumbPathFromRoot } from './useBreadcrumbPath';
+export type { BreadcrumbSegment, UseBreadcrumbPathOptions } from './useBreadcrumbPath';
 
 // ============================================================================
 // Resizable Panels

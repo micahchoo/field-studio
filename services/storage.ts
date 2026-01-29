@@ -1,11 +1,13 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { IIIFItem } from '../types';
+import { IngestCheckpoint } from './ingestState';
 
 export const DB_NAME = 'biiif-archive-db';
 export const FILES_STORE = 'files';
 export const PROJECT_STORE = 'project';
 export const DERIVATIVES_STORE = 'derivatives'; // New store for Level 0 images
+export const CHECKPOINTS_STORE = 'checkpoints'; // For resumable imports
 
 interface BiiifDB extends DBSchema {
   files: {
@@ -19,6 +21,10 @@ interface BiiifDB extends DBSchema {
   project: {
     key: string;
     value: IIIFItem;
+  };
+  checkpoints: {
+    key: string;
+    value: IngestCheckpoint;
   };
 }
 
@@ -90,7 +96,7 @@ class StorageService {
   }
 
   private _initDB() {
-      this._dbPromise = openDB<BiiifDB>(DB_NAME, 2, { 
+      this._dbPromise = openDB<BiiifDB>(DB_NAME, 3, {
         upgrade(db, oldVersion) {
             if (oldVersion < 1) {
                 db.createObjectStore(FILES_STORE);
@@ -98,6 +104,9 @@ class StorageService {
             }
             if (oldVersion < 2) {
                 db.createObjectStore(DERIVATIVES_STORE);
+            }
+            if (oldVersion < 3) {
+                db.createObjectStore(CHECKPOINTS_STORE);
             }
         },
         blocked: () => {
@@ -280,6 +289,50 @@ class StorageService {
     for (const key of derivativeKeys) {
       await db.delete(DERIVATIVES_STORE, `${id}_${key}`);
     }
+  }
+
+  // ============================================================================
+  // Checkpoint Methods (for resumable imports)
+  // ============================================================================
+
+  /**
+   * Save an import checkpoint
+   */
+  async saveCheckpoint(id: string, checkpoint: IngestCheckpoint): Promise<void> {
+    const db = await this.getDB();
+    await db.put(CHECKPOINTS_STORE, checkpoint, id);
+  }
+
+  /**
+   * Load an import checkpoint
+   */
+  async loadCheckpoint(id: string): Promise<IngestCheckpoint | null> {
+    const db = await this.getDB();
+    return await db.get(CHECKPOINTS_STORE, id) || null;
+  }
+
+  /**
+   * List all checkpoints
+   */
+  async listCheckpoints(): Promise<IngestCheckpoint[]> {
+    const db = await this.getDB();
+    return await db.getAll(CHECKPOINTS_STORE);
+  }
+
+  /**
+   * Delete a checkpoint
+   */
+  async deleteCheckpoint(id: string): Promise<void> {
+    const db = await this.getDB();
+    await db.delete(CHECKPOINTS_STORE, id);
+  }
+
+  /**
+   * Clear all checkpoints
+   */
+  async clearAllCheckpoints(): Promise<void> {
+    const db = await this.getDB();
+    await db.clear(CHECKPOINTS_STORE);
   }
 }
 

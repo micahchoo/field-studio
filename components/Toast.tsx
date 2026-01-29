@@ -100,15 +100,26 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ showToast, showPersistentToast }}>
       {children}
+      {/*
+        ARIA Live Region for Toast Notifications
+        - aria-live="polite": Announces toasts without interrupting
+        - aria-atomic="true": Announces entire toast content as a unit
+        - role="status": Identifies as status update for screen readers
+      */}
       <div
         ref={containerRef}
         className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-h-[300px] overflow-hidden"
         aria-live="polite"
         aria-atomic="true"
+        role="region"
+        aria-label="Notifications"
       >
         {toasts.map((toast, index) => (
           <div
             key={toast.id}
+            role={toast.type === 'error' ? 'alert' : 'status'}
+            aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+            aria-atomic="true"
             className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex flex-col gap-2 animate-bounce-in ${
               toast.type === 'success' ? 'bg-white border-green-200 text-green-800' :
               toast.type === 'error' ? 'bg-white border-red-200 text-red-800' :
@@ -125,15 +136,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 <Icon
                   name={toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : 'info'}
                   className={`shrink-0 ${toast.type === 'success' ? 'text-green-500' : toast.type === 'error' ? 'text-red-500' : toast.type === 'warning' ? 'text-amber-500' : 'text-blue-400'}`}
+                  aria-hidden="true"
                 />
                 <span className="text-sm font-medium truncate">{toast.message}</span>
               </div>
               <button
                 onClick={() => dismissToast(toast.id)}
-                className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors"
+                className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-600"
                 aria-label="Dismiss notification"
+                type="button"
               >
-                <Icon name="close" className="text-xs opacity-50 hover:opacity-100" />
+                <Icon name="close" className="text-xs opacity-50 hover:opacity-100" aria-hidden="true" />
               </button>
             </div>
             {toast.action && (
@@ -143,14 +156,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     toast.action?.onClick();
                     dismissToast(toast.id);
                   }}
-                  className={`text-xs font-medium px-3 py-1.5 rounded transition-colors ${
+                  className={`text-xs font-medium px-3 py-1.5 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                     toast.action.variant === 'primary'
-                      ? 'bg-iiif-blue text-white hover:bg-iiif-blue/90'
-                      : toast.type === 'success' ? 'text-green-700 hover:bg-green-50' :
-                        toast.type === 'error' ? 'text-red-700 hover:bg-red-50' :
-                        toast.type === 'warning' ? 'text-amber-700 hover:bg-amber-50' :
-                        'text-blue-300 hover:bg-white/10'
+                      ? 'bg-iiif-blue text-white hover:bg-iiif-blue/90 focus:ring-blue-600'
+                      : toast.type === 'success' ? 'text-green-700 hover:bg-green-50 focus:ring-green-600' :
+                        toast.type === 'error' ? 'text-red-700 hover:bg-red-50 focus:ring-red-600' :
+                        toast.type === 'warning' ? 'text-amber-700 hover:bg-amber-50 focus:ring-amber-600' :
+                        'text-blue-300 hover:bg-white/10 focus:ring-blue-400'
                   }`}
+                  type="button"
                 >
                   {toast.action.label}
                 </button>

@@ -3,9 +3,37 @@ import * as FlexSearchModule from 'flexsearch';
 import { IIIFItem, IIIFAnnotation, IIIFCanvas, isCanvas, getIIIFValue } from '../types';
 import { getAllCanvases } from '../utils';
 import { fieldRegistry, DEFAULT_SEARCH_CONFIG, SearchIndexConfig } from './fieldRegistry';
+import { USE_WORKER_SEARCH } from '../constants';
 
 // FlexSearch has inconsistent exports across bundlers - try all patterns
 const FlexSearch = (FlexSearchModule as any).default || FlexSearchModule;
+
+// Worker instance (lazy loaded)
+let searchWorker: Worker | null = null;
+
+/**
+ * Get or create the search worker instance
+ */
+function getSearchWorker(): Worker {
+  if (!searchWorker) {
+    // Create worker from the module
+    searchWorker = new Worker(
+      new URL('../workers/searchIndexer.ts', import.meta.url),
+      { type: 'module' }
+    );
+  }
+  return searchWorker;
+}
+
+/**
+ * Terminate the search worker (for cleanup)
+ */
+export function terminateSearchWorker(): void {
+  if (searchWorker) {
+    searchWorker.terminate();
+    searchWorker = null;
+  }
+}
 
 export interface SearchResult {
   id: string;
@@ -186,6 +214,138 @@ class SearchService {
         this.labelIndex.set(word, new Set());
       }
       this.labelIndex.get(word)!.add(itemId);
+    }
+  }
+
+  /**
+   * Search using Web Worker when USE_WORKER_SEARCH is enabled
+   * Falls back to main-thread search for compatibility
+   */
+  async searchWorker(query: string): Promise<SearchResult[]> {
+    if (!USE_WORKER_SEARCH) {
+      return this.search(query);
+    }
+
+    return new Promise((resolve, reject) => {
+      const worker = getSearchWorker();
+      const timeout = setTimeout(() => {
+        reject(new Error('Search worker timeout'));
+      }, 5000);
+
+      const handler = (e: MessageEvent) => {
+        const { type, results, error } = e.data;
+        
+        if (type === 'search') {
+          clearTimeout(timeout);
+          worker.removeEventListener('message', handler);
+          resolve(results as SearchResult[]);
+        } else if (type === 'error') {
+          clearTimeout(timeout);
+          worker.removeEventListener('message', handler);
+          reject(new Error(error));
+        }
+      };
+
+      worker.addEventListener('message', handler);
+      worker.postMessage({
+        action: 'search',
+        data: { query, options: { limit: 50 } }
+      });
+    });
+  }
+
+  /**
+   * Build index using Web Worker when USE_WORKER_SEARCH is enabled
+   */
+  async buildIndexWorker(root: IIIFItem | null): Promise<void> {
+    if (!USE_WORKER_SEARCH || !root) {
+      this.buildIndex(root);
+      return;
+    }
+
+    const worker = getSearchWorker();
+    
+    // Reset worker index
+    worker.postMessage({ action: 'reset' });
+
+    // Collect all items for indexing
+    const itemsToIndex: Array<{
+      id: string;
+      text: string;
+      type: string;
+      label: string;
+      context: string;
+      parent?: string;
+    }> = [];
+
+    this.collectItemsForWorker(root, [], itemsToIndex);
+
+    // Send items to worker in batches to avoid overwhelming the worker
+    const batchSize = 100;
+    for (let i = 0; i < itemsToIndex.length; i += batchSize) {
+      const batch = itemsToIndex.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(item => new Promise<void>((resolve) => {
+        const handler = (e: MessageEvent) => {
+          if (e.data.type === 'added' && e.data.id === item.id) {
+            worker.removeEventListener('message', handler);
+            resolve();
+          }
+        };
+        worker.addEventListener('message', handler);
+        worker.postMessage({ action: 'add', data: item });
+      })));
+    }
+
+    console.log(`Indexed ${itemsToIndex.length} items in worker.`);
+  }
+
+  private collectItemsForWorker(
+    item: IIIFItem,
+    path: string[],
+    items: Array<{ id: string; text: string; type: string; label: string; context: string; parent?: string }>
+  ): void {
+    const label = getIIIFValue(item.label, 'none') || getIIIFValue(item.label, 'en') || 'Untitled';
+    const summary = getIIIFValue(item.summary, 'none') || getIIIFValue(item.summary, 'en') || '';
+
+    items.push({
+      id: item.id,
+      text: `${label} ${summary}`,
+      type: item.type,
+      label,
+      context: path.join(' > ')
+    });
+
+    const newPath = [...path, label];
+
+    if (item.items) {
+      for (const child of item.items) {
+        this.collectItemsForWorker(child, newPath, items);
+      }
+    }
+
+    if (isCanvas(item) && item.annotations) {
+      item.annotations.forEach(page => {
+        page.items.forEach(anno => {
+          let text = '';
+          if (Array.isArray(anno.body)) {
+            // Complex body
+          } else if (anno.body.type === 'TextualBody') {
+            text = anno.body.value;
+          }
+
+          if (text) {
+            items.push({
+              id: anno.id,
+              text,
+              type: 'Annotation',
+              label: (anno as any).label || 'Annotation',
+              context: [...newPath, 'Annotations'].join(' > '),
+              parent: item.id
+            });
+          }
+        });
+      });
     }
   }
 

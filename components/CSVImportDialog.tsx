@@ -1,12 +1,22 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { IIIFItem, getIIIFValue } from '../types';
 import { csvImporter, CSVColumnMapping, CSVImportResult, SUPPORTED_IIIF_PROPERTIES } from '../services/csvImporter';
 import { SUPPORTED_LANGUAGES, CSV_SUPPORTED_PROPERTIES } from '../constants';
 import { Icon } from './Icon';
+import {
+  listCheckpoints,
+  getActiveCheckpoint,
+  resumeFromCheckpoint,
+  completeCheckpoint,
+  failCheckpoint,
+  IngestCheckpoint,
+  formatCheckpointAge,
+  deleteCheckpoint
+} from '../services/ingestState';
 
 type DialogMode = 'import' | 'export';
-type ImportStep = 'upload' | 'map' | 'result';
+type ImportStep = 'upload' | 'map' | 'result' | 'resume';
 type ExportStep = 'configure' | 'preview' | 'complete';
 
 interface CSVImportDialogProps {
@@ -14,9 +24,11 @@ interface CSVImportDialogProps {
   onApply: (updatedRoot: IIIFItem) => void;
   onClose: () => void;
   initialMode?: DialogMode;
+  /** Source ID for checkpoint tracking */
+  sourceId?: string;
 }
 
-export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply, onClose, initialMode = 'import' }) => {
+export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply, onClose, initialMode = 'import', sourceId }) => {
   const [mode, setMode] = useState<DialogMode>(initialMode);
 
   // Import state
@@ -28,6 +40,72 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
   const [mappings, setMappings] = useState<CSVColumnMapping[]>([]);
   const [importResult, setImportResult] = useState<CSVImportResult | null>(null);
   const [autoDetected, setAutoDetected] = useState(false);
+
+  // Checkpoint state
+  const [checkpoints, setCheckpoints] = useState<IngestCheckpoint[]>([]);
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<IngestCheckpoint | null>(null);
+  const [isLoadingCheckpoints, setIsLoadingCheckpoints] = useState(false);
+
+  // Load checkpoints on mount
+  useEffect(() => {
+    if (mode === 'import' && sourceId) {
+      loadAvailableCheckpoints();
+    }
+  }, [mode, sourceId]);
+
+  const loadAvailableCheckpoints = async () => {
+    setIsLoadingCheckpoints(true);
+    try {
+      const allCheckpoints = await listCheckpoints();
+      // Filter for checkpoints related to this source or CSV imports
+      const relevant = allCheckpoints.filter(cp =>
+        cp.sourceId === sourceId ||
+        cp.sourceId.startsWith('csv_') ||
+        cp.metadata?.type === 'csv_import'
+      );
+      setCheckpoints(relevant);
+    } catch (error) {
+      console.error('Failed to load checkpoints:', error);
+    } finally {
+      setIsLoadingCheckpoints(false);
+    }
+  };
+
+  const handleResumeFromCheckpoint = async (checkpoint: IngestCheckpoint) => {
+    try {
+      const resumed = await resumeFromCheckpoint(checkpoint.id);
+      setSelectedCheckpoint(resumed);
+
+      // Restore CSV state from checkpoint metadata
+      if (resumed.metadata.csvText) {
+        setCsvText(resumed.metadata.csvText as string);
+        const parsed = csvImporter.parseCSV(resumed.metadata.csvText as string);
+        setHeaders(parsed.headers);
+        setRows(parsed.rows);
+        setFilenameColumn((resumed.metadata.filenameColumn as string) || parsed.headers[0]);
+
+        if (resumed.metadata.mappings) {
+          setMappings(resumed.metadata.mappings as CSVColumnMapping[]);
+        }
+
+        setAutoDetected(true);
+        setImportStep('map');
+      }
+    } catch (error) {
+      console.error('Failed to resume checkpoint:', error);
+      alert('Failed to resume import. Please start fresh.');
+    }
+  };
+
+  const saveCheckpointDuringImport = async () => {
+    if (!selectedCheckpoint) return;
+
+    try {
+      await completeCheckpoint(selectedCheckpoint.id);
+    } catch (error) {
+      console.error('Failed to save checkpoint:', error);
+    }
+  };
 
   // Export state
   const [exportStep, setExportStep] = useState<ExportStep>('configure');
@@ -54,39 +132,70 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
   }, [exportColumns]);
 
   // Import handlers
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      setCsvText(text);
-      const parsed = csvImporter.parseCSV(text);
-      setHeaders(parsed.headers);
-      setRows(parsed.rows);
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        setCsvText(text);
+        const parsed = csvImporter.parseCSV(text);
+        setHeaders(parsed.headers);
+        setRows(parsed.rows);
 
-      const detected = csvImporter.detectFilenameColumn(parsed.headers);
-      if (detected) setFilenameColumn(detected);
+        const detected = csvImporter.detectFilenameColumn(parsed.headers);
+        if (detected) setFilenameColumn(detected);
 
-      // Try auto-detection first (works well with staging template exports)
-      const autoMappings = csvImporter.autoDetectMappings(parsed.headers, detected || '');
+        // Try auto-detection first (works well with staging template exports)
+        const autoMappings = csvImporter.autoDetectMappings(parsed.headers, detected || '');
+        let initialMappings: CSVColumnMapping[] = [];
 
-      if (autoMappings.length > 0) {
-        // Use auto-detected mappings
-        setMappings(autoMappings);
-        setAutoDetected(true);
-      } else {
-        // Fall back to manual mapping setup
-        const initialMappings: CSVColumnMapping[] = parsed.headers
-          .filter(h => h !== detected)
-          .slice(0, 5)
-          .map(h => ({ csvColumn: h, iiifProperty: '', language: 'en' }));
-        setMappings(initialMappings);
-        setAutoDetected(false);
+        if (autoMappings.length > 0) {
+          // Use auto-detected mappings
+          setMappings(autoMappings);
+          setAutoDetected(true);
+        } else {
+          // Fall back to manual mapping setup
+          initialMappings = parsed.headers
+            .filter(h => h !== detected)
+            .slice(0, 5)
+            .map(h => ({ csvColumn: h, iiifProperty: '', language: 'en' }));
+          setMappings(initialMappings);
+          setAutoDetected(false);
+        }
+
+        // Create checkpoint for resumable import
+        if (sourceId) {
+          const { createCheckpoint } = await import('../services/ingestState');
+          const checkpoint = await createCheckpoint({
+            sourceId: sourceId || `csv_${Date.now()}`,
+            sourceName: file.name,
+            files: parsed.rows.map((row, idx) => ({
+              path: row[detected || parsed.headers[0]] || `row_${idx}`,
+              size: 0,
+              lastModified: Date.now()
+            })),
+            metadata: {
+              type: 'csv_import',
+              csvText: text,
+              filenameColumn: detected || parsed.headers[0],
+              mappings: autoMappings.length > 0 ? autoMappings : initialMappings,
+              rowCount: parsed.rows.length
+            }
+          });
+          setSelectedCheckpoint(checkpoint);
+        }
+
+        setImportStep('map');
+      } catch (error) {
+        console.error('Error parsing CSV:', error);
+        alert('Failed to parse CSV file. Please check the file format.');
       }
-
-      setImportStep('map');
+    };
+    reader.onerror = () => {
+      alert('Failed to read the file. Please try again.');
     };
     reader.readAsText(file);
   };
@@ -112,7 +221,7 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
     setMappings(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     const validMappings = mappings.filter(m => m.csvColumn && m.iiifProperty);
     const { updatedRoot, result } = csvImporter.applyMappings(root, rows, filenameColumn, validMappings);
     setImportResult(result);
@@ -120,6 +229,24 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
 
     if (result.matched > 0) {
       onApply(updatedRoot);
+      // Complete the checkpoint
+      if (selectedCheckpoint) {
+        await completeCheckpoint(selectedCheckpoint.id);
+      }
+    } else {
+      // Mark checkpoint as failed if no matches
+      if (selectedCheckpoint) {
+        await failCheckpoint(selectedCheckpoint.id, 'No items matched the CSV data');
+      }
+    }
+  };
+
+  const handleDeleteCheckpoint = async (checkpointId: string) => {
+    try {
+      await deleteCheckpoint(checkpointId);
+      await loadAvailableCheckpoints();
+    } catch (error) {
+      console.error('Failed to delete checkpoint:', error);
     }
   };
 
@@ -224,6 +351,61 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
               <p className="text-slate-500 mb-6 max-w-md mx-auto">
                 Import metadata from a CSV spreadsheet. The file should have a column for filenames and columns for metadata fields.
               </p>
+
+              {/* Resume import section */}
+              {checkpoints.length > 0 && (
+                <div className="mb-8 max-w-md mx-auto">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-amber-800 font-bold mb-3">
+                      <Icon name="history" />
+                      Resume Previous Import
+                    </div>
+                    <div className="space-y-2">
+                      {checkpoints.slice(0, 3).map(cp => (
+                        <div
+                          key={cp.id}
+                          className="flex items-center justify-between bg-white rounded p-3"
+                        >
+                          <div className="text-left">
+                            <div className="font-medium text-sm text-slate-700">
+                              {cp.sourceName}
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              {formatCheckpointAge(cp.timestamp)} • {cp.processedFiles} of {cp.totalFiles} rows
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleResumeFromCheckpoint(cp)}
+                              className="px-3 py-1.5 bg-amber-500 text-white rounded text-xs font-medium hover:bg-amber-600"
+                            >
+                              Resume
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCheckpoint(cp.id)}
+                              className="px-2 py-1.5 text-slate-400 hover:text-red-500"
+                            >
+                              <Icon name="delete" className="text-sm" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {checkpoints.length > 3 && (
+                      <p className="text-[11px] text-amber-600 mt-2">
+                        +{checkpoints.length - 3} more imports available
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4 my-6">
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-xs text-slate-400">or start new</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+                </div>
+              )}
+
               <label className="inline-block">
                 <input
                   type="file"
@@ -374,27 +556,72 @@ export const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ root, onApply,
                 />
               </div>
 
-              <h3 className="text-xl font-bold text-slate-800 mb-4">Import Complete</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                {importResult.matched > 0 ? 'Import Complete' : 'Import Issues'}
+              </h3>
 
               <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-3xl font-bold text-green-600">{importResult.matched}</div>
-                  <div className="text-sm text-green-700">Items Updated</div>
+                <div className={`${importResult.matched > 0 ? 'bg-green-50' : 'bg-slate-100'} p-4 rounded-lg`}>
+                  <div className={`text-3xl font-bold ${importResult.matched > 0 ? 'text-green-600' : 'text-slate-600'}`}>
+                    {importResult.matched}
+                  </div>
+                  <div className={`text-sm ${importResult.matched > 0 ? 'text-green-700' : 'text-slate-500'}`}>Items Updated</div>
                 </div>
-                <div className="bg-slate-100 p-4 rounded-lg">
-                  <div className="text-3xl font-bold text-slate-600">{importResult.unmatched}</div>
-                  <div className="text-sm text-slate-500">Not Matched</div>
+                <div className={`${importResult.unmatched > 0 ? 'bg-amber-50' : 'bg-slate-100'} p-4 rounded-lg`}>
+                  <div className={`text-3xl font-bold ${importResult.unmatched > 0 ? 'text-amber-600' : 'text-slate-600'}`}>
+                    {importResult.unmatched}
+                  </div>
+                  <div className={`text-sm ${importResult.unmatched > 0 ? 'text-amber-700' : 'text-slate-500'}`}>Not Matched</div>
                 </div>
               </div>
 
+              {/* Unmatched items help */}
+              {importResult.unmatched > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left max-w-md mx-auto mb-4">
+                  <div className="flex items-center gap-2 text-amber-800 font-bold mb-2">
+                    <Icon name="lightbulb" />
+                    Troubleshooting Tips
+                  </div>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    <li>• Check that filenames in the CSV match exactly (case-sensitive)</li>
+                    <li>• Make sure you selected the correct filename column</li>
+                    <li>• File extensions may be stored differently (.jpg vs .jpeg)</li>
+                    <li>• Try exporting a template first to see the expected format</li>
+                  </ul>
+                </div>
+              )}
+
+              {/* Error messages with solutions */}
               {importResult.errors.length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left max-w-md mx-auto">
-                  <div className="font-bold text-red-800 mb-2">Errors ({importResult.errors.length})</div>
-                  <ul className="text-sm text-red-700 list-disc list-inside">
+                  <div className="flex items-center gap-2 text-red-800 font-bold mb-2">
+                    <Icon name="error" />
+                    Errors ({importResult.errors.length})
+                  </div>
+                  <ul className="text-sm text-red-700 space-y-2">
                     {importResult.errors.slice(0, 5).map((e, i) => (
-                      <li key={i}>{e}</li>
+                      <li key={i} className="flex items-start gap-2">
+                        <Icon name="cancel" className="text-xs mt-1 flex-shrink-0" />
+                        <span>{e}</span>
+                      </li>
                     ))}
                   </ul>
+                  {importResult.errors.length > 5 && (
+                    <p className="text-xs text-red-600 mt-2">
+                      +{importResult.errors.length - 5} more errors
+                    </p>
+                  )}
+
+                  {/* Common solutions */}
+                  <div className="mt-4 pt-3 border-t border-red-200">
+                    <p className="text-xs font-bold text-red-800 mb-2">Common Solutions:</p>
+                    <ul className="text-xs text-red-700 space-y-1">
+                      <li>• If file access errors: Check file permissions or enable CORS</li>
+                      <li>• If "file not found": Ensure files haven't been moved</li>
+                      <li>• If encoding errors: Save CSV as UTF-8 format</li>
+                      <li>• If parsing fails: Check for special characters in filenames</li>
+                    </ul>
+                  </div>
                 </div>
               )}
             </div>

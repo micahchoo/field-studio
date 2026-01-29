@@ -1231,6 +1231,19 @@ ${featuredInfo}
         const manifestUrl = `iiif/${rootType}/${rootIdVal}.json`;
         const title = root.label?.none?.[0] || root.label?.en?.[0] || 'IIIF Export';
 
+        // Sanitize values for safe HTML embedding
+        const sanitizeHtmlAttr = (str: string): string => {
+            return str
+                .replace(/&/g, '&')
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/"/g, '"')
+                .replace(/'/g, '&#x27;');
+        };
+
+        const safeTitle = sanitizeHtmlAttr(title);
+        const safeManifestUrl = sanitizeHtmlAttr(manifestUrl);
+
         const uvCss = options.format === 'static-site' ? 'viewer/uv.css' : 'https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.css';
         const uvJs = options.format === 'static-site' ? 'viewer/uv.js' : 'https://cdn.jsdelivr.net/npm/universalviewer@4/dist/uv.js';
 
@@ -1404,7 +1417,7 @@ ${featuredInfo}
     <header>
         <div class="header-content">
             <span class="badge">IIIF 3.0</span>
-            <h1>${title}</h1>
+            <h1>${safeTitle}</h1>
         </div>
         <button class="info-btn" onclick="toggleModal()">
             About This Archive
@@ -1434,7 +1447,7 @@ ${featuredInfo}
                 <li>No server or database required</li>
             </ul>
             <p>
-                <strong>Entry Point:</strong> <code>${manifestUrl}</code>
+                <strong>Entry Point:</strong> <code>${safeManifestUrl}</code>
             </p>
             <p>
                 To use with external viewers, point them to the manifest URL above.
@@ -1448,7 +1461,7 @@ ${featuredInfo}
 
     <script>
         // Initialize Universal Viewer
-        const manifestUri = '${manifestUrl}';
+        const manifestUri = '${safeManifestUrl}';
 
         function createUV() {
             const urlDataProvider = new UV.URLDataProvider();

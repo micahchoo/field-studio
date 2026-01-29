@@ -25,6 +25,8 @@ export interface UseSharedSelectionReturn {
   hasSelection: boolean;
   /** Last selected item ID */
   lastSelectedId: string | null;
+  /** Last clicked item ID (alias for lastSelectedId) */
+  lastClickedId: string | null;
   /** Map of item types to their counts */
   typeCounts: Map<string, number>;
   /** Select a single item */
@@ -37,12 +39,16 @@ export interface UseSharedSelectionReturn {
   remove: (ids: string[]) => void;
   /** Select a range (for shift-click) */
   selectRange: (ids: string[], types?: string[]) => void;
+  /** Select all items */
+  selectAll: (ids: string[], types?: string[]) => void;
   /** Clear all selection */
   clear: () => void;
   /** Check if an ID is selected */
   isSelected: (id: string) => boolean;
   /** Get count of a specific type */
   getTypeCount: (type: string) => number;
+  /** Handle selection with modifier keys (ctrl/meta/shift) */
+  handleSelectWithModifier: (id: string, event: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }, items: { id: string; type?: string }[]) => void;
 }
 
 /**
@@ -185,20 +191,76 @@ export function useSharedSelection(): UseSharedSelectionReturn {
     return typeCounts.get(type) || 0;
   }, [typeCounts]);
 
+  /** Select all items */
+  const selectAll = useCallback((ids: string[], types?: string[]) => {
+    setSelectedIds(new Set(ids));
+    if (ids.length > 0) {
+      setLastSelectedId(ids[ids.length - 1]);
+    }
+    // Rebuild type counts
+    if (types) {
+      const newTypeCounts = new Map<string, number>();
+      types.forEach((type, index) => {
+        const id = ids[index];
+        if (id) {
+          newTypeCounts.set(type, (newTypeCounts.get(type) || 0) + 1);
+        }
+      });
+      setTypeCounts(newTypeCounts);
+    } else {
+      setTypeCounts(new Map());
+    }
+  }, []);
+
+  /** Handle selection with modifier keys */
+  const handleSelectWithModifier = useCallback((id: string, event: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }, items: { id: string; type?: string }[]) => {
+    const { shiftKey, metaKey, ctrlKey } = event;
+    const item = items.find(i => i.id === id);
+    const type = item?.type;
+
+    if (shiftKey && lastSelectedId) {
+      // Range selection
+      const lastIndex = items.findIndex(i => i.id === lastSelectedId);
+      const currentIndex = items.findIndex(i => i.id === id);
+      
+      if (lastIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastIndex, currentIndex);
+        const end = Math.max(lastIndex, currentIndex);
+        const rangeItems = items.slice(start, end + 1);
+        const rangeIds = rangeItems.map(i => i.id);
+        const rangeTypes = rangeItems.map(i => i.type).filter((t): t is string => !!t);
+        
+        selectRange(rangeIds, rangeTypes);
+      } else {
+        // Fallback to toggle if lastSelectedId not in current items
+        toggle(id, type);
+      }
+    } else if (metaKey || ctrlKey) {
+      // Toggle selection
+      toggle(id, type);
+    } else {
+      // Single selection
+      select(id, type);
+    }
+  }, [lastSelectedId, select, toggle, selectRange]);
+
   return {
     selectedIds,
     count,
     hasSelection,
     lastSelectedId,
+    lastClickedId: lastSelectedId,
     typeCounts,
     select,
     toggle,
     add,
     remove,
     selectRange,
+    selectAll,
     clear,
     isSelected,
-    getTypeCount
+    getTypeCount,
+    handleSelectWithModifier
   };
 }
 

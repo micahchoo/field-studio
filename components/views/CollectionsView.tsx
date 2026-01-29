@@ -3,12 +3,14 @@ import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, g
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { MuseumLabel } from '../MuseumLabel';
+import { Breadcrumb } from '../Breadcrumb';
 import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
 import { autoStructureService } from '../../services/autoStructure';
 import { StructureCanvas } from '../StructureCanvas';
 import { resolveThumbUrl, resolveHierarchicalThumb, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
 import { useSharedSelection, useIIIFTraversal, useResizablePanel } from '../../hooks';
+import { useBreadcrumbPath } from '../../hooks/useBreadcrumbPath';
 import { VirtualTreeList } from '../VirtualTreeList';
 import {
   findAllOfType,
@@ -71,12 +73,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   const {
     selectedIds: multiSelectedIds,
     select,
-    deselect,
     toggle,
-    selectAll: selectMultiple,
+    add,
+    remove,
     clear: clearMultiSelection,
     isSelected
-  } = useSharedSelection(true);
+  } = useSharedSelection();
 
   // Use IIIF traversal hook for efficient tree operations
   const { findNode, getAllManifests, getAllCollections } = useIIIFTraversal(root);
@@ -133,6 +135,24 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     if (!root) return new Map<string, string[]>();
     return buildReferenceMap(root);
   }, [root]);
+
+  // Build node map for breadcrumb traversal
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, IIIFItem>();
+    if (!root) return map;
+
+    const traverse = (item: IIIFItem) => {
+      map.set(item.id, item);
+      const children = (item as any).items || (item as any).annotations || [];
+      children.forEach((child: IIIFItem) => traverse(child));
+    };
+
+    traverse(root);
+    return map;
+  }, [root]);
+
+  // Use the new breadcrumb path hook with reverse references
+  const breadcrumbPath = useBreadcrumbPath(selectedId, referenceMap, nodeMap);
 
   // Get all manifests for "Add to Collection" feature - using traversal hook
   const allManifests = useMemo(() => getAllManifests(), [getAllManifests]);
@@ -399,11 +419,22 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <div className="p-2 bg-iiif-blue/10 rounded-lg text-iiif-blue">
             <Icon name="account_tree" className="text-2xl" />
           </div>
-          <div>
+          <div className="flex flex-col">
             <h1 className="text-lg font-bold text-slate-800 leading-tight">Structure</h1>
-            <p className="text-xs text-slate-500">
-              {stats.collections} Collections · {stats.manifests} Manifests · {stats.canvases} Canvases
-            </p>
+            {/* Breadcrumb navigation */}
+            {breadcrumbPath.length > 0 && (
+              <Breadcrumb
+                path={breadcrumbPath}
+                onNavigate={handleSelect}
+                onHomeClick={() => root && handleSelect(root.id)}
+                maxVisible={4}
+              />
+            )}
+            {breadcrumbPath.length === 0 && (
+              <p className="text-xs text-slate-500">
+                {stats.collections} Collections · {stats.manifests} Manifests · {stats.canvases} Canvases
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -13,6 +13,96 @@ export const CONSTANTS = {
 export const FEATURE_FLAGS = {
   /** Use the new two-pane StagingWorkbench instead of the legacy wizard-based StagingArea */
   USE_NEW_STAGING: true,
+  /** Use WCAG 2.1 AA compliant focus indicators with high contrast */
+  USE_ACCESSIBLE_FOCUS: true,
+  /** Use Immer for immutable state updates in vault (performance optimization) */
+  USE_IMMER_CLONING: false,
+  /** Use Web Worker for FlexSearch indexing (offloads from main thread) */
+  USE_WORKER_SEARCH: false,
+  /** Enable progressive disclosure abstraction levels (Phase 3) */
+  USE_PROGRESSIVE_DISCLOSURE: false,
+  /** Enable simplified 3-mode UI consolidation (Phase 3) */
+  USE_SIMPLIFIED_UI: false,
+  /** Enable keyboard-based drag and drop (Phase 5) */
+  USE_KEYBOARD_DND: false,
+  /** Enable internationalization (i18n) framework (Phase 6) */
+  USE_I18N: false,
+};
+
+/** Performance feature flag exports for convenience */
+export const USE_IMMER_CLONING = FEATURE_FLAGS.USE_IMMER_CLONING;
+export const USE_WORKER_SEARCH = FEATURE_FLAGS.USE_WORKER_SEARCH;
+
+// =============================================================================
+// Progressive Disclosure - UX Simplification (Phase 3)
+// =============================================================================
+
+import type { UIAbstractionConfig, AbstractionLevel, CoreViewMode } from './types';
+
+/**
+ * Default UI abstraction configuration
+ * Used when no user preference is stored
+ */
+export const DEFAULT_ABSTRACTION_CONFIG: UIAbstractionConfig = {
+  level: 'standard',
+  showTechnicalIds: false,
+  showRawIIIF: false,
+  showAdvancedActions: false,
+  simplifiedLabels: true
+};
+
+/**
+ * Core view mode configurations
+ * Maps each core mode to its UI characteristics
+ */
+export const CORE_VIEW_MODE_CONFIG: Record<CoreViewMode, {
+  label: string;
+  description: string;
+  icon: string;
+  sidebarVisible: boolean;
+  inspectorVisible: boolean;
+  toolbarMode: 'minimal' | 'standard' | 'full';
+}> = {
+  workspace: {
+    label: 'Workspace',
+    description: 'Browse and organize your archive',
+    icon: 'workspace_premium',
+    sidebarVisible: true,
+    inspectorVisible: true,
+    toolbarMode: 'full'
+  },
+  detail: {
+    label: 'Detail',
+    description: 'Inspect and edit item details',
+    icon: 'edit_note',
+    sidebarVisible: true,
+    inspectorVisible: true,
+    toolbarMode: 'standard'
+  },
+  preview: {
+    label: 'Preview',
+    description: 'Preview how your archive will appear',
+    icon: 'preview',
+    sidebarVisible: false,
+    inspectorVisible: false,
+    toolbarMode: 'minimal'
+  }
+};
+
+/**
+ * Legacy to core view mode mappings
+ * For backward compatibility during migration
+ */
+export const LEGACY_TO_CORE_MODE_MAP: Record<string, CoreViewMode> = {
+  'archive': 'workspace',
+  'collections': 'workspace',
+  'board': 'detail',
+  'metadata': 'detail',
+  'map': 'workspace',
+  'spreadsheet': 'workspace',
+  'timeline': 'workspace',
+  'search': 'workspace',
+  'viewer': 'preview'
 };
 
 // =============================================================================

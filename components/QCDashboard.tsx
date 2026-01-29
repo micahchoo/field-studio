@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { ValidationIssue, IssueCategory, healIssue, applyHealToTree, getFixDescription } from '../services';
 import { Icon } from './Icon';
 import { IIIFItem, getIIIFValue, isCanvas, isCollection, isManifest } from '../types';
@@ -59,8 +59,24 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
 
   const selectedIssue = useMemo(() => allIssues.find(i => i.id === selectedIssueId), [allIssues, selectedIssueId]);
 
-  const findItemAndPath = (id: string) => {
-    if (!root) return { item: null, path: [] };
+  /**
+   * Memoized cache for findItemAndPath results
+   * Prevents re-traversal for previously looked up items
+   */
+  const findItemCache = useRef<Map<string, { item: IIIFItem | null; path: { id: string; label: string; type: string }[] }>>(new Map());
+
+  /**
+   * Memoized findItemAndPath with caching
+   * Uses DFS traversal with cycle detection
+   * Cached results are cleared when root changes
+   */
+  const findItemAndPath = useCallback((id: string) => {
+    // Check cache first
+    const cached = findItemCache.current.get(id);
+    if (cached) return cached;
+
+    if (!root) return { item: null, path: [] as { id: string; label: string; type: string }[] };
+    
     const path: { id: string, label: string, type: string }[] = [];
     let found: IIIFItem | null = null;
     const visited = new Set<string>();
@@ -70,10 +86,10 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
         visited.add(node.id);
 
         const nodeInfo = { id: node.id, label: getIIIFValue(node.label) || 'Untitled', type: node.type };
-        if (node.id === id) { 
-            found = node; 
-            path.push(...currentPath, nodeInfo); 
-            return true; 
+        if (node.id === id) {
+            found = node;
+            path.push(...currentPath, nodeInfo);
+            return true;
         }
         const children = (node as any).items || (node as any).annotations || [];
         for (const child of children) {
@@ -81,9 +97,19 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
         }
         return false;
     };
+    
     traverse(root, []);
-    return { item: found, path };
-  };
+    const result = { item: found, path };
+    
+    // Cache the result
+    findItemCache.current.set(id, result);
+    return result;
+  }, [root]);
+
+  // Clear cache when root changes
+  useEffect(() => {
+    findItemCache.current.clear();
+  }, [root]);
 
   const { item: previewItem, path: previewPath } = useMemo(() => 
     selectedIssue ? findItemAndPath(selectedIssue.itemId) : { item: null, path: [] }
@@ -110,7 +136,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
   };
 
   // Use centralized healer service for consistent fix behavior across Inspector and QCDashboard
-  const handleHeal = (issue: ValidationIssue) => {
+  const handleHeal = useCallback((issue: ValidationIssue) => {
       if (!root) return;
       
       try {
@@ -134,10 +160,10 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
       } catch (error) {
           console.error('[QCDashboard] Exception during healing:', error);
       }
-  };
+  }, [root, findItemAndPath, onUpdate]);
 
   // Safe batch healing for "Heal All Fixable" button
-  const handleHealAllFixable = () => {
+  const handleHealAllFixable = useCallback(() => {
       if (!root) return;
       
       const fixableIssues = categoryIssues.filter(i => i.fixable);
@@ -183,7 +209,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
           onUpdate(currentRoot);
           console.log(`[QCDashboard] Batch healing complete: ${healedCount} healed, ${failedCount} failed`);
       }
-  };
+  }, [root, categoryIssues, findItemAndPath, onUpdate]);
 
   const handleRemoveMetadata = (itemId: string, index: number) => {
       if (!previewItem || !previewItem.metadata) return;

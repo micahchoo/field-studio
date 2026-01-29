@@ -1,26 +1,32 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { FileTree, IIIFItem, SourceManifests, SourceManifest } from '../../types';
+import { FileTree, IIIFItem, SourceManifests, SourceManifest, AbstractionLevel } from '../../types';
 import { Icon } from '../Icon';
 import { buildSourceManifests, getAllCollections, findManifest } from '../../services/stagingService';
 import { useStagingState } from './hooks/useStagingState';
+import { useKeyboardDragDrop } from '../../hooks/useKeyboardDragDrop';
+import { FEATURE_FLAGS } from '../../constants';
 import { SourcePane } from './SourcePane';
 import { ArchivePane } from './ArchivePane';
 import { SendToCollectionModal } from './SendToCollectionModal';
 import { MetadataTemplateExport } from './MetadataTemplateExport';
+import { useTerminology } from '../../hooks/useTerminology';
 
 interface StagingWorkbenchProps {
   initialTree: FileTree;
   existingRoot: IIIFItem | null;
   onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void;
   onCancel: () => void;
+  /** Abstraction level for terminology (Phase 3) */
+  abstractionLevel?: AbstractionLevel;
 }
 
 export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
   initialTree,
   existingRoot,
   onIngest,
-  onCancel
+  onCancel,
+  abstractionLevel = 'standard'
 }) => {
   // Build source manifests from file tree
   const [sourceManifests, setSourceManifests] = useState<SourceManifests | null>(null);
@@ -116,6 +122,7 @@ export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
       existingRoot={existingRoot}
       onIngest={onIngest}
       onCancel={onCancel}
+      abstractionLevel={abstractionLevel}
     />
   );
 };
@@ -126,6 +133,7 @@ interface StagingWorkbenchInnerProps {
   existingRoot: IIIFItem | null;
   onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void;
   onCancel: () => void;
+  abstractionLevel: AbstractionLevel;
 }
 
 const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
@@ -133,8 +141,11 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   initialTree,
   existingRoot,
   onIngest,
-  onCancel
+  onCancel,
+  abstractionLevel
 }) => {
+  // Phase 3: Use terminology based on abstraction level
+  const { t, formatCount } = useTerminology({ level: abstractionLevel });
   const stagingState = useStagingState(initialSourceManifests);
   const {
     selectedIds,
@@ -164,6 +175,22 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   const [isIngesting, setIsIngesting] = useState(false);
   const [ingestProgress, setIngestProgress] = useState({ message: '', percent: 0 });
   const [splitPosition, setSplitPosition] = useState(50);
+
+  // Phase 5: Keyboard drag and drop for source manifests (when enabled)
+  const keyboardDnd = useKeyboardDragDrop({
+    items: sourceManifests.manifests,
+    onReorder: () => {
+      // Reordering not supported in staging - manifests have fixed order from files
+    },
+    onMove: (itemId, targetId) => {
+      // Move manifest to a collection
+      addToCollection(targetId, [itemId]);
+    },
+    getItemId: (item) => item.id
+  });
+
+  // Combine keyboard DnD with feature flag
+  const enableKeyboardDnd = FEATURE_FLAGS.USE_KEYBOARD_DND;
 
   // Get all manifest IDs for select all
   const allManifestIds = useMemo(() =>
@@ -214,12 +241,16 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
     [sendToManifestIds, getManifest]
   );
 
-  // Stats
+  // Stats with terminology
   const stats = useMemo(() => ({
     totalManifests: sourceManifests.manifests.length,
     totalFiles: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
     totalCollections: getAllCollectionsList().length
   }), [sourceManifests.manifests, getAllCollectionsList]);
+
+  // Get terminology-aware labels
+  const manifestLabel = formatCount(stats.totalManifests, 'Manifest');
+  const collectionLabel = formatCount(stats.totalCollections, 'Collection');
 
   if (isIngesting) {
     return (
@@ -251,9 +282,9 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
             <Icon name="construction" className="text-white text-lg" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-800">Ingest Workbench</h2>
+            <h2 className="font-bold text-slate-800">Organize Your Files</h2>
             <p className="text-[10px] text-slate-500">
-              {stats.totalManifests} manifests | {stats.totalFiles} files | {stats.totalCollections} collections
+              {manifestLabel} | {stats.totalFiles} files | {collectionLabel}
             </p>
           </div>
         </div>
@@ -286,7 +317,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
             className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 flex items-center gap-2 shadow-lg"
           >
             <Icon name="publish" />
-            Ingest Archive
+            Import {t('Archive')}
           </button>
 
           {/* Close */}
@@ -303,7 +334,16 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
       {hasUnassigned && (
         <div className="flex-shrink-0 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm flex items-center gap-2">
           <Icon name="warning" className="text-amber-500" />
-          Some manifests are not assigned to any collection. They will still be ingested but won't appear in the collection hierarchy.
+          Some {t('Manifest').toLowerCase()}s are not in any {t('Collection').toLowerCase()}. They will still be imported but won't appear in the organization.
+        </div>
+      )}
+
+      {/* Keyboard DnD instructions (when enabled) */}
+      {enableKeyboardDnd && (
+        <div className="flex-shrink-0 px-4 py-2 bg-sky-50 border-b border-sky-200 text-sky-700 text-xs flex items-center gap-2">
+          <Icon name="keyboard" className="text-sky-500" />
+          <span className="font-medium">Keyboard:</span>
+          <span>Arrow keys to navigate • Space to select • Enter to drop • Escape to cancel</span>
         </div>
       )}
 
@@ -322,6 +362,8 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
             onDragStart={handleManifestDragStart}
             onFocus={() => setFocusedPane('source')}
             isFocused={focusedPane === 'source'}
+            enableKeyboardDnd={enableKeyboardDnd}
+            keyboardDnd={keyboardDnd}
           />
         </div>
 
