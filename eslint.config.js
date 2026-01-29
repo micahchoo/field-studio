@@ -100,6 +100,21 @@ export default [
       'prefer-const': 'error',
       'no-var': 'error',
       'eqeqeq': ['error', 'always', { null: 'ignore' }],
+      
+      // Additional best practices for IIIF Field Archive Studio
+      'prefer-template': 'warn',
+      'template-curly-spacing': 'error',
+      'object-shorthand': ['warn', 'always'],
+      'prefer-destructuring': ['warn', { object: true, array: false }],
+      'no-unused-expressions': 'warn',
+      'no-param-reassign': ['warn', { props: false }],
+      'consistent-return': 'warn',
+      'no-duplicate-imports': 'error',
+      'sort-imports': ['warn', {
+        ignoreCase: true,
+        ignoreDeclarationSort: true,
+        memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single']
+      }],
     },
     settings: {
       react: {

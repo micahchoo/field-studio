@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { searchService } from './services/searchService';
+import { storage } from './services/storage';
 import { IIIF_SPEC, FEATURE_FLAGS } from './constants';
 import { initializeI18n } from './i18n';
 
@@ -53,7 +54,8 @@ window.addEventListener('unhandledrejection', event => {
 console.log("[Index] Starting application bootstrap...");
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('message', (event) => {
+  navigator.serviceWorker.addEventListener('message', async (event) => {
+    // Handle search queries from service worker
     if (event.data && event.data.type === 'SEARCH_QUERY') {
       const { query, url } = event.data;
       const results = searchService.search(query);
@@ -78,6 +80,67 @@ if ('serviceWorker' in navigator) {
       if (event.ports && event.ports[0]) {
         event.ports[0].postMessage(iiifResponse);
       }
+      return;
+    }
+
+    // Handle tile requests from service worker
+    if (event.data && event.data.type === 'TILE_REQUEST') {
+      const { requestId, assetId, level, x, y, format } = event.data;
+      
+      try {
+        const blob = await storage.tiles.getTile(assetId, level, x, y);
+        
+        if (blob) {
+          // Convert blob to array buffer for transfer
+          const arrayBuffer = await blob.arrayBuffer();
+          
+          // Send response back to service worker
+          navigator.serviceWorker.controller?.postMessage({
+            type: 'TILE_RESPONSE',
+            requestId,
+            blob: arrayBuffer,
+            contentType: format === 'png' ? 'image/png' : 'image/jpeg'
+          }, [arrayBuffer]);
+        } else {
+          // Tile not found
+          navigator.serviceWorker.controller?.postMessage({
+            type: 'TILE_RESPONSE',
+            requestId,
+            blob: null
+          });
+        }
+      } catch (error) {
+        console.error('[Main] Error fetching tile:', error);
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'TILE_RESPONSE',
+          requestId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+      return;
+    }
+
+    // Handle tile manifest requests from service worker
+    if (event.data && event.data.type === 'TILE_MANIFEST_REQUEST') {
+      const { requestId, assetId } = event.data;
+      
+      try {
+        const manifest = await storage.tiles.getTileManifest(assetId);
+        
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'TILE_MANIFEST_RESPONSE',
+          requestId,
+          manifest: manifest || null
+        });
+      } catch (error) {
+        console.error('[Main] Error fetching tile manifest:', error);
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'TILE_MANIFEST_RESPONSE',
+          requestId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+      return;
     }
   });
 

@@ -288,7 +288,7 @@ const AnnotationItem = ({
   );
 };
 
-export const Inspector: React.FC<InspectorProps> = ({
+const InspectorComponent: React.FC<InspectorProps> = ({
   resource,
   onUpdateResource,
   settings,
@@ -805,3 +805,9 @@ export const Inspector: React.FC<InspectorProps> = ({
     </aside>
   );
 };
+
+export const Inspector = React.memo(InspectorComponent, (prev, next) => {
+  // Custom comparison: only re-render if selectedId or fieldMode changes
+  return prev.resource?.id === next.resource?.id &&
+         prev.settings.fieldMode === next.settings.fieldMode;
+});

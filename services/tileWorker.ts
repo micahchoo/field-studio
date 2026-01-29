@@ -10,11 +10,74 @@
  * - Worker -> Main: { type: 'progress', assetId, size, percent }
  * - Worker -> Main: { type: 'complete', assetId, derivatives }
  * - Worker -> Main: { type: 'error', assetId, message }
+ *
+ * Pyramid Generation Protocol:
+ * - Main -> Worker: { type: 'GENERATE_PYRAMID', assetId, imageBlob, config }
+ * - Worker -> Main: { type: 'PYRAMID_PROGRESS', assetId, progress }
+ * - Worker -> Main: { type: 'PYRAMID_COMPLETE', assetId, descriptor, totalTiles }
+ * - Worker -> Main: { type: 'PYRAMID_ERROR', assetId, error }
  */
 
 import { DEFAULT_DERIVATIVE_SIZES } from '../constants';
+import { FEATURE_FLAGS } from '../constants/features';
+import {
+  createCanvasTilePipeline,
+  CanvasTilePipeline,
+  TileGenerationProgress,
+} from './imagePipeline/canvasPipeline';
+import {
+  TilePyramidConfig,
+  TilePyramidResult,
+  TilePyramidDescriptor,
+} from './imagePipeline/tileCalculator';
 
-// Message types for worker communication
+// ============================================================================
+// Memory Leak Prevention - Worker Blob URL Management
+// ============================================================================
+
+/**
+ * Check if worker URL cleanup is enabled
+ */
+const isWorkerCleanupEnabled = (): boolean => {
+  return (FEATURE_FLAGS as Record<string, boolean>).USE_WORKER_URL_CLEANUP !== false;
+};
+
+/**
+ * Cleanup function for the worker blob URL
+ * Should be called on app shutdown to prevent memory leaks
+ */
+let workerUrlCleanupFn: (() => void) | null = null;
+
+/**
+ * Register the cleanup function for the worker blob URL
+ * @internal
+ */
+function registerWorkerUrlCleanup(cleanupFn: () => void): void {
+  workerUrlCleanupFn = cleanupFn;
+}
+
+/**
+ * Clean up the worker blob URL
+ * Call this function when the application is shutting down
+ * to prevent memory leaks from unreleased blob URLs
+ */
+export function cleanupWorkerBlobUrl(): void {
+  if (!isWorkerCleanupEnabled()) {
+    console.log('[tileWorker] Worker URL cleanup disabled by feature flag');
+    return;
+  }
+
+  if (workerUrlCleanupFn) {
+    workerUrlCleanupFn();
+    workerUrlCleanupFn = null;
+    console.log('[tileWorker] Worker blob URL cleaned up');
+  }
+}
+
+// ============================================================================
+// Legacy Message Types (for derivative generation)
+// ============================================================================
+
 export interface TileWorkerRequest {
   type: 'generate' | 'generateBatch';
   assetId: string;
@@ -45,9 +108,85 @@ export interface TileWorkerError {
   message: string;
 }
 
-export type TileWorkerMessage = TileWorkerProgress | TileWorkerResult | TileWorkerError;
+// ============================================================================
+// Pyramid Generation Message Types
+// ============================================================================
 
-// Worker script (runs in worker context)
+/**
+ * Message to initiate tile pyramid generation
+ */
+export interface GeneratePyramidMessage {
+  type: 'GENERATE_PYRAMID';
+  assetId: string;
+  imageBlob: Blob;
+  config?: Partial<TilePyramidConfig>;
+}
+
+/**
+ * Progress update during pyramid generation
+ */
+export interface PyramidProgressMessage {
+  type: 'PYRAMID_PROGRESS';
+  assetId: string;
+  progress: TileGenerationProgress;
+}
+
+/**
+ * Completion message when pyramid generation finishes
+ */
+export interface PyramidCompleteMessage {
+  type: 'PYRAMID_COMPLETE';
+  assetId: string;
+  descriptor: TilePyramidDescriptor;
+  totalTiles: number;
+}
+
+/**
+ * Error message if pyramid generation fails
+ */
+export interface PyramidErrorMessage {
+  type: 'PYRAMID_ERROR';
+  assetId: string;
+  error: string;
+}
+
+/** Union type for all pyramid-related messages */
+export type PyramidWorkerMessage =
+  | GeneratePyramidMessage
+  | PyramidProgressMessage
+  | PyramidCompleteMessage
+  | PyramidErrorMessage;
+
+/** Union type for all worker messages */
+export type TileWorkerMessage =
+  | TileWorkerProgress
+  | TileWorkerResult
+  | TileWorkerError
+  | PyramidProgressMessage
+  | PyramidCompleteMessage
+  | PyramidErrorMessage;
+
+// ============================================================================
+// Tile Storage Types (forward declarations for 3.4)
+// ============================================================================
+
+/**
+ * Storage interface for tile persistence
+ * (Will be fully implemented in Phase 3.4)
+ */
+interface TileStorage {
+  saveTile(assetId: string, tileKey: string, blob: Blob): Promise<void>;
+  saveDescriptor(assetId: string, descriptor: TilePyramidDescriptor): Promise<void>;
+  hasPyramid(assetId: string): Promise<boolean>;
+  getTile(assetId: string, tileKey: string): Promise<Blob | undefined>;
+  getDescriptor(assetId: string): Promise<TilePyramidDescriptor | undefined>;
+  deletePyramid(assetId: string): Promise<void>;
+}
+
+// ============================================================================
+// Worker Script (Legacy Derivative Generation)
+// ============================================================================
+
 const workerScript = `
   self.onmessage = async function(e) {
     const { type, assetId, imageData, mimeType, sizes, quality = 0.8 } = e.data;
@@ -137,6 +276,20 @@ const workerScript = `
 const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
 const workerUrl = URL.createObjectURL(workerBlob);
 
+// Register cleanup function for the blob URL (Phase 1 Memory Leak Fix)
+registerWorkerUrlCleanup(() => {
+  try {
+    URL.revokeObjectURL(workerUrl);
+  } catch (e) {
+    console.warn('[tileWorker] Failed to revoke worker blob URL:', e);
+  }
+});
+
+// Optional: Auto-cleanup on page unload
+if (typeof window !== 'undefined' && isWorkerCleanupEnabled()) {
+  window.addEventListener('beforeunload', cleanupWorkerBlobUrl, { once: true });
+}
+
 // Worker task with priority support
 interface WorkerTask {
   request: TileWorkerRequest;
@@ -147,7 +300,241 @@ interface WorkerTask {
 }
 
 /**
- * TileWorkerPool - Manages a pool of web workers for parallel tile generation
+ * TileWorker - Manages tile pyramid generation using CanvasTilePipeline
+ *
+ * This class provides a high-level API for generating IIIF tile pyramids
+ * with support for:
+ * - Progress tracking via callbacks
+ * - Cancellation via AbortController
+ * - Integration with tile storage
+ * - Error handling and recovery
+ */
+export class TileWorker {
+  private pipeline: CanvasTilePipeline;
+  private abortControllers: Map<string, AbortController>;
+  private storage: TileStorage | null;
+
+  /**
+   * Creates a new TileWorker instance
+   *
+   * @param storage - Optional tile storage implementation
+   */
+  constructor(storage: TileStorage | null = null) {
+    this.pipeline = createCanvasTilePipeline();
+    this.abortControllers = new Map();
+    this.storage = storage;
+  }
+
+  /**
+   * Handle GENERATE_PYRAMID message
+   *
+   * Generates a complete tile pyramid for the given image blob.
+   * Reports progress via callbacks and stores tiles in the configured storage.
+   *
+   * @param assetId - Unique identifier for the asset
+   * @param imageBlob - Image data as Blob
+   * @param config - Optional partial pyramid configuration
+   * @returns Promise that resolves when generation is complete
+   * @throws Error if generation fails or is cancelled
+   *
+   * @example
+   * ```typescript
+   * const worker = new TileWorker(storage);
+   * await worker.handleGeneratePyramid('asset-123', imageBlob, { tileSize: 512 });
+   * ```
+   */
+  async handleGeneratePyramid(
+    assetId: string,
+    imageBlob: Blob,
+    config?: Partial<TilePyramidConfig>
+  ): Promise<void> {
+    // Cancel any existing generation for this asset
+    this.cancelPyramidGeneration(assetId);
+
+    // Create new abort controller for this generation
+    const abortController = new AbortController();
+    this.abortControllers.set(assetId, abortController);
+
+    try {
+      // Create pipeline with progress callback and abort signal
+      const pipeline = createCanvasTilePipeline(config, {
+        quality: 0.85,
+        signal: abortController.signal,
+        onProgress: (progress) => {
+          // Report progress via callback or event
+          this.onPyramidProgress(assetId, progress);
+        },
+        onTileGenerated: async (level, x, y, blob) => {
+          // Store the tile if storage is available
+          if (this.storage) {
+            const tileKey = `${level}/${x}_${y}.jpg`;
+            await this.storage.saveTile(assetId, tileKey, blob);
+          }
+        },
+      });
+
+      // Generate the pyramid
+      const result = await pipeline.generateTilePyramid(imageBlob, assetId);
+
+      // Check if generation was cancelled
+      if (abortController.signal.aborted) {
+        throw new Error('Tile generation cancelled');
+      }
+
+      if (!result) {
+        // Generation was skipped (image too small)
+        this.onPyramidComplete(assetId, {
+          width: 0,
+          height: 0,
+          tileSize: config?.tileSize || 512,
+          overlap: config?.overlap || 0,
+          levels: 0,
+          format: config?.format || 'jpg',
+        }, 0);
+        return;
+      }
+
+      // Store the descriptor if storage is available
+      if (this.storage) {
+        await this.storage.saveDescriptor(assetId, result.descriptor);
+      }
+
+      // Report completion
+      this.onPyramidComplete(assetId, result.descriptor, result.totalTiles);
+    } catch (error) {
+      // Check if this was a cancellation
+      if (abortController.signal.aborted) {
+        this.onPyramidError(assetId, 'Tile generation cancelled');
+      } else {
+        this.onPyramidError(
+          assetId,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+      throw error;
+    } finally {
+      // Clean up abort controller
+      this.abortControllers.delete(assetId);
+    }
+  }
+
+  /**
+   * Cancel pyramid generation for an asset
+   *
+   * @param assetId - Unique identifier for the asset
+   */
+  cancelPyramidGeneration(assetId: string): void {
+    const controller = this.abortControllers.get(assetId);
+    if (controller) {
+      controller.abort();
+      this.abortControllers.delete(assetId);
+    }
+  }
+
+  /**
+   * Cancel all ongoing pyramid generations
+   */
+  cancelAllPyramidGenerations(): void {
+    for (const [assetId, controller] of this.abortControllers) {
+      controller.abort();
+    }
+    this.abortControllers.clear();
+  }
+
+  /**
+   * Check if pyramid exists in storage
+   *
+   * @param assetId - Unique identifier for the asset
+   * @returns Promise resolving to true if pyramid exists
+   */
+  async hasPyramid(assetId: string): Promise<boolean> {
+    if (!this.storage) {
+      return false;
+    }
+    return this.storage.hasPyramid(assetId);
+  }
+
+  /**
+   * Get the current generation status for an asset
+   *
+   * @param assetId - Unique identifier for the asset
+   * @returns True if generation is in progress
+   */
+  isGenerating(assetId: string): boolean {
+    return this.abortControllers.has(assetId);
+  }
+
+  /**
+   * Get all assets currently being generated
+   *
+   * @returns Array of asset IDs
+   */
+  getGeneratingAssets(): string[] {
+    return Array.from(this.abortControllers.keys());
+  }
+
+  /**
+   * Progress callback - override or set to receive progress updates
+   */
+  onPyramidProgress(assetId: string, progress: TileGenerationProgress): void {
+    // Default implementation - can be overridden by subclasses
+    // or used to dispatch custom events
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pyramid-progress', {
+          detail: { assetId, progress },
+        })
+      );
+    }
+  }
+
+  /**
+   * Completion callback - override or set to receive completion notifications
+   */
+  onPyramidComplete(
+    assetId: string,
+    descriptor: TilePyramidDescriptor,
+    totalTiles: number
+  ): void {
+    // Default implementation - can be overridden by subclasses
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pyramid-complete', {
+          detail: { assetId, descriptor, totalTiles },
+        })
+      );
+    }
+  }
+
+  /**
+   * Error callback - override or set to receive error notifications
+   */
+  onPyramidError(assetId: string, error: string): void {
+    // Default implementation - can be overridden by subclasses
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pyramid-error', {
+          detail: { assetId, error },
+        })
+      );
+    }
+  }
+
+  /**
+   * Dispose of the worker and clean up resources
+   */
+  dispose(): void {
+    this.cancelAllPyramidGenerations();
+    this.storage = null;
+  }
+}
+
+// ============================================================================
+// Legacy TileWorkerPool (for derivative generation)
+// ============================================================================
+
+/**
+ * TileWorkerPool - Manages a pool of web workers for parallel derivative generation
  * Implements backpressure with max 4 concurrent workers to prevent memory issues
  */
 export class TileWorkerPool {
@@ -237,7 +624,7 @@ export class TileWorkerPool {
           resolve: task.resolve,
           reject: task.reject
         });
-        
+
         try {
           availableWorker.postMessage(task.request, [task.request.imageData]);
         } catch (err) {
@@ -320,7 +707,7 @@ export class TileWorkerPool {
         this.activeWorkers++;
         this.activeJobs.set(assetId, { resolve, reject });
         const worker = this.workers[this.activeJobs.size % this.poolSize];
-        
+
         try {
           worker.postMessage(request, [imageData]);
         } catch (err) {
@@ -348,10 +735,10 @@ export class TileWorkerPool {
 
     // Process in chunks to maintain backpressure
     const batchSize = this.maxConcurrent * 2; // Keep queue reasonably filled
-    
+
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
-      
+
       const batchPromises = batch.map(async ({ assetId, file, priority = 1 }) => {
         try {
           const result = await this.generateDerivatives(assetId, file, sizes, priority);
@@ -394,6 +781,31 @@ export function getTileWorkerPool(): TileWorkerPool {
   return tileWorkerPool;
 }
 
+// Singleton TileWorker instance
+let tileWorker: TileWorker | null = null;
+
+/**
+ * Get the singleton TileWorker instance
+ *
+ * @param storage - Optional tile storage implementation
+ * @returns TileWorker instance
+ */
+export function getTileWorker(storage?: TileStorage): TileWorker {
+  if (!tileWorker) {
+    tileWorker = new TileWorker(storage || null);
+  }
+  return tileWorker;
+}
+
+/**
+ * Reset the singleton TileWorker instance
+ * Useful for testing or when storage implementation changes
+ */
+export function resetTileWorker(): void {
+  tileWorker?.dispose();
+  tileWorker = null;
+}
+
 /**
  * Generate a single derivative (convenience function)
  * Falls back to main thread if workers unavailable
@@ -412,6 +824,48 @@ export async function generateDerivativeAsync(
     // Fallback to main thread
     return generateDerivativeFallback(file, width);
   }
+}
+
+/**
+ * Generate a tile pyramid for an image (convenience function)
+ *
+ * @param assetId - Unique identifier for the asset
+ * @param imageBlob - Image data as Blob
+ * @param config - Optional pyramid configuration
+ * @param storage - Optional tile storage implementation
+ * @returns Promise that resolves when generation is complete
+ */
+export async function generateTilePyramidAsync(
+  assetId: string,
+  imageBlob: Blob,
+  config?: Partial<TilePyramidConfig>,
+  storage?: TileStorage
+): Promise<void> {
+  const worker = getTileWorker(storage);
+  return worker.handleGeneratePyramid(assetId, imageBlob, config);
+}
+
+/**
+ * Cancel ongoing pyramid generation for an asset
+ *
+ * @param assetId - Unique identifier for the asset
+ */
+export function cancelTilePyramidGeneration(assetId: string): void {
+  tileWorker?.cancelPyramidGeneration(assetId);
+}
+
+/**
+ * Check if a pyramid exists for an asset
+ *
+ * @param assetId - Unique identifier for the asset
+ * @param storage - Tile storage implementation
+ * @returns Promise resolving to true if pyramid exists
+ */
+export async function hasTilePyramid(
+  assetId: string,
+  storage: TileStorage
+): Promise<boolean> {
+  return storage.hasPyramid(assetId);
 }
 
 /**

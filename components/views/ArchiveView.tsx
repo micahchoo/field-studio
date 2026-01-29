@@ -7,6 +7,7 @@ import { TimelineView } from './TimelineView';
 import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
 import { EmptyState } from '../EmptyState';
+import { GridLoading } from '../LoadingState';
 import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
 import { Viewer } from './Viewer';
 import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '../../hooks';
@@ -56,9 +57,22 @@ interface RubberBandState {
   containerRect: DOMRect | null;
 }
 
-export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen, onBatchEdit, onUpdate, validationIssues = {}, fieldMode, onReveal, onCatalogSelection }) => {
+const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen, onBatchEdit, onUpdate, validationIssues = {}, fieldMode, onReveal, onCatalogSelection }) => {
   const { showToast } = useToast();
-  
+
+  // Loading state for initial data
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Track last deleted snapshot for undo
+  const [deletedSnapshot, setDeletedSnapshot] = useState<{ root: IIIFItem; ids: string[] } | null>(null);
+
+  // Update loading state when root changes
+  useEffect(() => {
+    if (root) {
+      setIsLoading(false);
+    }
+  }, [root]);
+
   // Load persisted view mode from localStorage
   const [view, setView] = useState<'grid' | 'list' | 'map' | 'timeline'>(() => {
     if (typeof window === 'undefined') return 'grid';
@@ -96,7 +110,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
     selectAll: selectAllItems,
     clear: clearSelection,
     isSelected
-  } = useSharedSelection(true);
+  } = useSharedSelection();
 
   // Use IIIF traversal hook for efficient tree operations
   const { getAllCanvases } = useIIIFTraversal(root);
@@ -293,6 +307,11 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
   const handleDelete = useCallback((idsToDelete: string[]) => {
       if (!onUpdate || !root) return;
       if (!confirm(`Permanently remove ${idsToDelete.length} item(s)?`)) return;
+
+      // Save snapshot for undo
+      const snapshot = JSON.parse(JSON.stringify(root));
+      setDeletedSnapshot({ root: snapshot, ids: idsToDelete });
+
       const newRoot = JSON.parse(JSON.stringify(root));
       const traverseAndRemove = (parent: any) => {
           const list = parent.items || parent.annotations || [];
@@ -307,7 +326,18 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
       traverseAndRemove(newRoot);
       onUpdate(newRoot);
       clearSelection();
-      showToast("Archive modified", "success");
+      showToast(
+        `Deleted ${idsToDelete.length} item(s)`,
+        "success",
+        {
+          label: 'Undo',
+          onClick: () => {
+            onUpdate(snapshot);
+            showToast('Deletion undone', 'info');
+          },
+          variant: 'primary'
+        }
+      );
   }, [onUpdate, root, showToast, clearSelection]);
 
   // Keyboard shortcuts for selection
@@ -624,7 +654,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
               }}
             />
           )}
-            {view === 'grid' && (
+            {view === 'grid' && isLoading && (
+            <div className="p-6">
+              <GridLoading items={12} className={fieldMode ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : ''} />
+            </div>
+            )}
+            {view === 'grid' && !isLoading && (
             <div className="rubber-band-area">
             <VirtualizedGrid
               items={filteredAssets}
@@ -682,7 +717,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
             />
             </div>
             )}
-            {view === 'list' && <VirtualizedList assets={filteredAssets} visibleRange={listVisibleRange} onSelect={handleItemClick} isSelected={isSelected} fieldMode={fieldMode} />}
+            {view === 'list' && isLoading && (
+            <div className="p-6">
+              <GridLoading items={8} />
+            </div>
+            )}
+            {view === 'list' && !isLoading && <VirtualizedList assets={filteredAssets} visibleRange={listVisibleRange} onSelect={handleItemClick} isSelected={isSelected} fieldMode={fieldMode} />}
             {view === 'map' && <MapView root={root} onSelect={(item: IIIFItem) => onSelect(item)} />}
             {view === 'timeline' && <TimelineView root={root} onSelect={(item: IIIFItem) => onSelect(item)} />}
         </div>
@@ -914,6 +954,87 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen
     </div>
   );
 };
+
+export const ArchiveView = React.memo(ArchiveViewComponent, (prev, next) => {
+  // Custom comparison to prevent unnecessary re-renders
+  const prevRootId = prev.root?.id;
+  const nextRootId = next.root?.id;
+  const prevFieldMode = prev.fieldMode;
+  const nextFieldMode = next.fieldMode;
+
+  // Count validation issues as a proxy for content changes
+  const prevIssueCount = Object.keys(prev.validationIssues || {}).length;
+  const nextIssueCount = Object.keys(next.validationIssues || {}).length;
+
+  return prevRootId === nextRootId &&
+         prevFieldMode === nextFieldMode &&
+         prevIssueCount === nextIssueCount;
+});
+
+// Memoized Grid Item Component for ArchiveView
+interface ArchiveGridItemProps {
+  asset: IIIFCanvas;
+  index: number;
+  isSelected: boolean;
+  fieldMode: boolean;
+  onItemClick: (e: React.MouseEvent, asset: IIIFItem) => void;
+  onContextMenu: (e: React.MouseEvent, id: string) => void;
+  itemRefCallback: (el: HTMLDivElement | null, id: string) => void;
+}
+
+const MemoizedArchiveGridItem = React.memo<ArchiveGridItemProps>(({
+  asset,
+  isSelected,
+  fieldMode,
+  onItemClick,
+  onContextMenu,
+  itemRefCallback
+}) => {
+  const dna = getFileDNA(asset);
+  const thumbUrls = resolveHierarchicalThumbs(asset, 200);
+  const config = RESOURCE_TYPE_CONFIG['Canvas'];
+
+  return (
+    <div
+      key={asset.id}
+      ref={(el) => itemRefCallback(el, asset.id)}
+      onContextMenu={(e) => onContextMenu(e, asset.id)}
+      className={`group relative rounded-lg shadow-sm cursor-pointer transition-all ${
+        fieldMode
+          ? (isSelected ? 'bg-slate-800 border-4 border-yellow-400 p-2' : 'bg-slate-800 border border-slate-700 p-3')
+          : (isSelected ? 'bg-blue-50 border border-iiif-blue ring-2 ring-iiif-blue p-2' : `bg-white border p-2 hover:shadow-md border-slate-200`)
+      }`}
+      onClick={(e) => onItemClick(e, asset)}
+    >
+      <div className={`aspect-square rounded overflow-hidden flex items-center justify-center mb-2 relative ${fieldMode ? 'bg-black' : 'bg-slate-100'}`}>
+        <StackedThumbnail
+          urls={thumbUrls}
+          size="lg"
+          className="w-full h-full"
+          icon={config.icon}
+        />
+        <div className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded-full flex gap-1.5 font-sans">
+          {dna.time && <Icon name="schedule" className="text-[10px] text-yellow-400" title="Has Time metadata"/>}
+          {dna.location && <Icon name="location_on" className="text-[10px] text-green-400" title="Has GPS metadata"/>}
+          {dna.device && <Icon name="photo_camera" className="text-[10px] text-blue-400" title="Has Device metadata"/>}
+        </div>
+      </div>
+      <div className="px-1 min-w-0">
+        <div className={`font-medium truncate ${fieldMode ? 'text-white text-sm' : 'text-slate-700 text-[11px]'}`}>
+          <Icon name={config.icon} className={`mr-1 text-[10px] opacity-60 ${config.colorClass}`}/>
+          {getIIIFValue(asset.label)}
+        </div>
+      </div>
+    </div>
+  );
+}, (prev, next) => {
+  // Custom comparison: only re-render if ID or selection state changes
+  return prev.asset.id === next.asset.id &&
+         prev.isSelected === next.isSelected &&
+         prev.fieldMode === next.fieldMode;
+});
+
+MemoizedArchiveGridItem.displayName = 'MemoizedArchiveGridItem';
 
 // Virtualized Grid component for efficient rendering
 interface VirtualizedGridProps {

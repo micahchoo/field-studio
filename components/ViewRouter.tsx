@@ -17,6 +17,7 @@ import { Viewer } from './views/Viewer';
 import { CollectionsView } from './views/CollectionsView';
 import { SearchView } from './views/SearchView';
 import { MetadataSpreadsheet } from './views/MetadataSpreadsheet';
+import { TrashView } from './TrashView';
 import { ErrorBoundary, ViewErrorFallback } from './ErrorBoundary';
 import { FEATURE_FLAGS, CORE_VIEW_MODE_CONFIG, LEGACY_TO_CORE_MODE_MAP } from '../constants';
 
@@ -326,6 +327,45 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               onSelectId(id);
               onReveal(id, 'archive');
             }}
+          />
+        </ErrorBoundary>
+      )}
+
+      {currentMode === 'trash' && (
+        <ErrorBoundary
+          key="trash-view"
+          fallback={(error, retry) => (
+            <ViewErrorFallback
+              viewName="Trash"
+              error={error}
+              onRetry={retry}
+              onSwitchView={handleSwitchToArchive}
+            />
+          )}
+        >
+          <TrashView
+            state={{
+              entities: {
+                Collection: {},
+                Manifest: {},
+                Canvas: {},
+                Range: {},
+                AnnotationPage: {},
+                Annotation: {}
+              },
+              trashedEntities: {},
+              references: {},
+              reverseRefs: {},
+              collectionMembers: {},
+              memberOfCollections: {},
+              rootId: null,
+              typeIndex: {},
+              extensions: {}
+            }}
+            onRestore={(ids) => console.log('Restore items:', ids)}
+            onDelete={(ids) => console.log('Delete items:', ids)}
+            onEmptyTrash={() => console.log('Empty trash')}
+            variant={fieldMode ? 'field-mode' : 'default'}
           />
         </ErrorBoundary>
       )}

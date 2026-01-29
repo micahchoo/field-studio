@@ -24,7 +24,10 @@ import {
   reorderChildren,
   getEntity,
   VaultSnapshot,
-  normalize
+  normalize,
+  moveEntityToTrash,
+  restoreEntityFromTrash,
+  emptyTrash
 } from './vault';
 import {
   IIIFItem,
@@ -66,7 +69,12 @@ export type Action =
   | { type: 'UPDATE_CANVAS_DIMENSIONS'; canvasId: string; width: number; height: number }
   | { type: 'MOVE_ITEM'; itemId: string; newParentId: string; index?: number }
   | { type: 'BATCH_UPDATE'; updates: Array<{ id: string; changes: Partial<IIIFItem> }> }
-  | { type: 'RELOAD_TREE'; root: IIIFItem };
+  | { type: 'RELOAD_TREE'; root: IIIFItem }
+  // Phase 2: Trash/Restore System Actions
+  | { type: 'MOVE_TO_TRASH'; id: string; options?: { preserveRelationships?: boolean } }
+  | { type: 'RESTORE_FROM_TRASH'; id: string; options?: { parentId?: string; index?: number } }
+  | { type: 'EMPTY_TRASH' }
+  | { type: 'BATCH_RESTORE'; ids: string[]; options?: { parentId?: string } };
 
 export interface ActionResult {
   success: boolean;
@@ -486,6 +494,96 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
         }
       }
 
+      // ============================================================================
+      // Phase 2: Trash/Restore System Actions
+      // ============================================================================
+
+      case 'MOVE_TO_TRASH': {
+        const entity = getEntity(state, action.id);
+        if (!entity) {
+          return { success: false, state, error: `Entity not found: ${action.id}` };
+        }
+
+        const changes: PropertyChange[] = [{
+          property: '_state',
+          oldValue: entity._state,
+          newValue: 'trashed'
+        }];
+
+        return {
+          success: true,
+          state: moveEntityToTrash(state, action.id),
+          changes
+        };
+      }
+
+      case 'RESTORE_FROM_TRASH': {
+        const trashed = state.trashedEntities?.[action.id];
+        if (!trashed) {
+          return { success: false, state, error: `Entity ${action.id} not found in trash` };
+        }
+
+        const changes: PropertyChange[] = [{
+          property: '_state',
+          oldValue: 'trashed',
+          newValue: undefined
+        }];
+
+        return {
+          success: true,
+          state: restoreEntityFromTrash(state, action.id, action.options),
+          changes
+        };
+      }
+
+      case 'EMPTY_TRASH': {
+        const trashedCount = Object.keys(state.trashedEntities || {}).length;
+        if (trashedCount === 0) {
+          return { success: true, state, changes: [] };
+        }
+
+        const result = emptyTrash(state);
+        const changes: PropertyChange[] = [{
+          property: '_trashedEntities',
+          oldValue: trashedCount,
+          newValue: 0
+        }];
+
+        return {
+          success: result.errors.length === 0,
+          state: result.state,
+          changes,
+          error: result.errors.length > 0 ? result.errors.join('; ') : undefined
+        };
+      }
+
+      case 'BATCH_RESTORE': {
+        let currentState = state;
+        const allChanges: PropertyChange[] = [];
+        const errors: string[] = [];
+
+        for (const id of action.ids) {
+          if (!state.trashedEntities?.[id]) {
+            errors.push(`Entity ${id} not found in trash`);
+            continue;
+          }
+
+          currentState = restoreEntityFromTrash(currentState, id, action.options);
+          allChanges.push({
+            property: '_state',
+            oldValue: 'trashed',
+            newValue: undefined
+          });
+        }
+
+        return {
+          success: errors.length === 0,
+          state: currentState,
+          changes: allChanges,
+          error: errors.length > 0 ? errors.join('; ') : undefined
+        };
+      }
+
       default:
         return { success: false, state, error: `Unknown action type` };
     }
@@ -779,5 +877,18 @@ export const actions = {
     ({ type: 'BATCH_UPDATE', updates }),
 
   reloadTree: (root: IIIFItem): Action =>
-    ({ type: 'RELOAD_TREE', root })
+    ({ type: 'RELOAD_TREE', root }),
+
+  // Phase 2: Trash/Restore System Action Creators
+  moveToTrash: (id: string, options?: { preserveRelationships?: boolean }): Action =>
+    ({ type: 'MOVE_TO_TRASH', id, options }),
+
+  restoreFromTrash: (id: string, options?: { parentId?: string; index?: number }): Action =>
+    ({ type: 'RESTORE_FROM_TRASH', id, options }),
+
+  emptyTrash: (): Action =>
+    ({ type: 'EMPTY_TRASH' }),
+
+  batchRestore: (ids: string[], options?: { parentId?: string }): Action =>
+    ({ type: 'BATCH_RESTORE', ids, options })
 };

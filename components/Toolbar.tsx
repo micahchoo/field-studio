@@ -1,12 +1,15 @@
 /**
  * Toolbar - Reusable sidebar toolbar component
- * 
+ *
  * Provides organized action groups for import, export, and settings
  * with consistent styling and clear visual hierarchy.
  */
 
 import React from 'react';
 import { Icon } from './Icon';
+import { AbstractionLevelToggle } from './AbstractionLevelToggle';
+import type { AbstractionLevel } from '../types';
+import { FEATURE_FLAGS } from '../constants/features';
 
 export interface ToolbarProps {
   /** Field mode styling */
@@ -23,6 +26,10 @@ export interface ToolbarProps {
   onToggleFieldMode: () => void;
   /** Quick help toggle */
   onToggleQuickHelp?: () => void;
+  /** Current abstraction level (for toggle) */
+  abstractionLevel?: AbstractionLevel;
+  /** Handler for abstraction level changes */
+  onAbstractionLevelChange?: (level: AbstractionLevel) => void;
   /** Additional CSS classes */
   className?: string;
 }
@@ -43,8 +50,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onOpenSettings,
   onToggleFieldMode,
   onToggleQuickHelp,
+  abstractionLevel = 'standard',
+  onAbstractionLevelChange,
   className = ''
 }) => {
+  const showAbstractionToggle = FEATURE_FLAGS.USE_SIMPLIFIED_UI && onAbstractionLevelChange;
   const sectionLabelClass = `text-[9px] font-black uppercase tracking-widest mb-2 ${fieldMode ? 'text-slate-500' : 'text-slate-500'}`;
   
   const dividerClass = `h-px mb-3 ${fieldMode ? 'bg-slate-800' : 'bg-slate-800'}`;
@@ -80,6 +90,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   return (
     <div className={`p-3 ${className}`}>
+      {/* Abstraction Level Toggle - Always visible when feature enabled */}
+      {showAbstractionToggle && (
+        <div className="mb-3">
+          <div className={sectionLabelClass}>Complexity</div>
+          <AbstractionLevelToggle
+            currentLevel={abstractionLevel}
+            onChange={onAbstractionLevelChange}
+            size="sm"
+            className="w-full justify-center"
+          />
+        </div>
+      )}
+
       {/* Import Section */}
       <div className="mb-3">
         <div className={sectionLabelClass}>Import</div>

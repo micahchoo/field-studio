@@ -5,6 +5,313 @@ const DERIVATIVES_STORE = 'derivatives';
 const TILE_CACHE_NAME = 'iiif-tile-cache-v3';
 
 // ============================================================================
+// Tile Serving Configuration
+// ============================================================================
+
+// Tile URL pattern: /tiles/{assetId}/{level}/{x}_{y}.jpg
+const TILE_URL_PATTERN = /^\/tiles\/([^\/]+)\/(\d+)\/(\d+)_(\d+)\.(jpg|png)$/;
+
+// Tile info pattern: /tiles/{assetId}/info.json
+const TILE_INFO_PATTERN = /^\/tiles\/([^\/]+)\/info\.json$/;
+
+// Pending tile requests (for main thread communication)
+const pendingTileRequests = new Map();
+
+// ============================================================================
+// Tile Request Handling
+// ============================================================================
+
+/**
+ * Handle tile requests
+ * Strategy: Cache API -> IndexedDB (via main thread) -> 404
+ * @param {Request} request - The fetch request
+ * @param {string} assetId - The asset ID
+ * @param {number} level - The pyramid level
+ * @param {number} x - Tile X coordinate
+ * @param {number} y - Tile Y coordinate
+ * @param {string} format - Image format (jpg or png)
+ * @returns {Promise<Response>}
+ */
+async function handleTileRequest(request, assetId, level, x, y, format) {
+  const cache = await caches.open(TILE_CACHE_NAME);
+  const url = request.url;
+
+  // 1. Try Cache API first
+  const cachedResponse = await cache.match(request);
+  if (cachedResponse) {
+    touchEntry(url);
+    // Return cached response with updated headers
+    const headers = new Headers(cachedResponse.headers);
+    headers.set('X-Cache', 'HIT');
+    headers.set('X-Cache-Source', 'Cache-API');
+    return new Response(cachedResponse.body, {
+      status: 200,
+      statusText: 'OK',
+      headers
+    });
+  }
+
+  // 2. Fall back to IndexedDB via main thread
+  try {
+    const tileBlob = await fetchTileFromIndexedDB(assetId, level, x, y, format);
+    
+    if (!tileBlob) {
+      return new Response('Tile not found', {
+        status: 404,
+        statusText: 'Not Found',
+        headers: {
+          'Content-Type': 'text/plain',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    }
+
+    // Create response with proper headers
+    const contentType = format === 'png' ? 'image/png' : 'image/jpeg';
+    const response = new Response(tileBlob, {
+      status: 200,
+      statusText: 'OK',
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'max-age=31536000, immutable',
+        'X-Cache': 'MISS',
+        'X-Cache-Source': 'IndexedDB'
+      }
+    });
+
+    // 3. Cache the tile for future requests
+    await cacheTile(request, response.clone());
+
+    return response;
+  } catch (error) {
+    console.error('[SW] Error fetching tile from IndexedDB:', error);
+    return new Response('Error fetching tile', {
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: {
+        'Content-Type': 'text/plain',
+        'Cache-Control': 'no-cache'
+      }
+    });
+  }
+}
+
+/**
+ * Fetch a tile from IndexedDB via main thread communication
+ * Service Workers cannot directly access IndexedDB in the same context as the main thread,
+ * so we use MessageChannel to request the tile from the main thread which has access to storage.tiles.getTile()
+ * @param {string} assetId - The asset ID
+ * @param {number} level - The pyramid level
+ * @param {number} x - Tile X coordinate
+ * @param {number} y - Tile Y coordinate
+ * @param {string} format - Image format
+ * @returns {Promise<Blob|null>}
+ */
+async function fetchTileFromIndexedDB(assetId, level, x, y, format) {
+  return new Promise((resolve, reject) => {
+    const requestId = `${assetId}_${level}_${x}_${y}_${Date.now()}`;
+    
+    // Create a timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      pendingTileRequests.delete(requestId);
+      reject(new Error('Tile request timeout'));
+    }, 10000); // 10 second timeout
+
+    // Store the pending request
+    pendingTileRequests.set(requestId, {
+      resolve: (blob) => {
+        clearTimeout(timeout);
+        pendingTileRequests.delete(requestId);
+        resolve(blob);
+      },
+      reject: (error) => {
+        clearTimeout(timeout);
+        pendingTileRequests.delete(requestId);
+        reject(error);
+      }
+    });
+
+    // Broadcast to all clients (main thread)
+    self.clients.matchAll().then(clients => {
+      if (clients.length === 0) {
+        pendingTileRequests.delete(requestId);
+        clearTimeout(timeout);
+        reject(new Error('No active clients available to fetch tile'));
+        return;
+      }
+
+      // Send request to all clients (first one to respond wins)
+      const message = {
+        type: 'TILE_REQUEST',
+        requestId,
+        assetId,
+        level,
+        x,
+        y,
+        format
+      };
+
+      clients.forEach(client => {
+        client.postMessage(message);
+      });
+    }).catch(error => {
+      pendingTileRequests.delete(requestId);
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
+}
+
+/**
+ * Cache a tile in the Cache API with long-term caching
+ * @param {Request} request - The request to cache
+ * @param {Response} response - The response to cache
+ */
+async function cacheTile(request, response) {
+  try {
+    const size = await getResponseSize(response);
+    
+    // Check if we need to evict to make room
+    if (cacheMetadata.totalSize + size > CACHE_LIMIT) {
+      await evictLRU(size);
+    }
+
+    const cache = await caches.open(TILE_CACHE_NAME);
+    await cache.put(request, response.clone());
+
+    // Update metadata
+    cacheMetadata.entries.set(request.url, {
+      size,
+      timestamp: Date.now(),
+      accessCount: 1
+    });
+    cacheMetadata.totalSize += size;
+
+    console.log(`[SW] Cached tile: ${request.url} (${(size / 1024).toFixed(2)}KB)`);
+  } catch (error) {
+    console.error('[SW] Failed to cache tile:', error);
+  }
+}
+
+/**
+ * Handle tile info requests (IIIF Image API 3.0 info.json)
+ * @param {string} assetId - The asset ID
+ * @returns {Promise<Response>}
+ */
+async function handleTileInfoRequest(assetId) {
+  try {
+    // Fetch manifest from IndexedDB via main thread
+    const manifest = await fetchTileManifestFromIndexedDB(assetId);
+    
+    if (!manifest) {
+      return new Response('Tile manifest not found', {
+        status: 404,
+        statusText: 'Not Found',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    }
+
+    // Build IIIF Image API 3.0 info.json response
+    const scaleFactors = [];
+    for (let i = 0; i < manifest.levels; i++) {
+      scaleFactors.push(Math.pow(2, i));
+    }
+
+    const info = {
+      '@context': 'http://iiif.io/api/image/3/context.json',
+      'id': `${self.location.origin}/tiles/${assetId}`,
+      'type': 'ImageService3',
+      'protocol': 'http://iiif.io/api/image',
+      'profile': 'level1',
+      'width': manifest.width,
+      'height': manifest.height,
+      'tiles': [
+        {
+          'width': manifest.tileSize,
+          'height': manifest.tileSize,
+          'scaleFactors': scaleFactors
+        }
+      ],
+      'preferredFormats': [manifest.format === 'png' ? 'png' : 'jpg'],
+      'extraFeatures': ['regionByPx', 'sizeByW']
+    };
+
+    return new Response(JSON.stringify(info), {
+      status: 200,
+      statusText: 'OK',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'max-age=86400', // 24 hours for info.json
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  } catch (error) {
+    console.error('[SW] Error fetching tile info:', error);
+    return new Response(JSON.stringify({ error: 'Failed to fetch tile info' }), {
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+  }
+}
+
+/**
+ * Fetch tile manifest from IndexedDB via main thread
+ * @param {string} assetId - The asset ID
+ * @returns {Promise<Object|null>}
+ */
+async function fetchTileManifestFromIndexedDB(assetId) {
+  return new Promise((resolve, reject) => {
+    const requestId = `${assetId}_manifest_${Date.now()}`;
+    
+    const timeout = setTimeout(() => {
+      pendingTileRequests.delete(requestId);
+      reject(new Error('Manifest request timeout'));
+    }, 5000);
+
+    pendingTileRequests.set(requestId, {
+      resolve: (manifest) => {
+        clearTimeout(timeout);
+        pendingTileRequests.delete(requestId);
+        resolve(manifest);
+      },
+      reject: (error) => {
+        clearTimeout(timeout);
+        pendingTileRequests.delete(requestId);
+        reject(error);
+      }
+    });
+
+    self.clients.matchAll().then(clients => {
+      if (clients.length === 0) {
+        pendingTileRequests.delete(requestId);
+        clearTimeout(timeout);
+        reject(new Error('No active clients available'));
+        return;
+      }
+
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'TILE_MANIFEST_REQUEST',
+          requestId,
+          assetId
+        });
+      });
+    }).catch(error => {
+      pendingTileRequests.delete(requestId);
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
+}
+
+// ============================================================================
 // LRU Cache Configuration
 // ============================================================================
 const CACHE_LIMIT = 500 * 1024 * 1024; // 500MB in bytes
@@ -303,6 +610,23 @@ async function handleImageRequest(request) {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  
+  // Check if this is a tile request
+  const tileMatch = url.pathname.match(TILE_URL_PATTERN);
+  if (tileMatch) {
+    const [, assetId, level, x, y, format] = tileMatch;
+    event.respondWith(handleTileRequest(event.request, assetId, parseInt(level, 10), parseInt(x, 10), parseInt(y, 10), format));
+    return;
+  }
+  
+  // Check if this is a tile info request
+  const tileInfoMatch = url.pathname.match(TILE_INFO_PATTERN);
+  if (tileInfoMatch) {
+    const [, assetId] = tileInfoMatch;
+    event.respondWith(handleTileInfoRequest(assetId));
+    return;
+  }
+  
   // Flexible matching: any path containing /iiif/image/ or /image/ followed by IIIF patterns
   const isIIIFImage = /\/(iiif\/)?image\/[^\/]+\/(info\.json|.+?\/default\.(jpg|jpeg|png|webp|gif))$/.test(url.pathname);
   
@@ -312,11 +636,43 @@ self.addEventListener('fetch', (event) => {
 });
 
 // ============================================================================
-// Message Handler for Cache Management
+// Message Handler for Cache Management and Tile Requests
 // ============================================================================
 
 self.addEventListener('message', (event) => {
-  const { action } = event.data;
+  const { action, type, requestId } = event.data;
+  
+  // Handle tile response from main thread
+  if (type === 'TILE_RESPONSE' && requestId) {
+    const pendingRequest = pendingTileRequests.get(requestId);
+    if (pendingRequest) {
+      if (event.data.error) {
+        pendingRequest.reject(new Error(event.data.error));
+      } else if (event.data.blob) {
+        // Reconstruct Blob from array buffer
+        const blob = new Blob([event.data.blob], {
+          type: event.data.contentType || 'image/jpeg'
+        });
+        pendingRequest.resolve(blob);
+      } else {
+        pendingRequest.resolve(null);
+      }
+    }
+    return;
+  }
+  
+  // Handle tile manifest response from main thread
+  if (type === 'TILE_MANIFEST_RESPONSE' && requestId) {
+    const pendingRequest = pendingTileRequests.get(requestId);
+    if (pendingRequest) {
+      if (event.data.error) {
+        pendingRequest.reject(new Error(event.data.error));
+      } else {
+        pendingRequest.resolve(event.data.manifest || null);
+      }
+    }
+    return;
+  }
   
   switch (action) {
     case 'getCacheStats':

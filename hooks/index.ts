@@ -5,6 +5,7 @@
  *
  * Categories:
  * - State Management: useIIIFEntity (Vault)
+ * - Vault Selectors: useVaultSelectors (Memoized derived state)
  * - App State: useAppSettings, useURLState
  * - UI State: useDialogState, useInspectorTabs, useResponsive
  * - Progressive Disclosure: useAbstractionLevel, useTerminology (Phase 3)
@@ -16,12 +17,42 @@
 export {
   VaultProvider,
   useVault,
+  useVaultState,
+  useVaultDispatch,
+  useVaultOptional,
+  useVaultStateOptional,
+  useVaultDispatchOptional,
   useRoot,
   useEntity,
   useHistory,
   useBulkOperations,
   useUndoRedoShortcuts,
 } from './useIIIFEntity';
+
+// ============================================================================
+// Vault Selectors (Memoized Derived State)
+// ============================================================================
+export {
+  useEntity as useVaultEntity,
+  useEntityLabel,
+  useEntityChildren,
+  useEntityAncestors,
+  useEntityTree,
+  useEntitiesByType,
+  useValidationSummary,
+  useSelectedEntities,
+  useEntityPath,
+  useEntityDescendants,
+  useEntityExists,
+  useEntityParent,
+  useEntityType,
+} from './useVaultSelectors';
+
+export type {
+  NormalizedEntity,
+  TreeNode,
+  ValidationSummary,
+} from './useVaultSelectors';
 
 // ============================================================================
 // Application State
@@ -142,3 +173,30 @@ export {
 export type {
   UseFocusTrapOptions
 } from './useFocusTrap';
+
+// ============================================================================
+// Phase 1: Memory Leak Fixes - Image Source Management
+// ============================================================================
+export {
+  useImageSource,
+  useMultipleImageSources,
+} from './useImageSource';
+export type {
+  UseImageSourceOptions,
+  UseImageSourceResult,
+  UseMultipleImageSourcesResult,
+} from './useImageSource';
+
+// ============================================================================
+// Phase 3: Enhanced Progress Indicators (P1 - UX)
+// ============================================================================
+export {
+  useIngestProgress,
+  formatETA,
+  formatSpeed,
+} from './useIngestProgress';
+export type {
+  IngestControls,
+  AggregateProgress,
+  UseIngestProgressReturn,
+} from './useIngestProgress';

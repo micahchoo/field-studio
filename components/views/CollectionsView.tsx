@@ -21,6 +21,8 @@ import {
   buildReferenceMap
 } from '../../utils/iiifHierarchy';
 import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
+import { SkeletonBlock } from '../LoadingState';
+import { EmptyState, emptyStatePresets } from '../EmptyState';
 
 interface CollectionsViewProps {
   root: IIIFItem | null;
@@ -34,7 +36,22 @@ interface CollectionsViewProps {
   onToggleInspector?: () => void;
 }
 
-export const CollectionsView: React.FC<CollectionsViewProps> = ({
+// Memoized StructureCanvas wrapper to prevent unnecessary re-renders
+const MemoizedStructureCanvas = React.memo(StructureCanvas, (prev, next) => {
+  // Deep compare relevant props
+  const prevItemId = prev.item?.id;
+  const nextItemId = next.item?.id;
+  const prevSelectedSize = prev.selectedIds.size;
+  const nextSelectedSize = next.selectedIds.size;
+  const prevViewMode = prev.viewMode;
+  const nextViewMode = next.viewMode;
+  
+  return prevItemId === nextItemId &&
+         prevSelectedSize === nextSelectedSize &&
+         prevViewMode === nextViewMode;
+});
+
+const CollectionsViewComponent: React.FC<CollectionsViewProps> = ({
   root,
   onUpdate,
   abstractionLevel = 'standard',
@@ -354,6 +371,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   // Handle remove items
   const handleRemoveItems = useCallback((ids: string[]) => {
     if (!root || !selectedId) return;
+
+    // Save snapshot for undo
+    const snapshot = JSON.parse(JSON.stringify(root));
+
     const newRoot = cloneTree(root);
     const parent = findNode(selectedId);
 
@@ -362,7 +383,18 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     parent.items = parent.items.filter((item: IIIFItem) => !ids.includes(item.id));
     onUpdate(newRoot);
     clearMultiSelection();
-    showToast(`Removed ${ids.length} item(s)`, "success");
+    showToast(
+      `Removed ${ids.length} item(s)`,
+      "success",
+      {
+        label: 'Undo',
+        onClick: () => {
+          onUpdate(snapshot);
+          showToast('Removal undone', 'info');
+        },
+        variant: 'primary'
+      }
+    );
   }, [root, selectedId, cloneTree, findNode, onUpdate, showToast, clearMultiSelection]);
 
   // Handle duplicate items
@@ -528,7 +560,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
         <div className="flex-1 flex flex-col min-w-0">
           {selectedNode && (isManifest(selectedNode) || isCollection(selectedNode)) ? (
             <>
-              <StructureCanvas
+              <MemoizedStructureCanvas
                 item={selectedNode}
                 onReorder={handleStructureReorder}
                 onSelect={handleSelect}
@@ -644,3 +676,17 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
     </div>
   );
 };
+
+export const CollectionsView = React.memo(CollectionsViewComponent, (prev, next) => {
+  // Deep compare root IDs to prevent unnecessary re-renders
+  const prevRootId = prev.root?.id;
+  const nextRootId = next.root?.id;
+  const prevSelectedId = prev.selectedId;
+  const nextSelectedId = next.selectedId;
+  const prevInspectorVisible = prev.inspectorVisible;
+  const nextInspectorVisible = next.inspectorVisible;
+  
+  return prevRootId === nextRootId &&
+         prevSelectedId === nextSelectedId &&
+         prevInspectorVisible === nextInspectorVisible;
+});

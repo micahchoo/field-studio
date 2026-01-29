@@ -30,6 +30,10 @@ interface SidebarProps {
   onToggleQuickHelp?: () => void;
   isMobile?: boolean;
   onClose?: () => void;
+  /** Current abstraction level for the toggle */
+  abstractionLevel?: import('../types').AbstractionLevel;
+  /** Handler for abstraction level changes */
+  onAbstractionLevelChange?: (level: import('../types').AbstractionLevel) => void;
 }
 
 const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick: () => void; fieldMode: boolean; disabled?: boolean; title?: string }> = ({ icon, label, active, onClick, fieldMode, disabled, title }) => (
@@ -179,7 +183,11 @@ const TreeItem: React.FC<{
   );
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode, viewType, fieldMode, onSelect, onModeChange, onViewTypeChange, onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport, onOpenSettings, onToggleQuickHelp, isMobile, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
+  root, selectedId, currentMode, viewType, fieldMode, onSelect, onModeChange, onViewTypeChange,
+  onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport,
+  onOpenSettings, onToggleQuickHelp, isMobile, onClose, abstractionLevel = 'standard', onAbstractionLevelChange
+}) {
   const [filterText, setFilterText] = useState('');
   const [filterType, setFilterType] = useState('All');
 
@@ -235,6 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
               <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => onModeChange('metadata')} fieldMode={fieldMode} />
               <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => onModeChange('boards')} fieldMode={fieldMode} />
               <NavItem icon="search" label="Search" active={currentMode === 'search'} onClick={() => onModeChange('search')} fieldMode={fieldMode} />
+              <NavItem icon="delete_outline" label="Trash" active={currentMode === 'trash'} onClick={() => onModeChange('trash')} fieldMode={fieldMode} />
               <NavItem
                 icon="visibility"
                 label="Viewer"
@@ -295,6 +304,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
             onOpenSettings={onOpenSettings}
             onToggleFieldMode={onToggleFieldMode}
             onToggleQuickHelp={onToggleQuickHelp}
+            abstractionLevel={abstractionLevel}
+            onAbstractionLevelChange={onAbstractionLevelChange}
           />
         </div>
 
@@ -329,4 +340,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ root, selectedId, currentMode,
       </aside>
     </>
   );
-};
+}, (prev, next) => {
+  // Custom comparison: only re-render if root ID, selectedId, or fieldMode changes
+  return prev.root?.id === next.root?.id &&
+         prev.selectedId === next.selectedId &&
+         prev.fieldMode === next.fieldMode;
+});

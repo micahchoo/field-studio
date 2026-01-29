@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import type { AbstractionLevel } from './types';
 import { ToastProvider, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation, isCanvas, isCollection } from './types';
@@ -18,7 +19,7 @@ import { ExternalImportDialog } from './components/ExternalImportDialog';
 import { BatchEditor } from './components/BatchEditor';
 import { PersonaSettings } from './components/PersonaSettings';
 import { CommandPalette } from './components/CommandPalette';
-import { KeyboardShortcutsOverlay, GLOBAL_SHORTCUTS } from './components/KeyboardShortcutsOverlay';
+import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
 import { AuthDialog } from './components/AuthDialog';
 import { SkipLink } from './components/SkipLink';
 import { Icon } from './components/Icon';
@@ -372,6 +373,29 @@ const MainApp: React.FC = () => {
     onboardingModal.close();
   }, [updateSettings, onboardingModal]);
 
+  /**
+   * Handle abstraction level change from the toggle
+   * Updates all related settings based on the selected level
+   */
+  const handleAbstractionLevelChange = useCallback((level: AbstractionLevel) => {
+    const template = level === 'simple' ? METADATA_TEMPLATES.RESEARCHER
+      : level === 'standard' ? METADATA_TEMPLATES.ARCHIVIST
+      : METADATA_TEMPLATES.DEVELOPER;
+    const complexity = level === 'simple' ? 'simple' : level === 'advanced' ? 'advanced' : 'standard';
+    const showTechnical = level !== 'simple';
+    const fieldMode = level === 'simple';
+
+    updateSettings({
+      abstractionLevel: level,
+      metadataTemplate: template,
+      metadataComplexity: complexity as any,
+      showTechnicalIds: showTechnical,
+      fieldMode: fieldMode
+    });
+
+    showToast(`Switched to ${level === 'simple' ? 'Simple (Album/Photo)' : level === 'standard' ? 'Standard' : 'Advanced'} mode`, 'info');
+  }, [updateSettings, showToast]);
+
   const handleBatchApply = useCallback((ids: string[], updatesMap: Record<string, Partial<IIIFItem>>, ren?: string) => {
     const updates = ids.map((id, idx) => {
       const changes = { ...updatesMap[id] };
@@ -449,6 +473,7 @@ const MainApp: React.FC = () => {
           currentMode={currentMode}
           viewType={viewType}
           fieldMode={settings.fieldMode}
+          abstractionLevel={settings.abstractionLevel}
           visible={showSidebar}
           isMobile={isMobile}
           onSelect={(id) => {
@@ -466,6 +491,7 @@ const MainApp: React.FC = () => {
           onStructureUpdate={handleUpdateRoot}
           onOpenSettings={personaSettings.open}
           onToggleQuickHelp={() => setShowQuickRef(prev => !prev)}
+          onAbstractionLevelChange={handleAbstractionLevelChange}
         />
 
         <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''}`}>
@@ -587,8 +613,7 @@ const MainApp: React.FC = () => {
       <KeyboardShortcutsOverlay
         isOpen={keyboardShortcuts.isOpen}
         onClose={keyboardShortcuts.close}
-        categories={GLOBAL_SHORTCUTS}
-        currentContext={currentMode}
+        currentContext={currentMode as any}
       />
 
       <QuickReference

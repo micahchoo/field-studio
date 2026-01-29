@@ -19,11 +19,32 @@ export default defineConfig(({ mode }) => {
       optimizeDeps: {
         include: ['flexsearch']
       },
+      // ============================================================================
+      // Phase 4: Worker Configuration
+      // ============================================================================
       worker: {
-        format: 'es'
+        format: 'es',
+        // Bundle workers as separate chunks for better caching
+        rollupOptions: {
+          output: {
+            // Workers are bundled as separate chunks with consistent naming
+            entryFileNames: 'workers/[name]-[hash].js',
+            chunkFileNames: 'workers/[name]-[hash].js',
+          }
+        }
       },
       build: {
-        target: 'esnext'
+        target: 'esnext',
+        // Ensure workers are properly handled in production
+        rollupOptions: {
+          output: {
+            // Separate worker chunks for better caching
+            manualChunks: {
+              // Group worker-related code
+              'workers': ['./workers/ingest.worker', './workers/validation.worker'],
+            }
+          }
+        }
       }
     };
 });

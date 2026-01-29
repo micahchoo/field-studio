@@ -2,13 +2,15 @@
  * React Hooks for IIIF Entity Management
  *
  * Provides React integration with the Vault normalized state management system.
- * Hooks are type-safe and provide convenient access to entities with automatic
- * re-rendering on state changes.
+ * Uses the split context pattern to prevent unnecessary re-renders:
+ * - VaultStateContext: Changes trigger re-renders (for read-only components)
+ * - VaultDispatchContext: Stable reference, never triggers re-renders (for action-only components)
  *
  * Usage:
  * 1. Wrap app with VaultProvider
- * 2. Use hooks like useManifest, useCanvas, etc. to access entities
- * 3. Use useHistory for undo/redo controls
+ * 2. Use useVaultState() for read-only access (re-renders on state change)
+ * 3. Use useVaultDispatch() for actions only (stable, no re-renders)
+ * 4. Use useVault() for both (backwards compatibility, re-renders on state change)
  *
  * @see services/vault.ts for state management
  * @see services/actions.ts for action dispatch
@@ -52,15 +54,31 @@ import {
 // Context Types
 // ============================================================================
 
-interface VaultContextValue {
+/**
+ * State context value - changes to this trigger re-renders
+ * Use this for read-only components that need to react to state changes
+ */
+interface VaultStateContextValue {
   /** Current normalized state */
   state: NormalizedState;
 
-  /** Action dispatcher for mutations */
-  dispatcher: ActionDispatcher;
-
   /** Get entity by ID */
   getEntity: (id: string) => IIIFItem | null;
+
+  /** Export as nested IIIF tree */
+  exportRoot: () => IIIFItem | null;
+
+  /** Get root ID */
+  rootId: string | null;
+}
+
+/**
+ * Dispatch context value - stable reference, never triggers re-renders
+ * Use this for action-only components that don't need to react to state changes
+ */
+interface VaultDispatchContextValue {
+  /** Action dispatcher for mutations */
+  dispatcher: ActionDispatcher;
 
   /** Dispatch an action */
   dispatch: (action: Action) => boolean;
@@ -79,18 +97,22 @@ interface VaultContextValue {
 
   /** Load a new root item */
   loadRoot: (root: IIIFItem) => void;
-
-  /** Export as nested IIIF tree */
-  exportRoot: () => IIIFItem | null;
-
-  /** Get root ID */
-  rootId: string | null;
 }
 
+/**
+ * Combined context value (backwards compatibility)
+ * @deprecated Use useVaultState() and useVaultDispatch() separately for better performance
+ */
+interface VaultContextValue extends VaultStateContextValue, VaultDispatchContextValue {}
+
 // ============================================================================
-// Context and Provider
+// Contexts
 // ============================================================================
 
+const VaultStateContext = createContext<VaultStateContextValue | null>(null);
+const VaultDispatchContext = createContext<VaultDispatchContextValue | null>(null);
+
+// Legacy context for backwards compatibility
 const VaultContext = createContext<VaultContextValue | null>(null);
 
 interface VaultProviderProps {
@@ -158,34 +180,74 @@ export const VaultProvider: React.FC<VaultProviderProps> = ({
     dispatcher.dispatch(actions.reloadTree(root));
   }, [dispatcher]);
 
-  // Memoized context value
-  const contextValue = useMemo<VaultContextValue>(() => ({
+  // State context value - memoized to prevent unnecessary re-renders
+  const stateContextValue = useMemo<VaultStateContextValue>(() => ({
     state,
-    dispatcher,
     getEntity: (id: string) => getEntity(state, id),
+    exportRoot: () => denormalize(state),
+    rootId: state.rootId
+  }), [state]);
+
+  // Dispatch context value - memoized with stable reference
+  const dispatchContextValue = useMemo<VaultDispatchContextValue>(() => ({
+    dispatcher,
     dispatch: dispatchAction,
     undo,
     redo,
     canUndo: undoRedoStatus.canUndo,
     canRedo: undoRedoStatus.canRedo,
-    loadRoot,
-    exportRoot: () => denormalize(state),
-    rootId: state.rootId
-  }), [state, dispatcher, undoRedoStatus, loadRoot, dispatchAction, undo, redo]);
+    loadRoot
+  }), [dispatcher, dispatchAction, undo, redo, undoRedoStatus.canUndo, undoRedoStatus.canRedo, loadRoot]);
+
+  // Legacy context value (backwards compatibility)
+  const legacyContextValue = useMemo<VaultContextValue>(() => ({
+    ...stateContextValue,
+    ...dispatchContextValue
+  }), [stateContextValue, dispatchContextValue]);
 
   return (
-    <VaultContext.Provider value={contextValue}>
-      {children}
-    </VaultContext.Provider>
+    <VaultStateContext.Provider value={stateContextValue}>
+      <VaultDispatchContext.Provider value={dispatchContextValue}>
+        <VaultContext.Provider value={legacyContextValue}>
+          {children}
+        </VaultContext.Provider>
+      </VaultDispatchContext.Provider>
+    </VaultStateContext.Provider>
   );
 };
 
 // ============================================================================
-// Base Hook
+// Base Hooks
 // ============================================================================
 
 /**
- * Access the vault context
+ * Access the vault state context
+ * Use this for read-only components that need to re-render on state changes
+ */
+export function useVaultState(): VaultStateContextValue {
+  const context = useContext(VaultStateContext);
+  if (!context) {
+    throw new Error('useVaultState must be used within a VaultProvider');
+  }
+  return context;
+}
+
+/**
+ * Access the vault dispatch context
+ * Use this for action-only components that should NOT re-render on state changes
+ * The returned object has a stable reference and never triggers re-renders
+ */
+export function useVaultDispatch(): VaultDispatchContextValue {
+  const context = useContext(VaultDispatchContext);
+  if (!context) {
+    throw new Error('useVaultDispatch must be used within a VaultProvider');
+  }
+  return context;
+}
+
+/**
+ * Access the combined vault context (backwards compatibility)
+ * @deprecated Use useVaultState() and useVaultDispatch() separately for better performance
  */
 export function useVault(): VaultContextValue {
   const context = useContext(VaultContext);
@@ -197,9 +259,24 @@ export function useVault(): VaultContextValue {
 
 /**
  * Use vault context optionally (returns null if not in provider)
+ * @deprecated Use useVaultStateOptional() or useVaultDispatchOptional() instead
  */
 export function useVaultOptional(): VaultContextValue | null {
   return useContext(VaultContext);
+}
+
+/**
+ * Access the vault state context optionally (returns null if not in provider)
+ */
+export function useVaultStateOptional(): VaultStateContextValue | null {
+  return useContext(VaultStateContext);
+}
+
+/**
+ * Access the vault dispatch context optionally (returns null if not in provider)
+ */
+export function useVaultDispatchOptional(): VaultDispatchContextValue | null {
+  return useContext(VaultDispatchContext);
 }
 
 // ============================================================================
@@ -216,7 +293,8 @@ export function useEntity<T extends IIIFItem = IIIFItem>(id: string | null): {
   childIds: string[];
   update: (updates: Partial<T>) => boolean;
 } {
-  const { state, dispatch } = useVault();
+  const { state } = useVaultState();
+  const { dispatch } = useVaultDispatch();
 
   const entity = id ? getEntity(state, id) as T | null : null;
   const type = id ? getEntityType(state, id) : null;
@@ -235,7 +313,8 @@ export function useEntity<T extends IIIFItem = IIIFItem>(id: string | null): {
  * Hook for Manifest entities
  */
 export function useManifest(id: string | null) {
-  const { state, dispatch } = useVault();
+  const { state } = useVaultState();
+  const { dispatch } = useVaultDispatch();
 
   const manifest = id ? getEntity(state, id) as IIIFManifest | null : null;
   const canvasIds = id ? getChildIds(state, id).filter(
@@ -302,7 +381,8 @@ export function useManifest(id: string | null) {
  * Hook for Canvas entities
  */
 export function useCanvas(id: string | null) {
-  const { state, dispatch } = useVault();
+  const { state } = useVaultState();
+  const { dispatch } = useVaultDispatch();
 
   const canvas = id ? getEntity(state, id) as IIIFCanvas | null : null;
 
@@ -374,7 +454,8 @@ export function useCanvas(id: string | null) {
  * Hook for Annotation entities
  */
 export function useAnnotation(id: string | null) {
-  const { state, dispatch } = useVault();
+  const { state } = useVaultState();
+  const { dispatch } = useVaultDispatch();
 
   const annotation = id ? getEntity(state, id) as IIIFAnnotation | null : null;
 
@@ -412,7 +493,8 @@ export function useAnnotation(id: string | null) {
  * Hook for Collection entities
  */
 export function useCollection(id: string | null) {
-  const { state, dispatch } = useVault();
+  const { state } = useVaultState();
+  const { dispatch } = useVaultDispatch();
 
   const collection = id ? getEntity(state, id) as IIIFCollection | null : null;
   const childIds = id ? getChildIds(state, id) : [];
@@ -457,7 +539,8 @@ export function useCollection(id: string | null) {
  * Hook for Range entities
  */
 export function useRange(id: string | null) {
-  const { state, dispatch } = useVault();
+  const { state } = useVaultState();
+  const { dispatch } = useVaultDispatch();
 
   const range = id ? getEntity(state, id) as IIIFRange | null : null;
   const childIds = id ? getChildIds(state, id) : [];
@@ -488,7 +571,7 @@ export function useRange(id: string | null) {
  * Hook for undo/redo controls
  */
 export function useHistory() {
-  const { undo, redo, canUndo, canRedo, dispatcher } = useVault();
+  const { undo, redo, canUndo, canRedo, dispatcher } = useVaultDispatch();
 
   const status = useMemo(() =>
     dispatcher.getHistoryStatus(),
@@ -509,7 +592,8 @@ export function useHistory() {
  * Hook for accessing root entity
  */
 export function useRoot() {
-  const { state, rootId, loadRoot, exportRoot, dispatch } = useVault();
+  const { state, rootId, exportRoot } = useVaultState();
+  const { dispatch, loadRoot } = useVaultDispatch();
 
   const root = rootId ? getEntity(state, rootId) : null;
   const rootType = rootId ? getEntityType(state, rootId) : null;
@@ -538,7 +622,7 @@ export function useRoot() {
  * Hook for bulk operations
  */
 export function useBulkOperations() {
-  const { dispatch } = useVault();
+  const { dispatch } = useVaultDispatch();
 
   const batchUpdate = useCallback((
     updates: Array<{ id: string; changes: Partial<IIIFItem> }>
@@ -566,7 +650,7 @@ export function useBulkOperations() {
  * Hook for searching entities
  */
 export function useEntitySearch() {
-  const { state } = useVault();
+  const { state } = useVaultState();
 
   const searchByType = useCallback(<T extends IIIFItem>(type: EntityType): T[] => {
     return getEntitiesByType<T>(state, type);

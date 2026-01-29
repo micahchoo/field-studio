@@ -24,7 +24,11 @@
     "js-yaml": "4.1.0",
     "jszip": "3.10.1",
     "leaflet": "^1.9.4",
-    "react-i18next": "^16.5.4"
+    "lib0": "^0.2.117",
+    "react-i18next": "^16.5.4",
+    "y-indexeddb": "^9.0.12",
+    "y-webrtc": "^10.3.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

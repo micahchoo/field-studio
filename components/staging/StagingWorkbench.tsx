@@ -1,11 +1,14 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { FileTree, IIIFItem, SourceManifests, SourceManifest, AbstractionLevel } from '../../types';
+import { FileTree, IIIFItem, SourceManifests, SourceManifest, AbstractionLevel, IngestResult } from '../../types';
 import { Icon } from '../Icon';
 import { buildSourceManifests, getAllCollections, findManifest } from '../../services/stagingService';
 import { useStagingState } from './hooks/useStagingState';
 import { useKeyboardDragDrop } from '../../hooks/useKeyboardDragDrop';
-import { FEATURE_FLAGS } from '../../constants';
+import { useIngestProgress } from '../../hooks/useIngestProgress';
+import { IngestProgressPanel } from '../IngestProgressPanel';
+import { FEATURE_FLAGS, USE_WORKER_INGEST } from '../../constants/features';
+import { ingestTreeWithWorkers } from '../../services/ingestWorkerPool';
 import { SourcePane } from './SourcePane';
 import { ArchivePane } from './ArchivePane';
 import { SendToCollectionModal } from './SendToCollectionModal';
@@ -146,6 +149,10 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
 }) => {
   // Phase 3: Use terminology based on abstraction level
   const { t, formatCount } = useTerminology({ level: abstractionLevel });
+  
+  // Phase 3: Enhanced progress tracking
+  const { aggregate, progress, controls, startIngest, clearCompleted } = useIngestProgress();
+  
   const stagingState = useStagingState(initialSourceManifests);
   const {
     selectedIds,
@@ -172,8 +179,6 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   const [sendToManifestIds, setSendToManifestIds] = useState<string[]>([]);
   const [showMetadataExport, setShowMetadataExport] = useState(false);
   const [merge, setMerge] = useState(!!existingRoot);
-  const [isIngesting, setIsIngesting] = useState(false);
-  const [ingestProgress, setIngestProgress] = useState({ message: '', percent: 0 });
   const [splitPosition, setSplitPosition] = useState(50);
 
   // Phase 5: Keyboard drag and drop for source manifests (when enabled)
@@ -225,15 +230,91 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
     e.dataTransfer.effectAllowed = 'copyMove';
   }, []);
 
-  // Handle ingest
-  const handleIngest = useCallback(() => {
-    setIsIngesting(true);
-    // Pass the original tree to ingest - the staging workbench has organized the layout
-    // but we still use the original file tree for actual IIIF generation
-    onIngest(initialTree, merge, (msg, pct) => {
-      setIngestProgress({ message: msg, percent: pct });
-    });
-  }, [initialTree, merge, onIngest]);
+  // Handle ingest with enhanced progress tracking
+  const handleIngest = useCallback(async () => {
+    try {
+      // Use worker-based ingest if feature flag is enabled
+      if (USE_WORKER_INGEST) {
+        const result = await startIngest(async (options) => {
+          return await ingestTreeWithWorkers(initialTree, {
+            generateThumbnails: true,
+            extractMetadata: true,
+            calculateHashes: false,
+            onProgress: options.onProgress,
+            signal: options.signal
+          });
+        });
+        
+        // Call the original onIngest callback with the result
+        // The legacy callback expects a different signature, so we adapt it
+        onIngest(initialTree, merge, (msg, pct) => {
+          // Legacy callback - progress is already tracked via startIngest
+        });
+        
+        // Clear completed operation after a delay
+        setTimeout(() => clearCompleted(), 3000);
+        
+        return result;
+      } else {
+        // Legacy ingest path with enhanced progress tracking
+        return await startIngest(async (options) => {
+          return new Promise<IngestResult>((resolve, reject) => {
+            // Call the original onIngest with a wrapper that reports progress
+            onIngest(initialTree, merge, (msg, pct) => {
+              // Report progress to the enhanced tracking system
+              if (options.onProgress) {
+                options.onProgress({
+                  operationId: 'legacy-ingest',
+                  stage: pct >= 100 ? 'complete' : 'processing',
+                  stageProgress: pct,
+                  filesTotal: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
+                  filesCompleted: Math.floor((pct / 100) * sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0)),
+                  filesProcessing: 0,
+                  filesError: 0,
+                  files: [],
+                  speed: 0,
+                  etaSeconds: 0,
+                  startedAt: Date.now(),
+                  updatedAt: Date.now(),
+                  isPaused: false,
+                  isCancelled: false,
+                  activityLog: [{
+                    timestamp: Date.now(),
+                    level: 'info',
+                    message: msg
+                  }],
+                  overallProgress: pct
+                });
+              }
+              
+              if (pct >= 100) {
+                resolve({
+                  root: null,
+                  report: {
+                    manifestsCreated: sourceManifests.manifests.length,
+                    collectionsCreated: archiveLayout.root.children.length + 1,
+                    canvasesCreated: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
+                    filesProcessed: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
+                    warnings: []
+                  }
+                });
+              }
+            });
+            
+            // Handle cancellation
+            if (options.signal) {
+              options.signal.addEventListener('abort', () => {
+                reject(new Error('Ingest cancelled'));
+              });
+            }
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Ingest failed:', error);
+      // Error is already tracked by useIngestProgress
+    }
+  }, [initialTree, merge, onIngest, startIngest, clearCompleted, sourceManifests.manifests, archiveLayout.root.children.length]);
 
   // Get manifests for send to modal
   const sendToManifests = useMemo(() =>
@@ -252,23 +333,24 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   const manifestLabel = formatCount(stats.totalManifests, 'Manifest');
   const collectionLabel = formatCount(stats.totalCollections, 'Collection');
 
-  if (isIngesting) {
+  // Show enhanced progress panel when ingesting
+  if (aggregate.isActive) {
     return (
-      <div className="fixed inset-0 bg-white z-[500] flex flex-col items-center justify-center">
-        <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6 animate-pulse">
-          <Icon name="construction" className="text-4xl" />
-        </div>
-        <h3 className="text-xl font-bold text-slate-800 mb-2">Building Archive...</h3>
-        <p className="text-sm text-slate-500 mb-4">{ingestProgress.message}</p>
-        <div className="w-64 bg-slate-200 h-2 rounded-full overflow-hidden">
-          <div
-            className="bg-blue-500 h-full transition-all duration-300"
-            style={{ width: `${ingestProgress.percent}%` }}
+      <div className="fixed inset-0 bg-white/95 dark:bg-slate-900/95 z-[500] flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
+          <IngestProgressPanel
+            progress={progress}
+            controls={controls}
+            variant="full"
+            showLogByDefault={false}
+            showFilesByDefault={false}
+            onCancel={() => {
+              controls.cancel();
+              // Call cancel callback after a short delay to allow cleanup
+              setTimeout(() => onCancel(), 500);
+            }}
           />
         </div>
-        <p className="text-[10px] text-slate-400 mt-4 uppercase tracking-widest">
-          Generating IIIF manifests and collections
-        </p>
       </div>
     );
   }

@@ -75,7 +75,7 @@ interface ViewerProps {
   onComposerOpened?: () => void;
 }
 
-export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, onSelect, onUpdate, autoOpenComposer, onComposerOpened }) => {
+export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, manifestItems, manifest, onSelect, onUpdate, autoOpenComposer, onComposerOpened }) {
   const { showToast } = useToast();
   const viewerRef = useRef<any>(null);
   const osdContainerRef = useRef<HTMLDivElement>(null);
@@ -1258,4 +1258,24 @@ export const Viewer: React.FC<ViewerProps> = ({ item, manifestItems, manifest, o
       )}
     </div>
   );
-};
+}, (prev, next) => {
+  // Custom comparison: only re-render if canvas/manifest IDs or options change
+  const prevCanvasId = prev.item?.id;
+  const nextCanvasId = next.item?.id;
+  const prevManifestId = prev.manifest?.id;
+  const nextManifestId = next.manifest?.id;
+  
+  // Compare options using JSON stringify for deep equality
+  const prevOptions = JSON.stringify({
+    autoOpenComposer: prev.autoOpenComposer,
+    hasManifestItems: !!prev.manifestItems?.length
+  });
+  const nextOptions = JSON.stringify({
+    autoOpenComposer: next.autoOpenComposer,
+    hasManifestItems: !!next.manifestItems?.length
+  });
+  
+  return prevCanvasId === nextCanvasId &&
+         prevManifestId === nextManifestId &&
+         prevOptions === nextOptions;
+});

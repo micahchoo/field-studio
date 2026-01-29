@@ -1,10 +1,10 @@
 
-export type AppMode = 'archive' | 'collections' | 'boards' | 'search' | 'viewer' | 'metadata';
+export type AppMode = 'archive' | 'collections' | 'boards' | 'search' | 'viewer' | 'metadata' | 'trash';
 export type ViewType = 'files' | 'iiif';
 export type IIIFMotivation = 'painting' | 'supplementing' | 'commenting' | 'tagging' | 'linking' | 'identifying' | 'describing' | 'contentState' | string;
 export type ConnectionType = 'depicts' | 'transcribes' | 'relatesTo' | 'contradicts' | 'precedes';
 export type AbstractionLevel = 'simple' | 'standard' | 'advanced';
-export type ResourceState = 'cached' | 'stub' | 'local-only' | 'stale' | 'conflict';
+export type ResourceState = 'cached' | 'stub' | 'local-only' | 'stale' | 'conflict' | 'trashed' | 'deleted';
 
 // ============================================================================
 // Progressive Disclosure - UX Simplification (Phase 3)
@@ -69,12 +69,153 @@ export interface IngestReport {
   warnings: string[];
   /** Number of duplicate files detected during ingest */
   duplicatesSkipped?: number;
+  /** Progress summary for enhanced progress tracking */
+  progressSummary?: IngestProgressSummary;
 }
 
 export interface IngestResult {
   root: IIIFItem | null;
   report: IngestReport;
 }
+
+// ============================================================================
+// Phase 3: Enhanced Progress Indicators (P1 - UX)
+// ============================================================================
+
+/**
+ * Processing stage for ingest operations
+ */
+export type IngestStage =
+  | 'scanning'      // Initial file scan and analysis
+  | 'processing'    // Main file processing (hashing, metadata extraction)
+  | 'saving'        // Persisting to storage
+  | 'derivatives'   // Generating thumbnails and tiles
+  | 'complete'      // Finished
+  | 'cancelled'     // User cancelled
+  | 'error';        // Error occurred
+
+/**
+ * Status of an individual file in the ingest process
+ */
+export type FileStatus = 'pending' | 'processing' | 'completed' | 'error' | 'skipped';
+
+/**
+ * Information about a single file being processed
+ */
+export interface IngestFileInfo {
+  /** Unique identifier for this file */
+  id: string;
+  /** File name */
+  name: string;
+  /** Full path in the file tree */
+  path: string;
+  /** Current processing status */
+  status: FileStatus;
+  /** File size in bytes */
+  size: number;
+  /** MIME type */
+  mimeType: string;
+  /** Processing start timestamp */
+  startedAt?: number;
+  /** Processing completion timestamp */
+  completedAt?: number;
+  /** Error message if status is 'error' */
+  error?: string;
+  /** Processing progress (0-100) for this file */
+  progress: number;
+}
+
+/**
+ * Granular progress information for ingest operations
+ */
+export interface IngestProgress {
+  /** Overall operation ID */
+  operationId: string;
+  /** Current processing stage */
+  stage: IngestStage;
+  /** Stage-specific progress (0-100) */
+  stageProgress: number;
+  /** Total number of files to process */
+  filesTotal: number;
+  /** Number of files completed */
+  filesCompleted: number;
+  /** Number of files currently being processed */
+  filesProcessing: number;
+  /** Number of files with errors */
+  filesError: number;
+  /** Current file being processed (if any) */
+  currentFile?: IngestFileInfo;
+  /** All files in the operation */
+  files: IngestFileInfo[];
+  /** Processing speed in files per second */
+  speed: number;
+  /** Estimated time remaining in seconds */
+  etaSeconds: number;
+  /** Timestamp when operation started */
+  startedAt: number;
+  /** Timestamp of last update */
+  updatedAt: number;
+  /** Whether the operation is paused */
+  isPaused: boolean;
+  /** Whether the operation was cancelled */
+  isCancelled: boolean;
+  /** Activity log entries */
+  activityLog: IngestActivityLogEntry[];
+  /** Aggregated percentage (0-100) */
+  overallProgress: number;
+}
+
+/**
+ * Activity log entry for ingest operations
+ */
+export interface IngestActivityLogEntry {
+  /** Timestamp */
+  timestamp: number;
+  /** Log level */
+  level: 'info' | 'warning' | 'error' | 'success';
+  /** Message */
+  message: string;
+  /** Associated file ID (if applicable) */
+  fileId?: string;
+}
+
+/**
+ * Summary of progress for completed operations
+ */
+export interface IngestProgressSummary {
+  /** Total files processed */
+  filesTotal: number;
+  /** Files successfully completed */
+  filesCompleted: number;
+  /** Files with errors */
+  filesError: number;
+  /** Files skipped (duplicates) */
+  filesSkipped: number;
+  /** Total processing time in seconds */
+  durationSeconds: number;
+  /** Average processing speed in files per second */
+  averageSpeed: number;
+  /** Whether operation was cancelled */
+  wasCancelled: boolean;
+}
+
+/**
+ * Options for enhanced progress callbacks
+ */
+export interface IngestProgressOptions {
+  /** Callback for progress updates */
+  onProgress?: (progress: IngestProgress) => void;
+  /** AbortSignal for cancellation support */
+  signal?: AbortSignal;
+  /** Whether to pause processing */
+  paused?: boolean;
+}
+
+/**
+ * Legacy progress callback signature (for backward compatibility)
+ * @deprecated Use IngestProgressOptions with onProgress
+ */
+export type LegacyProgressCallback = (msg: string, percent: number) => void;
 
 export interface FileTree {
   name: string;

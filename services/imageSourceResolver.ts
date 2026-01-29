@@ -7,7 +7,30 @@
  *
  * This centralizes the image resolution logic that was previously duplicated
  * across Viewer.tsx, PolygonAnnotationTool.tsx, and other components.
+ *
+ * ## Memory Management (Phase 1 Fix)
+ *
+ * When using resolveImageSource(), blob URLs may be created that require
+ * manual cleanup. Use one of these patterns:
+ *
+ * 1. **Recommended**: Use the `useImageSource()` hook which handles cleanup automatically
+ * 2. **Manual cleanup**: Call `cleanupImageSource()` when the component unmounts
+ * 3. **Effect cleanup**: Use `createSourceCleanup()` as a useEffect cleanup function
+ *
+ * @example
+ * ```typescript
+ * // Automatic cleanup with hook
+ * const { source } = useImageSource(canvas, { preferredSize: 'medium' });
+ *
+ * // Manual cleanup
+ * const source = resolveImageSource(canvas);
+ * useEffect(() => {
+ *   return () => cleanupImageSource(source);
+ * }, [canvas]);
+ * ```
  */
+
+import { FEATURE_FLAGS } from '../constants/features';
 
 import type {
   IIIFCanvas,
@@ -17,6 +40,33 @@ import type {
   IIIFItem
 } from '../types';
 import type { ImageApiProfile, ImageServiceInfo } from '../utils/iiifImageApi';
+
+// ============================================================================
+// Feature Flag Check
+// ============================================================================
+
+/**
+ * Check if automatic cleanup warnings are enabled
+ */
+const isCleanupWarningEnabled = (): boolean => {
+  return (FEATURE_FLAGS as Record<string, boolean>).USE_IMAGE_SOURCE_CLEANUP !== false;
+};
+
+// ============================================================================
+// Cleanup Tracking (Phase 1 Memory Leak Fix)
+// ============================================================================
+
+/**
+ * WeakSet to track cleaned up sources (prevents double cleanup)
+ */
+const cleanedSources = new WeakSet<ResolvedImageSource>();
+
+/**
+ * Check if a source has already been cleaned up
+ */
+export function isSourceCleaned(source: ResolvedImageSource): boolean {
+  return cleanedSources.has(source);
+}
 
 // ============================================================================
 // Types
@@ -481,15 +531,40 @@ export function buildIIIFImageUrl(
 /**
  * Clean up a resolved image source
  * Should be called when component unmounts
+ *
+ * Phase 1 Memory Leak Fix: Now tracks cleaned sources to prevent double cleanup
+ * and provides better error handling.
  */
-export function cleanupImageSource(source: ResolvedImageSource | null): void {
-  if (source?.needsCleanup && source._blobRef) {
+export function cleanupImageSource(source: ResolvedImageSource | null): boolean {
+  if (!source) return false;
+
+  // Prevent double cleanup
+  if (cleanedSources.has(source)) {
+    if (isCleanupWarningEnabled()) {
+      console.warn('[imageSourceResolver] Source already cleaned up, skipping');
+    }
+    return false;
+  }
+
+  if (source.needsCleanup && source._blobRef) {
     try {
       URL.revokeObjectURL(source._blobRef);
+      cleanedSources.add(source);
+
+      if (isCleanupWarningEnabled()) {
+        console.log('[imageSourceResolver] Cleaned up blob URL:', source._blobRef.substring(0, 50) + '...');
+      }
+
+      return true;
     } catch (e) {
-      // Ignore cleanup errors
+      // Ignore cleanup errors but log in dev
+      if (isCleanupWarningEnabled()) {
+        console.warn('[imageSourceResolver] Failed to cleanup blob URL:', e);
+      }
     }
   }
+
+  return false;
 }
 
 // ============================================================================

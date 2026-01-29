@@ -6,6 +6,8 @@ import { useToast } from '../Toast';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { NavigationGuardDialog } from '../NavigationGuardDialog';
 import { RESOURCE_TYPE_CONFIG, RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP } from '../../constants';
+import { TableLoading } from '../LoadingState';
+import { EmptyState, emptyStatePresets } from '../EmptyState';
 import FileSaver from 'file-saver';
 
 interface MetadataSpreadsheetProps {
@@ -48,6 +50,7 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
   const [showAddMenu, setShowAddMenu] = useState<{ id: string } | null>(null);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [importProgress, setImportProgress] = useState<{ message: string; percent: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNavigationDialog, setShowNavigationDialog] = useState(false);
   const [pendingNavigationCallback, setPendingNavigationCallback] = useState<(() => void) | null>(null);
@@ -274,8 +277,10 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
   useEffect(() => {
       if (!root) {
           setItems([]);
+          setIsLoading(false);
           return;
       }
+      setIsLoading(true);
       const flatList: FlatItem[] = [];
       const metaKeys = new Set<string>();
       const visited = new Set<string>();
@@ -283,15 +288,15 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
       const traverse = (node: IIIFItem) => {
           if (!node || visited.has(node.id)) return;
           visited.add(node.id);
-          
+
           const isStructural = ['AnnotationPage', 'Annotation', 'Range'].includes(node.type);
           if (showSystemItems || !isStructural) {
               flatList.push({
-                  id: node.id, 
+                  id: node.id,
                   type: node.type,
                   label: getIIIFValue(node.label),
                   summary: getIIIFValue(node.summary),
-                  rights: node.rights || '', 
+                  rights: node.rights || '',
                   navDate: node.navDate || '',
                   viewingDirection: node.viewingDirection || '',
                   metadata: (node.metadata || []).reduce((acc, m) => {
@@ -303,7 +308,7 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                   _blobUrl: node._blobUrl || (node as any).thumbnail?.[0]?.id || (isCanvas(node) ? (node as any).items?.[0]?.items?.[0]?.body?.id : undefined)
               });
           }
-          
+
           const children = (node as any).items || (node as any).annotations || [];
           if (Array.isArray(children)) {
             children.forEach((child: any) => {
@@ -311,14 +316,15 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
             });
           }
       };
-      
+
       traverse(root);
       setItems(flatList);
-      
+
       // Core IIIF properties are separated from custom metadata
       const coreCols = ['Title', 'Summary', 'Date', 'Rights'];
       const dynamicCols = Array.from(metaKeys).filter(k => !coreCols.includes(k));
       setColumns([...coreCols, ...dynamicCols]);
+      setIsLoading(false);
   }, [root, showSystemItems]);
 
   const filteredItems = useMemo(() => {
@@ -490,10 +496,23 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
       </div>
 
       <div className="flex-1 overflow-auto bg-slate-100 custom-scrollbar">
-        {filteredItems.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-slate-400 italic">
-                No items match your catalog filters.
+        {isLoading ? (
+            <div className="p-6">
+              <TableLoading rows={8} cols={5} />
             </div>
+        ) : filteredItems.length === 0 ? (
+            <EmptyState
+              {...emptyStatePresets.noResults({
+                onAction: filter || filterIds ? () => {
+                  setFilter('');
+                  onClearFilter?.();
+                } : undefined
+              })}
+              message={filter || filterIds
+                ? "No items match your current filters. Try adjusting your search or clearing filters."
+                : "No items in the catalog. Import files to populate the catalog."
+              }
+            />
         ) : (
             <table className="w-full border-collapse text-sm bg-white">
                 <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm border-b-2 border-slate-200">

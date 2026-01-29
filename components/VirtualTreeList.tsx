@@ -59,7 +59,11 @@ interface TreeItemProps {
   canAcceptDrop: boolean;
 }
 
-const TreeItem = React.memo<TreeItemProps>(({
+/**
+ * MemoizedTreeItem - Exported for external use
+ * Uses custom comparison to prevent unnecessary re-renders
+ */
+export const MemoizedTreeItem = React.memo<TreeItemProps>(({
   node,
   isSelected,
   referenceCount,
@@ -158,7 +162,10 @@ const TreeItem = React.memo<TreeItemProps>(({
   );
 });
 
-TreeItem.displayName = 'TreeItem';
+MemoizedTreeItem.displayName = 'MemoizedTreeItem';
+
+// Keep internal TreeItem as alias for backward compatibility
+const TreeItem = MemoizedTreeItem;
 
 export const VirtualTreeList: React.FC<VirtualTreeListProps> = ({
   root,
@@ -282,7 +289,7 @@ export const VirtualTreeList: React.FC<VirtualTreeListProps> = ({
         const isDragOver = dragOverId === node.id;
 
         return (
-          <TreeItem
+          <MemoizedTreeItem
             key={node.id}
             node={node}
             isSelected={isSelected}

@@ -1,5 +1,26 @@
 
-import { FileTree, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFItem, IngestReport, IngestResult, IIIFAnnotationPage, IIIFAnnotation, IIIFMotivation, IIIFRange, isCollection } from '../types';
+import {
+  FileTree,
+  IIIFCollection,
+  IIIFManifest,
+  IIIFCanvas,
+  IIIFItem,
+  IngestReport,
+  IngestResult,
+  IIIFAnnotationPage,
+  IIIFAnnotation,
+  IIIFMotivation,
+  IIIFRange,
+  isCollection,
+  IngestProgress,
+  IngestStage,
+  IngestFileInfo,
+  FileStatus,
+  IngestActivityLogEntry,
+  IngestProgressSummary,
+  IngestProgressOptions,
+  LegacyProgressCallback
+} from '../types';
 import { storage } from './storage';
 import { DEFAULT_INGEST_PREFS, IMAGE_QUALITY, MIME_TYPE_MAP, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '../constants';
 import { load } from 'js-yaml';
@@ -23,6 +44,423 @@ import {
   createImageServiceReference,
   IMAGE_API_PROTOCOL
 } from '../utils';
+import { FEATURE_FLAGS, USE_ENHANCED_PROGRESS, USE_WORKER_INGEST } from '../constants/features';
+import { getFileLifecycleManager } from './fileLifecycle';
+
+// ============================================================================
+// Phase 4: Worker Migration Imports
+// ============================================================================
+import {
+  IngestWorkerPool,
+  getIngestWorkerPool,
+  ingestTreeWithWorkers,
+  PoolStats
+} from './ingestWorkerPool';
+import type {
+  IngestWorkerResponse,
+  IngestProgressMessage,
+  IngestFileCompleteMessage,
+  IngestCompleteMessage,
+  IngestErrorMessage
+} from '../workers/ingest.worker';
+
+// ============================================================================
+// Phase 3: Enhanced Progress Indicators (P1 - UX)
+// ============================================================================
+
+/**
+ * Create initial progress state for an ingest operation
+ */
+function createInitialProgress(operationId: string, totalFiles: number): IngestProgress {
+  return {
+    operationId,
+    stage: 'scanning',
+    stageProgress: 0,
+    filesTotal: totalFiles,
+    filesCompleted: 0,
+    filesProcessing: 0,
+    filesError: 0,
+    files: [],
+    speed: 0,
+    etaSeconds: 0,
+    startedAt: Date.now(),
+    updatedAt: Date.now(),
+    isPaused: false,
+    isCancelled: false,
+    activityLog: [{
+      timestamp: Date.now(),
+      level: 'info',
+      message: 'Ingest operation started'
+    }],
+    overallProgress: 0
+  };
+}
+
+/**
+ * Update progress with new file information
+ */
+function updateFileProgress(
+  progress: IngestProgress,
+  fileId: string,
+  updates: Partial<IngestFileInfo>
+): IngestProgress {
+  const fileIndex = progress.files.findIndex(f => f.id === fileId);
+  const updatedFiles = [...progress.files];
+
+  if (fileIndex >= 0) {
+    updatedFiles[fileIndex] = { ...updatedFiles[fileIndex], ...updates };
+  }
+
+  // Recalculate aggregates
+  const completed = updatedFiles.filter(f => f.status === 'completed').length;
+  const processing = updatedFiles.filter(f => f.status === 'processing').length;
+  const errors = updatedFiles.filter(f => f.status === 'error').length;
+
+  // Calculate speed and ETA
+  const elapsedSeconds = (Date.now() - progress.startedAt) / 1000;
+  const speed = elapsedSeconds > 0 ? completed / elapsedSeconds : 0;
+  const remainingFiles = progress.filesTotal - completed;
+  const etaSeconds = speed > 0 ? remainingFiles / speed : 0;
+
+  // Calculate overall progress
+  const fileProgressSum = updatedFiles.reduce((sum, f) => sum + f.progress, 0);
+  const overallProgress = progress.filesTotal > 0
+    ? Math.round(fileProgressSum / progress.filesTotal)
+    : 0;
+
+  return {
+    ...progress,
+    files: updatedFiles,
+    filesCompleted: completed,
+    filesProcessing: processing,
+    filesError: errors,
+    speed,
+    etaSeconds: Math.round(etaSeconds),
+    overallProgress,
+    updatedAt: Date.now()
+  };
+}
+
+/**
+ * Add file to progress tracking
+ */
+function addFileToProgress(
+  progress: IngestProgress,
+  fileInfo: Omit<IngestFileInfo, 'id' | 'status' | 'progress'>
+): { progress: IngestProgress; fileId: string } {
+  const fileId = `file-${progress.files.length}-${Date.now()}`;
+  const newFile: IngestFileInfo = {
+    ...fileInfo,
+    id: fileId,
+    status: 'pending',
+    progress: 0
+  };
+
+  return {
+    progress: {
+      ...progress,
+      files: [...progress.files, newFile],
+      updatedAt: Date.now()
+    },
+    fileId
+  };
+}
+
+/**
+ * Add activity log entry
+ */
+function addLogEntry(
+  progress: IngestProgress,
+  message: string,
+  level: IngestActivityLogEntry['level'] = 'info',
+  fileId?: string
+): IngestProgress {
+  const entry: IngestActivityLogEntry = {
+    timestamp: Date.now(),
+    level,
+    message,
+    fileId
+  };
+
+  // Keep only last 20 entries
+  const activityLog = [...progress.activityLog, entry].slice(-20);
+
+  return {
+    ...progress,
+    activityLog,
+    updatedAt: Date.now()
+  };
+}
+
+/**
+ * Update processing stage
+ */
+function updateStage(
+  progress: IngestProgress,
+  stage: IngestStage,
+  stageProgress: number = 0
+): IngestProgress {
+  return {
+    ...progress,
+    stage,
+    stageProgress,
+    updatedAt: Date.now()
+  };
+}
+
+/**
+ * Check if operation should be cancelled
+ */
+function checkCancellation(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new Error('Ingest operation cancelled');
+  }
+}
+
+/**
+ * Check if operation is paused and wait
+ */
+async function checkPaused(progress: IngestProgress, checkInterval: number = 100): Promise<void> {
+  while (progress.isPaused && !progress.isCancelled) {
+    await new Promise(resolve => setTimeout(resolve, checkInterval));
+  }
+}
+
+/**
+ * Convert enhanced progress to legacy callback format
+ */
+function progressToLegacyCallback(
+  progress: IngestProgress,
+  legacyCallback: LegacyProgressCallback
+): void {
+  const msg = progress.currentFile
+    ? `${progress.stage}: ${progress.currentFile.name} (${progress.filesCompleted}/${progress.filesTotal})`
+    : `${progress.stage}: ${progress.overallProgress}%`;
+  legacyCallback(msg, progress.overallProgress);
+}
+
+/**
+ * Create progress summary from final state
+ */
+function createProgressSummary(progress: IngestProgress): IngestProgressSummary {
+  const durationSeconds = (Date.now() - progress.startedAt) / 1000;
+  return {
+    filesTotal: progress.filesTotal,
+    filesCompleted: progress.filesCompleted,
+    filesError: progress.filesError,
+    filesSkipped: progress.files.filter(f => f.status === 'skipped').length,
+    durationSeconds: Math.round(durationSeconds * 10) / 10,
+    averageSpeed: durationSeconds > 0 ? progress.filesCompleted / durationSeconds : 0,
+    wasCancelled: progress.isCancelled
+  };
+}
+
+// ============================================================================
+// Feature Flag Check
+// ============================================================================
+
+/**
+ * Check if file lifecycle management is enabled
+ */
+const isFileLifecycleEnabled = (): boolean => {
+  return (FEATURE_FLAGS as Record<string, boolean>).USE_FILE_LIFECYCLE !== false;
+};
+
+/**
+ * Check if worker-based ingest is enabled
+ */
+const isWorkerIngestEnabled = (): boolean => {
+  return USE_WORKER_INGEST === true;
+};
+
+/**
+ * Check if workers are supported in this environment
+ */
+const areWorkersSupported = (): boolean => {
+  return typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined';
+};
+
+// ============================================================================
+// Phase 4: Worker-Based Ingest Integration
+// ============================================================================
+
+interface WorkerIngestState {
+  operationId: string;
+  progress: IngestProgress;
+  report: IngestReport;
+  canvases: IIIFCanvas[];
+  items: IIIFItem[];
+  resolve: (result: IngestResult) => void;
+  reject: (error: Error) => void;
+  onProgress?: (progress: IngestProgress) => void;
+}
+
+const activeWorkerOperations = new Map<string, WorkerIngestState>();
+
+/**
+ * Handle worker progress message
+ */
+function handleWorkerProgress(message: IngestProgressMessage['payload']): void {
+  const state = activeWorkerOperations.get(message.operationId);
+  if (!state) return;
+
+  // Update progress state
+  const fileIndex = state.progress.files.findIndex(f => f.id === message.fileId);
+  if (fileIndex >= 0) {
+    state.progress.files[fileIndex] = message.progress;
+  } else {
+    state.progress.files.push(message.progress);
+  }
+
+  // Recalculate aggregates
+  state.progress.filesCompleted = state.progress.files.filter(f => f.status === 'completed').length;
+  state.progress.filesProcessing = state.progress.files.filter(f => f.status === 'processing').length;
+  state.progress.filesError = state.progress.files.filter(f => f.status === 'error').length;
+  state.progress.overallProgress = message.overallProgress;
+  state.progress.stage = message.stage as IngestStage;
+  state.progress.updatedAt = Date.now();
+
+  // Call progress callback
+  state.onProgress?.(state.progress);
+}
+
+/**
+ * Handle worker file complete message
+ */
+function handleWorkerFileComplete(message: IngestFileCompleteMessage['payload']): void {
+  const state = activeWorkerOperations.get(message.operationId);
+  if (!state) return;
+
+  // Add canvas to collection
+  state.canvases.push(message.canvas);
+  state.report.canvasesCreated++;
+  state.report.filesProcessed++;
+
+  // Save asset and thumbnail on main thread (storage requires IndexedDB access)
+  (async () => {
+    try {
+      // Get the file from the canvas reference
+      if (message.canvas._fileRef instanceof File) {
+        await storage.saveAsset(message.canvas._fileRef, message.assetId);
+      }
+
+      // Save thumbnail if generated
+      if (message.thumbnailBlob) {
+        await storage.saveDerivative(message.assetId, 'thumb', message.thumbnailBlob);
+      }
+    } catch (error) {
+      console.warn('[ingestWorker] Failed to save asset:', message.assetId, error);
+    }
+  })();
+}
+
+/**
+ * Handle worker completion
+ */
+function handleWorkerComplete(message: IngestCompleteMessage['payload']): void {
+  const state = activeWorkerOperations.get(message.operationId);
+  if (!state) return;
+
+  // Update final stats
+  state.report.manifestsCreated = message.stats.manifestsCreated;
+  state.report.collectionsCreated = message.stats.collectionsCreated;
+
+  // Finalize progress
+  state.progress.stage = 'complete';
+  state.progress.stageProgress = 100;
+  state.progress.overallProgress = 100;
+  state.onProgress?.(state.progress);
+
+  // Clean up
+  activeWorkerOperations.delete(message.operationId);
+
+  // Resolve with result
+  state.resolve({
+    root: message.root,
+    report: state.report
+  });
+}
+
+/**
+ * Handle worker error
+ */
+function handleWorkerError(message: IngestErrorMessage['payload']): void {
+  const state = activeWorkerOperations.get(message.operationId);
+  if (!state) return;
+
+  console.error('[ingestWorker] Error:', message.error);
+
+  if (!message.recoverable) {
+    state.progress.stage = 'error';
+    state.onProgress?.(state.progress);
+    activeWorkerOperations.delete(message.operationId);
+    state.reject(new Error(message.error));
+  }
+}
+
+/**
+ * Initialize worker-based ingest
+ */
+async function ingestWithWorkers(
+  tree: FileTree,
+  baseUrl: string,
+  report: IngestReport,
+  progressOptions: IngestProgressOptions,
+  reportProgress: (p: IngestProgress) => void
+): Promise<IngestResult> {
+  const operationId = `ingest-${Date.now()}`;
+  const totalFiles = countMediaFiles(tree);
+
+  // Create initial progress state
+  const progress = createInitialProgress(operationId, totalFiles);
+
+  // Set up worker state
+  const workerState: WorkerIngestState = {
+    operationId,
+    progress,
+    report: { ...report },
+    canvases: [],
+    items: [],
+    resolve: () => {},
+    reject: () => {},
+    onProgress: reportProgress
+  };
+
+  activeWorkerOperations.set(operationId, workerState);
+
+  return new Promise((resolve, reject) => {
+    workerState.resolve = resolve;
+    workerState.reject = reject;
+
+    // Set up abort handling
+    if (progressOptions.signal) {
+      progressOptions.signal.addEventListener('abort', () => {
+        const pool = getIngestWorkerPool();
+        pool.cancelOperation(operationId);
+        activeWorkerOperations.delete(operationId);
+        reject(new Error('Ingest operation cancelled'));
+      });
+    }
+
+    // Use the worker pool
+    const pool = getIngestWorkerPool();
+
+    // Start the ingest operation
+    pool.ingestTree(tree, {
+      generateThumbnails: true,
+      extractMetadata: true,
+      calculateHashes: false,
+      signal: progressOptions.signal,
+      onProgress: reportProgress
+    }).then(result => {
+      activeWorkerOperations.delete(operationId);
+      resolve(result);
+    }).catch(error => {
+      activeWorkerOperations.delete(operationId);
+      reject(error);
+    });
+  });
+}
 
 /**
  * Queue for background tile pre-generation
@@ -95,6 +533,410 @@ const generateDerivative = async (file: Blob, width: number): Promise<Blob | nul
     } catch (e) {
         return null;
     }
+};
+
+/**
+ * Count total media files in a file tree for progress tracking
+ */
+function countMediaFiles(node: FileTree): number {
+  let count = 0;
+  
+  // Count media files at this level
+  for (const fileName of node.files.keys()) {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    const mime = MIME_TYPE_MAP[ext];
+    if (mime && mime.motivation === 'painting') {
+      count++;
+    }
+  }
+  
+  // Recursively count in subdirectories
+  for (const childNode of node.directories.values()) {
+    count += countMediaFiles(childNode);
+  }
+  
+  return count;
+}
+
+/**
+ * Enhanced processNode with granular progress tracking
+ */
+const processNodeWithProgress = async (
+  node: FileTree,
+  baseUrl: string,
+  report: IngestReport,
+  progress: IngestProgress,
+  progressOptions: IngestProgressOptions,
+  reportProgress: (p: IngestProgress) => void
+): Promise<IIIFItem> => {
+  // Check for cancellation
+  checkCancellation(progressOptions.signal);
+  await checkPaused(progress);
+
+  // Determine IIIF type using this priority:
+  let type: 'Collection' | 'Manifest' = 'Manifest';
+
+  if (node.iiifIntent && (node.iiifIntent === 'Collection' || node.iiifIntent === 'Manifest')) {
+    type = node.iiifIntent;
+  } else {
+    const hasSubdirs = node.directories.size > 0;
+    const isExplicitCollection = node.name === IIIF_CONFIG.INGEST.ROOT_NAME || node.name.startsWith(IIIF_CONFIG.INGEST.COLLECTION_PREFIX);
+
+    const mediaFiles = Array.from(node.files.keys()).filter(fn => {
+      const ext = fn.split('.').pop()?.toLowerCase() || '';
+      return !!MIME_TYPE_MAP[ext];
+    });
+    const isLeaf = !hasSubdirs && mediaFiles.length > 0;
+
+    if (isLeaf) {
+      type = 'Manifest';
+    } else if (isExplicitCollection || hasSubdirs) {
+      type = 'Collection';
+    } else if (mediaFiles.length > 0) {
+      type = 'Manifest';
+    } else {
+      type = 'Collection';
+    }
+  }
+
+  let ymlMeta: any = {};
+  if (node.files.has(IIIF_CONFIG.INGEST.META_FILE)) {
+    try {
+      const text = await node.files.get(IIIF_CONFIG.INGEST.META_FILE)!.text();
+      ymlMeta = load(text) || {};
+    } catch (e) {
+      report.warnings.push(`Invalid ${IIIF_CONFIG.INGEST.META_FILE} in ${node.path}`);
+      progress = addLogEntry(progress, `Invalid metadata file in ${node.path}`, 'warning');
+    }
+  }
+
+  let cleanName = node.name.startsWith(IIIF_CONFIG.INGEST.COLLECTION_PREFIX)
+    ? node.name.substring(IIIF_CONFIG.INGEST.COLLECTION_PREFIX.length)
+    : node.name;
+  if (cleanName === IIIF_CONFIG.INGEST.ROOT_NAME) cleanName = IIIF_CONFIG.INGEST.ROOT_DISPLAY_NAME;
+
+  const id = generateId(type, baseUrl);
+  const lang = ymlMeta.language || 'none';
+  const label = ymlMeta.label ? { [lang]: [ymlMeta.label] } : { none: [cleanName] };
+
+  if (type === 'Manifest') {
+    const items: IIIFCanvas[] = [];
+    const fileNames = Array.from(node.files.keys()).sort();
+    
+    // Smart Sidecar Detection
+    const sidecars = new Map<string, { main: File, supplemental: File[] }>();
+    const orphanedSupplemental: File[] = [];
+
+    // First pass: identify main content files
+    fileNames.forEach(fn => {
+      const parts = fn.split('.');
+      const ext = parts.pop()?.toLowerCase() || '';
+      const base = parts.join('.');
+      const mime = MIME_TYPE_MAP[ext];
+
+      if (mime && mime.motivation === 'painting') {
+        if (!sidecars.has(base)) {
+          sidecars.set(base, { main: node.files.get(fn)!, supplemental: [] });
+        }
+      }
+    });
+
+    // Second pass: link supplemental files
+    fileNames.forEach(fn => {
+      const parts = fn.split('.');
+      const ext = parts.pop()?.toLowerCase() || '';
+      const base = parts.join('.');
+
+      if (ext === 'txt' || ext === 'srt' || ext === 'vtt') {
+        const file = node.files.get(fn)!;
+        if (sidecars.has(base)) {
+          sidecars.get(base)!.supplemental.push(file);
+        } else {
+          orphanedSupplemental.push(file);
+        }
+      }
+    });
+
+    // Log sidecar detection
+    if (sidecars.size > 0) {
+      const withSupp = Array.from(sidecars.values()).filter(s => s.supplemental.length > 0).length;
+      report.warnings.push(`Smart Sidecar: Detected ${withSupp} paired files with transcriptions/captions`);
+      progress = addLogEntry(progress, `Detected ${withSupp} files with sidecars`, 'info');
+    }
+    if (orphanedSupplemental.length > 0) {
+      report.warnings.push(`Smart Sidecar: Found ${orphanedSupplemental.length} orphaned .txt/.srt files`);
+      progress = addLogEntry(progress, `Found ${orphanedSupplemental.length} orphaned supplemental files`, 'warning');
+    }
+
+    // Update stage to processing
+    progress = updateStage(progress, 'processing');
+    reportProgress(progress);
+
+    const bases = Array.from(sidecars.keys()).sort();
+    for (let i = 0; i < bases.length; i++) {
+      // Check cancellation
+      checkCancellation(progressOptions.signal);
+      await checkPaused(progress);
+
+      const base = bases[i];
+      const { main: file, supplemental } = sidecars.get(base)!;
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+
+      // Add file to progress tracking
+      const { progress: progressWithFile, fileId } = addFileToProgress(progress, {
+        name: file.name,
+        path: node.path ? `${node.path}/${file.name}` : file.name,
+        size: file.size,
+        mimeType: file.type || MIME_TYPE_MAP[ext]?.format || 'application/octet-stream'
+      });
+      progress = progressWithFile;
+
+      // Mark as processing
+      progress = updateFileProgress(progress, fileId, {
+        status: 'processing',
+        startedAt: Date.now(),
+        progress: 10
+      });
+      progress = { ...progress, currentFile: progress.files.find(f => f.id === fileId) };
+      reportProgress(progress);
+
+      const canvasId = IIIF_CONFIG.ID_PATTERNS.CANVAS(id, items.length + 1);
+      const assetId = `${id.split('/').pop()}-${file.name.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+
+      try {
+        // Check for duplicate files
+        progress = updateFileProgress(progress, fileId, { progress: 30 });
+        reportProgress(progress);
+
+        const duplicateCheck = await fileIntegrity.registerFile(file, canvasId, file.name);
+        if (duplicateCheck.isDuplicate && duplicateCheck.existingEntityId) {
+          report.warnings.push(
+            `Duplicate detected: "${file.name}" matches existing file (hash: ${duplicateCheck.fingerprint?.hash.substring(0, 8)}...). ` +
+            `Original entity: ${duplicateCheck.existingEntityId}.`
+          );
+          report.duplicatesSkipped = (report.duplicatesSkipped || 0) + 1;
+          progress = addLogEntry(progress, `Duplicate skipped: ${file.name}`, 'warning', fileId);
+          progress = updateFileProgress(progress, fileId, {
+            status: 'skipped',
+            progress: 100,
+            completedAt: Date.now()
+          });
+          reportProgress(progress);
+          continue;
+        }
+
+        progress = updateFileProgress(progress, fileId, { progress: 50 });
+        reportProgress(progress);
+
+        // Save asset
+        await storage.saveAsset(file, assetId);
+
+        // Get image dimensions
+        let imageWidth = DEFAULT_INGEST_PREFS.defaultCanvasWidth;
+        let imageHeight = DEFAULT_INGEST_PREFS.defaultCanvasHeight;
+
+        if (file.type.startsWith('image/')) {
+          try {
+            const bitmap = await createImageBitmap(file);
+            imageWidth = bitmap.width;
+            imageHeight = bitmap.height;
+            bitmap.close();
+          } catch (e) {
+            console.warn(`Could not read image dimensions for ${file.name}, using defaults`);
+          }
+
+          const preset = getDerivativePreset();
+
+          // Generate thumbnail
+          progress = updateFileProgress(progress, fileId, { progress: 70 });
+          reportProgress(progress);
+
+          const thumb = await generateDerivative(file, preset.thumbnailWidth);
+          if (thumb) await storage.saveDerivative(assetId, 'thumb', thumb);
+
+          // Queue larger derivatives
+          tileGenerationQueue.push({
+            assetId,
+            file,
+            sizes: preset.sizes.filter(s => s > preset.thumbnailWidth)
+          });
+        }
+
+        progress = updateFileProgress(progress, fileId, { progress: 80 });
+        reportProgress(progress);
+
+        const extractedMeta = await extractMetadata(file);
+        const iiifType = MIME_TYPE_MAP[ext]?.type || 'Image';
+        const isImage = iiifType === 'Image';
+        const preset = getDerivativePreset();
+
+        const thumbnails = isImage ? [{
+          id: `${IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId)}/full/${preset.thumbnailWidth},/0/default.jpg`,
+          type: "Image" as const,
+          format: "image/jpeg",
+          width: preset.thumbnailWidth
+        }] : undefined;
+
+        const paintingAnnotation: IIIFAnnotation = {
+          id: `${canvasId}/annotation/painting`,
+          type: "Annotation",
+          label: { none: ["Content Resource"] },
+          motivation: "painting",
+          target: canvasId,
+          body: {
+            id: `${IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId)}/full/max/0/default.jpg`,
+            type: iiifType as any,
+            format: MIME_TYPE_MAP[ext]?.format || 'image/jpeg',
+            service: isImage ? [
+              createImageServiceReference(IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId), 'level2')
+            ] : undefined
+          }
+        };
+
+        const annos: IIIFAnnotationPage[] = [{
+          id: `${canvasId}/page/painting`,
+          type: "AnnotationPage",
+          label: { none: ["Painting Page"] },
+          items: [paintingAnnotation]
+        }];
+
+        // Process supplemental files
+        const supplementingPages: IIIFAnnotationPage[] = [];
+        if (supplemental.length > 0) {
+          const suppPage: IIIFAnnotationPage = {
+            id: `${canvasId}/page/supplementing`,
+            type: "AnnotationPage",
+            label: { none: ["Supplements"] },
+            items: await Promise.all(supplemental.map(async (sf, sIdx) => {
+              const suppAssetId = `${assetId}-supp-${sIdx}`;
+              const textContent = await sf.text();
+              const textBlob = new Blob([textContent], { type: 'text/plain' });
+              await storage.saveAsset(textBlob, suppAssetId);
+
+              return {
+                id: `${canvasId}/annotation/supp-${sIdx}`,
+                type: "Annotation",
+                motivation: "supplementing",
+                label: { none: [sf.name] },
+                body: {
+                  type: "TextualBody",
+                  value: textContent,
+                  format: sf.name.endsWith('.srt') ? 'text/vtt' : 'text/plain',
+                  language: sf.name.endsWith('.srt') ? undefined : 'en'
+                },
+                target: canvasId
+              } as IIIFAnnotation;
+            }))
+          };
+          supplementingPages.push(suppPage);
+        }
+
+        const canvas: IIIFCanvas = {
+          id: canvasId,
+          type: "Canvas",
+          label: { none: [file.name] },
+          width: imageWidth,
+          height: imageHeight,
+          items: annos,
+          annotations: supplementingPages,
+          thumbnail: thumbnails,
+          navDate: extractedMeta.navDate,
+          metadata: extractedMeta.metadata,
+          _fileRef: file
+        };
+
+        // Register for lifecycle management
+        if (isFileLifecycleEnabled()) {
+          const fileLifecycleManager = getFileLifecycleManager();
+          fileLifecycleManager.register(canvasId, file, () => {
+            if (isFileLifecycleEnabled()) {
+              console.log(`[iiifBuilder] Cleaning up file reference for canvas ${canvasId}`);
+            }
+          });
+        }
+
+        items.push(canvas);
+        report.canvasesCreated++;
+        report.filesProcessed++;
+
+        // Mark as completed
+        progress = updateFileProgress(progress, fileId, {
+          status: 'completed',
+          progress: 100,
+          completedAt: Date.now()
+        });
+        progress = addLogEntry(progress, `Processed: ${file.name}`, 'success', fileId);
+        reportProgress(progress);
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        progress = updateFileProgress(progress, fileId, {
+          status: 'error',
+          error: errorMessage,
+          completedAt: Date.now()
+        });
+        progress = addLogEntry(progress, `Error processing ${file.name}: ${errorMessage}`, 'error', fileId);
+        reportProgress(progress);
+        
+        if (errorMessage.includes('cancelled')) {
+          throw error;
+        }
+      }
+    }
+
+    report.manifestsCreated++;
+    const manifest: IIIFManifest = {
+      "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
+      id, type: "Manifest", label, items,
+      behavior: node.iiifBehavior || ["individuals"],
+      viewingDirection: (node as any).viewingDirection || "left-to-right",
+      service: [{
+        id: IIIF_CONFIG.ID_PATTERNS.SEARCH_SERVICE(baseUrl, id.split('/').pop() || ''),
+        type: "SearchService2",
+        profile: IIIF_SPEC.SEARCH_2.PROFILE,
+        label: { en: ["Content Search"] }
+      }]
+    };
+    return manifest;
+  } else {
+    // This is a Collection
+    const items: IIIFItem[] = [];
+
+    // Handle loose files at collection level
+    const mediaFiles = Array.from(node.files.keys()).filter(fn => {
+      const ext = fn.split('.').pop()?.toLowerCase() || '';
+      const mime = MIME_TYPE_MAP[ext];
+      return mime && mime.motivation === 'painting';
+    });
+
+    if (mediaFiles.length > 0) {
+      const looseFilesNode: FileTree = {
+        name: `${cleanName} - ${IIIF_CONFIG.INGEST.LOOSE_FILES_Dir_NAME}`,
+        path: node.path,
+        files: new Map(Array.from(node.files.entries()).filter(([fn]) => {
+          const ext = fn.split('.').pop()?.toLowerCase() || '';
+          const mime = MIME_TYPE_MAP[ext];
+          return mime && mime.motivation === 'painting';
+        })),
+        directories: new Map(),
+        iiifIntent: 'Manifest'
+      };
+      items.push(await processNodeWithProgress(looseFilesNode, baseUrl, report, progress, progressOptions, reportProgress));
+    }
+
+    // Process subdirectories
+    for (const [name, dir] of node.directories.entries()) {
+      if (name.startsWith('+') || name.startsWith('!')) continue;
+      items.push(await processNodeWithProgress(dir, baseUrl, report, progress, progressOptions, reportProgress));
+    }
+
+    report.collectionsCreated++;
+    const collection: IIIFCollection = {
+      "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,
+      id, type: "Collection", label, items
+    };
+    return collection;
+  }
 };
 
 const processNode = async (
@@ -333,7 +1175,7 @@ const processNode = async (
                 supplementingPages.push(suppPage);
             }
 
-            items.push({
+            const canvas: IIIFCanvas = {
                 id: canvasId,
                 type: "Canvas",
                 label: { none: [file.name] },
@@ -345,7 +1187,20 @@ const processNode = async (
                 navDate: extractedMeta.navDate,
                 metadata: extractedMeta.metadata,
                 _fileRef: file
-            });
+            };
+
+            // Phase 1 Memory Leak Fix: Register file reference for lifecycle management
+            if (isFileLifecycleEnabled()) {
+                const fileLifecycleManager = getFileLifecycleManager();
+                fileLifecycleManager.register(canvasId, file, () => {
+                    // Pre-cleanup callback: clear the reference from canvas when cleaned up
+                    if (isFileLifecycleEnabled()) {
+                        console.log(`[iiifBuilder] Cleaning up file reference for canvas ${canvasId}`);
+                    }
+                });
+            }
+
+            items.push(canvas);
             report.canvasesCreated++;
             report.filesProcessed++;
         }
@@ -406,77 +1261,212 @@ const processNode = async (
     }
 };
 
+/**
+ * Ingest a file tree with enhanced progress tracking
+ * Supports both legacy callback and new enhanced progress options
+ */
 export const ingestTree = async (
-    tree: FileTree, 
-    existingRoot: IIIFItem | null = null,
-    onProgress?: (msg: string, percent: number) => void
+  tree: FileTree,
+  existingRoot: IIIFItem | null = null,
+  progressInput?: LegacyProgressCallback | IngestProgressOptions
 ): Promise<IngestResult> => {
-    const report: IngestReport = { manifestsCreated: 0, collectionsCreated: 0, canvasesCreated: 0, filesProcessed: 0, warnings: [] };
-    
-    // Use the captures baseUrl from the tree if provided, else fallback to current origin.
-    let baseUrl = tree.iiifBaseUrl;
-    if (!baseUrl) {
-      // Respect the site base path (e.g. /field-studio/)
-      const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-      baseUrl = `${window.location.origin}${basePath}/${IIIF_CONFIG.BASE_URL.PATH_SEGMENT}`;
-    } else {
-      // Clean up potential trailing slash to keep path construction predictable
-      baseUrl = baseUrl.replace(/\/$/, '');
+  const report: IngestReport = {
+    manifestsCreated: 0,
+    collectionsCreated: 0,
+    canvasesCreated: 0,
+    filesProcessed: 0,
+    warnings: []
+  };
+
+  // Determine which progress system to use
+  const isLegacyCallback = typeof progressInput === 'function';
+  const enhancedOptions: IngestProgressOptions = isLegacyCallback ? {} : (progressInput || {});
+  const legacyCallback: LegacyProgressCallback | undefined = isLegacyCallback
+    ? progressInput as LegacyProgressCallback
+    : undefined;
+
+  // Use enhanced progress if feature flag is enabled and not using legacy callback
+  const useEnhancedProgress = USE_ENHANCED_PROGRESS && !isLegacyCallback;
+
+  // Setup baseUrl
+  let baseUrl = tree.iiifBaseUrl;
+  if (!baseUrl) {
+    const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+    baseUrl = `${window.location.origin}${basePath}/${IIIF_CONFIG.BASE_URL.PATH_SEGMENT}`;
+  } else {
+    baseUrl = baseUrl.replace(/\/$/, '');
+  }
+
+  let progress: IngestProgress | undefined;
+  let newRoot: IIIFItem;
+
+  // Phase 4: Check if worker-based ingest should be used
+  const shouldUseWorkers = isWorkerIngestEnabled() && areWorkersSupported() && !isLegacyCallback;
+
+  if (shouldUseWorkers) {
+    // Phase 4: Worker-based ingest path
+    try {
+      const reportProgress = (p: IngestProgress) => {
+        enhancedOptions.onProgress?.(p);
+        if (legacyCallback) {
+          progressToLegacyCallback(p, legacyCallback);
+        }
+      };
+
+      const workerResult = await ingestWithWorkers(
+        tree,
+        baseUrl,
+        report,
+        enhancedOptions,
+        reportProgress
+      );
+
+      newRoot = workerResult.root;
+
+      // Merge stats from worker result
+      report.manifestsCreated = workerResult.report.manifestsCreated;
+      report.collectionsCreated = workerResult.report.collectionsCreated;
+      report.canvasesCreated = workerResult.report.canvasesCreated;
+      report.filesProcessed = workerResult.report.filesProcessed;
+
+      // Add progress summary if available
+      if (activeWorkerOperations.size === 0) {
+        const lastProgress = Array.from(activeWorkerOperations.values()).pop()?.progress;
+        if (lastProgress) {
+          report.progressSummary = createProgressSummary(lastProgress);
+        }
+      }
+    } catch (workerError) {
+      console.warn('[ingestTree] Worker ingest failed, falling back to main thread:', workerError);
+      // Fall through to enhanced progress path
+      newRoot = await processNodeWithProgress(
+        tree,
+        baseUrl,
+        report,
+        createInitialProgress(`fallback-${Date.now()}`, countMediaFiles(tree)),
+        enhancedOptions,
+        (p) => {
+          enhancedOptions.onProgress?.(p);
+          if (legacyCallback) {
+            progressToLegacyCallback(p, legacyCallback);
+          }
+        }
+      );
     }
-    
-    const newRoot = await processNode(tree, baseUrl, report, onProgress);
+  } else if (useEnhancedProgress) {
+    // Enhanced progress path (main thread)
+    const operationId = `ingest-${Date.now()}`;
+    const totalFiles = countMediaFiles(tree);
+    progress = createInitialProgress(operationId, totalFiles);
 
-    if (existingRoot && isCollection(existingRoot)) {
-        const rootClone = JSON.parse(JSON.stringify(existingRoot)) as IIIFCollection;
-        if (!rootClone.items) rootClone.items = [];
+    const reportProgress = (p: IngestProgress) => {
+      enhancedOptions.onProgress?.(p);
+      // Also call legacy callback if provided for compatibility
+      if (legacyCallback) {
+        progressToLegacyCallback(p, legacyCallback);
+      }
+    };
 
-        if (isCollection(newRoot) && tree.name === 'root') {
-            // When importing a root collection, merge its items using IIIF hierarchy rules
-            const newItems = (newRoot as IIIFCollection).items || [];
-            for (const item of newItems) {
-                // Validate each item can be added to a Collection
-                if (isValidChildType('Collection', item.type)) {
-                    const relationship = getRelationshipType('Collection', item.type);
-                    console.log(`Adding ${item.type} to Collection with ${relationship} relationship`);
-                    rootClone.items.push(item);
-                } else {
-                    report.warnings.push(`Skipped ${item.type} - not valid child of Collection`);
-                }
-            }
+    try {
+      newRoot = await processNodeWithProgress(
+        tree,
+        baseUrl,
+        report,
+        progress,
+        enhancedOptions,
+        reportProgress
+      );
+
+      // Final progress update
+      progress = updateStage(progress, 'complete', 100);
+      progress = addLogEntry(progress, `Ingest complete: ${report.filesProcessed} files processed`, 'success');
+      reportProgress(progress);
+
+      // Add progress summary to report
+      report.progressSummary = createProgressSummary(progress);
+    } catch (error) {
+      if (progress) {
+        progress = {
+          ...progress,
+          isCancelled: error instanceof Error && error.message.includes('cancelled')
+        };
+        progress = updateStage(progress, 'error');
+        progress = addLogEntry(
+          progress,
+          error instanceof Error ? error.message : 'Unknown error during ingest',
+          'error'
+        );
+        reportProgress(progress);
+        report.progressSummary = createProgressSummary(progress);
+      }
+      throw error;
+    }
+  } else {
+    // Legacy path - use original processNode
+    newRoot = await processNode(tree, baseUrl, report, legacyCallback);
+  }
+
+  // Merge with existing root if provided
+  if (existingRoot && isCollection(existingRoot)) {
+    const rootClone = JSON.parse(JSON.stringify(existingRoot)) as IIIFCollection;
+    if (!rootClone.items) rootClone.items = [];
+
+    if (isCollection(newRoot) && tree.name === 'root') {
+      const newItems = (newRoot as IIIFCollection).items || [];
+      for (const item of newItems) {
+        if (isValidChildType('Collection', item.type)) {
+          const relationship = getRelationshipType('Collection', item.type);
+          console.log(`Adding ${item.type} to Collection with ${relationship} relationship`);
+          rootClone.items.push(item);
         } else {
-            // Validate the new root can be added to existing Collection
-            if (isValidChildType('Collection', newRoot.type)) {
-                const relationship = getRelationshipType('Collection', newRoot.type);
-                console.log(`Adding ${newRoot.type} to existing Collection with ${relationship} relationship`);
-                rootClone.items.push(newRoot);
-            } else {
-                report.warnings.push(`Cannot add ${newRoot.type} to existing Collection - invalid child type`);
-            }
+          report.warnings.push(`Skipped ${item.type} - not valid child of Collection`);
         }
-        await storage.saveProject(rootClone);
-
-        // Start background tile pre-generation (non-blocking)
-        if (tileGenerationQueue.length > 0) {
-            report.warnings.push(`Background tile generation queued for ${tileGenerationQueue.length} images`);
-            processTileQueue(onProgress).catch(e =>
-                console.warn('Background tile generation error:', e)
-            );
-        }
-
-        return { root: rootClone, report };
+      }
     } else {
-        await storage.saveProject(newRoot);
-
-        // Start background tile pre-generation (non-blocking)
-        if (tileGenerationQueue.length > 0) {
-            report.warnings.push(`Background tile generation queued for ${tileGenerationQueue.length} images`);
-            processTileQueue(onProgress).catch(e =>
-                console.warn('Background tile generation error:', e)
-            );
-        }
-
-        return { root: newRoot, report };
+      if (isValidChildType('Collection', newRoot.type)) {
+        const relationship = getRelationshipType('Collection', newRoot.type);
+        console.log(`Adding ${newRoot.type} to existing Collection with ${relationship} relationship`);
+        rootClone.items.push(newRoot);
+      } else {
+        report.warnings.push(`Cannot add ${newRoot.type} to existing Collection - invalid child type`);
+      }
     }
+    await storage.saveProject(rootClone);
+
+    // Start background tile pre-generation
+    if (tileGenerationQueue.length > 0) {
+      report.warnings.push(`Background tile generation queued for ${tileGenerationQueue.length} images`);
+      processTileQueue(legacyCallback).catch(e =>
+        console.warn('Background tile generation error:', e)
+      );
+    }
+
+    return { root: rootClone, report };
+  } else {
+    await storage.saveProject(newRoot);
+
+    // Start background tile pre-generation
+    if (tileGenerationQueue.length > 0) {
+      report.warnings.push(`Background tile generation queued for ${tileGenerationQueue.length} images`);
+      processTileQueue(legacyCallback).catch(e =>
+        console.warn('Background tile generation error:', e)
+      );
+    }
+
+    return { root: newRoot, report };
+  }
+};
+
+/**
+ * Ingest with enhanced progress tracking (convenience method)
+ * @deprecated Use ingestTree with IngestProgressOptions instead
+ */
+export const ingestTreeWithProgress = async (
+  tree: FileTree,
+  options: IngestProgressOptions,
+  existingRoot?: IIIFItem | null
+): Promise<IngestResult> => {
+  return ingestTree(tree, existingRoot ?? null, options);
 };
 
 export const buildTree = (files: File[]): FileTree => {

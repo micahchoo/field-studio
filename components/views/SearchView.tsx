@@ -3,6 +3,7 @@ import { IIIFItem } from '../../types';
 import { searchService, SearchResult, AutocompleteResult } from '../../services/searchService';
 import { Icon } from '../Icon';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
+import { EmptyState, emptyStatePresets } from '../EmptyState';
 
 interface SearchViewProps {
   root: IIIFItem | null;
@@ -239,15 +240,18 @@ export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect, onReveal
                     )})}
                 </>
             ) : query.length > 1 ? (
-                <div className="text-center py-20 text-slate-400">
-                    <Icon name="search_off" className="text-4xl mb-2 text-slate-300"/>
-                    <p>No results found for "{query}"</p>
-                </div>
+                <EmptyState
+                  {...emptyStatePresets.noResults({
+                    onAction: () => setQuery('')
+                  })}
+                  message={`No results found for "${query}". Try different search terms or adjust your filters.`}
+                />
             ) : (
-                <div className="text-center py-20 text-slate-400">
-                    <Icon name="manage_search" className="text-4xl mb-2 text-slate-300"/>
-                    <p>Start typing to search your archive.</p>
-                </div>
+                <EmptyState
+                  icon="manage_search"
+                  title="Search Your Archive"
+                  message="Start typing to search for manifests, annotations, and content across your entire archive."
+                />
             )}
         </div>
       </div>

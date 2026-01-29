@@ -8,6 +8,51 @@ export const FILES_STORE = 'files';
 export const PROJECT_STORE = 'project';
 export const DERIVATIVES_STORE = 'derivatives'; // New store for Level 0 images
 export const CHECKPOINTS_STORE = 'checkpoints'; // For resumable imports
+export const TILES_STORE = 'tiles'; // For tile pyramid images
+export const TILE_MANIFESTS_STORE = 'tileManifests'; // For tile pyramid metadata
+
+// ============================================================================
+// Tile Storage Interfaces
+// ============================================================================
+
+/**
+ * Metadata for a stored tile pyramid
+ */
+export interface TileManifest {
+  assetId: string;
+  levels: number;
+  tileSize: number;
+  overlap: number;
+  format: string;
+  width: number;
+  height: number;
+  totalTiles: number;
+  createdAt: number;
+}
+
+/**
+ * Storage interface for tile pyramid operations
+ */
+export interface TileStorage {
+  /** Save a single tile blob */
+  saveTile(assetId: string, level: number, x: number, y: number, blob: Blob): Promise<void>;
+  /** Retrieve a single tile blob */
+  getTile(assetId: string, level: number, x: number, y: number): Promise<Blob | null>;
+  /** Save the manifest for a tile pyramid */
+  saveTileManifest(manifest: TileManifest): Promise<void>;
+  /** Retrieve the manifest for a tile pyramid */
+  getTileManifest(assetId: string): Promise<TileManifest | null>;
+  /** Check if a specific tile exists */
+  hasTile(assetId: string, level: number, x: number, y: number): Promise<boolean>;
+  /** Check if a complete pyramid exists for an asset */
+  hasPyramid(assetId: string): Promise<boolean>;
+  /** Delete all tiles and manifest for an asset */
+  deletePyramid(assetId: string): Promise<void>;
+  /** List all stored pyramid manifests */
+  listPyramids(): Promise<TileManifest[]>;
+  /** Get storage statistics for tiles */
+  getTileStats(): Promise<{ totalTiles: number; totalSize: number; pyramidCount: number }>;
+}
 
 interface BiiifDB extends DBSchema {
   files: {
@@ -25,6 +70,14 @@ interface BiiifDB extends DBSchema {
   checkpoints: {
     key: string;
     value: IngestCheckpoint;
+  };
+  tiles: {
+    key: string; // Format: {assetId}/{level}/{x}_{y}.{format}
+    value: Blob;
+  };
+  tileManifests: {
+    key: string; // Format: {assetId}_manifest
+    value: TileManifest;
   };
 }
 
@@ -96,7 +149,7 @@ class StorageService {
   }
 
   private _initDB() {
-      this._dbPromise = openDB<BiiifDB>(DB_NAME, 3, {
+      this._dbPromise = openDB<BiiifDB>(DB_NAME, 4, {
         upgrade(db, oldVersion) {
             if (oldVersion < 1) {
                 db.createObjectStore(FILES_STORE);
@@ -107,6 +160,11 @@ class StorageService {
             }
             if (oldVersion < 3) {
                 db.createObjectStore(CHECKPOINTS_STORE);
+            }
+            if (oldVersion < 4) {
+                // Add tile storage for image pyramid support
+                db.createObjectStore(TILES_STORE);
+                db.createObjectStore(TILE_MANIFESTS_STORE);
             }
         },
         blocked: () => {
@@ -333,6 +391,188 @@ class StorageService {
   async clearAllCheckpoints(): Promise<void> {
     const db = await this.getDB();
     await db.clear(CHECKPOINTS_STORE);
+  }
+
+  // ============================================================================
+  // Tile Storage Methods (for image pyramid support)
+  // ============================================================================
+
+  /**
+   * Generate a tile key in the format: {assetId}/{level}/{x}_{y}.{format}
+   * Note: format is determined from the manifest
+   */
+  private _getTileKey(assetId: string, level: number, x: number, y: number, format: string = 'jpg'): string {
+    return `${assetId}/${level}/${x}_${y}.${format}`;
+  }
+
+  /**
+   * Generate a manifest key in the format: {assetId}_manifest
+   */
+  private _getManifestKey(assetId: string): string {
+    return `${assetId}_manifest`;
+  }
+
+  /**
+   * Save a single tile blob to storage
+   */
+  async saveTile(
+    assetId: string,
+    level: number,
+    x: number,
+    y: number,
+    blob: Blob
+  ): Promise<void> {
+    return this.saveWithQuotaCheck('save tile', async () => {
+      const db = await this.getDB();
+      // Extract format from blob type or default to jpg
+      const format = blob.type?.includes('png') ? 'png' : 'jpg';
+      const key = this._getTileKey(assetId, level, x, y, format);
+      await db.put(TILES_STORE, blob, key);
+    });
+  }
+
+  /**
+   * Retrieve a single tile blob from storage
+   */
+  async getTile(
+    assetId: string,
+    level: number,
+    x: number,
+    y: number
+  ): Promise<Blob | null> {
+    const db = await this.getDB();
+    // Try to get manifest first to determine format
+    const manifest = await this.getTileManifest(assetId);
+    const format = manifest?.format || 'jpg';
+    const key = this._getTileKey(assetId, level, x, y, format);
+    const blob = await db.get(TILES_STORE, key);
+    return blob || null;
+  }
+
+  /**
+   * Save the manifest for a tile pyramid
+   */
+  async saveTileManifest(manifest: TileManifest): Promise<void> {
+    return this.saveWithQuotaCheck('save tile manifest', async () => {
+      const db = await this.getDB();
+      const key = this._getManifestKey(manifest.assetId);
+      await db.put(TILE_MANIFESTS_STORE, manifest, key);
+    });
+  }
+
+  /**
+   * Retrieve the manifest for a tile pyramid
+   */
+  async getTileManifest(assetId: string): Promise<TileManifest | null> {
+    const db = await this.getDB();
+    const key = this._getManifestKey(assetId);
+    const manifest = await db.get(TILE_MANIFESTS_STORE, key);
+    return manifest || null;
+  }
+
+  /**
+   * Check if a specific tile exists in storage
+   */
+  async hasTile(
+    assetId: string,
+    level: number,
+    x: number,
+    y: number
+  ): Promise<boolean> {
+    const db = await this.getDB();
+    const manifest = await this.getTileManifest(assetId);
+    const format = manifest?.format || 'jpg';
+    const key = this._getTileKey(assetId, level, x, y, format);
+    const blob = await db.get(TILES_STORE, key);
+    return blob !== undefined;
+  }
+
+  /**
+   * Check if a complete pyramid exists for an asset
+   */
+  async hasPyramid(assetId: string): Promise<boolean> {
+    const manifest = await this.getTileManifest(assetId);
+    return manifest !== null;
+  }
+
+  /**
+   * Delete all tiles and manifest for an asset
+   */
+  async deletePyramid(assetId: string): Promise<void> {
+    const db = await this.getDB();
+
+    // Get all tile keys for this asset
+    const allKeys = await db.getAllKeys(TILES_STORE);
+    const assetTileKeys = allKeys.filter(key =>
+      typeof key === 'string' && key.startsWith(`${assetId}/`)
+    );
+
+    // Delete all tiles for this asset
+    for (const key of assetTileKeys) {
+      await db.delete(TILES_STORE, key);
+    }
+
+    // Delete the manifest
+    await db.delete(TILE_MANIFESTS_STORE, this._getManifestKey(assetId));
+  }
+
+  /**
+   * List all stored pyramid manifests
+   */
+  async listPyramids(): Promise<TileManifest[]> {
+    const db = await this.getDB();
+    return await db.getAll(TILE_MANIFESTS_STORE);
+  }
+
+  /**
+   * Get storage statistics for tiles
+   */
+  async getTileStats(): Promise<{ totalTiles: number; totalSize: number; pyramidCount: number }> {
+    const db = await this.getDB();
+
+    // Get all tiles
+    const allTileKeys = await db.getAllKeys(TILES_STORE);
+    const tiles = await Promise.all(
+      allTileKeys.map(key => db.get(TILES_STORE, key))
+    );
+
+    // Calculate total size
+    let totalSize = 0;
+    for (const blob of tiles) {
+      if (blob && blob.size) {
+        totalSize += blob.size;
+      }
+    }
+
+    // Get pyramid count from manifests
+    const manifests = await db.getAllKeys(TILE_MANIFESTS_STORE);
+
+    return {
+      totalTiles: tiles.length,
+      totalSize,
+      pyramidCount: manifests.length
+    };
+  }
+
+  // ============================================================================
+  // Tile Storage Interface (for external access)
+  // ============================================================================
+
+  /**
+   * Get the tile storage interface for external components
+   */
+  get tiles(): TileStorage {
+    return {
+      saveTile: this.saveTile.bind(this),
+      getTile: this.getTile.bind(this),
+      saveTileManifest: this.saveTileManifest.bind(this),
+      getTileManifest: this.getTileManifest.bind(this),
+      hasTile: this.hasTile.bind(this),
+      hasPyramid: this.hasPyramid.bind(this),
+      deletePyramid: this.deletePyramid.bind(this),
+      listPyramids: this.listPyramids.bind(this),
+      getTileStats: this.getTileStats.bind(this),
+    };
   }
 }
 
