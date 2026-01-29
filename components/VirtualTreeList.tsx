@@ -83,7 +83,9 @@ const TreeItem = React.memo<TreeItemProps>(({
   return (
     <div
       role="treeitem"
-      aria-level={node.level + 1}
+      aria-level={node.aria.level}
+      aria-setsize={node.aria.setSize}
+      aria-posinset={node.aria.posInSet}
       aria-expanded={node.hasChildren ? node.isExpanded : undefined}
       aria-selected={isSelected}
       tabIndex={isSelected ? 0 : -1}

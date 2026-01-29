@@ -18,7 +18,9 @@ import { ExternalImportDialog } from './components/ExternalImportDialog';
 import { BatchEditor } from './components/BatchEditor';
 import { PersonaSettings } from './components/PersonaSettings';
 import { CommandPalette } from './components/CommandPalette';
+import { KeyboardShortcutsOverlay, GLOBAL_SHORTCUTS } from './components/KeyboardShortcutsOverlay';
 import { AuthDialog } from './components/AuthDialog';
+import { SkipLink } from './components/SkipLink';
 import { Icon } from './components/Icon';
 import { ViewRouter } from './components/ViewRouter';
 import { buildTree, ingestTree } from './services/iiifBuilder';
@@ -67,6 +69,7 @@ const MainApp: React.FC = () => {
   const batchEditor = useDialogState();
   const personaSettings = useDialogState();
   const commandPalette = useDialogState();
+  const keyboardShortcuts = useDialogState();
   const authDialog = useDialogState();
 
   // ---- Panel States ----
@@ -146,19 +149,24 @@ const MainApp: React.FC = () => {
         e.preventDefault();
         commandPalette.toggle();
       }
-      // Quick help - ? key (Shift+/)
+      // Keyboard shortcuts overlay - Cmd+? (or Ctrl+?)
+      if ((e.metaKey || e.ctrlKey) && e.key === '?') {
+        e.preventDefault();
+        keyboardShortcuts.toggle();
+      }
+      // Legacy quick help - ? key (Shift+/)
       if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
         const target = e.target as HTMLElement;
         // Don't trigger if user is typing in an input
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
           e.preventDefault();
-          setShowQuickRef(prev => !prev);
+          keyboardShortcuts.toggle();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [commandPalette]);
+  }, [commandPalette, keyboardShortcuts]);
 
   // ============================================================================
   // Command Palette Commands
@@ -408,9 +416,10 @@ const MainApp: React.FC = () => {
 
   return (
     <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans ${settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-100'}`}>
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[2000] focus:bg-iiif-blue focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
-        Skip to content
-      </a>
+      {/* Skip Links for Accessibility */}
+      <SkipLink targetId="main-content" label="Skip to main content" />
+      <SkipLink targetId="sidebar" label="Skip to sidebar navigation" position="top-left" className="mt-14" />
+      <SkipLink targetId="command-palette-trigger" label="Skip to Command Palette" shortcut="⌘K" position="top-left" className="mt-24" />
 
       {/* Saving Indicator */}
       <div className={`fixed top-4 right-4 z-[2000] pointer-events-none transition-all duration-300 ${saveStatus === 'saving' ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
@@ -573,6 +582,13 @@ const MainApp: React.FC = () => {
         isOpen={commandPalette.isOpen}
         onClose={commandPalette.close}
         commands={commands}
+      />
+
+      <KeyboardShortcutsOverlay
+        isOpen={keyboardShortcuts.isOpen}
+        onClose={keyboardShortcuts.close}
+        categories={GLOBAL_SHORTCUTS}
+        currentContext={currentMode}
       />
 
       <QuickReference

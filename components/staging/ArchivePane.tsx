@@ -4,6 +4,9 @@ import { ArchiveLayout, ArchiveCollection, SourceManifest, SourceManifests } fro
 import { Icon } from '../Icon';
 import { CollectionCard } from './CollectionCard';
 import { findManifest } from '../../services/stagingService';
+import { useTerminology } from '../../hooks/useTerminology';
+import { useKeyboardDragDrop } from '../../hooks/useKeyboardDragDrop';
+import { FEATURE_FLAGS } from '../../constants';
 
 interface ArchivePaneProps {
   archiveLayout: ArchiveLayout;
@@ -30,9 +33,41 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
   onFocus,
   isFocused
 }) => {
+  // Use terminology hook for user-friendly labels
+  const { t, formatCount } = useTerminology({ level: 'standard' });
+
   const [dragOverCollectionId, setDragOverCollectionId] = useState<string | null>(null);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [showNewCollectionInput, setShowNewCollectionInput] = useState(false);
+  const [focusedCollectionId, setFocusedCollectionId] = useState<string | null>(null);
+
+  // Phase 5: Keyboard drag and drop for collections (when enabled)
+  const enableKeyboardDnd = FEATURE_FLAGS.USE_KEYBOARD_DND;
+
+  // Flatten collections for keyboard navigation
+  const flattenCollections = useCallback((collection: ArchiveCollection): ArchiveCollection[] => {
+    const result: ArchiveCollection[] = [collection];
+    collection.children.forEach(child => {
+      result.push(...flattenCollections(child));
+    });
+    return result;
+  }, []);
+
+  const allCollections = useMemo(() => {
+    return flattenCollections(archiveLayout.root);
+  }, [archiveLayout.root, flattenCollections]);
+
+  const keyboardDnd = useKeyboardDragDrop({
+    items: allCollections,
+    onReorder: () => {
+      // Reordering collections not yet supported
+    },
+    onMove: (itemId, targetId) => {
+      // This would be called when moving a manifest to a collection via keyboard
+      onAddToCollection(targetId, [itemId]);
+    },
+    getItemId: (item) => item.id
+  });
 
   // Get manifests for a collection
   const getManifestsForCollection = useCallback((collection: ArchiveCollection): SourceManifest[] => {
@@ -65,16 +100,33 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
   }, []);
 
   // Render collection recursively
-  const renderCollection = useCallback((collection: ArchiveCollection, isRoot: boolean = false) => {
+  const renderCollection = useCallback((collection: ArchiveCollection, isRoot: boolean = false, level: number = 0) => {
     const manifests = getManifestsForCollection(collection);
+    const isFocused = focusedCollectionId === collection.id;
+    const isSelected = enableKeyboardDnd && keyboardDnd.state.selectedId === collection.id;
+    const isDropTarget = enableKeyboardDnd && keyboardDnd.state.dropTargetId === collection.id;
 
     return (
-      <div key={collection.id} className="space-y-3">
+      <div
+        key={collection.id}
+        className="space-y-3"
+        role="treeitem"
+        aria-level={level + 1}
+        aria-selected={isSelected}
+        tabIndex={isFocused ? 0 : -1}
+        onKeyDown={enableKeyboardDnd ? (e) => keyboardDnd.handlers.onKeyDown(e, collection) : undefined}
+        onFocus={() => {
+          setFocusedCollectionId(collection.id);
+          if (enableKeyboardDnd) {
+            keyboardDnd.handlers.onFocus(collection);
+          }
+        }}
+      >
         <CollectionCard
           collection={collection}
           manifests={manifests}
           isRoot={isRoot}
-          isDragOver={dragOverCollectionId === collection.id}
+          isDragOver={dragOverCollectionId === collection.id || isDropTarget}
           onDrop={(ids) => onAddToCollection(collection.id, ids)}
           onDragEnter={() => setDragOverCollectionId(collection.id)}
           onDragLeave={() => setDragOverCollectionId(null)}
@@ -90,7 +142,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
         {/* Render children */}
         {collection.children.length > 0 && (
           <div className="ml-6 pl-4 border-l-2 border-slate-200 space-y-3">
-            {collection.children.map(child => renderCollection(child))}
+            {collection.children.map(child => renderCollection(child, false, level + 1))}
           </div>
         )}
       </div>
@@ -102,7 +154,10 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
     onRemoveFromCollection,
     onRenameCollection,
     onDeleteCollection,
-    onCreateCollection
+    onCreateCollection,
+    focusedCollectionId,
+    enableKeyboardDnd,
+    keyboardDnd
   ]);
 
   // Stats
@@ -136,15 +191,15 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
           <div>
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
               <Icon name="account_tree" className="text-amber-500" />
-              Archive Layout
+              Your Archive
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Organize manifests into collections for publishing
+              Organize {t('Manifest').toLowerCase()}s into {t('Collection').toLowerCase()}s
             </p>
           </div>
           <div className="text-right">
             <div className="text-lg font-bold text-slate-800">{stats.totalCollections}</div>
-            <div className="text-[10px] text-slate-400">collections</div>
+            <div className="text-[10px] text-slate-400">{t('Collection').toLowerCase()}s</div>
           </div>
         </div>
 
@@ -156,7 +211,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
-              placeholder="Collection name..."
+              placeholder={`${t('Collection')} name...`}
               autoFocus
               className="flex-1 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:border-amber-400"
             />
@@ -183,7 +238,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
             className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-2"
           >
             <Icon name="create_new_folder" />
-            New Collection
+            New {t('Collection')}
           </button>
         )}
       </div>
@@ -203,7 +258,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
             <div className="flex items-center gap-2 mb-3">
               <Icon name="inbox" className="text-slate-400" />
               <h4 className="font-medium text-slate-600">
-                Unassigned Manifests
+                Unassigned {t('Manifest')}s
               </h4>
               <span className="ml-auto text-[11px] text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
                 {unassignedManifests.length}
@@ -236,10 +291,42 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
                     onClick={() => onOpenSendToModal([manifest.id])}
                     className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-amber-100 text-amber-700 rounded text-[10px] font-medium hover:bg-amber-200 transition-opacity"
                   >
-                    Send to...
+                    Add to {t('Collection')}...
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state when no collections */}
+        {archiveLayout.root.children.length === 0 && unassignedManifests.length === 0 && (
+          <div className="text-center py-12 px-4">
+            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Icon name="create_new_folder" className="text-3xl text-amber-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 mb-1">
+              No {t('Collection').toLowerCase()}s yet
+            </p>
+            <p className="text-xs text-slate-500 mb-4">
+              Create your first {t('Collection').toLowerCase()} to organize your files
+            </p>
+            <div className="bg-slate-50 rounded-lg p-3 text-left">
+              <p className="text-[11px] font-medium text-slate-600 mb-2">How to organize:</p>
+              <ul className="text-[11px] text-slate-500 space-y-1">
+                <li className="flex items-start gap-1.5">
+                  <Icon name="drag_indicator" className="text-xs text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>Drag files from the left to add them</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <Icon name="create_new_folder" className="text-xs text-amber-500 mt-0.5 flex-shrink-0" />
+                  <span>Create {t('Collection').toLowerCase()}s to group related files</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <Icon name="account_tree" className="text-xs text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <span>Nest {t('Collection').toLowerCase()}s for hierarchy</span>
+                </li>
+              </ul>
             </div>
           </div>
         )}
@@ -251,16 +338,16 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
           {stats.unassignedCount > 0 ? (
             <div className="flex items-center gap-1 text-amber-600">
               <Icon name="warning" className="text-sm" />
-              {stats.unassignedCount} manifest{stats.unassignedCount !== 1 ? 's' : ''} not in any collection
+              {stats.unassignedCount} {t('Manifest').toLowerCase()}{stats.unassignedCount !== 1 ? 's' : ''} not in any {t('Collection').toLowerCase()}
             </div>
           ) : (
             <div className="flex items-center gap-1 text-emerald-600">
               <Icon name="check_circle" className="text-sm" />
-              All manifests assigned
+              All {t('Manifest').toLowerCase()}s assigned
             </div>
           )}
           <span className="text-slate-400">
-            {stats.assignedManifests} in collections
+            {stats.assignedManifests} in {t('Collection').toLowerCase()}s
           </span>
         </div>
       </div>

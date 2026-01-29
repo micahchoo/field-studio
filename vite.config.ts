@@ -18,6 +18,12 @@ export default defineConfig(({ mode }) => {
       },
       optimizeDeps: {
         include: ['flexsearch']
+      },
+      worker: {
+        format: 'es'
+      },
+      build: {
+        target: 'esnext'
       }
     };
-}); 
+});

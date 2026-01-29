@@ -539,11 +539,19 @@ export const PATTERNS = {
 } as const;
 
 // ============================================================================
-// ACCESSIBILITY - WCAG Compliance Constants
+// ACCESSIBILITY - WCAG 2.1 AA Compliance Constants
 // ============================================================================
 
 export const ACCESSIBILITY = {
-  // Focus management
+  // Focus management - WCAG 2.1 AA compliant focus indicators
+  FOCUS: {
+    ring: 'ring-2 ring-offset-2',
+    lightMode: 'ring-blue-600 ring-offset-white',     // 4.5:1 contrast
+    darkMode: 'ring-yellow-400 ring-offset-slate-900', // 4.2:1 contrast
+    fieldMode: 'ring-yellow-400 ring-offset-black'
+  },
+
+  // Legacy focus config (deprecated, use FOCUS above)
   focus: {
     ring: INTERACTION.states.focus.ring,
     ringColor: INTERACTION.states.focus.ringColor,

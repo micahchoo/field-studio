@@ -1,0 +1,199 @@
+{
+  "app": {
+    "name": "استوديو أرشيف الحقل IIIF",
+    "version": "الإصدار {{version}}",
+    "loading": "جاري التحميل...",
+    "saving": "جاري الحفظ...",
+    "error": "حدث خطأ",
+    "success": "نجاح",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تحرير",
+    "create": "إنشاء",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "done": "تم",
+    "confirm": "تأكيد",
+    "dismiss": "تجاهل"
+  },
+  "navigation": {
+    "workspace": "مساحة العمل",
+    "detail": "التفاصيل",
+    "preview": "معاينة",
+    "archive": "الأرشيف",
+    "collections": "المجموعات",
+    "board": "اللوحة",
+    "metadata": "البيانات الوصفية",
+    "map": "الخريطة",
+    "search": "بحث",
+    "settings": "الإعدادات",
+    "help": "مساعدة"
+  },
+  "resource": {
+    "collection": "مجموعة",
+    "manifest": "بيان",
+    "canvas": "لوحة",
+    "range": "نطاق",
+    "annotationPage": "صفحة التعليقات",
+    "annotation": "تعليق",
+    "content": "محتوى",
+    "annotationCollection": "مجموعة التعليقات",
+    "items": "عناصر",
+    "item": "عنصر",
+    "noItems": "لا توجد عناصر"
+  },
+  "actions": {
+    "add": "إضافة",
+    "remove": "إزالة",
+    "move": "نقل",
+    "duplicate": "نسخ",
+    "import": "استيراد",
+    "export": "تصدير",
+    "upload": "رفع",
+    "download": "تحميل",
+    "share": "مشاركة",
+    "select": "تحديد",
+    "selectAll": "تحديد الكل",
+    "deselectAll": "إلغاء التحديد",
+    "expand": "توسيع",
+    "collapse": "طي",
+    "zoomIn": "تكبير",
+    "zoomOut": "تصغير",
+    "resetZoom": "إعادة تعيين التكبير",
+    "fullscreen": "ملء الشاشة",
+    "exitFullscreen": "خروج من ملء الشاشة"
+  },
+  "metadata": {
+    "label": "التسمية",
+    "summary": "الملخص",
+    "description": "الوصف",
+    "title": "العنوان",
+    "creator": "المنشئ",
+    "date": "التاريخ",
+    "subject": "الموضوع",
+    "rights": "الحقوق",
+    "source": "المصدر",
+    "type": "النوع",
+    "format": "التنسيق",
+    "identifier": "المعرف",
+    "language": "اللغة",
+    "coverage": "التغطية",
+    "publisher": "الناشر",
+    "contributor": "المساهم",
+    "relation": "العلاقة",
+    "metadata": "البيانات الوصفية",
+    "requiredStatement": "الإسناد",
+    "navDate": "تاريخ التنقل",
+    "provider": "المزود",
+    "behavior": "السلوك",
+    "viewingDirection": "اتجاه العرض"
+  },
+  "validation": {
+    "title": "حارس النزاهة",
+    "healthScore": "درجة الصحة",
+    "issues": "مشكلات",
+    "violations": "الانتهاكات المكتشفة",
+    "noIssues": "لا توجد مشكلات في هذه الفئة",
+    "category": {
+      "identity": "الهوية والمعرفات",
+      "structure": "التسلسل الهرمي",
+      "metadata": "التسميات والوصف",
+      "content": "الوسائط والتقنية"
+    },
+    "level": {
+      "error": "خطأ",
+      "warning": "تحذير",
+      "info": "معلومات"
+    },
+    "fix": "إصلاح",
+    "fixAll": "إصلاح الكل",
+    "fixed": "تم الإصلاح",
+    "resourcesMonitored": "الموارد المراقبة"
+  },
+  "commandPalette": {
+    "title": "لوحة الأوامر",
+    "placeholder": "اكتب أمرًا أو ابحث...",
+    "shortcut": "اضغط ⌘K للفتح",
+    "noResults": "لم يتم العثور على أوامر"
+  },
+  "featureDiscovery": {
+    "tour": {
+      "commandPalette": {
+        "title": "لوحة الأوامر",
+        "description": "اضغط ⌘K للوصول السريع إلى أي ميزة أو أمر"
+      },
+      "fieldMode": {
+        "title": "وضع الميدان",
+        "description": "واجهة محسّنة لجمع البيانات المتنقلة في الميدان"
+      },
+      "qcDashboard": {
+        "title": "مراقبة الجودة",
+        "description": "راقب وأصلح مشكلات سلامة البيانات"
+      },
+      "metadataEditor": {
+        "title": "محرر البيانات الوصفية",
+        "description": "تحرير غني لبيانات IIIF الوصفية مع التحقق"
+      }
+    },
+    "progress": "الخطوة {{current}} من {{total}}",
+    "skip": "تخطي الجولة",
+    "finish": "إنهاء الجولة",
+    "next": "التالي",
+    "back": "رجوع"
+  },
+  "emptyStates": {
+    "noItems": {
+      "title": "لا توجد عناصر",
+      "message": "هذه المنطقة فارغة. أضف عناصر للبدء."
+    },
+    "noResults": {
+      "title": "لا توجد نتائج",
+      "message": "لا توجد عناصر تطابق بحثك. جرب مصطلحات أو عوامل تصفية مختلفة."
+    },
+    "noSelection": {
+      "title": "لا شيء محدد",
+      "message": "حدد عنصرًا من القائمة لعرض التفاصيل والتحرير."
+    },
+    "error": {
+      "title": "حدث خطأ ما",
+      "message": "واجهنا خطأ. يرجى المحاولة مرة أخرى أو الاتصال بالدعم."
+    },
+    "loading": {
+      "title": "جاري التحميل...",
+      "message": "يرجى الانتظار بينما نقوم بتحميل بياناتك."
+    },
+    "noData": {
+      "title": "لا توجد بيانات بعد",
+      "message": "استيراد ملفات أو إنشاء عناصر جديدة لملء هذا العرض."
+    }
+  },
+  "accessibility": {
+    "skipToContent": "التخطي إلى المحتوى الرئيسي",
+    "mainNavigation": "التنقل الرئيسي",
+    "breadcrumb": "مسار التنقل",
+    "search": "بحث",
+    "closeMenu": "إغلاق القائمة",
+    "openMenu": "فتح القائمة",
+    "ariaLabel": {
+      "close": "إغلاق",
+      "save": "حفظ التغييرات",
+      "delete": "حذف",
+      "edit": "تحرير",
+      "select": "تحديد",
+      "moreOptions": "المزيد من الخيارات",
+      "loading": "جاري التحميل"
+    }
+  },
+  "errors": {
+    "generic": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    "network": "فشل الاتصال. يرجى التحقق من اتصالك بالإنترنت.",
+    "validation": "يرجى التحقق من إدخالك والمحاولة مرة أخرى.",
+    "notFound": "تعذر العثور على العنصر المطلوب.",
+    "permission": "ليس لديك إذن لتنفيذ هذا الإجراء.",
+    "timeout": "انتهت مهلة العملية. يرجى المحاولة مرة أخرى.",
+    "parse": "تعذر معالجة الملف. قد يكون تالفًا أو بتنسيق غير متوقع."
+  }
+}

@@ -4,22 +4,44 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { searchService } from './services/searchService';
-import { IIIF_SPEC } from './constants';
+import { IIIF_SPEC, FEATURE_FLAGS } from './constants';
+import { initializeI18n } from './i18n';
+
+// Initialize i18n if feature flag is enabled
+if (FEATURE_FLAGS.USE_I18N) {
+  initializeI18n();
+}
 
 // Global Error Handlers for debugging startup issues
 window.onerror = function(message, source, lineno, colno, error) {
   console.error('[Global Error]', message, source, lineno, colno, error);
   const root = document.getElementById('root');
   if (root) {
+    // Sanitize error values to prevent XSS
+    const sanitizeError = (str: unknown): string => {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"')
+        .replace(/'/g, '&#x27;');
+    };
+    
     root.innerHTML = `
       <div style="padding: 20px; color: #7f1d1d; background: #fef2f2; border: 1px solid #fecaca; margin: 20px; font-family: sans-serif; border-radius: 8px;">
         <h2 style="margin-top:0">Startup Error</h2>
-        <p><strong>Message:</strong> ${message}</p>
-        <p><strong>Source:</strong> ${source}:${lineno}:${colno}</p>
-        <pre style="background: #fff; padding: 10px; overflow: auto; font-size: 11px;">${error?.stack || 'No stack trace'}</pre>
-        <button onclick="window.location.reload()" style="padding: 8px 16px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">Reload</button>
+        <p><strong>Message:</strong> ${sanitizeError(message)}</p>
+        <p><strong>Source:</strong> ${sanitizeError(source)}:${sanitizeError(lineno)}:${sanitizeError(colno)}</p>
+        <pre style="background: #fff; padding: 10px; overflow: auto; font-size: 11px;">${sanitizeError(error?.stack) || 'No stack trace'}</pre>
+        <button id="reload-btn" style="padding: 8px 16px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">Reload</button>
       </div>
     `;
+    // Add event listener instead of inline onclick for CSP and XSS safety
+    const reloadBtn = document.getElementById('reload-btn');
+    if (reloadBtn) {
+      reloadBtn.addEventListener('click', () => window.location.reload());
+    }
   }
   return false;
 };

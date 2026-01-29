@@ -4,6 +4,19 @@ const FILES_STORE = 'files';
 const DERIVATIVES_STORE = 'derivatives';
 const TILE_CACHE_NAME = 'iiif-tile-cache-v3';
 
+// ============================================================================
+// LRU Cache Configuration
+// ============================================================================
+const CACHE_LIMIT = 500 * 1024 * 1024; // 500MB in bytes
+const CACHE_METADATA_KEY = 'iiif-cache-metadata';
+
+// In-memory cache metadata (will be lost on SW restart, but that's OK)
+// We'll rebuild from cache inspection when needed
+let cacheMetadata = {
+  entries: new Map(), // url -> { size, timestamp, accessCount }
+  totalSize: 0
+};
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -16,10 +29,131 @@ self.addEventListener('activate', (event) => {
         keys.map(key => {
           if (key !== TILE_CACHE_NAME) return caches.delete(key);
         })
-      ))
+      )),
+      // Initialize cache metadata from existing cache
+      initializeCacheMetadata()
     ])
   );
 });
+
+// ============================================================================
+// LRU Cache Management
+// ============================================================================
+
+/**
+ * Initialize cache metadata by inspecting existing cache entries
+ */
+async function initializeCacheMetadata() {
+  try {
+    const cache = await caches.open(TILE_CACHE_NAME);
+    const requests = await cache.keys();
+    
+    cacheMetadata.totalSize = 0;
+    cacheMetadata.entries.clear();
+    
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (response) {
+        const blob = await response.blob();
+        const size = blob.size;
+        cacheMetadata.entries.set(request.url, {
+          size,
+          timestamp: Date.now(),
+          accessCount: 0
+        });
+        cacheMetadata.totalSize += size;
+      }
+    }
+    
+    console.log(`[SW] Cache initialized: ${cacheMetadata.entries.size} entries, ${(cacheMetadata.totalSize / 1024 / 1024).toFixed(2)}MB`);
+  } catch (err) {
+    console.error('[SW] Failed to initialize cache metadata:', err);
+  }
+}
+
+/**
+ * Get the size of a response in bytes
+ */
+async function getResponseSize(response) {
+  const clone = response.clone();
+  const blob = await clone.blob();
+  return blob.size;
+}
+
+/**
+ * Update access metadata for a cache entry
+ */
+function touchEntry(url) {
+  const entry = cacheMetadata.entries.get(url);
+  if (entry) {
+    entry.timestamp = Date.now();
+    entry.accessCount++;
+  }
+}
+
+/**
+ * Evict oldest entries to make room for required space
+ * Uses LRU (Least Recently Used) algorithm
+ */
+async function evictLRU(requiredSpace) {
+  const cache = await caches.open(TILE_CACHE_NAME);
+  
+  // Sort entries by timestamp (oldest first)
+  const sortedEntries = Array.from(cacheMetadata.entries.entries())
+    .sort((a, b) => a[1].timestamp - b[1].timestamp);
+  
+  let freedSpace = 0;
+  const entriesToDelete = [];
+  
+  for (const [url, metadata] of sortedEntries) {
+    if (cacheMetadata.totalSize - freedSpace + requiredSpace <= CACHE_LIMIT) {
+      break;
+    }
+    
+    entriesToDelete.push(url);
+    freedSpace += metadata.size;
+  }
+  
+  // Delete entries from cache
+  for (const url of entriesToDelete) {
+    await cache.delete(url);
+    cacheMetadata.entries.delete(url);
+    console.log(`[SW] Evicted from cache: ${url}`);
+  }
+  
+  cacheMetadata.totalSize -= freedSpace;
+  
+  if (entriesToDelete.length > 0) {
+    console.log(`[SW] Evicted ${entriesToDelete.length} entries, freed ${(freedSpace / 1024 / 1024).toFixed(2)}MB`);
+  }
+  
+  return freedSpace;
+}
+
+/**
+ * Add a response to the cache with LRU eviction
+ */
+async function addToCache(request, response) {
+  const size = await getResponseSize(response);
+  
+  // Check if we need to evict
+  if (cacheMetadata.totalSize + size > CACHE_LIMIT) {
+    await evictLRU(size);
+  }
+  
+  const cache = await caches.open(TILE_CACHE_NAME);
+  await cache.put(request, response.clone());
+  
+  // Update metadata
+  cacheMetadata.entries.set(request.url, {
+    size,
+    timestamp: Date.now(),
+    accessCount: 1
+  });
+  cacheMetadata.totalSize += size;
+  
+  return response;
+}
 
 // IDB Helpers
 function getFromIDB(storeName, key) {
@@ -42,7 +176,11 @@ async function handleImageRequest(request) {
   const url = request.url;
   const cache = await caches.open(TILE_CACHE_NAME);
   const cachedResponse = await cache.match(request);
-  if (cachedResponse) return cachedResponse;
+  if (cachedResponse) {
+    // Update LRU timestamp on cache hit
+    touchEntry(url);
+    return cachedResponse;
+  }
 
   try {
     const urlObj = new URL(url);
@@ -152,10 +290,13 @@ async function handleImageRequest(request) {
 
     const blobOutput = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
     const res = new Response(blobOutput, { headers: { 'Content-Type': 'image/jpeg', 'Access-Control-Allow-Origin': '*' } });
-    cache.put(request, res.clone());
+    
+    // Use LRU cache instead of simple cache.put
+    await addToCache(request, res.clone());
     return res;
 
   } catch (err) {
+    console.error('[SW] Error handling image request:', err);
     return new Response('Error', { status: 500 });
   }
 }
@@ -167,5 +308,38 @@ self.addEventListener('fetch', (event) => {
   
   if (isIIIFImage) {
     event.respondWith(handleImageRequest(event.request));
+  }
+});
+
+// ============================================================================
+// Message Handler for Cache Management
+// ============================================================================
+
+self.addEventListener('message', (event) => {
+  const { action } = event.data;
+  
+  switch (action) {
+    case 'getCacheStats':
+      event.ports[0]?.postMessage({
+        totalSize: cacheMetadata.totalSize,
+        entryCount: cacheMetadata.entries.size,
+        limit: CACHE_LIMIT,
+        usagePercent: (cacheMetadata.totalSize / CACHE_LIMIT * 100).toFixed(2)
+      });
+      break;
+      
+    case 'clearCache':
+      caches.delete(TILE_CACHE_NAME).then(() => {
+        cacheMetadata.entries.clear();
+        cacheMetadata.totalSize = 0;
+        event.ports[0]?.postMessage({ success: true });
+      });
+      break;
+      
+    case 'evictCache':
+      evictLRU(event.data.requiredSpace || 0).then((freed) => {
+        event.ports[0]?.postMessage({ freed });
+      });
+      break;
   }
 });

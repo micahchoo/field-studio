@@ -219,4 +219,187 @@ export class ValidationService {
   }
 }
 
+/**
+ * Field validation result for a single field
+ */
+export interface FieldValidation {
+  status: 'pristine' | 'valid' | 'invalid' | 'validating';
+  message?: string;
+  fix?: () => void;
+  fixDescription?: string;
+}
+
+/**
+ * Get validation state for a specific field from a list of issues.
+ * Maps validation issues to field-level validation state.
+ *
+ * @param issues - Array of validation issues from validator.validateItem()
+ * @param fieldPath - Field path to check (e.g., 'label', 'summary', 'metadata', 'id')
+ * @param onFix - Optional callback to invoke when fix is triggered
+ * @returns FieldValidation object or null if no issues apply
+ */
+export function getValidationForField(
+  issues: ValidationIssue[],
+  fieldPath: string,
+  onFix?: (issue: ValidationIssue) => void
+): FieldValidation | null {
+  if (!issues || issues.length === 0) {
+    return { status: 'pristine' };
+  }
+
+  // Map field paths to issue message patterns
+  const fieldPatterns: Record<string, string[]> = {
+    'label': ['label', 'missing required', 'must have'],
+    'summary': ['summary'],
+    'metadata': ['metadata'],
+    'id': ['id', 'duplicate id', 'http', 'uri'],
+    'type': ['type', 'missing required field: type'],
+    'items': ['items', 'must have at least one'],
+    'rights': ['rights'],
+    'behavior': ['behavior'],
+    'thumbnail': ['thumbnail'],
+    'width': ['width', 'dimensions'],
+    'height': ['height', 'dimensions'],
+    'duration': ['duration'],
+    'viewingDirection': ['viewingdirection', 'viewing direction'],
+    'navDate': ['navdate', 'nav date'],
+    'navPlace': ['navplace', 'nav place'],
+    'provider': ['provider'],
+    'requiredStatement': ['requiredstatement', 'required statement'],
+    '@context': ['@context', 'context'],
+    'structures': ['structures'],
+    'annotations': ['annotations'],
+  };
+
+  const patterns = fieldPatterns[fieldPath.toLowerCase()];
+  if (!patterns) {
+    return { status: 'pristine' };
+  }
+
+  // Find issues that match this field
+  const matchingIssues = issues.filter(issue => {
+    const msg = (issue.message || '').toLowerCase();
+    return patterns.some(pattern => msg.includes(pattern.toLowerCase()));
+  });
+
+  if (matchingIssues.length === 0) {
+    return { status: 'pristine' };
+  }
+
+  // Find the most severe issue (error > warning)
+  const errorIssue = matchingIssues.find(i => i.level === 'error');
+  const warningIssue = matchingIssues.find(i => i.level === 'warning');
+  const primaryIssue = errorIssue || warningIssue;
+
+  if (!primaryIssue) {
+    return { status: 'pristine' };
+  }
+
+  // Build the field validation result
+  const result: FieldValidation = {
+    status: primaryIssue.level === 'error' ? 'invalid' : 'valid',
+    message: primaryIssue.message,
+  };
+
+  // Add fix function if the issue is fixable and callback provided
+  if (primaryIssue.fixable && onFix) {
+    result.fix = () => onFix(primaryIssue);
+    result.fixDescription = getFixDescription(primaryIssue);
+  }
+
+  return result;
+}
+
+/**
+ * Get a human-readable description of what fix will be applied.
+ * Re-exported from validationHealer for convenience.
+ */
+function getFixDescription(issue: ValidationIssue): string {
+  const msg = (issue.message || '').toLowerCase();
+
+  // Identity fixes
+  if (msg.includes('missing required field: type')) return 'Add default resource type';
+  if (msg.includes('missing required field: id')) return 'Generate valid HTTP URI ID';
+  if (msg.includes('id must be a valid http')) return 'Convert ID to HTTP(S) URI';
+  if (msg.includes('duplicate id')) return 'Append unique suffix to ID';
+  if (msg.includes('canvas id must not contain a fragment')) return 'Remove fragment identifier from Canvas ID';
+
+  // Label fixes
+  if (msg.includes('label') && msg.includes('required')) return 'Add label derived from ID';
+  if (msg.includes('label') && msg.includes('language map')) return 'Convert label to language map format';
+
+  // Summary fixes
+  if (msg.includes('summary')) return 'Add placeholder summary';
+
+  // Metadata fixes
+  if (msg.includes('metadata') && msg.includes('label and value')) return 'Fix metadata entry structure';
+  if (msg.includes('metadata')) return 'Initialize metadata array';
+
+  // Dimension fixes
+  if (msg.includes('dimensions') || msg.includes('width') || msg.includes('height')) {
+    if (issue.itemLabel?.toLowerCase().includes('canvas')) return 'Set default canvas dimensions';
+    if (issue.itemLabel?.toLowerCase().includes('image')) return 'Set default image dimensions';
+    return 'Set default dimensions';
+  }
+
+  // Duration fixes
+  if (msg.includes('duration')) return 'Add duration field (update value manually)';
+
+  // Items fixes
+  if (msg.includes('items') && msg.includes('must have at least one')) return 'Add placeholder item';
+  if (msg.includes('items') && msg.includes('invalid type')) return 'Remove items with invalid types';
+  if (msg.includes('items')) return 'Initialize items array';
+
+  // Structure fixes
+  if (msg.includes('structures') && issue.itemLabel?.toLowerCase().includes('collection')) return 'Remove invalid structures property';
+  if (msg.includes('structures')) return 'Remove structures from invalid resource type';
+
+  // Rights & Attribution
+  if (msg.includes('rights')) return 'Add CC0 rights statement';
+  if (msg.includes('requiredstatement') || msg.includes('required statement')) return 'Add default attribution statement';
+  if (msg.includes('provider')) return 'Add default provider/institution';
+
+  // Behavior fixes
+  if (msg.includes('behavior') && msg.includes('not allowed')) return 'Remove invalid behaviors for resource type';
+  if (msg.includes('behavior') && msg.includes('conflict')) return 'Resolve conflicting behaviors (keep first from each group)';
+  if (msg.includes('behavior')) return 'Clear or fix behaviors';
+
+  // Viewing direction
+  if (msg.includes('viewingdirection') && msg.includes('not allowed')) return 'Remove viewingDirection from this resource type';
+  if (msg.includes('viewingdirection')) return 'Set default viewingDirection to left-to-right';
+
+  // NavDate
+  if (msg.includes('navdate') && msg.includes('not allowed')) return 'Remove navDate from this resource type';
+  if (msg.includes('navdate')) return 'Set navDate to current date';
+
+  // Thumbnail
+  if (msg.includes('thumbnail')) return 'Add placeholder thumbnail reference';
+
+  // Format
+  if (msg.includes('format') && msg.includes('not allowed')) return 'Remove format from invalid resource type';
+  if (msg.includes('format')) return 'Add default format based on content type';
+
+  // Context
+  if (msg.includes('@context') && msg.includes('must have')) return 'Add IIIF Presentation API 3.0 context';
+  if (msg.includes('@context')) return 'Remove @context from embedded resource';
+
+  // Motivation
+  if (msg.includes('motivation') && msg.includes('not allowed')) return 'Remove motivation from invalid resource type';
+  if (msg.includes('motivation')) return 'Set default motivation to painting';
+
+  // Annotations
+  if (msg.includes('annotations') && msg.includes('not allowed')) return 'Remove annotations from invalid resource type';
+
+  // Service
+  if (msg.includes('service') && msg.includes('not allowed')) return 'Remove service from invalid resource type';
+
+  // Language map
+  if (msg.includes('must be a language map')) return 'Convert to valid language map format';
+
+  // HTTP URI
+  if (msg.includes('http') && msg.includes('uri')) return 'Generate valid HTTP URI';
+
+  return 'Auto-fix available';
+}
+
 export const validator = new ValidationService();

@@ -24,6 +24,14 @@ import {
   LanguageString
 } from '../types';
 import { getAllowedProperties } from '../utils/iiifSchema';
+import { sanitizeAnnotationBody } from '../utils/sanitization';
+import { produce, enableMapSet, setAutoFreeze } from 'immer';
+import { USE_IMMER_CLONING } from '../constants';
+
+// Enable Immer Map/Set support for better performance
+enableMapSet();
+// Disable auto-freeze for better performance (we don't need immutability checks in production)
+setAutoFreeze(false);
 
 // ============================================================================
 // Types
@@ -103,11 +111,47 @@ const KNOWN_IIIF_PROPERTIES: Record<EntityType | 'common', Set<string>> = {
 // ============================================================================
 
 /**
- * Clone an entity to a mutable record for manipulation
+ * Deep clone an entity using structuredClone (with JSON fallback)
+ * Uses Immer's produce when USE_IMMER_CLONING flag is enabled
  * This is the standard pattern for working with entities during denormalization
  */
 function cloneAsRecord<T extends object>(entity: T): Record<string, unknown> {
-  return { ...entity } as Record<string, unknown>;
+  if (USE_IMMER_CLONING) {
+    // Use Immer for immutable cloning and updates
+    return produce(entity, draft => draft) as unknown as Record<string, unknown>;
+  }
+
+  // Use native structuredClone if available (faster, handles more types)
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(entity) as Record<string, unknown>;
+    } catch (e) {
+      // Fallback for objects that can't be cloned (e.g., with functions)
+    }
+  }
+
+  // Legacy fallback for older browsers
+  return JSON.parse(JSON.stringify(entity)) as Record<string, unknown>;
+}
+
+/**
+ * Create a deep clone of the entire state using structuredClone
+ * with Immer fallback when enabled
+ */
+function deepCloneState(state: NormalizedState): NormalizedState {
+  if (USE_IMMER_CLONING) {
+    return produce(state, draft => draft);
+  }
+
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(state);
+    } catch (e) {
+      // Fallback
+    }
+  }
+
+  return JSON.parse(JSON.stringify(state));
 }
 
 /**
@@ -379,17 +423,40 @@ function normalizeAnnotationPage(
     items: []
   };
 
-  // Normalize annotations
+  // Normalize annotations with XSS sanitization
   const annotationIds: string[] = [];
   if (page.items) {
     for (const anno of page.items) {
       annotationIds.push(anno.id);
       state.typeIndex[anno.id] = 'Annotation';
       state.reverseRefs[anno.id] = id;
-      state.entities.Annotation[anno.id] = { ...anno };
+
+      // Sanitize annotation body content to prevent XSS
+      const sanitizedAnno = { ...anno };
+      if (sanitizedAnno.body) {
+        if (typeof sanitizedAnno.body === 'object' && sanitizedAnno.body !== null) {
+          // Handle TextualBody with value property
+          const bodyObj = sanitizedAnno.body as unknown as Record<string, unknown>;
+          if ('value' in bodyObj && typeof bodyObj.value === 'string') {
+            bodyObj.value = sanitizeAnnotationBody(bodyObj.value);
+          }
+          // Handle body as string directly
+          if ('format' in bodyObj && bodyObj.format === 'text/html' && 'value' in bodyObj) {
+            bodyObj.value = sanitizeAnnotationBody(bodyObj.value);
+          }
+        }
+      }
+      // Also sanitize bodyValue if present (IIIF Annotation body shorthand)
+      if ((sanitizedAnno as Record<string, unknown>).bodyValue) {
+        (sanitizedAnno as Record<string, unknown>).bodyValue = sanitizeAnnotationBody(
+          (sanitizedAnno as Record<string, unknown>).bodyValue
+        );
+      }
+
+      state.entities.Annotation[anno.id] = sanitizedAnno;
 
       // Extract extensions from annotation
-      const annoExtensions = extractExtensions(cloneAsRecord(anno), 'Annotation');
+      const annoExtensions = extractExtensions(cloneAsRecord(sanitizedAnno), 'Annotation');
       if (Object.keys(annoExtensions).length > 0) {
         state.extensions[anno.id] = annoExtensions;
       }
@@ -709,6 +776,7 @@ export function removeFromCollection(
 /**
  * Update an entity by ID - O(1) time, O(1) memory
  * Returns new state without full tree clone
+ * Uses Immer for immutable updates when USE_IMMER_CLONING is enabled
  */
 export function updateEntity(
   state: NormalizedState,
@@ -746,6 +814,16 @@ export function updateEntity(
       console.warn("Direct ID update through updateEntity is discouraged. Use renameEntity logic.");
   }
 
+  if (USE_IMMER_CLONING) {
+    // Use Immer for efficient immutable updates
+    return produce(state, draft => {
+      (draft.entities[actualType] as Record<string, IIIFItem>)[id] = {
+        ...existing,
+        ...updates
+      } as IIIFItem;
+    });
+  }
+
   // Create new entity with updates
   const updated = { ...existing, ...updates };
 
@@ -764,6 +842,7 @@ export function updateEntity(
 
 /**
  * Add a new entity
+ * Uses Immer for immutable updates when USE_IMMER_CLONING is enabled
  */
 export function addEntity(
   state: NormalizedState,
@@ -772,6 +851,18 @@ export function addEntity(
 ): NormalizedState {
   const type = entity.type as EntityType;
   const id = entity.id;
+
+  if (USE_IMMER_CLONING) {
+    return produce(state, draft => {
+      (draft.entities[type] as Record<string, IIIFItem>)[id] = entity;
+      draft.typeIndex[id] = type;
+      if (!draft.references[parentId]) {
+        draft.references[parentId] = [];
+      }
+      draft.references[parentId].push(id);
+      draft.reverseRefs[id] = parentId;
+    });
+  }
 
   const store = state.entities[type] as Record<string, IIIFItem>;
 
@@ -813,6 +904,7 @@ export function addEntity(
 
 /**
  * Remove an entity and all its descendants
+ * Uses Immer for immutable updates when USE_IMMER_CLONING is enabled
  */
 export function removeEntity(
   state: NormalizedState,
@@ -823,6 +915,65 @@ export function removeEntity(
 
   // Get all IDs to remove (entity + descendants)
   const toRemove = new Set([id, ...getDescendants(state, id)]);
+
+  if (USE_IMMER_CLONING) {
+    return produce(state, draft => {
+      // Remove entities
+      for (const entityType of Object.keys(draft.entities) as EntityType[]) {
+        const store = draft.entities[entityType];
+        for (const eid of Object.keys(store)) {
+          if (toRemove.has(eid)) {
+            delete store[eid];
+          }
+        }
+      }
+
+      // Remove from type index
+      for (const eid of Object.keys(draft.typeIndex)) {
+        if (toRemove.has(eid)) {
+          delete draft.typeIndex[eid];
+        }
+      }
+
+      // Remove from references
+      for (const pid of Object.keys(draft.references)) {
+        if (toRemove.has(pid)) {
+          delete draft.references[pid];
+        } else {
+          draft.references[pid] = draft.references[pid].filter(cid => !toRemove.has(cid));
+        }
+      }
+
+      // Remove from reverse refs
+      for (const cid of Object.keys(draft.reverseRefs)) {
+        if (toRemove.has(cid)) {
+          delete draft.reverseRefs[cid];
+        }
+      }
+
+      // Remove from collection membership
+      for (const collId of Object.keys(draft.collectionMembers)) {
+        if (toRemove.has(collId)) {
+          delete draft.collectionMembers[collId];
+        } else {
+          draft.collectionMembers[collId] = draft.collectionMembers[collId].filter(mid => !toRemove.has(mid));
+        }
+      }
+
+      for (const resId of Object.keys(draft.memberOfCollections)) {
+        if (toRemove.has(resId)) {
+          delete draft.memberOfCollections[resId];
+        } else {
+          draft.memberOfCollections[resId] = draft.memberOfCollections[resId].filter(cid => !toRemove.has(cid));
+        }
+      }
+
+      // Update root if needed
+      if (toRemove.has(draft.rootId!)) {
+        draft.rootId = null;
+      }
+    });
+  }
 
   // Create new stores with entities removed
   const newEntities: NormalizedState['entities'] = {

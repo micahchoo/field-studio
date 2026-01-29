@@ -4,6 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * blob: data:; connect-src *; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com https://esm.sh https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:">
     <title>IIIF Field Archive Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -82,6 +83,19 @@
 </head>
   <body>
     <div id="root"></div>
+    <!--
+      Global ARIA Live Region for Screen Reader Announcements
+      - Used by Toast notifications and other dynamic updates
+      - aria-live="polite": Non-intrusive announcements
+      - aria-atomic="true": Announce complete messages
+    -->
+    <div
+      id="aria-live-region"
+      aria-live="polite"
+      aria-atomic="true"
+      class="sr-only"
+      style="position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;"
+    ></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

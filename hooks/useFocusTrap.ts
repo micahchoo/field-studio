@@ -22,7 +22,7 @@
 import { useRef, useEffect, RefObject } from 'react';
 import { FOCUS_TRAP, KEYBOARD } from '../constants';
 
-interface UseFocusTrapOptions {
+export interface UseFocusTrapOptions {
   /** Whether the focus trap is active */
   isActive: boolean;
   /** Element to return focus to when trap is deactivated */

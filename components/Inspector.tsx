@@ -1,13 +1,15 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue, IIIFAnnotation, isManifest } from '../types';
 import { Icon } from './Icon';
+import { sanitizeAnnotationBody } from '../utils/sanitization';
 import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
 import { ProvenancePanel } from './ProvenancePanel';
 import { GeoEditor } from './GeoEditor';
 import { useResizablePanel } from '../hooks/useResizablePanel';
 import { RESOURCE_TYPE_CONFIG, isFieldVisible, getFieldsByCategory } from '../constants';
+import { useTerminology } from '../hooks/useTerminology';
 import {
   isPropertyAllowed,
   getPropertyRequirement,
@@ -17,9 +19,10 @@ import {
   getAllowedProperties,
   PROPERTY_MATRIX
 } from '../utils/iiifSchema';
-import { validator, ValidationIssue, healIssue, getFixDescription } from '../services';
+import { validator, ValidationIssue, healIssue, getValidationForField, FieldValidation } from '../services';
 import { suggestBehaviors } from '../utils/iiifBehaviors';
 import { resolvePreviewUrl } from '../utils/imageSourceResolver';
+import { ValidatedInput } from './ValidatedInput';
 
 interface InspectorProps {
   resource: IIIFItem | null;
@@ -295,6 +298,10 @@ export const Inspector: React.FC<InspectorProps> = ({
   designTab,
   annotations = []
 }) => {
+  // Phase 3: Use terminology based on abstraction level
+  const { t, getResourceTypeLabel } = useTerminology({
+    level: settings.abstractionLevel
+  });
   // Resizable panel hook for desktop
   const {
     size: inspectorWidth,
@@ -448,7 +455,9 @@ export const Inspector: React.FC<InspectorProps> = ({
       <div className={`h-14 flex items-center justify-between px-4 border-b shrink-0 ${settings.fieldMode ? 'bg-black text-white border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-center gap-2">
           <Icon name={config.icon} className={`${config.colorClass} text-sm`}/>
-          <span className={`text-xs font-black uppercase tracking-widest ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>Inspector</span>
+          <span className={`text-xs font-black uppercase tracking-widest ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>
+            {t('Inspector')}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <ShareButton item={resource} fieldMode={settings.fieldMode} />
@@ -528,43 +537,33 @@ export const Inspector: React.FC<InspectorProps> = ({
               </div>
             )}
 
-            {/* Label & Summary with inline validation indicators */}
+            {/* Label & Summary with ValidatedInput */}
             <div className="space-y-3">
-              <div>
-                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Label
-                  {validationIssues.length > 0 && (
-                    <span className="ml-1 text-amber-500">
-                      <Icon name="warning" className="text-xs inline" />
-                    </span>
-                  )}
-                </label>
-                <DebouncedInput
-                  type="text"
-                  value={label}
-                  onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })}
-                  className={`w-full text-sm p-3 rounded-lg outline-none font-bold border ${
-                    validationIssues.length > 0
-                      ? (settings.fieldMode ? 'border-amber-500' : 'border-amber-400')
-                      : (settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500')
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Summary</label>
-                <DebouncedTextarea
-                  value={summary}
-                  onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })}
-                  rows={3}
-                  className={`w-full text-sm p-3 rounded-lg outline-none border resize-none ${settings.fieldMode ? 'bg-slate-900 text-white border-slate-800 focus:border-yellow-400' : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500'}`}
-                />
-              </div>
+              <ValidatedInput
+                id="inspector-label"
+                label={t('Label')}
+                value={label}
+                onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })}
+                validation={useMemo(() => getValidationForField(validationIssues, 'label', handleFixIssue) || { status: 'pristine' }, [validationIssues])}
+                type="text"
+                fieldMode={settings.fieldMode}
+              />
+              <ValidatedInput
+                id="inspector-summary"
+                label={t('Summary')}
+                value={summary}
+                onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })}
+                validation={useMemo(() => getValidationForField(validationIssues, 'summary', handleFixIssue) || { status: 'pristine' }, [validationIssues])}
+                type="textarea"
+                rows={3}
+                fieldMode={settings.fieldMode}
+              />
             </div>
 
             {/* Metadata Fields */}
             <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
               <div className="flex justify-between items-center mb-3">
-                <label className={`text-[10px] font-bold uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Metadata</label>
+                <label className={`text-[10px] font-bold uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>{t('Metadata')}</label>
                 <div className="relative">
                   <button 
                     onClick={() => setShowAddMenu(!showAddMenu)} 
@@ -620,7 +619,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             {/* Standard Fields */}
             {isAllowed('rights') && (
               <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Rights</label>
+                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>{t('Rights')}</label>
                 <select
                   value={resource.rights || ''}
                   onChange={e => onUpdateResource({ rights: e.target.value || undefined })}
@@ -697,7 +696,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             <div className={`p-3 rounded-lg border ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-blue-50 border-blue-200'}`}>
               <div className="flex items-center justify-between">
                 <span className={`text-[10px] font-bold uppercase ${settings.fieldMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                  W3C Web Annotations
+                  {settings.abstractionLevel === 'simple' ? t('Notes') : 'W3C Web Annotations'}
                 </span>
                 <span className="text-[10px] text-slate-500">
                   {annotations.length} total

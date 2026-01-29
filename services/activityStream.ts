@@ -98,8 +98,19 @@ export interface OrderedCollectionPage {
 // ============================================================================
 
 const DB_NAME = 'biiif-activity-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped for archive store
 const PAGE_SIZE = 100;
+
+/**
+ * Maximum number of activities to keep in the main activity log
+ * When exceeded, oldest activities are rotated to the archive
+ */
+export const MAX_ACTIVITY_ENTRIES = 10000;
+
+/**
+ * Number of entries to keep in main log after rotation
+ */
+const MAIN_LOG_RETENTION_COUNT = 5000;
 
 interface ActivityDB extends DBSchema {
   activities: {
@@ -109,6 +120,18 @@ interface ActivityDB extends DBSchema {
       'by-time': string;       // endTime index for ordering
       'by-object': string;     // object.id index for filtering
       'by-type': ActivityType; // type index for filtering
+    };
+  };
+  /**
+   * Archived activities - moved here when main log exceeds MAX_ACTIVITY_ENTRIES
+   * These are still accessible for historical queries but don't impact main log performance
+   */
+  archived: {
+    key: string; // activity ID
+    value: Activity;
+    indexes: {
+      'by-time': string;       // endTime index for ordering
+      'by-object': string;     // object.id index for filtering
     };
   };
   metadata: {
@@ -127,7 +150,7 @@ class ActivityStreamService {
 
   constructor() {
     this.dbPromise = openDB<ActivityDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion, newVersion, transaction) {
         if (!db.objectStoreNames.contains('activities')) {
           const store = db.createObjectStore('activities');
           store.createIndex('by-time', 'endTime');
@@ -136,6 +159,12 @@ class ActivityStreamService {
         }
         if (!db.objectStoreNames.contains('metadata')) {
           db.createObjectStore('metadata');
+        }
+        // Create archive store in version 2
+        if (!db.objectStoreNames.contains('archived')) {
+          const archiveStore = db.createObjectStore('archived');
+          archiveStore.createIndex('by-time', 'endTime');
+          archiveStore.createIndex('by-object', 'object.id');
         }
       }
     });
@@ -344,10 +373,135 @@ class ActivityStreamService {
 
   /**
    * Save an activity to the database
+   * Triggers log rotation if MAX_ACTIVITY_ENTRIES is exceeded
    */
   private async saveActivity(activity: Activity): Promise<void> {
     const db = await this.dbPromise;
     await db.put('activities', activity, activity.id);
+    
+    // Check if rotation is needed (non-blocking)
+    this.checkAndRotateIfNeeded().catch(err => {
+      console.warn('[ActivityStream] Log rotation check failed:', err);
+    });
+  }
+
+  /**
+   * Check if log rotation is needed and perform it
+   * Moves oldest activities to archive when main log exceeds threshold
+   */
+  private async checkAndRotateIfNeeded(): Promise<void> {
+    const db = await this.dbPromise;
+    const count = await db.count('activities');
+    
+    if (count <= MAX_ACTIVITY_ENTRIES) return;
+    
+    console.log(`[ActivityStream] Rotating activities: ${count} entries exceeds limit of ${MAX_ACTIVITY_ENTRIES}`);
+    
+    // Get all activities sorted by time
+    const allActivities = await db.getAllFromIndex('activities', 'by-time');
+    
+    // Calculate how many to archive
+    const toArchive = count - MAIN_LOG_RETENTION_COUNT;
+    const activitiesToArchive = allActivities.slice(0, toArchive);
+    
+    // Move to archive in a transaction
+    const tx = db.transaction(['activities', 'archived'], 'readwrite');
+    const activitiesStore = tx.objectStore('activities');
+    const archivedStore = tx.objectStore('archived');
+    
+    for (const activity of activitiesToArchive) {
+      // Copy to archive
+      await archivedStore.put(activity, activity.id);
+      // Remove from main
+      await activitiesStore.delete(activity.id);
+    }
+    
+    await tx.done;
+    console.log(`[ActivityStream] Archived ${activitiesToArchive.length} activities`);
+  }
+
+  /**
+   * Get archived activities for a specific object
+   */
+  async getArchivedActivitiesForObject(objectId: string): Promise<Activity[]> {
+    const db = await this.dbPromise;
+    return db.getAllFromIndex('archived', 'by-object', objectId);
+  }
+
+  /**
+   * Get all activities (main + archived) for an object
+   */
+  async getAllActivitiesForObject(objectId: string): Promise<Activity[]> {
+    const [main, archived] = await Promise.all([
+      this.getActivitiesForObject(objectId),
+      this.getArchivedActivitiesForObject(objectId)
+    ]);
+    // Merge and sort by time
+    return [...main, ...archived].sort((a, b) =>
+      new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
+    );
+  }
+
+  /**
+   * Load archived activities into memory for historical queries
+   */
+  async getArchivedActivities(
+    options: {
+      since?: string;
+      until?: string;
+      limit?: number;
+      objectId?: string;
+    } = {}
+  ): Promise<Activity[]> {
+    const db = await this.dbPromise;
+    let activities: Activity[];
+    
+    if (options.objectId) {
+      activities = await db.getAllFromIndex('archived', 'by-object', options.objectId);
+    } else {
+      activities = await db.getAllFromIndex('archived', 'by-time');
+    }
+    
+    // Apply filters
+    if (options.since) {
+      activities = activities.filter(a => a.endTime >= options.since!);
+    }
+    if (options.until) {
+      activities = activities.filter(a => a.endTime <= options.until!);
+    }
+    
+    // Sort by time (newest first)
+    activities.sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime());
+    
+    // Apply limit
+    if (options.limit && options.limit > 0) {
+      activities = activities.slice(0, options.limit);
+    }
+    
+    return activities;
+  }
+
+  /**
+   * Get archive statistics
+   */
+  async getArchiveStats(): Promise<{
+    mainCount: number;
+    archivedCount: number;
+    totalCount: number;
+    rotationThreshold: number;
+  }> {
+    const db = await this.dbPromise;
+    const [mainCount, archivedCount] = await Promise.all([
+      db.count('activities'),
+      db.count('archived')
+    ]);
+    
+    return {
+      mainCount,
+      archivedCount,
+      totalCount: mainCount + archivedCount,
+      rotationThreshold: MAX_ACTIVITY_ENTRIES
+    };
   }
 
   /**

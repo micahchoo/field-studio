@@ -1,0 +1,199 @@
+{
+  "app": {
+    "name": "IIIF Field Archive Studio",
+    "version": "Version {{version}}",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "done": "Done",
+    "confirm": "Confirm",
+    "dismiss": "Dismiss"
+  },
+  "navigation": {
+    "workspace": "Workspace",
+    "detail": "Detail",
+    "preview": "Preview",
+    "archive": "Archive",
+    "collections": "Collections",
+    "board": "Board",
+    "metadata": "Metadata",
+    "map": "Map",
+    "search": "Search",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "resource": {
+    "collection": "Collection",
+    "manifest": "Manifest",
+    "canvas": "Canvas",
+    "range": "Range",
+    "annotationPage": "Annotation Page",
+    "annotation": "Annotation",
+    "content": "Content",
+    "annotationCollection": "Annotation Collection",
+    "items": "items",
+    "item": "item",
+    "noItems": "No items"
+  },
+  "actions": {
+    "add": "Add",
+    "remove": "Remove",
+    "move": "Move",
+    "duplicate": "Duplicate",
+    "import": "Import",
+    "export": "Export",
+    "upload": "Upload",
+    "download": "Download",
+    "share": "Share",
+    "select": "Select",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetZoom": "Reset Zoom",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit Fullscreen"
+  },
+  "metadata": {
+    "label": "Label",
+    "summary": "Summary",
+    "description": "Description",
+    "title": "Title",
+    "creator": "Creator",
+    "date": "Date",
+    "subject": "Subject",
+    "rights": "Rights",
+    "source": "Source",
+    "type": "Type",
+    "format": "Format",
+    "identifier": "Identifier",
+    "language": "Language",
+    "coverage": "Coverage",
+    "publisher": "Publisher",
+    "contributor": "Contributor",
+    "relation": "Relation",
+    "metadata": "Metadata",
+    "requiredStatement": "Attribution",
+    "navDate": "Navigation Date",
+    "provider": "Provider",
+    "behavior": "Behavior",
+    "viewingDirection": "Viewing Direction"
+  },
+  "validation": {
+    "title": "Integrity Guard",
+    "healthScore": "Health Score",
+    "issues": "Issues",
+    "violations": "Detected Violations",
+    "noIssues": "No issues in this category",
+    "category": {
+      "identity": "Identity & IDs",
+      "structure": "Hierarchy",
+      "metadata": "Labels & Descriptive",
+      "content": "Media & Technical"
+    },
+    "level": {
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "fix": "Fix It",
+    "fixAll": "Heal All Fixable",
+    "fixed": "Fixed",
+    "resourcesMonitored": "Resources Monitored"
+  },
+  "commandPalette": {
+    "title": "Command Palette",
+    "placeholder": "Type a command or search...",
+    "shortcut": "Press ⌘K to open",
+    "noResults": "No commands found"
+  },
+  "featureDiscovery": {
+    "tour": {
+      "commandPalette": {
+        "title": "Command Palette",
+        "description": "Press ⌘K to quickly access any feature or command"
+      },
+      "fieldMode": {
+        "title": "Field Mode",
+        "description": "Optimized interface for mobile data collection in the field"
+      },
+      "qcDashboard": {
+        "title": "Quality Control",
+        "description": "Monitor and fix data integrity issues"
+      },
+      "metadataEditor": {
+        "title": "Metadata Editor",
+        "description": "Rich editing for IIIF metadata with validation"
+      }
+    },
+    "progress": "Step {{current}} of {{total}}",
+    "skip": "Skip Tour",
+    "finish": "Finish Tour",
+    "next": "Next",
+    "back": "Back"
+  },
+  "emptyStates": {
+    "noItems": {
+      "title": "No Items",
+      "message": "This area is empty. Add items to get started."
+    },
+    "noResults": {
+      "title": "No Results",
+      "message": "No items match your search. Try different terms or filters."
+    },
+    "noSelection": {
+      "title": "Nothing Selected",
+      "message": "Select an item from the list to view details and edit."
+    },
+    "error": {
+      "title": "Something Went Wrong",
+      "message": "We encountered an error. Please try again or contact support."
+    },
+    "loading": {
+      "title": "Loading...",
+      "message": "Please wait while we load your data."
+    },
+    "noData": {
+      "title": "No Data Yet",
+      "message": "Import files or create new items to populate this view."
+    }
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content",
+    "mainNavigation": "Main navigation",
+    "breadcrumb": "Breadcrumb",
+    "search": "Search",
+    "closeMenu": "Close menu",
+    "openMenu": "Open menu",
+    "ariaLabel": {
+      "close": "Close",
+      "save": "Save changes",
+      "delete": "Delete",
+      "edit": "Edit",
+      "select": "Select",
+      "moreOptions": "More options",
+      "loading": "Loading"
+    }
+  },
+  "errors": {
+    "generic": "An unexpected error occurred. Please try again.",
+    "network": "Connection failed. Please check your internet connection.",
+    "validation": "Please check your input and try again.",
+    "notFound": "The requested item could not be found.",
+    "permission": "You do not have permission to perform this action.",
+    "timeout": "The operation timed out. Please try again.",
+    "parse": "Could not process the file. It may be corrupted or in an unexpected format."
+  }
+}

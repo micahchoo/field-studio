@@ -1,14 +1,17 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, getIIIFValue, isCollection, isManifest } from '../types';
+import { IIIFItem, IIIFCollection, IIIFManifest, getIIIFValue, isCollection, isManifest, AbstractionLevel } from '../types';
 import { Icon } from './Icon';
 import { getRelationshipType, buildReferenceMap } from '../utils/iiifHierarchy';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';
+import { useTerminology } from '../hooks/useTerminology';
 
 interface ManifestTreeProps {
   root: IIIFItem | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Abstraction level for terminology (Phase 3) */
+  abstractionLevel?: AbstractionLevel;
 }
 
 // Virtualization constants
@@ -50,7 +53,14 @@ const getIcon = (type: string) => {
 // Relationship type is now imported from utils/iiifHierarchy.ts
 // This centralizes IIIF 3.0 hierarchy logic across the application
 
-export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, onSelect }) => {
+export const ManifestTree: React.FC<ManifestTreeProps> = ({
+  root,
+  selectedId,
+  onSelect,
+  abstractionLevel = 'standard'
+}) => {
+  // Phase 3: Use terminology based on abstraction level
+  const { t, formatCount } = useTerminology({ level: abstractionLevel });
   // Build reference map for cross-collection tracking
   const refMap = useMemo(() => {
     if (!root) return new Map<string, string[]>();
@@ -262,7 +272,7 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
     >
       <div className="p-3 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
         <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">
-          Archive Explorer
+          {t('Archive Explorer')}
           {flatItems.length > 100 && (
             <span className="ml-2 text-slate-600 font-normal">({flatItems.length})</span>
           )}
@@ -331,6 +341,12 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
               };
               const colors = typeColors[item.type as keyof typeof typeColors] || { bg: 'bg-slate-500/20', text: 'text-slate-400', selectedBg: 'bg-slate-500' };
 
+              // Calculate ARIA attributes
+              // Get siblings at the same level for setSize calculation
+              const siblings = flatItems.filter(f => f.level === level);
+              const posInSet = siblings.findIndex(s => s.id === item.id) + 1;
+              const setSize = siblings.length;
+
               return (
                 <div
                   key={item.id}
@@ -342,8 +358,8 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({ root, selectedId, on
                   aria-selected={isSelected}
                   aria-expanded={hasChildren ? isExpanded : undefined}
                   aria-level={level + 1}
-                  aria-setsize={flatItems.length}
-                  aria-posinset={startIndex + index + 1}
+                  aria-setsize={setSize}
+                  aria-posinset={posInSet}
                   tabIndex={isFocused ? 0 : -1}
                   onKeyDown={(e) => handleKeyNav(e, item.id)}
                   onFocus={() => setFocusedId(item.id)}

@@ -18,6 +18,7 @@ import { ItemPreviewPanel } from '../ItemPreviewPanel';
 import { ItemDetailModal } from '../ItemDetailModal';
 import { BoardExportDialog } from '../BoardExportDialog';
 import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
+import { sanitizeSvg } from '../../utils/sanitization';
 
 export type AnchorSide = 'T' | 'R' | 'B' | 'L';
 
@@ -1262,15 +1263,19 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                             {it.annotations && it.annotations.map((anno, idx) => {
                                 const svgString = (anno.target as any).selector?.value;
                                 if (!svgString) return null;
+                                // Sanitize SVG to prevent XSS while preserving valid SVG markup
+                                // SVG is drawn via user interaction in PolygonAnnotationTool, so we sanitize
+                                // but allow SVG tags and basic attributes for proper rendering
+                                const sanitizedSvg = sanitizeSvg(svgString);
                                 return (
-                                    <div 
-                                        key={idx} 
+                                    <div
+                                        key={idx}
                                         className="absolute inset-0 pointer-events-auto group/anno"
                                         title={getIIIFValue(anno.body as any)}
                                     >
-                                        <div 
+                                        <div
                                             className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                                            dangerouslySetInnerHTML={{ __html: svgString }} 
+                                            dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
                                         />
                                         <div className="absolute bottom-2 left-2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/anno:opacity-100 transition-opacity whitespace-pre-wrap max-w-[150px] z-50">
                                             {getIIIFValue(anno.body as any)}
