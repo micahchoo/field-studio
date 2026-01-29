@@ -17,8 +17,8 @@ import DOMPurify from 'dompurify';
  * Allowed attributes: ['href', 'target']
  */
 const HTML_CONFIG = {
-  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
-  ALLOWED_ATTR: ['href', 'target'],
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img'],
+  ALLOWED_ATTR: ['href', 'target', 'src', 'alt'],
   ALLOW_DATA_ATTR: false,
   // Prevent javascript: URLs
   SANITIZE_DOM: true,
@@ -58,27 +58,59 @@ const PLAIN_TEXT_CONFIG = {
 /**
  * Sanitize annotation body content
  * Allows safe HTML formatting while preventing XSS
- * 
- * @param content Raw annotation body content
- * @returns Sanitized HTML string safe for rendering
- * 
+ *
+ * @param content Raw annotation body content (string or TextualBody object)
+ * @returns Sanitized content (string or object matching input type)
+ *
  * @example
+ * // String input
  * const rawBody = "<script>alert('xss')</script><b>Important note</b>";
  * const safeBody = sanitizeAnnotationBody(rawBody);
  * // Returns: "<b>Important note</b>"
+ *
+ * // Object input (IIIF TextualBody)
+ * const body = { type: 'TextualBody', value: '<p>Text</p><script>bad</script>' };
+ * const safe = sanitizeAnnotationBody(body);
+ * // Returns: { type: 'TextualBody', value: '<p>Text</p>' }
  */
-export function sanitizeAnnotationBody(content: unknown): string {
+export function sanitizeAnnotationBody(content: unknown): string | Record<string, unknown> {
   if (content === null || content === undefined) {
     return '';
   }
-  
+
+  // Handle object bodies (IIIF TextualBody)
+  if (typeof content === 'object' && content !== null && 'value' in content) {
+    const body = content as Record<string, unknown>;
+    const value = body.value;
+    const format = body.format;
+
+    let sanitized: string;
+
+    // If format is text/plain, don't sanitize HTML - just return as-is
+    if (format === 'text/plain') {
+      sanitized = typeof value === 'string' ? value : '';
+    } else {
+      // For text/html or unspecified format, sanitize HTML
+      sanitized = typeof value === 'string'
+        ? String(DOMPurify.sanitize(value, ANNOTATION_CONFIG))
+        : '';
+    }
+
+    // Return new object with sanitized value
+    return {
+      ...body,
+      value: sanitized
+    };
+  }
+
+  // Handle string content
   const text = String(content);
-  
+
   // Handle empty or whitespace-only content
   if (!text.trim()) {
     return '';
   }
-  
+
   return String(DOMPurify.sanitize(text, ANNOTATION_CONFIG));
 }
 
@@ -386,4 +418,125 @@ export function sanitizeSvg(svg: unknown): string {
   }
   
   return String(DOMPurify.sanitize(text, SVG_CONFIG));
+}
+
+// ============================================================================
+// Additional Utility Functions
+// ============================================================================
+
+/**
+ * Alias for sanitizeUrl to match test expectations
+ * Sanitizes URL by removing dangerous protocols
+ */
+export const sanitizeURL = sanitizeUrl;
+
+/**
+ * Strip all HTML tags from content, returning only plain text
+ * Similar to sanitizePlainText but simpler implementation
+ *
+ * @param html HTML content to strip
+ * @returns Plain text with all HTML tags removed
+ *
+ * @example
+ * const html = "<p>Hello <b>world</b>!</p>";
+ * const text = stripHTML(html);
+ * // Returns: "Hello world!"
+ */
+export function stripHTML(html: unknown): string {
+  if (html === null || html === undefined) {
+    return '';
+  }
+
+  const text = String(html);
+
+  if (!text.trim()) {
+    return '';
+  }
+
+  // Use DOMPurify to strip all tags
+  const stripped = String(DOMPurify.sanitize(text, PLAIN_TEXT_CONFIG));
+
+  // Create a temporary div to decode HTML entities
+  const div = document.createElement('div');
+  div.innerHTML = stripped;
+  return div.textContent || div.innerText || '';
+}
+
+/**
+ * Escape HTML special characters to prevent XSS
+ * Converts <, >, &, ", and ' to their HTML entity equivalents
+ *
+ * @param text Text to escape
+ * @returns Escaped text safe for HTML insertion
+ *
+ * @example
+ * const raw = '<script>alert("XSS")</script>';
+ * const safe = escapeHTML(raw);
+ * // Returns: "&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;"
+ */
+export function escapeHTML(text: unknown): string {
+  if (text === null || text === undefined) {
+    return '';
+  }
+
+  const str = String(text);
+
+  if (!str) {
+    return '';
+  }
+
+  // Manual character replacement for full control
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Validate if a string is a valid URL
+ * Checks for proper URL format and safe protocols
+ *
+ * @param url URL string to validate
+ * @returns True if valid URL, false otherwise
+ *
+ * @example
+ * isValidURL('https://example.com'); // true
+ * isValidURL('javascript:alert(1)'); // false
+ * isValidURL('not a url'); // false
+ */
+export function isValidURL(url: unknown): boolean {
+  if (url === null || url === undefined) {
+    return false;
+  }
+
+  const urlStr = String(url).trim();
+
+  if (!urlStr) {
+    return false;
+  }
+
+  // Block dangerous protocols
+  const dangerousProtocols = /^(javascript|data|vbscript|file):/i;
+  if (dangerousProtocols.test(urlStr)) {
+    return false;
+  }
+
+  // Try to parse as URL
+  try {
+    const parsed = new URL(urlStr);
+    // Only allow http, https, and relative URLs
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    // Check if it's a valid relative URL
+    if (urlStr.startsWith('/') || urlStr.startsWith('./') || urlStr.startsWith('../')) {
+      return true;
+    }
+    // Check if it's a hash-only URL
+    if (urlStr.startsWith('#')) {
+      return true;
+    }
+    return false;
+  }
 }

@@ -239,12 +239,13 @@ export function isAudioUrl(url: string): boolean {
 }
 
 /**
- * Check if a URL points to a supported media type
+ * Check if a URL points to a supported media type (image, video, audio, or model)
  * Consolidated from services/virtualManifestFactory.ts
  */
 export function isMediaUrl(url: string): boolean {
-  const ext = getExtension(url);
-  return !!MIME_TYPE_MAP[ext];
+  const info = getMimeType(url);
+  if (!info) return false;
+  return info.type === 'Image' || info.type === 'Video' || info.type === 'Sound' || info.type === 'Model';
 }
 
 /**

@@ -399,3 +399,87 @@ export {
 export type {
   MimeTypeInfo,
 } from './mediaTypes';
+
+// ============================================================================
+// Sanitization Utilities (XSS prevention)
+// ============================================================================
+export {
+  sanitizeHTML,
+  sanitizeURL,
+  sanitizeAnnotationBody,
+  stripHTML,
+  escapeHTML,
+  isValidURL,
+  sanitizeUrl,
+  sanitizePlainText,
+  sanitizeIIIFId,
+  sanitizeMetadataValue,
+  containsDangerousContent,
+  sanitizeUserInput,
+  sanitizeTrustedHtml,
+  sanitizeAttribute,
+  sanitizeSvg,
+} from './sanitization';
+
+// ============================================================================
+// Filename Utilities (file handling and sanitization)
+// ============================================================================
+export {
+  sanitizeFilename,
+  extractSequenceNumber,
+  detectFileSequence,
+  generateSafeFilename,
+  getBaseName,
+  parseFilePath,
+  filenameRelationshipPatterns,
+  findSimilarFiles,
+} from './filenameUtils';
+export type {
+  SimilarityMatch,
+} from './filenameUtils';
+
+// ============================================================================
+// Fuzzy Match Utilities (search and filtering)
+// ============================================================================
+export {
+  fuzzyMatch,
+  fuzzySearch,
+  fuzzyMatchSimple,
+  fuzzyScore,
+  highlightMatches,
+  fuzzyFilter,
+  fuzzySort,
+} from './fuzzyMatch';
+export type {
+  FuzzyMatchResult,
+} from './fuzzyMatch';
+
+// ============================================================================
+// Input Validation Utilities
+// ============================================================================
+export {
+  sanitizeInput,
+  validateTextInput,
+  INPUT_VALIDATORS,
+  sanitizeForInput,
+  checkForDangerousContent,
+} from './inputValidation';
+export type {
+  ValidationOptions,
+  ValidationResult,
+} from './inputValidation';
+
+// ============================================================================
+// UI Terminology (Progressive Disclosure)
+// ============================================================================
+export {
+  TERMINOLOGY_MAP,
+  getTerm,
+  getTerms,
+  getResourceTypeLabel,
+  getTermDescription,
+  formatCountWithTerm,
+} from './uiTerminology';
+export type {
+  TerminologyKey,
+} from './uiTerminology';

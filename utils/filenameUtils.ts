@@ -1,3 +1,237 @@
+/**
+ * Filename utility functions for file handling, sanitization, and sequence detection
+ */
+
+// Maximum filename length (most file systems)
+const MAX_FILENAME_LENGTH = 255;
+
+// Invalid filename characters for cross-platform compatibility
+const INVALID_CHARS = /[<>:"|?*\/\\]/g;
+
+/**
+ * Sanitize filename by removing invalid characters
+ * @param filename - Raw filename to sanitize
+ * @returns Sanitized filename safe for file systems
+ */
+export function sanitizeFilename(filename: string): string {
+  if (!filename || typeof filename !== 'string') {
+    return 'untitled';
+  }
+
+  // Remove invalid characters
+  let sanitized = filename.replace(INVALID_CHARS, '');
+
+  // Replace multiple consecutive spaces with single space
+  sanitized = sanitized.replace(/\s+/g, ' ');
+
+  // Trim leading/trailing spaces
+  sanitized = sanitized.trim();
+
+  // If empty after sanitization, use default
+  if (!sanitized) {
+    return 'untitled';
+  }
+
+  // Enforce maximum length
+  if (sanitized.length > MAX_FILENAME_LENGTH) {
+    const ext = sanitized.match(/\.[^.]+$/)?.[0] || '';
+    const nameWithoutExt = sanitized.slice(0, sanitized.length - ext.length);
+    sanitized = nameWithoutExt.slice(0, MAX_FILENAME_LENGTH - ext.length) + ext;
+  }
+
+  return sanitized;
+}
+
+/**
+ * Extract sequence number from filename
+ * @param filename - Filename to analyze
+ * @returns Sequence number or null if not found
+ */
+export function extractSequenceNumber(filename: string): number | null {
+  if (!filename || typeof filename !== 'string') {
+    return null;
+  }
+
+  // Try matching trailing numbers before extension first (most common pattern)
+  let match = filename.match(/(\d+)(?:\.[^.]+)?$/);
+
+  if (match && match[1]) {
+    return parseInt(match[1], 10);
+  }
+
+  // Also try matching numbers at the start (e.g., "001-image.jpg")
+  match = filename.match(/^(\d+)/);
+
+  if (match && match[1]) {
+    return parseInt(match[1], 10);
+  }
+
+  return null;
+}
+
+/**
+ * Detect if files form a sequence
+ * @param files - Array of file objects with name and path
+ * @returns Sequence detection result
+ */
+export function detectFileSequence(
+  files: Array<{ name: string; path: string }>
+): {
+  isSequence: boolean;
+  pattern?: string;
+  hasGaps?: boolean;
+} {
+  if (!files || files.length < 2) {
+    return { isSequence: false };
+  }
+
+  // Extract sequence numbers
+  const filesWithNumbers = files
+    .map(file => ({
+      ...file,
+      number: extractSequenceNumber(file.name),
+      baseName: file.name.replace(/\d+(\.[^.]+)?$/, ''),
+    }))
+    .filter(f => f.number !== null);
+
+  if (filesWithNumbers.length < 2) {
+    return { isSequence: false };
+  }
+
+  // Check if all files have the same base name
+  const baseName = filesWithNumbers[0].baseName;
+  const sameBaseName = filesWithNumbers.every(f => f.baseName === baseName);
+
+  if (!sameBaseName) {
+    return { isSequence: false };
+  }
+
+  // Sort by sequence number
+  const sorted = [...filesWithNumbers].sort((a, b) => a.number! - b.number!);
+
+  // Check for gaps in sequence
+  let hasGaps = false;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].number! - sorted[i-1].number! > 1) {
+      hasGaps = true;
+      break;
+    }
+  }
+
+  return {
+    isSequence: true,
+    pattern: baseName + '{number}',
+    hasGaps,
+  };
+}
+
+// Counter for generating unique filenames when timestamp alone isn't enough
+let filenameCounter = 0;
+
+/**
+ * Generate a safe filename
+ * @param baseName - Base name for the file
+ * @param extension - File extension (without dot)
+ * @param addTimestamp - Whether to add timestamp for uniqueness
+ * @returns Safe filename
+ */
+export function generateSafeFilename(
+  baseName: string,
+  extension: string,
+  addTimestamp: boolean = false
+): string {
+  // Sanitize base name
+  let safe = sanitizeFilename(baseName || 'untitled');
+
+  // Convert to lowercase and replace spaces with hyphens
+  safe = safe.toLowerCase().replace(/\s+/g, '-');
+
+  // Remove any remaining special characters except hyphens and underscores
+  safe = safe.replace(/[^a-z0-9_-]/g, '');
+
+  // Clean up multiple consecutive hyphens
+  safe = safe.replace(/-+/g, '-');
+
+  // Remove leading/trailing hyphens
+  safe = safe.replace(/^-+|-+$/g, '');
+
+  // Add timestamp if requested (with counter for uniqueness within same millisecond)
+  if (addTimestamp) {
+    const timestamp = Date.now();
+    filenameCounter++;
+    safe = `${safe}-${timestamp}-${filenameCounter}`;
+  }
+
+  // Add extension
+  const ext = extension.startsWith('.') ? extension : `.${extension}`;
+
+  return safe + ext;
+}
+
+/**
+ * Get base name without extension
+ * @param filename - Full filename
+ * @returns Filename without extension
+ */
+export function getBaseName(filename: string): string {
+  if (!filename || typeof filename !== 'string') {
+    return '';
+  }
+
+  // Handle paths - extract just the filename
+  const parts = filename.split(/[/\\]/);
+  const nameWithExt = parts[parts.length - 1];
+
+  // Handle hidden files (starting with .)
+  if (nameWithExt.startsWith('.') && !nameWithExt.includes('.', 1)) {
+    return nameWithExt;
+  }
+
+  // Remove extension
+  const lastDotIndex = nameWithExt.lastIndexOf('.');
+
+  if (lastDotIndex === -1 || lastDotIndex === 0) {
+    return nameWithExt;
+  }
+
+  return nameWithExt.slice(0, lastDotIndex);
+}
+
+/**
+ * Parse file path into components
+ * @param filePath - Full file path
+ * @returns Parsed path components
+ */
+export function parseFilePath(filePath: string): {
+  dir: string;
+  name: string;
+  ext: string;
+  base: string;
+} {
+  if (!filePath || typeof filePath !== 'string') {
+    return { dir: '', name: '', ext: '', base: '' };
+  }
+
+  // Normalize path separators
+  const normalized = filePath.replace(/\\/g, '/');
+
+  // Split into directory and filename
+  const lastSlash = normalized.lastIndexOf('/');
+  const dir = lastSlash === -1 ? '' : normalized.slice(0, lastSlash);
+  const base = lastSlash === -1 ? normalized : normalized.slice(lastSlash + 1);
+
+  // Split filename into name and extension
+  const lastDot = base.lastIndexOf('.');
+  let name = base;
+  let ext = '';
+
+  if (lastDot > 0) {
+    name = base.slice(0, lastDot);
+    ext = base.slice(lastDot + 1);
+  }
+
+  return { dir, name, ext, base };
+}
 
 // Patterns from Documentation/regex library.md
 export const filenameRelationshipPatterns = [

@@ -892,3 +892,56 @@ export const actions = {
   batchRestore: (ids: string[], options?: { parentId?: string }): Action =>
     ({ type: 'BATCH_RESTORE', ids, options })
 };
+
+// ============================================================================
+// Test API - Factory Functions and Aliases
+// ============================================================================
+
+/**
+ * Factory function to create ActionHistory instance
+ * @param options Configuration options
+ * @returns New ActionHistory instance
+ */
+export function createActionHistory(options?: { maxSize?: number }): ActionHistory {
+  return new ActionHistory(options?.maxSize);
+}
+
+/**
+ * Validate an action before execution
+ * @param action Action to validate
+ * @returns Validation result with valid flag and optional error
+ */
+export function validateAction(action: Action): { valid: boolean; error?: string } {
+  // Create a temporary empty state for validation
+  const tempState: NormalizedState = {
+    entities: {
+      Collection: {},
+      Manifest: {},
+      Canvas: {},
+      Range: {},
+      AnnotationPage: {},
+      Annotation: {}
+    },
+    references: {},
+    reverseRefs: {},
+    collectionMembers: {},
+    memberOfCollections: {},
+    rootId: null,
+    typeIndex: {},
+    extensions: {},
+    trashedEntities: {}
+  };
+
+  try {
+    const result = reduce(tempState, action);
+    return { valid: !result.error, error: result.error };
+  } catch (error) {
+    return { valid: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Execute an action on state
+ * Alias for reduce() to match test expectations
+ */
+export const executeAction = reduce;

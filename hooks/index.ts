@@ -173,6 +173,14 @@ export {
 export type {
   UseFocusTrapOptions
 } from './useFocusTrap';
+export {
+  useKeyboardDragDrop
+} from './useKeyboardDragDrop';
+
+// ============================================================================
+// Utility Hooks
+// ============================================================================
+export { useDebouncedCallback } from './useDebouncedCallback';
 
 // ============================================================================
 // Phase 1: Memory Leak Fixes - Image Source Management

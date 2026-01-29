@@ -9,14 +9,13 @@
  * - Drag-and-drop support for tree reordering
  */
 
-import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { IIIFItem, isCollection, isManifest, isCanvas } from '../types';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { getIIIFValue, isCanvas, isCollection, isManifest, type IIIFItem } from '../types';
 import { FlattenedTreeNode, useTreeVirtualization } from '../hooks/useTreeVirtualization';
 import { Icon } from './Icon';
 import { StackedThumbnail } from './StackedThumbnail';
 import { RESOURCE_TYPE_CONFIG } from '../constants';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
-import { getIIIFValue } from '../types';
 
 interface VirtualTreeListProps {
   /** Root IIIF item to display as tree */

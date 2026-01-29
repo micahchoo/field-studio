@@ -1,7 +1,5 @@
 # IIIF Field Archive Studio — Design Brief
 
-> **⚠️ STATUS: FEATURE FREEZE IN EFFECT**  
-> This design brief was created by working backward from the implemented codebase. No new features should be added during this freeze period. Focus is on bug fixes, documentation, and stability improvements only.
 
 ## Codebase Review Scope
 

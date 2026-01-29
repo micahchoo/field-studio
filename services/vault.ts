@@ -1749,3 +1749,37 @@ export function getVault(): Vault {
 export function resetVault(): void {
   vaultInstance = null;
 }
+
+// ============================================================================
+// Test API Aliases
+// ============================================================================
+
+/**
+ * Create an empty vault state
+ * Alias for createEmptyState() to match test expectations
+ */
+export const createEmptyVault = createEmptyState;
+
+/**
+ * Normalize IIIF tree to flat structure
+ * Alias for normalize() to match test expectations
+ */
+export const normalizeIIIF = normalize;
+
+/**
+ * Denormalize flat structure back to IIIF tree
+ * Alias for denormalize() to match test expectations
+ */
+export const denormalizeIIIF = denormalize;
+
+/**
+ * Get child IDs for a parent entity
+ * Alias for getChildIds() to match test expectations
+ */
+export const getChildren = getChildIds;
+
+/**
+ * Get parent ID for a child entity
+ * Alias for getParentId() to match test expectations
+ */
+export const getParent = getParentId;

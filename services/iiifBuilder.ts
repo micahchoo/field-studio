@@ -1487,3 +1487,217 @@ export const buildTree = (files: File[]): FileTree => {
   }
   return root;
 };
+
+// ============================================================================
+// Factory Functions for Testing
+// ============================================================================
+
+interface CreateManifestOptions {
+  id: string;
+  label: Record<string, string[]>;
+  summary?: Record<string, string[]>;
+  metadata?: Array<{ label: Record<string, string[]>; value: Record<string, string[]> }>;
+  rights?: string;
+  behavior?: string[];
+}
+
+/** Create a valid IIIF 3.0 Manifest */
+export function createManifest(options: CreateManifestOptions): IIIFManifest {
+  return {
+    '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
+    type: 'Manifest',
+    id: options.id,
+    label: options.label,
+    summary: options.summary,
+    metadata: options.metadata,
+    rights: options.rights,
+    behavior: options.behavior,
+    items: [],
+  } as IIIFManifest;
+}
+
+interface CreateCanvasOptions {
+  id: string;
+  label: Record<string, string[]>;
+  width: number;
+  height: number;
+  duration?: number;
+}
+
+/** Create a valid IIIF 3.0 Canvas */
+export function createCanvas(options: CreateCanvasOptions): IIIFCanvas {
+  return {
+    type: 'Canvas',
+    id: options.id,
+    label: options.label,
+    width: options.width,
+    height: options.height,
+    duration: options.duration,
+    items: [],
+  } as IIIFCanvas;
+}
+
+interface CreateAnnotationOptions {
+  id: string;
+  motivation: IIIFMotivation;
+  target: string | { type: 'SpecificResource'; source: string; selector?: { type: string; value: string } };
+  body: 
+    | { id: string; type: string; format?: string; width?: number; height?: number }
+    | { type: 'TextualBody'; value: string; format: string; language?: string };
+}
+
+/** Create a valid IIIF 3.0 Annotation */
+export function createAnnotation(options: CreateAnnotationOptions): IIIFAnnotation {
+  return {
+    type: 'Annotation',
+    id: options.id,
+    motivation: options.motivation,
+    target: options.target,
+    body: options.body,
+  } as IIIFAnnotation;
+}
+
+interface CreateAnnotationPageOptions {
+  id: string;
+  items?: IIIFAnnotation[];
+}
+
+/** Create a valid IIIF 3.0 AnnotationPage */
+export function createAnnotationPage(options: CreateAnnotationPageOptions): IIIFAnnotationPage {
+  return {
+    type: 'AnnotationPage',
+    id: options.id,
+    items: options.items || [],
+  };
+}
+
+interface CreateCollectionOptions {
+  id: string;
+  label: Record<string, string[]>;
+  items?: IIIFManifest[];
+}
+
+/** Create a valid IIIF 3.0 Collection */
+export function createCollection(options: CreateCollectionOptions): IIIFCollection {
+  return {
+    '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
+    type: 'Collection',
+    id: options.id,
+    label: options.label,
+    items: options.items || [],
+  } as IIIFCollection;
+}
+
+interface CreateRangeOptions {
+  id: string;
+  label: Record<string, string[]>;
+  items?: Array<{ id: string; type: 'Canvas' | 'Range' }>;
+}
+
+/** Create a valid IIIF 3.0 Range */
+export function createRange(options: CreateRangeOptions): IIIFRange {
+  return {
+    type: 'Range',
+    id: options.id,
+    label: options.label,
+    items: options.items || [],
+  } as IIIFRange;
+}
+
+interface FileWithBlob {
+  name: string;
+  type: string;
+  size: number;
+  blob: Blob;
+}
+
+interface BuildManifestOptions {
+  label: Record<string, string[]>;
+}
+
+/** Build a manifest from an array of files */
+export async function buildManifestFromFiles(
+  files: FileWithBlob[],
+  options: BuildManifestOptions
+): Promise<IIIFManifest> {
+  const manifest = createManifest({
+    id: `https://example.com/manifest/${Date.now()}`,
+    label: options.label,
+  });
+
+  manifest.items = files.map((file, index) => {
+    const canvas = createCanvas({
+      id: `${manifest.id}/canvas/${index}`,
+      label: { en: [file.name] },
+      width: 1000,
+      height: 1000,
+    });
+
+    // Create a painting annotation for the file
+    const annotation = createAnnotation({
+      id: `${canvas.id}/annotation/1`,
+      motivation: 'painting',
+      target: canvas.id,
+      body: {
+        id: `blob:${file.name}`,
+        type: file.type.startsWith('image/') ? 'Image' : 'Video',
+        format: file.type,
+      },
+    });
+
+    // Add annotation to page
+    const annotationPage = createAnnotationPage({
+      id: `${canvas.id}/page/1`,
+      items: [annotation],
+    });
+
+    canvas.items = [annotationPage];
+    return canvas;
+  });
+
+  return manifest;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+/** Validate a IIIF resource structure */
+export function validateIIIFResource(resource: unknown): ValidationResult {
+  const errors: string[] = [];
+  const r = resource as any;
+
+  // Check required fields
+  if (!r.id) {
+    errors.push('Missing required field: id');
+  }
+
+  if (!r.type) {
+    errors.push('Missing required field: type');
+  }
+
+  // Validate language maps
+  if (r.label && typeof r.label !== 'object') {
+    errors.push('Label must be a language map');
+  }
+
+  if (r.summary && typeof r.summary !== 'object') {
+    errors.push('Summary must be a language map');
+  }
+
+  // Validate canvas dimensions
+  if (r.type === 'Canvas') {
+    if (typeof r.width !== 'number' || r.width <= 0) {
+      errors.push('Canvas width must be a positive number');
+    }
+    if (typeof r.height !== 'number' || r.height <= 0) {
+      errors.push('Canvas height must be a positive number');
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}

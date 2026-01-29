@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { AbstractionLevel } from './types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type IIIFItem, isCanvas, isCollection, type ViewType } from './types';
 import { ToastProvider, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { IIIFItem, IIIFCanvas, FileTree, AppMode, ViewType, getIIIFValue, IIIFAnnotation, isCanvas, isCollection } from './types';
 import { METADATA_TEMPLATES } from './constants';
 import { Sidebar } from './components/Sidebar';
 import { Inspector } from './components/Inspector';
@@ -12,7 +11,7 @@ import { StagingWorkbench } from './components/staging/StagingWorkbench';
 import { ExportDialog } from './components/ExportDialog';
 import { ContextualHelp } from './components/ContextualHelp';
 import { QuickReference } from './components/Tooltip';
-import { QUICK_REF_ARCHIVE, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_BOARD, QUICK_REF_METADATA } from './constants/helpContent';
+import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER } from './constants/helpContent';
 import { QCDashboard } from './components/QCDashboard';
 import { OnboardingModal } from './components/OnboardingModal';
 import { ExternalImportDialog } from './components/ExternalImportDialog';
@@ -27,9 +26,9 @@ import { ViewRouter } from './components/ViewRouter';
 import { buildTree, ingestTree } from './services/iiifBuilder';
 import { AuthService, AuthState } from './services/authService';
 import { storage } from './services/storage';
-import { validator, ValidationIssue } from './services/validator';
+import { ValidationIssue, validator } from './services/validator';
 import { contentStateService } from './services/contentState';
-import { VaultProvider, useUndoRedoShortcuts, useVault, useBulkOperations } from './hooks/useIIIFEntity';
+import { useBulkOperations, useUndoRedoShortcuts, useVault, VaultProvider } from './hooks/useIIIFEntity';
 import { actions } from './services/actions';
 
 // Custom hooks for cleaner state management
@@ -58,7 +57,7 @@ const MainApp: React.FC = () => {
   const root = useMemo(() => exportRoot(), [state]);
 
   // ---- Custom Hooks ----
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile, isTablet: _isTablet } = useResponsive();
   const { settings, updateSettings, toggleFieldMode } = useAppSettings();
   const { showToast } = useToast();
 
@@ -390,7 +389,7 @@ const MainApp: React.FC = () => {
       metadataTemplate: template,
       metadataComplexity: complexity as any,
       showTechnicalIds: showTechnical,
-      fieldMode: fieldMode
+      fieldMode
     });
 
     showToast(`Switched to ${level === 'simple' ? 'Simple (Album/Photo)' : level === 'standard' ? 'Standard' : 'Advanced'} mode`, 'info');

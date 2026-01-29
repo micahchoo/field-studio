@@ -221,7 +221,13 @@ export function removeTrailingSlash(uri: string): string {
  */
 export function getUriLastSegment(uri: string): string {
   if (!uri) return '';
-  
+
+  // Handle URN schemes (e.g., urn:uuid:12345 → 12345)
+  if (uri.startsWith('urn:')) {
+    const parts = uri.split(':');
+    return parts[parts.length - 1] || '';
+  }
+
   try {
     const url = new URL(uri);
     const parts = url.pathname.split('/').filter(Boolean);

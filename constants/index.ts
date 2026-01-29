@@ -34,3 +34,15 @@ export * from './accessibility';
 
 // Error handling constants
 export * from './errors';
+
+// Viewport and navigation constants
+export * from './viewport';
+
+// Canopy template definitions
+export * from './canopyTemplates';
+
+// Help content and documentation
+export * from './helpContent';
+
+// Keyboard shortcuts
+export * from './shortcuts';

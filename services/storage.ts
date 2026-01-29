@@ -577,3 +577,89 @@ class StorageService {
 }
 
 export const storage = new StorageService();
+
+// ============================================================================
+// Convenience Exports for Testing
+// ============================================================================
+
+/** Open the database and return the DB instance */
+export async function openDatabase(): Promise<IDBPDatabase<BiiifDB>> {
+  // Access the private method through the instance
+  return (storage as any).getDB();
+}
+
+/** Save a file to storage */
+export async function saveFile(
+  fileId: string, 
+  blob: Blob, 
+  metadata?: { name?: string; size?: number; type?: string; lastModified?: number; calculateHash?: boolean }
+): Promise<string> {
+  await storage.saveAsset(blob, fileId);
+  return fileId;
+}
+
+/** Get a file from storage */
+export async function getFile(fileId: string): Promise<{ blob: Blob; metadata: { name: string; type: string; size: number } } | null> {
+  const blob = await storage.getAsset(fileId);
+  if (!blob) return null;
+  return {
+    blob,
+    metadata: {
+      name: fileId,
+      type: blob.type || 'application/octet-stream',
+      size: blob.size
+    }
+  };
+}
+
+/** Delete a file from storage */
+export async function deleteFile(fileId: string, options?: { deleteDerivatives?: boolean }): Promise<void> {
+  await storage.deleteAsset(fileId);
+}
+
+/** List all files in storage */
+export async function listFiles(filter?: { type?: string; sortBy?: string; order?: 'asc' | 'desc' }): Promise<Array<{ id: string; lastModified: number; size: number; type: string }>> {
+  const ids = await storage.getAllAssetIds();
+  const files = await Promise.all(
+    ids.map(async (id) => {
+      const blob = await storage.getAsset(id);
+      return {
+        id,
+        lastModified: Date.now(),
+        size: blob?.size || 0,
+        type: blob?.type || 'application/octet-stream'
+      };
+    })
+  );
+  return files;
+}
+
+/** Save project data */
+export async function saveProject(project: IIIFItem): Promise<void> {
+  await storage.saveProject(project);
+}
+
+/** Get project data */
+export async function getProject(): Promise<IIIFItem | null> {
+  return await storage.loadProject() || null;
+}
+
+/** Check storage quota */
+export async function checkStorageQuota(): Promise<{ usage: number; quota: number; percentUsed: number; warning?: string }> {
+  const estimate = await storage.getEstimate();
+  const usage = estimate?.usage || 0;
+  const quota = estimate?.quota || 0;
+  const percentUsed = quota > 0 ? (usage / quota) * 100 : 0;
+  
+  return {
+    usage,
+    quota,
+    percentUsed,
+    warning: percentUsed >= 90 ? 'Storage is getting full' : undefined
+  };
+}
+
+/** Clear all data */
+export async function clearAllData(): Promise<void> {
+  await storage.clear();
+}

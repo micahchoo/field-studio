@@ -23,8 +23,8 @@ export type { LogLevel, LogGroup, LogEntry } from './logger';
 // ============================================================================
 // State Management
 // ============================================================================
-export { actions } from './actions';
-export type { Action, ActionResult } from './actions';
+export { actions, reduce, createActionHistory, validateAction, executeAction, ActionHistory, ActionDispatcher } from './actions';
+export type { Action, ActionResult, HistoryEntry } from './actions';
 
 export { contentStateService } from './contentState';
 export type { ViewportState, SpecificResource, ContentStateTarget } from './contentState';
@@ -59,7 +59,13 @@ export {
   // Phase 2: Trash/Restore System functions
   moveEntityToTrash,
   restoreEntityFromTrash,
-  emptyTrash
+  emptyTrash,
+  // Export aliases for backwards compatibility
+  createEmptyVault,
+  normalizeIIIF,
+  denormalizeIIIF,
+  getChildren,
+  getParent
 } from './vault';
 export type { NormalizedState, EntityType, VaultSnapshot, TrashedEntity } from './vault';
 
