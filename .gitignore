@@ -158,7 +158,7 @@ template/
 
 # Test images and assets
 .Images iiif test/
-
+src/test
 # Canopy template zip
 canopy template.zip
 
