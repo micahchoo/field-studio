@@ -5,9 +5,9 @@
  * Handles defaults, merging, and auto-save.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppSettings } from '../types';
-import { DEFAULT_INGEST_PREFS, DEFAULT_MAP_CONFIG, DEFAULT_ZOOM_CONFIG, METADATA_TEMPLATES, IIIF_CONFIG } from '../constants';
+import { DEFAULT_INGEST_PREFS, DEFAULT_MAP_CONFIG, DEFAULT_ZOOM_CONFIG, IIIF_CONFIG, METADATA_TEMPLATES } from '../constants';
 
 const SETTINGS_KEY = 'iiif-field-settings';
 

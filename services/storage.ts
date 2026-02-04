@@ -1,5 +1,5 @@
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { IIIFItem } from '../types';
 import { IngestCheckpoint } from './ingestState';
 

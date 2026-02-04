@@ -16,38 +16,38 @@
  * @see services/actions.ts for action dispatch
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  Vault,
-  NormalizedState,
+  createEmptyState,
+  denormalize,
+  EntityType,
+  getChildIds,
+  getEntitiesByType,
   getEntity,
   getEntityType,
   getParentId,
-  getChildIds,
-  getEntitiesByType,
-  denormalize,
   normalize,
-  createEmptyState,
-  EntityType
+  NormalizedState,
+  Vault
 } from '../services/vault';
 import {
+  Action,
   ActionDispatcher,
   ActionHistory,
-  Action,
   actions
 } from '../services/actions';
 import {
-  IIIFItem,
-  IIIFCollection,
-  IIIFManifest,
-  IIIFCanvas,
-  IIIFRange,
   IIIFAnnotation,
   IIIFAnnotationPage,
-  LanguageMap,
-  LanguageString,
+  IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
+  IIIFRange,
+  isCollection,
   isManifest,
-  isCollection
+  LanguageMap,
+  LanguageString
 } from '../types';
 
 // ============================================================================

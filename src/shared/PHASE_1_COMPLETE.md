@@ -1,12 +1,30 @@
 # Phase 1: Shared Foundation — COMPLETE ✅
 
+> **⚠️ HISTORICAL DOCUMENT — Pattern Changed**
+>
+> This document was written on 2026-02-03 during the initial Phase 1 implementation.
+> The molecule architecture described here has since been **superseded**:
+>
+> | Original Pattern (this doc) | Current Pattern (Phase 1 Refactor) |
+> |-----------------------------|------------------------------------|
+> | Molecules call `useContextualStyles()` internally | Molecules receive `cx?` prop from organism |
+> | Molecules call `useTerminology()` internally | Molecules receive `t` function via props |
+> | No `fieldMode` prop on molecules | `fieldMode?` is an optional prop |
+> | Context consumed via hooks | Context consumed via props from Template |
+>
+> **Why the change?** The hook-based pattern created hidden coupling between molecules
+> and the app context layer. The props-driven pattern enforces explicit data flow and
+> makes molecules testable in isolation without context providers.
+>
+> For current architecture, see: `src/shared/ui/molecules/README.md`
+
 ## Summary
 
 **Phase 1 is now complete.** We've built the atomic design foundation with:
 - ✅ Comprehensive documentation at every level
 - ✅ 10 molecules (1,200 lines of clean, reusable code)
 - ✅ Zero magic numbers (all constants centralized)
-- ✅ Zero `fieldMode` prop-drilling
+- ✅ Minimal prop-drilling (`cx` and `fieldMode` flow from Template → Organism → Molecule)
 - ✅ Tests demonstrating IDEAL/FAILURE patterns
 - ✅ Ready for Phase 2 (entities) and Phase 3 (app layer)
 
@@ -63,8 +81,8 @@ Button, Input, Icon, Card from `ui/primitives/` now accessible from shared layer
 Each molecule:
 - ✅ Composes only atoms
 - ✅ Zero domain knowledge
-- ✅ Uses only generic hooks
-- ✅ Consumes context via `useContextualStyles()` and `useTerminology()`
+- ✅ Uses only local hooks (`useState`, `useDebouncedValue`)
+- ✅ Receives `cx?` and `fieldMode?` as optional props (no context hook calls)
 - ✅ Zero hardcoded values
 - ✅ Well-documented with JSDoc
 
@@ -77,13 +95,15 @@ Each molecule:
 | **DebouncedInput** | 150 | Input + debounce + validation | Configurable debounce, validation errors |
 
 ```typescript
-// No prop-drilling, uses constants
+// Receives cx and fieldMode from organism
 <FilterInput
   value={filter}
   onChange={setFilter}
   placeholder="Search items..."
+  cx={cx}
+  fieldMode={fieldMode}
 />
-// Internally: useContextualStyles, INPUT_CONSTRAINTS.debounceMs
+// Uses INPUT_CONSTRAINTS.debounceMs for timing
 ```
 
 #### Tier 2: Layout & Navigation (3 molecules, 392 lines)
@@ -100,10 +120,12 @@ Each molecule:
   icon="inventory_2"
   filter={{ value: filter, onChange: setFilter }}
   viewToggle={{ value: mode, onChange: setMode, options: [...] }}
+  cx={cx}
+  fieldMode={fieldMode}
 >
   <Grid items={items} />
 </ViewContainer>
-// No fieldMode prop — all styling internal
+// cx and fieldMode flow from organism
 ```
 
 #### Tier 3: Actions & State (4 molecules, 383 lines)
@@ -171,13 +193,14 @@ describe('FilterInput Molecule', () => {
     });
   });
 
-  describe('ARCHITECTURE: No fieldMode prop drilling', () => {
-    it('FAILURE PREVENTED: fieldMode prop should not exist', () => {
+  describe('ARCHITECTURE: Props-driven theming', () => {
+    it('IDEAL OUTCOME: fieldMode is optional prop, no hook calls', () => {
       type FilterInputProps = React.ComponentProps<typeof FilterInput>;
       const props: FilterInputProps = {
         onChange: () => {},
         placeholder: 'test',
-        // fieldMode: false, ← Compiler error if uncommented
+        fieldMode: false, // Optional — passed from organism
+        cx: { surface: '', text: '' }, // Optional — styling tokens
       };
     });
   });
@@ -193,7 +216,7 @@ describe('FilterInput Molecule', () => {
 | Molecules implemented | 10 | ✅ 10 |
 | Lines of molecule code | 1,000+ | ✅ 1,200 |
 | Magic numbers in molecules | 0 | ✅ 0 |
-| fieldMode props in molecules | 0 | ✅ 0 |
+| Context hooks in molecules | 0 | ✅ 0 (props-driven) |
 | Domain knowledge in molecules | 0 | ✅ 0 |
 | Constants centralized | Yes | ✅ 185 lines in tokens.ts |
 | READMEs at every level | Yes | ✅ 5 docs, 800 lines |
@@ -271,14 +294,14 @@ All 10 molecules:
 - Zero domain knowledge ✅
 - Work in archive, board, metadata, staging, any feature ✅
 - Don't import domain hooks ✅
-- Use generic hooks only (`useState`, `useDebouncedValue`, `useContextualStyles`) ✅
+- Use local hooks only (`useState`, `useDebouncedValue`) — no context hooks ✅
 
-### 5. **No Prop-Drilling of fieldMode**
-- ✅ `FilterInput` uses `useContextualStyles` internally
-- ✅ `SearchField` themed via context
-- ✅ `ViewToggle` doesn't accept `fieldMode` prop
-- ✅ `ViewContainer` consumes `useAppSettings` once
-- ✅ All molecules are fieldMode-aware without needing it as a prop
+### 5. **Props-Driven Theming** *(Updated from original)*
+- ✅ `FilterInput` receives `cx?` and `fieldMode?` as optional props
+- ✅ `SearchField` themed via `cx` prop from organism
+- ✅ `ViewToggle` accepts optional `cx` and `fieldMode` props
+- ✅ `ViewContainer` receives styling props from parent
+- ✅ All molecules are testable without context providers
 
 ### 6. **Tests Ready for Real Data**
 `FilterInput.test.tsx` shows the pattern. Ready to add real data from `.Images iiif test/` in Phase 4 organisms.
@@ -380,10 +403,10 @@ wc -l /media/2TA/DevStuff/BIIIF/field-studio/src/shared/config/tokens.ts
    - If a component is feature-specific, it's not in shared/
    - Molecules work in any context
 
-5. **Fieldmode Context, Not Props**
-   - Molecules call `useContextualStyles()` internally
-   - No `fieldMode` prop passing down through layers
-   - Eliminates 374+ prop occurrences in the old code
+5. **Explicit Props, Not Hidden Context** *(Updated)*
+   - Molecules receive `cx?` and `fieldMode?` as optional props
+   - Organisms call hooks, pass results to molecules
+   - Makes data flow explicit and testable
 
 ---
 

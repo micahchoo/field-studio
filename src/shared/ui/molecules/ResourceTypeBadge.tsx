@@ -1,10 +1,11 @@
 /**
  * ResourceTypeBadge Molecule
  *
- * Composes: Icon + label via useTerminology
+ * Composes: Icon + label (receives `t` terminology function via props)
  *
  * Displays IIIF resource type (Manifest, Canvas, Collection, etc.) with appropriate icon.
- * Uses useTerminology for localized labels (respects abstraction level).
+ * Receives `t` function via props from organism (respects abstraction level).
+ * NOTE: Does NOT call useTerminology — receives t() via props.
  *
  * IDEAL OUTCOME: Shows correct icon and label for any IIIF resource type
  * FAILURE PREVENTED: Hardcoded IIIF terms scattered across components
@@ -12,10 +13,7 @@
 
 import React, { useMemo } from 'react';
 import { Icon } from '../atoms';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
-import { useTerminology } from '@/hooks/useTerminology';
-import { useAbstractionLevel } from '@/hooks/useAbstractionLevel';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 // Mapping of resource types to icon names
 const RESOURCE_ICONS: Record<string, string> = {
@@ -37,6 +35,10 @@ export interface ResourceTypeBadgeProps {
   className?: string;
   /** Tooltip title */
   title?: string;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
+  /** Terminology function for localized labels */
+  t: (key: string) => string;
 }
 
 /**
@@ -55,14 +57,9 @@ export const ResourceTypeBadge: React.FC<ResourceTypeBadgeProps> = ({
   iconOnly = false,
   className = '',
   title,
+  cx,
+  t,
 }) => {
-  // Theme via context
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
-
-  // Terminology for current abstraction level
-  const { level } = useAbstractionLevel();
-  const { t } = useTerminology({ level });
 
   // Memoize icon lookup
   const iconName = useMemo(() => RESOURCE_ICONS[type] || 'info', [type]);

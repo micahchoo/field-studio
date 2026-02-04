@@ -34,7 +34,7 @@ interface IIIFMetadataPair {
   label: Record<string, string[]>;
   value: Record<string, string[]>;
 }
-import { manifest, canvas, collection } from '@/src/entities';
+import { canvas, collection, manifest } from '@/src/entities';
 
 // Re-export entity models for convenience
 export { manifest, canvas, collection };

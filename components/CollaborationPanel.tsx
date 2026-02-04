@@ -5,7 +5,7 @@
  * Provides real-time peer awareness and session management.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { SyncProvider } from '../services/sync/syncProvider';

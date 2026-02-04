@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Icon } from './Icon';
-import { IIIFItem, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFItem } from '../types';
 import { ValidationIssue } from '../services/validator';
 import { useSharedSelection } from '../hooks/useSharedSelection';
 
@@ -26,7 +26,7 @@ const formatBytes = (bytes: number, decimals = 1) => {
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 };
 
 export const StatusBar: React.FC<StatusBarProps> = ({

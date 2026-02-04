@@ -12,12 +12,12 @@
  * Consistent Placement: Top-right action area (designSystem.NAVIGATION.actions.primary)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { IIIFItem, getIIIFValue } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { getIIIFValue, IIIFItem } from '../types';
 import { contentStateService, ViewportState } from '../services/contentState';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
-import { PATTERNS, SPACING, COLORS, TOUCH_TARGETS } from '../designSystem';
+import { COLORS, PATTERNS, SPACING, TOUCH_TARGETS } from '../designSystem';
 
 interface ShareButtonProps {
   item: IIIFItem | null;

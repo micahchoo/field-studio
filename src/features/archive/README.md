@@ -46,16 +46,19 @@ export const ArchiveView = ({ root, onSelect, onUpdate }) => {
 **Responsibility:** Header + filtering + view toggle
 - Composes `SearchField` molecule for search
 - Composes `ViewToggle` molecule for mode switching
-- Uses `useContextualStyles` for theming
+- Receives `cx` and `fieldMode` via props from ArchiveView
+- Passes `cx` and `fieldMode` to molecule children
 - **NOT responsible for:** What happens when user searches (that's ArchiveView's job)
 
 ```typescript
-export const ArchiveHeader = ({ filter, onFilterChange, mode, onModeChange }) => (
-  <div className="flex items-center gap-4 p-4">
-    <SearchField value={filter} onChange={onFilterChange} />
+export const ArchiveHeader = ({ filter, onFilterChange, mode, onModeChange, cx, fieldMode }) => (
+  <div className={`flex items-center gap-4 p-4 ${cx?.surface}`}>
+    <SearchField value={filter} onChange={onFilterChange} cx={cx} fieldMode={fieldMode} />
     <ViewToggle
       value={mode}
       onChange={onModeChange}
+      cx={cx}
+      fieldMode={fieldMode}
       options={[
         { value: 'grid', icon: 'grid_view' },
         { value: 'list', icon: 'list' },
@@ -103,29 +106,46 @@ const filtered = useArchiveFilter(root, filterText);
 dispatch(actions.updateManifest(id, newData));
 ```
 
-### 3. **No fieldMode Prop**
+### 3. **Organisms Receive Context via Props**
 ```typescript
-// WRONG
-<ArchiveView fieldMode={settings.fieldMode} />
+// WRONG — organisms should not call context hooks
+const ArchiveView = ({ root }) => {
+  const cx = useContextualStyles();  // ❌ Should receive via props!
+  const { settings } = useAppSettings();  // ❌ Should receive via props!
+}
 
-// CORRECT
-<ArchiveView root={root} onSelect={onSelect} />
-// Internally uses: useContextualStyles, useAppSettings
+// CORRECT — organisms receive context from FieldModeTemplate
+<FieldModeTemplate>
+  {({ cx, fieldMode, t, isAdvanced }) => (
+    <ArchiveView
+      root={root}
+      cx={cx}
+      fieldMode={fieldMode}
+      t={t}
+      isAdvanced={isAdvanced}
+      onSelect={onSelect}
+    />
+  )}
+</FieldModeTemplate>
 ```
 
-### 4. **Props Only Describe Data**
+### 4. **Props Include Data AND Context**
 ```typescript
-// Props tell organism: "here's your data"
+// Props tell organism: "here's your data AND your context"
 interface ArchiveViewProps {
+  // Data props
   root: IIIFItem | null;
   onSelect: (item: IIIFItem) => void;
   onUpdate?: (newRoot: IIIFItem) => void;
+  // Context props (from FieldModeTemplate)
+  cx: ContextualClassNames;
+  fieldMode: boolean;
+  t: (key: string) => string;
+  isAdvanced: boolean;
 }
 
-// NOT:
-// fieldMode?: boolean;           ❌
-// useFieldMode?: () => boolean;  ❌
-// theme?: 'dark' | 'light';      ❌
+// Organism passes cx to molecules:
+<SearchField cx={cx} fieldMode={fieldMode} onChange={setFilter} />
 ```
 
 ## Testing Strategy
@@ -192,28 +212,27 @@ describe('ArchiveView Organism', () => {
   });
 
   describe('USER INTERACTION: Toggle fieldMode context', () => {
-    it('IDEAL OUTCOME: Archive theme switches with fieldMode', async () => {
+    it('IDEAL OUTCOME: Archive theme switches with fieldMode prop', async () => {
       const realData = await loadRealArchiveFixture('Karwaan');
+      const cxLight = { surface: 'bg-slate-50', text: 'text-slate-900' };
+      const cxDark = { surface: 'bg-black', text: 'text-white' };
+
+      // Light mode — pass cx directly via props
       const { rerender, container } = render(
-        <AppSettingsProvider initialFieldMode={false}>
-          <ArchiveView root={realData} onSelect={vi.fn()} />
-        </AppSettingsProvider>
+        <ArchiveView root={realData} onSelect={vi.fn()} cx={cxLight} fieldMode={false} />
       );
 
-      // Light mode
       expect(container.querySelector('[role="main"]')).toHaveClass('bg-slate-50');
 
-      // Toggle fieldMode
+      // Toggle fieldMode — pass different cx via props
       rerender(
-        <AppSettingsProvider initialFieldMode={true}>
-          <ArchiveView root={realData} onSelect={vi.fn()} />
-        </AppSettingsProvider>
+        <ArchiveView root={realData} onSelect={vi.fn()} cx={cxDark} fieldMode={true} />
       );
 
       // Dark mode
       expect(container.querySelector('[role="main"]')).toHaveClass('bg-black');
 
-      console.log('✓ IDEAL OUTCOME: Archive theme switches with fieldMode');
+      console.log('✓ IDEAL OUTCOME: Archive theme switches with fieldMode prop');
     });
   });
 });

@@ -1,9 +1,9 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { IIIFItem, IIIFManifest, IIIFCollection, IIIFCanvas, getIIIFValue, isManifest, isCanvas, isCollection } from '../types';
+import React, { useCallback, useMemo, useState } from 'react';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
 import { Icon } from './Icon';
 import { RESOURCE_TYPE_CONFIG } from '../constants';
-import { resolveThumbUrl, resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
+import { resolveHierarchicalThumbs, resolveThumbUrl } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';
 
 export interface StructureCanvasProps {

@@ -9,7 +9,7 @@
  * - Reference counting for blob URLs
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection } from '../types';
+import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '../types';
 import { storage } from './storage';
 
 // ============================================================================
@@ -420,7 +420,7 @@ export const virtualizedData = new VirtualizedDataService();
 // React Hook for Virtualized Data
 // ============================================================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useVirtualizedResource(id: string | null) {
   const [resource, setResource] = useState<IIIFItem | null>(null);

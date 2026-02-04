@@ -415,7 +415,7 @@ export const skipLinkStyles = `
 // React Hooks
 // ============================================================================
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * Hook for managing focus trap in modals

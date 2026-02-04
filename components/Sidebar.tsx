@@ -1,13 +1,13 @@
 
-import React, { useState, useMemo } from 'react';
-import { IIIFItem, IIIFCollection, AppMode, ViewType, IIIFManifest, getIIIFValue } from '../types';
+import React, { useMemo, useState } from 'react';
+import { AppMode, getIIIFValue, IIIFCollection, IIIFItem, IIIFManifest, ViewType } from '../types';
 import { Icon } from './Icon';
 import { Toolbar } from './Toolbar';
 import { CONSTANTS, RESOURCE_TYPE_CONFIG } from '../constants';
 import {
-  isValidChildType,
   getRelationshipType,
-  getValidChildTypes
+  getValidChildTypes,
+  isValidChildType
 } from '../utils/iiifHierarchy';
 import { useResizablePanel } from '../hooks/useResizablePanel';
 import { useAppSettings } from '../hooks/useAppSettings';
@@ -189,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
   onOpenSettings, onToggleQuickHelp, isMobile, onClose, abstractionLevel = 'standard', onAbstractionLevelChange
 }) {
   const { settings } = useAppSettings();
-  const fieldMode = settings.fieldMode;
+  const {fieldMode} = settings;
   const [filterText, setFilterText] = useState('');
   const [filterType, setFilterType] = useState('All');
 

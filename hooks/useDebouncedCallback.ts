@@ -15,7 +15,7 @@
  * ```
  */
 
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * Creates a debounced version of a callback function

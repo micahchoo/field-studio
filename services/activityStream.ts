@@ -14,7 +14,7 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Change Discovery API" pattern
  */
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { IIIF_SPEC } from '../constants';
 
 // ============================================================================

@@ -22,12 +22,12 @@
  * @see services/imageSourceResolver.ts for resolution logic
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FEATURE_FLAGS } from '../constants/features';
 import type { IIIFCanvas } from '../types';
 import type {
-  ResolvedImageSource,
   ImageSourceResolverOptions,
+  ResolvedImageSource,
 } from '../services/imageSourceResolver';
 
 // ============================================================================
@@ -196,7 +196,7 @@ export function useImageSource(
         if (debug) {
           console.log('[useImageSource] Resolved source:', {
             type: source.type,
-            url: source.url.substring(0, 100) + '...',
+            url: `${source.url.substring(0, 100)}...`,
             needsCleanup: source.needsCleanup,
           });
         }

@@ -23,10 +23,12 @@ import { FieldModeTemplate } from '@/src/app/templates';
 
 export const ArchiveRoute = () => (
   <FieldModeTemplate>
-    {({ cx, fieldMode }) => (
+    {({ cx, fieldMode, t, isAdvanced }) => (
       <ArchiveView
         cx={cx}
         fieldMode={fieldMode}
+        t={t}
+        isAdvanced={isAdvanced}
         // ... other props
       />
     )}
@@ -43,6 +45,8 @@ export const ArchiveRoute = () => (
   - `cx.button` — Button styles
   - Plus 7+ more tokens
 - `fieldMode: boolean` — Is high-contrast field mode active?
+- `t: (key: string) => string` — Terminology function (maps IIIF types to user-facing labels based on abstraction level)
+- `isAdvanced: boolean` — Progressive disclosure gate (show advanced UI when true)
 
 **No Props:**
 - FieldModeTemplate reads settings internally via `useAppSettings()`
@@ -111,8 +115,8 @@ export const ArchiveRoute = () => (
   >
     {/* BaseTemplate provides layout; FieldModeTemplate provides context */}
     <FieldModeTemplate>
-      {({ cx, fieldMode }) => (
-        <ArchiveView cx={cx} fieldMode={fieldMode} />
+      {({ cx, fieldMode, t, isAdvanced }) => (
+        <ArchiveView cx={cx} fieldMode={fieldMode} t={t} isAdvanced={isAdvanced} />
       )}
     </FieldModeTemplate>
   </BaseTemplate>
@@ -127,11 +131,12 @@ export const ArchiveRoute = () => (
 
 ```typescript
 // ✅ CORRECT - Organism receives context as props
-export const ArchiveView = ({ cx, fieldMode, root }) => {
+export const ArchiveView = ({ cx, fieldMode, t, isAdvanced, root }) => {
   return (
     <div className={cx.surface}>
       {/* Use cx for styling */}
       {/* Use fieldMode for conditional logic */}
+      {/* Use t for terminology, isAdvanced for progressive disclosure */}
     </div>
   );
 };
@@ -139,6 +144,8 @@ export const ArchiveView = ({ cx, fieldMode, root }) => {
 interface ArchiveViewProps {
   cx: ContextualClassNames;
   fieldMode: boolean;
+  t: (key: string) => string;
+  isAdvanced: boolean;
   root: IIIFItem;
 }
 ```
@@ -174,10 +181,12 @@ export const ArchivePage = () => {
       sidebarContent={<Sidebar />}
     >
       <FieldModeTemplate>
-        {({ cx, fieldMode }) => (
+        {({ cx, fieldMode, t, isAdvanced }) => (
           <ArchiveView
             cx={cx}
             fieldMode={fieldMode}
+            t={t}
+            isAdvanced={isAdvanced}
             // ... entity data
           />
         )}
@@ -211,6 +220,16 @@ App (with AppProviders)
               └── Molecules (SearchField, etc.)
                   └── Atoms (Button, etc.)
 ```
+
+## Reviewer Checklist
+
+Before merging changes to templates:
+
+- [ ] Render-prop callback destructures all four context values: `{ cx, fieldMode, t, isAdvanced }`
+- [ ] All four values are forwarded to the organism as props
+- [ ] Template does not import from `features/` — organisms are passed in by routes
+- [ ] No feature-specific state or logic lives inside the template
+- [ ] Hook calls (`useAppSettings`, `useContextualStyles`, `useTerminology`, `useAbstractionLevel`) exist only here — never in organisms or molecules below
 
 ## See Also
 

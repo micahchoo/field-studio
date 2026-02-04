@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { IIIFItem, getIIIFValue } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getIIIFValue, IIIFItem } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
 

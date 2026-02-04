@@ -22,15 +22,15 @@
  * controls.cancel();
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  IngestProgress,
-  IngestStage,
-  IngestFileInfo,
   IngestActivityLogEntry,
-  IngestProgressSummary,
+  IngestFileInfo,
+  IngestProgress,
   IngestProgressOptions,
-  IngestResult
+  IngestProgressSummary,
+  IngestResult,
+  IngestStage
 } from '../types';
 
 // ============================================================================

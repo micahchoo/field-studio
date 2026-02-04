@@ -13,9 +13,9 @@
  * FAILURE PREVENTED: Stale search results, race conditions, memory leaks
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { IIIFItem } from '@/types';
-import { searchService, SearchResult, AutocompleteResult } from '@/services/searchService';
+import { AutocompleteResult, SearchResult, searchService } from '@/services/searchService';
 import { UI_TIMING } from '@/src/shared/config/tokens';
 
 // ============================================================================

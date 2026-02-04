@@ -10,11 +10,11 @@
  * - History management via useLayerHistory
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import type { IIIFCanvas, IIIFItem } from '@/types';
 import { DEFAULT_INGEST_PREFS } from '@/constants';
-import { useViewport, usePanZoomGestures, useViewportKeyboard } from '@/hooks';
-import { useLayerHistory, buildCanvasFromLayers, PlacedResource } from '@/hooks/useLayerHistory';
+import { usePanZoomGestures, useViewport, useViewportKeyboard } from '@/hooks';
+import { buildCanvasFromLayers, PlacedResource, useLayerHistory } from '@/hooks/useLayerHistory';
 
 // ============================================================================
 // Types
@@ -113,7 +113,7 @@ export const useComposer = (
   // Viewport
   const containerRef = useRef<HTMLDivElement>(null);
   const viewport = useViewport({ minScale: 0.1, maxScale: 2, initialScale: 0.25 });
-  const scale = viewport.viewport.scale;
+  const {scale} = viewport.viewport;
   
   // Pan/zoom gestures
   const gestures = usePanZoomGestures(containerRef, viewport, {

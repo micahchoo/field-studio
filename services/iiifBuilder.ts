@@ -1,48 +1,48 @@
 
 import {
+  FileStatus,
   FileTree,
-  IIIFCollection,
-  IIIFManifest,
-  IIIFCanvas,
-  IIIFItem,
-  IngestReport,
-  IngestResult,
-  IIIFAnnotationPage,
   IIIFAnnotation,
+  IIIFAnnotationPage,
+  IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
   IIIFMotivation,
   IIIFRange,
-  isCollection,
-  IngestProgress,
-  IngestStage,
-  IngestFileInfo,
-  FileStatus,
   IngestActivityLogEntry,
-  IngestProgressSummary,
+  IngestFileInfo,
+  IngestProgress,
   IngestProgressOptions,
+  IngestProgressSummary,
+  IngestReport,
+  IngestResult,
+  IngestStage,
+  isCollection,
   LegacyProgressCallback
 } from '../types';
 import { storage } from './storage';
-import { DEFAULT_INGEST_PREFS, IMAGE_QUALITY, MIME_TYPE_MAP, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '../constants';
+import { DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC, IMAGE_QUALITY, MIME_TYPE_MAP } from '../constants';
 import { load } from 'js-yaml';
 import { extractMetadata } from './metadataHarvester';
-import { getTileWorkerPool, generateDerivativeAsync } from './tileWorker';
+import { generateDerivativeAsync, getTileWorkerPool } from './tileWorker';
 import { fileIntegrity, HashLookupResult } from './fileIntegrity';
 import {
-  isValidChildType,
+  generateId,
   getRelationshipType,
   isStandaloneType,
-  generateId
+  isValidChildType
 } from '../utils/iiifHierarchy';
 import {
-  getMimeType,
+  createImageServiceReference,
+  DEFAULT_VIEWING_DIRECTION,
   getContentTypeFromFilename,
+  getMimeType,
+  IMAGE_API_PROTOCOL,
   isImageMime,
   isTimeBasedMime,
   suggestBehaviors,
-  validateResource,
-  DEFAULT_VIEWING_DIRECTION,
-  createImageServiceReference,
-  IMAGE_API_PROTOCOL
+  validateResource
 } from '../utils';
 import { FEATURE_FLAGS, USE_ENHANCED_PROGRESS, USE_WORKER_INGEST } from '../constants/features';
 import { getFileLifecycleManager } from './fileLifecycle';
@@ -51,17 +51,17 @@ import { getFileLifecycleManager } from './fileLifecycle';
 // Phase 4: Worker Migration Imports
 // ============================================================================
 import {
-  IngestWorkerPool,
   getIngestWorkerPool,
   ingestTreeWithWorkers,
+  IngestWorkerPool,
   PoolStats
 } from './ingestWorkerPool';
 import type {
-  IngestWorkerResponse,
-  IngestProgressMessage,
-  IngestFileCompleteMessage,
   IngestCompleteMessage,
-  IngestErrorMessage
+  IngestErrorMessage,
+  IngestFileCompleteMessage,
+  IngestProgressMessage,
+  IngestWorkerResponse
 } from '../workers/ingest.worker';
 
 // ============================================================================

@@ -5,13 +5,13 @@
  * Shows scores for Mirador, Universal Viewer, Annona, and Clover
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IIIFItem } from '../types';
 import { Icon } from './Icon';
 import {
-  viewerCompatibility,
-  CompatibilityReport as Report,
   CompatibilityIssue,
+  CompatibilityReport as Report,
+  viewerCompatibility,
   ViewerName
 } from '../services/viewerCompatibility';
 

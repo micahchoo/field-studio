@@ -23,8 +23,7 @@
  */
 
 import React, { useState } from 'react';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 import { TIMELINE_DENSITY } from '../../config/tokens';
 
 export interface TimelineItem {
@@ -52,6 +51,8 @@ export interface TimelineTickProps {
   size?: 'sm' | 'md' | 'lg';
   /** Disabled state */
   disabled?: boolean;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
 }
 
 /**
@@ -68,9 +69,8 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
   selected = false,
   size = 'md',
   disabled = false,
+  cx,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 

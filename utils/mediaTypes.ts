@@ -117,7 +117,7 @@ export function getExtension(filename: string): string {
   try {
     // Try to parse as URL first
     const url = new URL(filename);
-    const pathname = url.pathname;
+    const {pathname} = url;
     const lastDot = pathname.lastIndexOf('.');
     if (lastDot === -1) return '';
     return pathname.substring(lastDot + 1).toLowerCase().split('?')[0];
@@ -327,7 +327,7 @@ export function getContentTypeFromMime(mimeType: string): MimeTypeInfo['type'] |
 export function getFilenameFromUrl(url: string): string {
   try {
     const urlObj = new URL(url);
-    const pathname = urlObj.pathname;
+    const {pathname} = urlObj;
     const parts = pathname.split('/');
     return decodeURIComponent(parts[parts.length - 1] || 'resource');
   } catch {

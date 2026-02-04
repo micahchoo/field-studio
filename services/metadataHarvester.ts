@@ -13,7 +13,7 @@ export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> =>
         // 1. Date Created (Archive DNA: Time)
         const dateStr = tags['DateTimeOriginal']?.description;
         if (dateStr) {
-            const isoDate = dateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3').replace(' ', 'T') + 'Z';
+            const isoDate = `${dateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3').replace(' ', 'T')}Z`;
             if (!isNaN(Date.parse(isoDate))) {
                 navDate = isoDate;
                 metadata.push({

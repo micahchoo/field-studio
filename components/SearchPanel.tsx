@@ -7,12 +7,12 @@
  * - Navigation to search hits
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AutocompleteTerm,
   contentSearchService,
-  SearchService,
   SearchResult,
-  AutocompleteTerm
+  SearchService
 } from '../services/contentSearchService';
 import { IIIFManifest } from '../types';
 import { Icon } from './Icon';

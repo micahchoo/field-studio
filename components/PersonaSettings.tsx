@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { AbstractionLevel, AppSettings } from '../types';
 import { Icon } from './Icon';
-import { METADATA_TEMPLATES, MetadataComplexity, getVisibleFields, getFieldsByCategory } from '../constants';
+import { getFieldsByCategory, getVisibleFields, METADATA_TEMPLATES, MetadataComplexity } from '../constants';
 import { guidance } from '../services/guidanceService';
 
 interface PersonaSettingsProps {
@@ -44,7 +44,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
           abstractionLevel: lvl,
           metadataTemplate: template,
           showTechnicalIds: showTechnical,
-          fieldMode: fieldMode,
+          fieldMode,
           metadataComplexity: complexity
       });
   };

@@ -74,8 +74,8 @@ export function sanitizeAnnotationBody(content: unknown): string | Record<string
   // Handle object bodies (IIIF TextualBody)
   if (typeof content === 'object' && content !== null && 'value' in content) {
     const body = content as Record<string, unknown>;
-    const value = body.value;
-    const format = body.format;
+    const {value} = body;
+    const {format} = body;
 
     let sanitized: string;
 

@@ -8,14 +8,14 @@
  * FAILURE PREVENTED: Lost items off-canvas, unclear drop targets, janky animations
  */
 
-import React, { useRef, useState, useCallback, forwardRef } from 'react';
+import React, { forwardRef, useCallback, useRef, useState } from 'react';
 import type { IIIFItem } from '@/types';
 import { Icon } from '@/src/shared/ui/atoms';
 import {
   type BoardItem,
+  calculateAnchorPoints,
   type Connection,
   type ConnectionType,
-  calculateAnchorPoints,
 } from '../../model';
 
 export interface BoardCanvasProps {

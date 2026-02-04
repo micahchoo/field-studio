@@ -13,9 +13,8 @@
 import React from 'react';
 import { Icon } from '../atoms';
 import { SearchField } from './SearchField';
-import { ViewToggle } from './ViewToggle';
+import { ViewToggle, type ViewToggleOption } from './ViewToggle';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
-import type { ViewToggleOption } from './ViewToggle';
 
 export interface ViewContainerProps {
   /** View title */

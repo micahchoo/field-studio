@@ -11,8 +11,7 @@
 
 import React from 'react';
 import { Icon } from '@/components/Icon';
-import { getIIIFValue } from '@/types';
-import type { IIIFItem } from '@/types';
+import { getIIIFValue, type IIIFItem } from '@/types';
 import type { PlacedResource } from '@/hooks/useLayerHistory';
 
 export type SidebarTab = 'layers' | 'library';
@@ -44,8 +43,8 @@ export interface ComposerSidebarProps {
   onLayerAlign: (type: 'center' | 'fill') => void;
   /** Callback when library item is selected */
   onLibraryItemSelect: (item: IIIFItem) => void;
-  /** Contextual styles */
-  cx: {
+  /** Contextual styles - currently unused but reserved for future fieldMode support */
+  cx?: {
     text: string;
     textMuted: string;
     active: string;
@@ -72,8 +71,6 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
   onLibraryItemSelect,
   cx,
 }) => {
-  const activeLayer = layers.find((l) => l.id === activeLayerId);
-
   return (
     <div className="w-80 bg-slate-900 border-r border-white/10 flex flex-col">
       {/* Tabs */}

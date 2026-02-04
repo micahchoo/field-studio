@@ -16,11 +16,11 @@
  */
 
 import {
-  TilePyramidConfig,
-  TilePyramidResult,
-  TilePyramidLevel,
   calculateTilePyramid,
   shouldGenerateTiles,
+  TilePyramidConfig,
+  TilePyramidLevel,
+  TilePyramidResult,
 } from './tileCalculator';
 
 // ============================================================================

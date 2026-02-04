@@ -5,7 +5,7 @@
  * Mobile: < 768px, Tablet: 768-1024px, Desktop: > 1024px
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ResponsiveState {
   width: number;

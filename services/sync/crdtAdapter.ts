@@ -8,7 +8,7 @@
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { IndexeddbPersistence } from 'y-indexeddb';
-import type { NormalizedState, EntityType } from '../vault';
+import type { EntityType, NormalizedState } from '../vault';
 
 // ============================================================================
 // Types

@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
-import { IIIFItem, getIIIFValue, isManifest, isCollection } from '../types';
-import { exportService, ExportOptions, VirtualFile, CanopyConfig, ImageApiOptions } from '../services/exportService';
-import { archivalPackageService, ArchivalPackageOptions } from '../services/archivalPackageService';
+import React, { useEffect, useState } from 'react';
+import { getIIIFValue, IIIFItem, isCollection, isManifest } from '../types';
+import { CanopyConfig, ExportOptions, exportService, ImageApiOptions, VirtualFile } from '../services/exportService';
+import { ArchivalPackageOptions, archivalPackageService } from '../services/archivalPackageService';
 import { activityStream as activityStreamService } from '../services/activityStream';
-import { validator, ValidationIssue } from '../services/validator';
+import { ValidationIssue, validator } from '../services/validator';
 import { Icon } from './Icon';
 import { ExportDryRun } from './ExportDryRun';
 import { FirstTimeHint } from './Tooltip';

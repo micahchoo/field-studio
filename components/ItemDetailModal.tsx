@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Icon } from './Icon';
-import { IIIFItem, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFItem } from '../types';
 
 interface BoardItem {
   id: string;

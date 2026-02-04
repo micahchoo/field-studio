@@ -1,15 +1,15 @@
-import { IIIFItem, IIIFManifest, IIIFCollection, IIIFCanvas, getIIIFValue, isCanvas, isManifest, isCollection } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
 import {
-  validateResource as schemaValidateResource,
+  getRecommendedProperties,
   IIIF_SCHEMA,
   isBehaviorAllowed,
-  getRecommendedProperties
+  validateResource as schemaValidateResource
 } from '../utils/iiifSchema';
 import { isValidHttpUri } from '../utils';
 import {
-  validateBehaviors,
   doesInheritBehavior,
-  findBehaviorConflicts
+  findBehaviorConflicts,
+  validateBehaviors
 } from '../utils/iiifBehaviors';
 
 export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';

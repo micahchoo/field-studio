@@ -1,7 +1,7 @@
-import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import { ValidationIssue, IssueCategory, healIssue, applyHealToTree, getFixDescription } from '../services';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { applyHealToTree, getFixDescription, healIssue, IssueCategory, ValidationIssue } from '../services';
 import { Icon } from './Icon';
-import { IIIFItem, getIIIFValue, isCanvas, isCollection, isManifest } from '../types';
+import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '../types';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';
 import { safeHealAll } from '../services/validationHealer';

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArchiveCollection, SourceManifest } from '../../types';
 import { Icon } from '../Icon';
 

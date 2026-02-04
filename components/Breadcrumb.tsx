@@ -5,7 +5,7 @@
  * and smart truncation for deep paths.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Icon } from './Icon';
 
 export interface BreadcrumbSegment {

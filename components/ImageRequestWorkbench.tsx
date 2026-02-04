@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IIIFCanvas, IIIFItem } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
@@ -65,7 +65,7 @@ export const ImageRequestWorkbench: React.FC<ImageRequestWorkbenchProps> = ({ ca
     if (!rawImageId) return '';
 
     if (rawImageId.startsWith('http://') || rawImageId.startsWith('https://')) {
-      const origin = window.location.origin;
+      const {origin} = window.location;
       if (rawImageId.startsWith(origin) && !rawImageId.includes(baseUrl)) {
         return rawImageId.replace(origin, origin + baseUrl.replace(/\/$/, ''));
       }

@@ -6,7 +6,7 @@
  * CollectionsView, and other components that need context actions.
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 
 export interface ContextMenuItem {
@@ -219,7 +219,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       style={{ 
         left: x, 
         top: y,
-        maxHeight: maxHeight,
+        maxHeight,
         overflowY: 'auto'
       }}
       onContextMenu={(e) => e.preventDefault()}

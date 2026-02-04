@@ -25,8 +25,7 @@
  */
 
 import React, { useState } from 'react';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 import { MAP_MARKER_COLORS, MAP_MARKER_DEFAULT } from '../../config/tokens';
 
 export interface MapMarkerProps {
@@ -52,6 +51,8 @@ export interface MapMarkerProps {
   size?: 'sm' | 'md' | 'lg';
   /** Disabled state */
   disabled?: boolean;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
 }
 
 /**
@@ -71,9 +72,8 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
   count = 1,
   size = 'md',
   disabled = false,
+  cx,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 

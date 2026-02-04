@@ -14,9 +14,9 @@ import React, { useCallback } from 'react';
 import type { IIIFCanvas, IIIFItem } from '@/types';
 import { useComposer } from '../../model';
 import {
-  ComposerToolbar,
-  ComposerSidebar,
   ComposerCanvas,
+  ComposerSidebar,
+  ComposerToolbar,
 } from '../molecules';
 
 export interface CanvasComposerPanelProps {

@@ -20,17 +20,17 @@
  * />
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Icon } from './Icon';
 import { EmptyState } from './EmptyState';
 import {
-  IngestProgress,
-  IngestStage,
-  IngestFileInfo,
+  FileStatus,
   IngestActivityLogEntry,
-  FileStatus
+  IngestFileInfo,
+  IngestProgress,
+  IngestStage
 } from '../types';
-import { IngestControls, formatETA, formatSpeed } from '../hooks/useIngestProgress';
+import { formatETA, formatSpeed, IngestControls } from '../hooks/useIngestProgress';
 
 // ============================================================================
 // Types

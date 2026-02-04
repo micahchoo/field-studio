@@ -5,7 +5,7 @@
  * Can track multiple dialogs with a single state object.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 interface DialogControls {
   isOpen: boolean;

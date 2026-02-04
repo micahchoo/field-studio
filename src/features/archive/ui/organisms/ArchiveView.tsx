@@ -8,32 +8,29 @@
  * FAILURE PREVENTED: No fieldMode prop drilling, no hardcoded constants, consistent styling
  */
 
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import type { IIIFItem, IIIFCanvas, IIIFCollection } from '@/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { IIIFCanvas, IIIFCollection, IIIFItem } from '@/types';
 import { getIIIFValue, isCanvas } from '@/types';
 import { ValidationIssue } from '@/services/validator';
 // LEGACY: Toast hook - will move to shared/hooks or app/providers
 import { useToast } from '@/components/Toast';
-import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '@/hooks';
+import { useGridVirtualization, useIIIFTraversal, useResponsive, useSharedSelection, useVirtualization } from '@/hooks';
 import { useDebouncedValue, useURLState } from '@/src/shared/lib';
-import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
-import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '@/constants';
-import { isValidChildType, getRelationshipType } from '@/utils/iiifHierarchy';
+import { ARIA_LABELS, IIIF_CONFIG, IIIF_SPEC, KEYBOARD, REDUCED_MOTION, RESOURCE_TYPE_CONFIG } from '@/constants';
+import { getRelationshipType, isValidChildType } from '@/utils/iiifHierarchy';
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 // NEW: StackedThumbnail molecule
-import { StackedThumbnail, ContextMenu, MuseumLabel } from '@/src/shared/ui/molecules';
+import { ContextMenu, MuseumLabel, StackedThumbnail } from '@/src/shared/ui/molecules';
 import type { ContextMenuSection } from '@/src/shared/ui/molecules';
 // NEW: MultiSelectFilmstrip feature molecule
 import { MultiSelectFilmstrip } from '../molecules/MultiSelectFilmstrip';
-import { generateUUID, createLanguageMap } from '@/utils/iiifTypes';
+import { createLanguageMap, generateUUID } from '@/utils/iiifTypes';
 // NEW: Feature slices for alternate views - these replace the legacy components/views/ imports
 import { MapView } from '@/src/features/map';
 import { TimelineView } from '@/src/features/timeline';
-// LEGACY: Viewer - still needs full feature slice migration
-import { Viewer } from '@/components/views/Viewer';
 import { ArchiveHeader } from './ArchiveHeader';
 import { ArchiveGrid } from './ArchiveGrid';
-import { selectAllCanvases, filterByTerm, sortCanvases, getFileDNA, getSelectionDNA, loadViewMode, saveViewMode, type ArchiveViewMode, type SortMode } from '../../model';
+import { type ArchiveViewMode, filterByTerm, getFileDNA, getSelectionDNA, loadViewMode, saveViewMode, selectAllCanvases, sortCanvases, type SortMode } from '../../model';
 
 export interface ArchiveViewProps {
   /** Root IIIF item (Collection or Manifest) */
@@ -66,9 +63,14 @@ export interface ArchiveViewProps {
     active: string;
     inactive: string;
     warningBg: string;
+    pageBg: string;
   };
   /** Current field mode */
   fieldMode: boolean;
+  /** Terminology function from template */
+  t: (key: string) => string;
+  /** Whether user is in advanced mode */
+  isAdvanced: boolean;
 }
 
 /**
@@ -76,7 +78,7 @@ export interface ArchiveViewProps {
  *
  * @example
  * <FieldModeTemplate>
- *   {({ cx, fieldMode }) => (
+ *   {({ cx, fieldMode, t, isAdvanced }) => (
  *     <ArchiveView
  *       root={root}
  *       onSelect={handleSelect}
@@ -85,6 +87,8 @@ export interface ArchiveViewProps {
  *       onUpdate={handleUpdate}
  *       cx={cx}
  *       fieldMode={fieldMode}
+ *       t={t}
+ *       isAdvanced={isAdvanced}
  *     />
  *   )}
  * </FieldModeTemplate>
@@ -100,6 +104,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   onCatalogSelection,
   cx,
   fieldMode,
+  t,
+  isAdvanced,
 }) => {
   const { showToast } = useToast();
   const { isMobile } = useResponsive();
@@ -346,12 +352,10 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
           <MapView
             root={root}
             onSelect={onSelect}
-            onOpen={onOpen}
-            onBatchEdit={onBatchEdit}
-            onUpdate={onUpdate}
-            validationIssues={validationIssues}
-            onReveal={onReveal}
-            onCatalogSelection={onCatalogSelection}
+            cx={cx}
+            fieldMode={fieldMode}
+            t={t}
+            isAdvanced={isAdvanced}
           />
         );
       case 'timeline':
@@ -359,12 +363,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
           <TimelineView
             root={root}
             onSelect={onSelect}
-            onOpen={onOpen}
-            onBatchEdit={onBatchEdit}
-            onUpdate={onUpdate}
-            validationIssues={validationIssues}
-            onReveal={onReveal}
-            onCatalogSelection={onCatalogSelection}
+            cx={cx}
+            fieldMode={fieldMode}
           />
         );
       default:

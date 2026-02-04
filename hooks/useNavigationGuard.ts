@@ -5,7 +5,7 @@
  * Provides in-app navigation blocking with confirmation dialogs
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface NavigationGuardOptions {
   /** Whether there are unsaved changes */

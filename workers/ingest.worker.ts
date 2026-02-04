@@ -12,15 +12,15 @@
  */
 
 import type {
-  IIIFCollection,
-  IIIFManifest,
-  IIIFCanvas,
-  IIIFAnnotationPage,
-  IIIFAnnotation,
-  IngestFileInfo,
-  IngestProgress,
   FileTree,
-  IIIFItem
+  IIIFAnnotation,
+  IIIFAnnotationPage,
+  IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
+  IngestFileInfo,
+  IngestProgress
 } from '../types';
 
 // ============================================================================
@@ -513,7 +513,7 @@ async function processNodeInternal(
   const id = generateId(type, baseUrl);
 
   // Parse metadata from info.yml if exists
-  let label = { none: [node.name] };
+  const label = { none: [node.name] };
 
   const files: Array<{
     file: File;

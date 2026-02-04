@@ -200,6 +200,9 @@ When building a new feature:
 - [ ] No hardcoded values (use constants)
 - [ ] No other feature imports
 - [ ] No app layer imports
+- [ ] Organisms receive `cx`, `fieldMode`, `t`, `isAdvanced` as props — never call `useContextualStyles`, `useAppSettings`, or `useTerminology` directly
+- [ ] Organisms pass `cx` and `fieldMode` down to every molecule child
+- [ ] Domain hooks (e.g., `useMap`, `useViewer`, `useHistory`) are allowed inside organisms; context hooks are not
 
 ## Next Steps
 

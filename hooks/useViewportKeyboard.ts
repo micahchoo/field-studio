@@ -5,7 +5,7 @@
  * Provides consistent keyboard-based pan, zoom, and rotation across all viewers.
  */
 
-import { useEffect, useCallback, type RefObject } from 'react';
+import { type RefObject, useCallback, useEffect } from 'react';
 import { VIEWPORT_DEFAULTS, VIEWPORT_KEYBOARD } from '../constants/viewport';
 import type { UseViewportReturn } from './useViewport';
 import type { UsePanZoomGesturesReturn } from './usePanZoomGestures';
@@ -108,7 +108,7 @@ export function useViewportKeyboard(
       if (!container) return;
 
       // Only respond if the container or its children have focus, or if document.body has focus
-      const activeElement = document.activeElement;
+      const {activeElement} = document;
       const isContainerFocused =
         container.contains(activeElement) ||
         activeElement === document.body ||
@@ -127,7 +127,7 @@ export function useViewportKeyboard(
       if (!isContainerFocused) return;
 
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-      const key = e.key;
+      const {key} = e;
 
       // Space bar for pan mode
       if (enableSpacePan && key === VIEWPORT_KEYBOARD.PAN_MODE && !e.repeat) {

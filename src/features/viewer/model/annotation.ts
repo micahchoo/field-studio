@@ -10,8 +10,8 @@
  * - SVG path utilities
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import type { IIIFCanvas, IIIFAnnotation } from '@/types';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { IIIFAnnotation, IIIFCanvas } from '@/types';
 import type { Point } from '@/constants/viewport';
 
 // ============================================================================
@@ -281,7 +281,7 @@ export const useAnnotation = (
     const annotation: IIIFAnnotation = {
       id: `${canvas.id}/annotation/${Date.now()}`,
       type: 'Annotation',
-      motivation: motivation,
+      motivation,
       body: {
         type: 'TextualBody',
         value: annotationText.trim(),

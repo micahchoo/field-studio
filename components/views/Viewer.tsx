@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage, IIIFSpecificResource, IIIFItem, IIIFManifest, getIIIFValue, LanguageString } from '../../types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getIIIFValue, IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFItem, IIIFManifest, IIIFSpecificResource, LanguageString } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
@@ -9,8 +9,8 @@ import { AVPlayer } from '../AVPlayer';
 import { PolygonAnnotationTool } from '../PolygonAnnotationTool';
 import { SearchPanel } from '../SearchPanel';
 import { contentStateService } from '../../services/contentState';
-import { contentSearchService, SearchService, SearchResult } from '../../services/contentSearchService';
-import { parseTarget, getSpatialRegion, createSpatialTarget, createSpecificResource } from '../../services/selectors';
+import { contentSearchService, SearchResult, SearchService } from '../../services/contentSearchService';
+import { createSpatialTarget, createSpecificResource, getSpatialRegion, parseTarget } from '../../services/selectors';
 import { VIEWPORT_DEFAULTS } from '../../constants/viewport';
 import { useAppSettings } from '../../hooks/useAppSettings';
 import { useTerminology } from '../../hooks/useTerminology';
@@ -960,9 +960,9 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                                     '@context': 'http://www.w3.org/ns/anno.jsonld',
                                     id: anno.id,
                                     type: 'Annotation',
-                                    motivation: motivation,
-                                    body: body,
-                                    target: target
+                                    motivation,
+                                    body,
+                                    target
                                 }, null, 2);
 
                                 const handleZoom = () => {

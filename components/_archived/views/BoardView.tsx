@@ -1,12 +1,12 @@
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { IIIFManifest, IIIFItem, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation, ConnectionType, getIIIFValue, AppSettings, LanguageString, isCanvas } from '../../types';
-import { DEFAULT_INGEST_PREFS, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppSettings, ConnectionType, getIIIFValue, IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas, LanguageString } from '../../types';
+import { ARIA_LABELS, DEFAULT_INGEST_PREFS, IIIF_CONFIG, IIIF_SPEC, KEYBOARD, REDUCED_MOTION } from '../../constants';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { Inspector } from '../Inspector';
 import { saveAs } from 'file-saver';
-import { useViewport, usePanZoomGestures } from '../../hooks';
+import { usePanZoomGestures, useViewport } from '../../hooks';
 import { useHistory } from '../../hooks/useHistory';
 import { PolygonAnnotationTool } from '../PolygonAnnotationTool';
 import { ImageRequestWorkbench } from '../ImageRequestWorkbench';
@@ -17,7 +17,7 @@ import { BoardDesignPanel } from '../BoardDesignPanel';
 import { ItemPreviewPanel } from '../ItemPreviewPanel';
 import { ItemDetailModal } from '../ItemDetailModal';
 import { BoardExportDialog } from '../BoardExportDialog';
-import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
+import { createLanguageMap, generateUUID } from '../../utils/iiifTypes';
 import { sanitizeSvg } from '../../utils/sanitization';
 import { useTerminology } from '../../hooks/useTerminology';
 
@@ -130,7 +130,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
   });
 
   // Derived isPanning from gestures (pan is now part of select tool via space/middle-mouse)
-  const isPanning = gestures.isPanning;
+  const {isPanning} = gestures;
 
   // Convert screen coordinates to canvas coordinates (accounting for pan/zoom)
   const getCanvasCoords = useCallback((e: React.MouseEvent | MouseEvent) => {
@@ -192,7 +192,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
             resourceType: resource?.type || 'Resource',
             label,
             blobUrl: blob,
-            blobUrls: blobUrls,
+            blobUrls,
             x: coords.x - 100,
             y: coords.y - 75,
             w: 200,

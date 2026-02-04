@@ -41,16 +41,22 @@ Injects fieldMode context and design tokens into child organisms:
 export const FieldModeTemplate = ({ children }) => {
   const { settings } = useAppSettings();
   const cx = useContextualStyles(settings.fieldMode);
+  const t = useTerminology();
+  const isAdvanced = useAbstractionLevel() === 'advanced';
 
-  return (
-    {children({ cx, fieldMode: settings.fieldMode })}
-  );
+  return children({ cx, fieldMode: settings.fieldMode, t, isAdvanced });
 };
 
 // Usage:
 <FieldModeTemplate>
-  {({ cx, fieldMode }) => (
-    <ArchiveView root={root} cx={cx} fieldMode={fieldMode} />
+  {({ cx, fieldMode, t, isAdvanced }) => (
+    <ArchiveView
+      root={root}
+      cx={cx}
+      fieldMode={fieldMode}
+      t={t}
+      isAdvanced={isAdvanced}
+    />
   )}
 </FieldModeTemplate>
 ```
@@ -103,15 +109,27 @@ export const ViewRouter = ({ currentMode, selectedId }) => {
     case 'archive':
       return (
         <FieldModeTemplate>
-          {({ cx, fieldMode }) => (
-            <ArchiveView cx={cx} fieldMode={fieldMode} />
+          {({ cx, fieldMode, t, isAdvanced }) => (
+            <ArchiveView cx={cx} fieldMode={fieldMode} t={t} isAdvanced={isAdvanced} />
           )}
         </FieldModeTemplate>
       );
     case 'board':
-      return <BoardView />;
+      return (
+        <FieldModeTemplate>
+          {({ cx, fieldMode, t, isAdvanced }) => (
+            <BoardView cx={cx} fieldMode={fieldMode} t={t} isAdvanced={isAdvanced} />
+          )}
+        </FieldModeTemplate>
+      );
     case 'metadata':
-      return <MetadataView />;
+      return (
+        <FieldModeTemplate>
+          {({ cx, fieldMode, t, isAdvanced }) => (
+            <MetadataView cx={cx} fieldMode={fieldMode} t={t} isAdvanced={isAdvanced} />
+          )}
+        </FieldModeTemplate>
+      );
     // ...
   }
 };

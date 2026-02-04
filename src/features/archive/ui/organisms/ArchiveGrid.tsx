@@ -137,6 +137,8 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             size="lg"
             className="w-full h-full"
             icon={config.icon}
+            cx={cx}
+            fieldMode={fieldMode}
           />
           <div className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded-full flex gap-1.5 font-sans">
             {dna.hasTime && <Icon name="schedule" className="text-[10px] text-yellow-400" title="Has Time metadata"/>}

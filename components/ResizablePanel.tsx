@@ -16,7 +16,7 @@
  */
 
 import React, { forwardRef } from 'react';
-import { useResizablePanel, ResizablePanelConfig } from '../hooks/useResizablePanel';
+import { ResizablePanelConfig, useResizablePanel } from '../hooks/useResizablePanel';
 import { Icon } from './Icon';
 
 // ============================================================================

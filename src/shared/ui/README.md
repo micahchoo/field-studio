@@ -75,7 +75,7 @@ A molecule is the first "smart" component — it has hooks and state — but it'
 ### Characteristics
 - ✅ Composes only atoms (lower layer)
 - ✅ Local state only (`useState`, `useDebouncedValue`, local UI state)
-- ✅ Context-aware (calls `useContextualStyles`, `useAppSettings` — generic context)
+- ✅ Props-driven (receives `cx?` and `fieldMode?` from organism — no context hook calls)
 - ✅ No domain logic (doesn't know about manifests, canvases, archives)
 - ✅ Reusable across features
 - ❌ No feature-specific hooks (e.g., no `useManifestData`)
@@ -86,12 +86,11 @@ A molecule is the first "smart" component — it has hooks and state — but it'
 
 **FilterInput molecule:**
 ```typescript
-// Composes: Icon (atom) + Input (atom) + useDebouncedValue (generic hook)
+// Composes: Icon (atom) + Input (atom) + useDebouncedValue (local hook)
 // State: internal search text + debounce timer
-// Context: fieldMode via useContextualStyles
-export const FilterInput = ({ onChange, placeholder }) => {
+// Props: receives cx? and fieldMode? from organism (NO context hook calls)
+export const FilterInput = ({ onChange, placeholder, cx, fieldMode }) => {
   const [value, setValue] = useState('');
-  const cx = useContextualStyles(useAppSettings().fieldMode);
   const debouncedValue = useDebouncedValue(value, 300);
 
   useEffect(() => {
@@ -99,25 +98,31 @@ export const FilterInput = ({ onChange, placeholder }) => {
   }, [debouncedValue]);
 
   return (
-    <div className={cx.input}>
+    <div className={cx?.input ?? 'default-input'}>
       <Icon name="search" />
       <Input value={value} onChange={(e) => setValue(e.target.value)} />
     </div>
   );
 };
+
+interface FilterInputProps {
+  onChange: (value: string) => void;
+  placeholder?: string;
+  cx?: ContextualClassNames;  // Optional — passed from organism
+  fieldMode?: boolean;        // Optional — passed from organism
+}
 ```
 
 **SearchField molecule:**
 ```typescript
 // Composes: Icon + Input + clear button
 // State: search text, debounce
-// Re-usable in any feature that needs search
-export const SearchField = ({ onSearch, placeholder }) => {
+// Props: receives cx? from organism (NO context hook calls)
+export const SearchField = ({ onSearch, placeholder, cx }) => {
   const [text, setText] = useState('');
-  const cx = useContextualStyles(useAppSettings().fieldMode);
 
   return (
-    <div>
+    <div className={cx?.surface}>
       <Icon name="search" />
       <Input
         value={text}
@@ -128,6 +133,12 @@ export const SearchField = ({ onSearch, placeholder }) => {
     </div>
   );
 };
+
+interface SearchFieldProps {
+  onSearch: (value: string) => void;
+  placeholder?: string;
+  cx?: ContextualClassNames;  // Optional — passed from organism
+}
 ```
 
 **ViewToggle molecule:**
@@ -239,7 +250,7 @@ We don't put organisms in `src/shared/` because organisms are **feature-specific
 2. **Molecules never import organisms or domain hooks**
 3. **Organisms never import from app/ or routes/**
 4. **All UI styling goes through design tokens (COLORS, SPACING, etc.)**
-5. **Context (fieldMode, settings) consumed only via generic hooks**
+5. **Context (fieldMode, settings) flows via props from Template → Organism → Molecule**
 
 ---
 
@@ -272,13 +283,14 @@ describe('FilterInput Molecule', () => {
     console.log('✓ IDEAL: Input debounces at 300ms');
   });
 
-  it('FAILURE PREVENTED: fieldMode prop not exposed', () => {
-    // TypeScript check: FilterInput should NOT have fieldMode prop
+  it('IDEAL OUTCOME: fieldMode is optional prop (props-driven)', () => {
+    // TypeScript check: FilterInput accepts optional cx and fieldMode props
     const props: React.ComponentProps<typeof FilterInput> = {
       onChange: () => {},
-      // fieldMode: false, ← Should error if this exists
+      fieldMode: false,  // Optional — passed from organism
+      cx: { surface: '', text: '', border: '', input: '' },  // Optional styling
     };
-    console.log('✓ FAILURE: No prop-drilling of fieldMode');
+    console.log('✓ IDEAL: Props-driven theming via cx and fieldMode');
   });
 });
 ```
@@ -309,7 +321,7 @@ describe('ArchiveGrid Organism', () => {
 | **State** | None | Local UI only | Domain + local |
 | **Location** | `shared/ui/atoms/` | `shared/ui/molecules/` | `features/*/ui/organisms/` |
 | **Composes** | Nothing | Atoms | Molecules + domain |
-| **Hooks** | None (pure functions) | Generic (`useState`, `useDebouncedValue`, `useContextualStyles`) | Domain (`useArchiveData`, `useManifestSelectors`) |
+| **Hooks** | None (pure functions) | Local only (`useState`, `useDebouncedValue`) — no context hooks | Domain (`useArchiveData`, `useManifestSelectors`) + context via props |
 | **Props** | Style + content | Generic UI props | Domain data + callbacks |
 | **Reusable?** | Across all features | Across all features | Feature-specific |
 | **Testable?** | Simple snapshot tests | IDEAL/FAILURE + UI interaction | IDEAL/FAILURE + real data |

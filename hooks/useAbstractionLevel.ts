@@ -5,7 +5,7 @@
  * Part of Phase 3 UX Simplification: Progressive Disclosure.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AbstractionLevel, UIAbstractionConfig } from '../types';
 import { DEFAULT_ABSTRACTION_CONFIG, FEATURE_FLAGS } from '../constants';
 

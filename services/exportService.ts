@@ -1,37 +1,37 @@
 
 import JSZip from 'jszip';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, IIIFAnnotation, isCollection, isManifest, isCanvas, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
 import { validator } from './validator';
 import {
+  createImageServiceReference,
   generateInfoJson,
   generateStandardSizes,
   generateStandardTiles,
-  createImageServiceReference,
-  ImageApiProfile,
-  getAllManifests
+  getAllManifests,
+  ImageApiProfile
 } from '../utils';
-import { getDerivativePreset, DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS, IIIF_SPEC } from '../constants';
+import { DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_SPEC } from '../constants';
 import {
-  generateCanopyPackageJson,
+  CANOPY_BUILD_SCRIPT,
+  CANOPY_CONTENT_ABOUT_LAYOUT,
+  CANOPY_CONTENT_LAYOUT,
+  CANOPY_CONTENT_SEARCH_LAYOUT,
+  CANOPY_CONTENT_WORKS_LAYOUT,
+  CANOPY_DEPLOY_WORKFLOW,
+  CANOPY_EXAMPLE_CLIENT,
+  CANOPY_EXAMPLE_COMPONENT,
   CANOPY_GITIGNORE,
   CANOPY_LICENSE,
-  CANOPY_BUILD_SCRIPT,
-  CANOPY_STYLES_INDEX,
-  CANOPY_STYLES_CUSTOM,
+  CANOPY_LOGO_SVG,
   CANOPY_MDX_COMPONENTS,
-  CANOPY_EXAMPLE_COMPONENT,
-  CANOPY_EXAMPLE_CLIENT,
-  CANOPY_CONTENT_LAYOUT,
-  CANOPY_CONTENT_ABOUT_LAYOUT,
-  CANOPY_CONTENT_WORKS_LAYOUT,
-  CANOPY_CONTENT_SEARCH_LAYOUT,
+  CANOPY_ROBOTS_TXT,
   CANOPY_SEARCH_RESULT_ARTICLE,
   CANOPY_SEARCH_RESULT_FIGURE,
-  CANOPY_ROBOTS_TXT,
-  CANOPY_DEPLOY_WORKFLOW,
+  CANOPY_STYLES_CUSTOM,
+  CANOPY_STYLES_INDEX,
   CANOPY_UPDATE_WORKFLOW,
-  CANOPY_LOGO_SVG,
-  generateCanopyAppMdx
+  generateCanopyAppMdx,
+  generateCanopyPackageJson
 } from '../constants/canopyTemplates';
 
 /** Default port for local IIIF server */
@@ -126,7 +126,7 @@ class ExportService {
 
         // Apply grayscale filter using ImageData
         const imageData = ctx.getImageData(0, 0, width, height);
-        const data = imageData.data;
+        const {data} = imageData;
         for (let i = 0; i < data.length; i += 4) {
             // Standard luminance formula: 0.299*R + 0.587*G + 0.114*B
             const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
@@ -201,7 +201,7 @@ class ExportService {
         // Calculate scale factors needed
         // Start from full resolution and halve until we reach a size <= tileSize
         const scaleFactors: number[] = [];
-        let maxDim = Math.max(width, height);
+        const maxDim = Math.max(width, height);
         let scaleFactor = 1;
         while (maxDim / scaleFactor > tileSize) {
             scaleFactors.push(scaleFactor);
@@ -261,7 +261,7 @@ class ExportService {
         // Canopy requires specific directory naming (plural) and assets/iiif/ path
         const getDirName = (type: string) => {
             if (options.format === 'canopy') {
-                return type.toLowerCase() + 's';
+                return `${type.toLowerCase()}s`;
             }
             return type.toLowerCase();
         };
@@ -345,11 +345,11 @@ class ExportService {
 
         const processItem = (item: IIIFItem, originalItem: IIIFItem) => {
             const originalId = item.id;
-            let idVal = originalId.split('/').pop() || 'unknown';
-            let typeDir = getDirName(item.type);
+            const idVal = originalId.split('/').pop() || 'unknown';
+            const typeDir = getDirName(item.type);
 
             // Deep clone the item for processing
-            let processedItem = JSON.parse(JSON.stringify(item));
+            const processedItem = JSON.parse(JSON.stringify(item));
 
             // Rewrite self ID
             if (options.format === 'canopy') {
@@ -379,7 +379,7 @@ class ExportService {
                     } else if (child.type === 'Canvas') {
                         // Process canvas content and assets
                         const origCanvas = (originalItem as any).items?.[idx] as IIIFCanvas;
-                        let processedCanvas = options.format === 'canopy'
+                        const processedCanvas = options.format === 'canopy'
                             ? rewriteIds(child, idVal)
                             : JSON.parse(JSON.stringify(child));
 
@@ -790,7 +790,7 @@ class ExportService {
      */
     private generateContentFiles(root: IIIFItem, config: CanopyConfig): VirtualFile[] {
         const files: VirtualFile[] = [];
-        const title = config.title;
+        const {title} = config;
         const description = this.extractIIIFValue((root as any).summary) || `A IIIF collection featuring ${this.countManifests(root)} items.`;
 
         // Generate homepage content/index.mdx
@@ -1017,7 +1017,7 @@ ${featuredInfo}
 
     private generateCanopyConfig(root: IIIFItem, config: CanopyConfig): string {
         const rootIdVal = root.id.split('/').pop();
-        const rootType = root.type.toLowerCase() + 's'; // Plural for Canopy
+        const rootType = `${root.type.toLowerCase()}s`; // Plural for Canopy
         const port = config.port || DEFAULT_IIIF_PORT;
 
         // For local development, IIIF files are served from http://localhost:{port}/iiif/
@@ -1145,7 +1145,7 @@ ${featuredInfo}
         const tileSize = imageApiOptions?.tileSize || 512;
         const scaleFactors: number[] = [];
         if (includeTiles) {
-            let maxDim = Math.max(width, height);
+            const maxDim = Math.max(width, height);
             let sf = 1;
             while (maxDim / sf > tileSize) {
                 scaleFactors.push(sf);
@@ -1193,7 +1193,7 @@ ${featuredInfo}
             info.tiles = [{
                 width: tileSize,
                 height: tileSize,
-                scaleFactors: scaleFactors
+                scaleFactors
             }];
         }
 

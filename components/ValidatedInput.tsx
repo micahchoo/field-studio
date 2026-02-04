@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from './Icon';
 
 export type ValidationStatus = 'pristine' | 'valid' | 'invalid' | 'validating';

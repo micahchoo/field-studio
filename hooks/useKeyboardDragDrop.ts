@@ -14,7 +14,7 @@
  * });
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Options for keyboard drag and drop */
 export interface KeyboardDragDropOptions<T> {

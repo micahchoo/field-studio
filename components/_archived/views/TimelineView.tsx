@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import { IIIFItem, IIIFCanvas, isCanvas, getIIIFValue } from '../../types';
+import { getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '../../types';
 import { Icon } from '../Icon';
 import { useAppSettings } from '../../hooks/useAppSettings';
 import { useContextualStyles } from '../../hooks/useContextualStyles';
@@ -22,7 +22,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) =>
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const { settings } = useAppSettings();
-  const fieldMode = settings.fieldMode;
+  const {fieldMode} = settings;
   const cx = useContextualStyles(fieldMode);
   const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
 

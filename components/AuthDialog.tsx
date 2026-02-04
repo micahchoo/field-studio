@@ -5,7 +5,7 @@
  * Supports active, kiosk, and external authentication profiles.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { authService, AuthService, AuthState, ProbeResponse } from '../services/authService';
 import { Icon } from './Icon';
 

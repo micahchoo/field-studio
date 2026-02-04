@@ -8,15 +8,15 @@
  */
 
 import {
-  NormalizedState,
-  getEntity,
-  getChildIds,
-  getParentId,
-  getEntitiesByType,
   getAncestors,
-  getDescendants,
+  getChildIds,
   getCollectionsContaining,
-  isOrphanManifest
+  getDescendants,
+  getEntitiesByType,
+  getEntity,
+  getParentId,
+  isOrphanManifest,
+  NormalizedState
 } from '@/services/vault';
 import type { IIIFManifest } from '@/types';
 

@@ -5,9 +5,9 @@
  * Re-exports from entities and adds archive-specific logic.
  */
 
-import type { IIIFItem, IIIFCanvas } from '@/types';
+import type { IIIFCanvas, IIIFItem } from '@/types';
 import { getIIIFValue } from '@/types';
-import { manifest, canvas } from '@/src/entities';
+import { canvas, manifest } from '@/src/entities';
 import type { NormalizedState } from '@/services/vault';
 
 // Re-export entity models for convenience

@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { Icon } from '../atoms';
-import { MUSEUM_LABEL_STYLES, MUSEUM_LABEL_ICONS } from '../../config/tokens';
+import { MUSEUM_LABEL_ICONS, MUSEUM_LABEL_STYLES } from '../../config/tokens';
 
 export type MuseumLabelType = 'field-note' | 'exhibit' | 'spec';
 

@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export interface UseStructureKeyboardOptions {
   /** Array of item IDs in display order */

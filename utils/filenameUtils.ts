@@ -99,7 +99,7 @@ export function detectFileSequence(
   }
 
   // Check if all files have the same base name
-  const baseName = filesWithNumbers[0].baseName;
+  const {baseName} = filesWithNumbers[0];
   const sameBaseName = filesWithNumbers.every(f => f.baseName === baseName);
 
   if (!sameBaseName) {
@@ -120,7 +120,7 @@ export function detectFileSequence(
 
   return {
     isSequence: true,
-    pattern: baseName + '{number}',
+    pattern: `${baseName}{number}`,
     hasGaps,
   };
 }

@@ -30,14 +30,14 @@ export const FEATURE_FLAGS = {
 };
 
 /** Performance feature flag exports for convenience */
-export const USE_IMMER_CLONING = FEATURE_FLAGS.USE_IMMER_CLONING;
-export const USE_WORKER_SEARCH = FEATURE_FLAGS.USE_WORKER_SEARCH;
+export const {USE_IMMER_CLONING} = FEATURE_FLAGS;
+export const {USE_WORKER_SEARCH} = FEATURE_FLAGS;
 
 // =============================================================================
 // Progressive Disclosure - UX Simplification (Phase 3)
 // =============================================================================
 
-import type { UIAbstractionConfig, AbstractionLevel, CoreViewMode } from './types';
+import type { AbstractionLevel, CoreViewMode, UIAbstractionConfig } from './types';
 
 /**
  * Default UI abstraction configuration

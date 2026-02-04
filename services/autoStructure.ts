@@ -1,5 +1,5 @@
 
-import { IIIFManifest, IIIFRange, IIIFCanvas, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFManifest, IIIFRange } from '../types';
 
 export const autoStructureService = {
   /**

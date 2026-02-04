@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { FileTree, IIIFItem, getIIIFValue } from '../types';
+import React, { useEffect, useState } from 'react';
+import { FileTree, getIIIFValue, IIIFItem } from '../types';
 import { Icon } from './Icon';
 import { findSimilarFiles } from '../utils/filenameUtils';
 
@@ -31,7 +31,7 @@ export const StagingArea: React.FC<StagingAreaProps> = ({ initialTree, existingR
   const [globalCreator, setGlobalCreator] = useState('');
   const [globalRights, setGlobalRights] = useState('https://creativecommons.org/licenses/by/4.0/');
   const [institution, setInstitution] = useState('');
-  const [baseUrl, setBaseUrl] = useState(window.location.origin + '/iiif');
+  const [baseUrl, setBaseUrl] = useState(`${window.location.origin}/iiif`);
 
   // Escape key to close (unless processing)
   useEffect(() => {

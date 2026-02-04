@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, getIIIFValue, isCollection, isManifest, AbstractionLevel } from '../types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AbstractionLevel, getIIIFValue, IIIFCollection, IIIFItem, IIIFManifest, isCollection, isManifest } from '../types';
 import { Icon } from './Icon';
-import { getRelationshipType, buildReferenceMap } from '../utils/iiifHierarchy';
+import { buildReferenceMap, getRelationshipType } from '../utils/iiifHierarchy';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';
 import { useTerminology } from '../hooks/useTerminology';
@@ -418,7 +418,7 @@ export const ManifestTree: React.FC<ManifestTreeProps> = ({
                   {/* Type indicator for Collections and Manifests */}
                   {(isCollection(item) || isManifest(item)) && (
                     <span className={`${(isCollection(item) || isManifest(item)) && (refMap.get(item.id)?.length || 0) > 1 ? 'ml-1' : 'ml-auto'} text-[8px] font-bold uppercase px-1 py-0.5 rounded ${
-                      isSelected ? 'bg-white/20 text-white' : colors.bg + ' ' + colors.text
+                      isSelected ? 'bg-white/20 text-white' : `${colors.bg} ${colors.text}`
                     }`}>
                       {isCollection(item) ? 'C' : 'M'}
                     </span>

@@ -79,21 +79,21 @@ export const FEATURE_FLAGS = {
 } as const;
 
 /** Phase 2 Trash System feature flag exports */
-export const USE_TRASH_SYSTEM = FEATURE_FLAGS.USE_TRASH_SYSTEM;
-export const USE_TRASH_AUTO_CLEANUP = FEATURE_FLAGS.USE_TRASH_AUTO_CLEANUP;
-export const USE_TRASH_SIZE_LIMITS = FEATURE_FLAGS.USE_TRASH_SIZE_LIMITS;
+export const {USE_TRASH_SYSTEM} = FEATURE_FLAGS;
+export const {USE_TRASH_AUTO_CLEANUP} = FEATURE_FLAGS;
+export const {USE_TRASH_SIZE_LIMITS} = FEATURE_FLAGS;
 
 /** Performance feature flag exports for convenience */
-export const USE_IMMER_CLONING = FEATURE_FLAGS.USE_IMMER_CLONING;
-export const USE_WORKER_SEARCH = FEATURE_FLAGS.USE_WORKER_SEARCH;
+export const {USE_IMMER_CLONING} = FEATURE_FLAGS;
+export const {USE_WORKER_SEARCH} = FEATURE_FLAGS;
 
 /** Phase 1 Memory Leak Fix feature flag exports */
-export const USE_WORKER_URL_CLEANUP = FEATURE_FLAGS.USE_WORKER_URL_CLEANUP;
-export const USE_IMAGE_SOURCE_CLEANUP = FEATURE_FLAGS.USE_IMAGE_SOURCE_CLEANUP;
-export const USE_FILE_LIFECYCLE = FEATURE_FLAGS.USE_FILE_LIFECYCLE;
+export const {USE_WORKER_URL_CLEANUP} = FEATURE_FLAGS;
+export const {USE_IMAGE_SOURCE_CLEANUP} = FEATURE_FLAGS;
+export const {USE_FILE_LIFECYCLE} = FEATURE_FLAGS;
 
 /** Phase 3 Enhanced Progress feature flag export */
-export const USE_ENHANCED_PROGRESS = FEATURE_FLAGS.USE_ENHANCED_PROGRESS;
+export const {USE_ENHANCED_PROGRESS} = FEATURE_FLAGS;
 
 /** Phase 4 Worker Migration feature flag export */
-export const USE_WORKER_INGEST = FEATURE_FLAGS.USE_WORKER_INGEST;
+export const {USE_WORKER_INGEST} = FEATURE_FLAGS;

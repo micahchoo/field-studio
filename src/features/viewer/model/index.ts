@@ -25,8 +25,8 @@ export {
   type UseAnnotationReturn,
 } from './annotation';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { IIIFCanvas, IIIFManifest, IIIFAnnotation } from '@/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { IIIFAnnotation, IIIFCanvas, IIIFManifest } from '@/types';
 import { contentSearchService } from '@/services/contentSearchService';
 import { UI_TIMING } from '@/src/shared/config/tokens';
 

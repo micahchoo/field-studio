@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { SourceManifest } from '../../types';
 import { Icon } from '../Icon';
 import { CanvasItem } from './CanvasItem';

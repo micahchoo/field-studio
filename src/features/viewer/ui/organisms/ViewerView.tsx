@@ -34,6 +34,7 @@ import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { ZoomControl } from '@/src/shared/ui/molecules/ZoomControl';
 import { PageCounter } from '@/src/shared/ui/molecules/PageCounter';
 import { LoadingState } from '@/src/shared/ui/molecules/LoadingState';
+import { IconButton } from '@/src/shared/ui/molecules/IconButton';
 import { useViewer } from '../../model';
 
 // LEGACY COMPONENT INTEGRATION:
@@ -202,53 +203,59 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
 
           {/* Search Button (if available) */}
           {hasSearchService && (
-            <button
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-              title="Search in Manifest"
-            >
-              <Icon name="search" />
-            </button>
+            <IconButton
+              icon="search"
+              ariaLabel="Search in Manifest"
+              onClick={() => {}}
+              variant="ghost"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
           )}
 
           {/* Metadata Toggle */}
-          <button
-            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-            title="Canvas Metadata"
-          >
-            <Icon name="info" />
-          </button>
+          <IconButton
+            icon="info"
+            ariaLabel="Canvas Metadata"
+            onClick={() => {}}
+            variant="ghost"
+            cx={cx}
+            fieldMode={fieldMode}
+          />
 
           {/* Download */}
           {canDownload && (
-            <button
+            <IconButton
+              icon="download"
+              ariaLabel="Download Image"
+              onClick={() => {}}
               disabled={!resolvedImageUrl}
-              className="p-2 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-800"
-              title="Download Image"
-            >
-              <Icon name="download" />
-            </button>
+              variant="ghost"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
           )}
 
           {/* Fullscreen */}
-          <button
+          <IconButton
+            icon={isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+            ariaLabel="Toggle Fullscreen"
             onClick={toggleFullscreen}
-            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
-            title="Toggle Fullscreen"
-          >
-            <Icon name={isFullscreen ? 'fullscreen_exit' : 'fullscreen'} />
-          </button>
+            variant="ghost"
+            cx={cx}
+            fieldMode={fieldMode}
+          />
 
           {/* Filmstrip Toggle */}
           {manifestItems && manifestItems.length > 1 && (
-            <button
+            <IconButton
+              icon="view_carousel"
+              ariaLabel="Toggle Canvas Navigator"
               onClick={toggleFilmstrip}
-              className={`p-2 rounded-lg hover:bg-slate-800 ${
-                showFilmstrip ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:text-white'
-              }`}
-              title="Toggle Canvas Navigator"
-            >
-              <Icon name="view_carousel" />
-            </button>
+              variant={showFilmstrip ? 'primary' : 'ghost'}
+              cx={cx}
+              fieldMode={fieldMode}
+            />
           )}
         </div>
       </div>
@@ -302,7 +309,9 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
           <PageCounter
             current={currentIndex + 1}
             total={totalItems}
+            onPageChange={() => {}}
             label={t('Canvas')}
+            cx={cx}
           />
           <div className="text-xs text-slate-500">
             {resolvedImageUrl ? 'Image loaded' : 'Loading...'}

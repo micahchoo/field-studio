@@ -5,10 +5,10 @@
  * recent commands, and rich command previews.
  */
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { fuzzyMatch, FuzzyMatchResult } from '../utils/fuzzyMatch';
-import { useCommandHistory, CommandHistoryEntry } from '../hooks/useCommandHistory';
+import { CommandHistoryEntry, useCommandHistory } from '../hooks/useCommandHistory';
 
 export interface Command {
   /** Unique identifier */
@@ -342,7 +342,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     // All commands by section
     const others = matches.filter(m => !m.isRecent && !m.isFrequent);
     others.forEach(match => {
-      const section = match.command.section;
+      const {section} = match.command;
       if (!groups[section]) {
         groups[section] = [];
       }

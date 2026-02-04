@@ -8,24 +8,22 @@
  * FAILURE PREVENTED: Lost work via history/undo, invalid state via validation
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { IIIFItem } from '@/types';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
-import { useTerminology } from '@/hooks/useTerminology';
-import { useAbstractionLevel } from '@/hooks/useAbstractionLevel';
 import { useHistory } from '@/hooks/useHistory';
 import { useToast } from '@/components/Toast';
 import {
-  type BoardState,
   type BoardItem,
+  type BoardState,
+  calculateAnchorPoints,
   type Connection,
   type ConnectionType,
-  createInitialBoardState,
   createBoardItem,
   createConnection,
-  selectIsEmpty,
-  calculateAnchorPoints,
+  createInitialBoardState,
   getConnectionLabel,
+  selectIsEmpty,
 } from '../../model';
 import { BoardHeader } from './BoardHeader';
 import { BoardCanvas } from './BoardCanvas';
@@ -43,6 +41,10 @@ export interface BoardViewProps {
   };
   /** Current field mode */
   fieldMode: boolean;
+  /** Terminology function from template */
+  t: (key: string) => string;
+  /** Whether user is in advanced mode */
+  isAdvanced: boolean;
   /** Called when board is exported */
   onExport?: (state: BoardState) => void;
   /** Initial board state (for loading saved boards) */
@@ -54,11 +56,13 @@ export interface BoardViewProps {
  *
  * @example
  * <FieldModeTemplate>
- *   {({ cx, fieldMode }) => (
+ *   {({ cx, fieldMode, t, isAdvanced }) => (
  *     <BoardView
  *       root={root}
  *       cx={cx}
  *       fieldMode={fieldMode}
+ *       t={t}
+ *       isAdvanced={isAdvanced}
  *       onExport={handleExport}
  *     />
  *   )}
@@ -68,12 +72,12 @@ export const BoardView: React.FC<BoardViewProps> = ({
   root,
   cx,
   fieldMode,
+  t,
+  isAdvanced,
   onExport,
   initialState,
 }) => {
   const { showToast } = useToast();
-  const { level } = useAbstractionLevel();
-  const { t } = useTerminology({ level });
 
   // History-managed board state
   const { state: board, update: updateBoard, undo, redo, canUndo, canRedo } =
@@ -144,7 +148,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
             {
               fromAnchor: anchors.from,
               toAnchor: anchors.to,
-              label: getConnectionLabel(type, level === 'advanced'),
+              label: getConnectionLabel(type, isAdvanced),
             }
           );
 
@@ -159,7 +163,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
         setConnectingFrom(null);
       }
     },
-    [connectingFrom, items, connections, board, updateBoard, showToast, level]
+    [connectingFrom, items, connections, board, updateBoard, showToast, isAdvanced]
   );
 
   // Handle item move

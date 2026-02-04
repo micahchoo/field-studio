@@ -8,13 +8,13 @@
  */
 
 import {
-  NormalizedState,
-  getEntity,
-  getChildIds,
-  getParentId,
-  getEntitiesByType,
   getAncestors,
-  getDescendants
+  getChildIds,
+  getDescendants,
+  getEntitiesByType,
+  getEntity,
+  getParentId,
+  NormalizedState
 } from '@/services/vault';
 import type { IIIFCanvas } from '@/types';
 

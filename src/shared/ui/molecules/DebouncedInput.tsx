@@ -10,7 +10,7 @@
  * FAILURE PREVENTED: Excessive re-renders from rapid input changes
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Input } from '../atoms';
 import { INPUT_CONSTRAINTS, UI_TIMING } from '../../config/tokens';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';

@@ -14,18 +14,18 @@
  */
 
 import {
-  IIIFItem,
-  IIIFCollection,
-  IIIFManifest,
-  IIIFCanvas,
-  IIIFRange,
   IIIFAnnotation,
   IIIFAnnotationPage,
+  IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
+  IIIFRange,
   LanguageString
 } from '../types';
 import { getAllowedProperties } from '../utils/iiifSchema';
 import { sanitizeAnnotationBody } from '../utils/sanitization';
-import { produce, enableMapSet, setAutoFreeze } from 'immer';
+import { enableMapSet, produce, setAutoFreeze } from 'immer';
 import { USE_IMMER_CLONING } from '../constants';
 
 // Enable Immer Map/Set support for better performance
@@ -278,7 +278,7 @@ function normalizeItem(
   parentId: string | null
 ): void {
   const type = item.type as EntityType;
-  const id = item.id;
+  const {id} = item;
 
   // Store in type index
   state.typeIndex[id] = type;
@@ -424,7 +424,7 @@ function normalizeAnnotationPage(
   state: NormalizedState,
   parentId: string
 ): void {
-  const id = page.id;
+  const {id} = page;
 
   state.typeIndex[id] = 'AnnotationPage';
   state.reverseRefs[id] = parentId;
@@ -873,7 +873,7 @@ export function addEntity(
   parentId: string
 ): NormalizedState {
   const type = entity.type as EntityType;
-  const id = entity.id;
+  const {id} = entity;
 
   if (USE_IMMER_CLONING) {
     return produce(state, draft => {
@@ -1285,7 +1285,7 @@ export function restoreEntityFromTrash(
     return state;
   }
 
-  const entity = trashed.entity;
+  const {entity} = trashed;
   const type = entity.type as EntityType;
   const parentId = options?.parentId ?? trashed.originalParentId;
 

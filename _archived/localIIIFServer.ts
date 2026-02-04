@@ -1,19 +1,19 @@
 
 import { searchService } from './searchService';
 import {
+  COMPLIANCE_LEVELS,
   generateInfoJson,
   generateStandardTiles,
-  validateRegion,
-  validateSize,
-  validateRotation,
-  validateQuality,
-  validateFormat,
   getImageMimeType,
   IMAGE_API_CONTEXT,
-  COMPLIANCE_LEVELS,
   ImageApiProfile,
   ImageFormat,
-  ImageQuality
+  ImageQuality,
+  validateFormat,
+  validateQuality,
+  validateRegion,
+  validateRotation,
+  validateSize
 } from '../utils';
 
 export class LocalIIIFServer {
@@ -56,7 +56,7 @@ export class LocalIIIFServer {
                     "@context": "http://iiif.io/api/search/2/context.json",
                     "id": url,
                     "type": "AnnotationPage",
-                    "items": items
+                    items
                 }
             };
         }
@@ -201,8 +201,8 @@ export class LocalIIIFServer {
 
       // Handle rotation
       if (rotationResult.parsed && (rotationResult.parsed.degrees !== 0 || rotationResult.parsed.mirror)) {
-          const degrees = rotationResult.parsed.degrees;
-          const mirror = rotationResult.parsed.mirror;
+          const {degrees} = rotationResult.parsed;
+          const {mirror} = rotationResult.parsed;
 
           // For 90/270 degree rotations, swap canvas dimensions
           if (degrees === 90 || degrees === 270) {
@@ -233,7 +233,7 @@ export class LocalIIIFServer {
       // Handle quality (grayscale/bitonal)
       if (quality === 'gray' || quality === 'bitonal') {
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
+          const {data} = imageData;
           for (let i = 0; i < data.length; i += 4) {
               const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
               if (quality === 'bitonal') {

@@ -1,5 +1,5 @@
 
-import { IIIFItem, isManifest, isCollection } from '../types';
+import { IIIFItem, isCollection, isManifest } from '../types';
 import { virtualManifestFactory } from './virtualManifestFactory';
 import { specBridge } from './specBridge';
 import { authService, AuthService } from './authService';

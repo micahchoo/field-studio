@@ -25,8 +25,7 @@
  */
 
 import React, { useState } from 'react';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface ResultCardProps {
   /** Unique identifier */
@@ -49,6 +48,8 @@ export interface ResultCardProps {
   date?: string;
   /** Loading state */
   loading?: boolean;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
 }
 
 /**
@@ -67,9 +68,8 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   highlightTerms = [],
   date,
   loading = false,
+  cx,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
   const [imageError, setImageError] = useState(false);
 
   // Highlight matching terms in text

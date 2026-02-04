@@ -8,14 +8,14 @@
  * - Synchronized content display
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  avService,
+  AccompanyingCanvas,
   AVCanvas,
+  avService,
   AVState,
   SyncPoint,
-  TimeModeConfig,
-  AccompanyingCanvas
+  TimeModeConfig
 } from '../services/avService';
 import { IIIFAnnotation } from '../types';
 import { Icon } from './Icon';
@@ -129,7 +129,7 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
     const media = mediaRef.current;
     if (!media) return;
 
-    const currentTime = media.currentTime;
+    const {currentTime} = media;
 
     // Handle trim mode end
     if (timeMode?.mode === 'trim' && timeMode.end && currentTime >= timeMode.end) {
@@ -211,7 +211,7 @@ export const AVPlayer: React.FC<AVPlayerProps> = ({
     } catch (e) {
       const err = e as Error;
       console.warn('[AVPlayer] Play failed:', err.message);
-      setError('Unable to play media: ' + err.message);
+      setError(`Unable to play media: ${err.message}`);
       setState(prev => ({ ...prev, isPlaying: false }));
     }
   }, [state.isPlaying]);

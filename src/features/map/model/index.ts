@@ -13,9 +13,9 @@
  * FAILURE PREVENTED: Invalid coordinates, clustering errors, viewport drift
  */
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { IIIFItem, IIIFCanvas } from '@/types';
-import { isCanvas, getIIIFValue } from '@/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { IIIFCanvas, IIIFItem } from '@/types';
+import { getIIIFValue, isCanvas } from '@/types';
 
 // ============================================================================
 // Types

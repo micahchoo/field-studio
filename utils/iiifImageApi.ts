@@ -8,7 +8,7 @@
  * @see https://iiif.io/api/image/3.0/
  */
 
-import { IIIF_SPEC, getDerivativePreset } from '../constants';
+import { getDerivativePreset, IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Types

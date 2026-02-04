@@ -5,8 +5,8 @@
  * Handles bidirectional sync between local vault changes and remote CRDT updates.
  */
 
-import { Vault, NormalizedState } from '../vault';
-import { VaultCrdtAdapter, PresenceInfo, NormalizedEntity } from './crdtAdapter';
+import { NormalizedState, Vault } from '../vault';
+import { NormalizedEntity, PresenceInfo, VaultCrdtAdapter } from './crdtAdapter';
 import { SyncState, SyncStatus } from './types';
 
 // ============================================================================

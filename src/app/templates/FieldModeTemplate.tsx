@@ -21,7 +21,7 @@
 
 import React, { ReactNode } from 'react';
 import { useAppSettings } from '@/hooks/useAppSettings';
-import { useContextualStyles, ContextualClassNames } from '@/hooks/useContextualStyles';
+import { ContextualClassNames, useContextualStyles } from '@/hooks/useContextualStyles';
 import { useTerminology } from '@/hooks/useTerminology';
 
 export interface FieldModeTemplateRenderProps {
@@ -46,7 +46,13 @@ export interface FieldModeTemplateProps {
  * This is the primary way organisms receive styling and mode information.
  * Organisms wrapped in this template don't need to know about useAppSettings.
  */
-export const FieldModeTemplate: React.FC<FieldModeTemplateProps> = ({ children }) => {
+/**
+ * Memoized FieldModeTemplate for performance
+ *
+ * Prevents re-renders when settings haven't changed.
+ * Critical for <50ms paint time after context changes.
+ */
+export const FieldModeTemplate: React.FC<FieldModeTemplateProps> = React.memo(({ children }) => {
   // Get current app settings (fieldMode, abstractionLevel, etc.)
   const { settings } = useAppSettings();
 
@@ -56,17 +62,22 @@ export const FieldModeTemplate: React.FC<FieldModeTemplateProps> = ({ children }
   // Get terminology based on abstraction level
   const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
 
+  // Memoize the context object to prevent unnecessary re-renders
+  const contextValue = React.useMemo(() => ({
+    cx,
+    fieldMode: settings.fieldMode,
+    t,
+    isAdvanced,
+  }), [cx, settings.fieldMode, t, isAdvanced]);
+
   // Pass all context to children via render prop
   return (
     <>
-      {children({
-        cx,
-        fieldMode: settings.fieldMode,
-        t,
-        isAdvanced,
-      })}
+      {children(contextValue)}
     </>
   );
-};
+});
+
+FieldModeTemplate.displayName = 'FieldModeTemplate';
 
 export default FieldModeTemplate;

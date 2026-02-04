@@ -5,8 +5,8 @@
  * Provides consistent mouse wheel zoom and drag-to-pan behavior across all viewers.
  */
 
-import { useState, useCallback, useRef, useEffect, type RefObject } from 'react';
-import { VIEWPORT_DEFAULTS, type Point } from '../constants/viewport';
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { type Point, VIEWPORT_DEFAULTS } from '../constants/viewport';
 import type { UseViewportReturn } from './useViewport';
 
 // ============================================================================

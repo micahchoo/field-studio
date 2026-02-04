@@ -20,10 +20,9 @@
  * />
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '../atoms';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface PageCounterProps {
   /** Current page number (1-indexed) */
@@ -40,6 +39,8 @@ export interface PageCounterProps {
   label?: string;
   /** Disabled state */
   disabled?: boolean;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
 }
 
 /**
@@ -55,9 +56,8 @@ export const PageCounter: React.FC<PageCounterProps> = ({
   allowDirectEntry = true,
   label = 'Page',
   disabled = false,
+  cx,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(current.toString());
 

@@ -12,7 +12,7 @@
  * ```
  */
 
-import React, { Suspense, ComponentType } from 'react';
+import React, { ComponentType, Suspense } from 'react';
 
 // Loading fallback for lazy components
 const ComponentFallback: React.FC<{ name: string }> = ({ name }) => (

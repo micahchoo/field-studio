@@ -9,7 +9,7 @@
  * for repository ingest.
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, getIIIFValue, isCanvas } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas } from '../types';
 import { storage } from './storage';
 
 // ============================================================================
@@ -356,7 +356,7 @@ class ArchivalPackageService {
       const bagSize = this.formatSize(totalSize);
       bagInfoLines.push(`Bag-Size: ${bagSize}`);
 
-      const bagInfoTxt = bagInfoLines.join('\n') + '\n';
+      const bagInfoTxt = `${bagInfoLines.join('\n')}\n`;
       files.push({ path: `${bagName}/bag-info.txt`, content: bagInfoTxt });
 
       // 4. Generate manifest file (checksums)
@@ -364,7 +364,7 @@ class ArchivalPackageService {
       for (const file of payloadFiles) {
         manifestLines.push(`${file.digest}  ${file.path}`);
       }
-      const manifestTxt = manifestLines.join('\n') + '\n';
+      const manifestTxt = `${manifestLines.join('\n')}\n`;
       files.push({
         path: `${bagName}/manifest-${options.digestAlgorithm}.txt`,
         content: manifestTxt
@@ -382,7 +382,7 @@ class ArchivalPackageService {
         const digest = await this.computeDigest(tagFile.content, options.digestAlgorithm);
         tagManifestLines.push(`${digest}  ${tagFile.path}`);
       }
-      const tagManifestTxt = tagManifestLines.join('\n') + '\n';
+      const tagManifestTxt = `${tagManifestLines.join('\n')}\n`;
       files.push({
         path: `${bagName}/tagmanifest-${options.digestAlgorithm}.txt`,
         content: tagManifestTxt

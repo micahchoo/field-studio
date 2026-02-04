@@ -33,10 +33,10 @@
 import { FEATURE_FLAGS } from '../constants/features';
 
 import type {
-  IIIFCanvas,
-  IIIFExternalWebResource,
   IIIFAnnotation,
   IIIFAnnotationBody,
+  IIIFCanvas,
+  IIIFExternalWebResource,
   IIIFItem
 } from '../types';
 import type { ImageApiProfile, ImageServiceInfo } from '../utils/iiifImageApi';
@@ -169,7 +169,7 @@ export function getPaintingBody(canvas: IIIFCanvas): IIIFExternalWebResource | n
   const firstAnnotation = firstPage.items?.[0];
   if (!firstAnnotation) return null;
 
-  const body = firstAnnotation.body;
+  const {body} = firstAnnotation;
   if (!body) return null;
 
   // Handle array of bodies
@@ -552,7 +552,7 @@ export function cleanupImageSource(source: ResolvedImageSource | null): boolean 
       cleanedSources.add(source);
 
       if (isCleanupWarningEnabled()) {
-        console.log('[imageSourceResolver] Cleaned up blob URL:', source._blobRef.substring(0, 50) + '...');
+        console.log('[imageSourceResolver] Cleaned up blob URL:', `${source._blobRef.substring(0, 50)}...`);
       }
 
       return true;

@@ -19,7 +19,7 @@
  * - Incremental switchover: old components → new feature slices
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { AppMode, IIIFItem } from '@/types';
 import { BaseTemplate } from '../templates/BaseTemplate';
 import { FieldModeTemplate } from '../templates/FieldModeTemplate';
@@ -77,6 +77,14 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   sidebarContent,
   headerContent
 }) => {
+  // Handle unknown mode fallback - useEffect to avoid setState during render
+  useEffect(() => {
+    const validModes: AppMode[] = ['archive', 'boards', 'metadata', 'collections', 'search', 'viewer', 'trash'];
+    if (!validModes.includes(currentMode)) {
+      console.warn(`Unknown app mode: ${currentMode}, falling back to archive`);
+      onModeChange('archive');
+    }
+  }, [currentMode, onModeChange]);
   // Phase 4: Wire new feature slices incrementally
   // Archive feature is now implemented - route to new ArchiveView
   if (currentMode === 'archive') {
@@ -88,7 +96,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
         headerContent={headerContent}
       >
         <FieldModeTemplate>
-          {({ cx, fieldMode }) => (
+          {({ cx, fieldMode, t, isAdvanced }) => (
             <ArchiveView
               root={root}
               onSelect={(item) => onSelect(item.id)}
@@ -107,6 +115,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               }}
               cx={cx}
               fieldMode={fieldMode}
+              t={t}
+              isAdvanced={isAdvanced}
             />
           )}
         </FieldModeTemplate>
@@ -124,11 +134,13 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
         headerContent={headerContent}
       >
         <FieldModeTemplate>
-          {({ cx, fieldMode }) => (
+          {({ cx, fieldMode, t, isAdvanced }) => (
             <BoardView
               root={root}
               cx={cx}
               fieldMode={fieldMode}
+              t={t}
+              isAdvanced={isAdvanced}
               onExport={(state) => {
                 // Handle board export - could dispatch to export service
                 console.log('Board export:', state);
@@ -309,9 +321,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     );
   }
 
-  // Unknown mode - show archive as default
-  console.warn(`Unknown app mode: ${currentMode}, falling back to archive`);
-  onModeChange('archive');
+  // Unknown mode - will be handled by useEffect above
   return null;
 };
 

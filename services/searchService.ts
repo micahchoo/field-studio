@@ -1,8 +1,8 @@
 
 import * as FlexSearchModule from 'flexsearch';
-import { IIIFItem, IIIFAnnotation, IIIFCanvas, isCanvas, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCanvas } from '../types';
 import { getAllCanvases } from '../utils';
-import { fieldRegistry, DEFAULT_SEARCH_CONFIG, SearchIndexConfig } from './fieldRegistry';
+import { DEFAULT_SEARCH_CONFIG, fieldRegistry, SearchIndexConfig } from './fieldRegistry';
 import { USE_WORKER_SEARCH } from '../constants';
 
 // FlexSearch has inconsistent exports across bundlers - try all patterns
@@ -147,7 +147,7 @@ export class SearchService {
     // Index current item
     this.index.add({
       id: item.id,
-      label: label,
+      label,
       text: summary,
       type: item.type,
       context: path.join(' > ')
@@ -189,7 +189,7 @@ export class SearchService {
              this.index.add({
                 id: anno.id,
                 label: annoLabel,
-                text: text,
+                text,
                 type: 'Annotation',
                 context: [...newPath, 'Annotations'].join(' > ')
              });

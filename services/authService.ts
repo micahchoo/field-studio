@@ -295,14 +295,14 @@ class IIIFAuthService {
    * Handle postMessage from auth windows/iframes
    */
   private handlePostMessage(event: MessageEvent) {
-    const data = event.data;
+    const {data} = event;
 
     if (!data || typeof data !== 'object') return;
 
     // Check if it's an auth message
     if (data.type !== 'AuthAccessToken2' && data.type !== 'AuthAccessTokenError2') return;
 
-    const messageId = data.messageId;
+    const {messageId} = data;
     if (!messageId) return;
 
     const pending = this.pendingMessages.get(messageId);

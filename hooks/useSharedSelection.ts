@@ -5,7 +5,7 @@
  * with selection count tracking and batch operations.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 export interface SharedSelectionState {
   /** Set of selected item IDs */

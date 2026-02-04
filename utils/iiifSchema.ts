@@ -1521,7 +1521,7 @@ export function validateResource(resource: IIIFItem): string[] {
 
   // Check items array if present
   if ('items' in resource && resource.items !== undefined) {
-    const items = resource.items;
+    const {items} = resource;
     if (!Array.isArray(items)) {
       errors.push('items must be an array');
     } else if (items.length === 0) {

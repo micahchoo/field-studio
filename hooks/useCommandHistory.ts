@@ -4,7 +4,7 @@
  * Tracks command usage and provides recent/frequent command access.
  */
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface CommandHistoryEntry {
   /** Command identifier */

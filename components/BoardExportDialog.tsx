@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Icon } from './Icon';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
-import { IIIFManifest, IIIFCanvas, IIIFAnnotationPage, IIIFAnnotation, IIIFItem, getIIIFValue } from '../types';
-import { DEFAULT_INGEST_PREFS, IIIF_SPEC, IIIF_CONFIG } from '../constants';
+import { getIIIFValue, IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFItem, IIIFManifest } from '../types';
+import { DEFAULT_INGEST_PREFS, IIIF_CONFIG, IIIF_SPEC } from '../constants';
 import { useToast } from './Toast';
 
 interface BoardItem {

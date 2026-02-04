@@ -5,8 +5,8 @@
  * Provides a scrollable filmstrip of thumbnails with click-to-focus.
  */
 
-import React, { useRef, useEffect } from 'react';
-import { IIIFCanvas, getIIIFValue } from '../types';
+import React, { useEffect, useRef } from 'react';
+import { getIIIFValue, IIIFCanvas } from '../types';
 import { Icon } from './Icon';
 import { StackedThumbnail } from './StackedThumbnail';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';

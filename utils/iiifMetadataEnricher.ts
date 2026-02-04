@@ -5,7 +5,7 @@
  * per IIIF Presentation API 3.0 recommendations.
  */
 
-import { IIIFItem, IIIFManifest, IIIFCollection, getIIIFValue, isManifest, isCollection } from '../types';
+import { getIIIFValue, IIIFCollection, IIIFItem, IIIFManifest, isCollection, isManifest } from '../types';
 import { resolveHierarchicalThumbs, resolveLeafCanvases } from './imageSourceResolver';
 
 /**

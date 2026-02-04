@@ -13,8 +13,8 @@
  * FAILURE PREVENTED: Invalid dates, inconsistent grouping, timezone issues
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
-import type { IIIFItem, IIIFCanvas } from '@/types';
+import React, { useCallback, useMemo, useState } from 'react';
+import type { IIIFCanvas, IIIFItem } from '@/types';
 import { isCanvas } from '@/types';
 
 // ============================================================================

@@ -4,14 +4,15 @@
  * Composes: Icon + text + optional action button
  *
  * Standardized placeholder for empty collections, zero results, etc.
- * Themes via useContextualStyles (no fieldMode prop).
+ * Receives `cx` styling tokens via props from organism.
+ * NOTE: Does NOT call useContextualStyles — receives cx via props.
  *
  * IDEAL OUTCOME: Shows meaningful message and CTA for empty state
  * FAILURE PREVENTED: User confusion about why content is missing
  */
 
 import React from 'react';
-import { Icon, Button } from '../atoms';
+import { Button, Icon } from '../atoms';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface EmptyStateAction {

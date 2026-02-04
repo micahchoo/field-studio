@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { IIIFItem, getIIIFValue, isCollection } from '../types';
-import { fetchRemoteResource, requiresAuth, AuthRequiredResult } from '../services/remoteLoader';
+import { getIIIFValue, IIIFItem, isCollection } from '../types';
+import { AuthRequiredResult, fetchRemoteResource, requiresAuth } from '../services/remoteLoader';
 import { AuthService } from '../services/authService';
 import { Icon } from './Icon';
 

@@ -88,7 +88,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   return (
     <BaseTemplate showSidebar={showSidebar} onSidebarToggle={onSidebarToggle}>
       <FieldModeTemplate>
-        {({ cx, fieldMode }) => {
+        {({ cx, fieldMode, t, isAdvanced }) => {
           switch (currentMode) {
             case 'archive':
               return (
@@ -97,6 +97,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                   selectedId={selectedId}
                   cx={cx}
                   fieldMode={fieldMode}
+                  t={t}
+                  isAdvanced={isAdvanced}
                   onSelect={onSelect}
                 />
               );
@@ -108,6 +110,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                   selectedId={selectedId}
                   cx={cx}
                   fieldMode={fieldMode}
+                  t={t}
+                  isAdvanced={isAdvanced}
                   onUpdate={onUpdate}
                 />
               );

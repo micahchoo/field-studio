@@ -10,10 +10,9 @@
  * - Uses Icon atom
  */
 
-import React, { useState, useCallback } from 'react';
-import { Icon } from '@/components/Icon';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import React, { useCallback, useState } from 'react';
+import { Icon } from '../atoms';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface StackedThumbnailProps {
   /** URLs of images to display */
@@ -26,6 +25,10 @@ export interface StackedThumbnailProps {
   icon?: string;
   /** Background class for placeholder */
   placeholderBg?: string;
+  /** Contextual styles from template (optional, for theming) */
+  cx?: ContextualClassNames;
+  /** Current field mode */
+  fieldMode?: boolean;
 }
 
 const containerSizes = {
@@ -42,17 +45,17 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   className = '',
   icon = 'image',
   placeholderBg,
+  cx,
+  fieldMode,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
 
   const handleImageError = useCallback((url: string) => {
     setFailedUrls((prev) => new Set([...prev, url]));
   }, []);
 
-  const bgClass = placeholderBg || cx.subtleBg;
-  const iconColor = cx.textMuted;
+  const bgClass = placeholderBg || cx?.subtleBg || 'bg-slate-100';
+  const iconColor = cx?.textMuted || 'text-slate-300';
 
   // Filter out failed URLs
   const validUrls = urls.filter((url) => url && !failedUrls.has(url));
@@ -62,7 +65,7 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   if (urlCount === 0) {
     return (
       <div
-        className={`${containerSizes[size]} ${bgClass} flex items-center justify-center shrink-0 overflow-hidden border ${cx.border} ${className}`}
+        className={`${containerSizes[size]} ${bgClass} flex items-center justify-center shrink-0 overflow-hidden border ${cx?.border || 'border-slate-200/50'} ${className}`}
       >
         <Icon name={icon} className={iconColor} />
       </div>
@@ -73,7 +76,7 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   if (urlCount === 1) {
     return (
       <div
-        className={`${containerSizes[size]} bg-slate-900 shrink-0 overflow-hidden border ${cx.border} ${className}`}
+        className={`${containerSizes[size]} bg-slate-900 shrink-0 overflow-hidden border ${cx?.border || 'border-slate-200/50'} ${className}`}
       >
         <img
           src={validUrls[0]}
@@ -89,7 +92,7 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   // Grid layout for 2-4 images
   return (
     <div
-      className={`${containerSizes[size]} bg-slate-200 shrink-0 overflow-hidden ${cx.border} grid grid-cols-2 grid-rows-2 gap-0.5 ${className}`}
+      className={`${containerSizes[size]} bg-slate-200 shrink-0 overflow-hidden ${cx?.border || 'border-slate-200/50'} grid grid-cols-2 grid-rows-2 gap-0.5 ${className}`}
     >
       {validUrls.slice(0, 4).map((url, i) => (
         <div

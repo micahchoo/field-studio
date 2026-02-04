@@ -1,8 +1,8 @@
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { FileTree, IIIFItem, SourceManifests, SourceManifest, AbstractionLevel, IngestResult } from '../../types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { AbstractionLevel, FileTree, IIIFItem, IngestResult, SourceManifest, SourceManifests } from '../../types';
 import { Icon } from '../Icon';
-import { buildSourceManifests, getAllCollections, findManifest } from '../../services/stagingService';
+import { buildSourceManifests, findManifest, getAllCollections } from '../../services/stagingService';
 import { useStagingState } from './hooks/useStagingState';
 import { useKeyboardDragDrop } from '../../hooks/useKeyboardDragDrop';
 import { useIngestProgress } from '../../hooks/useIngestProgress';

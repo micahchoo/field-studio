@@ -11,7 +11,7 @@
  * - services/ingestAnalyzer.ts (traverse preview nodes)
  */
 
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas } from '../types';
+import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '../types';
 
 // ============================================================================
 // Type Definitions

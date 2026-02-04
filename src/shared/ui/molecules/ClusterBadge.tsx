@@ -23,8 +23,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '../atoms';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 import { CLUSTER_INTENSITY } from '../../config/tokens';
 
 export interface ClusterItem {
@@ -47,6 +46,8 @@ export interface ClusterBadgeProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Disabled state */
   disabled?: boolean;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
 }
 
 /**
@@ -61,9 +62,8 @@ export const ClusterBadge: React.FC<ClusterBadgeProps> = ({
   onSelectItem,
   size = 'md',
   disabled = false,
+  cx,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Size configurations based on count magnitude

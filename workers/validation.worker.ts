@@ -102,7 +102,7 @@ function traverseAndValidate(
   options: any,
   onProgress?: (processed: number, total: number) => void
 ): { issues: ValidationIssue[]; count: number } {
-  let issues: ValidationIssue[] = [];
+  const issues: ValidationIssue[] = [];
   let count = 1;
   
   // Validate current item

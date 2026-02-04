@@ -1,5 +1,5 @@
 
-import { FileTree, SourceManifest, SourceManifests, ArchiveLayout, ArchiveCollection } from '../types';
+import { ArchiveCollection, ArchiveLayout, FileTree, SourceManifest, SourceManifests } from '../types';
 import { filenameRelationshipPatterns } from '../utils/filenameUtils';
 import { buildTree } from './iiifBuilder';
 import { MIME_TYPE_MAP } from '../constants';

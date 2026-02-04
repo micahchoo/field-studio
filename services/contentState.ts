@@ -8,7 +8,7 @@
  * @see https://iiif.io/api/content-state/1.0/
  */
 
-import { IIIFItem, IIIFCanvas } from '../types';
+import { IIIFCanvas, IIIFItem } from '../types';
 import { IIIF_SPEC } from '../constants';
 
 // ============================================================================
@@ -191,7 +191,7 @@ export const contentStateService = {
   parseContentState: (state: ContentState): ViewportState | null => {
     try {
       // Unwrap arrays recursively to get a single target
-      let target: ContentStateTarget = state.target;
+      let {target} = state;
       while (Array.isArray(target)) {
         target = target[0];
       }
@@ -206,7 +206,7 @@ export const contentStateService = {
       }
 
       const specificResource = target as SpecificResource;
-      const source = specificResource.source;
+      const {source} = specificResource;
       const canvasId = typeof source === 'string' ? source : source.id;
       const manifestId = typeof source === 'object' && source.partOf?.[0]?.id
         ? source.partOf[0].id
@@ -223,7 +223,7 @@ export const contentStateService = {
 
       for (const selector of selectors) {
         if (selector.type === 'FragmentSelector') {
-          const value = selector.value;
+          const {value} = selector;
 
           // Parse xywh
           const xywhMatch = value.match(/xywh=(\d+),(\d+),(\d+),(\d+)/);
@@ -384,7 +384,7 @@ export const contentStateService = {
     const {
       width = 800,
       height = 600,
-      viewerUrl = window.location.origin + '/viewer.html'
+      viewerUrl = `${window.location.origin}/viewer.html`
     } = options;
 
     const state = contentStateService.createContentState(viewport);

@@ -4,15 +4,15 @@
  * Composes: Icon + Input atoms + debounce logic
  *
  * A search/filter input with built-in debounce, clear button, and fieldMode theming.
- * NO fieldMode prop — theming is handled internally via useContextualStyles.
+ * Receives `cx` and `fieldMode` as optional props from organism.
+ * NOTE: Does NOT call useContextualStyles — receives cx via props.
  *
  * IDEAL OUTCOME: User types, onChange is called once after debounce period
  * FAILURE PREVENTED: Excessive onChange calls don't thrash parent state
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Icon } from '../atoms';
-import { Input } from '../atoms';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Icon, Input } from '../atoms';
 import { INPUT_CONSTRAINTS } from '../../config/tokens';
 import { sanitizeForInput } from '@/utils/inputValidation';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';

@@ -1,21 +1,21 @@
-import { IIIFItem, getIIIFValue, isCanvas, isManifest, isCollection } from '../types';
+import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '../types';
 import { ValidationIssue } from './validator';
 import { createLanguageMap, findNodeById, generateValidUri } from '../utils';
 import { DEFAULT_INGEST_PREFS, IIIF_SPEC } from '../constants';
 import {
-  getPropertyRequirement,
-  isBehaviorAllowed,
   COMMON_RIGHTS_URIS,
+  getMinimumTemplate,
+  getPropertyRequirement,
   getValidItemTypes,
-  VIEWING_DIRECTIONS,
+  isBehaviorAllowed,
   isValidViewingDirection,
-  getMinimumTemplate
+  VIEWING_DIRECTIONS
 } from '../utils/iiifSchema';
 import {
-  getValidBehaviorsForType,
   findBehaviorConflicts,
+  getDefaultBehavior,
   getDisjointSetForBehavior,
-  getDefaultBehavior
+  getValidBehaviorsForType
 } from '../utils/iiifBehaviors';
 
 /**

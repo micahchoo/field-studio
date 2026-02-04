@@ -25,17 +25,17 @@
  */
 
 import React from 'react';
-import type { IIIFItem, IIIFCanvas } from '@/types';
+import type { IIIFCanvas, IIIFItem } from '@/types';
 import { getIIIFValue } from '@/types';
 import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { TimelineTick } from '@/src/shared/ui/molecules/TimelineTick';
 import {
-  useTimeline,
-  formatTime,
   formatShortDate,
+  formatTime,
   getGridColumns,
   getTimelinePosition,
+  useTimeline,
   type ZoomLevel,
 } from '../../model';
 
@@ -201,9 +201,18 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 onClick={() => toggleDate(group.date)}
               >
                 <TimelineTick
-                  date={group.displayDate}
-                  count={group.items.length}
-                  active={selectedDate === group.date}
+                  timestamp={group.date}
+                  label={group.displayDate}
+                  items={group.items.map(item => ({
+                    id: item.id,
+                    title: item.label ? String(item.label) : 'Untitled',
+                    type: item.type || 'Canvas',
+                    timestamp: item.navDate || group.date
+                  }))}
+                  position={groupIdx / groups.length}
+                  onSelectItem={(id) => onSelect(group.items.find(i => i.id === id) || group.items[0])}
+                  selected={selectedDate === group.date}
+                  cx={cx}
                 />
               </div>
 

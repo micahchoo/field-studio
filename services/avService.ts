@@ -10,7 +10,7 @@
  * @see https://iiif.io/api/presentation/3.0/#placeholdercanvas
  */
 
-import { IIIFCanvas, IIIFManifest, IIIFAnnotation, LanguageMap } from '../types';
+import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '../types';
 import { IMAGE_QUALITY } from '../constants';
 
 // ============================================================================
@@ -229,7 +229,7 @@ class AVService {
     const syncPoints: SyncPoint[] = [];
 
     for (const annotation of annotations) {
-      const target = annotation.target;
+      const {target} = annotation;
       if (typeof target !== 'string') continue;
 
       // Parse time fragment from target
@@ -239,7 +239,7 @@ class AVService {
       const startTime = parseFloat(timeMatch[1]);
 
       // Get text content from body
-      const body = annotation.body;
+      const {body} = annotation;
       const text = typeof body === 'string'
         ? body
         : Array.isArray(body)
@@ -451,7 +451,7 @@ class AVService {
       }
 
       // Save current state
-      const currentTime = videoElement.currentTime;
+      const {currentTime} = videoElement;
       const wasPaused = videoElement.paused;
 
       const captureFrame = () => {

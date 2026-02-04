@@ -2,25 +2,25 @@
  * KeyboardShortcutsOverlay - Global keyboard shortcuts help (Cmd+?)
  */
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
-  SHORTCUTS,
-  ShortcutDefinition,
-  ShortcutContext,
-  ShortcutCategory,
-  formatShortcut,
-  getShortcutsByContext,
-  searchShortcuts,
-  groupShortcutsByCategory,
-  getAvailableContexts,
-  getContextLabel,
-  getCategoryLabel,
-  getCategoryIcon,
-  getCheatSheetData,
   CATEGORY_CONFIG,
   compareShortcuts,
+  formatShortcut,
+  getAvailableContexts,
+  getCategoryIcon,
+  getCategoryLabel,
+  getCheatSheetData,
+  getContextLabel,
+  getShortcutsByContext,
+  groupShortcutsByCategory,
+  searchShortcuts,
+  ShortcutCategory,
+  ShortcutContext,
+  ShortcutDefinition,
+  SHORTCUTS,
 } from '../constants/shortcuts';
 
 export interface KeyboardShortcutsOverlayProps {

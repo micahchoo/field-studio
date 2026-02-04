@@ -9,9 +9,9 @@
  * - Clover
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, IIIFAnnotation, isCanvas, isRange } from '../types';
-import { isImageService3, createImageServiceReference } from '../utils';
-import { IIIF_CONFIG, IIIF_SPEC, getDerivativePreset } from '../constants';
+import { IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isRange } from '../types';
+import { createImageServiceReference, isImageService3 } from '../utils';
+import { getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '../constants';
 
 // ============================================================================
 // Types
@@ -354,7 +354,7 @@ class ViewerCompatibilityService {
    * Generate a test manifest for compatibility testing
    */
   generateTestManifest(): IIIFManifest {
-    const baseUrl = IIIF_CONFIG.BASE_URL.LEGACY_DOMAINS[1] + '/iiif'; // example.org/iiif
+    const baseUrl = `${IIIF_CONFIG.BASE_URL.LEGACY_DOMAINS[1]}/iiif`; // example.org/iiif
     const manifestId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, `test-${Date.now()}`);
     const preset = getDerivativePreset();
 

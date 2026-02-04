@@ -1,8 +1,8 @@
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
-import { IIIFCanvas, IIIFAnnotation } from '../types';
+import { IIIFAnnotation, IIIFCanvas } from '../types';
 import type { Point } from '../constants/viewport';
 
 interface PolygonAnnotationToolProps {
@@ -208,7 +208,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
     const annotation: IIIFAnnotation = {
       id: `${canvas.id}/annotation/${Date.now()}`,
       type: 'Annotation',
-      motivation: motivation,
+      motivation,
       body: {
         type: 'TextualBody',
         value: annotationText.trim(),

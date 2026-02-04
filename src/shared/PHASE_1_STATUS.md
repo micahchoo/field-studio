@@ -1,5 +1,18 @@
 # Phase 1: Shared Foundation — Status Report
 
+> **⚠️ HISTORICAL DOCUMENT — Pattern Changed**
+>
+> This document was written during Phase 1 implementation (2026-02-03).
+> The molecule architecture described here has since been **superseded**:
+>
+> | Original Pattern (this doc) | Current Pattern |
+> |-----------------------------|------------------------------------|
+> | Molecules call `useContextualStyles()` internally | Molecules receive `cx?` prop |
+> | Molecules call `useTerminology()` internally | Molecules receive `t` via props |
+> | No `fieldMode` prop on molecules | `fieldMode?` is optional prop |
+>
+> For current architecture, see: `src/shared/ui/molecules/README.md`
+
 ## ✅ Completed: Documentation & Architecture
 
 We've established the atomic design philosophy with comprehensive READMEs at every level:
@@ -31,7 +44,7 @@ We've established the atomic design philosophy with comprehensive READMEs at eve
 
 #### FilterInput (84 lines)
 - Composes: Icon + Input atoms + debounce logic
-- ✅ No `fieldMode` prop — uses `useContextualStyles` internally
+- ✅ Receives `cx?` and `fieldMode?` as optional props *(updated)*
 - ✅ Uses `INPUT_CONSTRAINTS.debounceMs` and `INPUT_CONSTRAINTS.maxLengthDefault`
 - ✅ Clear button with visual feedback
 - ✅ Input sanitization to prevent injection
@@ -55,9 +68,9 @@ We've established the atomic design philosophy with comprehensive READMEs at eve
 - ✅ Fieldmode-aware theming
 
 #### ResourceTypeBadge (69 lines)
-- Composes: Icon + label via useTerminology
+- Composes: Icon + label
 - ✅ Shows IIIF resource types (Manifest, Canvas, Collection, etc.)
-- ✅ Respects abstraction level (simple/standard/advanced terminology)
+- ✅ Receives `t` terminology function via props *(updated)*
 - ✅ Icon mapping for all resource types
 
 **Total: 401 lines of molecule code**
@@ -96,15 +109,15 @@ Every level explains:
 - Molecules reference constants, not hardcoded values
 - Easy to adjust values globally (e.g., change debounce from 300ms to 500ms once)
 
-### 4. **No Prop-Drilling of fieldMode**
-- `FilterInput`, `SearchField`, `ViewToggle`, `EmptyState` consume `useContextualStyles` internally
-- Features/organisms don't pass `fieldMode` down through molecules
-- `ResourceTypeBadge` uses `useTerminology` for localized labels
+### 4. **Props-Driven Theming** *(Updated)*
+- `FilterInput`, `SearchField`, `ViewToggle`, `EmptyState` receive `cx?` and `fieldMode?` as optional props
+- Organisms call context hooks, pass results down to molecules
+- `ResourceTypeBadge` receives `t` terminology function via props
 
 ### 5. **Reusable Across All Features**
 - All 5 molecules have zero domain knowledge
 - They work in archive, board design, metadata, staging, any feature
-- Molecules use generic hooks only (`useState`, `useDebouncedValue`, `useContextualStyles`)
+- Molecules use local hooks only (`useState`, `useDebouncedValue`) — no context hooks
 
 ---
 
@@ -190,7 +203,7 @@ grep -n "[0-9]\{2,\}" src/shared/ui/molecules/YourMolecule.tsx
 | Metric | Target | Current |
 |--------|--------|---------|
 | Magic numbers in molecules | 0 | ✅ 0 |
-| fieldMode props in molecules | 0 | ✅ 0 (all use context) |
+| Context hooks in molecules | 0 | ✅ 0 (props-driven) |
 | Domain knowledge in molecules | 0 | ✅ 0 (reusable) |
 | Tests with IDEAL/FAILURE pattern | 100% | ✅ 100% (1/1 file) |
 | Real-data fixtures ready | Yes | ✅ pipelineFixtures.ts exists |
@@ -237,7 +250,7 @@ src/shared/
 
 1. **The spec was directional but not perfectly accurate.** We validated against the codebase:
    - Primitives (atoms) had zero imports → we preserved them and made them accessible
-   - 374 fieldMode props exist → we're solving this by having molecules consume context
+   - 374 fieldMode occurrences → reduced to ~50 in organisms/templates (correct level)
    - Magic numbers scattered → we collected them all in one file
 
 2. **Code informs tests, not the other way around.** We implemented molecules first, then wrote tests that demonstrate how they should behave.

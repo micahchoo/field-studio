@@ -47,8 +47,8 @@ export interface ComposerToolbarProps {
   onSave: () => void;
   /** Callback when cancel clicked */
   onCancel: () => void;
-  /** Contextual styles */
-  cx: {
+  /** Contextual styles - currently unused but reserved for future fieldMode support */
+  cx?: {
     text: string;
     textMuted: string;
     active: string;

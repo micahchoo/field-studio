@@ -11,7 +11,7 @@
  * - Uses Icon atom
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Icon } from '../atoms';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
@@ -207,7 +207,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       style={{
         left: x,
         top: y,
-        maxHeight: maxHeight,
+        maxHeight,
         overflowY: 'auto'
       }}
       onContextMenu={(e) => e.preventDefault()}

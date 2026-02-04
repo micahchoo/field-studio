@@ -1,6 +1,6 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { ArchiveLayout, ArchiveCollection, SourceManifest, SourceManifests } from '../../types';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ArchiveCollection, ArchiveLayout, SourceManifest, SourceManifests } from '../../types';
 import { Icon } from '../Icon';
 import { CollectionCard } from './CollectionCard';
 import { findManifest } from '../../services/stagingService';

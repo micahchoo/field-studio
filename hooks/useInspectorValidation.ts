@@ -7,9 +7,9 @@
  *   (caller decides how to apply it — typically via onUpdateResource)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { IIIFItem } from '../types';
-import { validator, ValidationIssue, healIssue } from '../services';
+import { healIssue, ValidationIssue, validator } from '../services';
 
 export function useInspectorValidation(resource: IIIFItem | null) {
   const [issues, setIssues] = useState<ValidationIssue[]>([]);

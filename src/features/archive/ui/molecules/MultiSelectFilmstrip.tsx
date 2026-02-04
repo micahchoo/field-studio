@@ -11,11 +11,12 @@
  * - Pure presentation, callbacks via props
  */
 
-import React, { useRef, useEffect } from 'react';
-import { IIIFCanvas, getIIIFValue } from '@/types';
+import React, { useEffect, useRef } from 'react';
+import { getIIIFValue, IIIFCanvas } from '@/types';
 import { Icon } from '@/components/Icon';
 import { StackedThumbnail } from '@/src/shared/ui/molecules';
 import { RESOURCE_TYPE_CONFIG } from '@/constants';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface MultiSelectFilmstripProps {
   /** Array of selected canvas items */
@@ -32,6 +33,8 @@ export interface MultiSelectFilmstripProps {
   orientation?: 'horizontal' | 'vertical';
   /** Function to resolve thumbnail URLs for an item */
   resolveThumbs: (item: IIIFCanvas, size: number) => string[];
+  /** Contextual styles from template */
+  cx: ContextualClassNames;
 }
 
 export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
@@ -42,6 +45,7 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
   fieldMode = false,
   orientation = 'horizontal',
   resolveThumbs,
+  cx,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const focusedRef = useRef<HTMLButtonElement>(null);
@@ -106,6 +110,7 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
                   size={isFocused ? 'sm' : 'xs'}
                   icon={config.icon}
                   className="w-full h-full rounded-md"
+                  cx={cx}
                   fieldMode={fieldMode}
                 />
               </div>

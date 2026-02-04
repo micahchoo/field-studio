@@ -21,14 +21,14 @@
  */
 
 import {
-  IIIFItem,
-  IIIFCollection,
-  IIIFManifest,
   IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
   IIIFRange,
+  isCanvas,
   isCollection,
   isManifest,
-  isCanvas,
   isRange
 } from '../types';
 import { IIIF_CONFIG } from '../constants';

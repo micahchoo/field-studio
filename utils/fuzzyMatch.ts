@@ -68,7 +68,7 @@ export function fuzzyMatch(text: string, pattern: string): FuzzyMatchResult | nu
   // Word boundary match (pattern matches at word boundaries)
   const words = textLower.split(/[-_\s\/]+/);
   let wordBoundaryScore = 0;
-  let wordBoundaryMatches: Array<{ start: number; end: number }> = [];
+  const wordBoundaryMatches: Array<{ start: number; end: number }> = [];
   let remainingPattern = patternLower;
   let currentIndex = 0;
 

@@ -24,7 +24,7 @@
  */
 
 import React from 'react';
-import type { IIIFItem, IIIFCanvas } from '@/types';
+import type { IIIFCanvas, IIIFItem } from '@/types';
 import { getIIIFValue } from '@/types';
 import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
@@ -32,10 +32,10 @@ import { MapMarker } from '@/src/shared/ui/molecules/MapMarker';
 import { ClusterBadge } from '@/src/shared/ui/molecules/ClusterBadge';
 import { ZoomControl } from '@/src/shared/ui/molecules/ZoomControl';
 import {
-  useMap,
-  formatCoordinates,
   formatBounds,
+  formatCoordinates,
   type GeoItem,
+  useMap,
 } from '../../model';
 
 export interface MapViewProps {
@@ -112,8 +112,9 @@ export const MapView: React.FC<MapViewProps> = ({
       <EmptyState
         icon="map"
         title="No Geotagged Items"
-        message="Items need GPS coordinates in their metadata to appear on the map."
-        secondaryMessage={isAdvanced ? 'Add a "Location" metadata field with coordinates like "40.7128, -74.0060"' : undefined}
+        message={isAdvanced
+          ? 'Items need GPS coordinates in their metadata to appear on the map. Add a "Location" metadata field with coordinates like "40.7128, -74.0060".'
+          : 'Items need GPS coordinates in their metadata to appear on the map.'}
         cx={cx}
         fieldMode={fieldMode}
       />
@@ -181,12 +182,19 @@ export const MapView: React.FC<MapViewProps> = ({
               {isCluster ? (
                 <ClusterBadge
                   count={cluster.items.length}
-                  highlighted={hoveredItem !== null && cluster.items.includes(hoveredItem)}
+                  onExpand={() => {}}
+                  cx={cx}
                 />
               ) : (
                 <MapMarker
+                  id={firstItem.canvas.id}
+                  lat={cluster.lat}
+                  lng={cluster.lng}
+                  title={firstItem.canvas.label ? String(firstItem.canvas.label) : 'Untitled'}
+                  type="Canvas"
                   thumbnail={firstItem.canvas._blobUrl || undefined}
-                  highlighted={hoveredItem === firstItem}
+                  onSelect={() => onSelect(firstItem.canvas)}
+                  cx={cx}
                 />
               )}
             </div>

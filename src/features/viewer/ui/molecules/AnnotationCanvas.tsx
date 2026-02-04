@@ -5,9 +5,9 @@
  */
 
 import React from 'react';
-import type { IIIFCanvas, IIIFAnnotation } from '@/types';
+import type { IIIFAnnotation, IIIFCanvas } from '@/types';
 import type { Point } from '@/constants/viewport';
-import { pointsToSvgPath, parseSvgSelector } from '../../model/annotation';
+import { parseSvgSelector, pointsToSvgPath } from '../../model/annotation';
 
 export interface AnnotationCanvasProps {
   canvas: IIIFCanvas;

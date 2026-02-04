@@ -15,7 +15,7 @@
  * @see Phase 2: Trash/Restore System (P0 - Data Safety)
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Icon } from './Icon';
 import { EmptyState } from './EmptyState';
 import { TrashStats } from '../services/trashService';

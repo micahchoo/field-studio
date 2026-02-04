@@ -19,7 +19,7 @@
  * ```
  */
 
-import { useRef, useEffect, RefObject } from 'react';
+import { RefObject, useEffect, useRef } from 'react';
 import { FOCUS_TRAP, KEYBOARD } from '../constants';
 
 export interface UseFocusTrapOptions {

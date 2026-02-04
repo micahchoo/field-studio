@@ -19,7 +19,7 @@ export interface ToolbarProps {
   /** Additional CSS classes */
   className?: string;
   /** Alignment of items */
-  align?: 'left' | 'center' | 'right' | 'space-between';
+  align?: 'left' | 'center' | 'right' | 'spaceBetween';
   /** Show divider line above toolbar */
   showDivider?: boolean;
   /** Compact mode (smaller padding) */
@@ -36,14 +36,14 @@ const alignClasses = {
   left: 'justify-start',
   center: 'justify-center',
   right: 'justify-end',
-  'space-between': 'justify-between',
+  spaceBetween: 'justify-between',
 };
 
 /**
  * Toolbar Molecule
  *
  * @example
- * <Toolbar align="space-between">
+ * <Toolbar align="spaceBetween">
  *   <Button onClick={onCreate}>Create</Button>
  *   <Button onClick={onDelete} variant="danger">Delete</Button>
  * </Toolbar>
@@ -55,21 +55,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   showDivider = false,
   compact = false,
   ariaLabel = 'Toolbar',
-  cx = {},
+  cx,
   fieldMode = false,
 }) => {
   // Context is provided via props (no hook calls)
 
   const paddingClass = compact ? 'py-2 px-3' : 'py-3 px-4';
   const gapClass = compact ? 'gap-2' : 'gap-3';
+  const safeCx = cx || {} as ContextualClassNames;
 
   return (
     <div
       className={`
         flex items-center ${alignClasses[align]}
         ${paddingClass} ${gapClass}
-        ${showDivider ? `border-t ${cx.border}` : ''}
-        ${cx.surface}
+        ${showDivider ? `border-t ${safeCx.border || 'border-slate-200'}` : ''}
+        ${safeCx.surface || ''}
         ${className}
       `}
       role="toolbar"

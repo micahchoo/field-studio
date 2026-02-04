@@ -16,7 +16,7 @@
  * @see https://iiif.io/api/annex/openannotation/#selectors
  */
 
-import { Selector, IIIFSpecificResource } from '../types';
+import { IIIFSpecificResource, Selector } from '../types';
 
 // ============================================================================
 // Types
@@ -258,7 +258,7 @@ export function serializeSelector(selector: ParsedSelector): string {
     return '';
   }
 
-  return '#' + parts.join('&');
+  return `#${parts.join('&')}`;
 }
 
 /**

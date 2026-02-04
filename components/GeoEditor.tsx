@@ -5,16 +5,16 @@
  * Uses Leaflet for map rendering and drawing.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  navPlaceService,
-  NavPlace,
+  GeocodedLocation,
   GeoFeature,
   LatLng,
   LatLngBounds,
-  GeocodedLocation
+  NavPlace,
+  navPlaceService
 } from '../services/navPlaceService';
-import { IIIFItem, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFItem } from '../types';
 import { Icon } from './Icon';
 
 // Leaflet type declaration for dynamic import

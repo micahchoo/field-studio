@@ -40,19 +40,19 @@
  * 6. Create SendToCollectionModal molecule
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import type { IIIFItem, IIIFCollection } from '@/types';
+import React, { useCallback, useMemo, useState } from 'react';
+import type { IIIFCollection, IIIFItem } from '@/types';
 import { ViewContainer } from '@/src/shared/ui/molecules/ViewContainer';
 import { FilterInput } from '@/src/shared/ui/molecules/FilterInput';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { Button } from '@/src/shared/ui/atoms';
 import {
-  type SourceManifests,
-  type SourceManifest,
+  createCollectionFromManifests,
   selectAllSourceManifests,
   selectTotalCanvasCount,
-  createCollectionFromManifests,
+  type SourceManifest,
+  type SourceManifests,
 } from '../../model';
 
 export interface StagingViewProps {

@@ -58,7 +58,7 @@ See `config/tokens.ts` for the full list.
 
 1. **Shared code is read-only from features.** Features import from shared, not the other way.
 2. **No context providers in shared.** Context (fieldMode, user settings) is provided by the app layer.
-3. **Molecules should not import domain hooks.** They use generic hooks like `useContextualStyles`, not `useManifestData`.
+3. **Molecules receive context via props.** They use local hooks only (`useState`, `useDebouncedValue`), NOT context hooks like `useContextualStyles` or `useAppSettings`. Context flows via props from Template → Organism → Molecule.
 4. **Every file has a purpose.** If a component could be used by only one feature, move it to that feature's directory.
 
 ---

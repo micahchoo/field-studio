@@ -1,11 +1,11 @@
 
-import React, { useState, useRef, useCallback } from 'react';
-import { IIIFCanvas, IIIFItem, getIIIFValue } from '../types';
+import React, { useCallback, useRef, useState } from 'react';
+import { getIIIFValue, IIIFCanvas, IIIFItem } from '../types';
 import { DEFAULT_INGEST_PREFS } from '../constants';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
-import { useViewport, usePanZoomGestures, useViewportKeyboard } from '../hooks';
-import { useLayerHistory, buildCanvasFromLayers, PlacedResource } from '../hooks/useLayerHistory';
+import { usePanZoomGestures, useViewport, useViewportKeyboard } from '../hooks';
+import { buildCanvasFromLayers, PlacedResource, useLayerHistory } from '../hooks/useLayerHistory';
 
 interface CanvasComposerProps {
   canvas: IIIFCanvas;
@@ -36,7 +36,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
   const containerRef = useRef<HTMLDivElement>(null);
 
   const viewport = useViewport({ minScale: 0.1, maxScale: 2, initialScale: 0.25 });
-  const scale = viewport.viewport.scale;
+  const {scale} = viewport.viewport;
 
   const gestures = usePanZoomGestures(containerRef, viewport, {
     enabled: !isResizing,

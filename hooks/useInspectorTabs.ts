@@ -4,7 +4,7 @@
  * Manages tab state with localStorage persistence per resource type.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type InspectorTab = 'metadata' | 'provenance' | 'geo' | 'learn';
 

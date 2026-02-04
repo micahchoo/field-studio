@@ -146,7 +146,7 @@ export function shouldGenerateTiles(
   }
 
   // Calculate total tiles at full resolution with default tile size
-  const tileSize = DEFAULT_CONFIG.tileSize;
+  const {tileSize} = DEFAULT_CONFIG;
   const cols = Math.ceil(imageWidth / tileSize);
   const rows = Math.ceil(imageHeight / tileSize);
   const fullResTiles = cols * rows;
@@ -336,8 +336,8 @@ export function calculateTileRegion(
   y: number,
   config: TilePyramidConfig
 ): string {
-  const tileSize = config.tileSize;
-  const overlap = config.overlap;
+  const {tileSize} = config;
+  const {overlap} = config;
 
   // Calculate pixel coordinates
   const xStart = Math.max(0, x * tileSize - overlap);
@@ -381,8 +381,8 @@ export function getTileDimensions(
   y: number,
   config: TilePyramidConfig
 ): { width: number; height: number } {
-  const tileSize = config.tileSize;
-  const overlap = config.overlap;
+  const {tileSize} = config;
+  const {overlap} = config;
 
   const xStart = Math.max(0, x * tileSize - overlap);
   const yStart = Math.max(0, y * tileSize - overlap);

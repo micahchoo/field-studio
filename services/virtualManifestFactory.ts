@@ -10,7 +10,7 @@
  * This enables Field Studio to work with any media URL, not just IIIF resources.
  */
 
-import { IIIFManifest, IIIFCanvas, IIIFAnnotation, LanguageMap } from '../types';
+import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '../types';
 import { IIIF_SPEC } from '../constants';
 import {
   getExtension,
@@ -116,7 +116,7 @@ class VirtualManifestFactory {
   private getFilename(url: string): string {
     try {
       const urlObj = new URL(url);
-      const pathname = urlObj.pathname;
+      const {pathname} = urlObj;
       const parts = pathname.split('/');
       return decodeURIComponent(parts[parts.length - 1] || 'resource');
     } catch {

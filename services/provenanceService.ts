@@ -369,7 +369,7 @@ export class ProvenanceService {
 
     // Build object characteristics
     let objectCharacteristicsXml = '';
-    const source = provenance.created.source;
+    const {source} = provenance.created;
     if (source) {
       objectCharacteristicsXml = `
     <premis:objectCharacteristics>
@@ -398,20 +398,20 @@ export class ProvenanceService {
     }
 
     // Build storage information
-    let storageXml = `
+    const storageXml = `
     <premis:storage>
       <premis:storageMedium>IndexedDB (Browser Local Storage)</premis:storageMedium>
     </premis:storage>`;
 
     // Build significant properties (IIIF-specific)
-    let significantPropertiesXml = `
+    const significantPropertiesXml = `
     <premis:significantProperties>
       <premis:significantPropertiesType>IIIF Resource Type</premis:significantPropertiesType>
       <premis:significantPropertiesValue>${provenance.resourceType}</premis:significantPropertiesValue>
     </premis:significantProperties>`;
 
     // Build original name and related info
-    let originalNameXml = source?.filename
+    const originalNameXml = source?.filename
       ? `<premis:originalName>${this.escapeXml(source.filename)}</premis:originalName>`
       : '';
 
@@ -446,7 +446,7 @@ export class ProvenanceService {
   </premis:agent>`;
 
     // Build rights statement if available
-    let rightsXml = '';
+    const rightsXml = '';
     // Rights can be added here when resource rights are tracked
 
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -493,7 +493,7 @@ ${rightsXml}
       const provenance = this.provenanceMap.get(resourceId);
       if (!provenance) continue;
 
-      const source = provenance.created.source;
+      const {source} = provenance.created;
       objects.push(`
   <premis:object xsi:type="premis:file">
     <premis:objectIdentifier>
@@ -641,7 +641,7 @@ export const provenanceService = new ProvenanceService();
 // React Hook
 // ============================================================================
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function useProvenance(resourceId: string | null) {
   const [provenance, setProvenance] = useState<ResourceProvenance | null>(null);

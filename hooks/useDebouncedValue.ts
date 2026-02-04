@@ -10,7 +10,7 @@
  * @param delay    Debounce window in ms (default 300)
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useDebouncedValue<T>(
   value: T,

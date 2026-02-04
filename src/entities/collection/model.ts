@@ -8,16 +8,16 @@
  */
 
 import {
-  NormalizedState,
-  getEntity,
-  getChildIds,
-  getParentId,
-  getEntitiesByType,
   getAncestors,
-  getDescendants,
+  getChildIds,
   getCollectionMembers,
   getCollectionsContaining,
-  getOrphanManifests
+  getDescendants,
+  getEntitiesByType,
+  getEntity,
+  getOrphanManifests,
+  getParentId,
+  NormalizedState
 } from '@/services/vault';
 import type { IIIFCollection } from '@/types';
 

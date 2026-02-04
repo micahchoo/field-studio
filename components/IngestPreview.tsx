@@ -5,12 +5,12 @@
  * allowing users to review and adjust before actual ingest.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   IngestAnalysisResult,
   IngestPreviewNode,
-  ProposedIIIFType,
-  overrideNodeType
+  overrideNodeType,
+  ProposedIIIFType
 } from '../services/ingestAnalyzer';
 import { Icon } from './Icon';
 

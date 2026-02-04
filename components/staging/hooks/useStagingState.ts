@@ -1,23 +1,23 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  SourceManifests,
+  ArchiveCollection,
   ArchiveLayout,
-  StagingState,
   SourceManifest,
-  ArchiveCollection
+  SourceManifests,
+  StagingState
 } from '../../../types';
 import {
-  createInitialArchiveLayout,
-  createCollection,
   addManifestsToCollection,
-  removeManifestsFromCollection,
-  updateCanvasOrder,
-  renameCollection,
+  createCollection,
+  createInitialArchiveLayout,
   deleteCollection,
-  moveCollection,
+  findManifest,
   getAllCollections,
-  findManifest
+  moveCollection,
+  removeManifestsFromCollection,
+  renameCollection,
+  updateCanvasOrder
 } from '../../../services/stagingService';
 
 export interface UseStagingStateReturn {

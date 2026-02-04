@@ -11,7 +11,7 @@
  * @param defaultValue   Fallback when storage is empty or invalid
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export function usePersistedTab<T extends string>(
   namespace: string,

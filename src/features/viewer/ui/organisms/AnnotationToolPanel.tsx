@@ -11,12 +11,12 @@
  */
 
 import React, { useEffect } from 'react';
-import type { IIIFCanvas, IIIFAnnotation } from '@/types';
+import type { IIIFAnnotation, IIIFCanvas } from '@/types';
 import { useAnnotation } from '../../model';
 import {
-  AnnotationToolbar,
   AnnotationCanvas,
   AnnotationForm,
+  AnnotationToolbar,
 } from '../molecules';
 
 export interface AnnotationToolPanelProps {

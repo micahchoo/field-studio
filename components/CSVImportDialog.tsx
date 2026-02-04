@@ -1,18 +1,18 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { IIIFItem, getIIIFValue } from '../types';
-import { csvImporter, CSVColumnMapping, CSVImportResult, SUPPORTED_IIIF_PROPERTIES } from '../services/csvImporter';
-import { SUPPORTED_LANGUAGES, CSV_SUPPORTED_PROPERTIES } from '../constants';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getIIIFValue, IIIFItem } from '../types';
+import { CSVColumnMapping, csvImporter, CSVImportResult, SUPPORTED_IIIF_PROPERTIES } from '../services/csvImporter';
+import { CSV_SUPPORTED_PROPERTIES, SUPPORTED_LANGUAGES } from '../constants';
 import { Icon } from './Icon';
 import {
-  listCheckpoints,
-  getActiveCheckpoint,
-  resumeFromCheckpoint,
   completeCheckpoint,
+  deleteCheckpoint,
   failCheckpoint,
-  IngestCheckpoint,
   formatCheckpointAge,
-  deleteCheckpoint
+  getActiveCheckpoint,
+  IngestCheckpoint,
+  listCheckpoints,
+  resumeFromCheckpoint
 } from '../services/ingestState';
 
 type DialogMode = 'import' | 'export';

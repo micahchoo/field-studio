@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { IIIFItem, IIIFAnnotation, IIIFCanvas, AppSettings, getIIIFValue, isManifest, isCollection } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCollection, isManifest } from '../types';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
-import { RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP, BEHAVIOR_OPTIONS, BEHAVIOR_DEFINITIONS, BEHAVIOR_CONFLICTS, getConflictingBehaviors, DEFAULT_MAP_CONFIG } from '../constants';
+import { BEHAVIOR_CONFLICTS, BEHAVIOR_DEFINITIONS, BEHAVIOR_OPTIONS, DEFAULT_MAP_CONFIG, DUBLIN_CORE_MAP, getConflictingBehaviors, RIGHTS_OPTIONS, VIEWING_DIRECTIONS } from '../constants';
 
 declare const L: any;
 

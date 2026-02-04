@@ -11,8 +11,8 @@
  * IIIF painting annotations for saving.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { IIIFCanvas, IIIFAnnotation, IIIFAnnotationPage } from '../types';
+import { useCallback, useEffect, useState } from 'react';
+import { IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas } from '../types';
 import { DEFAULT_INGEST_PREFS } from '../constants';
 
 // ---------------------------------------------------------------------------

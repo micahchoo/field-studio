@@ -9,7 +9,7 @@
  * - UserIntentDispatchContext: stable reference, never triggers re‑renders (for actions)
  */
 
-import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { CONTEXTUAL_TOKENS } from '../designSystem';
 
 // ============================================================================

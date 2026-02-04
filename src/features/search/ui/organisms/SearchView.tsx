@@ -18,7 +18,7 @@
  * useAppSettings directly. This organism receives context via props.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { IIIFItem } from '@/types';
 import { RESOURCE_TYPE_CONFIG } from '@/constants';
 import { Icon } from '@/components/Icon';
@@ -28,10 +28,10 @@ import { ResultCard } from '@/src/shared/ui/molecules/ResultCard';
 import { SearchField } from '@/src/shared/ui/molecules/SearchField';
 import { LoadingState } from '@/src/shared/ui/molecules/LoadingState';
 import {
-  useSearch,
   getResultCountText,
-  shouldSearch,
   type SearchFilter,
+  shouldSearch,
+  useSearch,
 } from '../../model';
 
 export interface SearchViewProps {
@@ -285,11 +285,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 <ResultCard
                   key={res.id}
                   id={res.id}
-                  label={res.label}
+                  title={res.label}
                   type={res.type}
-                  context={res.context}
-                  onClick={() => onSelect(res.id)}
-                  onRevealMap={onRevealMap ? () => onRevealMap(res.id) : undefined}
+                  onSelect={() => onSelect(res.id)}
+                  cx={cx}
                 />
               ))}
             </>

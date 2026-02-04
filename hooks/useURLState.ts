@@ -5,7 +5,7 @@
  * Handles browser back/forward navigation.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppMode } from '../types';
 
 const VALID_MODES: AppMode[] = ['archive', 'collections', 'metadata', 'search', 'viewer', 'boards'];

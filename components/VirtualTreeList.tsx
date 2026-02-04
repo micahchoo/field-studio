@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { getIIIFValue, isCanvas, isCollection, isManifest, type IIIFItem } from '../types';
+import { getIIIFValue, type IIIFItem, isCanvas, isCollection, isManifest } from '../types';
 import { FlattenedTreeNode, useTreeVirtualization } from '../hooks/useTreeVirtualization';
 import { Icon } from './Icon';
 import { StackedThumbnail } from './StackedThumbnail';

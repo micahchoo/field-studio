@@ -66,7 +66,7 @@ export const ExportDryRun: React.FC<ExportDryRunProps> = ({ files }) => {
                 ) : (
                     <pre className="text-[11px] font-mono text-blue-200 leading-relaxed whitespace-pre-wrap break-all">
                         {typeof selectedFile.content === 'string' && selectedFile.content.length > 50000 
-                            ? selectedFile.content.slice(0, 50000) + '\n... [Preview Truncated]' 
+                            ? `${selectedFile.content.slice(0, 50000)}\n... [Preview Truncated]` 
                             : selectedFile.content}
                     </pre>
                 )

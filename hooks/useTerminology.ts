@@ -5,14 +5,14 @@
  * Part of Phase 3 UX Simplification: Progressive Disclosure.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-  TERMINOLOGY_MAP,
-  getTerm as getTermUtil,
-  getTerms as getTermsUtil,
-  getResourceTypeLabel as getResourceTypeLabelUtil,
   formatCountWithTerm as formatCountWithTermUtil,
+  getResourceTypeLabel as getResourceTypeLabelUtil,
   getTermDescription as getTermDescriptionUtil,
+  getTerms as getTermsUtil,
+  getTerm as getTermUtil,
+  TERMINOLOGY_MAP,
   type TerminologyKey
 } from '../utils/uiTerminology';
 import type { AbstractionLevel } from '../types';

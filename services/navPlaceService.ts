@@ -8,7 +8,7 @@
  * @see https://geojson.org/
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, LanguageMap } from '../types';
+import { IIIFCanvas, IIIFItem, IIIFManifest, LanguageMap } from '../types';
 
 // GeoJSON type declarations (subset needed for this service)
 declare namespace GeoJSON {

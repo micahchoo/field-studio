@@ -24,10 +24,9 @@
  * />
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '../atoms';
-import { useContextualStyles } from '@/hooks/useContextualStyles';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface RangePreset {
   label: string;
@@ -52,6 +51,8 @@ export interface RangeSelectorProps {
   showPresets?: boolean;
   /** Disabled state */
   disabled?: boolean;
+  /** Contextual styles from template (required for theming) */
+  cx: ContextualClassNames;
 }
 
 /**
@@ -68,9 +69,8 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
   maxDate,
   showPresets = true,
   disabled = false,
+  cx,
 }) => {
-  const { settings } = useAppSettings();
-  const cx = useContextualStyles(settings.fieldMode);
 
   // Local state for inputs
   const [startInput, setStartInput] = useState(start);

@@ -8,8 +8,8 @@
  * - Provides ARIA-compatible tree navigation
  */
 
-import { useState, useCallback, useMemo, useRef, useEffect, RefObject } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, isCollection, isManifest } from '../types';
+import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { IIIFCollection, IIIFItem, IIIFManifest, isCollection, isManifest } from '../types';
 import { useVirtualization } from './useVirtualization';
 
 /** Flattened tree node for virtualization - minimal memory footprint */

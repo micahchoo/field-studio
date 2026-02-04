@@ -10,7 +10,7 @@
  * - Memoized calculations
  */
 
-import { useState, useEffect, useMemo, useRef, useCallback, RefObject } from 'react';
+import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface UseVirtualizationOptions {
   totalItems: number;
@@ -127,7 +127,7 @@ export function useVirtualization(options: UseVirtualizationOptions): UseVirtual
     const container = containerRef.current;
     if (!container) return;
 
-    const scrollTop = container.scrollTop;
+    const {scrollTop} = container;
     const viewportHeight = container.clientHeight;
 
     const startIndex = getItemAtPosition(scrollTop);
@@ -229,7 +229,7 @@ export function useGridVirtualization(options: UseGridVirtualizationOptions): Us
     const container = containerRef.current;
     if (!container) return;
 
-    const scrollTop = container.scrollTop;
+    const {scrollTop} = container;
     const viewportHeight = container.clientHeight;
     const viewportWidth = container.clientWidth;
 

@@ -1,27 +1,27 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas, AbstractionLevel, getIIIFValue, isCollection, isManifest, isCanvas } from '../../types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { AbstractionLevel, getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { MuseumLabel } from '../MuseumLabel';
 import { Breadcrumb } from '../Breadcrumb';
-import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
+import { ARIA_LABELS, IIIF_CONFIG, IIIF_SPEC, KEYBOARD, REDUCED_MOTION, RESOURCE_TYPE_CONFIG } from '../../constants';
 import { autoStructureService } from '../../services/autoStructure';
 import { StructureCanvas } from '../StructureCanvas';
-import { resolveThumbUrl, resolveHierarchicalThumb, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
+import { resolveHierarchicalThumb, resolveHierarchicalThumbs, resolveThumbUrl } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
-import { useSharedSelection, useIIIFTraversal, useResizablePanel } from '../../hooks';
+import { useIIIFTraversal, useResizablePanel, useSharedSelection } from '../../hooks';
 import { useTerminology } from '../../hooks/useTerminology';
 import { useBreadcrumbPath } from '../../hooks/useBreadcrumbPath';
 import { VirtualTreeList } from '../VirtualTreeList';
 import {
+  buildReferenceMap,
   findAllOfType,
   findCollectionsContaining,
-  isValidChildType,
   getRelationshipType,
   getValidChildTypes,
-  buildReferenceMap
+  isValidChildType
 } from '../../utils/iiifHierarchy';
-import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
+import { createLanguageMap, generateUUID } from '../../utils/iiifTypes';
 import { SkeletonBlock } from '../LoadingState';
 import { EmptyState, emptyStatePresets } from '../EmptyState';
 

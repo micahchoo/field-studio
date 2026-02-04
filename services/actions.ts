@@ -16,37 +16,37 @@
  */
 
 import {
-  NormalizedState,
-  updateEntity,
   addEntity,
-  removeEntity,
-  moveEntity,
-  reorderChildren,
+  emptyTrash,
   getEntity,
-  VaultSnapshot,
-  normalize,
+  moveEntity,
   moveEntityToTrash,
+  normalize,
+  NormalizedState,
+  removeEntity,
+  reorderChildren,
   restoreEntityFromTrash,
-  emptyTrash
+  updateEntity,
+  VaultSnapshot
 } from './vault';
 import {
-  IIIFItem,
-  IIIFCanvas,
-  IIIFManifest,
   IIIFAnnotation,
+  IIIFCanvas,
+  IIIFItem,
+  IIIFManifest,
   LanguageMap
 } from '../types';
-import { provenanceService, PropertyChange } from './provenanceService';
+import { PropertyChange, provenanceService } from './provenanceService';
 import {
-  isValidChildType,
   getRelationshipType,
-  getValidChildTypes
+  getValidChildTypes,
+  isValidChildType
 } from '../utils/iiifHierarchy';
 import {
   validateBehaviors as centralizedValidateBehaviors,
   findBehaviorConflicts,
-  isValidViewingDirection,
-  isValidNavDate
+  isValidNavDate,
+  isValidViewingDirection
 } from '../utils';
 
 // ============================================================================

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IIIFItem, IIIFManifest, IIIFCanvas, isManifest, isCanvas, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas, isManifest } from '../types';
 import { Icon } from './Icon';
 
 interface WorkspaceProps {

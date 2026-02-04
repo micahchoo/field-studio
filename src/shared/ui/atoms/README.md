@@ -41,6 +41,17 @@ Every atom uses design tokens from `../../../designSystem.ts`:
 - Touch targets: `TOUCH_TARGETS.button.base.height`
 - Interactions: `INTERACTION.duration.base`
 
+## Reviewer Checklist
+
+Before merging changes to atoms:
+
+- [ ] Zero hooks — no `useState`, `useEffect`, `useContext`, or custom hooks
+- [ ] Zero internal state — component output is a pure function of its props
+- [ ] Props only — all behaviour and appearance driven by props + design tokens
+- [ ] Design tokens — no hardcoded colours, spacing, or radii; everything from `designSystem.ts`
+- [ ] Accessible — semantic HTML element, `aria-*` attributes where needed, keyboard-reachable
+- [ ] No domain imports — nothing from `services/`, `features/`, `entities/`, or `hooks/`
+
 ---
 
 **See parent directory (`ui/README.md`) for the full atomic hierarchy.**

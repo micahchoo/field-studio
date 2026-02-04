@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { IIIFItem, getIIIFValue, isCanvas } from '../../types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getIIIFValue, IIIFItem, isCanvas } from '../../types';
 import { Icon } from '../Icon';
 import { useToast } from '../Toast';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { NavigationGuardDialog } from '../NavigationGuardDialog';
-import { RESOURCE_TYPE_CONFIG, RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_MAP } from '../../constants';
+import { DUBLIN_CORE_MAP, RESOURCE_TYPE_CONFIG, RIGHTS_OPTIONS, VIEWING_DIRECTIONS } from '../../constants';
 import { TableLoading } from '../LoadingState';
 import { EmptyState, emptyStatePresets } from '../EmptyState';
 import FileSaver from 'file-saver';

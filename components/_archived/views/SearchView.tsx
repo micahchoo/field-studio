@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IIIFItem } from '../../types';
-import { searchService, SearchResult, AutocompleteResult } from '../../services/searchService';
+import { AutocompleteResult, SearchResult, searchService } from '../../services/searchService';
 import { Icon } from '../Icon';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { EmptyState, emptyStatePresets } from '../EmptyState';

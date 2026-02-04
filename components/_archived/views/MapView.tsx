@@ -1,6 +1,6 @@
 
-import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { IIIFItem, IIIFCanvas, isCanvas, getIIIFValue } from '../../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '../../types';
 import { Icon } from '../Icon';
 import { useAppSettings } from '../../hooks/useAppSettings';
 import { useContextualStyles } from '../../hooks/useContextualStyles';
@@ -33,7 +33,7 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
   const [pan, setPan] = useState({ x: 0, y: 0 });
 
   const { settings } = useAppSettings();
-  const fieldMode = settings.fieldMode;
+  const {fieldMode} = settings;
   const cx = useContextualStyles(fieldMode);
   const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
 

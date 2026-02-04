@@ -1,17 +1,17 @@
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { SourceManifests, SourceManifest } from '../../types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { SourceManifest, SourceManifests } from '../../types';
 import { Icon } from '../Icon';
 import { SourceManifestItem } from './SourceManifestItem';
 import { findSimilarFiles } from '../../utils/filenameUtils';
 import { useTerminology } from '../../hooks/useTerminology';
 import { KeyboardDragDropReturn } from '../../hooks/useKeyboardDragDrop';
 import {
-  listCheckpoints,
-  getActiveCheckpoint,
   formatCheckpointAge,
+  getActiveCheckpoint,
   getCheckpointStatusColor,
-  IngestCheckpoint
+  IngestCheckpoint,
+  listCheckpoints
 } from '../../services/ingestState';
 
 interface SourcePaneProps {

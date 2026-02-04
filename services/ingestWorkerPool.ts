@@ -12,22 +12,23 @@
  */
 
 import {
-  IngestWorkerRequest,
-  IngestWorkerResponse,
-  IngestProgressMessage,
+  IngestCompleteMessage,
+  IngestErrorMessage,
   IngestFileCompleteMessage,
   IngestNodeCompleteMessage,
-  IngestCompleteMessage,
-  IngestErrorMessage
+  IngestProgressMessage,
+  IngestWorkerRequest,
+  IngestWorkerResponse
 } from '../workers/ingest.worker';
+import IngestWorker from '../workers/ingest.worker?worker';
 import {
   FileTree,
   IIIFItem,
-  IngestResult,
-  IngestReport,
+  IngestFileInfo,
   IngestProgress,
   IngestProgressOptions,
-  IngestFileInfo
+  IngestReport,
+  IngestResult
 } from '../types';
 import { FEATURE_FLAGS } from '../constants/features';
 import { getTileWorkerPool } from './tileWorker';
@@ -105,7 +106,6 @@ export class IngestWorkerPool {
   private batchWriteTimer: ReturnType<typeof setInterval> | null = null;
   private completedTasks = 0;
   private failedTasks = 0;
-  private workerScriptUrl: string | null = null;
 
   constructor(poolSize: number = Math.min(navigator.hardwareConcurrency || 4, MAX_WORKERS)) {
     this.poolSize = Math.min(poolSize, MAX_WORKERS);
@@ -117,21 +117,16 @@ export class IngestWorkerPool {
    * Initialize worker pool
    */
   private initWorkers(): void {
-    // Create worker script as blob for inline workers
-    const workerScript = this.generateWorkerScript();
-    const blob = new Blob([workerScript], { type: 'application/javascript' });
-    this.workerScriptUrl = URL.createObjectURL(blob);
-
     for (let i = 0; i < this.poolSize; i++) {
       this.createWorker();
     }
   }
 
   /**
-   * Create a new worker instance
+   * Create a new worker instance using Vite's worker import
    */
   private createWorker(): Worker {
-    const worker = new Worker(this.workerScriptUrl!, { type: 'module' });
+    const worker = new IngestWorker();
 
     worker.onmessage = (e: MessageEvent<IngestWorkerResponse>) => {
       this.handleWorkerMessage(e.data);
@@ -143,18 +138,6 @@ export class IngestWorkerPool {
 
     this.workers.push(worker);
     return worker;
-  }
-
-  /**
-   * Generate inline worker script
-   * In production, this would import the actual worker file
-   */
-  private generateWorkerScript(): string {
-    // Return a placeholder that will be replaced with actual worker in production
-    // For now, we use a simple script that delegates to the actual worker module
-    return `
-      import '${typeof window !== 'undefined' ? new URL('../workers/ingest.worker.ts', window.location.href).href : ''}';
-    `;
   }
 
   /**
@@ -216,12 +199,7 @@ export class IngestWorkerPool {
       }
 
       case 'INGEST_NODE_COMPLETE': {
-        const { operationId } = message.payload;
-        const job = this.activeJobs.get(operationId);
-        if (job) {
-          job.resolve(message.payload);
-          this.activeJobs.delete(operationId);
-        }
+        // Node progress update - don't resolve, wait for INGEST_COMPLETE
         this.activeWorkers--;
         this.processQueue();
         break;
@@ -588,11 +566,6 @@ export class IngestWorkerPool {
     this.workers = [];
     this.queue = [];
     this.activeJobs.clear();
-
-    if (this.workerScriptUrl) {
-      URL.revokeObjectURL(this.workerScriptUrl);
-      this.workerScriptUrl = null;
-    }
   }
 
   /**

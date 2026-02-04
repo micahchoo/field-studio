@@ -10,7 +10,7 @@
  * FAILURE PREVENTED: User input loss or thrashing parent component state
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { Icon, Input } from '../atoms';
 import { INPUT_CONSTRAINTS } from '../../config/tokens';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -65,26 +65,20 @@ export const SearchField: React.FC<SearchFieldProps> = ({
 }) => {
   // Context is provided via props (no hook calls)
 
-  // Local state
-  const [text, setText] = useState(value);
-
-  // Sync external value
-  useEffect(() => {
-    setText(value);
-  }, [value]);
-
-  // Debounce text for onChange
-  const debouncedText = useDebouncedValue(text, INPUT_CONSTRAINTS.debounceMs);
-
-  // Fire onChange when debounced value changes
-  useEffect(() => {
-    onChange?.(debouncedText);
-    onSearch?.(debouncedText);
-  }, [debouncedText, onChange, onSearch]);
+  // Debounce text for onChange - hook manages local state and calls onChange after delay
+  const { localValue: text, handleChange, flush } = useDebouncedValue(
+    value,
+    (newValue) => {
+      onChange?.(newValue);
+      onSearch?.(newValue);
+    },
+    INPUT_CONSTRAINTS.debounceMs
+  );
 
   const handleClear = useCallback(() => {
-    setText('');
-  }, []);
+    handleChange('');
+    flush(); // Flush immediately on clear
+  }, [handleChange, flush]);
 
   return (
     <div className={`relative ${width} ${className}`}>
@@ -103,7 +97,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         type="text"
         placeholder={placeholder}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         autoFocus={autoFocus}
         className={`
           w-full pl-10 pr-8 py-2 border rounded-md text-sm

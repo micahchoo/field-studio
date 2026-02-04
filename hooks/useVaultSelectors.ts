@@ -20,25 +20,25 @@ import {
   useVaultState,
 } from './useIIIFEntity';
 import {
-  IIIFItem,
-  IIIFCollection,
-  IIIFManifest,
-  IIIFCanvas,
-  IIIFRange,
   IIIFAnnotation,
   IIIFAnnotationPage,
+  IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
+  IIIFRange,
   LanguageString,
 } from '../types';
 import {
-  NormalizedState,
+  EntityType,
+  getAncestors,
+  getChildIds,
+  getDescendants,
+  getEntitiesByType,
   getEntity,
   getEntityType,
   getParentId,
-  getChildIds,
-  getEntitiesByType,
-  getAncestors,
-  getDescendants,
-  EntityType,
+  NormalizedState,
 } from '../services/vault';
 import { ValidationIssue } from '../services/validator';
 import { BreadcrumbSegment } from './useBreadcrumbPath';
@@ -100,7 +100,7 @@ function getEntityLabelText(entity: NormalizedEntity | null): string {
   }
 
   // Fallback to ID-based label
-  const id = entity.id;
+  const {id} = entity;
   const lastSlash = id.lastIndexOf('/');
   if (lastSlash > 0) {
     const fragment = id.slice(lastSlash + 1);

@@ -18,7 +18,7 @@
  * This organism focuses on composition while the model handles business logic.
  */
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IIIFItem } from '@/types';
 import { ViewContainer } from '@/src/shared/ui/molecules/ViewContainer';
 import { FilterInput } from '@/src/shared/ui/molecules/FilterInput';
@@ -26,12 +26,12 @@ import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { Button } from '@/src/shared/ui/atoms';
 import {
-  flattenTree,
-  filterByTerm,
-  extractColumns,
-  itemsToCSV,
   detectChanges,
+  extractColumns,
+  filterByTerm,
   type FlatItem,
+  flattenTree,
+  itemsToCSV,
   type ResourceTab,
 } from '../../model';
 

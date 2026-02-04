@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { IIIFItem, IIIFCanvas, ResourceState, getIIIFValue, IIIFCollection, AppMode, isCanvas } from '../../types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppMode, getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCanvas, ResourceState } from '../../types';
 import { ValidationIssue } from '../../services/validator';
 import { Icon } from '../Icon';
 import { MapView } from './MapView';
@@ -8,21 +8,21 @@ import { MuseumLabel } from '../MuseumLabel';
 import { useToast } from '../Toast';
 import { EmptyState } from '../EmptyState';
 import { GridLoading } from '../LoadingState';
-import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
+import { ARIA_LABELS, IIIF_CONFIG, IIIF_SPEC, KEYBOARD, REDUCED_MOTION, RESOURCE_TYPE_CONFIG } from '../../constants';
 import { Viewer } from './Viewer';
-import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '../../hooks';
+import { useGridVirtualization, useIIIFTraversal, useResponsive, useSharedSelection, useVirtualization } from '../../hooks';
 import { useAppSettings } from '../../hooks/useAppSettings';
 import { useContextualStyles } from '../../hooks/useContextualStyles';
 import {
-  isValidChildType,
+  findCanvasParent,
   getRelationshipType,
-  findCanvasParent
+  isValidChildType
 } from '../../utils/iiifHierarchy';
-import { resolveThumbUrl, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
+import { resolveHierarchicalThumbs, resolveThumbUrl } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
 import { ContextMenu, ContextMenuSection } from '../ContextMenu';
 import { MultiSelectFilmstrip } from '../MultiSelectFilmstrip';
-import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
+import { createLanguageMap, generateUUID } from '../../utils/iiifTypes';
 
 interface ArchiveViewProps {
   root: IIIFItem | null;
@@ -61,7 +61,7 @@ interface RubberBandState {
 const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen, onBatchEdit, onUpdate, validationIssues = {}, onReveal, onCatalogSelection }) => {
   const { showToast } = useToast();
   const { settings } = useAppSettings();
-  const fieldMode = settings.fieldMode;
+  const {fieldMode} = settings;
   const cx = useContextualStyles(fieldMode);
 
   // Loading state for initial data
@@ -437,8 +437,8 @@ const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOp
       }
 
       // Calculate selection rectangle bounds
-      const startX = rubberBand.startX;
-      const startY = rubberBand.startY;
+      const {startX} = rubberBand;
+      const {startY} = rubberBand;
       // Use current mouse position or last known position
       const endX = rubberBand.currentX; 
       const endY = rubberBand.currentY;

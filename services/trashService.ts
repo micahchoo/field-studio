@@ -14,16 +14,16 @@
  */
 
 import {
-  NormalizedState,
-  TrashedEntity,
-  moveEntityToTrash,
-  restoreEntityFromTrash,
   emptyTrash,
+  getDescendants,
   getEntity,
-  getDescendants
+  moveEntityToTrash,
+  NormalizedState,
+  restoreEntityFromTrash,
+  TrashedEntity
 } from './vault';
-import { provenanceService, PropertyChange } from './provenanceService';
-import { USE_TRASH_SYSTEM, USE_TRASH_AUTO_CLEANUP, USE_TRASH_SIZE_LIMITS } from '../constants/features';
+import { PropertyChange, provenanceService } from './provenanceService';
+import { USE_TRASH_AUTO_CLEANUP, USE_TRASH_SIZE_LIMITS, USE_TRASH_SYSTEM } from '../constants/features';
 import { IIIFItem, ResourceState } from '../types';
 
 // ============================================================================
@@ -539,7 +539,7 @@ export class TrashService {
       }
 
       // Count by type
-      const type = trashed.entity.type;
+      const {type} = trashed.entity;
       itemsByType[type] = (itemsByType[type] || 0) + 1;
 
       // Check expiration

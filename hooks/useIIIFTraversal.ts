@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas } from '../types';
+import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '../types';
 
 export interface UseIIIFTraversalReturn {
   /** Find a node by ID anywhere in the tree */

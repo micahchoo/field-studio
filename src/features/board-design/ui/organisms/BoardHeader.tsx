@@ -12,6 +12,8 @@ import React from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
 import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
+import { IconButton } from '@/src/shared/ui/molecules/IconButton';
+import { ActionButton } from '@/src/shared/ui/molecules/ActionButton';
 
 export interface BoardHeaderProps {
   /** Board title */
@@ -110,57 +112,38 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 
       {/* Right: Actions */}
       <Toolbar>
-        {/* Undo */}
-        <button
+        <IconButton
+          icon="undo"
+          ariaLabel="Undo"
+          title="Undo (Ctrl+Z)"
           onClick={onUndo}
           disabled={!canUndo}
-          className={`
-            p-2 rounded transition-colors
-            ${canUndo
-              ? fieldMode
-                ? 'text-slate-300 hover:text-white hover:bg-slate-800'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-slate-400 cursor-not-allowed'}
-          `}
-          title="Undo (Ctrl+Z)"
-          aria-label="Undo"
-        >
-          <Icon name="undo" />
-        </button>
-
-        {/* Redo */}
-        <button
+          variant="ghost"
+          cx={cx}
+          fieldMode={fieldMode}
+        />
+        <IconButton
+          icon="redo"
+          ariaLabel="Redo"
+          title="Redo (Ctrl+Shift+Z)"
           onClick={onRedo}
           disabled={!canRedo}
-          className={`
-            p-2 rounded transition-colors
-            ${canRedo
-              ? fieldMode
-                ? 'text-slate-300 hover:text-white hover:bg-slate-800'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-slate-400 cursor-not-allowed'}
-          `}
-          title="Redo (Ctrl+Shift+Z)"
-          aria-label="Redo"
-        >
-          <Icon name="redo" />
-        </button>
+          variant="ghost"
+          cx={cx}
+          fieldMode={fieldMode}
+        />
 
         <div className={`w-px h-6 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
 
-        {/* Export */}
-        <button
+        <ActionButton
+          label="Export"
+          icon="download"
           onClick={onExport}
-          className={`
-            flex items-center gap-2 px-3 py-2 rounded font-medium
-            ${fieldMode
-              ? 'bg-yellow-400 text-slate-900 hover:bg-yellow-300'
-              : 'bg-iiif-blue text-white hover:bg-blue-600'}
-          `}
-        >
-          <Icon name="download" />
-          <span>Export</span>
-        </button>
+          variant="primary"
+          size="sm"
+          cx={cx}
+          fieldMode={fieldMode}
+        />
       </Toolbar>
     </div>
   );

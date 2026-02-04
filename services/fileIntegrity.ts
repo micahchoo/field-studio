@@ -10,7 +10,7 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Content-Addressable Storage (Hashing)" pattern
  */
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { DBSchema, IDBPDatabase, openDB } from 'idb';
 
 // ============================================================================
 // Types

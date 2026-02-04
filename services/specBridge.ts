@@ -19,15 +19,15 @@
  * @see https://iiif.io/api/presentation/3.0/change-log/
  */
 
-import { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, LanguageMap, isCanvas } from '../types';
+import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, LanguageMap } from '../types';
 import {
-  isValidViewingDirection,
-  isBehaviorValidForType,
-  isValidHttpUri,
   createLanguageMap,
   DEFAULT_VIEWING_DIRECTION,
+  IMAGE_API_PROTOCOL,
+  isBehaviorValidForType,
   isImageService3,
-  IMAGE_API_PROTOCOL
+  isValidHttpUri,
+  isValidViewingDirection
 } from '../utils';
 import { IIIF_SPEC } from '../constants';
 

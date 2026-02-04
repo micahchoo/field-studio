@@ -1,14 +1,14 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SourceManifests } from '../../types';
 import { Icon } from '../Icon';
 import { SUPPORTED_LANGUAGES } from '../../constants';
 import {
-  VocabularyOption,
-  MetadataTemplateOptions,
+  downloadMetadataTemplate,
   getVocabularyOptions,
+  MetadataTemplateOptions,
   previewMetadataTemplate,
-  downloadMetadataTemplate
+  VocabularyOption
 } from '../../services/metadataTemplateService';
 
 interface MetadataTemplateExportProps {

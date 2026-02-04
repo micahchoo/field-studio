@@ -21,14 +21,14 @@
 import { DEFAULT_DERIVATIVE_SIZES } from '../constants';
 import { FEATURE_FLAGS } from '../constants/features';
 import {
-  createCanvasTilePipeline,
   CanvasTilePipeline,
+  createCanvasTilePipeline,
   TileGenerationProgress,
 } from './imagePipeline/canvasPipeline';
 import {
   TilePyramidConfig,
-  TilePyramidResult,
   TilePyramidDescriptor,
+  TilePyramidResult,
 } from './imagePipeline/tileCalculator';
 
 // ============================================================================

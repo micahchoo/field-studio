@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { IIIFItem, getIIIFValue } from '../types';
+import { getIIIFValue, IIIFItem } from '../types';
 import { Icon } from './Icon';
 import { RESOURCE_TYPE_CONFIG } from '../constants';
 
@@ -30,7 +30,7 @@ function getSelectionType(items: IIIFItem[]): SelectionType {
 
   if (types.size > 1) return 'mixed';
 
-  const type = items[0].type;
+  const {type} = items[0];
   switch (type) {
     case 'Canvas': return 'canvas';
     case 'Manifest': return 'manifest';

@@ -1,5 +1,5 @@
 
-import { SourceManifests, SourceManifest } from '../types';
+import { SourceManifest, SourceManifests } from '../types';
 import { getCSVColumnsByCategory, SUPPORTED_LANGUAGES } from '../constants';
 
 export type VocabularyOption = 'iiif' | 'dublin-core' | 'both';

@@ -9,10 +9,10 @@
  * - ResourceDispatchContext: stable reference, never triggers re‑renders (for actions)
  */
 
-import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { IIIFItem } from '../types';
 import { ValidationSummary } from './useVaultSelectors';
-import { HIERARCHY, CONTEXTUAL_TOKENS } from '../designSystem';
+import { CONTEXTUAL_TOKENS, HIERARCHY } from '../designSystem';
 
 // ============================================================================
 // Types

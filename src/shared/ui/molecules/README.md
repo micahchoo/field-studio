@@ -11,7 +11,7 @@ Composes: Icon + Input + debounce logic
 - Input for searching/filtering
 - Built-in debounce at 300ms
 - Clear button appears when text exists
-- Styles via `useContextualStyles` (fieldMode-aware)
+- Styles via `cx` prop (fieldMode-aware)
 
 **Usage:**
 ```typescript
@@ -144,15 +144,15 @@ Composes: Button group for mode selection
 ```
 
 ### ResourceTypeBadge ✨ NEW
-Composes: Icon + type label via terminology
+Composes: Icon + type label
 - Shows resource type (Manifest, Canvas, Collection, etc.)
-- Uses `useTerminology` to get localized labels
-- Fieldmode-aware styling
+- Receives `t` terminology function via props from organism
+- Fieldmode-aware styling via `cx` prop
 
 **Usage:**
 ```typescript
-<ResourceTypeBadge type="Manifest" />
-{/* Shows icon + "Manifest" or "Item Group" depending on abstraction level */}
+<ResourceTypeBadge type="Manifest" t={t} cx={cx} />
+{/* Shows icon + "Manifest" or "Item Group" depending on terminology */}
 ```
 
 ## Key Characteristics
@@ -160,13 +160,13 @@ Composes: Icon + type label via terminology
 ✅ **All molecules in this directory:**
 - Compose only atoms (from `../atoms/`)
 - Have local UI state (`useState`, `useDebouncedValue`)
-- Call generic context hooks (`useContextualStyles`, `useAppSettings`, `useTerminology`)
+- Receive `cx?: ContextualClassNames` and `fieldMode?: boolean` as optional props from the organism
 - Zero domain knowledge (don't import from services, don't know about archives/manifests)
 - Reusable across all features
 
 ❌ **Never:**
 - Import domain hooks (e.g., `useArchiveData`, `useManifestSelectors`)
-- Have prop drilling of `fieldMode` (they consume `useContextualStyles` internally)
+- Call context hooks (`useContextualStyles`, `useAppSettings`, `useTerminology`) — receive styling via `cx` prop instead
 - Contain business logic
 - Call API endpoints
 
@@ -239,16 +239,17 @@ describe('FilterInput Molecule', () => {
       console.log('✓ IDEAL OUTCOME: FilterInput theme switches with fieldMode');
     });
 
-    it('FAILURE PREVENTED: fieldMode prop prop-drilling', () => {
-      // Verify no fieldMode prop in the interface
+    it('IDEAL OUTCOME: Molecule receives fieldMode as optional prop', () => {
+      // fieldMode is optional — molecule never calls useContextualStyles
       type FilterInputProps = React.ComponentProps<typeof FilterInput>;
       const props: FilterInputProps = {
         onChange: () => {},
         placeholder: 'test',
-        // fieldMode: false, ← Should NOT be allowed
+        fieldMode: false, // Optional — passed down from organism
+        cx: { surface: '', text: '' }, // Optional — styling tokens from organism
       };
 
-      console.log('✓ FAILURE PREVENTED: No fieldMode prop-drilling');
+      console.log('✓ IDEAL OUTCOME: fieldMode is optional prop, no hook calls');
     });
   });
 });
@@ -257,9 +258,9 @@ describe('FilterInput Molecule', () => {
 ## Rules for Molecules
 
 1. **Import atoms, never organisms or domain code**
-2. **Use generic hooks only** (`useState`, `useDebouncedValue`, `useContextualStyles`)
+2. **Use local hooks only** (`useState`, `useDebouncedValue`) — no context hooks
 3. **Accept plain data props**, never domain objects
-4. **Never accept `fieldMode` as a prop** — consume it via `useContextualStyles`
+4. **Accept `cx?` and `fieldMode?` as optional props** — do not call `useContextualStyles` internally
 5. **No magic numbers** — use `INPUT_CONSTRAINTS` from config
 6. **Use cx.* tokens for all fieldMode-conditional styling** — no inline `settings.fieldMode ? X : Y`
 
@@ -326,6 +327,17 @@ A `TODO(tokens)` comment marks the usage site in the source file.
 - ✅ Major violations fixed (78% of organism ternaries)
 - ⚠️ Minor secondary styling ternaries remain (22% - typography, button states)
 - 📋 Can be addressed in refinement pass without blocking deployment
+
+## Reviewer Checklist
+
+Before merging changes to molecules:
+
+- [ ] No imports of `useContextualStyles`, `useAppSettings`, or `useTerminology` (ESLint `no-restricted-imports` enforces this)
+- [ ] `cx` prop is optional (`cx?: ContextualClassNames`) — all usages guarded with `cx?.token || fallback`
+- [ ] `fieldMode` prop is optional (`fieldMode?: boolean`) — never derived from a hook
+- [ ] Local state only — `useState` / `useDebouncedValue` are fine; no `useEffect` that reaches outside the molecule
+- [ ] Zero domain imports — nothing from `services/`, `features/`, `entities/`, or feature `model/`
+- [ ] Composes atoms from `../atoms/` only; does not nest other molecules unless explicitly documented
 
 ---
 

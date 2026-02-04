@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { IIIFItem, AppSettings, IIIFManifest, getIIIFValue, IIIFAnnotation, isManifest } from '../types';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFItem, IIIFManifest, isManifest } from '../types';
 import { Icon } from './Icon';
 import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
@@ -9,7 +9,7 @@ import { useResizablePanel } from '../hooks/useResizablePanel';
 import { RESOURCE_TYPE_CONFIG } from '../constants';
 import { useTerminology } from '../hooks/useTerminology';
 import { isPropertyAllowed } from '../utils/iiifSchema';
-import { ValidationIssue, getValidationForField } from '../services';
+import { getValidationForField, ValidationIssue } from '../services';
 import { suggestBehaviors } from '../utils/iiifBehaviors';
 import { resolvePreviewUrl } from '../utils/imageSourceResolver';
 import { ValidatedInput } from './ValidatedInput';
@@ -244,6 +244,23 @@ const InspectorComponent: React.FC<InspectorProps> = ({
     resource, settings.language, onUpdateResource
   );
 
+  // Validation memoized values - must be called before any conditional returns
+  const labelValidation = useMemo(() =>
+    getValidationForField(validationIssues, 'label', (issue) => {
+      const fixed = fixIssue(issue);
+      if (fixed) onUpdateResource(fixed);
+    }) || { status: 'pristine' as const },
+    [validationIssues, fixIssue, onUpdateResource]
+  );
+
+  const summaryValidation = useMemo(() =>
+    getValidationForField(validationIssues, 'summary', (issue) => {
+      const fixed = fixIssue(issue);
+      if (fixed) onUpdateResource(fixed);
+    }) || { status: 'pristine' as const },
+    [validationIssues, fixIssue, onUpdateResource]
+  );
+
   // Return null AFTER all hooks (React Rules of Hooks)
   if (!visible || !resource) return null;
 
@@ -336,7 +353,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
       </div>
 
       {/* Consolidated Tabs */}
-      <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black' + ' ' + cx.border : 'bg-white'}`}>
+      <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? `bg-black` + ` ${cx.border}` : 'bg-white'}`}>
         {availableTabs.map(t => (
           <button
             key={t}
@@ -406,7 +423,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                 label={t('Label')}
                 value={label}
                 onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })}
-                validation={useMemo(() => getValidationForField(validationIssues, 'label', (issue) => { const fixed = fixIssue(issue); if (fixed) onUpdateResource(fixed); }) || { status: 'pristine' }, [validationIssues, fixIssue, onUpdateResource])}
+                validation={labelValidation}
                 type="text"
                 fieldMode={settings.fieldMode}
               />
@@ -415,7 +432,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                 label={t('Summary')}
                 value={summary}
                 onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })}
-                validation={useMemo(() => getValidationForField(validationIssues, 'summary', (issue) => { const fixed = fixIssue(issue); if (fixed) onUpdateResource(fixed); }) || { status: 'pristine' }, [validationIssues, fixIssue, onUpdateResource])}
+                validation={summaryValidation}
                 type="textarea"
                 rows={3}
                 fieldMode={settings.fieldMode}

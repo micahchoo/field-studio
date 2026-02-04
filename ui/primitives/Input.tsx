@@ -6,8 +6,8 @@
  * Sized and styled entirely via design tokens.
  */
 
-import React, { useRef, useEffect } from 'react';
-import { COLORS, TYPOGRAPHY, LAYOUT, TOUCH_TARGETS, INTERACTION, SPACING, PATTERNS } from '../../designSystem';
+import React, { useEffect, useRef } from 'react';
+import { COLORS, INTERACTION, LAYOUT, PATTERNS, SPACING, TOUCH_TARGETS, TYPOGRAPHY } from '../../designSystem';
 
 export type InputSize = 'sm' | 'base' | 'lg';
 

@@ -319,7 +319,7 @@ class ContentSearchService {
       }
     } else if (annotation.target.type === 'SpecificResource') {
       // Complex target with selectors
-      const source = annotation.target.source;
+      const {source} = annotation.target;
       canvasId = typeof source === 'string' ? source : source.id;
 
       const selectors = Array.isArray(annotation.target.selector)
