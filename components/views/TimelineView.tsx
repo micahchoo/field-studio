@@ -2,6 +2,9 @@
 import React, { useMemo, useState } from 'react';
 import { IIIFItem, IIIFCanvas, isCanvas, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
+import { useAppSettings } from '../../hooks/useAppSettings';
+import { useContextualStyles } from '../../hooks/useContextualStyles';
+import { useTerminology } from '../../hooks/useTerminology';
 
 interface TimelineViewProps {
   root: IIIFItem | null;
@@ -17,6 +20,11 @@ interface TimelineGroup {
 export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) => {
   const [zoomLevel, setZoomLevel] = useState<'day' | 'month' | 'year'>('day');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const { settings } = useAppSettings();
+  const fieldMode = settings.fieldMode;
+  const cx = useContextualStyles(fieldMode);
+  const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
 
   const { groups, minDate, maxDate } = useMemo(() => {
     if (!root) return { groups: [], minDate: null, maxDate: null };
@@ -87,8 +95,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) =>
 
   if (!root || groups.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-8">
-        <Icon name="event" className="text-6xl mb-4 text-slate-300" />
+      <div className={`flex-1 flex flex-col items-center justify-center ${cx.surface} ${cx.textMuted} p-8`}>
+        <Icon name="event" className="text-6xl mb-4 opacity-50" />
         <p className="text-lg font-medium">No Dated Items</p>
         <p className="text-sm mt-2">Items need a navDate property to appear in the timeline.</p>
       </div>
@@ -96,33 +104,33 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) =>
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-100">
+    <div className={`flex flex-col h-full ${cx.surface}`}>
       {/* Header */}
-      <div className="h-14 bg-white border-b flex items-center justify-between px-6 shadow-sm">
+      <div className={`h-14 ${cx.headerBg} border-b flex items-center justify-between px-6 shadow-sm`}>
         <div className="flex items-center gap-4">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2">
+          <h2 className={`font-bold ${cx.text} flex items-center gap-2`}>
             <Icon name="timeline" className="text-purple-500" />
             Timeline
           </h2>
-          <span className="text-sm text-slate-500">{totalItems} dated items</span>
+          <span className={`text-sm ${cx.textMuted}`}>{totalItems} dated items</span>
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded">
+        <div className={`flex items-center gap-2 ${cx.surface} p-1 rounded`}>
           <button
             onClick={() => setZoomLevel('day')}
-            className={`px-3 py-1 text-xs font-bold rounded ${zoomLevel === 'day' ? 'bg-white shadow text-purple-600' : 'text-slate-500'}`}
+            className={`px-3 py-1 text-xs font-bold rounded ${zoomLevel === 'day' ? `${cx.active} shadow` : cx.textMuted}`}
           >
             Day
           </button>
           <button
             onClick={() => setZoomLevel('month')}
-            className={`px-3 py-1 text-xs font-bold rounded ${zoomLevel === 'month' ? 'bg-white shadow text-purple-600' : 'text-slate-500'}`}
+            className={`px-3 py-1 text-xs font-bold rounded ${zoomLevel === 'month' ? `${cx.active} shadow` : cx.textMuted}`}
           >
             Month
           </button>
           <button
             onClick={() => setZoomLevel('year')}
-            className={`px-3 py-1 text-xs font-bold rounded ${zoomLevel === 'year' ? 'bg-white shadow text-purple-600' : 'text-slate-500'}`}
+            className={`px-3 py-1 text-xs font-bold rounded ${zoomLevel === 'year' ? `${cx.active} shadow` : cx.textMuted}`}
           >
             Year
           </button>
@@ -131,9 +139,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ root, onSelect }) =>
 
       {/* Date Range Bar */}
       {minDate && maxDate && (
-        <div className="h-10 bg-slate-200 flex items-center px-6 text-xs text-slate-600">
+        <div className={`h-10 ${cx.surface} flex items-center px-6 text-xs ${cx.textMuted}`}>
           <span>{minDate.toLocaleDateString()}</span>
-          <div className="flex-1 mx-4 h-1 bg-slate-300 rounded relative">
+          <div className={`flex-1 mx-4 h-1 ${cx.border} rounded relative`}>
             {groups.map((g, i) => {
               const startTime = minDate.getTime();
               const endTime = maxDate.getTime();

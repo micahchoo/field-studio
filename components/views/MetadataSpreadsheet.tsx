@@ -9,6 +9,8 @@ import { RESOURCE_TYPE_CONFIG, RIGHTS_OPTIONS, VIEWING_DIRECTIONS, DUBLIN_CORE_M
 import { TableLoading } from '../LoadingState';
 import { EmptyState, emptyStatePresets } from '../EmptyState';
 import FileSaver from 'file-saver';
+import { useAppSettings } from '../../hooks/useAppSettings';
+import { useTerminology } from '../../hooks/useTerminology';
 
 interface MetadataSpreadsheetProps {
   root: IIIFItem | null;
@@ -40,6 +42,8 @@ const IIIF_PROPERTY_SUGGESTIONS = [
 
 export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, onUpdate, filterIds, onClearFilter, onNavigateAway }) => {
   const { showToast } = useToast();
+  const { settings } = useAppSettings();
+  const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
   const [items, setItems] = useState<FlatItem[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [filter, setFilter] = useState('');
@@ -490,7 +494,7 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                 onClick={() => setActiveTab(tab)} 
                 className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest relative border-b-2 transition-all ${activeTab === tab ? 'text-iiif-blue border-b-2 border-iiif-blue bg-blue-50/20' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
             >
-                {tab}s
+                {tab === 'All' ? tab : t(tab)}s
             </button>
         ))}
       </div>
@@ -546,7 +550,7 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                                         <Icon name={expandedRow === item.id ? 'expand_less' : 'expand_more'} className={`text-xs transition-transform ${expandedRow === item.id ? 'text-iiif-blue' : 'text-slate-300'}`}/>
                                         <span className={`text-[9px] uppercase font-black px-1.5 py-0.5 rounded border flex items-center gap-1 ${config.bgClass} ${config.colorClass} ${config.borderClass}`}>
                                             <Icon name={config.icon} className="text-[10px]"/>
-                                            {item.type}
+                                            {t(item.type)}
                                         </span>
                                     </div>
                                 </td>
@@ -649,10 +653,12 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                                                 </div>
                                             </div>
                                             <div className="flex-1 space-y-6">
-                                                <div>
+                                                {isAdvanced && (
+                                                  <div>
                                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Icon name="fingerprint" className="text-xs"/> Archival ID (URI)</h4>
                                                     <code className="text-[10px] text-iiif-blue bg-blue-50 px-3 py-1.5 rounded border border-blue-100 break-all block font-mono leading-relaxed">{item.id}</code>
-                                                </div>
+                                                  </div>
+                                                )}
                                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                                     {Object.entries(item.metadata).map(([k,v]) => (
                                                         <div key={k} className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
@@ -661,13 +667,15 @@ export const MetadataSpreadsheet: React.FC<MetadataSpreadsheetProps> = ({ root, 
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 flex items-start gap-3">
+                                                {!isAdvanced && (
+                                                  <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 flex items-start gap-3">
                                                      <Icon name="info" className="text-amber-500 mt-0.5" />
                                                      <div>
                                                          <p className="text-xs font-bold text-amber-900 uppercase tracking-tight">Archival Catalog Mode</p>
                                                          <p className="text-[11px] text-amber-800 opacity-80 mt-0.5 italic leading-snug">Data edited here is instantly projected into the IIIF semantic model.</p>
                                                      </div>
-                                                </div>
+                                                  </div>
+                                                )}
                                             </div>
                                         </div>
                                     </td>

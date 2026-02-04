@@ -10,6 +10,7 @@ import { StructureCanvas } from '../StructureCanvas';
 import { resolveThumbUrl, resolveHierarchicalThumb, resolveHierarchicalThumbs } from '../../utils/imageSourceResolver';
 import { StackedThumbnail } from '../StackedThumbnail';
 import { useSharedSelection, useIIIFTraversal, useResizablePanel } from '../../hooks';
+import { useTerminology } from '../../hooks/useTerminology';
 import { useBreadcrumbPath } from '../../hooks/useBreadcrumbPath';
 import { VirtualTreeList } from '../VirtualTreeList';
 import {
@@ -63,6 +64,7 @@ const CollectionsViewComponent: React.FC<CollectionsViewProps> = ({
   onToggleInspector
 }) => {
   const { showToast } = useToast();
+  const { t, isAdvanced } = useTerminology({ level: abstractionLevel });
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [structureViewMode, setStructureViewMode] = useState<'grid' | 'list'>('grid');
@@ -464,7 +466,7 @@ const CollectionsViewComponent: React.FC<CollectionsViewProps> = ({
             )}
             {breadcrumbPath.length === 0 && (
               <p className="text-xs text-slate-500">
-                {stats.collections} Collections · {stats.manifests} Manifests · {stats.canvases} Canvases
+                {stats.collections} {t('Collection')}s · {stats.manifests} {t('Manifest')}s · {stats.canvases} {t('Canvas')}es
               </p>
             )}
           </div>
@@ -482,13 +484,13 @@ const CollectionsViewComponent: React.FC<CollectionsViewProps> = ({
             onClick={() => handleCreateType('Collection', selectedId)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
           >
-            <Icon name="create_new_folder" className="text-amber-600" /> Collection
+            <Icon name="create_new_folder" className="text-amber-600" /> {t('Collection')}
           </button>
           <button
             onClick={() => handleCreateType('Manifest', selectedId)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
           >
-            <Icon name="note_add" className="text-emerald-600" /> Manifest
+            <Icon name="note_add" className="text-emerald-600" /> {t('Manifest')}
           </button>
           {onToggleInspector && (
             <button
@@ -657,11 +659,13 @@ const CollectionsViewComponent: React.FC<CollectionsViewProps> = ({
                     </div>
                   )}
 
-                  <MuseumLabel title="IIIF Hierarchy Model" type="field-note">
-                    <strong>Collections</strong> are curated lists that reference resources.
-                    <strong>Manifests</strong> own their Canvases exclusively.
-                    A Manifest can appear in multiple Collections - think of it like a book that can be in multiple reading lists.
-                  </MuseumLabel>
+                  {!isAdvanced && (
+                    <MuseumLabel title="IIIF Hierarchy Model" type="field-note">
+                      <strong>Collections</strong> are curated lists that reference resources.
+                      <strong>Manifests</strong> own their Canvases exclusively.
+                      A Manifest can appear in multiple Collections - think of it like a book that can be in multiple reading lists.
+                    </MuseumLabel>
+                  )}
                 </div>
               </div>
             </div>

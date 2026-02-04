@@ -42,6 +42,29 @@ It bridges the gap between messy field data (raw photos, recordings, notes) and 
 
 **Note:** The application relies on Service Workers (`sw.js`) to serve IIIF image tiles. Ensure you are in a **Secure Context** (localhost or HTTPS). If images fail to load, check the "Service Workers" section in your browser's DevTools Application tab.
 
+### Available Commands
+
+**Development:**
+```bash
+npm run dev              # Start dev server on http://localhost:3000
+npm run build            # Production build
+npm run preview          # Preview production build
+```
+
+**Testing:**
+```bash
+npm test                 # Run all tests once
+npm run test:watch       # Watch mode (best for development)
+npm run test:ui          # Interactive UI for tests
+npm run test:coverage    # Generate coverage report
+```
+
+**Linting:**
+```bash
+npm run lint             # Check for linting errors
+npm run lint:fix         # Auto-fix linting errors
+```
+
 ### Extending the Studio
 
 

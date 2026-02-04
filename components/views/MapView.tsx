@@ -2,6 +2,9 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { IIIFItem, IIIFCanvas, isCanvas, getIIIFValue } from '../../types';
 import { Icon } from '../Icon';
+import { useAppSettings } from '../../hooks/useAppSettings';
+import { useContextualStyles } from '../../hooks/useContextualStyles';
+import { useTerminology } from '../../hooks/useTerminology';
 
 interface MapViewProps {
   root: IIIFItem | null;
@@ -28,6 +31,11 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
   const [selectedCluster, setSelectedCluster] = useState<GeoItem[] | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  const { settings } = useAppSettings();
+  const fieldMode = settings.fieldMode;
+  const cx = useContextualStyles(fieldMode);
+  const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -109,11 +117,11 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
 
   if (!root || geoItems.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-8">
-        <Icon name="map" className="text-6xl mb-4 text-slate-300" />
+      <div className={`flex-1 flex flex-col items-center justify-center ${fieldMode ? 'bg-black text-white' : 'bg-slate-50 text-slate-400'} p-8`}>
+        <Icon name="map" className={`text-6xl mb-4 ${fieldMode ? 'text-slate-500' : 'text-slate-300'}`} />
         <p className="text-lg font-medium">No Geotagged Items</p>
         <p className="text-sm mt-2">Items need GPS coordinates in their metadata to appear on the map.</p>
-        <p className="text-xs mt-4 text-slate-400">
+        <p className={`text-xs mt-4 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
           Add a "Location" metadata field with coordinates like "40.7128, -74.0060"
         </p>
       </div>
@@ -121,34 +129,34 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-200">
+    <div className={`flex flex-col h-full ${fieldMode ? 'bg-black' : 'bg-slate-200'}`}>
       {/* Header */}
-      <div className="h-14 bg-white border-b flex items-center justify-between px-6 shadow-sm">
+      <div className={`h-14 ${cx.headerBg} ${cx.border} flex items-center justify-between px-6 shadow-sm`}>
         <div className="flex items-center gap-4">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2">
+          <h2 className={`font-bold ${cx.text} flex items-center gap-2`}>
             <Icon name="map" className="text-green-500" />
             Map View
           </h2>
-          <span className="text-sm text-slate-500">{geoItems.length} geotagged items</span>
+          <span className={`text-sm ${cx.textMuted}`}>{geoItems.length} geotagged items</span>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
-            className="p-2 hover:bg-slate-100 rounded"
+            className={`p-2 rounded ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
           >
             <Icon name="remove" />
           </button>
-          <span className="text-sm text-slate-600 w-16 text-center">{Math.round(zoom * 100)}%</span>
+          <span className={`text-sm ${cx.textMuted} w-16 text-center`}>{Math.round(zoom * 100)}%</span>
           <button
             onClick={() => setZoom(z => Math.min(4, z + 0.25))}
-            className="p-2 hover:bg-slate-100 rounded"
+            className={`p-2 rounded ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
           >
             <Icon name="add" />
           </button>
           <button
             onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
-            className="p-2 hover:bg-slate-100 rounded ml-2"
+            className={`p-2 rounded ml-2 ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
             title="Reset view"
           >
             <Icon name="center_focus_strong" />
@@ -219,7 +227,7 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
         {/* Hover tooltip */}
         {hoveredItem && !selectedCluster && (
           <div
-            className="absolute bg-white rounded-lg shadow-xl border p-2 z-30 pointer-events-none"
+            className={`absolute ${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-lg shadow-xl border p-2 z-30 pointer-events-none`}
             style={{
               left: geoToPixel(hoveredItem.lat, hoveredItem.lng).x + 20,
               top: geoToPixel(hoveredItem.lat, hoveredItem.lng).y - 20
@@ -233,9 +241,11 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
                 <div className="font-bold text-sm text-slate-800">
                   {getIIIFValue(hoveredItem.canvas.label, 'none') || 'Untitled'}
                 </div>
-                <div className="text-xs text-slate-500">
-                  {hoveredItem.lat.toFixed(4)}, {hoveredItem.lng.toFixed(4)}
-                </div>
+                {isAdvanced && (
+                  <div className="text-xs text-slate-500">
+                    {hoveredItem.lat.toFixed(4)}, {hoveredItem.lng.toFixed(4)}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -244,9 +254,9 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
         {/* Cluster popup */}
         {selectedCluster && (
           <div className="absolute inset-0 bg-black/30 z-40 flex items-center justify-center p-8">
-            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className={`${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden`}>
               <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="font-bold text-slate-800">
+                <h3 className={`font-bold ${cx.text}`}>
                   {selectedCluster.length} items at this location
                 </h3>
                 <button onClick={() => setSelectedCluster(null)} className="text-slate-400 hover:text-slate-600">
@@ -281,14 +291,12 @@ export const MapView: React.FC<MapViewProps> = ({ root, onSelect }) => {
           </div>
         )}
 
-        {/* Coordinates display */}
-        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded px-3 py-1 text-xs text-slate-600">
-          {bounds && (
-            <>
-              Bounds: {bounds.minLat.toFixed(2)}°, {bounds.minLng.toFixed(2)}° to {bounds.maxLat.toFixed(2)}°, {bounds.maxLng.toFixed(2)}°
-            </>
-          )}
-        </div>
+        {/* Coordinates display - only for advanced users */}
+        {bounds && isAdvanced && (
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded px-3 py-1 text-xs text-slate-600">
+            Bounds: {bounds.minLat.toFixed(2)}°, {bounds.minLng.toFixed(2)}° to {bounds.maxLat.toFixed(2)}°, {bounds.maxLng.toFixed(2)}°
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,8 @@
  * Used for annotation bodies, user-generated content, and any text rendered as HTML.
  */
 
-import DOMPurify from 'dompurify';
+// Use isomorphic-dompurify for compatibility with both browser and Node/test environments
+import DOMPurify from 'isomorphic-dompurify';
 
 /**
  * Configuration for annotation body sanitization
@@ -33,15 +34,7 @@ const HTML_CONFIG = {
 const ANNOTATION_CONFIG = {
   ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'span'],
   ALLOWED_ATTR: ['href', 'target', 'class', 'title'],
-  ALLOW_DATA_ATTR: false,
-  // Prevent javascript: URLs
-  SANITIZE_DOM: true,
-  // Keep text content of removed tags
   KEEP_CONTENT: true,
-  // Block dangerous protocols
-  FORBID_ATTR: ['style', 'onerror', 'onload', 'onclick'],
-  // Return string instead of TrustedHTML
-  RETURN_TRUSTED_TYPE: false,
 };
 
 /**
@@ -91,9 +84,13 @@ export function sanitizeAnnotationBody(content: unknown): string | Record<string
       sanitized = typeof value === 'string' ? value : '';
     } else {
       // For text/html or unspecified format, sanitize HTML
-      sanitized = typeof value === 'string'
-        ? String(DOMPurify.sanitize(value, ANNOTATION_CONFIG))
-        : '';
+      if (typeof value === 'string') {
+        const result = DOMPurify.sanitize(value, ANNOTATION_CONFIG);
+        sanitized = String(result || '');
+
+      } else {
+        sanitized = '';
+      }
     }
 
     // Return new object with sanitized value

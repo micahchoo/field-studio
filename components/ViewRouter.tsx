@@ -137,7 +137,6 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               onOpen={onOpenItem}
               onBatchEdit={onBatchEdit}
               validationIssues={validationIssuesMap}
-              fieldMode={fieldMode}
               onReveal={onReveal}
               onCatalogSelection={onCatalogSelection}
             />
@@ -216,7 +215,6 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
             onOpen={onOpenItem}
             onBatchEdit={onBatchEdit}
             validationIssues={validationIssuesMap}
-            fieldMode={fieldMode}
             onReveal={onReveal}
             onCatalogSelection={onCatalogSelection}
           />

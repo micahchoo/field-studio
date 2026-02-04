@@ -652,6 +652,94 @@ export const IIIF = {
 } as const;
 
 // ============================================================================
+// CONTEXTUAL TOKENS - Semantic UI Contexts & Microcopy
+// ============================================================================
+
+export const CONTEXTUAL_TOKENS = {
+  // Semantic contexts for UI states
+  contexts: {
+    editing: {
+      border: COLORS.semantic.info,
+      background: COLORS.primary[50],
+      icon: '✏️',
+      microcopy: 'Editing mode — changes are pending'
+    },
+    validating: {
+      border: COLORS.semantic.warning,
+      background: `${COLORS.semantic.warning}20`, // 20% opacity
+      icon: '⚡',
+      microcopy: 'Validating…'
+    },
+    archived: {
+      opacity: 0.6,
+      filter: 'grayscale(0.8)',
+      icon: '📦',
+      microcopy: 'Archived — read‑only'
+    },
+    fieldMode: {
+      contrast: COLORS.field.foreground,
+      touchTarget: TOUCH_TARGETS.field,
+      icon: '🌄',
+      microcopy: 'Field mode — high contrast, large touch targets'
+    },
+    selected: {
+      border: COLORS.primary[500],
+      background: COLORS.primary[50],
+      icon: '⭐',
+      microcopy: 'Selected'
+    },
+    error: {
+      border: COLORS.semantic.error,
+      background: `${COLORS.semantic.error}10`,
+      icon: '🚨',
+      microcopy: 'Error — needs attention'
+    },
+    success: {
+      border: COLORS.semantic.success,
+      background: `${COLORS.semantic.success}10`,
+      icon: '✅',
+      microcopy: 'Success — all good'
+    }
+  },
+
+  // Microcopy templates (will be merged with i18n system)
+  microcopy: {
+    emptyState: (resourceType: string) => `No ${resourceType} selected. Click + to add.`,
+    validationHint: (issue: { suggestion: string }) => `Fix: ${issue.suggestion}`,
+    progress: (current: number, total: number) => `Processing ${current} of ${total}…`,
+    saveStatus: (status: 'saved' | 'saving' | 'error') => {
+      const map = {
+        saved: 'All changes saved',
+        saving: 'Saving…',
+        error: 'Failed to save'
+      };
+      return map[status];
+    },
+    resourceType: (type: keyof typeof HIERARCHY.iiifTypes) => {
+      const config = HIERARCHY.iiifTypes[type];
+      const descriptions: Record<string, string> = {
+        Collection: 'a group of manifests or sub-collections',
+        Manifest: 'a single item with one or more canvases',
+        Canvas: 'a single page or surface',
+        Range: 'a logical section spanning canvases',
+        AnnotationPage: 'a set of annotations on a canvas',
+        Annotation: 'a single annotation target',
+      };
+      return `${config.icon} ${type} — ${descriptions[type] || 'IIIF resource'}`;
+    }
+  },
+
+  // Helper functions for contextual styling
+  getContextStyle(contextKey: keyof CONTEXTUAL_TOKENS['contexts']) {
+    return this.contexts[contextKey];
+  },
+  getMicrocopy(key: keyof CONTEXTUAL_TOKENS['microcopy'], ...args: any[]) {
+    const fn = this.microcopy[key];
+    return typeof fn === 'function' ? fn(...args) : fn;
+  }
+} as const;
+
+// ============================================================================
 // EXPORT UTILITY FUNCTIONS
 // ============================================================================
 

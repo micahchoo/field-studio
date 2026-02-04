@@ -4,6 +4,8 @@ import { searchService, SearchResult, AutocompleteResult } from '../../services/
 import { Icon } from '../Icon';
 import { RESOURCE_TYPE_CONFIG } from '../../constants';
 import { EmptyState, emptyStatePresets } from '../EmptyState';
+import { useAppSettings } from '../../hooks/useAppSettings';
+import { useTerminology } from '../../hooks/useTerminology';
 
 interface SearchViewProps {
   root: IIIFItem | null;
@@ -12,6 +14,8 @@ interface SearchViewProps {
 }
 
 export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect, onRevealMap }) => {
+  const { settings } = useAppSettings();
+  const { t } = useTerminology({ level: settings.abstractionLevel });
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [filter, setFilter] = useState<'All' | 'Manifest' | 'Canvas' | 'Annotation'>('All');
@@ -178,7 +182,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect, onReveal
                                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                         }`}
                     >
-                        {f}
+                        {f === 'All' ? f : t(f)}
                     </button>
                 ))}
             </div>
@@ -226,7 +230,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ root, onSelect, onReveal
                                                 </button>
                                             )}
                                             <span className={`text-[10px] font-mono bg-slate-50 px-1.5 py-0.5 rounded text-slate-400 border border-slate-100`}>
-                                                {res.type}
+                                                {t(res.type)}
                                             </span>
                                         </div>
                                     </div>

@@ -12,6 +12,8 @@ import { contentStateService } from '../../services/contentState';
 import { contentSearchService, SearchService, SearchResult } from '../../services/contentSearchService';
 import { parseTarget, getSpatialRegion, createSpatialTarget, createSpecificResource } from '../../services/selectors';
 import { VIEWPORT_DEFAULTS } from '../../constants/viewport';
+import { useAppSettings } from '../../hooks/useAppSettings';
+import { useTerminology } from '../../hooks/useTerminology';
 
 declare const OpenSeadragon: any;
 
@@ -77,6 +79,8 @@ interface ViewerProps {
 
 export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, manifestItems, manifest, onSelect, onUpdate, autoOpenComposer, onComposerOpened }) {
   const { showToast } = useToast();
+  const { settings } = useAppSettings();
+  const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
   const viewerRef = useRef<any>(null);
   const osdContainerRef = useRef<HTMLDivElement>(null);
   const viewerContainerRef = useRef<HTMLDivElement>(null);
@@ -603,7 +607,7 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
     }
   }, [resolvedImageUrl, item, showToast]);
 
-  if (!item) return <div className="flex-1 flex items-center justify-center bg-slate-900 text-slate-500 italic">Select a canvas to inspect.</div>;
+  if (!item) return <div className="flex-1 flex items-center justify-center bg-slate-900 text-slate-500 italic">Select a {t('Canvas').toLowerCase()} to inspect.</div>;
 
   return (
     <div ref={viewerContainerRef} className="flex-1 flex flex-col bg-slate-900 overflow-hidden relative">
@@ -839,12 +843,12 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                             ? 'border-blue-500 ring-2 ring-blue-500/50'
                             : 'border-slate-700 hover:border-slate-500 opacity-70 hover:opacity-100'
                         }`}
-                        title={getIIIFValue(canvas.label) || `Canvas ${idx + 1}`}
+                        title={getIIIFValue(canvas.label) || `${t('Canvas')} ${idx + 1}`}
                       >
                         {thumbUrl ? (
                           <img
                             src={thumbUrl}
-                            alt={getIIIFValue(canvas.label) || `Canvas ${idx + 1}`}
+                            alt={getIIIFValue(canvas.label) || `${t('Canvas')} ${idx + 1}`}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -1062,13 +1066,15 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                                                     >
                                                         <Icon name="link" className="text-xs" />
                                                     </button>
-                                                    <button
+                                                    {isAdvanced && (
+                                                      <button
                                                         onClick={handleCopyJsonLd}
                                                         className="p-1 text-slate-400 hover:text-green-400 rounded"
                                                         title="Copy W3C JSON-LD"
-                                                    >
+                                                      >
                                                         <Icon name="code" className="text-xs" />
-                                                    </button>
+                                                      </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             
@@ -1081,7 +1087,9 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                                             {isTextBody && (
                                                 <div className="mt-2 flex items-center gap-2">
                                                     <span className="text-[8px] text-slate-500 uppercase">{bodyFormat}</span>
-                                                    <span className="text-[8px] text-slate-600 font-mono truncate">{anno.id.split('/').pop()?.slice(0, 20)}...</span>
+                                                    {isAdvanced && (
+                                                      <span className="text-[8px] text-slate-600 font-mono truncate">{anno.id.split('/').pop()?.slice(0, 20)}...</span>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1092,8 +1100,9 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                     )}
                 </div>
                 
-                {/* Footer: W3C compliance note */}
-                <div className="p-3 border-t border-slate-800 bg-slate-950">
+                {/* Footer: W3C compliance note — advanced users only */}
+                {isAdvanced && (
+                  <div className="p-3 border-t border-slate-800 bg-slate-950">
                     <div className="flex items-center justify-between text-[9px] text-slate-500">
                         <span className="flex items-center gap-1">
                             <Icon name="verified" className="text-xs" />
@@ -1108,7 +1117,8 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                             Spec →
                         </a>
                     </div>
-                </div>
+                  </div>
+                )}
             </div>
         )}
 
@@ -1116,7 +1126,7 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
         {showMetadataPanel && item && (
             <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col animate-in slide-in-from-right duration-200">
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Canvas Metadata</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">{t('Canvas')} Metadata</h3>
                     <button onClick={() => setShowMetadataPanel(false)}><Icon name="close" className="text-slate-500 text-sm" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -1124,13 +1134,15 @@ export const Viewer: React.FC<ViewerProps> = React.memo(function Viewer({ item, 
                     <div className="space-y-3">
                         <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Basic Information</h4>
                         <div className="bg-slate-800 p-3 rounded border border-slate-700 space-y-2">
-                            <div>
+                            {isAdvanced && (
+                              <div>
                                 <span className="text-[9px] text-slate-500 uppercase">ID</span>
                                 <p className="text-xs text-slate-300 font-mono break-all">{item.id}</p>
-                            </div>
+                              </div>
+                            )}
                             <div>
                                 <span className="text-[9px] text-slate-500 uppercase">Type</span>
-                                <p className="text-xs text-slate-300">{item.type}</p>
+                                <p className="text-xs text-slate-300">{t(item.type)}</p>
                             </div>
                             {(item.width || item.height) && (
                                 <div>

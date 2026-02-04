@@ -11,6 +11,8 @@ import { GridLoading } from '../LoadingState';
 import { RESOURCE_TYPE_CONFIG, IIIF_SPEC, IIIF_CONFIG, REDUCED_MOTION, KEYBOARD, ARIA_LABELS } from '../../constants';
 import { Viewer } from './Viewer';
 import { useResponsive, useSharedSelection, useVirtualization, useGridVirtualization, useIIIFTraversal } from '../../hooks';
+import { useAppSettings } from '../../hooks/useAppSettings';
+import { useContextualStyles } from '../../hooks/useContextualStyles';
 import {
   isValidChildType,
   getRelationshipType,
@@ -29,7 +31,6 @@ interface ArchiveViewProps {
   onBatchEdit: (ids: string[]) => void;
   onUpdate?: (newRoot: IIIFItem) => void;
   validationIssues?: Record<string, ValidationIssue[]>;
-  fieldMode: boolean;
   onReveal?: (id: string, mode: 'collections' | 'viewer' | 'archive') => void;
   onCatalogSelection?: (ids: string[]) => void;
 }
@@ -57,8 +58,11 @@ interface RubberBandState {
   containerRect: DOMRect | null;
 }
 
-const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen, onBatchEdit, onUpdate, validationIssues = {}, fieldMode, onReveal, onCatalogSelection }) => {
+const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOpen, onBatchEdit, onUpdate, validationIssues = {}, onReveal, onCatalogSelection }) => {
   const { showToast } = useToast();
+  const { settings } = useAppSettings();
+  const fieldMode = settings.fieldMode;
+  const cx = useContextualStyles(fieldMode);
 
   // Loading state for initial data
   const [isLoading, setIsLoading] = useState(true);
@@ -563,9 +567,9 @@ const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOp
       )}
 
       {/* Header */}
-      <div className={`h-16 border-b px-6 flex items-center justify-between shadow-sm z-10 shrink-0 ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+      <div className={`h-16 border-b px-6 flex items-center justify-between shadow-sm z-10 shrink-0 ${cx.surface}`}>
         <div className="flex items-center gap-4">
-          <h2 className={`font-bold ${fieldMode ? 'text-xl text-yellow-400' : 'text-lg text-slate-800'}`}>Archive</h2>
+          <h2 className={`font-bold ${fieldMode ? 'text-xl' : 'text-lg'} ${cx.accent}`}>Archive</h2>
           {!isMobile && selectedIds.size === 0 && (
               <div className="h-4 w-px bg-slate-500"></div>
           )}
@@ -578,7 +582,7 @@ const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOp
         <div className="flex items-center gap-3">
           {!isMobile && (
               <div className="relative">
-                <Icon name="search" className={`absolute left-3 top-2.5 text-lg ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <Icon name="search" className={`absolute left-3 top-2.5 text-lg ${cx.label}`} />
                 <input type="text" placeholder="Filter archive..." value={filter} onChange={handleFilterChange} className={`pl-10 pr-3 py-2 border rounded-md text-sm outline-none transition-all w-64 ${fieldMode ? 'bg-slate-800 border-slate-600 text-white focus:border-yellow-400 placeholder:text-slate-600' : 'bg-slate-100 border-transparent focus:bg-white focus:border-iiif-blue'}`} />
               </div>
           )}
@@ -956,18 +960,16 @@ const ArchiveViewComponent: React.FC<ArchiveViewProps> = ({ root, onSelect, onOp
 };
 
 export const ArchiveView = React.memo(ArchiveViewComponent, (prev, next) => {
-  // Custom comparison to prevent unnecessary re-renders
+  // Custom comparison to prevent unnecessary re-renders.
+  // fieldMode is read via useAppSettings inside the component — context updates
+  // will trigger re-renders independently of this memo gate.
   const prevRootId = prev.root?.id;
   const nextRootId = next.root?.id;
-  const prevFieldMode = prev.fieldMode;
-  const nextFieldMode = next.fieldMode;
 
-  // Count validation issues as a proxy for content changes
   const prevIssueCount = Object.keys(prev.validationIssues || {}).length;
   const nextIssueCount = Object.keys(next.validationIssues || {}).length;
 
   return prevRootId === nextRootId &&
-         prevFieldMode === nextFieldMode &&
          prevIssueCount === nextIssueCount;
 });
 
@@ -1121,6 +1123,7 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
   isSelected,
   fieldMode
 }) => {
+  const cx = useContextualStyles(fieldMode);
   const rowHeight = 56;
   const totalHeight = assets.length * rowHeight;
   const topSpacer = visibleRange.start * rowHeight;
@@ -1128,10 +1131,10 @@ const VirtualizedList: React.FC<VirtualizedListProps> = ({
   const bottomSpacer = Math.max(0, (assets.length - visibleRange.end) * rowHeight);
 
   return (
-    <div className={`border rounded-lg shadow-sm overflow-hidden flex flex-col ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+    <div className={`border rounded-lg shadow-sm overflow-hidden flex flex-col ${cx.surface}`}>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className={`${fieldMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-500'} border-b ${fieldMode ? 'border-slate-700' : 'border-slate-200'} sticky top-0 z-10`}>
+          <thead className={`${cx.headerBg} ${cx.textMuted} border-b ${cx.border} sticky top-0 z-10`}>
             <tr>
               <th className="px-4 py-3 font-medium w-10">
                 <Icon name="check_box_outline_blank" className="opacity-50" />

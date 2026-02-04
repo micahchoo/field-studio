@@ -1,28 +1,23 @@
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { IIIFItem, IIIFCanvas, AppSettings, IIIFManifest, getIIIFValue, IIIFAnnotation, isManifest } from '../types';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { IIIFItem, AppSettings, IIIFManifest, getIIIFValue, IIIFAnnotation, isManifest } from '../types';
 import { Icon } from './Icon';
-import { sanitizeAnnotationBody } from '../utils/sanitization';
 import { MuseumLabel } from './MuseumLabel';
 import { ShareButton } from './ShareButton';
-import { ProvenancePanel } from './ProvenancePanel';
 import { GeoEditor } from './GeoEditor';
 import { useResizablePanel } from '../hooks/useResizablePanel';
-import { RESOURCE_TYPE_CONFIG, isFieldVisible, getFieldsByCategory } from '../constants';
+import { RESOURCE_TYPE_CONFIG } from '../constants';
 import { useTerminology } from '../hooks/useTerminology';
-import {
-  isPropertyAllowed,
-  getPropertyRequirement,
-  getAllowedBehaviors,
-  VIEWING_DIRECTIONS,
-  canHaveViewingDirection,
-  getAllowedProperties,
-  PROPERTY_MATRIX
-} from '../utils/iiifSchema';
-import { validator, ValidationIssue, healIssue, getValidationForField, FieldValidation } from '../services';
+import { isPropertyAllowed } from '../utils/iiifSchema';
+import { ValidationIssue, getValidationForField } from '../services';
 import { suggestBehaviors } from '../utils/iiifBehaviors';
 import { resolvePreviewUrl } from '../utils/imageSourceResolver';
 import { ValidatedInput } from './ValidatedInput';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { usePersistedTab } from '../hooks/usePersistedTab';
+import { useInspectorValidation } from '../hooks/useInspectorValidation';
+import { useMetadataEditor } from '../hooks/useMetadataEditor';
+import { useContextualStyles } from '../hooks/useContextualStyles';
 
 interface InspectorProps {
   resource: IIIFItem | null;
@@ -60,106 +55,26 @@ const IIIF_SPECS: Record<string, {
   }
 };
 
-const DebouncedInput = ({ value, onChange, onFocus, onBlur, ...props }: any) => {
-  const [innerValue, setInnerValue] = useState(value ?? '');
-  const onChangeRef = useRef<(val: string) => void>(onChange);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isTyping = useRef<boolean>(false);
-  const isFocused = useRef<boolean>(false);
+/** Single debounced field primitive — renders <input> or <textarea> based on inputType */
+const DebouncedField = ({ value, onChange, inputType = 'input', rows, ...props }: {
+  value: string;
+  onChange: (value: string) => void;
+  inputType?: 'input' | 'textarea';
+  rows?: number;
+  [key: string]: any;
+}) => {
+  const { localValue, handleChange, flush } = useDebouncedValue(value ?? '', onChange);
 
-  onChangeRef.current = onChange;
+  const common = {
+    ...props,
+    value: localValue,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => handleChange(e.target.value),
+    onBlur: (e: React.FocusEvent) => { flush(); props.onBlur?.(e); },
+  };
 
-  useEffect(() => {
-    if (!isTyping.current && !isFocused.current) {
-      setInnerValue(value ?? '');
-    }
-  }, [value]);
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value;
-    isTyping.current = true;
-    setInnerValue(newVal);
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      onChangeRef.current(newVal);
-      isTyping.current = false;
-    }, 300);
-  }, []);
-
-  const handleFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    isFocused.current = true;
-    onFocus?.(e);
-  }, [onFocus]);
-
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    isFocused.current = false;
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      onChangeRef.current(innerValue);
-      isTyping.current = false;
-    }
-    onBlur?.(e);
-  }, [onBlur, innerValue]);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  return <input {...props} value={innerValue} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />;
-};
-
-const DebouncedTextarea = ({ value, onChange, onFocus, onBlur, ...props }: any) => {
-  const [innerValue, setInnerValue] = useState(value ?? '');
-  const onChangeRef = useRef<(val: string) => void>(onChange);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isTyping = useRef<boolean>(false);
-  const isFocused = useRef<boolean>(false);
-
-  onChangeRef.current = onChange;
-
-  useEffect(() => {
-    if (!isTyping.current && !isFocused.current) {
-      setInnerValue(value ?? '');
-    }
-  }, [value]);
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newVal = e.target.value;
-    isTyping.current = true;
-    setInnerValue(newVal);
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      onChangeRef.current(newVal);
-      isTyping.current = false;
-    }, 300);
-  }, []);
-
-  const handleFocus = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
-    isFocused.current = true;
-    onFocus?.(e);
-  }, [onFocus]);
-
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
-    isFocused.current = false;
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      onChangeRef.current(innerValue);
-      isTyping.current = false;
-    }
-    onBlur?.(e);
-  }, [onBlur, innerValue]);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  return <textarea {...props} value={innerValue} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />;
+  return inputType === 'textarea'
+    ? <textarea {...common} rows={rows} />
+    : <input {...common} />;
 };
 
 // Validated Field Component - shows inline validation feedback
@@ -198,21 +113,13 @@ const ValidatedField: React.FC<ValidatedFieldProps> = ({
         {hasError && <Icon name="error" className="text-red-500 ml-1 text-xs" />}
         {hasWarning && !hasError && <Icon name="warning" className="text-amber-500 ml-1 text-xs" />}
       </label>
-      {inputType === 'input' ? (
-        <DebouncedInput
-          type="text"
-          value={value}
-          onChange={onChange}
-          className={inputClass}
-        />
-      ) : (
-        <DebouncedTextarea
-          value={value}
-          onChange={onChange}
-          rows={rows || 3}
-          className={`${inputClass} resize-none`}
-        />
-      )}
+      <DebouncedField
+        inputType={inputType}
+        value={value}
+        onChange={onChange}
+        rows={inputType === 'textarea' ? (rows || 3) : undefined}
+        className={`${inputClass}${inputType === 'textarea' ? ' resize-none' : ''}`}
+      />
       {issues.length > 0 && (
         <div className="mt-1.5 space-y-1">
           {issues.map((issue, idx) => (
@@ -298,88 +205,39 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   designTab,
   annotations = []
 }) => {
-  // Phase 3: Use terminology based on abstraction level
-  const { t, getResourceTypeLabel } = useTerminology({
-    level: settings.abstractionLevel
-  });
-  // Resizable panel hook for desktop
-  const {
-    size: inspectorWidth,
-    isResizing,
-    handleProps,
-    panelStyle,
-  } = useResizablePanel({
+  const { t } = useTerminology({ level: settings.abstractionLevel });
+  const cx = useContextualStyles(settings.fieldMode);
+
+  const { size: inspectorWidth, isResizing, handleProps, panelStyle } = useResizablePanel({
     id: 'inspector',
     defaultSize: 320,
     minSize: 280,
     maxSize: 480,
     direction: 'horizontal',
-    side: 'left', // resize handle on left side of inspector (it's on the right of the screen)
+    side: 'left',
     collapseThreshold: 0,
     persist: true,
   });
 
-  // Consolidated tabs: Metadata, Annotations, Structure, Learn
-  const getStoredTab = (resourceType: string): 'metadata' | 'annotations' | 'structure' | 'learn' | 'design' => {
-    try {
-      const stored = localStorage.getItem(`inspector-tab-${resourceType}`);
-      if (stored && ['metadata', 'annotations', 'structure', 'learn', 'design'].includes(stored)) {
-        return stored as any;
-      }
-    } catch (e) {}
-    return 'metadata';
-  };
-
-  const [tab, setTab] = useState<'metadata' | 'annotations' | 'structure' | 'learn' | 'design'>(() =>
-    resource ? getStoredTab(resource.type) : 'metadata'
+  // Tab state persisted per resource type
+  const ALLOWED_TABS = ['metadata', 'annotations', 'structure', 'learn', 'design'] as const;
+  const [tab, setTab] = usePersistedTab(
+    'inspector',
+    resource?.type || 'default',
+    ALLOWED_TABS,
+    'metadata'
   );
+
   const [showAddMenu, setShowAddMenu] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
 
-  // Run validation when resource changes
-  useEffect(() => {
-    if (resource) {
-      setValidationIssues(validator.validateItem(resource));
-    } else {
-      setValidationIssues([]);
-    }
-  }, [resource]);
+  // Validation lifecycle (run + fix + fixAll)
+  const { issues: validationIssues, fixIssue, fixAllIssues } = useInspectorValidation(resource);
 
-  const handleFixIssue = (issue: ValidationIssue) => {
-    if (!resource || !issue.fixable) return;
-    const result = healIssue(resource, issue);
-    if (result.success && result.updatedItem) {
-      onUpdateResource(result.updatedItem);
-    }
-  };
-
-  const handleFixAllIssues = () => {
-    if (!resource) return;
-    const fixableIssues = validationIssues.filter(i => i.fixable);
-    if (fixableIssues.length === 0) return;
-
-    import('../services/validationHealer').then(({ safeHealAll }) => {
-      const result = safeHealAll(resource, fixableIssues);
-      if (result.success && result.updatedItem) {
-        onUpdateResource(result.updatedItem);
-      }
-    });
-  };
-
-  useEffect(() => {
-    if (resource?.type) {
-      setTab(getStoredTab(resource.type));
-    }
-  }, [resource?.type]);
-
-  useEffect(() => {
-    if (resource?.type && tab) {
-      try {
-        localStorage.setItem(`inspector-tab-${resource.type}`, tab);
-      } catch (e) {}
-    }
-  }, [tab, resource?.type]);
+  // Metadata CRUD
+  const { updateField, addField, removeField, availableProperties } = useMetadataEditor(
+    resource, settings.language, onUpdateResource
+  );
 
   if (!visible || !resource) return null;
 
@@ -452,10 +310,10 @@ const InspectorComponent: React.FC<InspectorProps> = ({
       aria-label="Resource Inspector"
     >
       {/* Header */}
-      <div className={`h-14 flex items-center justify-between px-4 border-b shrink-0 ${settings.fieldMode ? 'bg-black text-white border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`h-14 flex items-center justify-between px-4 border-b shrink-0 ${cx.headerBg} ${cx.text}`}>
         <div className="flex items-center gap-2">
           <Icon name={config.icon} className={`${config.colorClass} text-sm`}/>
-          <span className={`text-xs font-black uppercase tracking-widest ${settings.fieldMode ? 'text-yellow-400' : config.colorClass}`}>
+          <span className={`text-xs font-black uppercase tracking-widest ${settings.fieldMode ? cx.accent : config.colorClass}`}>
             {t('Inspector')}
           </span>
         </div>
@@ -472,14 +330,12 @@ const InspectorComponent: React.FC<InspectorProps> = ({
       </div>
 
       {/* Consolidated Tabs */}
-      <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black border-slate-800' : 'bg-white'}`}>
+      <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? 'bg-black' + ' ' + cx.border : 'bg-white'}`}>
         {availableTabs.map(t => (
           <button
             key={t}
-            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider transition-all ${
-              tab === t 
-                ? (settings.fieldMode ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/20') 
-                : 'text-slate-400 hover:text-slate-600'
+            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider transition-all border-b-2 ${
+              tab === t ? cx.active : cx.inactive
             }`}
             onClick={() => setTab(t as any)}
             aria-selected={tab === t}
@@ -505,7 +361,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
           <div role="tabpanel" className="space-y-4">
             {/* Validation Status */}
             {validationIssues.length > 0 && (
-              <div className={`p-3 rounded-lg border text-[10px] space-y-2 ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-orange-50 border-orange-200'}`}>
+              <div className={`p-3 rounded-lg border text-[10px] space-y-2 ${cx.warningBg}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-orange-600">
                     <Icon name="report_problem" className="text-sm" />
@@ -513,7 +369,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                   </div>
                   {validationIssues.some(i => i.fixable) && (
                     <button
-                      onClick={handleFixAllIssues}
+                      onClick={() => fixAllIssues().then(fixed => { if (fixed) onUpdateResource(fixed); })}
                       className={`text-[8px] font-bold uppercase px-2 py-1 rounded ${settings.fieldMode ? 'bg-green-900 text-green-400' : 'bg-green-100 text-green-700'}`}
                     >
                       Fix All
@@ -524,7 +380,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                   <div key={issue.id} className={`flex items-start gap-2 text-[10px] ${issue.level === 'error' ? 'text-red-500' : (settings.fieldMode ? 'text-slate-400' : 'text-orange-700')}`}>
                     <span className="shrink-0">{issue.message}</span>
                     {issue.fixable && (
-                      <button onClick={() => handleFixIssue(issue)} className="text-[8px] text-green-600 hover:underline">Fix</button>
+                      <button onClick={() => { const fixed = fixIssue(issue); if (fixed) onUpdateResource(fixed); }} className="text-[8px] text-green-600 hover:underline">Fix</button>
                     )}
                   </div>
                 ))}
@@ -544,7 +400,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                 label={t('Label')}
                 value={label}
                 onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })}
-                validation={useMemo(() => getValidationForField(validationIssues, 'label', handleFixIssue) || { status: 'pristine' }, [validationIssues])}
+                validation={useMemo(() => getValidationForField(validationIssues, 'label', (issue) => { const fixed = fixIssue(issue); if (fixed) onUpdateResource(fixed); }) || { status: 'pristine' }, [validationIssues, fixIssue, onUpdateResource])}
                 type="text"
                 fieldMode={settings.fieldMode}
               />
@@ -553,7 +409,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                 label={t('Summary')}
                 value={summary}
                 onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })}
-                validation={useMemo(() => getValidationForField(validationIssues, 'summary', handleFixIssue) || { status: 'pristine' }, [validationIssues])}
+                validation={useMemo(() => getValidationForField(validationIssues, 'summary', (issue) => { const fixed = fixIssue(issue); if (fixed) onUpdateResource(fixed); }) || { status: 'pristine' }, [validationIssues, fixIssue, onUpdateResource])}
                 type="textarea"
                 rows={3}
                 fieldMode={settings.fieldMode}
@@ -561,29 +417,27 @@ const InspectorComponent: React.FC<InspectorProps> = ({
             </div>
 
             {/* Metadata Fields */}
-            <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+            <div className={`pt-4 border-t ${cx.divider}`}>
               <div className="flex justify-between items-center mb-3">
-                <label className={`text-[10px] font-bold uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>{t('Metadata')}</label>
+                <label className={`text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>{t('Metadata')}</label>
                 <div className="relative">
                   <button 
                     onClick={() => setShowAddMenu(!showAddMenu)} 
-                    className={`text-[10px] font-bold uppercase flex items-center gap-1 ${settings.fieldMode ? 'text-yellow-400' : 'text-blue-600'}`}
+                    className={`text-[10px] font-bold uppercase flex items-center gap-1 ${cx.accent}`}
                   >
                     Add <Icon name="add" className="text-[10px]"/>
                   </button>
                   {showAddMenu && (
                     <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 min-w-[160px] max-h-[250px] overflow-y-auto">
-                      {getAllowedProperties(resource.type)
-                        .filter(p => !['id', 'type', 'items', 'annotations', 'structures', 'label', 'summary', 'metadata'].includes(p))
-                        .map(p => (
-                          <button 
-                            key={p} 
-                            onClick={() => handleAddMetadataField(p)} 
-                            className="w-full px-3 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50"
-                          >
-                            {p}
-                          </button>
-                        ))}
+                      {availableProperties.map(p => (
+                        <button
+                          key={p}
+                          onClick={() => { addField(p); setShowAddMenu(false); }}
+                          className="w-full px-3 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50"
+                        >
+                          {p}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -594,18 +448,18 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                   const mVal = getIIIFValue(md.value, settings.language);
                   return (
                     <div key={idx} className={`group relative p-2.5 rounded-lg border ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                      <DebouncedInput 
+                      <DebouncedField
                         className={`w-full text-[10px] font-bold uppercase bg-transparent outline-none mb-1 border-b ${settings.fieldMode ? 'text-slate-500 border-slate-800' : 'text-slate-500 border-transparent'}`}
                         value={mKey}
-                        onChange={(val: string) => handleUpdateMetadataField(idx, val, mVal)}
+                        onChange={(val: string) => updateField(idx, val, mVal)}
                       />
-                      <DebouncedInput 
+                      <DebouncedField
                         className={`w-full text-xs bg-transparent outline-none ${settings.fieldMode ? 'text-white' : 'text-slate-800'}`}
                         value={mVal}
-                        onChange={(val: string) => handleUpdateMetadataField(idx, mKey, val)}
+                        onChange={(val: string) => updateField(idx, mKey, val)}
                       />
-                      <button 
-                        onClick={() => handleRemoveMetadataField(idx)}
+                      <button
+                        onClick={() => removeField(idx)}
                         className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"
                       >
                         <Icon name="close" className="text-xs"/>
@@ -618,8 +472,8 @@ const InspectorComponent: React.FC<InspectorProps> = ({
 
             {/* Standard Fields */}
             {isAllowed('rights') && (
-              <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>{t('Rights')}</label>
+              <div className={`pt-4 border-t ${cx.divider}`}>
+                <label className={`block text-[10px] font-bold mb-1.5 uppercase tracking-wider ${cx.label}`}>{t('Rights')}</label>
                 <select
                   value={resource.rights || ''}
                   onChange={e => onUpdateResource({ rights: e.target.value || undefined })}
@@ -636,9 +490,9 @@ const InspectorComponent: React.FC<InspectorProps> = ({
 
             {/* Geo Location */}
             {(resource as any).navPlace && (
-              <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+              <div className={`pt-4 border-t ${cx.divider}`}>
                 <div className="flex justify-between items-center mb-2">
-                  <label className={`text-[10px] font-bold uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Location</label>
+                  <label className={`text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>Location</label>
                   <button 
                     onClick={() => onUpdateResource({ navPlace: undefined } as any)}
                     className="text-[10px] text-red-400 hover:text-red-600 font-bold uppercase"
@@ -659,9 +513,9 @@ const InspectorComponent: React.FC<InspectorProps> = ({
 
             {/* Behaviors */}
             {isAllowed('behavior') && (
-              <div className={`pt-4 border-t ${settings.fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+              <div className={`pt-4 border-t ${cx.divider}`}>
                 <div className="flex justify-between items-center mb-2">
-                  <label className={`block text-[10px] font-bold uppercase tracking-wider ${settings.fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>Behaviors</label>
+                  <label className={`block text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>Behaviors</label>
                   <button 
                     onClick={handleSuggestBehaviors}
                     className={`text-[9px] font-bold uppercase px-2 py-1 rounded border ${settings.fieldMode ? 'border-slate-700 text-yellow-400' : 'border-slate-200 text-blue-600'}`}
@@ -734,7 +588,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
         {tab === 'structure' && resource && isManifest(resource) && (
           <div role="tabpanel" className="space-y-4">
             <div className={`p-3 rounded-lg border ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <h3 className={`text-xs font-bold uppercase mb-2 ${settings.fieldMode ? 'text-yellow-400' : 'text-blue-600'}`}>Table of Contents</h3>
+              <h3 className={`text-xs font-bold uppercase mb-2 ${cx.accent}`}>Table of Contents</h3>
               {(resource as IIIFManifest).structures && (resource as IIIFManifest).structures!.length > 0 ? (
                 <div className="space-y-2">
                   {(resource as IIIFManifest).structures!.map((range, idx) => (

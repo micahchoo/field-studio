@@ -61,6 +61,61 @@ export { useAppSettings } from './useAppSettings';
 export { useURLState } from './useURLState';
 
 // ============================================================================
+// User Intent Context (Phase 1: UI Simplification)
+// ============================================================================
+export {
+  UserIntentProvider,
+  useUserIntentState,
+  useUserIntentDispatch,
+  useUserIntent,
+  useUserIntentOptional,
+  useIsEditing,
+  useIsFieldMode,
+  useIntentMicrocopy,
+} from './useUserIntent';
+export type {
+  UserIntent,
+  UserIntentState,
+  UserIntentActions,
+} from './useUserIntent';
+
+// ============================================================================
+// Resource Context (Phase 1: UI Simplification)
+// ============================================================================
+export {
+  ResourceContextProvider,
+  useResourceContextState,
+  useResourceContextDispatch,
+  useResourceContext,
+  useResourceContextOptional,
+  useHasResource,
+  useIsCanvas,
+  useIsManifest,
+  useIsCollection,
+  useResourceMicrocopy,
+} from './useResourceContext';
+export type {
+  IIIFResourceType,
+  EditHistory,
+  CollaborationStatus,
+  AccessibilitySettings,
+  ResourceContextState,
+  ResourceContextActions,
+} from './useResourceContext';
+
+// ============================================================================
+// Contextual Microcopy (Phase 1: UI Simplification)
+// ============================================================================
+export {
+  useContextualMicrocopy,
+  useValidationMicrocopy,
+} from './useContextualMicrocopy';
+export type {
+  ContextualMicrocopyOptions,
+  ContextualMicrocopyResult,
+} from './useContextualMicrocopy';
+
+// ============================================================================
 // UI State
 // ============================================================================
 export { useDialogState, useDialogsState } from './useDialogState';
@@ -176,6 +231,23 @@ export type {
 export {
   useKeyboardDragDrop
 } from './useKeyboardDragDrop';
+
+// ============================================================================
+// Phase 2: Contextual Styling & Component Extraction Hooks
+// ============================================================================
+export { useContextualStyles } from './useContextualStyles';
+export type { ContextualClassNames } from './useContextualStyles';
+
+export { useDebouncedValue } from './useDebouncedValue';
+
+export { usePersistedTab } from './usePersistedTab';
+
+export { useInspectorValidation } from './useInspectorValidation';
+
+export { useMetadataEditor } from './useMetadataEditor';
+
+export { useLayerHistory, buildCanvasFromLayers } from './useLayerHistory';
+export type { PlacedResource } from './useLayerHistory';
 
 // ============================================================================
 // Utility Hooks

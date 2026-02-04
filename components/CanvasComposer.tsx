@@ -1,10 +1,11 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { IIIFCanvas, IIIFAnnotation, IIIFItem, IIIFAnnotationPage, getIIIFValue } from '../types';
+import React, { useState, useRef, useCallback } from 'react';
+import { IIIFCanvas, IIIFItem, getIIIFValue } from '../types';
 import { DEFAULT_INGEST_PREFS } from '../constants';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
 import { useViewport, usePanZoomGestures, useViewportKeyboard } from '../hooks';
+import { useLayerHistory, buildCanvasFromLayers, PlacedResource } from '../hooks/useLayerHistory';
 
 interface CanvasComposerProps {
   canvas: IIIFCanvas;
@@ -13,234 +14,43 @@ interface CanvasComposerProps {
   onClose: () => void;
 }
 
-interface PlacedResource {
-  id: string;
-  resource: IIIFItem & { _text?: string };
-  x: number; y: number; w: number; h: number;
-  opacity: number;
-  locked: boolean;
-}
-
-// Local undo/redo history for composition changes
-interface HistoryState {
-  past: PlacedResource[][];
-  present: PlacedResource[];
-  future: PlacedResource[][];
-}
-
-const MAX_HISTORY = 50;
-
 export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, onUpdate, onClose }) => {
   const { showToast } = useToast();
-  const [history, setHistory] = useState<HistoryState>({ past: [], present: [], future: [] });
+
+  // Layer state + undo/redo + Cmd+Z keyboard binding
+  const { layers, updateLayers, canUndo, canRedo, undo, redo } = useLayerHistory(canvas);
+
   const [canvasDimensions, setCanvasDimensions] = useState({ w: canvas.width || DEFAULT_INGEST_PREFS.defaultCanvasWidth, h: canvas.height || DEFAULT_INGEST_PREFS.defaultCanvasHeight });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [bgMode, setBgMode] = useState<'grid' | 'dark' | 'light'>('grid');
   const [sidebarTab, setSidebarTab] = useState<'layers' | 'library'>('layers');
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
-  
-  // Track initial state for accurate resize calculations
+
   const resizeStartRef = useRef<{
-    mouseX: number;
-    mouseY: number;
-    layerX: number;
-    layerY: number;
-    layerW: number;
-    layerH: number;
+    mouseX: number; mouseY: number;
+    layerX: number; layerY: number;
+    layerW: number; layerH: number;
   } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Unified viewport management
-  const viewport = useViewport({
-    minScale: 0.1,
-    maxScale: 2,
-    initialScale: 0.25,
-  });
-
-  // Get scale from viewport for use throughout component
+  const viewport = useViewport({ minScale: 0.1, maxScale: 2, initialScale: 0.25 });
   const scale = viewport.viewport.scale;
 
-  // Pan/zoom gesture handling for the workspace
   const gestures = usePanZoomGestures(containerRef, viewport, {
-    enabled: !isResizing, // Disable during layer resize
-    panButton: 'middle', // Middle-click to pan
-    requireCtrlForZoom: false, // Allow direct wheel zoom
+    enabled: !isResizing,
+    panButton: 'middle',
+    requireCtrlForZoom: false,
   });
 
-  // Keyboard shortcuts for viewport (zoom only, undo/redo handled separately)
   useViewportKeyboard(containerRef, viewport, gestures, {
-    enabled: true,
-    enableZoom: true,
-    enablePan: true,
-    enableRotation: false,
-    enableReset: true,
-    enableSpacePan: true,
+    enabled: true, enableZoom: true, enablePan: true,
+    enableRotation: false, enableReset: true, enableSpacePan: true,
   });
-
-  // Derived layers from history
-  const layers = history.present;
-
-  // Update layers with history tracking
-  const updateLayers = useCallback((updater: PlacedResource[] | ((prev: PlacedResource[]) => PlacedResource[])) => {
-    setHistory(prev => {
-      const newPresent = typeof updater === 'function' ? updater(prev.present) : updater;
-      // Don't record if nothing changed
-      if (JSON.stringify(newPresent) === JSON.stringify(prev.present)) return prev;
-      return {
-        past: [...prev.past.slice(-MAX_HISTORY + 1), prev.present],
-        present: newPresent,
-        future: []
-      };
-    });
-  }, []);
-
-  // Set layers without history (for initial load)
-  const setLayersInitial = useCallback((layers: PlacedResource[]) => {
-    setHistory({ past: [], present: layers, future: [] });
-  }, []);
-
-  // Undo/Redo functions
-  const canUndo = history.past.length > 0;
-  const canRedo = history.future.length > 0;
-
-  const undo = useCallback(() => {
-    setHistory(prev => {
-      if (prev.past.length === 0) return prev;
-      const newPast = [...prev.past];
-      const newPresent = newPast.pop()!;
-      return {
-        past: newPast,
-        present: newPresent,
-        future: [prev.present, ...prev.future]
-      };
-    });
-  }, []);
-
-  const redo = useCallback(() => {
-    setHistory(prev => {
-      if (prev.future.length === 0) return prev;
-      const newFuture = [...prev.future];
-      const newPresent = newFuture.shift()!;
-      return {
-        past: [...prev.past, prev.present],
-        present: newPresent,
-        future: newFuture
-      };
-    });
-  }, []);
-
-  // Keyboard shortcuts for undo/redo
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) {
-          redo();
-        } else {
-          undo();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
-
-  useEffect(() => {
-    const existing: PlacedResource[] = [];
-    if (canvas.items?.[0]?.items) {
-      canvas.items[0].items.forEach(anno => {
-          const targetString = typeof anno.target === 'string' ? anno.target : (anno.target as any).source;
-          const fragment = targetString.includes('#xywh=') ? targetString.split('#xywh=')[1] : null;
-          let [x, y, w, h] = [0, 0, canvasDimensions.w, canvasDimensions.h];
-          if (fragment) [x, y, w, h] = fragment.split(',').map(Number);
-
-          existing.push({
-            id: anno.id,
-            resource: {
-                id: (anno.body as any).id || '',
-                type: (anno.body as any).type || 'Image',
-                _blobUrl: (anno.body as any).id?.includes('blob:') ? (anno.body as any).id : undefined,
-                label: (anno.body as any).label || { none: ['Archive Layer'] }
-            } as any,
-            x, y, w, h, opacity: 1, locked: false
-          });
-      });
-    }
-    setLayersInitial(existing);
-  }, [canvas.id, setLayersInitial]);
 
   const handleSave = () => {
-    // Build painting annotations from layers
-    const paintingAnnotations: IIIFAnnotation[] = layers.map(l => {
-      let body: any;
-      if (l.resource.type === 'Text' || l.resource._text) {
-        body = {
-          type: 'TextualBody',
-          value: l.resource._text || 'New Text Layer',
-          format: 'text/plain'
-        };
-      } else {
-        const format = l.resource.type === 'Video' ? 'video/mp4' : l.resource.type === 'Sound' ? 'audio/mpeg' : 'image/jpeg';
-        body = {
-          id: l.resource._blobUrl || l.resource.id,
-          type: l.resource.type,
-          format
-        };
-      }
-      
-      return {
-        id: l.id,
-        type: "Annotation",
-        motivation: "painting",
-        body,
-        target: `${canvas.id}#xywh=${Math.round(l.x)},${Math.round(l.y)},${Math.round(l.w)},${Math.round(l.h)}`
-      };
-    });
-
-    // Preserve existing non-painting annotations from all annotation pages
-    const existingNonPaintingAnnotations: IIIFAnnotation[] = [];
-    if (canvas.items) {
-      canvas.items.forEach((page: IIIFAnnotationPage) => {
-        if (page.items) {
-          page.items.forEach((anno: IIIFAnnotation) => {
-            // Keep annotations that are NOT painting motivation and NOT from our layer IDs
-            const isPainting = anno.motivation === 'painting' ||
-              (Array.isArray(anno.motivation) && anno.motivation.includes('painting'));
-            const isLayerAnnotation = layers.some(l => l.id === anno.id);
-            if (!isPainting || !isLayerAnnotation) {
-              existingNonPaintingAnnotations.push(anno);
-            }
-          });
-        }
-      });
-    }
-
-    // Create new items array with painting page first, then preserve other annotation pages
-    const newItems: IIIFAnnotationPage[] = [{
-      id: `${canvas.id}/page/painting`,
-      type: "AnnotationPage",
-      items: paintingAnnotations
-    }];
-
-    // Add back any non-painting annotations
-    if (existingNonPaintingAnnotations.length > 0) {
-      newItems.push({
-        id: `${canvas.id}/page/annotations`,
-        type: "AnnotationPage",
-        items: existingNonPaintingAnnotations
-      });
-    }
-
-    const newCanvas: IIIFCanvas = {
-      ...canvas,
-      width: canvasDimensions.w,
-      height: canvasDimensions.h,
-      items: newItems
-    };
-    
-    onUpdate(newCanvas);
+    onUpdate(buildCanvasFromLayers(canvas, layers, canvasDimensions));
     showToast("Composition saved successfully", "success");
     onClose();
   };

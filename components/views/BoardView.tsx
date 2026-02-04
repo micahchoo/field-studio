@@ -19,6 +19,7 @@ import { ItemDetailModal } from '../ItemDetailModal';
 import { BoardExportDialog } from '../BoardExportDialog';
 import { generateUUID, createLanguageMap } from '../../utils/iiifTypes';
 import { sanitizeSvg } from '../../utils/sanitization';
+import { useTerminology } from '../../hooks/useTerminology';
 
 export type AnchorSide = 'T' | 'R' | 'B' | 'L';
 
@@ -76,7 +77,8 @@ interface BoardState {
 
 export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings }> = ({ root, settings }) => {
   const { showToast } = useToast();
-  
+  const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });
+
   // History state
   const { state: board, update: updateBoard, undo, redo, canUndo, canRedo } = useHistory<BoardState>({
       items: [],
@@ -1077,7 +1079,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                             } z-20 backdrop-blur-sm`}
                             style={{ left: it.x, top: it.y, width: it.w, height: it.h }}
                             role="button"
-                            aria-label={`${it.isNote ? 'Note' : it.resourceType}: ${it.label}`}
+                            aria-label={`${it.isNote ? 'Note' : t(it.resourceType)}: ${it.label}`}
                             aria-selected={activeId === it.id}
                             tabIndex={0}
                             onKeyDown={(e) => {
@@ -1249,7 +1251,7 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                                         )}
                                         {/* Type badge */}
                                         <div className={`absolute top-2 left-2 bg-gradient-to-r ${typeGradient} text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest shadow-lg`}>
-                                            {it.resourceType}
+                                            {t(it.resourceType)}
                                         </div>
                                     </div>
                                     {/* Footer with label over dark gradient */}
@@ -1313,24 +1315,26 @@ export const BoardView: React.FC<{ root: IIIFItem | null, settings: AppSettings 
                       <p className={`text-sm mb-8 ${mode === 'view' ? 'text-slate-400' : 'text-slate-500'}`}>
                         Create spatial connections between your archival materials
                       </p>
-                      <div className={`space-y-3 text-left ${mode === 'view' ? 'text-slate-300' : 'text-slate-600'}`}>
-                        <div className="flex items-center gap-4">
-                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Drag</kbd>
-                          <span className="text-sm">Drag media from the Archive panel</span>
+                      {!isAdvanced && (
+                        <div className={`space-y-3 text-left ${mode === 'view' ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <div className="flex items-center gap-4">
+                            <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Drag</kbd>
+                            <span className="text-sm">Drag media from the Archive panel</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-yellow-900/50 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>T</kbd>
+                            <span className="text-sm">Add sticky notes for annotations</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>C</kbd>
+                            <span className="text-sm">Connect items to show relationships</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Space</kbd>
+                            <span className="text-sm">Hold to pan around the board</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-yellow-900/50 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>T</kbd>
-                          <span className="text-sm">Add sticky notes for annotations</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>C</kbd>
-                          <span className="text-sm">Connect items to show relationships</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <kbd className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold min-w-[48px] text-center ${mode === 'view' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Space</kbd>
-                          <span className="text-sm">Hold to pan around the board</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}

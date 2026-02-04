@@ -30,6 +30,8 @@ import { ValidationIssue, validator } from './services/validator';
 import { contentStateService } from './services/contentState';
 import { useBulkOperations, useUndoRedoShortcuts, useVault, VaultProvider } from './hooks/useIIIFEntity';
 import { actions } from './services/actions';
+import { UserIntentProvider } from './hooks/useUserIntent';
+import { ResourceContextProvider } from './hooks/useResourceContext';
 
 // Custom hooks for cleaner state management
 import { useResponsive } from './hooks/useResponsive';
@@ -471,7 +473,6 @@ const MainApp: React.FC = () => {
           selectedId={selectedId}
           currentMode={currentMode}
           viewType={viewType}
-          fieldMode={settings.fieldMode}
           abstractionLevel={settings.abstractionLevel}
           visible={showSidebar}
           isMobile={isMobile}
@@ -648,7 +649,11 @@ const App: React.FC = () => (
   <VaultProvider>
     <ToastProvider>
       <ErrorBoundary>
-        <MainApp />
+        <UserIntentProvider>
+          <ResourceContextProvider>
+            <MainApp />
+          </ResourceContextProvider>
+        </UserIntentProvider>
       </ErrorBoundary>
     </ToastProvider>
   </VaultProvider>

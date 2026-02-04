@@ -10,13 +10,13 @@ import {
   getValidChildTypes
 } from '../utils/iiifHierarchy';
 import { useResizablePanel } from '../hooks/useResizablePanel';
+import { useAppSettings } from '../hooks/useAppSettings';
 
 interface SidebarProps {
   root: IIIFItem | null;
   selectedId: string | null;
   currentMode: AppMode;
   viewType: ViewType;
-  fieldMode: boolean;
   onSelect: (id: string) => void;
   onModeChange: (mode: AppMode) => void;
   onViewTypeChange: (type: ViewType) => void;
@@ -184,10 +184,12 @@ const TreeItem: React.FC<{
 };
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
-  root, selectedId, currentMode, viewType, fieldMode, onSelect, onModeChange, onViewTypeChange,
+  root, selectedId, currentMode, viewType, onSelect, onModeChange, onViewTypeChange,
   onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport,
   onOpenSettings, onToggleQuickHelp, isMobile, onClose, abstractionLevel = 'standard', onAbstractionLevelChange
 }) {
+  const { settings } = useAppSettings();
+  const fieldMode = settings.fieldMode;
   const [filterText, setFilterText] = useState('');
   const [filterType, setFilterType] = useState('All');
 
@@ -341,8 +343,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
     </>
   );
 }, (prev, next) => {
-  // Custom comparison: only re-render if root ID, selectedId, or fieldMode changes
+  // Custom comparison: only re-render if root ID or selectedId changes.
+  // fieldMode changes propagate via useAppSettings context, bypassing memo.
   return prev.root?.id === next.root?.id &&
-         prev.selectedId === next.selectedId &&
-         prev.fieldMode === next.fieldMode;
+         prev.selectedId === next.selectedId;
 });
