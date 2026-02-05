@@ -6,11 +6,13 @@ These are re-exported from `../../ui/primitives/` (the existing primitive compon
 
 ## What's here
 
-- `Button.tsx` — styled button with variants (primary, secondary, ghost, danger, success)
-- `Input.tsx` — form input field with size variants
-- `Icon.tsx` — icon component using the existing icon registry
-- `Card.tsx` — card container for grouping content
-- `index.ts` — barrel export
+| File | Component | Description |
+|------|-----------|-------------|
+| `Button.tsx` | Button | Styled button with variants (primary, secondary, ghost, danger, success) |
+| `Input.tsx` | Input | Form input field with size variants |
+| `Icon.tsx` | Icon | Icon component using the existing icon registry |
+| `Card.tsx` | Card | Card container for grouping content |
+| `index.ts` | — | Barrel export of all atoms |
 
 ## Usage
 
@@ -32,7 +34,7 @@ export const MyComponent = () => (
 3. **Composable** — Atoms are always part of a molecule or organism, never standalone
 4. **Accessible** — Semantic HTML, ARIA labels, keyboard support built-in
 
-## No magic numbers
+## No Magic Numbers
 
 Every atom uses design tokens from `../../../designSystem.ts`:
 - Colors: `COLORS.primary[500]`, `COLORS.semantic.error`

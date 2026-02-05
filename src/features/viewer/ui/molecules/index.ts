@@ -24,3 +24,13 @@ export type { AnnotationCanvasProps } from './AnnotationCanvas';
 
 export { AnnotationForm } from './AnnotationForm';
 export type { AnnotationFormProps } from './AnnotationForm';
+
+// Viewer molecules (migrated from legacy components)
+export { MediaPlayer } from './MediaPlayer';
+export type { MediaPlayerProps } from './MediaPlayer';
+
+export { ViewerSearchPanel } from './ViewerSearchPanel';
+export type { ViewerSearchPanelProps, SearchResult, SearchService } from './ViewerSearchPanel';
+
+export { ViewerWorkbench } from './ViewerWorkbench';
+export type { ViewerWorkbenchProps } from './ViewerWorkbench';

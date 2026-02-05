@@ -17,8 +17,10 @@ This feature handles:
 ```
 staging/
 ├── ui/
-│   └── organisms/
-│       └── StagingView.tsx       ← Main two-pane workbench
+│   ├── organisms/
+│   │   └── StagingView.tsx       ← Main two-pane workbench
+│   └── molecules/
+│       └── SourcePane.tsx        ← Source manifest list pane
 ├── model/
 │   └── index.ts                  ← Source manifest operations, collection creation
 ├── index.ts                      ← Public API
@@ -37,15 +39,12 @@ staging/
 - `FilterInput`: Search/filter input with debounce
 - `Toolbar`: Action button group
 - `EmptyState`: Empty/loading states
+- `CollectionCard`: Card representing a target collection
+- `CanvasItem`: Thumbnail + label for canvases
 
 ### Atoms Used (From Shared)
 - `Button`: Action buttons
-
-## Future Molecules Needed
-- `SourcePane`: Draggable manifest list (feature-specific or shared)
-- `CanvasItem`: Thumbnail + label for canvases
-- `CollectionCard`: Card representing a target collection
-- `SendToCollectionModal`: Modal for selecting destination
+- `Icon`: Icons for actions
 
 ## Usage
 
@@ -75,7 +74,41 @@ const sourceManifests: SourceManifests = {
 
 ## Model API
 
+### Types
+
+```typescript
+interface SourceManifest {
+  id: string;
+  label: string;
+  canvases: SourceCanvas[];
+  isPartial?: boolean;
+  sourceUrl?: string;
+}
+
+interface SourceCanvas {
+  id: string;
+  label: string;
+  thumbnail?: string;
+  blobUrl?: string;
+  width?: number;
+  height?: number;
+}
+
+interface SourceManifests {
+  byId: Record<string, SourceManifest>;
+  allIds: string[];
+}
+
+type StagingAction =
+  | { type: 'ADD_TO_COLLECTION'; manifestIds: string[]; collectionId: string }
+  | { type: 'REORDER_CANVASES'; manifestId: string; newOrder: string[] }
+  | { type: 'REMOVE_FROM_SOURCE'; manifestId: string }
+  | { type: 'CREATE_COLLECTION'; label: string; manifestIds: string[] }
+  | { type: 'MERGE_MANIFESTS'; sourceIds: string[]; targetId: string };
+```
+
 ### Source Manifest Operations
+
 ```typescript
 import {
   createSourceManifest,
@@ -84,6 +117,8 @@ import {
   reorderCanvases,
   selectAllSourceManifests,
   selectTotalCanvasCount,
+  mergeSourceManifests,
+  findSimilarFilenames,
 } from '@/src/features/staging';
 
 // Create from IIIF manifest
@@ -94,41 +129,71 @@ const updated = addSourceManifest(sourceManifests, source);
 
 // Reorder canvases
 const reordered = reorderCanvases(sourceManifests, manifestId, newOrder);
+
+// Find similar filenames for merging
+const similar = findSimilarFilenames(sourceManifests);
+
+// Merge manifests
+const merged = mergeSourceManifests(sourceManifests, [id1, id2], targetId);
 ```
 
 ### Collection Creation
+
 ```typescript
 import { createCollectionFromManifests } from '@/src/features/staging';
 
-const collection = createCollectionFromManifests('My Collection', manifests);
+const collection = createCollectionFromManifests(
+  selectedManifests,
+  'My New Collection'
+);
 ```
 
-### Similarity Detection
+## Public API
+
 ```typescript
-import { findSimilarFilenames, mergeSourceManifests } from '@/src/features/staging';
+// Components
+export { StagingView } from './ui/organisms/StagingView';
+export { SourcePane } from './ui/molecules/SourcePane';
 
-// Find similar files
-const groups = findSimilarFilenames(filenames);
+// Types
+export type { StagingViewProps } from './ui/organisms/StagingView';
+export type { SourcePaneProps } from './ui/molecules/SourcePane';
 
-// Merge manifests
-const merged = mergeSourceManifests(sourceManifests, sourceIds, targetId);
+// Model
+export {
+  collection,
+  manifest,
+  createSourceManifest,
+  addSourceManifest,
+  removeSourceManifest,
+  reorderCanvases,
+  selectAllSourceManifests,
+  selectTotalCanvasCount,
+  createCollectionFromManifests,
+  mergeSourceManifests,
+  findSimilarFilenames,
+  type SourceManifest,
+  type SourceCanvas,
+  type SourceManifests,
+  type StagingAction,
+} from './model';
 ```
 
-## Refactor Status
+## Molecules Used
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| StagingView organism | ✅ New | Refactored from StagingWorkbench |
-| Model layer | ✅ New | Extracted and centralized |
-| SourcePane | ⚠️ Inline | Should become molecule |
-| Drag-drop | ❌ Basic | Needs useDragDrop hook |
-| Keyboard nav | ❌ Pending | Accessibility requirement |
-| CanvasItem | ❌ Pending | Should be shared molecule |
-| CollectionCard | ❌ Pending | Should be shared molecule |
-| Checkpoint/resume | ❌ Pending | From ingestState service |
+| Molecule | Purpose | Source |
+|----------|---------|--------|
+| `ViewContainer` | View wrapper with header | `src/shared/ui/molecules/` |
+| `FilterInput` | Search/filter input | `src/shared/ui/molecules/` |
+| `Toolbar` | Action button group | `src/shared/ui/molecules/` |
+| `EmptyState` | Empty/loading states | `src/shared/ui/molecules/` |
+| `CollectionCard` | Target collection cards | `src/shared/ui/molecules/` |
+| `CanvasItem` | Canvas thumbnails | `src/shared/ui/molecules/` |
 
-## Legacy References
+## Future Enhancements
 
-- `components/staging/StagingWorkbench.tsx` - Original main component
-- `components/staging/SourcePane.tsx` - Original left pane (reference only)
-- `components/staging/hooks/useStagingState.ts` - Original state hook (reference only)
+- [ ] Full drag-drop with `useDragDrop` hook
+- [ ] Keyboard navigation for accessibility
+- [ ] Checkpoint/resume functionality
+- [ ] SendToCollectionModal for destination selection
+- [ ] Similarity detection UI for merging files

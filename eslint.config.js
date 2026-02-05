@@ -191,6 +191,8 @@ export default [
       // P2/P3: Custom plugin rules for molecule validation
       '@field-studio/molecule-props-validation': 'warn',
       '@field-studio/useeffect-restrictions': 'error',
+      '@field-studio/max-lines-feature': 'warn',
+      '@field-studio/no-native-html-in-molecules': 'error',
       'no-restricted-imports': ['error', {
         paths: [
           // Block context hooks — molecules receive these via props
@@ -271,6 +273,42 @@ export default [
           { group: ['@/src/app/*', '@/src/app/**'], message: '❌ FSD: Features cannot import from app layer. Receive context via props from Templates.' },
           // FSD: No cross-feature imports (catches @/src/features/anything)
           { group: ['@/src/features/*'], message: '❌ FSD: Features cannot import from other features. Use shared layer for cross-cutting concerns.' },
+        ],
+      }],
+    },
+  },
+
+  // ORGANISM LAYER: Max lines constraint
+  {
+    files: ['src/features/*/ui/organisms/**/*.{ts,tsx}'],
+    plugins: {
+      '@field-studio': fieldStudioPlugin,
+    },
+    rules: {
+      '@field-studio/max-lines-feature': ['warn', {
+        organismMax: 300,
+        moleculeMax: 200,
+      }],
+    },
+  },
+
+  // FEATURE-SPECIFIC ATOM IMPORT ENFORCEMENT
+  // Encourages features to create their own atoms instead of using primitives directly
+  {
+    files: [
+      'src/features/viewer/ui/molecules/**/*.{ts,tsx}',
+      'src/features/metadata-edit/ui/molecules/**/*.{ts,tsx}',
+      'src/features/board-design/ui/molecules/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': ['warn', {
+        patterns: [
+          // Discourage direct primitive imports in large molecules
+          // (Allow list for atoms, warn for molecules)
+          {
+            group: ['@/ui/primitives/*', '@/ui/primitives/*'],
+            message: '⚠️ Consider creating feature-specific atoms in features/{name}/ui/atoms/ instead of importing primitives directly. See docs/atomic-design-feature-audit.md'
+          },
         ],
       }],
     },

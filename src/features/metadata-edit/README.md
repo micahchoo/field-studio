@@ -190,3 +190,7 @@ const IIIF_PROPERTY_SUGGESTIONS = [
 | Molecule | Purpose | Source |
 |----------|---------|--------|
 | `ViewContainer` | View wrapper with header | `src/shared/ui/molecules/` |
+| `FilterInput` | Search/filter input | `src/shared/ui/molecules/` |
+| `Toolbar` | Action button group | `src/shared/ui/molecules/` |
+| `EmptyState` | Empty/loading states | `src/shared/ui/molecules/` |
+| `DebouncedInput` | Cell editing | `src/shared/ui/molecules/` |

@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => {
             // Separate worker chunks for better caching
             manualChunks: {
               // Group worker-related code
-              'workers': ['./workers/ingest.worker', './workers/validation.worker'],
+              'workers': ['./src/shared/workers/ingest.worker', './src/shared/workers/validation.worker'],
             }
           }
         }

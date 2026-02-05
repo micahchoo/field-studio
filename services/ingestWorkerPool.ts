@@ -11,7 +11,7 @@
  * - Support for parallel processing of CPU-bound tasks
  */
 
-import {
+import type {
   IngestCompleteMessage,
   IngestErrorMessage,
   IngestFileCompleteMessage,
@@ -19,8 +19,8 @@ import {
   IngestProgressMessage,
   IngestWorkerRequest,
   IngestWorkerResponse
-} from '../workers/ingest.worker';
-import IngestWorker from '../workers/ingest.worker?worker';
+} from '@/src/shared/workers';
+import IngestWorker from '@/src/shared/workers/ingest.worker?worker';
 import {
   FileTree,
   IIIFItem,

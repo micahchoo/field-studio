@@ -1,4 +1,4 @@
-# Timeline Feature
+# Timeline Feature (`src/features/timeline/`)
 
 Temporal visualization of IIIF items with navDate property.
 
@@ -9,11 +9,11 @@ This feature follows Atomic Design + Feature-Sliced Design principles:
 ```
 src/features/timeline/
 ├── ui/organisms/
-│   └── TimelineView.tsx      # Main organism (composes molecules)
+│   └── TimelineView.tsx      ← Main organism (composes molecules)
 ├── model/
-│   └── index.ts              # useTimeline hook + domain logic
-├── index.ts                  # Public API
-└── README.md                 # This file
+│   └── index.ts              ← useTimeline hook + domain logic
+├── index.ts                  ← Public API
+└── README.md                 ← This file
 ```
 
 ## Organism: TimelineView
@@ -48,10 +48,13 @@ const {
   groups,
   minDate,
   maxDate,
+  totalItems,
   zoomLevel,
   selectedDate,
   setZoomLevel,
+  setSelectedDate,
   toggleDate,
+  hasItems,
   // ...more
 } = useTimeline(root);
 ```
@@ -71,12 +74,33 @@ const {
 | Month | By month (YYYY-MM) | 6-8 |
 | Year | By year (YYYY) | 8-12 |
 
-## Molecules Used
+## Types
 
-| Molecule | Purpose |
-|----------|---------|
-| `TimelineTick` | Date header with item count |
-| `EmptyState` | No dated items state |
+```typescript
+type ZoomLevel = 'day' | 'month' | 'year';
+
+interface TimelineGroup {
+  date: string;
+  displayDate: string;
+  items: IIIFCanvas[];
+}
+
+interface TimelineState {
+  groups: TimelineGroup[];
+  minDate: Date | null;
+  maxDate: Date | null;
+  totalItems: number;
+  zoomLevel: ZoomLevel;
+  selectedDate: string | null;
+}
+
+interface UseTimelineReturn extends TimelineState {
+  setZoomLevel: (level: ZoomLevel) => void;
+  setSelectedDate: (date: string | null) => void;
+  toggleDate: (date: string) => void;
+  hasItems: boolean;
+}
+```
 
 ## Date Format Support
 
@@ -88,38 +112,73 @@ The timeline uses the IIIF `navDate` property which should be ISO 8601 format:
 }
 ```
 
-## Legacy Migration
+## Date Utilities
 
-This replaces `components/views/TimelineView.tsx`:
+```typescript
+import {
+  formatDisplayDate,
+  formatTime,
+  formatShortDate,
+  getDateKey,
+  getGridColumns,
+  getTimelinePosition,
+} from '@/src/features/timeline';
 
-| Aspect | Legacy | New |
-|--------|--------|-----|
-| Lines of code | 255 | ~200 (organism) + 150 (model) |
-| fieldMode access | `useAppSettings()` | Via props from template |
-| Styling | Inline classes | Via `cx` prop |
-| Date formatting | Inline functions | `formatDisplayDate()` utility |
-| Grid layout | Inline logic | `getGridColumns()` utility |
+// Format based on zoom level
+const display = formatDisplayDate(date, 'month'); // "January 2024"
 
-## Decomposition Notes
+// Format time
+const time = formatTime(date); // "10:30 AM"
 
-### Future Molecules
+// Get date key for grouping
+const key = getDateKey(date, 'day'); // "2024-01-15"
 
-1. **TimelineHeader** - Title, stats, and zoom controls
-2. **TimelineMinimap** - Date range bar with position markers
-3. **TimelineGroup** - Collapsible date group
-4. **TimelineItemCard** - Item thumbnail with metadata
-5. **RangeSelector** - Date range filter
+// Get grid column count
+const columns = getGridColumns('year'); // 12
+```
 
-### Future Enhancements
+## Molecules Used
 
-1. **Date Range Filtering** - Filter to specific date ranges
-2. **Temporal Search** - Search within date ranges
-3. **Animation** - Animate transitions between zoom levels
-4. **Export** - Export timeline as static image
+| Molecule | Purpose |
+|----------|---------|
+| `TimelineTick` | Date header with item count |
+| `EmptyState` | No dated items state |
 
-## Performance Considerations
+## Public API
 
-- Items sorted once per root change (useMemo)
-- Groups recalculated only when zoom changes
-- Images lazy-loaded
-- Minimap markers limited to visible range
+```typescript
+// Component
+export { TimelineView } from './ui/organisms/TimelineView';
+export type { TimelineViewProps } from './ui/organisms/TimelineView';
+
+// Model
+export {
+  useTimeline,
+  formatDisplayDate,
+  formatTime,
+  formatShortDate,
+  getDateKey,
+  getGridColumns,
+  getTimelinePosition,
+  type ZoomLevel,
+  type TimelineGroup,
+  type UseTimelineReturn,
+} from './model';
+```
+
+## Usage
+
+```typescript
+import { TimelineView } from '@/src/features/timeline';
+
+<FieldModeTemplate>
+  {({ cx, fieldMode }) => (
+    <TimelineView
+      root={root}
+      onSelect={handleSelect}
+      cx={cx}
+      fieldMode={fieldMode}
+    />
+  )}
+</FieldModeTemplate>
+```

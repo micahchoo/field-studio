@@ -38,20 +38,25 @@ An atom is to UI what hydrogen is to chemistry — you can't break it down furth
 - ❌ No data fetching
 
 ### Examples
+
+**Atom: Button**
 ```typescript
-// ATOM: Button
 // Props-only, uses design tokens
 export const Button = ({ variant, size, children, ...props }) => {
   return <button style={variantStyles[variant]}>{children}</button>;
 };
+```
 
-// ATOM: Input
+**Atom: Input**
+```typescript
 // Pure HTML input with design tokens
 export const Input = ({ size, disabled, ...props }) => {
   return <input style={sizeStyles[size]} disabled={disabled} {...props} />;
 };
+```
 
-// ATOM: Icon
+**Atom: Icon**
+```typescript
 // Just renders an SVG icon, no logic
 export const Icon = ({ name, size }) => icons[name];
 ```
@@ -62,6 +67,8 @@ export const Icon = ({ name, size }) => icons[name];
 - `Icon.tsx` — icon registry (re-exported from `../../ui/primitives/`)
 - `Card.tsx` — card container (re-exported from `../../ui/primitives/`)
 - `index.ts` — barrel export of all atoms
+
+See [`src/shared/ui/atoms/README.md`](./atoms/README.md) for details.
 
 ---
 
@@ -98,234 +105,132 @@ export const FilterInput = ({ onChange, placeholder, cx, fieldMode }) => {
   }, [debouncedValue]);
 
   return (
-    <div className={cx?.input ?? 'default-input'}>
-      <Icon name="search" />
-      <Input value={value} onChange={(e) => setValue(e.target.value)} />
-    </div>
-  );
-};
-
-interface FilterInputProps {
-  onChange: (value: string) => void;
-  placeholder?: string;
-  cx?: ContextualClassNames;  // Optional — passed from organism
-  fieldMode?: boolean;        // Optional — passed from organism
-}
-```
-
-**SearchField molecule:**
-```typescript
-// Composes: Icon + Input + clear button
-// State: search text, debounce
-// Props: receives cx? from organism (NO context hook calls)
-export const SearchField = ({ onSearch, placeholder, cx }) => {
-  const [text, setText] = useState('');
-
-  return (
-    <div className={cx?.surface}>
+    <div className={cx?.input}>
       <Icon name="search" />
       <Input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={value}
+        onChange={setValue}
         placeholder={placeholder}
+        className={fieldMode ? 'high-contrast' : ''}
       />
-      {text && <button onClick={() => setText('')}>Clear</button>}
-    </div>
-  );
-};
-
-interface SearchFieldProps {
-  onSearch: (value: string) => void;
-  placeholder?: string;
-  cx?: ContextualClassNames;  // Optional — passed from organism
-}
-```
-
-**ViewToggle molecule:**
-```typescript
-// Composes: Button atoms in a group
-// State: selected mode
-// Generic — works for any toggle (archive view mode, board layout, etc.)
-export const ViewToggle = ({ value, onChange, options }) => {
-  return (
-    <div>
-      {options.map((opt) => (
-        <Button
-          key={opt.value}
-          variant={value === opt.value ? 'primary' : 'ghost'}
-          onClick={() => onChange(opt.value)}
-        >
-          <Icon name={opt.icon} />
-        </Button>
-      ))}
     </div>
   );
 };
 ```
 
 ### Files in this directory
-- `FilterInput.tsx` — search/filter input with debounce
-- `DebouncedInput.tsx` — input with configurable debounce
-- `EmptyState.tsx` — standardized empty state placeholder
-- `ViewContainer.tsx` — header + content wrapper (for views)
-- `Toolbar.tsx` — action button toolbar
-- `SelectionToolbar.tsx` — multi-select action toolbar
-- `LoadingState.tsx` — loading skeleton
-- `SearchField.tsx` — search input (extracted pattern)
-- `ViewToggle.tsx` — view mode toggle (extracted pattern)
-- `ResourceTypeBadge.tsx` — type indicator + label
-- `index.ts` — barrel export of all molecules
+- `FilterInput.tsx` — Debounced search input
+- `SearchField.tsx` — Search field with clear button
+- `ViewToggle.tsx` — Grid/list/map toggle
+- `EmptyState.tsx` — Empty state placeholder
+- `LoadingState.tsx` — Loading indicator
+- `Toolbar.tsx` — Action button toolbar
+- `SelectionToolbar.tsx` — Selection count + bulk actions
+- `DebouncedInput.tsx` — Input with debounced onChange
+- `ZoomControl.tsx` — Zoom in/out/reset
+- `ViewContainer.tsx` — Consistent view wrapper
+- `PageCounter.tsx` — "X of Y" counter
+- `ClusterBadge.tsx` — Map cluster indicator
+- `ContextMenu.tsx` — Right-click context menu
+- `FacetPill.tsx` — Filter pill (All, Manifest, etc.)
+- `FilterInput.tsx` — Filter input with debounce
+- `IconButton.tsx` — Icon-only button
+- `MapMarker.tsx` — Map location marker
+- `MenuButton.tsx` — Menu trigger button
+- `MuseumLabel.tsx` — IIIF label display
+- `RangeSelector.tsx` — Range slider
+- `ResultCard.tsx` — Search result card
+- `SearchField.tsx` — Search input
+- `SelectionToolbar.tsx` — Multi-selection toolbar
+- `StackedThumbnail.tsx` — Stacked thumbnail display
+- `StatusBadge.tsx` — Status indicator badge
+- `TimelineTick.tsx` — Timeline date marker
+- `ViewToggle.tsx` — View mode toggle
+- And more...
+
+See [`src/shared/ui/molecules/README.md`](./molecules/README.md) for details.
 
 ---
 
-## Layer 3: Organisms (`organisms/`)
+## Layer 3: Organisms (Not at Shared Level)
 
-### What is an organism?
-**Complex, feature-specific sections** that compose molecules and implement **domain logic**.
+Organisms contain **domain logic** and are **feature-specific**. They live in `src/features/*/ui/organisms/`.
 
-Organisms know about your business domain (archives, manifests, canvases). They use domain hooks and API data.
+**Why not in shared?**
+- Organisms know about manifests, canvases, and IIIF
+- They use domain hooks like `useArchiveFilter`
+- They're specific to a feature's business logic
+- They import from entities and services
 
-### Characteristics
-- ✅ Composes molecules (lower layer)
-- ✅ Domain-aware (understands archives, canvases, etc.)
-- ✅ Domain hooks allowed (`useArchiveData`, `useManifestSelectors`)
-- ✅ Complex state and logic
-- ❌ No routing logic
-- ❌ No global state mutations (uses actions dispatcher, not direct vault updates)
-- ❌ No page-level concerns (data fetching is in pages)
+Example: `ArchiveView`, `BoardView`, `MetadataView`
 
-### Examples (in `src/features/*/ui/organisms/`)
+---
 
-**ArchiveGrid organism:**
-```typescript
-// Knows about manifests and canvases (domain)
-// Composes: FilterInput (molecule) + grid renderer
-export const ArchiveGrid = ({ root }) => {
-  const manifests = useArchiveSelectors(root);
-  const [filter, setFilter] = useState('');
-  const filtered = manifests.filter(/* domain-aware filter */);
+## Context Flow
 
-  return (
-    <>
-      <FilterInput onChange={setFilter} /> {/* Molecule */}
-      <div className="grid">
-        {filtered.map(manifest => (
-          <ManifestCard key={manifest.id} manifest={manifest} />
-        ))}
-      </div>
-    </>
-  );
-};
+The key insight: **Context is injected at the template level and flows down via props.**
+
+```
+FieldModeTemplate (reads context via hooks)
+    ↓
+    props: { cx, fieldMode, t, isAdvanced }
+    ↓
+Organism (ArchiveView)
+    ↓
+    props: { cx, fieldMode }
+    ↓
+Molecule (FilterInput)
+    ↓
+    props: { className }
+    ↓
+Atom (Input)
 ```
 
-### NOT in src/shared/ui/organisms/
-
-We don't put organisms in `src/shared/` because organisms are **feature-specific**. They go in `src/features/*/ui/organisms/`.
+**No hook calls in organisms or molecules.** Only templates call `useAppSettings()` and `useContextualStyles()`.
 
 ---
 
-## Practical Decision Tree
+## Migration Path
 
-**Is this component zero state?**
-- Yes → **ATOM**
-- No → Next question
-
-**Does it only have local UI state (not domain state)?**
-- Yes → **MOLECULE**
-- No → **ORGANISM** (put in features/)
-
-**Does it need to know about archives, manifests, or domain logic?**
-- Yes → **ORGANISM** (definitely features/)
-- No → Could be a molecule
-
-**Is it reusable across multiple features?**
-- Yes → **MOLECULE** (shared layer)
-- No → **ORGANISM** (feature layer)
-
----
-
-## Rules Enforced by Convention
-
-1. **Atoms never import molecules or organisms**
-2. **Molecules never import organisms or domain hooks**
-3. **Organisms never import from app/ or routes/**
-4. **All UI styling goes through design tokens (COLORS, SPACING, etc.)**
-5. **Context (fieldMode, settings) flows via props from Template → Organism → Molecule**
-
----
-
-## Testing Strategy
-
-Tests follow **IDEAL OUTCOME / FAILURE PREVENTED** pattern and use **real data**:
-
-### Atom Tests
+### Before (prop drilling):
 ```typescript
-describe('Button Atom', () => {
-  it('IDEAL OUTCOME: Renders with correct variant styles', () => {
-    const { getByRole } = render(<Button variant="primary">Click</Button>);
-    expect(getByRole('button')).toHaveClass('bg-blue-600');
-    console.log('✓ IDEAL: Button renders variant correctly');
-  });
-});
+<App fieldMode={fieldMode}>
+  <Page fieldMode={fieldMode}>
+    <View fieldMode={fieldMode}>
+      <Component fieldMode={fieldMode}>
+        <FilterInput fieldMode={fieldMode} /> {/* Finally used here */}
+      </Component>
+    </View>
+  </Page>
+</App>
 ```
 
-### Molecule Tests
+### After (template injection):
 ```typescript
-describe('FilterInput Molecule', () => {
-  it('IDEAL OUTCOME: Debounces onChange after 300ms', async () => {
-    const onChange = vi.fn();
-    const { getByRole } = render(<FilterInput onChange={onChange} />);
-
-    fireEvent.change(getByRole('textbox'), { target: { value: 'test' } });
-    expect(onChange).not.toHaveBeenCalled(); // Not yet
-
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith('test'));
-    console.log('✓ IDEAL: Input debounces at 300ms');
-  });
-
-  it('IDEAL OUTCOME: fieldMode is optional prop (props-driven)', () => {
-    // TypeScript check: FilterInput accepts optional cx and fieldMode props
-    const props: React.ComponentProps<typeof FilterInput> = {
-      onChange: () => {},
-      fieldMode: false,  // Optional — passed from organism
-      cx: { surface: '', text: '', border: '', input: '' },  // Optional styling
-    };
-    console.log('✓ IDEAL: Props-driven theming via cx and fieldMode');
-  });
-});
-```
-
-### Organism Tests
-```typescript
-describe('ArchiveGrid Organism', () => {
-  it('IDEAL OUTCOME: Filters manifests from real archive data', async () => {
-    const realData = await loadRealArchiveFixture('Karwaan');
-    const { getByRole } = render(<ArchiveGrid root={realData} />);
-
-    fireEvent.change(getByRole('textbox'), { target: { value: '110' } });
-
-    await waitFor(() => {
-      expect(getByRole('grid').querySelectorAll('[data-testid="item"]')).toHaveLength(1);
-    });
-    console.log('✓ IDEAL: Grid filters real data correctly');
-  });
-});
+<FieldModeTemplate>
+  {({ cx, fieldMode }) => (
+    <ArchiveView cx={cx} fieldMode={fieldMode}>
+      <ArchiveHeader>
+        <FilterInput /> {/* Receives styling via cx prop */}
+      </ArchiveHeader>
+    </ArchiveView>
+  )}
+</FieldModeTemplate>
 ```
 
 ---
 
 ## Summary Table
 
-| Aspect | Atoms | Molecules | Organisms |
-|--------|-------|-----------|-----------|
-| **State** | None | Local UI only | Domain + local |
-| **Location** | `shared/ui/atoms/` | `shared/ui/molecules/` | `features/*/ui/organisms/` |
-| **Composes** | Nothing | Atoms | Molecules + domain |
-| **Hooks** | None (pure functions) | Local only (`useState`, `useDebouncedValue`) — no context hooks | Domain (`useArchiveData`, `useManifestSelectors`) + context via props |
-| **Props** | Style + content | Generic UI props | Domain data + callbacks |
-| **Reusable?** | Across all features | Across all features | Feature-specific |
-| **Testable?** | Simple snapshot tests | IDEAL/FAILURE + UI interaction | IDEAL/FAILURE + real data |
+| Layer | State | Domain Logic | Context Hooks | Location |
+|-------|-------|--------------|---------------|----------|
+| Atoms | None | None | None | `src/shared/ui/atoms/` |
+| Molecules | Local UI only | None | None | `src/shared/ui/molecules/` |
+| Organisms | Feature state | Yes | None (receive via props) | `src/features/*/ui/organisms/` |
+| Templates | App context | No | Yes (useAppSettings, useContextualStyles) | `src/app/templates/` |
 
 ---
 
-**Next:** See `atoms/`, `molecules/` directories for implementation examples.
+See individual README files for each layer:
+- [`src/shared/ui/atoms/README.md`](./atoms/README.md)
+- [`src/shared/ui/molecules/README.md`](./molecules/README.md)

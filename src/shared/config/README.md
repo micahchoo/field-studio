@@ -14,17 +14,20 @@ Changes to these values propagate everywhere they're used.
 
 ## Files
 
+| File | Purpose |
+|------|---------|
+| `tokens.ts` | Re-exports design tokens and adds application-specific constants |
+
 ### `tokens.ts`
 
 Re-exports design tokens and adds application-specific constants.
 
 **Exported from:**
-- `designSystem.ts` — COLORS, SPACING, LAYOUT, TOUCH_TARGETS, INTERACTION
-- New constants for this app
+- `designSystem.ts` (project root) — COLORS, SPACING, LAYOUT, TOUCH_TARGETS, INTERACTION
 
 **Structure:**
 ```typescript
-// Re-exports
+// Re-exports from designSystem.ts
 export { COLORS, SPACING, LAYOUT, TOUCH_TARGETS, INTERACTION } from '../../designSystem';
 
 // New constants (no magic numbers)
@@ -58,11 +61,11 @@ export const FilterInput = ({ onChange, placeholder }) => {
 
 **After (using config):**
 ```typescript
-import { INPUT_CONSTRAINTS } from '@/src/shared/config/tokens';
+import { INPUT_CONSTRAINTS, UI_TIMING } from '@/src/shared/config/tokens';
 
 export const FilterInput = ({ onChange, placeholder }) => {
   const [value, setValue] = useState('');
-  const debouncedValue = useDebouncedValue(value, INPUT_CONSTRAINTS.debounceMs);
+  const debouncedValue = useDebouncedValue(value, UI_TIMING.debounce);
 
   return <input maxLength={INPUT_CONSTRAINTS.maxLengthDefault} />;
 };
@@ -88,6 +91,23 @@ export const FilterInput = ({ onChange, placeholder }) => {
 - Random strings (error messages → use i18n)
 - Computed values (use functions instead)
 - Feature-specific config (put in feature directories)
+
+## Design Tokens Reference
+
+### Colors (`COLORS`)
+Semantic color tokens for consistent theming.
+
+### Spacing (`SPACING`)
+Consistent spacing scale (4px base unit).
+
+### Layout (`LAYOUT`)
+Border radius, shadows, z-index scale.
+
+### Touch Targets (`TOUCH_TARGETS`)
+Minimum sizes for interactive elements.
+
+### Interaction (`INTERACTION`)
+Timing for animations and transitions.
 
 ---
 

@@ -6,7 +6,7 @@
  *
  * ATOMIC DESIGN COMPLIANCE:
  * - Receives cx and fieldMode via props from FieldModeTemplate (no hook calls)
- * - Composes molecules: ZoomControl, PageCounter, EmptyState
+ * - Composes molecules: ZoomControl, PageCounter, EmptyState, MediaPlayer, ViewerSearchPanel, ViewerWorkbench
  * - Domain logic delegated to useViewer hook
  * - No prop-drilling of fieldMode
  *
@@ -22,23 +22,16 @@
  * - ViewerToolbar: Zoom/rotate controls
  * - AnnotationOverlay: SVG annotation rendering
  * - ViewerPanels: Side panels (search, metadata, transcription)
- * - MediaPlayer: Video/audio player wrapper
  * - FilmstripNavigator: Canvas thumbnails
  *
- * PHASE 4 INTEGRATION:
- * Legacy components integrated from components/:
- * - ImageRequestWorkbench: Panel for IIIF Image API parameter manipulation
- * - CanvasComposer: Modal for synthesizing new canvases from layers
- * - PolygonAnnotationTool: Modal for drawing polygon annotations
- * - SearchPanel: Panel for IIIF Content Search within manifests
- * - AVPlayer: Component for audio/video canvas playback
+ * MIGRATED COMPONENTS (Phase 4 Complete):
+ * - MediaPlayer: Migrated from AVPlayer → features/viewer/ui/molecules/MediaPlayer
+ * - ViewerSearchPanel: Migrated from SearchPanel → features/viewer/ui/molecules/ViewerSearchPanel
+ * - ViewerWorkbench: Migrated from ImageRequestWorkbench → features/viewer/ui/molecules/ViewerWorkbench
  *
- * TODO: Migrate legacy components to atomic design:
- * - ImageRequestWorkbench → features/viewer/ui/molecules/ViewerWorkbench
- * - CanvasComposer → features/viewer/ui/organisms/ComposerModal
- * - PolygonAnnotationTool → features/viewer/ui/molecules/AnnotationDrawer
- * - SearchPanel → features/viewer/ui/molecules/ViewerSearchPanel
- * - AVPlayer → features/viewer/ui/molecules/MediaPlayer
+ * REMAINING MIGRATIONS:
+ * - CanvasComposer: Pending migration to features/viewer/ui/organisms/ComposerModal
+ * - PolygonAnnotationTool: Pending migration to features/viewer/ui/molecules/AnnotationDrawer
  *
  * @module features/viewer/ui/organisms/ViewerView
  */
@@ -50,16 +43,14 @@ import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { ZoomControl } from '@/src/shared/ui/molecules/ZoomControl';
 import { PageCounter } from '@/src/shared/ui/molecules/PageCounter';
 import { IconButton } from '@/src/shared/ui/molecules/IconButton';
+import { MediaPlayer, ViewerSearchPanel, ViewerWorkbench } from '../molecules';
+import type { SearchResult } from '../molecules/ViewerSearchPanel';
 import { useViewer } from '../../model';
 
-// LEGACY COMPONENT INTEGRATION (Phase 4):
-// These components are imported from the legacy components/ directory
-// and integrated into the new atomic design structure.
-import { ImageRequestWorkbench } from '@/components/ImageRequestWorkbench';
+// LEGACY COMPONENT INTEGRATION (Phase 4 - Partial):
+// These components are still pending migration from the legacy components/ directory
 import { CanvasComposer } from '@/components/CanvasComposer';
 import { PolygonAnnotationTool } from '@/components/PolygonAnnotationTool';
-import { SearchPanel } from '@/components/SearchPanel';
-import { AVPlayer } from '@/components/AVPlayer';
 
 export interface ViewerViewProps {
   /** Canvas to display */
@@ -335,23 +326,27 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
             />
           ) : mediaType === 'video' ? (
             <div className="flex-1 flex items-center justify-center">
-              {/* AVPlayer integration for video content */}
+              {/* MediaPlayer integration for video content */}
               {item && resolvedImageUrl && (
-                <AVPlayer
-                  canvas={item as any}
+                <MediaPlayer
+                  canvas={item}
                   src={resolvedImageUrl}
                   mediaType="video"
+                  cx={cx}
+                  fieldMode={fieldMode}
                 />
               )}
             </div>
           ) : mediaType === 'audio' ? (
             <div className="flex-1 flex items-center justify-center">
-              {/* AVPlayer integration for audio content */}
+              {/* MediaPlayer integration for audio content */}
               {item && resolvedImageUrl && (
-                <AVPlayer
-                  canvas={item as any}
+                <MediaPlayer
+                  canvas={item}
                   src={resolvedImageUrl}
                   mediaType="audio"
+                  cx={cx}
+                  fieldMode={fieldMode}
                 />
               )}
             </div>
@@ -393,13 +388,15 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
 
       {/* Image Request Workbench */}
       {showWorkbench && item && (
-        <ImageRequestWorkbench
-          canvas={item as any}
+        <ViewerWorkbench
+          canvas={item}
           onClose={() => setShowWorkbench(false)}
           onApply={(url) => {
             console.log('Applied IIIF URL:', url);
             setShowWorkbench(false);
           }}
+          cx={cx}
+          fieldMode={fieldMode}
         />
       )}
 
@@ -432,27 +429,37 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
 
       {/* Search Panel */}
       {showSearchPanel && manifest && (
-        <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-xl z-50 flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h3 className="font-bold text-slate-800">Search Manifest</h3>
-            <div
+        <div className={`fixed inset-y-0 right-0 w-96 shadow-xl z-50 flex flex-col ${fieldMode ? 'bg-slate-950' : 'bg-white'}`}>
+          <div className={`flex items-center justify-between p-4 border-b ${fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
+            <h3 className={`font-bold ${fieldMode ? 'text-white' : 'text-slate-800'}`}>Search Manifest</h3>
+            <IconButton
+              icon="close"
+              ariaLabel="Close search panel"
               onClick={() => setShowSearchPanel(false)}
-              className="p-2 hover:bg-slate-100 rounded-lg cursor-pointer"
-            >
-              <Icon name="close" />
-            </div>
+              variant="ghost"
+              size="sm"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
           </div>
           <div className="flex-1 overflow-hidden">
-            <SearchPanel
-              manifest={manifest as any}
-              searchService={currentSearchService}
-              onResultSelect={(result) => {
+            <ViewerSearchPanel
+              manifest={manifest}
+              searchService={currentSearchService as { id: string; type: string; profile?: string } | null}
+              onResultSelect={(result: SearchResult) => {
                 console.log('Selected search result:', result);
               }}
-              onResultsChange={(results) => {
+              onResultsChange={(results: SearchResult[]) => {
                 console.log('Search results:', results);
               }}
               currentCanvasId={item?.id}
+              cx={cx}
+              fieldMode={fieldMode}
+              onSearch={async (query: string) => {
+                // Placeholder - actual search implementation would be injected via props
+                console.log('Searching for:', query);
+                return [];
+              }}
             />
           </div>
         </div>

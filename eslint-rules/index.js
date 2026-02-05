@@ -6,6 +6,8 @@
 import moleculePropsValidation from './rules/molecule-props-validation.js';
 import useEffectRestrictions from './rules/useeffect-restrictions.js';
 import templateConstraints from './rules/template-constraints.js';
+import maxLinesFeature from './rules/max-lines-feature.js';
+import noNativeHtmlInMolecules from './rules/no-native-html-in-molecules.js';
 
 const plugin = {
   meta: {
@@ -16,6 +18,8 @@ const plugin = {
     'molecule-props-validation': moleculePropsValidation,
     'useeffect-restrictions': useEffectRestrictions,
     'template-constraints': templateConstraints,
+    'max-lines-feature': maxLinesFeature,
+    'no-native-html-in-molecules': noNativeHtmlInMolecules,
   },
   configs: {
     recommended: {
@@ -24,6 +28,8 @@ const plugin = {
         '@field-studio/molecule-props-validation': 'warn',
         '@field-studio/useeffect-restrictions': 'error',
         '@field-studio/template-constraints': 'error',
+        '@field-studio/max-lines-feature': 'warn',
+        '@field-studio/no-native-html-in-molecules': 'error',
       },
     },
     strict: {
@@ -32,6 +38,8 @@ const plugin = {
         '@field-studio/molecule-props-validation': 'error',
         '@field-studio/useeffect-restrictions': 'error',
         '@field-studio/template-constraints': 'error',
+        '@field-studio/max-lines-feature': 'error',
+        '@field-studio/no-native-html-in-molecules': 'error',
       },
     },
   },

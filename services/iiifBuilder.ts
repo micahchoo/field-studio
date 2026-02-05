@@ -62,7 +62,7 @@ import type {
   IngestFileCompleteMessage,
   IngestProgressMessage,
   IngestWorkerResponse
-} from '../workers/ingest.worker';
+} from '@/src/shared/workers';
 
 // ============================================================================
 // Phase 3: Enhanced Progress Indicators (P1 - UX)

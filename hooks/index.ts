@@ -123,12 +123,11 @@ export type {
 } from './useContextualMicrocopy';
 
 // ============================================================================
-// UI State
+// UI State (shared hooks from FSD location)
 // ============================================================================
-export { useDialogState, useDialogsState } from './useDialogState';
+export { useDialogState, useDialogsState, useResponsive } from '@/src/shared/lib/hooks';
 export { useInspectorTabs } from './useInspectorTabs';
 export type { InspectorTab } from './useInspectorTabs';
-export { useResponsive } from './useResponsive';
 
 // ============================================================================
 // Viewport Management
@@ -248,32 +247,22 @@ export type {
 } from './useResizablePanel';
 
 // ============================================================================
-// Accessibility & Motion
+// Accessibility & Motion (from shared)
 // ============================================================================
 export {
   useReducedMotion,
   useMotionDuration,
-  useMotionTransitions
-} from './useReducedMotion';
-export {
-  useFocusTrap
-} from './useFocusTrap';
-export type {
-  UseFocusTrapOptions
-} from './useFocusTrap';
-export {
-  useKeyboardDragDrop
-} from './useKeyboardDragDrop';
+  useMotionTransitions,
+  useFocusTrap,
+} from '@/src/shared/lib/hooks';
+export type { UseFocusTrapOptions } from '@/src/shared/lib/hooks';
+export { useKeyboardDragDrop } from './useKeyboardDragDrop';
 
 // ============================================================================
-// Phase 2: Contextual Styling & Component Extraction Hooks
+// Shared UI Hooks (from shared)
 // ============================================================================
-export { useContextualStyles } from './useContextualStyles';
-export type { ContextualClassNames } from './useContextualStyles';
-
-export { useDebouncedValue } from './useDebouncedValue';
-
-export { usePersistedTab } from './usePersistedTab';
+export { useContextualStyles, useDebouncedValue, usePersistedTab } from '@/src/shared/lib/hooks';
+export type { ContextualClassNames } from '@/src/shared/lib/hooks';
 
 export { useInspectorValidation } from './useInspectorValidation';
 
@@ -283,9 +272,9 @@ export { useLayerHistory, buildCanvasFromLayers } from './useLayerHistory';
 export type { PlacedResource } from './useLayerHistory';
 
 // ============================================================================
-// Utility Hooks
+// Utility Hooks (from shared)
 // ============================================================================
-export { useDebouncedCallback } from './useDebouncedCallback';
+export { useDebouncedCallback } from '@/src/shared/lib/hooks';
 
 // ============================================================================
 // Phase 1: Memory Leak Fixes - Image Source Management

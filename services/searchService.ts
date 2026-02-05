@@ -18,7 +18,7 @@ function getSearchWorker(): Worker {
   if (!searchWorker) {
     // Create worker from the module
     searchWorker = new Worker(
-      new URL('../workers/searchIndexer.ts', import.meta.url),
+      new URL('@/src/shared/workers/searchIndexer.ts', import.meta.url),
       { type: 'module' }
     );
   }

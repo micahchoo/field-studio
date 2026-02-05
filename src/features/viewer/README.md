@@ -1,4 +1,4 @@
-# Viewer Feature
+# Viewer Feature (`src/features/viewer/`)
 
 IIIF canvas viewer with OpenSeadragon deep zoom, annotations, and media playback.
 
@@ -8,12 +8,23 @@ This feature follows Atomic Design + Feature-Sliced Design principles:
 
 ```
 src/features/viewer/
-├── ui/organisms/
-│   └── ViewerView.tsx        # Main organism (composes molecules)
+├── ui/
+│   ├── organisms/
+│   │   ├── ViewerView.tsx           ← Main viewer organism
+│   │   ├── CanvasComposerPanel.tsx  ← Canvas composition panel
+│   │   └── AnnotationToolPanel.tsx  ← Annotation editing panel
+│   └── molecules/
+│       ├── index.ts                 ← Barrel export
+│       ├── ComposerToolbar.tsx      ← Composer toolbar
+│       ├── ComposerSidebar.tsx      ← Composer sidebar
+│       ├── ComposerCanvas.tsx       ← Composer canvas area
+│       └── AnnotationToolbar.tsx    ← Annotation tools toolbar
 ├── model/
-│   └── index.ts              # useViewer hook + domain logic
-├── index.ts                  # Public API
-└── README.md                 # This file
+│   ├── index.ts                     ← useViewer hook
+│   ├── composer.ts                  ← Composer state
+│   └── annotation.ts                ← Annotation state
+├── index.ts                         ← Public API
+└── README.md                        ← This file
 ```
 
 ## Organism: ViewerView
@@ -54,9 +65,21 @@ const {
   zoomLevel,
   viewerRef,
   osdContainerRef,
+  containerRef,
   zoomIn,
   zoomOut,
   resetView,
+  rotateCW,
+  rotateCCW,
+  toggleFullscreen,
+  toggleTranscriptionPanel,
+  toggleSearchPanel,
+  toggleMetadataPanel,
+  selectAnnotation,
+  addAnnotation,
+  removeAnnotation,
+  hasSearchService,
+  canDownload,
   // ...more
 } = useViewer(item, manifest, autoOpenComposer, onComposerOpened);
 ```
@@ -70,6 +93,64 @@ const {
 - Panel visibility state
 - Memory cleanup (object URLs, OSD instances)
 
+## Media Types
+
+```typescript
+type MediaType = 'image' | 'video' | 'audio' | 'other';
+```
+
+The viewer automatically detects media type from canvas content and renders the appropriate player:
+- **Image**: OpenSeadragon deep zoom viewer
+- **Video**: HTML5 video player
+- **Audio**: HTML5 audio player
+- **Other**: Fallback display
+
+## Composer Sub-Feature
+
+The Canvas Composer allows creating multi-canvas compositions:
+
+```typescript
+const {
+  layers,
+  activeLayerId,
+  composition,
+  addLayer,
+  removeLayer,
+  reorderLayers,
+  updateLayer,
+  exportComposition,
+} = useComposer();
+```
+
+Components:
+- `ComposerToolbar`: Layer management tools
+- `ComposerSidebar`: Layer list and properties
+- `ComposerCanvas`: Composition canvas area
+
+## Annotation Sub-Feature
+
+Annotation tools for marking up canvas content:
+
+```typescript
+const {
+  mode,
+  points,
+  currentAnnotation,
+  setMode,
+  addPoint,
+  undo,
+  clear,
+  save,
+  pointsToSvgPath,
+} = useAnnotation();
+```
+
+Drawing modes:
+- `rectangle`: Rectangular regions
+- `polygon`: Freehand polygons
+- `circle`: Circular regions
+- `point`: Single point markers
+
 ## Molecules Used
 
 | Molecule | Purpose |
@@ -79,77 +160,86 @@ const {
 | `EmptyState` | Empty states (no selection, unsupported) |
 | `LoadingState` | Loading indicators |
 
-## Legacy Migration
+## Public API
 
-This replaces `components/views/Viewer.tsx`:
+```typescript
+// Main Component
+export { ViewerView } from './ui/organisms/ViewerView';
+export type { ViewerViewProps } from './ui/organisms/ViewerView';
 
-| Aspect | Legacy | New |
-|--------|--------|-----|
-| Lines of code | 1294 | ~300 (organism) + 350 (model) |
-| fieldMode access | `useAppSettings()` | Via props from template |
-| Styling | Inline classes | Via `cx` prop |
-| OSD lifecycle | Inline useEffect | `useViewer` hook |
-| Terminology | `useTerminology()` | Via `t` prop |
+// Composer Components
+export {
+  ComposerToolbar,
+  ComposerSidebar,
+  ComposerCanvas,
+  type ComposerToolbarProps,
+  type ComposerSidebarProps,
+  type ComposerCanvasProps,
+} from './ui/molecules';
 
-## Decomposition Notes
+export { CanvasComposerPanel } from './ui/organisms/CanvasComposerPanel';
+export type { CanvasComposerPanelProps } from './ui/organisms/CanvasComposerPanel';
+
+// Model
+export {
+  useViewer,
+  type MediaType,
+  type ViewerState,
+  type UseViewerReturn,
+} from './model';
+
+export {
+  useComposer,
+  type UseComposerReturn,
+} from './model';
+
+export {
+  useAnnotation,
+  pointsToSvgPath,
+  createSvgSelector,
+  parseSvgSelector,
+  getBoundingBox,
+  simplifyPath,
+  type DrawingMode,
+  type UseAnnotationReturn,
+} from './model';
+```
+
+## Usage
+
+```typescript
+import { ViewerView } from '@/src/features/viewer';
+
+<FieldModeTemplate>
+  {({ cx, fieldMode, t, isAdvanced }) => (
+    <ViewerView
+      item={selectedCanvas}
+      manifest={currentManifest}
+      manifestItems={manifestCanvases}
+      onUpdate={handleCanvasUpdate}
+      cx={cx}
+      fieldMode={fieldMode}
+      t={t}
+      isAdvanced={isAdvanced}
+    />
+  )}
+</FieldModeTemplate>
+```
+
+## Performance Considerations
+
+- OpenSeadragon instances are cleaned up on unmount
+- Object URLs are revoked to prevent memory leaks
+- Heavy components are lazy-loaded where possible
+- Viewport state is memoized to prevent unnecessary re-renders
+
+## Future Decomposition
 
 The Viewer is the most complex feature. The following components should be
 extracted to molecules/organisms in future iterations:
 
-### Future Molecules
-
-1. **ViewerToolbar** - All toolbar buttons and controls
-2. **AnnotationOverlay** - SVG annotation rendering over OSD
-3. **FilmstripNavigator** - Canvas thumbnail strip
-4. **ViewerPanel** - Collapsible side panel container
-
-### Future Organisms (within feature)
-
-1. **ImageRequestWorkbenchPanel** - Panel for image region extraction
-2. **CanvasComposerPanel** - Panel for synthesizing new canvases
-3. **PolygonAnnotationToolPanel** - Panel for drawing annotations
-4. **ContentSearchPanel** - Search results within manifest
-5. **MetadataPanel** - Canvas metadata display
-6. **TranscriptionPanel** - Evidence and notes panel
-
-### Legacy Components to Integrate
-
-| Component | Legacy Path | Integration Status |
-|-----------|-------------|-------------------|
-| ImageRequestWorkbench | components/ImageRequestWorkbench.tsx | TODO |
-| CanvasComposer | components/CanvasComposer.tsx | TODO |
-| PolygonAnnotationTool | components/PolygonAnnotationTool.tsx | TODO |
-| SearchPanel | components/SearchPanel.tsx | TODO |
-| AVPlayer | components/AVPlayer.tsx | TODO |
-
-These should be imported from `@/components/` during the transition period,
-then refactored into proper molecules/organisms.
-
-## OpenSeadragon Integration
-
-The viewer uses OpenSeadragon for IIIF deep zoom:
-
-```typescript
-// OSD is initialized in useViewer when:
-// 1. mediaType === 'image'
-// 2. osdContainerRef is available
-// 3. resolvedImageUrl is ready
-
-// Tile source priority:
-// 1. IIIF Image Service (info.json)
-// 2. Simple image URL
-```
-
-**Memory Management:**
-- OSD instance destroyed on unmount
-- Object URLs revoked after use
-- All handlers removed before destroy
-- `isMounted` ref prevents state updates after unmount
-
-## TODO / Known Issues
-
-1. **Annotation overlays** - Not yet implemented in refactored version
-2. **Rotation** - State tracked but not applied to OSD viewport
-3. **Keyboard shortcuts** - Need to re-implement zoom/rotate shortcuts
-4. **Content search** - SearchPanel integration pending
-5. **AVPlayer** - Using native video/audio elements temporarily
+- **AnnotationCanvas** - The annotation drawing overlay
+- **TranscriptionPanel** - OCR text display
+- **SearchPanel** - Content search within canvas
+- **MetadataPanel** - Canvas metadata display
+- **Filmstrip** - Canvas navigation thumbnails

@@ -1,477 +1,311 @@
 /**
- * Utilities Index
+ * Utilities - Atomic Design Structure
  *
- * Central export point for all utility functions.
+ * Organized by granularity:
+ * - atoms: Primitive utilities (zero dependencies)
+ * - molecules: Composed utilities (depends on atoms)
+ * - organisms: Domain logic (depends on atoms, molecules)
  */
 
 // ============================================================================
-// Theme Utilities
+// Atoms - Primitive Utilities
 // ============================================================================
-export {
-  createThemeClasses,
-  getStatusColorForScore,
-  getStatusColorForLevel,
-} from './themeClasses';
-export type { ThemeClasses } from './themeClasses';
 
-// ============================================================================
-// IIIF Hierarchy Utilities
-// ============================================================================
 export {
-  // Relationship types
-  getRelationshipType,
-  canHaveMultipleParents,
-  isStandaloneType,
-  // Collection operations
-  getCollectionManifests,
-  getNestedCollections,
-  collectionContainsManifest,
-  addManifestToCollection,
-  removeManifestFromCollection,
-  // Manifest operations
-  getManifestCanvases,
-  manifestContainsCanvas,
-  addCanvasToManifest,
-  removeCanvasFromManifest,
-  reorderManifestCanvases,
-  // Tree traversal
-  findAllOfType,
-  findCollectionsContaining,
-  findCanvasParent,
-  findNodeById,
-  getPathToNode,
-  // Validation
-  isValidChildType,
-  getValidChildTypes,
-  // Statistics
-  countResourcesByType,
-  getTreeDepth,
-  // Cross-collection reference tracking
-  buildReferenceMap,
-  getReferencingCollections,
-  // Range helpers
-  createRange,
-  createNestedRange,
-  addRangeToManifest,
-  getManifestRanges,
-  flattenRangeCanvasIds,
-} from './iiifHierarchy';
-export type { IIIFRelationshipType } from './iiifHierarchy';
-
-// ============================================================================
-// IIIF Schema Utilities (Property Requirements)
-// ============================================================================
-export {
-  // Complete property matrix
-  PROPERTY_MATRIX,
-  ITEMS_CONTAINMENT,
-  // Legacy schema (backwards compatibility)
-  IIIF_SCHEMA,
-  // Property validation
-  getPropertyRequirement,
-  isPropertyAllowed,
-  getAllowedProperties,
-  getRequiredProperties,
-  getRecommendedProperties,
-  // Behavior validation
-  isBehaviorAllowed,
-  getAllowedBehaviors,
-  getNotAllowedBehaviors,
-  // Viewing direction
-  VIEWING_DIRECTIONS,
-  DEFAULT_VIEWING_DIRECTION,
-  isValidViewingDirection,
-  canHaveViewingDirection,
-  // Time mode
-  TIME_MODES,
-  DEFAULT_TIME_MODE,
-  isValidTimeMode,
-  // Items containment
-  getValidItemTypes,
-  isValidItemType,
-  // Conditional requirements
-  CONDITIONAL_REQUIREMENTS,
-  checkConditionalRequirements,
-  // Complete validation
-  validateResource,
-  validateResourceFull,
-  // Templates
-  getMinimumTemplate,
-} from './iiifSchema';
-export type {
-  PropertyRequirement,
-  ResourceSchema,
-  IIIFResourceType,
-  ContentResourceType,
-  ViewingDirection,
-  TimeMode,
-  ConditionalRequirement,
-  ValidationResult,
-  MinimumResourceTemplate,
-} from './iiifSchema';
-
-// ============================================================================
-// IIIF Behavior Utilities
-// ============================================================================
-export {
-  // Validity matrix
-  BEHAVIOR_VALIDITY_MATRIX,
-  // Disjoint sets
-  DISJOINT_SETS,
-  // Inheritance rules
-  INHERITANCE_RULES,
-  // Behavior descriptions
-  BEHAVIOR_DESCRIPTIONS,
-  // Validation functions
-  isBehaviorValidForType,
-  getValidBehaviorsForType,
-  findBehaviorConflicts,
-  getDisjointSetForBehavior,
-  getDefaultBehavior,
-  // Inheritance
-  doesInheritBehavior,
-  getInheritedBehaviors,
-  resolveEffectiveBehaviors,
-  // Complete validation
-  validateBehaviors,
-  // Helpers
-  getBehaviorDescription,
-  getBehaviorsByCategory,
-  suggestBehaviors,
-} from './iiifBehaviors';
-export type {
-  IIIFBehavior,
-  BehaviorCategory,
-  DisjointSet,
-  InheritanceRule,
-  BehaviorDescription,
-  BehaviorValidationResult,
-  ContentCharacteristics,
-} from './iiifBehaviors';
-
-// ============================================================================
-// IIIF Value Types and MIME Mapping
-// ============================================================================
-export {
-  // Content resource types
-  CONTENT_RESOURCE_TYPES,
-  // MIME type mapping
-  MIME_TYPE_MAP,
-  getMimeType,
-  getExtensionForMime,
-  getContentTypeFromMime,
-  getContentTypeFromFilename,
-  isImageMime,
-  isVideoMime,
-  isAudioMime,
-  isTimeBasedMime,
-  isVisualMime,
-  // LanguageMap validation
-  isValidLanguageMap,
-  createLanguageMap,
-  getLanguageValue,
-  // MetadataEntry validation
-  isValidMetadataEntry,
-  createMetadataEntry,
-  // Agent validation
-  isValidAgent,
-  // Reference validation
-  isValidReference,
-  // ExternalResource validation
-  isValidExternalResource,
-  // ContentResource validation
-  isValidContentResource,
-  // URI validation
+  // Text
+  escapeHTML,
+  stripTags,
+  normalizeWhitespace,
+  truncate,
+  toKebabCase,
+  toCamelCase,
+  // Regex patterns
+  HTML_TAG_PATTERN,
+  SCRIPT_PATTERN,
+  EVENT_HANDLER_PATTERN,
+  CONTROL_CHAR_PATTERN,
+  HTTP_URI_PATTERN,
+  UUID_PATTERN,
+  EXTENSION_PATTERN,
+  INVALID_FILENAME_CHARS,
+  ISO_8601_PATTERN,
+  // ID/URI
+  generateUUID,
+  removeTrailingSlash,
+  normalizeUri,
+  getUriLastSegment,
+  convertToHttpUri,
+  generateValidUri,
+  // URL
   isValidHttpUri,
   hasFragmentIdentifier,
-  isValidId,
-  // DateTime validation
-  isValidNavDate,
-  formatNavDate,
-  // Rights validation
-  isKnownRightsUri,
-  isValidRightsUri,
-  // Dimension validation
-  isValidDimension,
-  isValidDuration,
-  // Service types
-  LEGACY_SERVICE_TYPES,
-  isKnownServiceType,
-  // Motivation validation
-  IIIF_MOTIVATIONS,
-  isValidMotivation,
-  isPaintingMotivation,
-} from './iiifTypes';
-export type {
-  LanguageMap,
-  MetadataEntry,
-  Agent,
-  Reference,
-  ExternalResource,
-  ContentResource,
-  IIIFMotivation,
-} from './iiifTypes';
-
-// ============================================================================
-// IIIF Image API 3.0 Utilities
-// ============================================================================
-export {
-  // Constants
-  IMAGE_API_CONTEXT,
-  IMAGE_API_PROTOCOL,
-  COMPLIANCE_LEVELS,
-  FORMAT_MIME_TYPES,
-  MIME_TO_FORMAT,
-  FEATURE_DESCRIPTIONS,
-  VALIDATION_PATTERNS,
-  // Parameter validation
-  validateRegion,
-  validateSize,
-  validateRotation,
-  validateQuality,
-  validateFormat,
-  validateImageRequest,
-  // URI building
-  buildImageUri,
-  buildInfoUri,
-  formatRegion,
-  formatSize,
-  formatRotation,
-  parseImageUri,
-  // Info.json validation and generation
-  validateInfoJson,
-  generateInfoJson,
-  generateStandardSizes,
-  generateStandardTiles,
-  // Tile calculation
-  calculateTileRequest,
-  calculateTileCount,
-  buildTileUri,
-  getAllTileUris,
-  // Compliance checking
-  checkComplianceLevel,
-  getFeaturesForProfile,
-  getFormatsForProfile,
-  getQualitiesForProfile,
-  // Service references
-  createImageServiceReference,
-  isImageService3,
-  // Utility functions
-  getImageMimeType,
-  getFormatFromMime,
-  calculateResultingSize,
-  encodeIdentifier,
-  decodeIdentifier,
-} from './iiifImageApi';
-export type {
-  ImageApiProfile,
-  ImageQuality,
-  ImageFormat,
-  RegionType,
-  SizeType,
-  RegionParams,
-  SizeParams,
-  RotationParams,
-  ImageRequestParams,
-  SizeInfo,
-  TileInfo,
-  ImageServiceInfo,
-  ImageApiFeature,
-  TileRequest,
-  ImageApiValidationResult,
-} from './iiifImageApi';
-
-// ============================================================================
-// Image Source Resolver
-// ============================================================================
-export {
-  resolveImageSource,
-  resolveThumbUrl,
-  resolvePreviewUrl,
-  hasDeepZoomCapability,
-  getImageServiceInfo,
-  resolveHierarchicalThumb,
-  resolveHierarchicalThumbs,
-  resolveLeafCanvases,
-} from './imageSourceResolver';
-export type {
-  IIIFCanvasLike,
-  IIIFItemLike,
-  ImageSourceResult,
-  ResolveImageOptions,
-} from './imageSourceResolver';
-
-// ============================================================================
-// IIIF Metadata Enricher (Stacked Thumbnails + Summary)
-// ============================================================================
-export {
-  generateThumbnailMetadata,
-  generateSummary,
-  enrichIIIFMetadata,
-  enrichTreeMetadata,
-  getStackedThumbnails,
-  batchEnrichMetadata,
-} from './iiifMetadataEnricher';
-export type {
-  ThumbnailSpec,
-} from './iiifMetadataEnricher';
-
-// ============================================================================
-// IIIF Traversal Utilities (Tree operations)
-// Re-exports from iiifHierarchy for backwards compatibility
-// New traversal utilities available in iiifTraversal module
-// ============================================================================
-export {
-  // Core traversal (from new iiifTraversal module)
-  traverse,
-  findParent,
-  flattenTree,
-  getTreeDepthStats,
-  buildTreeIndex,
-  getAllCanvases,
-  getAllManifests,
-  getAllCollections,
-  getAllLeafNodes,
-  getChildren,
-  safeTraverse,
-  findDuplicateIds,
-} from './iiifTraversal';
-export type {
-  TraversalOptions,
-  TraversalContext,
-  TraversalResult,
-  TreeIndex,
-} from './iiifTraversal';
-
-// ============================================================================
-// IIIF Validation Utilities (ID validation, duplicate detection)
-// New validation utilities in iiifValidation module
-// ============================================================================
-export {
-  // ID validation
-  generateValidUri,
-  convertToHttpUri,
-  // Duplicate detection
-  hasDuplicateIds,
-  // UUID generation
-  generateUUID,
-  generateResourceId,
-  // URI normalization
-  normalizeUri,
-  removeTrailingSlash,
-  getUriLastSegment,
-} from './iiifValidation';
-export type {
-  DuplicateIdResult,
-} from './iiifValidation';
-
-// ============================================================================
-// Media Type Utilities (MIME types, file detection)
-// New media type utilities in mediaTypes module
-// ============================================================================
-export {
-  // Constants (only new ones not in iiifTypes)
+  hasDangerousProtocol,
+  isRelativeUrl,
+  isHashAnchor,
+  isValidUrlFormat,
+  // Files
+  MAX_FILENAME_LENGTH,
+  getExtension,
+  removeExtension,
+  getBaseName,
+  parseFilePath,
+  sanitizeFilename,
+  extractSequenceNumber,
+  generateSafeFilename,
+  // Validation types
+  DEFAULT_VALIDATION,
+  // Colors
+  STATUS_COLORS,
+  BACKGROUNDS,
+  TEXT_COLORS,
+  BORDER_COLORS,
+  BUTTON_STYLES,
+  // Media types
+  MIME_TYPE_MAP,
+  IMAGE_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+  AUDIO_EXTENSIONS,
   TEXT_EXTENSIONS,
   MODEL_EXTENSIONS,
-  // MIME type functions
+} from './atoms';
+
+export type {
+  // Validation types
+  InputValidationResult,
+  IIIFValidationResult,
+  ValidationRequirement,
+  ValidationOptions,
+  // Media types
+  ContentResourceType,
+  MimeTypeInfo,
+} from './atoms';
+
+// ============================================================================
+// Molecules - Composed Utilities
+// ============================================================================
+
+export {
+  // Sanitizers
+  sanitizeHTML,
+  sanitizeURL,
+  sanitizePlainText,
+  containsDangerousContent,
+  sanitizeSVG,
+  sanitizeAttribute,
+  // Validators
+  validateTextInput,
+  sanitizeInput,
+  INPUT_VALIDATORS,
+  sanitizeForInput,
+  checkForDangerousContent,
+  // Search
+  fuzzyMatch,
+  fuzzyMatchSimple,
+  fuzzyScore,
+  fuzzySearch,
+  fuzzyFilter,
+  fuzzySort,
+  highlightMatches,
+  // Media detection
+  getMimeType,
   getMimeTypeString,
-  // File type detection (additional types not in iiifTypes)
+  isImageFile,
+  isVideoFile,
+  isAudioFile,
   isTextFile,
   isModelFile,
   isPdfFile,
-  // URL-based detection
-  isImageUrl,
-  isVideoUrl,
-  isAudioUrl,
-  isMediaUrl,
-  detectMediaType,
-  // MIME classification (additional types)
   isImageMimeType,
   isVideoMimeType,
   isAudioMimeType,
   isTimeBasedMimeType,
   isVisualMimeType,
-  // Filename utilities
+  getContentTypeFromMime,
+  getContentTypeFromFilename,
+  detectMediaType,
   getFilenameFromUrl,
-  removeExtension,
-  getExtension,
-} from './mediaTypes';
-export type {
-  MimeTypeInfo,
-} from './mediaTypes';
-
-// ============================================================================
-// Sanitization Utilities (XSS prevention)
-// ============================================================================
-export {
-  sanitizeHTML,
-  sanitizeURL,
-  sanitizeAnnotationBody,
-  stripHTML,
-  escapeHTML,
-  isValidURL,
-  sanitizeUrl,
-  sanitizePlainText,
-  sanitizeIIIFId,
-  sanitizeMetadataValue,
-  containsDangerousContent,
-  sanitizeUserInput,
-  sanitizeTrustedHtml,
-  sanitizeAttribute,
-  sanitizeSvg,
-} from './sanitization';
-
-// ============================================================================
-// Filename Utilities (file handling and sanitization)
-// ============================================================================
-export {
-  sanitizeFilename,
-  extractSequenceNumber,
+  // Themes
+  createThemeClasses,
+  getStatusColorForScore,
+  getStatusColorForLevel,
+  // Files
   detectFileSequence,
-  generateSafeFilename,
-  getBaseName,
-  parseFilePath,
-  filenameRelationshipPatterns,
   findSimilarFiles,
-} from './filenameUtils';
-export type {
-  SimilarityMatch,
-} from './filenameUtils';
+} from './molecules';
 
-// ============================================================================
-// Fuzzy Match Utilities (search and filtering)
-// ============================================================================
-export {
-  fuzzyMatch,
-  fuzzySearch,
-  fuzzyMatchSimple,
-  fuzzyScore,
-  highlightMatches,
-  fuzzyFilter,
-  fuzzySort,
-} from './fuzzyMatch';
 export type {
+  // Sanitizers
+  SanitizeConfig,
+  // Search
   FuzzyMatchResult,
-} from './fuzzyMatch';
+  // Themes
+  ThemeClasses,
+  // Files
+  SequenceResult,
+  SimilarityMatch,
+} from './molecules';
 
 // ============================================================================
-// Input Validation Utilities
+// Organisms - Domain Logic
 // ============================================================================
+
+// IIIF Domain
 export {
-  sanitizeInput,
-  validateTextInput,
-  INPUT_VALIDATORS,
-  sanitizeForInput,
-  checkForDangerousContent,
-} from './inputValidation';
-export type {
-  ValidationOptions,
-  ValidationResult as InputValidationResult,
-} from './inputValidation';
+  // Types
+  isValidLanguageMap,
+  isValidMetadataEntry,
+  isValidAgent,
+  isValidReference,
+  isValidExternalResource,
+  isValidContentResource,
+  createLanguageMap,
+  getLanguageValue,
+  createMetadataEntry,
+  IIIF_MOTIVATIONS,
+  isValidMotivation,
+  isPaintingMotivation,
+  isValidNavDate,
+  formatNavDate,
+  isValidDimension,
+  isValidDuration,
+  isKnownRightsUri,
+  isValidRightsUri,
+  // Schema
+  CONTENT_RESOURCE_LIST,
+  VIEWING_DIRECTIONS,
+  DEFAULT_VIEWING_DIRECTION,
+  isValidViewingDirection,
+  canHaveViewingDirection,
+  TIME_MODES,
+  DEFAULT_TIME_MODE,
+  isValidTimeMode,
+  PROPERTY_MATRIX,
+  getPropertyRequirement,
+  isPropertyAllowed,
+  getAllowedProperties,
+  getRequiredProperties,
+  getRecommendedProperties,
+  validateResource,
+  validateResourceFull,
+  ITEMS_CONTAINMENT,
+  getValidItemTypes,
+  isValidItemType,
+  // Behaviors
+  BEHAVIOR_VALIDITY_MATRIX,
+  DISJOINT_SETS,
+  INHERITANCE_RULES,
+  BEHAVIOR_DESCRIPTIONS,
+  isBehaviorValidForType,
+  getValidBehaviorsForType,
+  getDisjointSetForBehavior,
+  findBehaviorConflicts,
+  getDefaultBehavior,
+  doesInheritBehavior,
+  getInheritedBehaviors,
+  resolveEffectiveBehaviors,
+  validateBehaviors,
+  getBehaviorDescription,
+  getBehaviorsByCategory,
+  suggestBehaviors,
+  // Hierarchy
+  getRelationshipType,
+  canHaveMultipleParents,
+  isStandaloneType,
+  getCollectionManifests,
+  getNestedCollections,
+  collectionContainsManifest,
+  addManifestToCollection,
+  removeManifestFromCollection,
+  getManifestCanvases,
+  manifestContainsCanvas,
+  addCanvasToManifest,
+  removeCanvasFromManifest,
+  reorderManifestCanvases,
+  findAllOfTypeSimple,
+  buildReferenceMap,
+  getReferencingCollections,
+  createRange,
+  createNestedRange,
+  addRangeToManifest,
+  getManifestRanges,
+  flattenRangeCanvasIds,
+  countResourcesByType,
+  getTreeDepth,
+  // Traversal
+  getChildren,
+  traverse,
+  safeTraverse,
+  findNodeById,
+  findAllOfType,
+  findParent,
+  getPathToNode,
+  getAllCanvases,
+  getAllManifests,
+  getAllCollections,
+  getAllLeafNodes,
+  buildTreeIndex,
+  getTreeDepthStats,
+  findDuplicateIds,
+  hasDuplicateIds,
+  flattenTree,
+  // Validation
+  generateResourceId,
+  validateResourceId,
+  isValidIIIFType,
+  validateResourceBase,
+  // Image API
+  FORMAT_MIME_TYPES,
+  MIME_TO_FORMAT,
+  COMPLIANCE_LEVELS,
+  FEATURE_DESCRIPTIONS,
+  IMAGE_API_CONTEXT,
+  IMAGE_API_PROTOCOL,
+  VALIDATION_PATTERNS,
+  validateRegion,
+  validateSize,
+  validateRotation,
+  validateQuality,
+  validateFormat,
+  formatRegion,
+  formatSize,
+  formatRotation,
+  buildImageUri,
+  buildInfoUri,
+  calculateTileRequest,
+  calculateTileCount,
+  buildTileUri,
+  generateInfoJson,
+  generateStandardSizes,
+  generateStandardTiles,
+  getImageMimeType,
+  getFormatFromMime,
+  calculateResultingSize,
+  encodeIdentifier,
+  decodeIdentifier,
+  createImageServiceReference,
+  isImageService3,
+  // Metadata
+  generateThumbnailMetadata,
+  getStackedThumbnails,
+  generateSummary,
+  enrichIIIFMetadata,
+  enrichTreeMetadata,
+  batchEnrichMetadata,
+  // Image Resolver
+  resolveImageSource,
+  resolveThumbUrl,
+  resolvePreviewUrl,
+  resolveHierarchicalThumbs,
+  resolveHierarchicalThumb,
+  hasDeepZoomCapability,
+  getImageServiceInfo,
+  resolveLeafCanvases,
+  isCanvasImage,
+  isCanvasVisual,
+  getCanvasMimeType,
+} from './organisms';
 
-// ============================================================================
-// UI Terminology (Progressive Disclosure)
-// ============================================================================
+// UI Domain
 export {
   TERMINOLOGY_MAP,
   getTerm,
@@ -479,7 +313,78 @@ export {
   getResourceTypeLabel,
   getTermDescription,
   formatCountWithTerm,
-} from './uiTerminology';
+  getAllTerms,
+  hasTerm,
+} from './organisms';
+
 export type {
+  // IIIF Types
+  LanguageMap,
+  MetadataEntry,
+  Agent,
+  Reference,
+  ExternalResource,
+  ContentResource,
+  IIIFResourceType,
+  ViewingDirection,
+  TimeMode,
+  IIIFBehavior,
+  IIIFMotivation,
+  // Behaviors
+  DisjointSet,
+  InheritanceRule,
+  BehaviorDescription,
+  BehaviorCategory,
+  BehaviorValidationResult,
+  // Hierarchy
+  IIIFRelationshipType,
+  // Traversal
+  TraversalOptions,
+  TraversalContext,
+  TraversalResult,
+  TreeIndex,
+  TreeStats,
+  DuplicateIdResult,
+  // Validation
+  IdValidationResult,
+  // Image API
+  ImageApiProfile,
+  ImageQuality,
+  ImageFormat,
+  ImageApiFeature,
+  ComplianceLevel,
+  RegionParams,
+  SizeParams,
+  RotationParams,
+  ImageRequestParams,
+  SizeInfo,
+  TileInfo,
+  ImageServiceInfo,
+  TileRequest,
+  ImageApiValidationResult,
+  // Metadata
+  ThumbnailSpec,
+  EnrichmentResult,
+  // Image Resolver
+  IIIFCanvasLike,
+  IIIFItemLike,
+  ImageSourceResult,
+  ResolveImageOptions,
+  // UI
+  AbstractionLevel,
   TerminologyKey,
-} from './uiTerminology';
+} from './organisms';
+
+// ============================================================================
+// Backwards Compatibility Aliases
+// ============================================================================
+
+// ValidationResult - use explicitly named versions
+export type {
+  InputValidationResult as ValidationResult,
+} from './atoms';
+
+// Note: findAllOfType is already exported from organisms above
+// Note: CONTENT_RESOURCE_LIST is already exported from organisms above
+// Note: generateValidUri, normalizeUri, removeTrailingSlash, getUriLastSegment 
+//       are already exported from atoms above
