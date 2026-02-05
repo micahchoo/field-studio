@@ -11,7 +11,7 @@ import { StagingWorkbench } from './components/staging/StagingWorkbench';
 import { ExportDialog } from './components/ExportDialog';
 import { ContextualHelp } from './components/ContextualHelp';
 import { QuickReference } from './components/Tooltip';
-import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER } from './constants/helpContent';
+import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from './constants/helpContent';
 import { QCDashboard } from './components/QCDashboard';
 import { OnboardingModal } from './components/OnboardingModal';
 import { ExternalImportDialog } from './components/ExternalImportDialog';
@@ -180,7 +180,8 @@ const MainApp: React.FC = () => {
 
   const commands = useMemo(() => [
     { id: 'archive', label: 'Go to Archive', icon: 'inventory_2', shortcut: '⌘1', onExecute: () => setCurrentMode('archive'), section: 'Navigation' as const, description: 'Switch to Archive view' },
-    { id: 'collections', label: 'Go to Collections', icon: 'folder_special', shortcut: '⌘2', onExecute: () => setCurrentMode('collections'), section: 'Navigation' as const, description: 'Switch to Collections/Structure view' },
+    { id: 'collections', label: 'Go to Collections', icon: 'folder_special', shortcut: '⌘2', onExecute: () => setCurrentMode('collections'), section: 'Navigation' as const, description: 'Switch to Collections/Staging view' },
+    { id: 'structure', label: 'Go to Structure View', icon: 'account_tree', shortcut: '⌘3', onExecute: () => setCurrentMode('structure'), section: 'Navigation' as const, description: 'Hierarchical tree view' },
     { id: 'metadata', label: 'Go to Metadata', icon: 'table_chart', shortcut: '⌘3', onExecute: () => setCurrentMode('metadata'), section: 'Navigation' as const, description: 'Switch to Metadata spreadsheet view' },
     { id: 'search', label: 'Go to Search', icon: 'search', shortcut: '⌘4', onExecute: () => setCurrentMode('search'), section: 'Navigation' as const, description: 'Switch to Search view' },
     { id: 'export', label: 'Export Archive', icon: 'download', shortcut: '⌘E', onExecute: exportDialog.open, section: 'Actions' as const, description: 'Export archive to IIIF package' },
@@ -322,7 +323,11 @@ const MainApp: React.FC = () => {
   const handleReveal = useCallback((id: string, mode: AppMode) => {
     setSelectedId(id);
     setCurrentMode(mode);
-    if (mode !== 'viewer') setShowInspector(true);
+    // Only auto-show inspector if an item is selected and not on mobile
+    if (id && !isMobile) {
+      setShowInspector(true);
+    }
+    // On mobile, hide inspector in viewer mode to maximize viewport
     if (isMobile) {
       setShowSidebar(false);
       if (mode === 'viewer') setShowInspector(false);
@@ -621,10 +626,18 @@ const MainApp: React.FC = () => {
       />
 
       <QuickReference
-        title={currentMode === 'archive' ? 'Archive View' : currentMode === 'collections' ? 'Structure View' : currentMode === 'viewer' ? 'Viewer' : 'Board View'}
+        title={
+          currentMode === 'archive' ? 'Archive View' :
+          currentMode === 'collections' ? 'Staging/Import' :
+          currentMode === 'structure' ? 'Structure View' :
+          currentMode === 'viewer' ? 'Viewer' :
+          currentMode === 'boards' ? 'Board View' :
+          'Metadata View'
+        }
         items={
           currentMode === 'archive' ? QUICK_REF_ARCHIVE :
-          currentMode === 'collections' ? QUICK_REF_STRUCTURE :
+          currentMode === 'collections' ? QUICK_REF_STAGING :
+          currentMode === 'structure' ? QUICK_REF_STRUCTURE :
           currentMode === 'viewer' ? QUICK_REF_VIEWER :
           currentMode === 'boards' ? QUICK_REF_BOARD :
           QUICK_REF_METADATA

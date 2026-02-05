@@ -9,8 +9,7 @@
  */
 
 import React from 'react';
-import { Icon } from '@/src/shared/ui/atoms';
-import { Button } from '@/ui/primitives/Button';
+import { IconButton } from '@/src/shared/ui/molecules';
 
 export interface BoardToolbarProps {
   /** Currently active tool */
@@ -36,21 +35,18 @@ const tools = [
     id: 'select' as const,
     icon: 'mouse',
     label: 'Select',
-    description: 'Select and move items',
     shortcut: 'V',
   },
   {
     id: 'connect' as const,
     icon: 'timeline',
     label: 'Connect',
-    description: 'Create connections between items',
     shortcut: 'C',
   },
   {
     id: 'note' as const,
     icon: 'sticky_note_2',
     label: 'Note',
-    description: 'Add text notes',
     shortcut: 'N',
   },
 ];
@@ -64,42 +60,42 @@ export const BoardToolbar: React.FC<BoardToolbarProps> = ({
   selectedItemId,
   onDelete,
   cx: _cx,
-  fieldMode,
+  fieldMode: _fieldMode,
 }) => {
   return (
     <div
       className={`
         w-16 flex flex-col items-center py-4 gap-2 border-r
-        ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-200'}
+        ${_fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-200'}
       `}
     >
       {/* Tools */}
       {tools.map((tool) => (
-        <Button
+        <IconButton
           key={tool.id}
+          icon={tool.icon}
+          ariaLabel={tool.label}
           onClick={() => onToolChange(tool.id)}
-          variant={activeTool === tool.id ? 'primary' : 'ghost'}
-          size="sm"
-          icon={<Icon name={tool.icon} />}
-          title={`${tool.label} (${tool.shortcut})`}
-          aria-label={tool.label}
-          aria-pressed={activeTool === tool.id}
+          variant="ghost"
+          isActive={activeTool === tool.id}
+          shortcut={tool.shortcut}
+          size="md"
           className="w-10 h-10"
         />
       ))}
 
       {/* Divider */}
-      <div className={`w-8 h-px my-2 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+      <div className={`w-8 h-px my-2 ${_fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
 
       {/* Selected Item Actions */}
-      <Button
-        onClick={selectedItemId ? onDelete : undefined}
+      <IconButton
+        icon="delete"
+        ariaLabel="Delete selected"
+        onClick={selectedItemId ? onDelete : () => {}}
         variant="ghost"
-        size="sm"
         disabled={!selectedItemId}
-        icon={<Icon name="delete" />}
-        title={selectedItemId ? 'Delete selected (Delete)' : 'No item selected'}
-        aria-label="Delete selected"
+        shortcut="Delete"
+        size="md"
         className="w-10 h-10"
       />
     </div>

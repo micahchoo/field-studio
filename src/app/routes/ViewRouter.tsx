@@ -36,6 +36,9 @@ import { MapView } from '@/src/features/map';
 // NEW: Import timeline feature
 import { TimelineView } from '@/src/features/timeline';
 
+// NEW: Import structure view feature
+import { StructureTreeView } from '@/src/features/structure-view';
+
 export interface ViewRouterProps {
   /** Current app mode (archive, boards, metadata, etc.) */
   currentMode: AppMode;
@@ -79,7 +82,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
 }) => {
   // Handle unknown mode fallback - useEffect to avoid setState during render
   useEffect(() => {
-    const validModes: AppMode[] = ['archive', 'boards', 'metadata', 'collections', 'search', 'viewer', 'trash'];
+    const validModes: AppMode[] = ['archive', 'boards', 'metadata', 'collections', 'structure', 'search', 'viewer', 'trash'];
     if (!validModes.includes(currentMode)) {
       console.warn(`Unknown app mode: ${currentMode}, falling back to archive`);
       onModeChange('archive');
@@ -180,8 +183,12 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   }
 
   // Phase 4d: Staging feature
+  // NOTE: Staging/import functionality works via modal (StagingWorkbench)
+  // triggered by Import button in Sidebar. The modal-based flow is in App.tsx lines 558-569.
+  // Collections mode currently routes to archive view as placeholder.
+  // TODO: Implement full FSD-compliant staging workflow with proper state management
   if (currentMode === 'collections') {
-    // Note: 'collections' mode is used for the staging/import workbench
+    // Temporarily route to archive view since staging is modal-based
     return (
       <BaseTemplate
         showSidebar={showSidebar}
@@ -190,26 +197,55 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
         headerContent={headerContent}
       >
         <FieldModeTemplate>
-          {({ cx, fieldMode }) => (
-            <StagingView
+          {({ cx, fieldMode, t, isAdvanced }) => (
+            <ArchiveView
               root={root}
+              onSelect={(item) => onSelect(item.id)}
+              onOpen={(item) => {
+                onModeChange('viewer');
+                onSelect(item.id);
+              }}
+              onBatchEdit={(ids) => {
+                console.log('Batch edit:', ids);
+              }}
+              onUpdate={(newRoot) => {
+                console.log('Root updated:', newRoot);
+              }}
               cx={cx}
               fieldMode={fieldMode}
-              // These will be managed by parent state in full implementation
-              sourceManifests={{ byId: {}, allIds: [] }}
-              targetCollections={[]}
-              onAddToCollection={(manifestIds, collectionId) => {
-                console.log('Add to collection:', manifestIds, collectionId);
+              t={t}
+              isAdvanced={isAdvanced}
+              onSwitchView={onModeChange}
+            />
+          )}
+        </FieldModeTemplate>
+      </BaseTemplate>
+    );
+  }
+
+  // Phase 4g: Structure Tree View feature
+  if (currentMode === 'structure') {
+    return (
+      <BaseTemplate
+        showSidebar={showSidebar}
+        onSidebarToggle={onSidebarToggle}
+        sidebarContent={sidebarContent}
+        headerContent={headerContent}
+      >
+        <FieldModeTemplate>
+          {({ cx }) => (
+            <StructureTreeView
+              root={root}
+              selectedId={_selectedId}
+              onSelect={(id) => onSelect(id)}
+              onOpen={(item) => {
+                onSelect(item.id);
+                onModeChange('viewer');
               }}
-              onCreateCollection={(label, manifestIds) => {
-                console.log('Create collection:', label, manifestIds);
+              onUpdate={(newRoot) => {
+                console.log('Structure updated:', newRoot);
               }}
-              onReorderCanvases={(manifestId, newOrder) => {
-                console.log('Reorder canvases:', manifestId, newOrder);
-              }}
-              onRemoveFromSource={(manifestIds) => {
-                console.log('Remove from source:', manifestIds);
-              }}
+              className="h-full"
             />
           )}
         </FieldModeTemplate>
@@ -248,6 +284,39 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   // Phase 4f: Viewer feature
   // NOTE: This requires a selected canvas, falls back to archive if none selected
   if (currentMode === 'viewer') {
+    // Find selected canvas and its parent manifest
+    let selectedCanvas: IIIFCanvas | null = null;
+    let parentManifest: IIIFManifest | null = null;
+
+    if (_selectedId && root) {
+      // Helper to find canvas in manifest
+      const findCanvasInManifest = (manifest: IIIFManifest, id: string): IIIFCanvas | null => {
+        if (manifest.items) {
+          return manifest.items.find((canvas) => canvas.id === id) || null;
+        }
+        return null;
+      };
+
+      // Check if root is a manifest
+      if (root.type === 'Manifest') {
+        parentManifest = root as IIIFManifest;
+        selectedCanvas = findCanvasInManifest(parentManifest, _selectedId);
+      }
+      // Check if root is a collection
+      else if (root.type === 'Collection' && (root as IIIFCollection).items) {
+        for (const item of (root as IIIFCollection).items) {
+          if (item.type === 'Manifest') {
+            const canvas = findCanvasInManifest(item as IIIFManifest, _selectedId);
+            if (canvas) {
+              selectedCanvas = canvas;
+              parentManifest = item as IIIFManifest;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     return (
       <BaseTemplate
         showSidebar={showSidebar}
@@ -258,8 +327,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
         <FieldModeTemplate>
           {({ cx, fieldMode, t, isAdvanced }) => (
             <ViewerView
-              item={null} // TODO: Get selected canvas from root by selectedId
-              manifest={null} // TODO: Get parent manifest
+              item={selectedCanvas}
+              manifest={parentManifest}
               onUpdate={(item) => {
                 console.log('Canvas updated:', item);
               }}

@@ -246,7 +246,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
             icon: 'inventory_2',
             onClick: () => {
               // Could navigate to archive view
-              console.log('Navigate to archive');
+              console.info('Navigate to archive');
             },
           }}
           cx={cx}

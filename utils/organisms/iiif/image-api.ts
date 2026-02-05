@@ -3,11 +3,11 @@
  * Organism - depends on molecules
  */
 
-import { MIME_TO_FORMAT, FORMAT_MIME_TYPES } from './image-api-constants';
+import { MIME_TO_FORMAT, FORMAT_MIME_TYPES, IMAGE_API_PROTOCOL } from './image-api-constants';
 import { getExtension, getMimeTypeString } from '../../molecules/media-detection';
 
 // Re-export constants
-export { MIME_TO_FORMAT, FORMAT_MIME_TYPES };
+export { MIME_TO_FORMAT, FORMAT_MIME_TYPES, IMAGE_API_PROTOCOL };
 
 // ============================================================================
 // Types

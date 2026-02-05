@@ -32,7 +32,7 @@ export interface ProgressBarProps {
   /** Additional CSS classes */
   className?: string;
   /** Contextual styles from parent */
-  cx?: ContextualClassNames;
+  cx?: ContextualClassNames | Record<string, string>;
   /** Field mode flag */
   fieldMode?: boolean;
 }

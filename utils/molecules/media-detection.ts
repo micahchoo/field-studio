@@ -15,6 +15,9 @@ import {
 } from '../atoms/media-types';
 import { getExtension } from '../atoms/files';
 
+// Re-export file utilities used by consumers
+export { getExtension };
+
 /**
  * Get MIME type info from filename
  */

@@ -41,3 +41,21 @@ export type { IconProps } from './Icon';
 // ============================================================================
 export { Card } from '@/ui/primitives/Card';
 export type { CardProps } from '@/ui/primitives/Card';
+
+// ============================================================================
+// TabButtonBase Atom - Tab button for tabbed interfaces
+// ============================================================================
+export { TabButtonBase } from './TabButtonBase';
+export type { TabButtonBaseProps } from './TabButtonBase';
+
+// ============================================================================
+// StepIndicator Atom - Step indicator for wizards and multi-step flows
+// ============================================================================
+export { StepIndicator } from './StepIndicator';
+export type { StepIndicatorProps } from './StepIndicator';
+
+// ============================================================================
+// StepConnector Atom - Visual connector between steps
+// ============================================================================
+export { StepConnector } from './StepConnector';
+export type { StepConnectorProps } from './StepConnector';

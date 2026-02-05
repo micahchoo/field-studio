@@ -12,6 +12,16 @@
  */
 
 // ============================================================================
+// Viewer Controls Atoms - Navigation and zoom controls
+// ============================================================================
+
+export { ZoomControl } from './ZoomControl';
+export type { ZoomControlProps } from './ZoomControl';
+
+export { PageCounter } from './PageCounter';
+export type { PageCounterProps } from './PageCounter';
+
+// ============================================================================
 // Workbench Atoms - IIIF Image API workbench components
 // ============================================================================
 
@@ -35,9 +45,6 @@ export type { ImagePreviewProps } from './ImagePreview';
 
 export { PreviewHeader } from './PreviewHeader';
 export type { PreviewHeaderProps } from './PreviewHeader';
-
-export { TabButton } from './TabButton';
-export type { TabButtonProps } from './TabButton';
 
 export { RotationDial } from './RotationDial';
 export type { RotationDialProps } from './RotationDial';

@@ -1,5 +1,5 @@
 /**
- * ZoomControl Molecule
+ * ZoomControl Atom
  *
  * Zoom in/out/reset controls for IIIF viewer interfaces.
  * Composes Button atoms with zoom level display.
@@ -23,7 +23,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { Button } from '../atoms';
+import { Button } from '@/src/shared/ui/atoms';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface ZoomControlProps {

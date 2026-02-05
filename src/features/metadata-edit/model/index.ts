@@ -363,3 +363,18 @@ export const detectChanges = (
 
   return changed;
 };
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+export {
+  useInspectorValidation,
+} from './useInspectorValidation';
+
+export type {
+  ValidationIssue,
+  ValidationResult,
+  ValidationSeverity,
+  UseInspectorValidationReturn,
+} from './useInspectorValidation';

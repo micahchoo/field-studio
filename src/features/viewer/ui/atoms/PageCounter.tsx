@@ -1,5 +1,5 @@
 /**
- * PageCounter Molecule
+ * PageCounter Atom
  *
  * Page navigation counter for paginated or multi-canvas views.
  * Composes Button atoms with current/total display.
@@ -21,7 +21,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button } from '../atoms';
+import { Button } from '@/src/shared/ui/atoms';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
 export interface PageCounterProps {

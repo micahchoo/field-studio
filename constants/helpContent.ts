@@ -26,12 +26,23 @@ export const QUICK_REF_ARCHIVE: QuickRefItem[] = [
   { icon: 'photo_camera', label: 'Extract metadata', description: 'EXIF data like GPS and dates are captured' },
 ];
 
-export const QUICK_REF_STRUCTURE: QuickRefItem[] = [
+// Staging/Import workbench quick reference
+export const QUICK_REF_STAGING: QuickRefItem[] = [
+  { icon: 'upload', label: 'Import', description: 'Drag files to import' },
   { icon: 'add', label: 'Add item', shortcut: 'N', description: 'Create a new Manifest or Collection' },
   { icon: 'drag_indicator', label: 'Reorder', description: 'Drag items to reorganize hierarchy' },
   { icon: 'content_copy', label: 'Duplicate', shortcut: 'Cmd+D', description: 'Clone selected item' },
   { icon: 'delete', label: 'Delete', shortcut: 'Del', description: 'Remove selected item' },
-  { icon: 'expand_more', label: 'Expand all', shortcut: 'Cmd+E', description: 'Show all nested items' },
+];
+
+// Structure Tree View quick reference
+export const QUICK_REF_STRUCTURE: QuickRefItem[] = [
+  { icon: 'expand_more', label: 'Expand/Collapse', description: 'Click arrow to toggle children' },
+  { icon: 'drag_indicator', label: 'Reorder', description: 'Drag items to reorganize hierarchy' },
+  { icon: 'select_all', label: 'Multi-select', shortcut: 'Cmd+Click', description: 'Select multiple items' },
+  { icon: 'content_copy', label: 'Duplicate', shortcut: 'Cmd+D', description: 'Clone selected item' },
+  { icon: 'delete', label: 'Delete', shortcut: 'Del', description: 'Remove selected item' },
+  { icon: 'open_in_new', label: 'Open', shortcut: 'Double-click', description: 'Open in viewer' },
 ];
 
 export const QUICK_REF_VIEWER: QuickRefItem[] = [

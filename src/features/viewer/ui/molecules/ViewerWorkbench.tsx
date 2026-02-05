@@ -14,10 +14,10 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { IconButton } from '@/src/shared/ui/molecules';
+import { IconButton, TabBar } from '@/src/shared/ui/molecules';
 import {
   ParameterSection, PresetSelector, CoordinateInput, ImagePreview,
-  PreviewHeader, UrlBar, TabButton, RotationDial, UpscaleToggle,
+  PreviewHeader, UrlBar, RotationDial, UpscaleToggle,
   QualitySelector, FormatSelector, CodePanel, WorkbenchFooter,
 } from '@/src/features/viewer/ui/atoms';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
@@ -146,10 +146,15 @@ export const ViewerWorkbench: React.FC<ViewerWorkbenchProps> = ({
 
         {/* Right: Controls */}
         <div className={`w-96 ${bgClass} border-l ${borderClass} flex flex-col`}>
-          <div className="flex border-b">
-            <TabButton id="params" label="Parameters" icon="tune" isActive={activeTab === 'params'} onClick={() => setActiveTab('params')} fieldMode={fieldMode} />
-            <TabButton id="code" label="Code" icon="code" isActive={activeTab === 'code'} onClick={() => setActiveTab('code')} fieldMode={fieldMode} />
-          </div>
+          <TabBar
+            tabs={[
+              { id: 'params', label: 'Parameters', icon: 'tune' },
+              { id: 'code', label: 'Code', icon: 'code' },
+            ]}
+            activeTabId={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as 'params' | 'code')}
+            fieldMode={fieldMode}
+          />
 
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'params' ? (

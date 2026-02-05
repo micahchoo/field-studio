@@ -241,7 +241,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
             <nav className={`p-3 space-y-2 border-b shrink-0 ${fieldMode ? 'border-slate-700' : 'border-slate-800'}`}>
               <NavItem icon="inventory_2" label="Archive" active={currentMode === 'archive'} onClick={() => onModeChange('archive')} fieldMode={fieldMode} />
-              <NavItem icon="account_tree" label="Structure" active={currentMode === 'collections'} onClick={() => onModeChange('collections')} fieldMode={fieldMode} />
+              <NavItem icon="account_tree" label="Structure" active={currentMode === 'structure'} onClick={() => onModeChange('structure')} fieldMode={fieldMode} />
+              <NavItem icon="folder_special" label="Staging" active={currentMode === 'collections'} onClick={() => onModeChange('collections')} fieldMode={fieldMode} />
               <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => onModeChange('metadata')} fieldMode={fieldMode} />
               <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => onModeChange('boards')} fieldMode={fieldMode} />
               <NavItem icon="search" label="Search" active={currentMode === 'search'} onClick={() => onModeChange('search')} fieldMode={fieldMode} />

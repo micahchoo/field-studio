@@ -36,6 +36,12 @@ export interface IconButtonProps {
   cx?: ContextualClassNames | {};
   /** Current field mode */
   fieldMode?: boolean;
+  /** Whether the button is in an active/selected state */
+  isActive?: boolean;
+  /** Keyboard shortcut hint to display in tooltip (e.g., 'V', 'Ctrl+S') */
+  shortcut?: string;
+  /** Optional ID for the button */
+  id?: string;
 }
 
 const sizeClasses = {
@@ -72,14 +78,21 @@ export const IconButton: React.FC<IconButtonProps> = ({
   title,
   cx: _cx = {},
   fieldMode: _fieldMode = false,
+  isActive = false,
+  shortcut,
+  id,
 }) => {
   // Map variant to Button atom variant
+  // If isActive is true, use 'primary' variant
   const variantMap: Record<string, 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'> = {
-    default: 'secondary',
+    default: isActive ? 'primary' : 'secondary',
     primary: 'primary',
     danger: 'danger',
-    ghost: 'ghost',
+    ghost: isActive ? 'primary' : 'ghost',
   };
+  
+  // Build title with shortcut if provided
+  const fullTitle = shortcut ? `${title || ariaLabel} (${shortcut})` : (title || ariaLabel);
 
   // Map size to Button atom size
   const sizeMap: Record<string, 'sm' | 'base' | 'lg' | 'xl'> = {
@@ -98,13 +111,15 @@ export const IconButton: React.FC<IconButtonProps> = ({
 
   return (
     <Button
+      id={id}
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      title={title || ariaLabel}
+      aria-pressed={isActive}
+      title={fullTitle}
       variant={variantMap[variant]}
       size={sizeMap[size]}
-      minimal={variant === 'ghost'}
+      minimal={variant === 'ghost' && !isActive}
       style={customStyle}
       className={className}
     >

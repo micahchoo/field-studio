@@ -24,6 +24,10 @@ export {
   type DrawingMode,
   type UseAnnotationReturn,
 } from './annotation';
+export {
+  useMediaPlayer,
+  type MediaState,
+} from './useMediaPlayer';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IIIFAnnotation, IIIFCanvas, IIIFManifest } from '@/types';

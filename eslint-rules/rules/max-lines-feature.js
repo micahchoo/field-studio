@@ -127,4 +127,4 @@ const rule = {
   },
 };
 
-module.exports = rule;
+export default rule;

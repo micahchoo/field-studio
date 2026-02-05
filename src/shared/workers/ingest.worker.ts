@@ -145,6 +145,14 @@ export interface IngestErrorMessage {
   };
 }
 
+/** Worker -> Main: Initialization complete */
+export interface IngestInitializedMessage {
+  type: 'INGEST_INITIALIZED';
+  payload: {
+    operationId: string;
+  };
+}
+
 /** All message types from main thread */
 export type IngestWorkerRequest =
   | InitIngestMessage
@@ -158,7 +166,8 @@ export type IngestWorkerResponse =
   | IngestFileCompleteMessage
   | IngestNodeCompleteMessage
   | IngestCompleteMessage
-  | IngestErrorMessage;
+  | IngestErrorMessage
+  | IngestInitializedMessage;
 
 // ============================================================================
 // Constants (mirrored from constants.ts)
@@ -707,6 +716,12 @@ self.onmessage = async (event: MessageEvent<IngestWorkerRequest>) => {
           extractMetadata: options.extractMetadata !== false,
           calculateHashes: options.calculateHashes === true
         }
+      });
+
+      // Send initialization confirmation
+      self.postMessage({
+        type: 'INGEST_INITIALIZED',
+        payload: { operationId }
       });
 
       break;

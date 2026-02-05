@@ -30,6 +30,31 @@
  * );
  */
 
+// Navigation & Tabs
+export { TabBar } from './TabBar';
+export type { TabBarProps, TabDefinition } from './TabBar';
+
+// Form Controls & Selectors
+export { SelectField } from './SelectField';
+export type { SelectFieldProps, SelectOption, SelectOptionGroup } from './SelectField';
+
+export { DropdownSelect } from './DropdownSelect';
+export type { DropdownSelectProps, DropdownOption } from './DropdownSelect';
+
+export { FormInput } from './FormInput';
+export type { FormInputProps, FormInputType } from './FormInput';
+
+// List Components
+export { ListContainer } from './ListContainer';
+export type { ListContainerProps } from './ListContainer';
+
+export { ListItemBase } from './ListItemBase';
+export type { ListItemBaseProps } from './ListItemBase';
+
+// Modal & Dialog
+export { ModalDialog } from './ModalDialog';
+export type { ModalDialogProps, ModalSize } from './ModalDialog';
+
 // Display & Content
 export { StackedThumbnail } from './StackedThumbnail';
 export type { StackedThumbnailProps } from './StackedThumbnail';
@@ -104,12 +129,9 @@ export type { FacetPillProps } from './FacetPill';
 export { ResultCard } from './ResultCard';
 export type { ResultCardProps } from './ResultCard';
 
-// Viewer Controls (for decomposition)
-export { ZoomControl } from './ZoomControl';
-export type { ZoomControlProps } from './ZoomControl';
-
-export { PageCounter } from './PageCounter';
-export type { PageCounterProps } from './PageCounter';
+// Viewer Controls - MOVED to viewer feature
+// ZoomControl and PageCounter are now in src/features/viewer/ui/atoms/
+// and should be imported from there instead.
 
 // Map Components (for decomposition)
 export { MapMarker } from './MapMarker';

@@ -261,14 +261,18 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
           return new Promise<IngestResult>((resolve, reject) => {
             // Call the original onIngest with a wrapper that reports progress
             onIngest(initialTree, merge, (msg, pct) => {
+              // Calculate file counts safely with null checks
+              const totalFiles = sourceManifests?.manifests?.reduce((sum, m) => sum + m.files.length, 0) || 0;
+              const completedFiles = Math.floor((pct / 100) * totalFiles);
+
               // Report progress to the enhanced tracking system
               if (options.onProgress) {
                 options.onProgress({
                   operationId: 'legacy-ingest',
                   stage: pct >= 100 ? 'complete' : 'processing',
                   stageProgress: pct,
-                  filesTotal: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
-                  filesCompleted: Math.floor((pct / 100) * sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0)),
+                  filesTotal: totalFiles,
+                  filesCompleted: completedFiles,
                   filesProcessing: 0,
                   filesError: 0,
                   files: [],
@@ -286,15 +290,15 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
                   overallProgress: pct
                 });
               }
-              
+
               if (pct >= 100) {
                 resolve({
                   root: null,
                   report: {
-                    manifestsCreated: sourceManifests.manifests.length,
+                    manifestsCreated: sourceManifests?.manifests?.length || 0,
                     collectionsCreated: archiveLayout.root.children.length + 1,
-                    canvasesCreated: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
-                    filesProcessed: sourceManifests.manifests.reduce((sum, m) => sum + m.files.length, 0),
+                    canvasesCreated: totalFiles,
+                    filesProcessed: totalFiles,
                     warnings: []
                   }
                 });

@@ -29,7 +29,7 @@ import { Icon } from '@/src/shared/ui/atoms';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { MapMarker } from '@/src/shared/ui/molecules/MapMarker';
 import { ClusterBadge } from '@/src/shared/ui/molecules/ClusterBadge';
-import { ZoomControl } from '@/src/shared/ui/molecules/ZoomControl';
+import { ZoomControl } from '@/src/features/viewer/ui/atoms';
 import {
   formatBounds,
   formatCoordinates,

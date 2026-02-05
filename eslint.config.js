@@ -306,7 +306,7 @@ export default [
           // Discourage direct primitive imports in large molecules
           // (Allow list for atoms, warn for molecules)
           {
-            group: ['@/ui/primitives/*', '@/ui/primitives/*'],
+            group: ['@/ui/primitives/*'],
             message: '⚠️ Consider creating feature-specific atoms in features/{name}/ui/atoms/ instead of importing primitives directly. See docs/atomic-design-feature-audit.md'
           },
         ],

@@ -25,6 +25,7 @@ export type {
   IngestNodeCompleteMessage,
   IngestCompleteMessage,
   IngestErrorMessage,
+  IngestInitializedMessage,
 } from './ingest.worker';
 
 /**

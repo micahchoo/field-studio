@@ -34,3 +34,22 @@ export type { ViewerSearchPanelProps, SearchResult, SearchService } from './View
 
 export { ViewerWorkbench } from './ViewerWorkbench';
 export type { ViewerWorkbenchProps } from './ViewerWorkbench';
+
+// New decomposition molecules (Phase 2)
+export { ViewerToolbar } from './ViewerToolbar';
+export type { ViewerToolbarProps } from './ViewerToolbar';
+
+export { FilmstripNavigator } from './FilmstripNavigator';
+export type { FilmstripNavigatorProps } from './FilmstripNavigator';
+
+export { AnnotationOverlay } from './AnnotationOverlay';
+export type { AnnotationOverlayProps, IIIFAnnotation } from './AnnotationOverlay';
+
+export { ViewerPanels } from './ViewerPanels';
+export type { ViewerPanelsProps } from './ViewerPanels';
+
+export { ViewerEmptyState } from './ViewerEmptyState';
+export type { ViewerEmptyStateProps } from './ViewerEmptyState';
+
+export { ViewerContent } from './ViewerContent';
+export type { ViewerContentProps } from './ViewerContent';

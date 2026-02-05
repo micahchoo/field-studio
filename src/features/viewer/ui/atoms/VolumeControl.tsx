@@ -31,7 +31,7 @@ export interface VolumeControlProps {
   /** Additional CSS classes for container */
   className?: string;
   /** Contextual styles from parent */
-  cx?: ContextualClassNames;
+  cx?: ContextualClassNames | Record<string, string>;
   /** Field mode flag */
   fieldMode?: boolean;
 }
