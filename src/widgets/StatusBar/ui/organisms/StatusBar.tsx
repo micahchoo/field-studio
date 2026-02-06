@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
-import { ValidationIssue } from '@/src/shared/services/validator';
-import { useSharedSelection } from '@/src/shared/lib/hooks/useSharedSelection';
+import { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 
 interface StatusBarProps {
   totalItems: number;
@@ -51,16 +49,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     ? Math.min(100, (storageUsage.usage / storageUsage.quota) * 100)
     : 0;
 
-  // Try to get selection from shared hook if not provided externally
-  let sharedSelectionCount = 0;
-  try {
-    const sharedSelection = useSharedSelection();
-    sharedSelectionCount = sharedSelection.count;
-  } catch {
-    // Hook not available in context, use prop
-  }
-  
-  const effectiveSelectionCount = selectionCount ?? sharedSelectionCount;
+  const effectiveSelectionCount = selectionCount ?? 0;
   const hasMultiSelection = effectiveSelectionCount > 0;
 
   return (
@@ -76,13 +65,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             <Icon name="check_box" className="text-[14px] text-iiif-blue" />
             <span className="text-iiif-blue font-medium">{effectiveSelectionCount} selected</span>
             {onClearSelection && (
-              <button
+              <div
                 onClick={onClearSelection}
-                className="ml-1 hover:text-white transition-colors"
+                className="ml-1 hover:text-white transition-colors cursor-pointer"
                 title="Clear selection"
               >
                 <Icon name="close" className="text-[12px]" />
-              </button>
+              </div>
             )}
           </div>
         )}

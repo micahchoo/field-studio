@@ -4,13 +4,13 @@ import {
   IIIF_SCHEMA,
   isBehaviorAllowed,
   validateResource as schemaValidateResource
-} from '../utils/iiifSchema';
-import { isValidHttpUri } from '../utils';
+} from '@/utils/iiifSchema';
+import { isValidHttpUri } from '@/utils';
 import {
   doesInheritBehavior,
   findBehaviorConflicts,
   validateBehaviors
-} from '../utils/iiifBehaviors';
+} from '@/utils/iiifBehaviors';
 
 export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
 

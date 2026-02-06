@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { applyHealToTree, getFixDescription, healIssue, IssueCategory, ValidationIssue } from '../services';
-import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { applyHealToTree, getFixDescription, healIssue, safeHealAll } from '@/src/entities/manifest/model/validation/validationHealer';
+import { IssueCategory, ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
-import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
-import { StackedThumbnail } from './StackedThumbnail';
-import { safeHealAll } from '../services/validationHealer';
+import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
+import { StackedThumbnail } from '@/src/shared/ui/molecules/StackedThumbnail';
 
 interface QCDashboardProps {
   issuesMap: Record<string, ValidationIssue[]>;
@@ -242,9 +242,10 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                 {CATEGORIES.map(cat => {
                     const count = allIssues.filter(i => i.category === cat.id).length;
                     return (
-                        <button 
+                        <Button 
                             key={cat.id} 
                             onClick={() => setActiveCategory(cat.id)}
+                            variant="ghost"
                             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeCategory === cat.id ? 'bg-white shadow-md text-iiif-blue font-bold ring-1 ring-slate-200' : 'text-slate-500 hover:bg-slate-200/50'}`}
                         >
                             <div className="flex items-center gap-3">
@@ -252,7 +253,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                 <span className="text-xs uppercase tracking-wider">{cat.label}</span>
                             </div>
                             {count > 0 && <span className={`text-[10px] px-1.5 rounded-full font-bold ${count > 5 ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-600'}`}>{count}</span>}
-                        </button>
+                        </Button>
                     );
                 })}
             </div>
@@ -269,12 +270,14 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                     <Icon name="list" className="text-slate-400"/>
                     Detected Violations in {activeCategory}
                 </h3>
-                <button
+                <Button
                     onClick={handleHealAllFixable}
+                    variant="primary"
+                    size="sm"
                     className="text-[10px] font-black uppercase px-4 py-2 bg-iiif-blue text-white rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-95"
                 >
                     Heal All Fixable
-                </button>
+                </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {categoryIssues.length === 0 ? (
@@ -299,13 +302,15 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                 <p className="text-xs text-slate-500 line-clamp-1">{issue.message}</p>
                             </div>
                             {issue.fixable && (
-                                <button
+                                <Button
                                     onClick={(e) => { e.stopPropagation(); handleHeal(issue); }}
                                     title={getFixDescription(issue)}
+                                    variant="success"
+                                    size="sm"
                                     className="px-5 py-1.5 bg-green-600 text-white text-[9px] font-black uppercase rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow hover:bg-green-700"
                                 >
                                     Fix It
-                                </button>
+                                </Button>
                             )}
                         </div>
                     ))
@@ -317,7 +322,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
         <div className="w-[450px] bg-slate-50 flex flex-col shrink-0">
             <div className="p-6 border-b flex justify-between items-center bg-white shadow-sm">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Archival Context & Tools</span>
-                <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full transition-colors"><Icon name="close" className="text-slate-400"/></button>
+                <Button onClick={onClose} variant="ghost" size="sm" className="p-1 hover:bg-slate-100 rounded-full transition-colors"><Icon name="close" className="text-slate-400"/></Button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
@@ -377,20 +382,22 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                         <div className="flex justify-between items-center mb-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase">Archive Metadata</label>
                                             <div className="relative">
-                                                <button onClick={() => setShowAddMenu(!showAddMenu)} className="text-[9px] font-black uppercase text-iiif-blue hover:underline flex items-center gap-1">Add Field <Icon name="expand_more" className="text-[10px]"/></button>
+                                                <Button onClick={() => setShowAddMenu(!showAddMenu)} variant="ghost" size="sm" className="text-[9px] font-black uppercase text-iiif-blue hover:underline flex items-center gap-1">Add Field <Icon name="expand_more" className="text-[10px]"/></Button>
                                                 {showAddMenu && (
                                                     <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-[700] min-w-[140px] max-h-[200px] overflow-y-auto custom-scrollbar">
                                                         {IIIF_PROPERTY_SUGGESTIONS.map(prop => (
-                                                            <button 
+                                                            <Button 
                                                                 key={prop} 
                                                                 onClick={() => handleAddMetadata(previewItem.id, prop)}
-                                                                className="w-full px-4 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50 transition-colors"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="w-full px-4 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50 transition-colors justify-start"
                                                             >
                                                                 {prop}
-                                                            </button>
+                                                            </Button>
                                                         ))}
                                                         <div className="border-t mt-1 pt-1">
-                                                            <button onClick={() => handleAddMetadata(previewItem.id, "New Field")} className="w-full px-4 py-1.5 text-left text-[10px] font-black text-slate-400 hover:bg-slate-50 italic">Custom...</button>
+                                                            <Button onClick={() => handleAddMetadata(previewItem.id, "New Field")} variant="ghost" size="sm" className="w-full px-4 py-1.5 text-left text-[10px] font-black text-slate-400 hover:bg-slate-50 italic justify-start">Custom...</Button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -422,12 +429,14 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                                                 handleUpdateItem(previewItem.id, { metadata: newMeta });
                                                             }}
                                                         />
-                                                        <button 
+                                                        <Button 
                                                             onClick={() => handleRemoveMetadata(previewItem.id, idx)}
-                                                            className="text-slate-300 hover:text-red-500 opacity-0 group-hover/meta:opacity-100 transition-all"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-slate-300 hover:text-red-500 opacity-0 group-hover/meta:opacity-100 transition-all p-0 min-w-0"
                                                         >
                                                             <Icon name="close" className="text-sm"/>
-                                                        </button>
+                                                        </Button>
                                                     </div>
                                                 ))
                                             )}
@@ -450,12 +459,14 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                             </div>
                         </div>
 
-                        <button 
+                        <Button 
                             onClick={() => { onSelect(selectedIssue.itemId); onClose(); }}
+                            variant="primary"
+                            size="lg"
                             className="w-full bg-slate-800 text-white p-4 rounded-2xl text-xs font-black uppercase hover:bg-slate-700 transition-all flex items-center justify-center gap-2 shadow-xl"
                         >
                             <Icon name="location_searching" /> Reveal in Workbench
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-300 text-center p-8">

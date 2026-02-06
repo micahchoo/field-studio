@@ -7,8 +7,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { fuzzyMatch, FuzzyMatchResult } from '../utils/fuzzyMatch';
-import { CommandHistoryEntry, useCommandHistory } from '../hooks/useCommandHistory';
+import { Button } from '@/src/shared/ui/atoms';
+import { fuzzyMatch, FuzzyMatchResult } from '@/utils/fuzzyMatch';
+import { CommandHistoryEntry, useCommandHistory } from '@/src/shared/lib/hooks/useCommandHistory';
 
 export interface Command {
   /** Unique identifier */
@@ -320,7 +321,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Group matches by section when no query
   const groupedMatches = useMemo(() => {
     if (query.trim()) {
-      return { 'Search Results': matches };
+      return { searchResults: matches };
     }
 
     const groups: Record<string, CommandMatch[]> = {};
@@ -328,13 +329,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     // Recent section
     const recent = matches.filter(m => m.isRecent);
     if (recent.length > 0) {
-      groups['Recent'] = recent;
+      groups.recent = recent;
     }
 
     // Frequent section
     const frequent = matches.filter(m => m.isFrequent);
     if (frequent.length > 0) {
-      groups['Frequent'] = frequent;
+      groups.frequent = frequent;
     }
 
     // All commands by section
@@ -410,48 +411,56 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   const index = globalIndex++;
 
                   return (
-                    <button
+                    <Button
                       key={match.command.id}
                       onClick={() => handleExecute(match)}
-                      className={`
-                        w-full px-4 py-3 flex items-center gap-3 text-left transition-colors
-                        ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}
-                      `}
+                      variant="ghost"
+                      fullWidth
+                      style={{
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                        padding: '12px 16px',
+                        backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+                        border: 'none',
+                        borderRadius: 0,
+                      }}
                       onMouseEnter={() => setSelectedIndex(index)}
                       role="option"
                       aria-selected={isSelected}
                     >
-                      {match.command.icon && (
-                        <Icon 
-                          name={match.command.icon} 
-                          className={`text-lg ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}
-                        />
-                      )}
+                      <div className="flex items-center gap-3 w-full">
+                        {match.command.icon && (
+                          <Icon 
+                            name={match.command.icon} 
+                            className={`text-lg ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}
+                          />
+                        )}
 
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-800 truncate">
-                          {highlightText(match.command.label, match.highlightRanges)}
-                        </div>
-                        {match.command.description && (
-                          <div className="text-xs text-slate-400 truncate">
-                            {match.command.description}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-800 truncate">
+                            {highlightText(match.command.label, match.highlightRanges)}
                           </div>
-                        )}
-                      </div>
+                          {match.command.description && (
+                            <div className="text-xs text-slate-400 truncate">
+                              {match.command.description}
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        {match.isRecent && (
-                          <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
-                            recent
-                          </span>
-                        )}
-                        {match.command.shortcut && (
-                          <kbd className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono">
-                            {match.command.shortcut}
-                          </kbd>
-                        )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {match.isRecent && (
+                            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+                              recent
+                            </span>
+                          )}
+                          {match.command.shortcut && (
+                            <kbd className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono">
+                              {match.command.shortcut}
+                            </kbd>
+                          )}
+                        </div>
                       </div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

@@ -1,6 +1,6 @@
 import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { ValidationIssue } from './validator';
-import { createLanguageMap, findNodeById, generateValidUri } from '../utils';
+import { createLanguageMap, findNodeById, generateValidUri } from '@/utils';
 import { DEFAULT_INGEST_PREFS, IIIF_SPEC } from '@/src/shared/constants';
 import {
   COMMON_RIGHTS_URIS,
@@ -10,13 +10,13 @@ import {
   isBehaviorAllowed,
   isValidViewingDirection,
   VIEWING_DIRECTIONS
-} from '../utils/iiifSchema';
+} from '@/utils/iiifSchema';
 import {
   findBehaviorConflicts,
   getDefaultBehavior,
   getDisjointSetForBehavior,
   getValidBehaviorsForType
-} from '../utils/iiifBehaviors';
+} from '@/utils/iiifBehaviors';
 
 /**
  * ValidationHealer provides auto-fix capabilities for common IIIF validation issues.

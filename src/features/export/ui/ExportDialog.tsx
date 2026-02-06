@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { getIIIFValue, IIIFItem, isCollection, isManifest } from '@/src/shared/types';
-import { CanopyConfig, ExportOptions, exportService, ImageApiOptions, VirtualFile } from '../services/exportService';
-import { ArchivalPackageOptions, archivalPackageService } from '../services/archivalPackageService';
-import { activityStream as activityStreamService } from '../services/activityStream';
-import { ValidationIssue, validator } from '../services/validator';
+import { CanopyConfig, ExportOptions, exportService, ImageApiOptions, VirtualFile } from '@/src/shared/services/exportService';
+import { ArchivalPackageOptions, archivalPackageService } from '@/src/shared/services/archivalPackageService';
+import { activityStream as activityStreamService } from '@/src/shared/services/activityStream';
+import { ValidationIssue, validator } from '@/src/shared/services/validator';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { ExportDryRun } from './ExportDryRun';
 import { FirstTimeHint } from './Tooltip';

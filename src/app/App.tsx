@@ -4,25 +4,25 @@ import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type 
 import { ToastProvider, useToast } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
 import { METADATA_TEMPLATES } from '@/src/shared/constants';
-import { Sidebar } from '@/components/Sidebar';
-import { Inspector } from '@/components/Inspector';
-import { StatusBar } from '@/components/StatusBar';
-import { StagingWorkbench } from '@/components/staging/StagingWorkbench';
-import { ExportDialog } from '@/components/ExportDialog';
-import { ContextualHelp } from '@/components/ContextualHelp';
-import { QuickReference } from '@/components/Tooltip';
+import { Sidebar } from '@/src/widgets/NavigationSidebar/ui/organisms/Sidebar';
+import { Inspector } from '@/src/features/metadata-edit/ui/organisms/Inspector';
+import { StatusBar } from '@/src/widgets/StatusBar/ui/organisms/StatusBar';
+import { StagingWorkbench } from '@/src/features/staging/ui/organisms/StagingWorkbench';
+import { ExportDialog } from '@/src/features/export/ui/ExportDialog';
+import { ContextualHelp } from '@/src/widgets/ContextualHelp/ui/ContextualHelp';
+import { QuickReference } from '@/src/shared/ui/molecules/Tooltip';
 import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from '@/src/shared/constants/helpContent';
-import { QCDashboard } from '@/components/QCDashboard';
-import { OnboardingModal } from '@/components/OnboardingModal';
-import { ExternalImportDialog } from '@/components/ExternalImportDialog';
-import { BatchEditor } from '@/components/BatchEditor';
-import { PersonaSettings } from '@/components/PersonaSettings';
-import { CommandPalette } from '@/components/CommandPalette';
-import { KeyboardShortcutsOverlay } from '@/components/KeyboardShortcutsOverlay';
-import { AuthDialog } from '@/components/AuthDialog';
-import { SkipLink } from '@/components/SkipLink';
+import { QCDashboard } from '@/src/widgets/QCDashboard/ui/QCDashboard';
+import { OnboardingModal } from '@/src/widgets/OnboardingModal/ui/OnboardingModal';
+import { ExternalImportDialog } from '@/src/features/ingest/ui/ExternalImportDialog';
+import { BatchEditor } from '@/src/features/metadata-edit/ui/organisms/BatchEditor';
+import { PersonaSettings } from '@/src/widgets/PersonaSettings/ui/PersonaSettings';
+import { CommandPalette } from '@/src/widgets/CommandPalette/ui/CommandPalette';
+import { KeyboardShortcutsOverlay } from '@/src/widgets/KeyboardShortcuts/ui/KeyboardShortcutsOverlay';
+import { AuthDialog } from '@/src/widgets/AuthDialog/ui/AuthDialog';
+import { SkipLink } from '@/src/shared/ui/atoms/SkipLink';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { StorageFullDialog } from '@/components/StorageFullDialog';
+import { StorageFullDialog } from '@/src/widgets/StorageFullDialog/ui/StorageFullDialog';
 // NEW: Use the refactored ViewRouter from src/app/routes (Phase 5)
 // This routes to new feature slices for implemented routes (archive)
 // and falls back to old components for unimplemented routes
