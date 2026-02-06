@@ -21,8 +21,8 @@ import {
   NormalizedState,
   restoreEntityFromTrash,
   TrashedEntity
-} from './vault';
-import { PropertyChange, provenanceService } from './provenanceService';
+} from '../vault';
+import { PropertyChange, provenanceService } from '@/src/shared/services/provenanceService';
 import { USE_TRASH_AUTO_CLEANUP, USE_TRASH_SIZE_LIMITS, USE_TRASH_SYSTEM } from '@/src/shared/constants';
 import { IIIFItem, ResourceState } from '@/src/shared/types';
 
