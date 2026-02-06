@@ -13,10 +13,10 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { getIIIFValue, IIIFItem } from '../types';
+import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { contentStateService, ViewportState } from '@/src/shared/services/contentState';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { Button } from '@/ui/primitives/Button';
 import { COLORS, PATTERNS, SPACING, TOUCH_TARGETS } from '../designSystem';
 

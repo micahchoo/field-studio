@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { VirtualFile } from '../services/exportService';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface ExportDryRunProps {
   files: VirtualFile[];

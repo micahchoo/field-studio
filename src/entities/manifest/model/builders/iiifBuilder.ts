@@ -20,9 +20,9 @@ import {
   IngestStage,
   isCollection,
   LegacyProgressCallback
-} from '../types';
+} from '@/src/shared/types';
 import { storage } from './storage';
-import { DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC, IMAGE_QUALITY, MIME_TYPE_MAP } from '../constants';
+import { DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC, IMAGE_QUALITY, MIME_TYPE_MAP } from '@/src/shared/constants';
 import { load } from 'js-yaml';
 import { extractMetadata } from './metadataHarvester';
 import { generateDerivativeAsync, getTileWorkerPool } from './tileWorker';

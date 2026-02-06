@@ -1,6 +1,6 @@
 
-import { SourceManifest, SourceManifests } from '../types';
-import { getCSVColumnsByCategory, SUPPORTED_LANGUAGES } from '../constants';
+import { SourceManifest, SourceManifests } from '@/src/shared/types';
+import { getCSVColumnsByCategory, SUPPORTED_LANGUAGES } from '@/src/shared/constants';
 
 export type VocabularyOption = 'iiif' | 'dublin-core' | 'both';
 

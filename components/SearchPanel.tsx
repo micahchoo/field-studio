@@ -14,8 +14,8 @@ import {
   SearchResult,
   SearchService
 } from '../services/contentSearchService';
-import { IIIFManifest } from '../types';
-import { Icon } from './Icon';
+import { IIIFManifest } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface SearchPanelProps {
   /** The manifest to search within */

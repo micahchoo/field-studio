@@ -38,7 +38,7 @@ import type {
   IIIFCanvas,
   IIIFExternalWebResource,
   IIIFItem
-} from '../types';
+} from '@/src/shared/types';
 import type { ImageApiProfile, ImageServiceInfo } from '../utils/iiifImageApi';
 
 // ============================================================================

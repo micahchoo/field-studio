@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 export interface TabButtonBaseProps {
   /** Display label */

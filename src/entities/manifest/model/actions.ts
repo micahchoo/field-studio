@@ -35,7 +35,7 @@ import {
   IIIFItem,
   IIIFManifest,
   LanguageMap
-} from '../types';
+} from '@/src/shared/types';
 import { PropertyChange, provenanceService } from './provenanceService';
 import {
   getRelationshipType,

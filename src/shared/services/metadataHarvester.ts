@@ -1,6 +1,6 @@
 
 import ExifReader from 'exifreader';
-import { IIIFItem } from '../types';
+import { IIIFItem } from '@/src/shared/types';
 
 export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> => {
     if (!file.type.startsWith('image/')) return {};

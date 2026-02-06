@@ -1,8 +1,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
-import { IIIFAnnotation, IIIFCanvas } from '../types';
+import { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
 import type { Point } from '../constants/viewport';
 
 interface PolygonAnnotationToolProps {

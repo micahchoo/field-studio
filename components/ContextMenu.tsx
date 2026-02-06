@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 export interface ContextMenuItem {
   /** Unique identifier for the item */

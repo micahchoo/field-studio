@@ -13,8 +13,8 @@
  * @see https://iiif.io/api/search/2.0/
  */
 
-import { IIIFAnnotation, IIIFCanvas, LanguageMap } from '../types';
-import { IIIF_SPEC } from '../constants';
+import { IIIFAnnotation, IIIFCanvas, LanguageMap } from '@/src/shared/types';
+import { IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

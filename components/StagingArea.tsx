@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { FileTree, getIIIFValue, IIIFItem } from '../types';
-import { Icon } from './Icon';
+import { FileTree, getIIIFValue, IIIFItem } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { findSimilarFiles } from '../utils/filenameUtils';
 
 interface StagingAreaProps {

@@ -1,8 +1,8 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
-import { Icon } from './Icon';
-import { RESOURCE_TYPE_CONFIG } from '../constants';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { resolveHierarchicalThumbs, resolveThumbUrl } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';
 

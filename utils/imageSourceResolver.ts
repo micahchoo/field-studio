@@ -13,8 +13,8 @@
  */
 
 import { IIIFImageService, type SizeParams } from './iiifImageApi';
-import { DEFAULT_DERIVATIVE_PRESET, getDerivativePreset } from '../constants';
-import { isCanvas } from '../types';
+import { DEFAULT_DERIVATIVE_PRESET, getDerivativePreset } from '@/src/shared/constants';
+import { isCanvas } from '@/src/shared/types';
 
 // ============================================================================
 // Types

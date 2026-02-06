@@ -7,8 +7,8 @@
  * @see https://iiif.io/api/presentation/3.0/
  */
 
-import { IIIFItem } from '../types';
-import { IIIF_SPEC } from '../constants';
+import { IIIFItem } from '@/src/shared/types';
+import { IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Type Definitions

@@ -1,6 +1,6 @@
 
 import JSZip from 'jszip';
-import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
+import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { validator } from './validator';
 import {
   createImageServiceReference,
@@ -10,7 +10,7 @@ import {
   getAllManifests,
   ImageApiProfile
 } from '../utils';
-import { DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_SPEC } from '../constants';
+import { DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_SPEC } from '@/src/shared/constants';
 import {
   CANOPY_BUILD_SCRIPT,
   CANOPY_CONTENT_ABOUT_LAYOUT,

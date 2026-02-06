@@ -6,7 +6,7 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { LoadingSpinner } from './LoadingState';
 
 interface StatePreservation {

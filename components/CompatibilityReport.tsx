@@ -6,8 +6,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { IIIFItem } from '../types';
-import { Icon } from './Icon';
+import { IIIFItem } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import {
   CompatibilityIssue,
   CompatibilityReport as Report,

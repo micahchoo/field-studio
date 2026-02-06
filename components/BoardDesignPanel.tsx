@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Icon } from './Icon';
-import { ConnectionType } from '../types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { ConnectionType } from '@/src/shared/types';
 
 interface BoardItem {
   id: string;

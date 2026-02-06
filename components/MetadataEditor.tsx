@@ -1,9 +1,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCollection, isManifest } from '../types';
-import { Icon } from './Icon';
+import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCollection, isManifest } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
-import { BEHAVIOR_CONFLICTS, BEHAVIOR_DEFINITIONS, BEHAVIOR_OPTIONS, DEFAULT_MAP_CONFIG, DUBLIN_CORE_MAP, getConflictingBehaviors, RIGHTS_OPTIONS, VIEWING_DIRECTIONS } from '../constants';
+import { BEHAVIOR_CONFLICTS, BEHAVIOR_DEFINITIONS, BEHAVIOR_OPTIONS, DEFAULT_MAP_CONFIG, DUBLIN_CORE_MAP, getConflictingBehaviors, RIGHTS_OPTIONS, VIEWING_DIRECTIONS } from '@/src/shared/constants';
 
 declare const L: any;
 

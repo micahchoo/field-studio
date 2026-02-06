@@ -12,7 +12,7 @@ import {
   overrideNodeType,
   ProposedIIIFType
 } from '../services/ingestAnalyzer';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface IngestPreviewProps {
   analysis: IngestAnalysisResult;

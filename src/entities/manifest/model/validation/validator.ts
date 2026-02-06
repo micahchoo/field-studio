@@ -1,4 +1,4 @@
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import {
   getRecommendedProperties,
   IIIF_SCHEMA,

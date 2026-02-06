@@ -1,8 +1,8 @@
 
 import React, { useMemo } from 'react';
-import { getIIIFValue, IIIFItem } from '../types';
-import { Icon } from './Icon';
-import { RESOURCE_TYPE_CONFIG } from '../constants';
+import { getIIIFValue, IIIFItem } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 
 export interface StructureToolbarProps {
   selectedIds: Set<string>;

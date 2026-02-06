@@ -30,8 +30,8 @@ import {
   isCollection,
   isManifest,
   isRange
-} from '../types';
-import { IIIF_CONFIG } from '../constants';
+} from '@/src/shared/types';
+import { IIIF_CONFIG } from '@/src/shared/constants';
 
 // ============================================================================
 // Relationship Types

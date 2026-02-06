@@ -8,7 +8,7 @@
  * - services/validationHealer.ts (URI generation)
  */
 
-import { IIIFItem } from '../types';
+import { IIIFItem } from '@/src/shared/types';
 
 // ============================================================================
 // ID Validation

@@ -28,7 +28,7 @@ import {
   IIIFManifest,
   IIIFRange,
   LanguageString,
-} from '../types';
+} from '@/src/shared/types';
 import {
   EntityType,
   getAncestors,

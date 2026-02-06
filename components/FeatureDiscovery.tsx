@@ -11,7 +11,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 export interface TourStep {
   id: string;

@@ -6,7 +6,7 @@
  * Part of Phase 3 UX Simplification: Progressive Disclosure.
  */
 
-import type { AbstractionLevel } from '../types';
+import type { AbstractionLevel } from '@/src/shared/types';
 
 /**
  * Terminology mappings for each abstraction level

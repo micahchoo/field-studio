@@ -10,8 +10,8 @@
  * This enables Field Studio to work with any media URL, not just IIIF resources.
  */
 
-import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '../types';
-import { IIIF_SPEC } from '../constants';
+import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '@/src/shared/types';
+import { IIIF_SPEC } from '@/src/shared/constants';
 import {
   getExtension,
   getMimeType

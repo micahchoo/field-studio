@@ -10,11 +10,11 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { getIIIFValue, type IIIFItem, isCanvas, isCollection, isManifest } from '../types';
+import { getIIIFValue, type IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { FlattenedTreeNode, useTreeVirtualization } from '../hooks/useTreeVirtualization';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { StackedThumbnail } from './StackedThumbnail';
-import { RESOURCE_TYPE_CONFIG } from '../constants';
+import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
 
 interface VirtualTreeListProps {

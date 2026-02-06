@@ -9,9 +9,9 @@
  * - Clover
  */
 
-import { IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isRange } from '../types';
+import { IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isRange } from '@/src/shared/types';
 import { createImageServiceReference, isImageService3 } from '../utils';
-import { getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '../constants';
+import { getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

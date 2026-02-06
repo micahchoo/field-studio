@@ -16,8 +16,8 @@
  * @see IIIF Presentation API 3.0: Collections are "cheap overlays"
  */
 
-import { FileTree } from '../types';
-import { MIME_TYPE_MAP } from '../constants';
+import { FileTree } from '@/src/shared/types';
+import { MIME_TYPE_MAP } from '@/src/shared/constants';
 import { load } from 'js-yaml';
 import { traverse } from '../utils';
 

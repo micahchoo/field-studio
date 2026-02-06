@@ -6,11 +6,11 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { getIIIFValue, IIIFCanvas } from '../types';
-import { Icon } from './Icon';
+import { getIIIFValue, IIIFCanvas } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { StackedThumbnail } from './StackedThumbnail';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
-import { RESOURCE_TYPE_CONFIG } from '../constants';
+import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 
 interface MultiSelectFilmstripProps {
   /** Array of selected canvas items */

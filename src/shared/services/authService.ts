@@ -11,7 +11,7 @@
  * @see https://iiif.io/api/auth/2.0/
  */
 
-import { IIIF_SPEC } from '../constants';
+import { IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { designSystem } from '../designSystem';
 
 export type LoadingVariant = 'spinner' | 'skeleton' | 'progress' | 'overlay';

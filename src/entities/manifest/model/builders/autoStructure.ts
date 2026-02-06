@@ -1,5 +1,5 @@
 
-import { getIIIFValue, IIIFCanvas, IIIFManifest, IIIFRange } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFManifest, IIIFRange } from '@/src/shared/types';
 
 export const autoStructureService = {
   /**

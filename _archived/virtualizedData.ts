@@ -9,7 +9,7 @@
  * - Reference counting for blob URLs
  */
 
-import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '../types';
+import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
 import { storage } from './storage';
 
 // ============================================================================

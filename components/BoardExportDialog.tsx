@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
-import { getIIIFValue, IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFItem, IIIFManifest } from '../types';
-import { DEFAULT_INGEST_PREFS, IIIF_CONFIG, IIIF_SPEC } from '../constants';
+import { getIIIFValue, IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFItem, IIIFManifest } from '@/src/shared/types';
+import { DEFAULT_INGEST_PREFS, IIIF_CONFIG, IIIF_SPEC } from '@/src/shared/constants';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
 
 interface BoardItem {

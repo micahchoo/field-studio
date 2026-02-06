@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { Icon } from './Icon';
-import type { AbstractionLevel } from '../types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
+import type { AbstractionLevel } from '@/src/shared/types';
 
 export interface AbstractionLevelToggleProps {
   /** Current abstraction level */

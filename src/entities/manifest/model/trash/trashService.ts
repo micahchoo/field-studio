@@ -24,7 +24,7 @@ import {
 } from './vault';
 import { PropertyChange, provenanceService } from './provenanceService';
 import { USE_TRASH_AUTO_CLEANUP, USE_TRASH_SIZE_LIMITS, USE_TRASH_SYSTEM } from '../constants/features';
-import { IIIFItem, ResourceState } from '../types';
+import { IIIFItem, ResourceState } from '@/src/shared/types';
 
 // ============================================================================
 // Types

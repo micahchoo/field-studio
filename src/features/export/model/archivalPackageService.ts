@@ -9,7 +9,7 @@
  * for repository ingest.
  */
 
-import { getIIIFValue, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas } from '@/src/shared/types';
 import { storage } from './storage';
 
 // ============================================================================

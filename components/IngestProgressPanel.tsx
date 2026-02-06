@@ -21,7 +21,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { EmptyState } from './EmptyState';
 import {
   FileStatus,
@@ -29,7 +29,7 @@ import {
   IngestFileInfo,
   IngestProgress,
   IngestStage
-} from '../types';
+} from '@/src/shared/types';
 import { formatETA, formatSpeed, IngestControls } from '../hooks/useIngestProgress';
 
 // ============================================================================

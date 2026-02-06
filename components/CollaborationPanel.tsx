@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useFocusTrap } from '@/src/shared/lib/hooks/useFocusTrap';
 import { SyncProvider } from '../services/sync/syncProvider';
 import { SyncState } from '../services/sync/types';

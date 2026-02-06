@@ -8,9 +8,9 @@
  */
 
 import React from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { AbstractionLevelToggle } from './AbstractionLevelToggle';
-import type { AbstractionLevel } from '../types';
+import type { AbstractionLevel } from '@/src/shared/types';
 import { FEATURE_FLAGS } from '../constants/features';
 import { useAppSettings } from '@/src/app/providers/useAppSettings';
 import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';

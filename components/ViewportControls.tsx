@@ -8,7 +8,7 @@
 import React from 'react';
 import type { UseViewportReturn } from '../hooks/useViewport';
 import { VIEWPORT_DEFAULTS } from '../constants/viewport';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 // ============================================================================
 // Types

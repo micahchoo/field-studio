@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AbstractionLevel, getIIIFValue, IIIFCollection, IIIFItem, IIIFManifest, isCollection, isManifest } from '../types';
-import { Icon } from './Icon';
+import { AbstractionLevel, getIIIFValue, IIIFCollection, IIIFItem, IIIFManifest, isCollection, isManifest } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { buildReferenceMap, getRelationshipType } from '../utils/iiifHierarchy';
 import { resolveHierarchicalThumbs } from '../utils/imageSourceResolver';
 import { StackedThumbnail } from './StackedThumbnail';

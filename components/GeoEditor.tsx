@@ -14,8 +14,8 @@ import {
   NavPlace,
   navPlaceService
 } from '../services/navPlaceService';
-import { getIIIFValue, IIIFItem } from '../types';
-import { Icon } from './Icon';
+import { getIIIFValue, IIIFItem } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 // Leaflet type declaration for dynamic import
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { AppMode, AppSettings, CoreViewMode, IIIFCanvas, IIIFItem, isCanvas } from '../types';
+import { AppMode, AppSettings, CoreViewMode, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
 import { ValidationIssue } from '../services/validator';
 import { ArchiveView } from './views/ArchiveView';
 import { BoardView } from './views/BoardView';
@@ -19,7 +19,7 @@ import { SearchView } from './views/SearchView';
 import { MetadataSpreadsheet } from './views/MetadataSpreadsheet';
 import { TrashView } from './TrashView';
 import { ErrorBoundary, ViewErrorFallback } from './ErrorBoundary';
-import { CORE_VIEW_MODE_CONFIG, FEATURE_FLAGS, LEGACY_TO_CORE_MODE_MAP } from '../constants';
+import { CORE_VIEW_MODE_CONFIG, FEATURE_FLAGS, LEGACY_TO_CORE_MODE_MAP } from '@/src/shared/constants';
 
 interface ViewRouterProps {
   currentMode: AppMode;

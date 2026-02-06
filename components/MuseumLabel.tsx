@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface MuseumLabelProps {
   title: string;

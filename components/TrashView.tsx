@@ -16,12 +16,12 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { EmptyState } from './EmptyState';
 import { TrashStats } from '../services/trashService';
 import { NormalizedState, TrashedEntity } from '../services/vault';
-import { getIIIFValue, IIIFItem } from '../types';
-import { FEATURE_FLAGS } from '../constants';
+import { getIIIFValue, IIIFItem } from '@/src/shared/types';
+import { FEATURE_FLAGS } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

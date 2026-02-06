@@ -8,8 +8,8 @@
  * @see https://iiif.io/api/content-state/1.0/
  */
 
-import { IIIFCanvas, IIIFItem } from '../types';
-import { IIIF_SPEC } from '../constants';
+import { IIIFCanvas, IIIFItem } from '@/src/shared/types';
+import { IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { getIIIFValue, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas, isManifest } from '../types';
-import { Icon } from './Icon';
+import { getIIIFValue, IIIFCanvas, IIIFItem, IIIFManifest, isCanvas, isManifest } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface WorkspaceProps {
   resource: IIIFItem | null;

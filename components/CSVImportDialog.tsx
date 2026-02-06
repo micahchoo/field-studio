@@ -1,9 +1,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { getIIIFValue, IIIFItem } from '../types';
+import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { CSVColumnMapping, csvImporter, CSVImportResult, SUPPORTED_IIIF_PROPERTIES } from '../services/csvImporter';
-import { CSV_SUPPORTED_PROPERTIES, SUPPORTED_LANGUAGES } from '../constants';
-import { Icon } from './Icon';
+import { CSV_SUPPORTED_PROPERTIES, SUPPORTED_LANGUAGES } from '@/src/shared/constants';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import {
   completeCheckpoint,
   deleteCheckpoint,

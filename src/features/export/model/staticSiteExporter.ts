@@ -8,7 +8,7 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Static-First Infrastructure (Wax)"
  */
 
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '../types';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { storage } from './storage';
 import { LunrDocument, searchService } from './searchService';
 import { DEFAULT_SEARCH_CONFIG, fieldRegistry } from './fieldRegistry';
@@ -21,7 +21,7 @@ import {
   ImageApiProfile,
   isPaintingMotivation
 } from '../utils';
-import { DEFAULT_DERIVATIVE_SIZES, getDerivativePreset, IIIF_SPEC } from '../constants';
+import { DEFAULT_DERIVATIVE_SIZES, getDerivativePreset, IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

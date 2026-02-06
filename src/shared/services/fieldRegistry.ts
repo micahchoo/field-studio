@@ -9,7 +9,7 @@
  * @see ARCHITECTURE_INSPIRATION.md - "WAX Case Study"
  */
 
-import { MetadataComplexity } from '../constants';
+import { MetadataComplexity } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

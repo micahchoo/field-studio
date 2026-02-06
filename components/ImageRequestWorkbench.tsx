@@ -1,9 +1,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IIIFCanvas, IIIFItem } from '../types';
-import { Icon } from './Icon';
+import { IIIFCanvas, IIIFItem } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
-import { IIIF_SPEC } from '../constants';
+import { IIIF_SPEC } from '@/src/shared/constants';
 
 interface ImageRequestWorkbenchProps {
   canvas: IIIFCanvas;

@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { RIGHTS_OPTIONS } from '../constants';
+import { RIGHTS_OPTIONS } from '@/src/shared/constants';
 
 interface RightsDropdownProps {
   value: string | undefined;

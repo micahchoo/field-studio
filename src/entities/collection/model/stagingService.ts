@@ -1,8 +1,8 @@
 
-import { ArchiveCollection, ArchiveLayout, FileTree, SourceManifest, SourceManifests } from '../types';
+import { ArchiveCollection, ArchiveLayout, FileTree, SourceManifest, SourceManifests } from '@/src/shared/types';
 import { filenameRelationshipPatterns } from '../utils/filenameUtils';
 import { buildTree } from './iiifBuilder';
-import { MIME_TYPE_MAP } from '../constants';
+import { MIME_TYPE_MAP } from '@/src/shared/constants';
 
 /**
  * Natural sort comparison for strings with numbers

@@ -9,7 +9,7 @@
  * - PREMIS metadata export
  */
 
-import { IIIFItem } from '../types';
+import { IIIFItem } from '@/src/shared/types';
 
 // ============================================================================
 // Types

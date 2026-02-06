@@ -29,7 +29,7 @@ import {
   IngestProgressOptions,
   IngestReport,
   IngestResult
-} from '../types';
+} from '@/src/shared/types';
 import { FEATURE_FLAGS } from '../constants/features';
 import { getTileWorkerPool } from './tileWorker';
 import { storage } from './storage';

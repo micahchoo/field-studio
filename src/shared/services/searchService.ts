@@ -1,9 +1,9 @@
 
 import * as FlexSearchModule from 'flexsearch';
-import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCanvas } from '../types';
+import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
 import { getAllCanvases } from '@/utils';
 import { DEFAULT_SEARCH_CONFIG, fieldRegistry, SearchIndexConfig } from './fieldRegistry';
-import { USE_WORKER_SEARCH } from '../constants';
+import { USE_WORKER_SEARCH } from '@/src/shared/constants';
 
 // FlexSearch has inconsistent exports across bundlers - try all patterns
 const FlexSearch = (FlexSearchModule as any).default || FlexSearchModule;

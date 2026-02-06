@@ -19,7 +19,7 @@
  * @see https://iiif.io/api/presentation/3.0/change-log/
  */
 
-import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, LanguageMap } from '../types';
+import { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, LanguageMap } from '@/src/shared/types';
 import {
   createLanguageMap,
   DEFAULT_VIEWING_DIRECTION,
@@ -29,7 +29,7 @@ import {
   isValidHttpUri,
   isValidViewingDirection
 } from '../utils';
-import { IIIF_SPEC } from '../constants';
+import { IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Version Detection

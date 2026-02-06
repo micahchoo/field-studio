@@ -10,8 +10,8 @@
  * @see https://iiif.io/api/presentation/3.0/#placeholdercanvas
  */
 
-import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '../types';
-import { IMAGE_QUALITY } from '../constants';
+import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '@/src/shared/types';
+import { IMAGE_QUALITY } from '@/src/shared/constants';
 
 // ============================================================================
 // Types

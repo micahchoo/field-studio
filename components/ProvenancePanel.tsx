@@ -6,8 +6,8 @@
  */
 
 import React, { useState } from 'react';
-import { IIIFItem } from '../types';
-import { Icon } from './Icon';
+import { IIIFItem } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { PropertyChange, ProvenanceEntry, provenanceService, useProvenance } from '@/src/shared/services/provenanceService';
 import { COLORS, FEEDBACK, SPACING } from '../designSystem';
 

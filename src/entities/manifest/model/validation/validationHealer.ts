@@ -1,7 +1,7 @@
-import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '../types';
+import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { ValidationIssue } from './validator';
 import { createLanguageMap, findNodeById, generateValidUri } from '../utils';
-import { DEFAULT_INGEST_PREFS, IIIF_SPEC } from '../constants';
+import { DEFAULT_INGEST_PREFS, IIIF_SPEC } from '@/src/shared/constants';
 import {
   COMMON_RIGHTS_URIS,
   getMinimumTemplate,

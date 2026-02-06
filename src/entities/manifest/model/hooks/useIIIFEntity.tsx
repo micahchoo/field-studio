@@ -48,7 +48,7 @@ import {
   isManifest,
   LanguageMap,
   LanguageString
-} from '../types';
+} from '@/src/shared/types';
 
 // ============================================================================
 // Context Types

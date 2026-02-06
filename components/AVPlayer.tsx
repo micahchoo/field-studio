@@ -17,8 +17,8 @@ import {
   SyncPoint,
   TimeModeConfig
 } from '../services/avService';
-import { IIIFAnnotation } from '../types';
-import { Icon } from './Icon';
+import { IIIFAnnotation } from '@/src/shared/types';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface AVPlayerProps {
   /** The canvas containing AV content */

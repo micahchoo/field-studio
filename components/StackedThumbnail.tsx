@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface StackedThumbnailProps {
   urls: string[];
