@@ -22,7 +22,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { EmptyState } from './EmptyState';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import {
   FileStatus,
   IngestActivityLogEntry,
