@@ -4,29 +4,29 @@ import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type 
 import { ToastProvider, useToast } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
 import { METADATA_TEMPLATES } from '@/src/shared/constants';
-import { Sidebar } from './components/Sidebar';
-import { Inspector } from './components/Inspector';
-import { StatusBar } from './components/StatusBar';
-import { StagingWorkbench } from './components/staging/StagingWorkbench';
-import { ExportDialog } from './components/ExportDialog';
-import { ContextualHelp } from './components/ContextualHelp';
-import { QuickReference } from './components/Tooltip';
-import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from './constants/helpContent';
-import { QCDashboard } from './components/QCDashboard';
-import { OnboardingModal } from './components/OnboardingModal';
-import { ExternalImportDialog } from './components/ExternalImportDialog';
-import { BatchEditor } from './components/BatchEditor';
-import { PersonaSettings } from './components/PersonaSettings';
-import { CommandPalette } from './components/CommandPalette';
-import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay';
-import { AuthDialog } from './components/AuthDialog';
-import { SkipLink } from './components/SkipLink';
+import { Sidebar } from '@/components/Sidebar';
+import { Inspector } from '@/components/Inspector';
+import { StatusBar } from '@/components/StatusBar';
+import { StagingWorkbench } from '@/components/staging/StagingWorkbench';
+import { ExportDialog } from '@/components/ExportDialog';
+import { ContextualHelp } from '@/components/ContextualHelp';
+import { QuickReference } from '@/components/Tooltip';
+import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from '@/constants/helpContent';
+import { QCDashboard } from '@/components/QCDashboard';
+import { OnboardingModal } from '@/components/OnboardingModal';
+import { ExternalImportDialog } from '@/components/ExternalImportDialog';
+import { BatchEditor } from '@/components/BatchEditor';
+import { PersonaSettings } from '@/components/PersonaSettings';
+import { CommandPalette } from '@/components/CommandPalette';
+import { KeyboardShortcutsOverlay } from '@/components/KeyboardShortcutsOverlay';
+import { AuthDialog } from '@/components/AuthDialog';
+import { SkipLink } from '@/components/SkipLink';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { StorageFullDialog } from './components/StorageFullDialog';
+import { StorageFullDialog } from '@/components/StorageFullDialog';
 // NEW: Use the refactored ViewRouter from src/app/routes (Phase 5)
 // This routes to new feature slices for implemented routes (archive)
 // and falls back to old components for unimplemented routes
-import { ViewRouter } from './src/app/routes';
+import { ViewRouter } from './routes';
 import { buildTree, ingestTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
 import { AuthService, AuthState } from '@/src/shared/services/authService';
 import { storage } from '@/src/shared/services/storage';
