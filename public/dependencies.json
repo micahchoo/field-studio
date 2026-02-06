@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-06T22:15:11.731Z",
+  "generatedAt": "2026-02-06T22:18:25.689Z",
   "totalFiles": 378,
   "files": {
     "src/app/App.tsx": {
@@ -7028,8 +7028,8 @@
       "dependents": [
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 10779,
-      "lines": 316
+      "size": 13967,
+      "lines": 396
     },
     "src/features/archive/ui/organisms/ArchiveView.tsx": {
       "filePath": "src/features/archive/ui/organisms/ArchiveView.tsx",
@@ -7228,8 +7228,8 @@
         "src/features/archive/index.ts",
         "src/features/archive/index.ts"
       ],
-      "size": 23589,
-      "lines": 646
+      "size": 24623,
+      "lines": 673
     },
     "src/features/board-design/hooks/useCanvasDrag.ts": {
       "filePath": "src/features/board-design/hooks/useCanvasDrag.ts",
