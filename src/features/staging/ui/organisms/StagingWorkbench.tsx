@@ -4,17 +4,17 @@ import { AbstractionLevel, FileTree, IIIFItem, IngestResult, SourceManifest, Sou
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { buildSourceManifests, findManifest, getAllCollections } from '@/src/entities/collection/model/stagingService';
 // TODO: Migrate these hooks or remove if unused
-// import { useStagingState } from './hooks/useStagingState';
-// import { useKeyboardDragDrop } from '../../hooks/useKeyboardDragDrop';
-// import { useIngestProgress } from '../../hooks/useIngestProgress';
-// import { IngestProgressPanel } from '../IngestProgressPanel';
+// import { useStagingState } from '@/src/shared/lib/hooks/useStagingState';
+// import { useKeyboardDragDrop } from '@/src/shared/lib/hooks/useKeyboardDragDrop';
+// import { useIngestProgress } from '@/src/shared/lib/hooks/useIngestProgress';
+// import { IngestProgressPanel } from '../molecules/IngestProgressPanel';
 import { FEATURE_FLAGS, USE_WORKER_INGEST } from '@/src/shared/constants';
 import { ingestTreeWithWorkers } from '@/src/entities/manifest/model/ingest/ingestWorkerPool';
 import { SourcePane } from '../molecules/SourcePane';
 // TODO: Migrate these components or remove if unused
 // import { ArchivePane } from './ArchivePane';
 // import { SendToCollectionModal } from './SendToCollectionModal';
-// import { MetadataTemplateExport } from './MetadataTemplateExport';
+// import { MetadataTemplateExport } from '../molecules/MetadataTemplateExport';
 import { useTerminology } from '@/src/app/providers/useTerminology';
 
 interface StagingWorkbenchProps {

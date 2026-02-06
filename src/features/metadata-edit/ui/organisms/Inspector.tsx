@@ -3,10 +3,9 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFItem, IIIFManifest, isManifest } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { MuseumLabel } from '@/src/shared/ui/molecules/MuseumLabel';
-// TODO: Migrate these components or remove if unused
-// import { ShareButton } from './ShareButton';
-// import { GeoEditor } from './GeoEditor';
-// import { ValidatedInput } from './ValidatedInput';
+import { ShareButton } from '../atoms/ShareButton';
+import { GeoEditor } from '../molecules/GeoEditor';
+import { ValidatedInput } from '../atoms/ValidatedInput';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
 import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { useTerminology } from '@/src/app/providers/useTerminology';
@@ -17,8 +16,7 @@ import { resolvePreviewUrl } from '@/utils/imageSourceResolver';
 import { useDebouncedValue } from '@/src/shared/lib/hooks/useDebouncedValue';
 import { usePersistedTab } from '@/src/shared/lib/hooks/usePersistedTab';
 import { useInspectorValidation } from '../../model/useInspectorValidation';
-// TODO: Migrate this hook or remove if unused
-// import { useMetadataEditor } from '../hooks/useMetadataEditor';
+import { useMetadataEditor } from '@/src/shared/lib/hooks/useMetadataEditor';
 import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
 
 interface InspectorProps {

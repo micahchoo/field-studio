@@ -4,7 +4,9 @@ import { getIIIFValue, IIIFCanvas, IIIFItem } from '@/src/shared/types';
 import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
-import { usePanZoomGestures, useViewport, useViewportKeyboard } from '../hooks';
+import { usePanZoomGestures } from '@/src/shared/lib/hooks/usePanZoomGestures';
+import { useViewport } from '@/src/shared/lib/hooks/useViewport';
+import { useViewportKeyboard } from '@/src/shared/lib/hooks/useViewportKeyboard';
 import { buildCanvasFromLayers, PlacedResource, useLayerHistory } from '@/src/shared/lib/hooks/useLayerHistory';
 
 interface CanvasComposerProps {
