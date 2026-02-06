@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-06T07:18:16.239Z",
+  "generatedAt": "2026-02-06T07:20:08.051Z",
   "totalFiles": 370,
   "files": {
     "src/app/App.tsx": {
@@ -1227,7 +1227,10 @@
           "source": "@/src/shared/types",
           "specifiers": [
             "AppMode",
-            "IIIFItem"
+            "IIIFItem",
+            "IIIFCanvas",
+            "IIIFManifest",
+            "IIIFCollection"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -1392,7 +1395,7 @@
       "dependents": [
         "src/app/routes/index.ts"
       ],
-      "size": 12950,
+      "size": 12992,
       "lines": 427
     },
     "src/app/routes/index.ts": {
@@ -17479,6 +17482,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/entities/canvas/model/imageSourceResolver",
+          "specifiers": [
+            "resolveImageSource"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "./composer",
           "specifiers": [
             "[re-export]:useComposer",
@@ -17621,8 +17635,8 @@
         "src/features/viewer/model/useMediaPlayer.ts"
       ],
       "dependents": [],
-      "size": 14209,
-      "lines": 486
+      "size": 16082,
+      "lines": 519
     },
     "src/features/viewer/model/useMediaPlayer.ts": {
       "filePath": "src/features/viewer/model/useMediaPlayer.ts",
@@ -34650,6 +34664,7 @@
     "@/src/entities",
     "@/src/entities/annotation/model/contentSearchService",
     "@/src/entities/canvas/model/fileIntegrity",
+    "@/src/entities/canvas/model/imageSourceResolver",
     "@/src/entities/collection/model/stagingService",
     "@/src/entities/manifest/model/actions",
     "@/src/entities/manifest/model/builders/iiifBuilder",
@@ -34859,9 +34874,9 @@
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx"
   ],
   "stats": {
-    "totalImports": 1471,
+    "totalImports": 1472,
     "totalExports": 2181,
-    "avgImportsPerFile": 3.9756756756756757,
+    "avgImportsPerFile": 3.9783783783783786,
     "mostImported": [
       {
         "file": "src/features/dependency-explorer/types.ts",
