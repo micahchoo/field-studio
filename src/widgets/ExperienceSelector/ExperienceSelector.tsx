@@ -13,8 +13,8 @@
  */
 
 import React, { useState } from 'react';
-import { AbstractionLevel } from '../../../types';
-import { COLORS, SPACING, LAYOUT, INTERACTION } from '../../../designSystem';
+import { AbstractionLevel } from '@/src/shared/types';
+import { COLORS, SPACING, LAYOUT, INTERACTION } from '@/src/shared/config/design-tokens';
 
 export interface ExperienceSelectorProps {
   /** Current selected level */

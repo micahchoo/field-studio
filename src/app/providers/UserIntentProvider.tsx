@@ -10,7 +10,7 @@
  */
 
 import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
-import { CONTEXTUAL_TOKENS } from '../designSystem';
+import { CONTEXTUAL_TOKENS } from '@/src/shared/config/design-tokens';
 
 // ============================================================================
 // Types

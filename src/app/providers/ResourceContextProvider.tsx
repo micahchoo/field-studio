@@ -12,7 +12,7 @@
 import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { IIIFItem } from '@/src/shared/types';
 import { ValidationSummary } from './useVaultSelectors';
-import { CONTEXTUAL_TOKENS, HIERARCHY } from '../designSystem';
+import { CONTEXTUAL_TOKENS, HIERARCHY } from '@/src/shared/config/design-tokens';
 
 // ============================================================================
 // Types
