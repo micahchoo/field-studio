@@ -39,8 +39,8 @@ import {
   getEntityType,
   getParentId,
   NormalizedState,
-} from '../services/vault';
-import { ValidationIssue } from '../services/validator';
+} from '../vault';
+import { ValidationIssue } from '../validation/validator';
 import { BreadcrumbSegment } from './useBreadcrumbPath';
 
 // ============================================================================

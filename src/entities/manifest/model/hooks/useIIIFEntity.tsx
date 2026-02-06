@@ -29,13 +29,13 @@ import {
   normalize,
   NormalizedState,
   Vault
-} from '../services/vault';
+} from '../vault';
 import {
   Action,
   ActionDispatcher,
   ActionHistory,
   actions
-} from '../services/actions';
+} from '../actions';
 import {
   IIIFAnnotation,
   IIIFAnnotationPage,
