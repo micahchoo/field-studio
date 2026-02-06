@@ -32,7 +32,7 @@ import {
   CANOPY_UPDATE_WORKFLOW,
   generateCanopyAppMdx,
   generateCanopyPackageJson
-} from '../constants/canopyTemplates';
+} from '@/src/shared/constants/canopyTemplates';
 
 /** Default port for local IIIF server */
 export const DEFAULT_IIIF_PORT = 8765;

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
-import type { Point } from '../constants/viewport';
+import type { Point } from '@/src/shared/constants/viewport';
 
 interface PolygonAnnotationToolProps {
   canvas: IIIFCanvas;
