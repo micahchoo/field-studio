@@ -198,21 +198,43 @@ class StorageService {
     // Pre-check quota
     const { ok, usagePercent } = await this.checkStorageQuota();
     if (!ok && usagePercent >= STORAGE_CRITICAL_THRESHOLD) {
-      console.warn(`Storage critically full, attempting ${operation} anyway`);
+      const error = new DOMException(
+        `Storage quota exceeded: Cannot ${operation}. Please export and clear data.`,
+        'QuotaExceededError'
+      );
+      this._warningCallback?.({
+        type: 'save_failed',
+        message: `Failed to ${operation}: Storage quota exceeded. Export your data to free up space.`,
+        usagePercent
+      });
+      throw error;
     }
 
     try {
       return await saveFn();
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      if (error instanceof DOMException && 
+          (error.name === 'QuotaExceededError' || error.message?.includes('quota'))) {
         this._warningCallback?.({
           type: 'save_failed',
-          message: `Failed to ${operation}: Storage quota exceeded. Free up space by exporting and clearing data.`,
+          message: `Failed to ${operation}: Storage quota exceeded. Export your data to free up space.`,
           usagePercent: 1
         });
       }
       throw error;
     }
+  }
+
+  /**
+   * Force check if storage is critically full without cooldown
+   */
+  async isStorageCriticallyFull(): Promise<{ full: boolean; usagePercent: number }> {
+    const estimate = await this.getEstimate();
+    if (!estimate || estimate.quota === 0) {
+      return { full: false, usagePercent: 0 };
+    }
+    const usagePercent = estimate.usage / estimate.quota;
+    return { full: usagePercent >= STORAGE_CRITICAL_THRESHOLD, usagePercent };
   }
 
   async saveAsset(file: File | Blob, id: string): Promise<void> {

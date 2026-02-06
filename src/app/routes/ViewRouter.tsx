@@ -149,6 +149,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                 // Handle board export - could dispatch to export service
                 console.log('Board export:', state);
               }}
+              onSwitchView={onModeChange}
             />
           )}
         </FieldModeTemplate>
@@ -266,7 +267,11 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           {({ cx, fieldMode, t }) => (
             <SearchView
               root={root}
-              onSelect={(id) => onSelect(id)}
+              onSelect={(id) => {
+                // Pipeline: Search result click -> Archive view with item selected
+                onSelect(id);
+                onModeChange('archive');
+              }}
               onRevealMap={(id) => {
                 onSelect(id);
                 onModeChange('map');

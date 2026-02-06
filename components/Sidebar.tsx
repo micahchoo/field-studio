@@ -1,8 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
-import { AppMode, getIIIFValue, IIIFCollection, IIIFItem, IIIFManifest, ViewType } from '../types';
+import { AppMode, getIIIFValue, IIIFItem, ViewType } from '../types';
 import { Icon } from './Icon';
-import { Toolbar } from './Toolbar';
 import { CONSTANTS, RESOURCE_TYPE_CONFIG } from '../constants';
 import {
   getRelationshipType,
@@ -30,59 +29,84 @@ interface SidebarProps {
   onToggleQuickHelp?: () => void;
   isMobile?: boolean;
   onClose?: () => void;
-  /** Current abstraction level for the toggle */
   abstractionLevel?: import('../types').AbstractionLevel;
-  /** Handler for abstraction level changes */
   onAbstractionLevelChange?: (level: import('../types').AbstractionLevel) => void;
 }
 
-const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick: () => void; fieldMode: boolean; disabled?: boolean; title?: string }> = ({ icon, label, active, onClick, fieldMode, disabled, title }) => (
+// Clean navigation item - Field mode: high contrast black/yellow
+const NavItem: React.FC<{ 
+  icon: string; 
+  label: string; 
+  active: boolean; 
+  onClick: () => void; 
+  fieldMode: boolean; 
+  disabled?: boolean; 
+  title?: string;
+}> = ({ icon, label, active, onClick, fieldMode, disabled, title }) => (
   <button
     onClick={onClick}
     disabled={disabled}
     title={title}
     aria-current={active ? 'page' : undefined}
-    aria-label={`${label} View`}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium snappy-transition group active:scale-95 ${active ? (fieldMode ? 'bg-yellow-400 text-black font-black border-2 border-black shadow-md' : 'bg-iiif-blue text-white shadow-md transform scale-[1.02]') : (fieldMode ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:translate-x-1')} ${disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent' : ''}`}
+    className={`
+      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 group
+      ${active 
+        ? (fieldMode 
+          ? 'bg-yellow-400 text-black font-bold shadow-lg shadow-yellow-400/20 border-2 border-yellow-400' 
+          : 'bg-slate-700 text-white shadow-sm') 
+        : (fieldMode 
+          ? 'text-yellow-400/80 hover:bg-yellow-400/10 hover:text-yellow-400 border-2 border-transparent' 
+          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-300')
+      }
+      ${disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}
+    `}
   >
-    <Icon name={icon} className={`transition-transform duration-300 ${active ? (fieldMode ? "text-black" : "text-white") : "text-slate-500 group-hover:scale-110"}`} />
-    <span className={fieldMode ? "text-lg" : "text-sm"}>{label}</span>
+    <Icon 
+      name={icon} 
+      className={`
+        text-lg transition-colors
+        ${active 
+          ? (fieldMode ? "text-black" : "text-white") 
+          : (fieldMode ? "text-yellow-400/70 group-hover:text-yellow-400" : "text-slate-500 group-hover:text-slate-300")
+        }
+      `} 
+    />
+    <span className="text-sm">{label}</span>
   </button>
 );
+
+// Types that should show in sidebar - stop at Canvas level, don't show AnnotationPages or Content Resources
+const SIDEBAR_VISIBLE_TYPES = new Set(['Collection', 'Manifest', 'Canvas', 'Range']);
+const STOP_TRAVERSAL_TYPES = new Set(['AnnotationPage', 'Annotation', 'Choice', 'SpecificResource']);
 
 const TreeItem: React.FC<{ 
   item: IIIFItem; level: number; selectedId: string | null; onSelect: (id: string) => void; 
   viewType: ViewType; fieldMode: boolean; root: IIIFItem | null; onStructureUpdate?: any;
   filterText: string;
-  filterType: string;
-}> = ({ item, level, selectedId, onSelect, viewType, fieldMode, root, onStructureUpdate, filterText, filterType }) => {
+}> = ({ item, level, selectedId, onSelect, viewType, fieldMode, root, onStructureUpdate, filterText }) => {
   const [expanded, setExpanded] = useState(true); 
   const isSelected = item.id === selectedId;
   
   const config = RESOURCE_TYPE_CONFIG[item.type] || RESOURCE_TYPE_CONFIG['Content'];
-  const children = (item as any).items || (item as any).annotations || [];
+  
+  // Get children but filter out types we don't want to show
+  const rawChildren = (item as any).items || (item as any).annotations || [];
+  const children = rawChildren.filter((child: any) => !STOP_TRAVERSAL_TYPES.has(child.type));
   const hasChildren = children.length > 0;
+  
+  // Stop rendering if this is a content-level type
+  if (STOP_TRAVERSAL_TYPES.has(item.type)) return null;
   
   const label = getIIIFValue(item.label) || 'Untitled';
   const displayLabel = viewType === 'files' ? ((item as any)._filename || item.id.split('/').pop()) : label;
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onSelect(item.id);
-    } else if (e.key === 'ArrowRight' && hasChildren && !expanded) {
-      e.preventDefault();
-      setExpanded(true);
-    } else if (e.key === 'ArrowLeft' && hasChildren && expanded) {
-      e.preventDefault();
-      setExpanded(false);
-    }
-  };
-
-  // Filter Logic
+  // Filter logic - check if this item or any children match
   const matchesText = !filterText || displayLabel.toLowerCase().includes(filterText.toLowerCase());
-  const matchesType = filterType === 'All' || item.type === filterType;
-  const isMatch = matchesText && matchesType;
+  const childMatches = hasChildren && children.some((child: any) => {
+    const childLabel = getIIIFValue(child.label) || child.id || '';
+    return childLabel.toLowerCase().includes(filterText.toLowerCase());
+  });
+  const isMatch = matchesText || childMatches;
 
   const handleDragStart = (e: React.DragEvent) => {
       e.dataTransfer.setData('application/iiif-item-id', item.id);
@@ -109,23 +133,14 @@ const TreeItem: React.FC<{
 
       const findAndInsert = (parent: any) => {
           if (parent.id === item.id) {
-              // Use centralized IIIF hierarchy validation
               if (!draggedNode) return false;
-
-              // Validate parent-child relationship using IIIF 3.0 rules
               if (!isValidChildType(parent.type, draggedNode.type)) {
                 const validChildren = getValidChildTypes(parent.type);
-                console.warn(
-                  `Cannot drop ${draggedNode.type} into ${parent.type}. ` +
-                  `Valid children: ${validChildren.join(', ') || 'none'}`
-                );
+                console.warn(`Cannot drop ${draggedNode.type} into ${parent.type}. Valid children: ${validChildren.join(', ') || 'none'}`);
                 return false;
               }
-
-              // Log relationship type for debugging
               const relationship = getRelationshipType(parent.type, draggedNode.type);
               console.log(`Creating ${relationship} relationship: ${parent.type} → ${draggedNode.type}`);
-
               if (!parent.items) parent.items = [];
               parent.items.push(draggedNode);
               return true;
@@ -144,6 +159,9 @@ const TreeItem: React.FC<{
 
   if (!isMatch && !hasChildren) return null;
 
+  // Visual styling based on type - Manifests and Canvases get highest priority
+  const isPriority = item.type === 'Manifest' || item.type === 'Canvas';
+  
   return (
     <div className="select-none" role="none">
       <div 
@@ -152,30 +170,67 @@ const TreeItem: React.FC<{
         aria-selected={isSelected}
         aria-expanded={hasChildren ? expanded : undefined}
         tabIndex={0}
-        onKeyDown={handleKeyDown}
-        className={`flex items-center gap-2 cursor-pointer snappy-transition border-l-4 outline-none focus-visible-ring group ${fieldMode ? 'py-3' : 'py-1.5 border-l-2'} ${isSelected ? (fieldMode ? 'bg-yellow-400 border-yellow-600 text-black font-bold shadow-md scale-[1.01]' : 'bg-slate-800 border-iiif-blue text-white shadow-inner') : (fieldMode ? 'border-transparent text-slate-200 hover:bg-slate-800 hover:border-slate-700' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border-slate-700')}`}
-        style={{ paddingLeft: level * (fieldMode ? 20 : 12) + 4 }}
+        className={`
+          flex items-center gap-2 cursor-pointer snappy-transition outline-none focus-visible-ring group
+          border-l-2 py-2
+          ${isSelected 
+            ? (fieldMode 
+              ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400 font-bold shadow-md' 
+              : 'bg-blue-500/20 border-blue-500 text-white shadow-inner')
+            : (fieldMode 
+              ? 'border-transparent text-slate-300 hover:bg-slate-800 hover:border-slate-600' 
+              : 'border-transparent text-slate-300 hover:text-white hover:bg-slate-800/50 hover:border-slate-600')
+          }
+          ${isPriority && !isSelected ? (fieldMode ? 'text-white' : 'text-slate-200 font-medium') : ''}
+        `}
+        style={{ 
+          // Flat hierarchy - minimal or no indentation, use visual cues instead
+          paddingLeft: level === 0 ? 8 : 12 
+        }}
         onClick={() => onSelect(item.id)}
       >
         <button 
           aria-label={expanded ? `Collapse ${displayLabel}` : `Expand ${displayLabel}`}
           aria-expanded={expanded}
           tabIndex={-1}
-          className={`p-1 rounded hover:bg-white/10 transition-transform active:scale-95 ${!hasChildren ? 'invisible' : ''}`} 
+          className={`p-0.5 rounded hover:bg-white/10 transition-transform active:scale-95 ${!hasChildren ? 'invisible' : ''}`} 
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
         >
-          <Icon name={expanded ? "expand_more" : "chevron_right"} className={`transition-transform duration-200 ${expanded ? 'rotate-0' : '-rotate-90'} ${fieldMode ? "text-xl" : "text-[16px]"}`} />
+          <Icon 
+            name={expanded ? "expand_more" : "chevron_right"} 
+            className={`transition-transform duration-200 text-base ${expanded ? 'rotate-0' : '-rotate-90'} ${fieldMode ? "text-slate-400" : "text-slate-500"}`} 
+          />
         </button>
+        
+        {/* Visual priority indicator */}
+        {isPriority && (
+          <div className={`w-1 h-4 rounded-full ${item.type === 'Manifest' ? 'bg-blue-500' : 'bg-emerald-500'} ${isSelected ? 'opacity-100' : 'opacity-70'}`} />
+        )}
+        
         <Icon 
           name={viewType === 'files' ? 'folder' : config.icon} 
-          className={`transition-colors ${fieldMode ? 'text-2xl' : 'text-[18px]'} ${!isSelected ? config.colorClass : ''} group-hover:brightness-125`} 
+          className={`
+            transition-colors text-base
+            ${!isSelected ? config.colorClass : ''} 
+            group-hover:brightness-125
+            ${isPriority ? 'text-lg' : ''}
+          `} 
         />
-        <span className={`${fieldMode ? "text-base font-bold" : "text-[11px] font-medium"} truncate transition-colors`}>{displayLabel}</span>
+        <span className={`text-xs truncate transition-colors flex-1 ${isPriority ? 'font-medium' : ''}`}>
+          {displayLabel}
+        </span>
+        
+        {/* Child count badge for collections */}
+        {item.type === 'Collection' && hasChildren && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-700 text-slate-400'}`}>
+            {children.length}
+          </span>
+        )}
       </div>
       {hasChildren && expanded && (
         <div role="group" className="animate-fade-in origin-top">
           {children.map((child: any) => (
-            <TreeItem key={child.id} item={child} level={level + 1} selectedId={selectedId} onSelect={onSelect} viewType={viewType} fieldMode={fieldMode} root={root} onStructureUpdate={onStructureUpdate} filterText={filterText} filterType={filterType}/>
+            <TreeItem key={child.id} item={child} level={level + 1} selectedId={selectedId} onSelect={onSelect} viewType={viewType} fieldMode={fieldMode} root={root} onStructureUpdate={onStructureUpdate} filterText={filterText}/>
           ))}
         </div>
       )}
@@ -186,14 +241,32 @@ const TreeItem: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
   root, selectedId, currentMode, viewType, onSelect, onModeChange, onViewTypeChange,
   onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport,
-  onOpenSettings, onToggleQuickHelp, isMobile, onClose, abstractionLevel = 'standard', onAbstractionLevelChange
+  onOpenSettings, onToggleQuickHelp, isMobile, onClose, onAbstractionLevelChange
 }) {
-  const { settings } = useAppSettings();
-  const {fieldMode} = settings;
+  const { settings, updateSettings } = useAppSettings();
   const [filterText, setFilterText] = useState('');
-  const [filterType, setFilterType] = useState('All');
+  const [showSettings, setShowSettings] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Resizable panel hook for desktop
+  // Check if we have data
+  const hasData = root && ((root as any).items?.length > 0 || (root as any).type);
+
+  const handleImportClick = () => {
+    console.log('[Sidebar] Import button clicked');
+    if (fileInputRef.current) {
+      console.log('[Sidebar] Triggering file input click');
+      fileInputRef.current.click();
+    } else {
+      console.error('[Sidebar] File input ref is null');
+    }
+  };
+
+  const handleFieldModeToggle = () => {
+    const newFieldMode = !settings.fieldMode;
+    updateSettings({ fieldMode: newFieldMode });
+    onToggleFieldMode();
+  };
+
   const {
     size: sidebarWidth,
     isResizing,
@@ -201,151 +274,310 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
     panelStyle,
   } = useResizablePanel({
     id: 'sidebar',
-    defaultSize: 256,
-    minSize: 200,
+    defaultSize: 280,
+    minSize: 260,
     maxSize: 400,
     direction: 'horizontal',
-    side: 'right', // resize handle on right side of sidebar
-    collapseThreshold: 0, // Don't auto-collapse, use visible prop instead
+    side: 'right',
+    collapseThreshold: 0,
     persist: true,
   });
 
   const sidebarStyles = isMobile
-    ? `fixed inset-y-0 left-0 z-[1000] w-72 shadow-2xl transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}`
+    ? `fixed inset-y-0 left-0 z-[1000] w-80 shadow-2xl transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}`
     : `flex flex-col h-full border-r shrink-0 relative`;
 
-  const bgStyles = fieldMode ? 'bg-black border-slate-700' : 'bg-slate-900 border-slate-800 text-slate-300';
+  // Field mode: high contrast black/yellow, Normal: sleek slate
+  const bgStyles = settings.fieldMode 
+    ? 'bg-black border-yellow-400/30' 
+    : 'bg-slate-900 border-slate-800 text-slate-300';
 
   return (
     <>
       {isMobile && visible && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950]" onClick={onClose}></div>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[950]" onClick={onClose}></div>
       )}
       <aside
-        className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden`}
+        className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden transition-colors duration-300`}
         style={isMobile ? undefined : panelStyle}
       >
-        {/* Fixed Header */}
-        <div className={`flex items-center px-4 shrink-0 gap-3 ${fieldMode ? 'h-20 border-b border-slate-700' : 'h-14 border-b border-slate-800'}`}>
-          <div className={`rounded flex items-center justify-center font-bold text-xs shadow-lg ${fieldMode ? 'w-10 h-10 bg-yellow-400 text-black' : 'w-8 h-8 bg-iiif-blue text-white'}`}>IIIF</div>
+        {/* Compact Header - App branding */}
+        <div className={`flex items-center px-3 shrink-0 gap-2 h-12 border-b ${settings.fieldMode ? 'border-yellow-400/30 bg-black' : 'border-slate-800 bg-slate-900'}`}>
+          <div className={`w-7 h-7 rounded flex items-center justify-center font-bold text-xs shadow transition-colors duration-300 ${settings.fieldMode ? 'bg-yellow-400 text-black' : 'bg-iiif-blue text-white'}`}>
+            <Icon name="photo_library" className="text-base" />
+          </div>
           <div className="flex-1 overflow-hidden">
-            <div className={`${fieldMode ? 'text-yellow-400 text-lg' : 'text-white text-sm'} font-black tracking-tight truncate`}>{CONSTANTS.APP_NAME}</div>
-            <div className={`${fieldMode ? 'text-slate-400' : 'text-slate-500'} text-[10px] uppercase font-black tracking-widest`}>v{CONSTANTS.VERSION}</div>
+            <div className={`text-xs font-bold tracking-tight truncate transition-colors duration-300 ${settings.fieldMode ? 'text-yellow-400' : 'text-white'}`}>
+              {CONSTANTS.APP_NAME}
+            </div>
+            <div className={`text-[9px] transition-colors ${settings.fieldMode ? 'text-yellow-400/60' : 'text-slate-500'}`}>
+              {root ? `${(root as any).items?.length || 0} items` : 'No archive'}
+            </div>
           </div>
           {isMobile && (
-              <button onClick={onClose} aria-label="Close sidebar" className="p-2 text-slate-500 hover:text-white"><Icon name="close"/></button>
+              <button onClick={onClose} aria-label="Close sidebar" className={`p-1.5 transition-colors ${settings.fieldMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-500 hover:text-white'}`}>
+                <Icon name="close" className="text-lg"/>
+              </button>
           )}
         </div>
         
-        {/* Scrollable Navigation Area */}
+        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
-            <nav className={`p-3 space-y-2 border-b shrink-0 ${fieldMode ? 'border-slate-700' : 'border-slate-800'}`}>
-              <NavItem icon="inventory_2" label="Archive" active={currentMode === 'archive'} onClick={() => onModeChange('archive')} fieldMode={fieldMode} />
-              <NavItem icon="account_tree" label="Structure" active={currentMode === 'structure'} onClick={() => onModeChange('structure')} fieldMode={fieldMode} />
-              <NavItem icon="folder_special" label="Staging" active={currentMode === 'collections'} onClick={() => onModeChange('collections')} fieldMode={fieldMode} />
-              <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => onModeChange('metadata')} fieldMode={fieldMode} />
-              <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => onModeChange('boards')} fieldMode={fieldMode} />
-              <NavItem icon="search" label="Search" active={currentMode === 'search'} onClick={() => onModeChange('search')} fieldMode={fieldMode} />
-              <NavItem icon="delete_outline" label="Trash" active={currentMode === 'trash'} onClick={() => onModeChange('trash')} fieldMode={fieldMode} />
-              <NavItem
-                icon="visibility"
-                label="Viewer"
-                active={currentMode === 'viewer'}
-                onClick={() => selectedId ? onModeChange('viewer') : null}
-                fieldMode={fieldMode}
-                disabled={!selectedId}
-                title={selectedId ? "Open selected item in viewer" : "Select an item to view"}
+          
+          {/* PRIMARY NAVIGATION - Main app sections */}
+          <nav className="p-3">
+            <div className="space-y-1">
+              <NavItem icon="inventory_2" label="Archive" active={currentMode === 'archive'} onClick={() => onModeChange('archive')} fieldMode={settings.fieldMode} />
+              <NavItem icon="account_tree" label="Structure" active={currentMode === 'structure'} onClick={() => onModeChange('structure')} fieldMode={settings.fieldMode} />
+              <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => onModeChange('metadata')} fieldMode={settings.fieldMode} />
+              <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => onModeChange('boards')} fieldMode={settings.fieldMode} />
+            </div>
+          </nav>
+
+          {/* IMPORT SECTION - High contrast in field mode */}
+          <div className="px-3 pb-3">
+            <div className={`
+              rounded-xl p-4 border-2 transition-colors duration-300
+              ${!hasData 
+                ? (settings.fieldMode ? 'bg-yellow-400/20 border-yellow-400' : 'bg-blue-600/10 border-blue-500/50')
+                : (settings.fieldMode ? 'bg-black border-yellow-400/30' : 'bg-slate-800/50 border-slate-700/50')
+              }
+            `}>
+              <div className={`text-[11px] font-semibold uppercase tracking-wider mb-3 transition-colors ${settings.fieldMode ? 'text-yellow-400' : 'text-slate-400'}`}>
+                Import
+              </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                {...({ webkitdirectory: "" } as any)}
+                className="hidden"
+                onChange={(e) => {
+                  console.log('[Sidebar] File input changed:', e.target.files?.length, 'files selected');
+                  onImport(e);
+                }}
               />
-            </nav>
-
-            <div className="px-4 py-3 flex flex-col gap-2 bg-black/10 shrink-0 sticky top-0 z-10 backdrop-blur-sm">
-              <div className="flex items-center justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <span id="view-type-label">{viewType === 'files' ? 'Physical Disk' : 'Archival Model'}</span>
-                  <div role="group" aria-labelledby="view-type-label" className={`flex rounded p-0.5 ${fieldMode ? 'bg-slate-800 border border-slate-600' : 'bg-slate-800'}`}>
-                  <button aria-pressed={viewType === 'files'} className={`px-2 py-0.5 rounded transition-all ${viewType === 'files' ? (fieldMode ? 'bg-white text-black' : 'bg-slate-600 text-white') : 'hover:text-slate-300'}`} onClick={() => onViewTypeChange('files')}>Files</button>
-                  <button aria-pressed={viewType === 'iiif'} className={`px-2 py-0.5 rounded transition-all ${viewType === 'iiif' ? (fieldMode ? 'bg-white text-black' : 'bg-slate-600 text-white') : 'hover:text-slate-300'}`} onClick={() => onViewTypeChange('iiif')}>IIIF</button>
-                  </div>
+              
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  className={`
+                    w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg 
+                    font-bold text-sm transition-all duration-150
+                    ${settings.fieldMode
+                      ? 'bg-yellow-400 text-black hover:bg-yellow-300 shadow-lg shadow-yellow-400/30 border-2 border-yellow-400'
+                      : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20'
+                    }
+                  `}
+                >
+                  <Icon name="folder_open" className="text-base" />
+                  Import Folder
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={onOpenExternalImport}
+                  className={`
+                    w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg 
+                    border-2 font-medium text-sm transition-all duration-150
+                    ${settings.fieldMode
+                      ? 'bg-black border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400'
+                      : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }
+                  `}
+                >
+                  <Icon name="cloud_download" className="text-base" />
+                  Import from URL
+                </button>
               </div>
-              <div className="flex gap-1">
-                  <div className="relative group flex-1">
-                      <input 
-                          type="text" 
-                          value={filterText} 
-                          onChange={e => setFilterText(e.target.value)} 
-                          placeholder="Filter..." 
-                          aria-label="Filter archive items"
-                          className={`w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 outline-none focus:border-iiif-blue transition-all ${fieldMode ? 'placeholder:text-slate-600' : 'placeholder:text-slate-500'}`}
-                      />
-                      <Icon name="filter_list" className="absolute right-2 top-2 text-[14px] text-slate-500 group-hover:text-slate-300" />
-                  </div>
-                  <select 
-                    value={filterType}
-                    aria-label="Filter by resource type"
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className={`w-16 text-[10px] bg-slate-800 border border-slate-700 rounded-lg px-1 outline-none text-slate-400 font-bold focus:border-iiif-blue`}
+            </div>
+          </div>
+
+          {/* ARCHIVE TREE - Only show when data exists */}
+          {root && (
+            <div className="flex-1 px-3 pb-3 min-h-0">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  Archive
+                </span>
+                <span className="text-[10px] text-slate-600">
+                  {(root as any).items?.length || 0} items
+                </span>
+              </div>
+              <div className={`
+                rounded-lg border overflow-hidden
+                ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-800/30 border-slate-800/50'}
+              `}>
+                <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
+                  <TreeItem 
+                    item={root} 
+                    level={0} 
+                    selectedId={selectedId} 
+                    onSelect={onSelect} 
+                    viewType={viewType} 
+                    fieldMode={settings.fieldMode} 
+                    root={root} 
+                    onStructureUpdate={onStructureUpdate} 
+                    filterText={filterText}
+                  />
+                </div>
+              </div>
+              {/* Tree filter */}
+              <div className="relative mt-2">
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+                <input 
+                  type="text" 
+                  value={filterText} 
+                  onChange={e => setFilterText(e.target.value)} 
+                  placeholder="Filter manifests..." 
+                  className="w-full text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg pl-9 pr-8 py-2 outline-none focus:border-slate-500 transition-all text-slate-200 placeholder:text-slate-500"
+                />
+                {filterText && (
+                  <button
+                    onClick={() => setFilterText('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300"
                   >
-                      <option value="All">All</option>
-                      <option value="Collection">Coll.</option>
-                      <option value="Manifest">Manif.</option>
-                      <option value="Canvas">Canvas</option>
-                  </select>
+                    <Icon name="close" className="text-xs" />
+                  </button>
+                )}
               </div>
             </div>
+          )}
+        </div>
 
-            <div className="flex-1 pb-4" role="tree" aria-label="Archive Structure">
-              {root ? <TreeItem item={root} level={0} selectedId={selectedId} onSelect={onSelect} viewType={viewType} fieldMode={fieldMode} root={root} onStructureUpdate={onStructureUpdate} filterText={filterText} filterType={filterType}/> : <div className="p-8 text-center text-slate-600 text-sm italic">No field project active.</div>}
+        {/* BOTTOM ACTIONS - Settings, Export, Help */}
+        <div className={`border-t shrink-0 transition-colors duration-300 ${settings.fieldMode ? 'border-yellow-400/30 bg-black' : 'border-slate-800 bg-slate-900'}`}>
+          {/* Export Button - Only show when data exists */}
+          {hasData && (
+            <div className={`p-3 border-b ${settings.fieldMode ? 'border-yellow-400/20' : 'border-slate-800'}`}>
+              <button
+                onClick={onExportTrigger}
+                className={`
+                  w-full py-2.5 rounded-lg text-sm font-bold
+                  flex items-center justify-center gap-2 shadow-lg
+                  transition-all duration-150 active:scale-[0.98]
+                  ${settings.fieldMode
+                    ? 'bg-yellow-400 text-black hover:bg-yellow-300 shadow-yellow-400/30 border-2 border-yellow-400'
+                    : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20'
+                  }
+                `}
+              >
+                <Icon name="download" className="text-base" />
+                Export Archive
+              </button>
             </div>
+          )}
+          
+          {/* Quick Actions Row */}
+          <div className="flex items-center p-2 gap-1">
+            <button
+              onClick={handleFieldModeToggle}
+              className={`
+                flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
+                text-xs font-bold transition-all border-2
+                ${settings.fieldMode 
+                  ? 'text-black bg-yellow-400 border-yellow-400 hover:bg-yellow-300' 
+                  : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200'
+                }
+              `}
+              title={settings.fieldMode ? "Disable Field Mode" : "Enable Field Mode"}
+            >
+              <Icon name={settings.fieldMode ? "wb_sunny" : "nights_stay"} className="text-sm" />
+              <span>{settings.fieldMode ? 'FIELD ON' : 'Field'}</span>
+            </button>
+            
+            <button
+              onClick={() => onModeChange('search')}
+              className={`
+                flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
+                text-xs font-medium transition-all border-2
+                ${currentMode === 'search'
+                  ? (settings.fieldMode ? 'text-black bg-yellow-400 border-yellow-400' : 'text-blue-400 bg-blue-500/10 border-blue-500/30')
+                  : (settings.fieldMode ? 'text-yellow-400 border-yellow-400/30 hover:border-yellow-400 hover:bg-yellow-400/10' : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200')
+                }
+              `}
+            >
+              <Icon name="search" className="text-sm" />
+              <span>Search</span>
+            </button>
+            
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={`
+                flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
+                text-xs font-medium transition-all border-2
+                ${showSettings 
+                  ? (settings.fieldMode ? 'text-black bg-yellow-400 border-yellow-400' : 'text-blue-400 bg-blue-500/10 border-blue-500/30')
+                  : (settings.fieldMode ? 'text-yellow-400 border-yellow-400/30 hover:border-yellow-400 hover:bg-yellow-400/10' : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200')
+                }
+              `}
+            >
+              <Icon name="settings" className="text-sm" />
+              <span>Settings</span>
+            </button>
+          </div>
+          
+          {/* Collapsible Settings Panel */}
+          {showSettings && (
+            <div className="px-3 pb-3 space-y-1 border-t border-slate-800 pt-2">
+              <button
+                onClick={onOpenSettings}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
+              >
+                <Icon name="tune" className="text-base" />
+                <span>App Settings</span>
+              </button>
+              {onAbstractionLevelChange && (
+                <button
+                  onClick={() => onAbstractionLevelChange(settings.abstractionLevel === 'simple' ? 'standard' : 'simple')}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
+                >
+                  <Icon name="layers" className="text-base" />
+                  <span>Mode: {settings.abstractionLevel === 'simple' ? 'Simple' : settings.abstractionLevel === 'advanced' ? 'Advanced' : 'Standard'}</span>
+                </button>
+              )}
+              {onToggleQuickHelp && (
+                <button
+                  onClick={onToggleQuickHelp}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
+                >
+                  <Icon name="help_outline" className="text-base" />
+                  <span>Keyboard Shortcuts</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Fixed Footer - Toolbar */}
-        <div className={`border-t shrink-0 ${fieldMode ? 'bg-black border-slate-700' : 'bg-slate-900 border-slate-800'}`}>
-          <Toolbar
-            fieldMode={fieldMode}
-            onImport={onImport}
-            onOpenExternalImport={onOpenExternalImport}
-            onExportTrigger={onExportTrigger}
-            onOpenSettings={onOpenSettings}
-            onToggleFieldMode={onToggleFieldMode}
-            onToggleQuickHelp={onToggleQuickHelp}
-            abstractionLevel={abstractionLevel}
-            onAbstractionLevelChange={onAbstractionLevelChange}
-          />
-        </div>
-
-        {/* Resize Handle - Desktop Only */}
+        {/* Resize Handle */}
         {!isMobile && (
           <div
             {...handleProps}
             className={`
               absolute right-0 top-0 bottom-0 w-1 z-30 group
-              cursor-col-resize
-              transition-colors duration-150
+              cursor-col-resize transition-colors duration-150
               hover:bg-slate-500/20
-              ${isResizing ? (fieldMode ? 'bg-yellow-400/30' : 'bg-iiif-blue/30') : ''}
-              ${handleProps.className}
+              ${isResizing ? (settings.fieldMode ? 'bg-yellow-400/30' : 'bg-iiif-blue/30') : ''}
             `}
           >
-            {/* Visual drag indicator */}
-            <div
-              className={`
-                absolute right-0 top-1/2 -translate-y-1/2
-                w-1 h-12 rounded-full
-                transition-all duration-150
-                opacity-0 group-hover:opacity-100 group-focus:opacity-100
-                ${isResizing
-                  ? (fieldMode ? 'bg-yellow-400 opacity-100' : 'bg-iiif-blue opacity-100')
-                  : (fieldMode ? 'bg-slate-600 group-hover:bg-yellow-400' : 'bg-slate-500 group-hover:bg-iiif-blue')
-                }
-              `}
-            />
+            <div className={`
+              absolute right-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full
+              transition-all duration-150 opacity-0 group-hover:opacity-100
+              ${isResizing
+                ? (settings.fieldMode ? 'bg-yellow-400' : 'bg-iiif-blue')
+                : 'bg-slate-500 group-hover:bg-iiif-blue'
+              }
+            `} />
           </div>
         )}
       </aside>
     </>
   );
 }, (prev, next) => {
-  // Custom comparison: only re-render if root ID or selectedId changes.
-  // fieldMode changes propagate via useAppSettings context, bypassing memo.
-  return prev.root?.id === next.root?.id &&
-         prev.selectedId === next.selectedId;
+  return prev.root?.id === next.root?.id && 
+         prev.selectedId === next.selectedId &&
+         prev.currentMode === next.currentMode;
 });

@@ -181,24 +181,24 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
     <div
       className={`
         flex flex-col h-full transition-colors
-        ${isFocused ? 'border-amber-200 bg-amber-50/30' : 'bg-slate-50'}
+        ${isFocused ? 'border-amber-500/30 bg-amber-900/10' : 'bg-slate-800/50'}
       `}
       onClick={onFocus}
     >
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-slate-200 bg-white">
+      <div className="flex-shrink-0 p-4 border-b border-slate-700 bg-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <h3 className="font-bold text-white flex items-center gap-2">
               <Icon name="account_tree" className="text-amber-500" />
               Your Archive
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5">
               Organize {t('Manifest').toLowerCase()}s into {t('Collection').toLowerCase()}s
             </p>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-slate-800">{stats.totalCollections}</div>
+            <div className="text-lg font-bold text-white">{stats.totalCollections}</div>
             <div className="text-[10px] text-slate-400">{t('Collection').toLowerCase()}s</div>
           </div>
         </div>
@@ -213,7 +213,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
               placeholder={`${t('Collection')} name...`}
               autoFocus
-              className="flex-1 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:border-amber-400"
+              className="flex-1 px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg outline-none focus:border-amber-400 text-white placeholder-slate-400"
             />
             <button
               onClick={handleCreateCollection}
@@ -227,7 +227,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
                 setShowNewCollectionInput(false);
                 setNewCollectionName('');
               }}
-              className="px-3 py-2 text-slate-500 hover:text-slate-700"
+              className="px-3 py-2 text-slate-400 hover:text-white"
             >
               <Icon name="close" />
             </button>
@@ -235,7 +235,7 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
         ) : (
           <button
             onClick={() => setShowNewCollectionInput(true)}
-            className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2 border-2 border-dashed border-slate-600 rounded-lg text-sm text-slate-400 hover:border-amber-400 hover:text-amber-400 hover:bg-amber-900/20 transition-colors flex items-center justify-center gap-2"
           >
             <Icon name="create_new_folder" />
             New {t('Collection')}
@@ -253,14 +253,14 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleUnassignedDrop}
-            className="mt-6 pt-4 border-t border-slate-200"
+            className="mt-6 pt-4 border-t border-slate-700"
           >
             <div className="flex items-center gap-2 mb-3">
               <Icon name="inbox" className="text-slate-400" />
-              <h4 className="font-medium text-slate-600">
+              <h4 className="font-medium text-slate-300">
                 Unassigned {t('Manifest')}s
               </h4>
-              <span className="ml-auto text-[11px] text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+              <span className="ml-auto text-[11px] text-slate-400 bg-slate-700 px-2 py-0.5 rounded-full">
                 {unassignedManifests.length}
               </span>
             </div>
@@ -273,10 +273,10 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
                   onDragStart={(e) => {
                     e.dataTransfer.setData('application/iiif-manifest-ids', JSON.stringify([manifest.id]));
                   }}
-                  className="group flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-grab active:cursor-grabbing hover:border-slate-300 hover:shadow-sm transition-all"
+                  className="group flex items-center gap-3 p-3 bg-slate-700 border border-slate-600 rounded-lg cursor-grab active:cursor-grabbing hover:border-slate-500 hover:shadow-sm transition-all"
                 >
                   <Icon name="drag_indicator" className="text-slate-300 group-hover:text-slate-500" />
-                  <div className="w-8 h-8 bg-emerald-100 rounded flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-emerald-900/50 rounded flex items-center justify-center flex-shrink-0">
                     <Icon name="menu_book" className="text-emerald-600 text-sm" />
                   </div>
                   <div className="flex-1 min-w-0">

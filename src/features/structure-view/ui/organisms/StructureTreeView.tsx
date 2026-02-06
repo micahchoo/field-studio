@@ -190,14 +190,15 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
     <div
       className={`
         flex flex-col h-full
-        bg-white dark:bg-slate-900
-        border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden
+        bg-white dark:bg-stone-900
+        border border-stone-200 dark:border-stone-700 rounded-xl overflow-hidden
+        shadow-sm
         ${className}
       `}
     >
-      {/* Search Bar */}
+      {/* Search Bar - refined with archival aesthetic */}
       {FEATURES.TREE_SEARCH && (
-        <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+        <div className="p-4 border-b border-stone-200 dark:border-stone-700 bg-stone-50/30 dark:bg-stone-900/30">
           <TreeSearchBar
             query={filterQuery}
             onQueryChange={setFilterQuery}
@@ -214,6 +215,7 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
         onExpandAll={expandAll}
         onCollapseAll={collapseAll}
         onClearSelection={clearSelection}
+        abstractionLevel={fieldMode ? 'advanced' : 'standard'}
       />
 
       {/* Tree Content - Virtual or Standard */}
@@ -243,13 +245,30 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
         </div>
       )}
 
+      {/* Status bar - abstraction-aware, reduced visual noise */}
       {treeStats && (
-        <div className="px-3 py-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs text-slate-500 dark:text-slate-400">
-          Depth: {treeStats.maxDepth} | Types:{' '}
-          {Object.entries(treeStats.typeCounts)
-            .map(([type, count]) => `${type}: ${count}`)
-            .join(', ')}
-          {filterQuery && ` | Filtered: ${matchCount} of ${flattenedNodes.length}`}
+        <div className="px-4 py-2.5 border-t border-stone-200 dark:border-stone-700 bg-stone-50/80 dark:bg-stone-900/80 text-sm text-stone-500 dark:text-stone-400 flex items-center justify-between">
+          <span className="font-serif">
+            {(() => {
+              // Convert technical types to friendly counts
+              const counts = treeStats.typeCounts;
+              const items = (counts.Canvas || 0) + (counts.Annotation || 0);
+              const albums = counts.Collection || 0;
+              const groups = counts.Manifest || 0;
+              
+              const parts = [];
+              if (albums > 0) parts.push(`${albums} ${albums === 1 ? 'album' : 'albums'}`);
+              if (groups > 0) parts.push(`${groups} ${groups === 1 ? 'group' : 'groups'}`);
+              if (items > 0) parts.push(`${items} ${items === 1 ? 'item' : 'items'}`);
+              
+              return parts.join(' · ') || 'Empty archive';
+            })()}
+          </span>
+          {filterQuery && (
+            <span className="text-amber-700 dark:text-amber-400 font-medium">
+              Showing {matchCount} of {flattenedNodes.length}
+            </span>
+          )}
         </div>
       )}
     </div>

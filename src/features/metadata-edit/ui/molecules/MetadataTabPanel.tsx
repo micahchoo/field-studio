@@ -1,25 +1,24 @@
 /**
- * MetadataTabPanel Molecule
+ * MetadataTabPanel Molecule - Card-Based Redesign
  *
- * Panel for editing metadata fields (label, summary, descriptive metadata).
- * Composes PropertyInput, PropertyLabel, LocationPicker atoms.
+ * Complete redesign following the critique:
+ * - Card-based layout instead of cramped spreadsheet
+ * - Clear visual hierarchy with grouped sections
+ * - Human-readable dates with date pickers
+ * - Separate read-only technical fields
+ * - Edit affordances with hover states and icons
  *
- * ATOMIC DESIGN COMPLIANCE:
- * - Manages metadata array state (passed via props)
- * - No domain logic (delegates to parent callbacks)
- * - Props-only API
- * - Uses feature-specific atoms and primitives
- * - No native HTML elements
- *
- * @module features/metadata-edit/ui/molecules/MetadataTabPanel
+ * BOLD AESTHETIC:
+ * - Warm stone palette with amber accents
+ * - Generous whitespace and clear grouping
+ * - Refined typography with visual hierarchy
+ * - Subtle shadows and rounded corners
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { getIIIFValue, type IIIFItem } from '@/types';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
-import { PropertyInput } from '../atoms/PropertyInput';
-import { PropertyLabel } from '../atoms/PropertyLabel';
 import { LocationPicker } from '../atoms/LocationPicker';
 import type { ContextualClassNames } from '@/hooks/useContextualStyles';
 
@@ -46,181 +45,456 @@ export interface MetadataTabPanelProps {
   onShowLocationPicker: (picker: { index: number; value: string } | null) => void;
 }
 
+// Format ISO date to human-readable
+function formatDate(isoString: string): string {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return isoString;
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return isoString;
+  }
+}
+
+// Parse human-readable date back to ISO
+function parseDate(dateString: string): string {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toISOString();
+  } catch {
+    return dateString;
+  }
+}
+
+interface FormSectionProps {
+  title: string;
+  icon: string;
+  children: React.ReactNode;
+  collapsed?: boolean;
+  onToggle?: () => void;
+  fieldMode?: boolean;
+}
+
+const FormSection: React.FC<FormSectionProps> = ({ title, icon, children, collapsed = false, onToggle, fieldMode }) => {
+  const [isCollapsed, setIsCollapsed] = useState(collapsed);
+  const collapsedState = onToggle ? collapsed : isCollapsed;
+  const toggle = onToggle || (() => setIsCollapsed(!isCollapsed));
+
+  return (
+    <div className={`rounded-xl border ${fieldMode ? 'bg-stone-900/50 border-stone-800' : 'bg-white border-stone-200'} overflow-hidden`}>
+      <button
+        onClick={toggle}
+        className={`w-full px-4 py-3 flex items-center justify-between ${fieldMode ? 'hover:bg-stone-800' : 'hover:bg-stone-50'} transition-colors`}
+      >
+        <div className="flex items-center gap-2">
+          <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${fieldMode ? 'bg-stone-800 text-stone-400' : 'bg-stone-100 text-stone-600'}`}>
+            <Icon name={icon} className="text-sm" />
+          </span>
+          <span className={`font-medium ${fieldMode ? 'text-stone-200' : 'text-stone-800'}`}>{title}</span>
+        </div>
+        <svg
+          className={`w-5 h-5 ${fieldMode ? 'text-stone-500' : 'text-stone-400'} transition-transform ${collapsedState ? '-rotate-90' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {!collapsedState && <div className="px-4 pb-4 space-y-4">{children}</div>}
+    </div>
+  );
+};
+
+interface TextFieldProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  type?: 'text' | 'textarea' | 'date';
+  fieldMode?: boolean;
+  readOnly?: boolean;
+  hint?: string;
+}
+
+const TextField: React.FC<TextFieldProps> = ({ label, value, onChange, placeholder, type = 'text', fieldMode, readOnly, hint }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const baseClass = `
+    w-full px-3 py-2.5 rounded-lg border text-sm transition-all
+    ${readOnly
+      ? `${fieldMode ? 'bg-stone-900/50 text-stone-500 border-transparent' : 'bg-stone-100 text-stone-500 border-transparent'}`
+      : `${fieldMode
+          ? 'bg-stone-800 text-stone-200 border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+          : 'bg-white text-stone-900 border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+        }`
+    }
+  `;
+
+  return (
+    <div
+      className="group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <label className={`text-sm font-medium ${fieldMode ? 'text-stone-300' : 'text-stone-700'}`}>
+          {label}
+        </label>
+        {readOnly && (
+          <span className={`text-xs px-2 py-0.5 rounded-full ${fieldMode ? 'bg-stone-800 text-stone-500' : 'bg-stone-100 text-stone-500'}`}>
+            Read-only
+          </span>
+        )}
+        {!readOnly && (isHovered || isFocused) && (
+          <span className="text-xs text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Icon name="edit" className="text-xs inline mr-1" />
+            Click to edit
+          </span>
+        )}
+      </div>
+      {type === 'textarea' ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          readOnly={readOnly}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={`${baseClass} resize-none min-h-[100px]`}
+          rows={4}
+        />
+      ) : type === 'date' ? (
+        <div className="relative">
+          <input
+            type="text"
+            value={formatDate(value)}
+            onChange={(e) => onChange(parseDate(e.target.value))}
+            placeholder="Select date..."
+            readOnly={readOnly}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className={`${baseClass} pr-10`}
+          />
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <Icon name="calendar_today" className={`text-sm ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`} />
+          </div>
+        </div>
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          readOnly={readOnly}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={baseClass}
+        />
+      )}
+      {hint && <p className={`mt-1 text-xs ${fieldMode ? 'text-stone-500' : 'text-stone-500'}`}>{hint}</p>}
+    </div>
+  );
+};
+
 export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
   resource,
   label,
   summary,
   language,
-  cx,
   fieldMode,
   onUpdateResource,
   getDCHint,
   isLocationField,
   onShowLocationPicker,
 }) => {
-  const inputClass = `w-full text-sm p-2.5 border rounded bg-white text-slate-900 focus:ring-2 focus:ring-${
-    cx.accent
-  } focus:border-${cx.accent} outline-none transition-all`;
+  // Group metadata fields by category
+  const basicFields = ['title', 'label', 'description', 'summary', 'subject', 'creator', 'contributor'];
+  const dateFields = ['date', 'navDate', 'created', 'issued', 'modified'];
+  const rightsFields = ['rights', 'license', 'attribution', 'requiredStatement', 'provider'];
+  const locationFields = ['location', 'coverage', 'spatial', 'navPlace'];
+
+  const metadata = resource.metadata || [];
+  
+  const basicMetadata = metadata.filter((_, idx) => {
+    const lbl = getIIIFValue(metadata[idx].label, language)?.toLowerCase() || '';
+    return basicFields.some(f => lbl.includes(f));
+  });
+  
+  const dateMetadata = metadata.filter((_, idx) => {
+    const lbl = getIIIFValue(metadata[idx].label, language)?.toLowerCase() || '';
+    return dateFields.some(f => lbl.includes(f));
+  });
+  
+  const rightsMetadata = metadata.filter((_, idx) => {
+    const lbl = getIIIFValue(metadata[idx].label, language)?.toLowerCase() || '';
+    return rightsFields.some(f => lbl.includes(f));
+  });
+  
+  const otherMetadata = metadata.filter((_, idx) => {
+    const lbl = getIIIFValue(metadata[idx].label, language)?.toLowerCase() || '';
+    return ![...basicFields, ...dateFields, ...rightsFields].some(f => lbl.includes(f));
+  });
 
   return (
-    <>
-      {/* Resource Type */}
-      <div className="flex justify-between items-center">
-        <span className={`text-[10px] font-bold uppercase ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
-          Type
-        </span>
-        <span
-          className={`text-xs font-mono px-2 py-0.5 rounded ${
-            fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'
-          }`}
-        >
-          {resource.type}
-        </span>
-      </div>
-
-      {/* Label */}
-      <div>
-        <PropertyLabel
-          label="Label"
-          dcHint="dc:title"
-          fieldMode={fieldMode}
-          cx={cx}
-        />
-        <PropertyInput
-          type="text"
+    <div className="space-y-4">
+      {/* Basic Information */}
+      <FormSection title="Basic Information" icon="info" fieldMode={fieldMode}>
+        <TextField
+          label="Title"
           value={label}
           onChange={(val) => onUpdateResource({ label: { [language]: [val] } })}
-          cx={cx}
+          placeholder="Enter a descriptive title"
           fieldMode={fieldMode}
-          className={inputClass}
+          hint="The main name or title of this item"
         />
-      </div>
-
-      {/* Summary */}
-      <div>
-        <PropertyLabel
-          label="Summary"
-          fieldMode={fieldMode}
-          cx={cx}
-        />
-        <PropertyInput
-          type="textarea"
+        <TextField
+          label="Description"
           value={summary}
           onChange={(val) => onUpdateResource({ summary: { [language]: [val] } })}
-          cx={cx}
+          placeholder="Add a brief description..."
+          type="textarea"
           fieldMode={fieldMode}
-          className={`${inputClass} resize-none`}
-          rows={5}
+          hint="A short summary of what this item contains"
         />
-      </div>
+        
+        {/* Additional basic metadata */}
+        {basicMetadata.map((md, idx) => {
+          const lbl = getIIIFValue(md.label, language);
+          const val = getIIIFValue(md.value, language);
+          const actualIdx = metadata.indexOf(md);
+          
+          return (
+            <TextField
+              key={actualIdx}
+              label={lbl.charAt(0).toUpperCase() + lbl.slice(1)}
+              value={val}
+              onChange={(newVal) => {
+                const newMeta = [...metadata];
+                newMeta[actualIdx].value = { [language]: [newVal] };
+                onUpdateResource({ metadata: newMeta });
+              }}
+              placeholder={`Enter ${lbl}...`}
+              fieldMode={fieldMode}
+              hint={getDCHint(lbl) || undefined}
+            />
+          );
+        })}
+      </FormSection>
 
-      {/* Descriptive Metadata */}
-      <div>
-        <PropertyLabel
-          label="Descriptive Metadata"
-          fieldMode={fieldMode}
-          cx={cx}
-        />
-        <div className="space-y-3">
-          {(resource.metadata || []).map((md, idx) => {
+      {/* Date Information */}
+      {(dateMetadata.length > 0 || resource.navDate) && (
+        <FormSection title="Date & Time" icon="schedule" fieldMode={fieldMode}>
+          {resource.navDate && (
+            <TextField
+              label="Navigation Date"
+              value={resource.navDate}
+              onChange={(val) => onUpdateResource({ navDate: val })}
+              type="date"
+              fieldMode={fieldMode}
+              hint="Used for timeline and chronological ordering"
+            />
+          )}
+          {dateMetadata.map((md, idx) => {
             const lbl = getIIIFValue(md.label, language);
             const val = getIIIFValue(md.value, language);
-            const dc = getDCHint(lbl);
-            const isLoc = isLocationField(lbl);
-
+            const actualIdx = metadata.indexOf(md);
+            
             return (
-              <div
-                key={idx}
-                className={`p-2 rounded border group transition-colors ${
-                  fieldMode
-                    ? 'bg-slate-900 border-slate-700 hover:border-slate-600'
-                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                {/* Label row with DC hint and delete button */}
-                <div className="flex justify-between items-center mb-1">
-                  <div className="flex items-center gap-2">
-                    <PropertyInput
-                      type="text"
-                      value={lbl}
-                      onChange={(newLabel) => {
-                        const newMeta = [...(resource.metadata || [])];
-                        newMeta[idx].label = { [language]: [newLabel] };
-                        onUpdateResource({ metadata: newMeta });
-                      }}
-                      cx={cx}
-                      fieldMode={fieldMode}
-                      className="text-xs font-bold bg-transparent border-b border-transparent focus:border-blue-300 outline-none w-24"
-                    />
-                    {dc && (
-                      <span
-                        className="text-[8px] font-mono text-white bg-slate-400 px-1 rounded opacity-70"
-                        title="Dublin Core Mapping"
-                      >
-                        {dc}
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    onClick={() => {
-                      const newMeta = resource.metadata?.filter((_, i) => i !== idx);
-                      onUpdateResource({ metadata: newMeta });
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    icon={<Icon name="close" className="text-xs" />}
-                    aria-label="Remove metadata field"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  />
-                </div>
+              <TextField
+                key={actualIdx}
+                label={lbl.charAt(0).toUpperCase() + lbl.slice(1)}
+                value={val}
+                onChange={(newVal) => {
+                  const newMeta = [...metadata];
+                  newMeta[actualIdx].value = { [language]: [newVal] };
+                  onUpdateResource({ metadata: newMeta });
+                }}
+                type="date"
+                fieldMode={fieldMode}
+              />
+            );
+          })}
+        </FormSection>
+      )}
 
-                {/* Value row with location picker */}
-                <div className="flex gap-1">
-                  <PropertyInput
-                    type="text"
+      {/* Location */}
+      {metadata.some((_, idx) => isLocationField(getIIIFValue(metadata[idx].label, language) || '')) && (
+        <FormSection title="Location" icon="place" fieldMode={fieldMode}>
+          {metadata.map((md, idx) => {
+            const lbl = getIIIFValue(md.label, language);
+            if (!isLocationField(lbl)) return null;
+            const val = getIIIFValue(md.value, language);
+            
+            return (
+              <div key={idx} className="flex gap-2">
+                <div className="flex-1">
+                  <TextField
+                    label={lbl.charAt(0).toUpperCase() + lbl.slice(1)}
                     value={val}
                     onChange={(newVal) => {
-                      const newMeta = [...(resource.metadata || [])];
+                      const newMeta = [...metadata];
                       newMeta[idx].value = { [language]: [newVal] };
                       onUpdateResource({ metadata: newMeta });
                     }}
-                    cx={cx}
+                    placeholder="Enter coordinates or location..."
                     fieldMode={fieldMode}
-                    className="w-full text-xs rounded px-2 py-1 border focus:border-blue-400 outline-none"
                   />
-                  {isLoc && (
-                    <LocationPicker
-                      onClick={() => onShowLocationPicker({ index: idx, value: val })}
-                      cx={cx}
-                      fieldMode={fieldMode}
-                    />
-                  )}
+                </div>
+                <div className="pt-7">
+                  <LocationPicker
+                    onClick={() => onShowLocationPicker({ index: idx, value: val })}
+                    fieldMode={fieldMode}
+                  />
                 </div>
               </div>
             );
           })}
+        </FormSection>
+      )}
 
-          {/* Add Field button */}
-          <div
-            onClick={() => {
-              onUpdateResource({
-                metadata: [
-                  ...(resource.metadata || []),
-                  { label: { [language]: ['New Field'] }, value: { [language]: [''] } },
-                ],
-              });
-            }}
-            className={`w-full py-2 border border-dashed rounded text-xs flex items-center justify-center gap-1 transition-colors ${
-              fieldMode
-                ? 'border-slate-700 text-slate-500 hover:bg-slate-900'
-                : 'border-slate-300 text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            <Icon name="add" className="text-sm" /> Add Field
+      {/* Rights & Licensing */}
+      {(rightsMetadata.length > 0 || resource.requiredStatement || resource.rights) && (
+        <FormSection title="Rights & Licensing" icon="shield" fieldMode={fieldMode}>
+          {resource.requiredStatement && (
+            <TextField
+              label="Attribution"
+              value={getIIIFValue(resource.requiredStatement, language)}
+              onChange={(val) => onUpdateResource({ requiredStatement: { [language]: [val] } })}
+              placeholder="e.g., © 2024 Example Institution"
+              fieldMode={fieldMode}
+              hint="How this item should be credited"
+            />
+          )}
+          {resource.rights && (
+            <TextField
+              label="Rights Statement"
+              value={resource.rights}
+              onChange={(val) => onUpdateResource({ rights: val })}
+              placeholder="e.g., https://creativecommons.org/licenses/by/4.0/"
+              fieldMode={fieldMode}
+              hint="URL to license or rights statement"
+            />
+          )}
+          {rightsMetadata.map((md, idx) => {
+            const lbl = getIIIFValue(md.label, language);
+            const val = getIIIFValue(md.value, language);
+            const actualIdx = metadata.indexOf(md);
+            
+            return (
+              <TextField
+                key={actualIdx}
+                label={lbl.charAt(0).toUpperCase() + lbl.slice(1)}
+                value={val}
+                onChange={(newVal) => {
+                  const newMeta = [...metadata];
+                  newMeta[actualIdx].value = { [language]: [newVal] };
+                  onUpdateResource({ metadata: newMeta });
+                }}
+                fieldMode={fieldMode}
+              />
+            );
+          })}
+        </FormSection>
+      )}
+
+      {/* Additional Metadata */}
+      {otherMetadata.length > 0 && (
+        <FormSection title="Additional Metadata" icon="more_horiz" collapsed fieldMode={fieldMode}>
+          <div className="space-y-3">
+            {otherMetadata.map((md, idx) => {
+              const lbl = getIIIFValue(md.label, language);
+              const val = getIIIFValue(md.value, language);
+              const actualIdx = metadata.indexOf(md);
+              const dc = getDCHint(lbl);
+              
+              return (
+                <div
+                  key={actualIdx}
+                  className={`p-3 rounded-lg border group transition-all ${
+                    fieldMode
+                      ? 'bg-stone-800/50 border-stone-700 hover:border-stone-600'
+                      : 'bg-stone-50 border-stone-200 hover:border-stone-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={lbl}
+                      onChange={(e) => {
+                        const newMeta = [...metadata];
+                        newMeta[actualIdx].label = { [language]: [e.target.value] };
+                        onUpdateResource({ metadata: newMeta });
+                      }}
+                      className={`text-sm font-medium bg-transparent border-b border-transparent hover:border-stone-400 focus:border-amber-500 focus:outline-none flex-1 ${
+                        fieldMode ? 'text-stone-300' : 'text-stone-700'
+                      }`}
+                      placeholder="Field name"
+                    />
+                    {dc && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${fieldMode ? 'bg-stone-700 text-stone-400' : 'bg-stone-200 text-stone-600'}`}>
+                        {dc}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => {
+                        const newMeta = metadata.filter((_, i) => i !== actualIdx);
+                        onUpdateResource({ metadata: newMeta });
+                      }}
+                      className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-100 hover:text-red-600 ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`}
+                      title="Remove field"
+                    >
+                      <Icon name="close" className="text-xs" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={val}
+                    onChange={(e) => {
+                      const newMeta = [...metadata];
+                      newMeta[actualIdx].value = { [language]: [e.target.value] };
+                      onUpdateResource({ metadata: newMeta });
+                    }}
+                    className={`w-full text-sm bg-transparent border-b border-transparent hover:border-stone-300 focus:border-amber-500 focus:outline-none ${
+                      fieldMode ? 'text-stone-400' : 'text-stone-600'
+                    }`}
+                    placeholder="Enter value..."
+                  />
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </div>
-    </>
+        </FormSection>
+      )}
+
+      {/* Add Custom Field Button */}
+      <button
+        onClick={() => {
+          onUpdateResource({
+            metadata: [
+              ...metadata,
+              { label: { [language]: ['Custom Field'] }, value: { [language]: [''] } },
+            ],
+          });
+        }}
+        className={`w-full py-3 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+          fieldMode
+            ? 'border-stone-700 text-stone-500 hover:border-stone-600 hover:text-stone-400 hover:bg-stone-800/50'
+            : 'border-stone-300 text-stone-500 hover:border-stone-400 hover:text-stone-600 hover:bg-stone-50'
+        }`}
+      >
+        <Icon name="add" className="text-sm" />
+        Add Custom Field
+      </button>
+    </div>
   );
 };
 

@@ -113,6 +113,18 @@ export type { MenuButtonProps } from './MenuButton';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps, EmptyStateAction } from './EmptyState';
 
+export { GuidedEmptyState } from './GuidedEmptyState';
+export type { GuidedEmptyStateProps, WorkflowStep } from './GuidedEmptyState';
+
+export { FloatingSelectionToolbar } from './FloatingSelectionToolbar';
+export type { FloatingSelectionToolbarProps } from './FloatingSelectionToolbar';
+
+export { BreadcrumbNav } from './BreadcrumbNav';
+export type { BreadcrumbNavProps, BreadcrumbItem } from './BreadcrumbNav';
+
+export { MetadataCard } from './MetadataCard';
+export type { MetadataCardProps, MetadataField } from './MetadataCard';
+
 export { LoadingState } from './LoadingState';
 export type { LoadingStateProps } from './LoadingState';
 

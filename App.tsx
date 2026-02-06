@@ -22,6 +22,7 @@ import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay'
 import { AuthDialog } from './components/AuthDialog';
 import { SkipLink } from './components/SkipLink';
 import { Icon } from './components/Icon';
+import { StorageFullDialog } from './components/StorageFullDialog';
 // NEW: Use the refactored ViewRouter from src/app/routes (Phase 5)
 // This routes to new feature slices for implemented routes (archive)
 // and falls back to old components for unimplemented routes
@@ -29,6 +30,7 @@ import { ViewRouter } from './src/app/routes';
 import { buildTree, ingestTree } from './services/iiifBuilder';
 import { AuthService, AuthState } from './services/authService';
 import { storage } from './services/storage';
+import { setGlobalQuotaErrorHandler } from './services/ingestWorkerPool';
 import { ValidationIssue, validator } from './services/validator';
 import { contentStateService } from './services/contentState';
 import { useBulkOperations, useUndoRedoShortcuts, useVault, VaultProvider } from './hooks/useIIIFEntity';
@@ -77,6 +79,7 @@ const MainApp: React.FC = () => {
   const commandPalette = useDialogState();
   const keyboardShortcuts = useDialogState();
   const authDialog = useDialogState();
+  const storageFullDialog = useDialogState();
 
   // ---- Panel States ----
   const [showSidebar, setShowSidebar] = useState(!isMobile);
@@ -216,9 +219,19 @@ const MainApp: React.FC = () => {
     storage.setWarningCallback((warning) => {
       if (warning.type === 'quota_critical' || warning.type === 'save_failed') {
         showToastRef.current(warning.message, 'error');
+        // Show storage full dialog for critical errors
+        if (warning.usagePercent >= 0.95) {
+          storageFullDialog.open();
+        }
       } else if (warning.type === 'quota_warning') {
         showToastRef.current(warning.message, 'info');
       }
+    });
+
+    // Set up global quota error handler for worker pool
+    setGlobalQuotaErrorHandler(() => {
+      showToastRef.current('Storage full! Please export and clear data to continue.', 'error');
+      storageFullDialog.open();
     });
 
     storage.loadProject().then(async (proj) => {
@@ -449,7 +462,7 @@ const MainApp: React.FC = () => {
   // ============================================================================
 
   return (
-    <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans ${settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-100'}`}>
+    <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans transition-colors duration-300 ${settings.fieldMode ? 'bg-black text-white' : settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-50'}`}>
       {/* Skip Links for Accessibility */}
       <SkipLink targetId="main-content" label="Skip to main content" />
       <SkipLink targetId="sidebar" label="Skip to sidebar navigation" position="top-left" className="mt-14" />
@@ -503,7 +516,7 @@ const MainApp: React.FC = () => {
           onAbstractionLevelChange={handleAbstractionLevelChange}
         />
 
-        <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''}`}>
+        <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''} transition-colors duration-300`}>
           <ViewRouter
             currentMode={currentMode}
             root={root}
@@ -654,6 +667,16 @@ const MainApp: React.FC = () => {
           onClose={handleAuthClose}
         />
       )}
+
+      {/* Storage Full Dialog */}
+      <StorageFullDialog
+        isOpen={storageFullDialog.isOpen}
+        onClose={storageFullDialog.close}
+        onExport={() => {
+          storageFullDialog.close();
+          exportDialog.open();
+        }}
+      />
     </div>
   );
 };

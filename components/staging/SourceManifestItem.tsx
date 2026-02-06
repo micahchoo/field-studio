@@ -69,8 +69,8 @@ export const SourceManifestItem: React.FC<SourceManifestItemProps> = ({
       className={`
         border rounded-xl overflow-hidden transition-all
         ${isSelected
-          ? 'border-blue-400 bg-blue-50 shadow-md ring-2 ring-blue-200'
-          : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+          ? 'border-blue-400 bg-blue-900/20 shadow-md ring-2 ring-blue-500/30'
+          : 'border-slate-600 bg-slate-700 hover:border-slate-500 hover:shadow-sm'
         }
       `}
     >
@@ -81,7 +81,7 @@ export const SourceManifestItem: React.FC<SourceManifestItemProps> = ({
         onDragStart={onDragStart}
         className={`
           flex items-center gap-3 p-3 cursor-pointer transition-colors
-          ${isSelected ? 'bg-blue-100' : 'hover:bg-slate-50'}
+          ${isSelected ? 'bg-blue-900/30' : 'hover:bg-slate-600/50'}
         `}
       >
         {/* Expand/collapse button */}
@@ -90,33 +90,33 @@ export const SourceManifestItem: React.FC<SourceManifestItemProps> = ({
             e.stopPropagation();
             setExpanded(!expanded);
           }}
-          className="p-1 rounded hover:bg-white/50 transition-colors"
+          className="p-1 rounded hover:bg-slate-600/50 transition-colors"
         >
           <Icon
             name={expanded ? 'expand_more' : 'chevron_right'}
-            className="text-lg text-slate-500"
+            className="text-lg text-slate-400"
           />
         </button>
 
         {/* Manifest icon */}
         <div className={`
           w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-          ${isSelected ? 'bg-blue-200' : 'bg-emerald-100'}
+          ${isSelected ? 'bg-blue-600' : 'bg-emerald-700/50'}
         `}>
-          <Icon name="menu_book" className={`text-xl ${isSelected ? 'text-blue-600' : 'text-emerald-600'}`} />
+          <Icon name="menu_book" className={`text-xl ${isSelected ? 'text-white' : 'text-emerald-300'}`} />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-slate-800 truncate" title={manifest.name}>
+          <div className="font-medium text-white truncate" title={manifest.name}>
             {manifest.name}
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-500">
+          <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <span>{manifest.files.length} {manifest.files.length === 1 ? 'canvas' : 'canvases'}</span>
             {manifest.detectedPattern && (
               <>
-                <span className="text-slate-300">|</span>
-                <span className="text-emerald-600 font-medium flex items-center gap-1">
+                <span className="text-slate-500">|</span>
+                <span className="text-emerald-400 font-medium flex items-center gap-1">
                   <Icon name="auto_awesome" className="text-[10px]" />
                   {manifest.detectedPattern}
                 </span>
@@ -133,7 +133,7 @@ export const SourceManifestItem: React.FC<SourceManifestItemProps> = ({
         )}
 
         {/* Drag indicator */}
-        <div className="flex-shrink-0 text-slate-300 hover:text-slate-500 cursor-grab">
+        <div className="flex-shrink-0 text-slate-500 hover:text-slate-300 cursor-grab">
           <Icon name="drag_indicator" className="text-lg" />
         </div>
       </div>
@@ -141,7 +141,7 @@ export const SourceManifestItem: React.FC<SourceManifestItemProps> = ({
       {/* Breadcrumb path */}
       {manifest.breadcrumbs.length > 0 && (
         <div className="px-4 pb-2 -mt-1">
-          <div className="flex items-center gap-1 text-[10px] text-slate-400">
+          <div className="flex items-center gap-1 text-[10px] text-slate-500">
             {manifest.breadcrumbs.map((crumb, i) => (
               <React.Fragment key={i}>
                 {i > 0 && <Icon name="chevron_right" className="text-[10px]" />}
@@ -154,8 +154,8 @@ export const SourceManifestItem: React.FC<SourceManifestItemProps> = ({
 
       {/* Canvas list (expanded) */}
       {expanded && (
-        <div className="border-t border-slate-200 bg-slate-50 p-3 space-y-2">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+        <div className="border-t border-slate-600 bg-slate-800 p-3 space-y-2">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
             <Icon name="layers" className="text-sm" />
             Canvas Order (drag to reorder)
           </div>

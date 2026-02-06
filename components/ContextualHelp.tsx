@@ -19,18 +19,25 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
   const [content, setContent] = useState<typeof WELCOME_MESSAGES['archive'] | null>(null);
 
   useEffect(() => {
+    // DISABLED: Too many tooltips create visual noise
+    // Only show help if user explicitly asks for it via ? key
+    setVisible(false);
+    setContent(null);
+    return;
+    
+    /* Original code - disabled
     const topicId = `intro-${mode}` as const;
     const welcomeContent = WELCOME_MESSAGES[mode];
 
     if (welcomeContent && !guidance.hasSeen(topicId)) {
       setContent(welcomeContent);
-      // Small delay so it doesn't flash during view transitions
       const timer = setTimeout(() => setVisible(true), 300);
       return () => clearTimeout(timer);
     } else {
       setVisible(false);
       setContent(null);
     }
+    */
   }, [mode]);
 
   const dismiss = () => {

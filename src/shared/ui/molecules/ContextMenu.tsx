@@ -191,19 +191,24 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
   if (validSections.length === 0) return null;
 
+  // Fallback background if cx.surface is not defined or transparent
+  const bgClass = cx.surface || 'bg-white';
+  const borderClass = cx.border || 'border-slate-200';
+
   return (
     <div
       ref={menuRef}
       className={`
         fixed z-[1000]
-        ${cx.surface}
+        ${bgClass}
+        ${borderClass}
         border shadow-2xl rounded-xl py-2 min-w-[220px]
         animate-in fade-in zoom-in-95 duration-100
         ${className}
       `}
       style={{
         left: x,
-        top: y,
+        top: x,
         maxHeight,
         overflowY: 'auto',
       }}

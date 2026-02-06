@@ -898,68 +898,69 @@ export const STRUCTURE_CARD_SIZES: Record<CardSize, { minWidth: number; aspectRa
 // Resource Type Configuration
 // ============================================================================
 
+// Bright colors for visibility on dark backgrounds (-400 variants)
 export const RESOURCE_TYPE_CONFIG: Record<string, { icon: string; colorClass: string; bgClass: string; borderClass: string; label: string; metaphor: string }> = {
   'Collection': {
     icon: 'folder',
-    colorClass: 'text-amber-600',
-    bgClass: 'bg-amber-100',
-    borderClass: 'border-amber-200',
+    colorClass: 'text-amber-400',
+    bgClass: 'bg-amber-900/30',
+    borderClass: 'border-amber-700/50',
     label: 'Collection',
     metaphor: 'Literary Genres'
   },
   'Manifest': { 
     icon: 'menu_book', 
-    colorClass: 'text-emerald-600', 
-    bgClass: 'bg-emerald-100', 
-    borderClass: 'border-emerald-200', 
+    colorClass: 'text-emerald-400', 
+    bgClass: 'bg-emerald-900/30', 
+    borderClass: 'border-emerald-700/50', 
     label: 'Manifest',
     metaphor: 'Book'
   },
   'Canvas': { 
     icon: 'crop_original', 
-    colorClass: 'text-blue-500', 
-    bgClass: 'bg-blue-100', 
-    borderClass: 'border-blue-200', 
+    colorClass: 'text-blue-400', 
+    bgClass: 'bg-blue-900/30', 
+    borderClass: 'border-blue-700/50', 
     label: 'Canvas',
     metaphor: 'Page'
   },
   'Range': { 
     icon: 'segment', 
-    colorClass: 'text-indigo-500', 
-    bgClass: 'bg-indigo-100', 
-    borderClass: 'border-indigo-200', 
+    colorClass: 'text-indigo-400', 
+    bgClass: 'bg-indigo-900/30', 
+    borderClass: 'border-indigo-700/50', 
     label: 'Range',
     metaphor: 'Table of Contents'
   },
   'AnnotationPage': { 
     icon: 'layers', 
-    colorClass: 'text-purple-500', 
-    bgClass: 'bg-purple-100', 
-    borderClass: 'border-purple-200', 
+    colorClass: 'text-purple-400', 
+    bgClass: 'bg-purple-900/30', 
+    borderClass: 'border-purple-700/50', 
     label: 'Annotation Page',
     metaphor: 'Transparent overlay on page'
   },
   'Annotation': { 
     icon: 'chat_bubble', 
-    colorClass: 'text-teal-500', 
-    bgClass: 'bg-teal-100', 
-    borderClass: 'border-teal-200', 
+    colorClass: 'text-teal-400', 
+    bgClass: 'bg-teal-900/30', 
+    borderClass: 'border-teal-700/50', 
     label: 'Annotation',
     metaphor: 'Note / Mark on the transparent overlay'
   },
   'Content': { 
     icon: 'image', 
-    colorClass: 'text-slate-500', 
-    bgClass: 'bg-slate-100', 
-    borderClass: 'border-slate-200', 
+    colorClass: 'text-slate-400', 
+    bgClass: 'bg-slate-800', 
+    borderClass: 'border-slate-700', 
     label: 'Content',
     metaphor: 'The actual thing made with ink on the page'
   },
   'AnnotationCollection': {
     icon: 'collections_bookmark',
-    colorClass: 'text-pink-500',
-    bgClass: 'bg-pink-100',
-    borderClass: 'border-pink-200',
+    colorClass: 'text-pink-400',
+    bgClass: 'bg-pink-900/30',
+    borderClass: 'border-pink-700/50',
     label: 'Annotation Collection',
     metaphor: 'Collections of one/many persons annotations on a single page, book or genre'
   }

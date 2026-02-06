@@ -102,13 +102,13 @@ export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
 
   if (isProcessing || !sourceManifests) {
     return (
-      <div className="fixed inset-0 bg-white z-[500] flex flex-col items-center justify-center">
-        <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6 animate-pulse">
+      <div className="fixed inset-0 bg-slate-900 z-[500] flex flex-col items-center justify-center">
+        <div className="w-20 h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mb-6 animate-pulse">
           <Icon name="folder_open" className="text-4xl" />
         </div>
-        <h3 className="text-xl font-bold text-slate-800 mb-2">Analyzing Content...</h3>
-        <p className="text-sm text-slate-500 mb-4">{progress.message}</p>
-        <div className="w-64 bg-slate-200 h-2 rounded-full overflow-hidden">
+        <h3 className="text-xl font-bold text-white mb-2">Analyzing Content...</h3>
+        <p className="text-sm text-slate-400 mb-4">{progress.message}</p>
+        <div className="w-64 bg-slate-700 h-2 rounded-full overflow-hidden">
           <div
             className="bg-blue-500 h-full transition-all duration-300"
             style={{ width: `${progress.percent}%` }}
@@ -340,7 +340,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   // Show enhanced progress panel when ingesting
   if (aggregate.isActive) {
     return (
-      <div className="fixed inset-0 bg-white/95 dark:bg-slate-900/95 z-[500] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-slate-900/95 z-[500] flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
           <IngestProgressPanel
             progress={progress}
@@ -360,16 +360,16 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-white z-[500] flex flex-col">
+    <div className="fixed inset-0 bg-slate-900 z-[500] flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 h-14 border-b border-slate-200 bg-slate-50 flex items-center justify-between px-4">
+      <div className="flex-shrink-0 h-14 border-b border-slate-700 bg-slate-800 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
             <Icon name="construction" className="text-white text-lg" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-800">Organize Your Files</h2>
-            <p className="text-[10px] text-slate-500">
+            <h2 className="font-bold text-white">Organize Your Files</h2>
+            <p className="text-[10px] text-slate-400">
               {manifestLabel} | {stats.totalFiles} files | {collectionLabel}
             </p>
           </div>
@@ -379,7 +379,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
           {/* Metadata template export */}
           <button
             onClick={() => setShowMetadataExport(true)}
-            className="px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg flex items-center gap-2"
+            className="px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg flex items-center gap-2 transition-colors"
           >
             <Icon name="table_chart" className="text-slate-400" />
             Export Template
@@ -387,11 +387,12 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
 
           {/* Merge toggle */}
           {existingRoot && (
-            <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 cursor-pointer hover:bg-slate-100 rounded-lg">
+            <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 cursor-pointer hover:bg-slate-700 rounded-lg transition-colors">
               <input
                 type="checkbox"
                 checked={merge}
                 onChange={(e) => setMerge(e.target.checked)}
+                className="rounded border-slate-600"
               />
               Merge with existing
             </label>
@@ -400,7 +401,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
           {/* Ingest button */}
           <button
             onClick={handleIngest}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 flex items-center gap-2 shadow-lg"
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 flex items-center gap-2 shadow-lg transition-colors"
           >
             <Icon name="publish" />
             Import {t('Archive')}
@@ -409,18 +410,46 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
           {/* Close */}
           <button
             onClick={onCancel}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
           >
             <Icon name="close" />
           </button>
         </div>
       </div>
 
-      {/* Validation warning */}
+      {/* Validation warning - improved styling */}
       {hasUnassigned && (
-        <div className="flex-shrink-0 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm flex items-center gap-2">
-          <Icon name="warning" className="text-amber-500" />
-          Some {t('Manifest').toLowerCase()}s are not in any {t('Collection').toLowerCase()}. They will still be imported but won't appear in the organization.
+        <div className="flex-shrink-0 px-4 py-3 bg-orange-50 border-b border-orange-200">
+          <div className="flex items-start gap-3 max-w-4xl mx-auto">
+            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-900">
+                Some {t('Manifest').toLowerCase()}s are not organized
+              </p>
+              <p className="text-sm text-orange-700 mt-0.5">
+                Unorganized items will be imported but won't appear in your archive structure.
+              </p>
+            </div>
+            <button
+              className="text-xs font-medium text-orange-700 hover:text-orange-900 underline"
+              onClick={() => {
+                // Auto-organize unassigned manifests
+                const unassigned = sourceManifests.manifests.filter(m =>
+                  !archiveLayout.root.children.some((c: any) => c.items?.includes(m.id))
+                );
+                if (unassigned.length > 0) {
+                  const newCollectionId = createNewCollection('Unorganized Items');
+                  addToCollection(newCollectionId, unassigned.map(m => m.id));
+                }
+              }}
+            >
+              Auto-organize
+            </button>
+          </div>
         </div>
       )}
 

@@ -60,24 +60,24 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({
       className={`
         group flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all
         ${isSelected
-          ? 'bg-blue-100 border-2 border-blue-400 shadow-sm'
-          : 'bg-white border border-slate-200 hover:border-slate-300 hover:shadow-sm'
+          ? 'bg-blue-900/30 border-2 border-blue-400 shadow-sm'
+          : 'bg-slate-700 border border-slate-600 hover:border-slate-500 hover:shadow-sm'
         }
-        ${isDragTarget ? 'border-blue-500 border-dashed bg-blue-50' : ''}
+        ${isDragTarget ? 'border-blue-500 border-dashed bg-blue-900/20' : ''}
       `}
     >
       {/* Drag handle */}
-      <div className="flex-shrink-0 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500">
+      <div className="flex-shrink-0 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300">
         <Icon name="drag_indicator" className="text-lg" />
       </div>
 
       {/* Index badge */}
-      <span className="flex-shrink-0 w-6 h-6 bg-slate-100 rounded text-[10px] font-bold text-slate-500 flex items-center justify-center">
+      <span className="flex-shrink-0 w-6 h-6 bg-slate-600 rounded text-[10px] font-bold text-slate-400 flex items-center justify-center">
         {index + 1}
       </span>
 
       {/* Thumbnail or icon */}
-      <div className="flex-shrink-0 w-10 h-10 bg-slate-100 rounded overflow-hidden flex items-center justify-center">
+      <div className="flex-shrink-0 w-10 h-10 bg-slate-600 rounded overflow-hidden flex items-center justify-center">
         {thumbnail ? (
           <img
             src={thumbnail}
@@ -91,10 +91,10 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({
 
       {/* File info */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-slate-700 truncate" title={file.name}>
+        <div className="text-sm font-medium text-slate-200 truncate" title={file.name}>
           {file.name}
         </div>
-        <div className="text-[10px] text-slate-400">
+        <div className="text-[10px] text-slate-500">
           {formatFileSize(file.size)}
         </div>
       </div>

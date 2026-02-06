@@ -1,31 +1,31 @@
 /**
  * ArchiveGrid Organism
  *
- * Composes: StackedThumbnail, Icon atoms, and virtualized grid layout.
- * Renders a grid of Canvas items with selection, hover, and context menu.
+ * Refined grid with bold archival aesthetic:
+ * - Stronger selection indicators with checkmark overlay
+ * - Zoom/density controls for flexible viewing
+ * - Better badge tooltips and visual hierarchy
+ * - Warm stone palette with amber accents
  *
- * PROPS NOTE: 11 props are required for virtualization support:
- * - items, visibleRange, columns, itemSize: Virtualization configuration
- * - isSelected, onItemClick, onContextMenu: Selection/interaction handlers
- * - cx, fieldMode, isMobile: Theming and responsive behavior
- * - activeItem, filter, onClearFilter: UI state management
+ * PROPS NOTE: 11 props are required for virtualization support
  *
- * This is acceptable for an organism with virtualization requirements.
- * See: docs/Atomic System Architecture.md - Organism prop guidelines
- *
- * IDEAL OUTCOME: Efficient virtualized grid with consistent styling
- * FAILURE PREVENTED: No prop drilling, uses cx and fieldMode from template
+ * BOLD AESTHETIC:
+ * - Strong selection states with amber accent
+ * - Generous whitespace and rounded corners
+ * - Layered depth with shadows
+ * - Refined typography
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { getIIIFValue, type IIIFCanvas } from '@/types';
-// NEW: StackedThumbnail molecule
 import { StackedThumbnail } from '@/src/shared/ui/molecules';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
 import { RESOURCE_TYPE_CONFIG } from '@/constants';
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 import { getFileDNA } from '../../model';
+
+export type GridDensity = 'compact' | 'comfortable' | 'spacious';
 
 export interface ArchiveGridProps {
   /** Canvas items to render */
@@ -56,6 +56,7 @@ export interface ArchiveGridProps {
     active: string;
     inactive: string;
     warningBg: string;
+    thumbnailBg?: string;
   };
   /** Current field mode */
   fieldMode: boolean;
@@ -67,6 +68,10 @@ export interface ArchiveGridProps {
   filter?: string;
   /** Callback to clear filter */
   onClearFilter?: () => void;
+  /** Grid density control */
+  density?: GridDensity;
+  /** Callback when density changes */
+  onDensityChange?: (density: GridDensity) => void;
 }
 
 /**
@@ -103,6 +108,8 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
   activeItem,
   filter,
   onClearFilter,
+  density = 'comfortable',
+  onDensityChange,
 }) => {
   const gap = 16;
   const rowHeight = itemSize.height + gap;
@@ -123,41 +130,123 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
       ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
       : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8';
 
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [badgeTooltip, setBadgeTooltip] = useState<{text: string; x: number; y: number} | null>(null);
+
+  const densityClasses = {
+    compact: 'gap-2',
+    comfortable: 'gap-4',
+    spacious: 'gap-6',
+  };
+
+  const paddingClasses = {
+    compact: 'p-1.5',
+    comfortable: 'p-2',
+    spacious: 'p-3',
+  };
+
   const renderItem = (asset: IIIFCanvas) => {
     const selected = isSelected(asset.id);
     const dna = getFileDNA(asset);
     const thumbUrls = resolveHierarchicalThumbs(asset, 200);
     const config = RESOURCE_TYPE_CONFIG['Canvas'];
+    const isHovered = hoveredId === asset.id;
 
     return (
       <div
         key={asset.id}
         onContextMenu={(e) => onContextMenu(e, asset.id)}
-        className={`group relative rounded-lg shadow-sm cursor-pointer transition-all ${
-          fieldMode
-            ? (selected ? 'bg-slate-800 border-4 border-yellow-400 p-2' : 'bg-slate-800 border border-slate-700 p-3')
-            : (selected ? 'bg-blue-50 border border-iiif-blue ring-2 ring-iiif-blue p-2' : `bg-white border p-2 hover:shadow-md border-slate-200`)
-        }`}
+        className={`
+          group relative rounded-xl cursor-pointer transition-all duration-200
+          ${paddingClasses[density || 'comfortable']}
+          ${selected
+            ? 'bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-500 shadow-md'
+            : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:shadow-lg hover:border-stone-300 dark:hover:border-stone-600'
+          }
+        `}
         onClick={(e) => onItemClick(e, asset)}
+        onMouseEnter={() => setHoveredId(asset.id)}
+        onMouseLeave={() => setHoveredId(null)}
       >
-        <div className={`aspect-square rounded overflow-hidden flex items-center justify-center mb-2 relative ${cx.thumbnailBg}`}>
+        <div className="aspect-square rounded-lg overflow-hidden flex items-center justify-center mb-2 relative bg-stone-100 dark:bg-stone-900">
+          {/* Selection checkmark overlay */}
+          {selected && (
+            <div className="absolute inset-0 bg-amber-500/10 z-10 pointer-events-none" />
+          )}
+          <div className={`
+            absolute top-2 right-2 z-20
+            w-6 h-6 rounded-full flex items-center justify-center
+            transition-all duration-200
+            ${selected
+              ? 'bg-amber-500 text-white scale-100'
+              : 'bg-white/90 text-stone-400 scale-0 group-hover:scale-100'
+            }
+            shadow-sm
+          `}>
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+
           <StackedThumbnail
             urls={thumbUrls}
             size="lg"
             className="w-full h-full"
             icon={config.icon}
-            cx={cx}
+            cx={cx as any}
             fieldMode={fieldMode}
           />
-          <div className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded-full flex gap-1.5 font-sans">
-            {dna.hasTime && <Icon name="schedule" className="text-[10px] text-yellow-400" title="Has Time metadata"/>}
-            {dna.hasLocation && <Icon name="location_on" className="text-[10px] text-green-400" title="Has GPS metadata"/>}
-            {dna.hasDevice && <Icon name="photo_camera" className="text-[10px] text-blue-400" title="Has Device metadata"/>}
+
+          {/* Metadata badges with tooltips */}
+          <div className="absolute bottom-2 right-2 flex gap-1">
+            {dna.hasTime && (
+              <button
+                className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-sm hover:bg-amber-600 transition-colors"
+                onMouseEnter={(e) => setBadgeTooltip({text: 'Has date/time metadata', x: e.clientX, y: e.clientY})}
+                onMouseLeave={() => setBadgeTooltip(null)}
+                title="Has Time metadata"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            )}
+            {dna.hasLocation && (
+              <button
+                className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm hover:bg-emerald-600 transition-colors"
+                onMouseEnter={(e) => setBadgeTooltip({text: 'Has GPS location data', x: e.clientX, y: e.clientY})}
+                onMouseLeave={() => setBadgeTooltip(null)}
+                title="Has GPS metadata"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+              </button>
+            )}
+            {dna.hasDevice && (
+              <button
+                className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm hover:bg-sky-600 transition-colors"
+                onMouseEnter={(e) => setBadgeTooltip({text: 'Has camera/device info', x: e.clientX, y: e.clientY})}
+                onMouseLeave={() => setBadgeTooltip(null)}
+                title="Has Device metadata"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Filename with hover tooltip */}
         <div className="px-1 min-w-0">
-          <div className={`font-medium truncate ${cx.text} ${fieldMode ? 'text-sm' : 'text-[11px]'}`}>
-            <Icon name={config.icon} className={`mr-1 text-[10px] opacity-60 ${config.colorClass}`}/>
+          <div
+            className={`
+              font-medium truncate text-stone-800 dark:text-stone-200
+              ${(density || 'comfortable') === 'compact' ? 'text-[11px]' : 'text-xs'}
+            `}
+            title={getIIIFValue(asset.label)}
+          >
             {getIIIFValue(asset.label)}
           </div>
         </div>
@@ -166,32 +255,74 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
   };
 
   return (
-    <div>
+    <div className="relative">
+      {/* Density controls toolbar */}
+      <div className="flex items-center justify-end gap-2 mb-4">
+        <span className="text-xs text-stone-500 dark:text-stone-400">View:</span>
+        <div className="flex items-center bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5">
+          {(['compact', 'comfortable', 'spacious'] as const).map((d) => (
+            <button
+              key={d}
+              onClick={() => onDensityChange?.(d)}
+              className={`
+                px-2 py-1 text-xs font-medium rounded-md transition-all
+                ${density === d
+                  ? 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 shadow-sm'
+                  : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+                }
+              `}
+              title={`${d.charAt(0).toUpperCase() + d.slice(1)} view`}
+            >
+              {d === 'compact' && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>}
+              {d === 'comfortable' && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>}
+              {d === 'spacious' && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" /></svg>}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {topSpacer > 0 && <div style={{ height: topSpacer }} aria-hidden="true" />}
-      <div className={`grid gap-4 ${gridColsClass}`}>
+      <div className={`grid ${densityClasses[density]} ${gridColsClass}`}>
         {visibleItems.map(renderItem)}
       </div>
       {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
+
+      {/* Refined empty state */}
       {items.length === 0 && (
-        <div className="p-8 text-center">
-          <div className={`text-lg font-medium ${cx.text}`}>
-            {filter ? 'No items match your filter' : 'No items in archive'}
+        <div className="p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+            <svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
-          <p className={`text-sm mt-2 ${cx.textMuted}`}>
+          <div className="text-lg font-medium text-stone-800 dark:text-stone-200 mb-2">
+            {filter ? 'No matching items found' : 'Your archive is empty'}
+          </div>
+          <p className="text-sm text-stone-500 dark:text-stone-400 max-w-sm mx-auto">
             {filter
               ? `Try adjusting your search for "${filter}" or clear the filter to see all items.`
-              : 'Import files to get started building your archive.'}
+              : 'Import photos and documents to start building your archive.'}
           </p>
           {filter && onClearFilter && (
             <Button
               onClick={onClearFilter}
               variant="primary"
               size="sm"
-              className="mt-4"
+              className="mt-6"
             >
               Clear Filter
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Badge tooltip */}
+      {badgeTooltip && (
+        <div
+          className="fixed z-50 px-2 py-1 bg-stone-800 text-white text-xs rounded shadow-lg pointer-events-none"
+          style={{ left: badgeTooltip.x, top: badgeTooltip.y - 30 }}
+        >
+          {badgeTooltip.text}
         </div>
       )}
     </div>

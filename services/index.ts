@@ -330,6 +330,7 @@ export {
   ingestTreeWithWorkers,
   cancelIngestOperation,
   getIngestPoolStats,
+  setGlobalQuotaErrorHandler,
 } from './ingestWorkerPool';
 export type {
   PoolStats,

@@ -39,10 +39,12 @@ export interface ArchiveHeaderProps {
   onGroupIntoManifest: () => void;
   /** Callback to open map view */
   onOpenMap: () => void;
-  /** Callback to edit metadata of selected items */
+  /** Callback to edit metadata of selected items (sends to Catalog) */
   onEditMetadata: () => void;
   /** Callback to batch edit selected items */
   onBatchEdit: () => void;
+  /** Callback to compose selected items on a Board */
+  onComposeOnBoard: () => void;
   /** Contextual styles from template */
   cx: {
     surface: string;
@@ -87,12 +89,13 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
   onOpenMap,
   onEditMetadata,
   onBatchEdit,
+  onComposeOnBoard,
   cx,
   fieldMode,
 }) => {
   const hasSelection = selectedCount > 0;
 
-  // Desktop selection toolbar actions
+  // Desktop selection toolbar actions - Pipeline flow
   const selectionActions = [
     {
       label: 'Group into Manifest',
@@ -111,16 +114,16 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
         ]
       : []),
     {
-      label: 'Edit Metadata',
+      label: 'Edit in Catalog',
       icon: 'table_chart' as const,
       color: 'amber' as const,
       onClick: onEditMetadata,
     },
     {
-      label: 'Batch Edit',
-      icon: 'edit' as const,
-      color: 'purple' as const,
-      onClick: onBatchEdit,
+      label: 'Compose on Board',
+      icon: 'dashboard' as const,
+      color: 'pink' as const,
+      onClick: onComposeOnBoard,
     },
   ];
 
@@ -147,6 +150,12 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
       icon: 'table_chart' as const,
       color: 'amber' as const,
       onClick: onEditMetadata,
+    },
+    {
+      label: 'Board',
+      icon: 'dashboard' as const,
+      color: 'pink' as const,
+      onClick: onComposeOnBoard,
     },
   ];
 

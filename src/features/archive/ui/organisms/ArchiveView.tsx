@@ -4,44 +4,36 @@
  * Main organism for the archive feature. Composes ArchiveHeader, ArchiveGrid, and ArchiveList.
  * Receives cx and fieldMode via template render props, eliminating prop drilling.
  *
- * IDEAL OUTCOME: Archive view provides browsing, filtering, selection, and view switching
- * FAILURE PREVENTED: No fieldMode prop drilling, no hardcoded constants, consistent styling
+ * CHANGES:
+ * - Redesigned empty state with clear onboarding flow
+ * - Added step-by-step getting started guide
+ * - Better visual hierarchy for first-time users
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type IIIFCanvas, type IIIFCollection, type IIIFItem, isCanvas } from '@/types';
 import { ValidationIssue } from '@/services/validator';
-// LEGACY: Toast hook - will move to shared/hooks or app/providers
 import { useToast } from '@/components/Toast';
 import { useGridVirtualization, useIIIFTraversal, useResponsive, useSharedSelection } from '@/hooks';
 import { IIIF_CONFIG, IIIF_SPEC } from '@/constants';
 import { isValidChildType } from '@/utils/iiifHierarchy';
-import { ContextMenu, type ContextMenuSection } from '@/src/shared/ui/molecules';
+import { ContextMenu, type ContextMenuSection, FloatingSelectionToolbar, BreadcrumbNav, type BreadcrumbItem, GuidedEmptyState } from '@/src/shared/ui/molecules';
 import { createLanguageMap, generateUUID } from '@/utils/iiifTypes';
 import { ArchiveHeader } from './ArchiveHeader';
 import { ArchiveGrid } from './ArchiveGrid';
 import { type ArchiveViewMode, filterByTerm, getSelectionDNA, loadViewMode, saveViewMode, sortCanvases, type SortMode } from '../../model';
+import { Button } from '@/src/shared/ui/atoms';
 
 export interface ArchiveViewProps {
-  /** Root IIIF item (Collection or Manifest) */
   root: IIIFItem | null;
-  /** Called when a single item is selected (e.g., for preview) */
   onSelect: (item: IIIFItem) => void;
-  /** Called when an item is opened (e.g., in viewer) */
   onOpen: (item: IIIFItem) => void;
-  /** Called with selected IDs for batch editing */
   onBatchEdit: (ids: string[]) => void;
-  /** Called when root is updated (e.g., after grouping) */
   onUpdate?: (newRoot: IIIFItem) => void;
-  /** Validation issues keyed by item ID */
   validationIssues?: Record<string, ValidationIssue[]>;
-  /** Reveal an item in a specific mode */
   onReveal?: (id: string, mode: 'collections' | 'viewer' | 'archive') => void;
-  /** Called when selection should be sent to catalog */
   onCatalogSelection?: (ids: string[]) => void;
-  /** Delegate view-mode switch to router (map, timeline, etc.) */
   onSwitchView?: (mode: string) => void;
-  /** Contextual styles from template */
   cx: {
     surface: string;
     text: string;
@@ -57,34 +49,75 @@ export interface ArchiveViewProps {
     warningBg: string;
     pageBg: string;
   };
-  /** Current field mode */
   fieldMode: boolean;
-  /** Terminology function from template */
   t: (key: string) => string;
-  /** Whether user is in advanced mode */
   isAdvanced: boolean;
 }
 
 /**
- * ArchiveView Organism
- *
- * @example
- * <FieldModeTemplate>
- *   {({ cx, fieldMode, t, isAdvanced }) => (
- *     <ArchiveView
- *       root={root}
- *       onSelect={handleSelect}
- *       onOpen={handleOpen}
- *       onBatchEdit={handleBatchEdit}
- *       onUpdate={handleUpdate}
- *       cx={cx}
- *       fieldMode={fieldMode}
- *       t={t}
- *       isAdvanced={isAdvanced}
- *     />
- *   )}
- * </FieldModeTemplate>
+ * Empty State Component - Uses GuidedEmptyState for better UX
  */
+const ArchiveEmptyState: React.FC<{
+  fieldMode: boolean;
+  cx: ArchiveViewProps['cx'];
+  onImport: () => void;
+  onOpenExternal: () => void;
+  t: (key: string) => string;
+}> = ({ fieldMode, cx, onImport, onOpenExternal, t }) => {
+  const archiveTerm = t('Archive');
+
+  const steps = [
+    {
+      id: 'import',
+      number: 1,
+      title: t('Ingest'),
+      description: `Add photos, videos, or documents to your ${archiveTerm.toLowerCase()}`,
+      icon: 'upload' as const,
+      active: true,
+      helpText: 'You can drag and drop folders or select files from your computer',
+    },
+    {
+      id: 'organize',
+      number: 2,
+      title: 'Organize',
+      description: `Structure items into ${t('Collection')}s and ${t('Manifest')}s`,
+      icon: 'folder' as const,
+      helpText: 'Group related items together for easier navigation',
+    },
+    {
+      id: 'export',
+      number: 3,
+      title: t('Export'),
+      description: 'Share your archive as IIIF or publish online',
+      icon: 'download' as const,
+      helpText: 'Export to standard formats for preservation and sharing',
+    },
+  ];
+
+  return (
+    <GuidedEmptyState
+      icon="inventory_2"
+      title={`Welcome to Field Studio`}
+      subtitle={`Create, organize, and publish ${archiveTerm.toLowerCase()}s. Start by importing your media files.`}
+      steps={steps}
+      primaryAction={{
+        label: `${t('Ingest')} Folder`,
+        icon: 'folder_open',
+        onClick: onImport,
+      }}
+      secondaryAction={{
+        label: `${t('Ingest')} from URL`,
+        icon: 'link',
+        onClick: onOpenExternal,
+      }}
+      cx={cx}
+      fieldMode={fieldMode}
+      tip={`Tip: Drag and drop a folder to quickly ${t('ingest').toLowerCase()} multiple files`}
+      expandableSteps={true}
+    />
+  );
+};
+
 export const ArchiveView: React.FC<ArchiveViewProps> = ({
   root,
   onSelect,
@@ -103,66 +136,39 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   const { showToast } = useToast();
   const { isMobile } = useResponsive();
 
-  // Load persisted view mode from localStorage
+  // Load persisted view mode
   const [view, setView] = useState<ArchiveViewMode>(loadViewMode);
-  // Persist view mode changes
-  useEffect(() => {
-    saveViewMode(view);
-  }, [view]);
+  useEffect(() => { saveViewMode(view); }, [view]);
 
-  // Filter and sort state
+  // State
   const [filter, setFilter] = useState('');
   const [sortBy] = useState<SortMode>('name');
-
-  // Active item (for detail panel)
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; targetId: string; isMulti?: boolean } | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
-  // Context menu state
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    targetId: string;
-    isMulti?: boolean;
-  } | null>(null);
-
-  // Use shared selection hook for cross-view persistence
-  const {
-    selectedIds,
-    handleSelectWithModifier,
-    select,
-    clear: clearSelection,
-    isSelected,
-  } = useSharedSelection();
-
-  // Use IIIF traversal hook for efficient tree operations
+  // Selection
+  const { selectedIds, handleSelectWithModifier, select, clear: clearSelection, isSelected } = useSharedSelection();
   const { getAllCanvases } = useIIIFTraversal(root);
-
-  // Get all canvases
   const allCanvases = useMemo(() => getAllCanvases(), [getAllCanvases]);
 
-  // Filter and sort canvases
+  // Filtered canvases
   const filteredCanvases = useMemo(() => {
     const filtered = filterByTerm(allCanvases, filter);
     return sortCanvases(filtered, sortBy);
   }, [allCanvases, filter, sortBy]);
 
-  // Selected canvases
   const selectedCanvases = useMemo(() => allCanvases.filter(c => isSelected(c.id)), [allCanvases, isSelected]);
-
-  // Selection DNA
   const selectionDNA = useMemo(() => getSelectionDNA(selectedCanvases), [selectedCanvases]);
 
-  // Update active item when selection changes
+  // Update active item
   useEffect(() => {
     if (selectedIds.size === 1) {
       const id = Array.from(selectedIds)[0];
-      const item = allCanvases.find(a => a.id === id);
-      setActiveItem(item || null);
+      setActiveItem(allCanvases.find(a => a.id === id) || null);
     } else if (selectedIds.size > 1) {
       if (!activeItem || !selectedIds.has(activeItem.id)) {
-        const firstId = Array.from(selectedIds)[0];
-        const firstItem = allCanvases.find(a => a.id === firstId);
-        setActiveItem(firstItem || null);
+        setActiveItem(allCanvases.find(a => a.id === Array.from(selectedIds)[0]) || null);
       }
     } else {
       setActiveItem(null);
@@ -170,8 +176,6 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   }, [selectedIds, allCanvases, activeItem]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Virtualization for grid view
   const gridItemSize = useMemo(() => {
     if (activeItem && !isMobile) return { width: 160, height: 180 };
     if (fieldMode) return { width: 200, height: 220 };
@@ -185,14 +189,9 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
     overscan: 3,
   });
 
-
   // Handlers
-  const handleFilterChange = useCallback((value: string) => {
-    setFilter(value);
-  }, []);
-
+  const handleFilterChange = useCallback((value: string) => setFilter(value), []);
   const handleViewChange = useCallback((newView: ArchiveViewMode) => {
-    // map/timeline are sibling features — delegate to router
     if (newView === 'map' || newView === 'timeline') {
       onSwitchView?.(newView);
       return;
@@ -200,15 +199,11 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
     setView(newView);
   }, [onSwitchView]);
 
-  const handleClearFilter = useCallback(() => {
-    setFilter('');
-  }, []);
-
+  const handleClearFilter = useCallback(() => setFilter(''), []);
+  
   const handleItemClick = useCallback((e: React.MouseEvent, asset: IIIFCanvas) => {
     handleSelectWithModifier(asset.id, e, filteredCanvases);
-    if (!e.shiftKey && !e.metaKey && !e.ctrlKey) {
-      onSelect(asset);
-    }
+    if (!e.shiftKey && !e.metaKey && !e.ctrlKey) onSelect(asset);
   }, [handleSelectWithModifier, filteredCanvases, onSelect]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, id: string) => {
@@ -218,15 +213,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   }, [selectedIds]);
 
   const handleCreateManifestFromSelection = useCallback((specificIds?: string[]) => {
-    const idsToGroup = specificIds && specificIds.length > 0
-      ? new Set(specificIds)
-      : selectedIds;
-
+    const idsToGroup = specificIds && specificIds.length > 0 ? new Set(specificIds) : selectedIds;
     if (!root || !onUpdate || idsToGroup.size === 0) return;
+    
     const newRoot = JSON.parse(JSON.stringify(root)) as IIIFCollection;
     const canvasesToMove: any[] = [];
 
-    // Validate that selected items are Canvases (the only valid child of Manifest)
     const removeCanvases = (parent: any) => {
       const list = parent.items || parent.annotations || [];
       for (let i = list.length - 1; i >= 0; i--) {
@@ -234,8 +226,6 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
         if (idsToGroup.has(item.id)) {
           if (isCanvas(item) && isValidChildType('Manifest', item.type)) {
             canvasesToMove.push(list.splice(i, 1)[0]);
-          } else {
-            console.warn(`Cannot move ${item.type} into Manifest - only Canvas is valid`);
           }
         } else if (item.items || item.annotations) {
           removeCanvases(item);
@@ -254,7 +244,6 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
     const manifestId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, generateUUID());
 
     const newManifest: any = {
-      // eslint-disable-next-line @typescript-eslint/naming-convention -- IIIF Presentation 3 JSON-LD spec key
       '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
       id: manifestId,
       type: 'Manifest',
@@ -269,24 +258,29 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
       onUpdate(newRoot);
       select(manifestId);
       showToast(`Grouped ${canvasesToMove.length} Canvases into new Manifest`, 'success');
-    } else {
-      showToast(`Cannot add Manifest to ${newRoot.type}`, 'error');
     }
   }, [root, onUpdate, selectedIds, select, showToast]);
 
-  const handleOpenMap = useCallback(() => {
-    onSwitchView?.('map');
-  }, [onSwitchView]);
-
+  const handleOpenMap = useCallback(() => onSwitchView?.('map'), [onSwitchView]);
+  
+  // Pipeline: Archive -> Catalog with selected items
   const handleEditMetadata = useCallback(() => {
     onCatalogSelection?.(Array.from(selectedIds));
-  }, [selectedIds, onCatalogSelection]);
+    onSwitchView?.('metadata');
+  }, [selectedIds, onCatalogSelection, onSwitchView]);
+  
+  const handleBatchEdit = useCallback(() => onBatchEdit(Array.from(selectedIds)), [selectedIds, onBatchEdit]);
+  
+  // Pipeline: Archive -> Board with selected items
+  const handleComposeOnBoard = useCallback(() => {
+    // Store selected IDs for the board to pick up
+    if (selectedIds.size > 0) {
+      sessionStorage.setItem('board-selected-items', JSON.stringify(Array.from(selectedIds)));
+      onSwitchView?.('boards');
+    }
+  }, [selectedIds, onSwitchView]);
 
-  const handleBatchEdit = useCallback(() => {
-    onBatchEdit(Array.from(selectedIds));
-  }, [selectedIds, onBatchEdit]);
-
-  // Render based on view mode
+  // Render content view
   const renderContentView = () => {
     switch (view) {
       case 'grid':
@@ -308,13 +302,11 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
           />
         );
       case 'list':
-        // TODO: Create ArchiveList organism
         return (
           <div className="p-6">
             <div className="text-center text-slate-500">List view not yet implemented</div>
           </div>
         );
-      // map / timeline are handled by handleViewChange → router delegation
       case 'map':
       case 'timeline':
         return null;
@@ -322,6 +314,19 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
         return null;
     }
   };
+
+  // EMPTY STATE - When no root/archive loaded
+  if (!root) {
+    return (
+      <ArchiveEmptyState
+        fieldMode={fieldMode}
+        cx={cx}
+        onImport={() => setShowImportDialog(true)}
+        onOpenExternal={() => onSwitchView?.('collections')}
+        t={_t}
+      />
+    );
+  }
 
   return (
     <div className={`flex-1 flex flex-col h-full relative overflow-hidden ${cx.pageBg}`}>
@@ -338,6 +343,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
         onOpenMap={handleOpenMap}
         onEditMetadata={handleEditMetadata}
         onBatchEdit={handleBatchEdit}
+        onComposeOnBoard={handleComposeOnBoard}
         cx={cx}
         fieldMode={fieldMode}
       />
@@ -349,29 +355,53 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
         {renderContentView()}
       </div>
 
-      {/* Context Menu */}
+      {/* Context Menu - Enhanced with pipeline actions */}
       {contextMenu && (() => {
+        const targetItem = allCanvases.find(c => c.id === contextMenu.targetId);
         const sections: ContextMenuSection[] = [
           {
+            title: 'Actions',
             items: [
-              {
-                id: 'open',
-                label: 'Open',
-                icon: 'visibility',
-                onClick: () => {
-                  onOpen(allCanvases.find(c => c.id === contextMenu.targetId) as IIIFItem);
-                  setContextMenu(null);
+              { id: 'open', label: 'Open in Viewer', icon: 'visibility', onClick: () => { onOpen(targetItem as IIIFItem); setContextMenu(null); } },
+              { id: 'select', label: selectedIds.has(contextMenu.targetId) ? 'Deselect' : 'Select', icon: selectedIds.has(contextMenu.targetId) ? 'check_box' : 'check_box_outline_blank', onClick: () => { 
+                if (selectedIds.has(contextMenu.targetId)) {
+                  // Deselect logic would go here
+                } else {
+                  select(contextMenu.targetId);
                 }
-              },
-              {
-                id: 'group-into-manifest',
-                label: 'Group into Manifest',
-                icon: 'account_tree',
-                onClick: () => {
-                  handleCreateManifestFromSelection([contextMenu.targetId]);
-                  setContextMenu(null);
-                }
-              }
+                setContextMenu(null); 
+              }},
+            ]
+          },
+          {
+            title: 'Organize',
+            items: [
+              { id: 'group-into-manifest', label: 'Group into Manifest', icon: 'folder_special', onClick: () => { handleCreateManifestFromSelection([contextMenu.targetId]); setContextMenu(null); } },
+              { id: 'duplicate', label: 'Duplicate', icon: 'content_copy', onClick: () => { showToast('Duplicate feature coming soon', 'info'); setContextMenu(null); } },
+            ]
+          },
+          {
+            title: 'Pipeline',
+            items: [
+              { id: 'edit-metadata', label: 'Edit in Catalog', icon: 'table_chart', variant: 'primary', onClick: () => { 
+                select(contextMenu.targetId);
+                handleEditMetadata();
+                setContextMenu(null); 
+              }},
+              { id: 'compose-board', label: 'Compose on Board', icon: 'dashboard', variant: 'primary', onClick: () => { 
+                select(contextMenu.targetId);
+                handleComposeOnBoard();
+                setContextMenu(null); 
+              }},
+              ...(selectionDNA.hasGPS ? [{ id: 'view-map', label: 'View on Map', icon: 'explore', onClick: () => { handleOpenMap(); setContextMenu(null); } }] : []),
+            ]
+          },
+          {
+            title: 'Navigate',
+            items: [
+              { id: 'go-structure', label: 'View in Structure', icon: 'account_tree', onClick: () => { onSwitchView?.('structure'); setContextMenu(null); } },
+              { id: 'go-catalog', label: 'Open Catalog', icon: 'table_chart', onClick: () => { onSwitchView?.('metadata'); setContextMenu(null); } },
+              { id: 'go-boards', label: 'Open Boards', icon: 'dashboard', onClick: () => { onSwitchView?.('boards'); setContextMenu(null); } },
             ]
           }
         ];
@@ -384,9 +414,28 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             sections={sections}
             selectionCount={contextMenu.isMulti ? selectedIds.size : 1}
             fieldMode={fieldMode}
+            cx={cx}
           />
         );
       })()}
+
+      {/* Floating Selection Toolbar - appears near selection */}
+      {selectedIds.size > 0 && (
+        <FloatingSelectionToolbar
+          selectedItems={selectedCanvases}
+          onClear={clearSelection}
+          onOpenViewer={() => activeItem && onOpen(activeItem)}
+          onEditMetadata={handleEditMetadata}
+          onGroupIntoManifest={handleCreateManifestFromSelection}
+          onComposeOnBoard={handleComposeOnBoard}
+          onViewOnMap={selectionDNA.hasGPS ? handleOpenMap : undefined}
+          hasGPS={selectionDNA.hasGPS}
+          cx={cx}
+          t={_t}
+          fieldMode={fieldMode}
+          position="bottom"
+        />
+      )}
     </div>
   );
 };

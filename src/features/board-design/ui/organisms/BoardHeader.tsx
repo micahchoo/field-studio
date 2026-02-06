@@ -32,6 +32,10 @@ export interface BoardHeaderProps {
   onRedo: () => void;
   /** Export callback */
   onExport: () => void;
+  /** Delete callback (optional - shows delete button when provided) */
+  onDelete?: () => void;
+  /** Whether an item is selected (for delete button state) */
+  hasSelection?: boolean;
   /** Number of items on board */
   itemCount?: number;
   /** Number of connections */
@@ -58,22 +62,24 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   onUndo,
   onRedo,
   onExport,
+  onDelete,
+  hasSelection,
   itemCount,
   connectionCount,
   cx,
   fieldMode,
 }) => {
   const toolOptions = [
-    { value: 'select', icon: 'mouse', label: 'Select' },
-    { value: 'connect', icon: 'timeline', label: 'Connect' },
-    { value: 'note', icon: 'sticky_note_2', label: 'Note' },
+    { value: 'select', icon: 'mouse', label: 'Select', shortcut: 'V' },
+    { value: 'connect', icon: 'timeline', label: 'Connect', shortcut: 'C' },
+    { value: 'note', icon: 'sticky_note_2', label: 'Note', shortcut: 'N' },
   ];
 
   return (
     <div
       className={`
         h-16 border-b px-4 flex items-center justify-between
-        ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}
+        ${fieldMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}
       `}
     >
       {/* Left: Title + Stats */}
@@ -81,17 +87,17 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         <div
           className={`
             p-2 rounded-lg
-            ${fieldMode ? 'bg-yellow-400/20 text-yellow-400' : 'bg-iiif-blue/10 text-iiif-blue'}
+            ${fieldMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}
           `}
         >
           <Icon name="dashboard" className="text-xl" />
         </div>
         <div>
-          <h2 className={`font-bold ${fieldMode ? 'text-yellow-400' : 'text-slate-800'}`}>
+          <h2 className={`font-bold ${fieldMode ? 'text-stone-200' : 'text-stone-800'}`}>
             {title}
           </h2>
           {(itemCount !== undefined || connectionCount !== undefined) && (
-            <p className={`text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-500'}`}>
+            <p className={`text-xs ${fieldMode ? 'text-stone-500' : 'text-stone-500'}`}>
               {itemCount !== undefined && `${itemCount} items`}
               {itemCount !== undefined && connectionCount !== undefined && ' · '}
               {connectionCount !== undefined && `${connectionCount} connections`}
@@ -100,15 +106,33 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         </div>
       </div>
 
-      {/* Center: Tool Selection */}
-      <ViewToggle
-        value={activeTool}
-        onChange={(value) => onToolChange(value as 'select' | 'connect' | 'note')}
-        options={toolOptions}
-        ariaLabel="Board tools"
-        cx={cx}
-        fieldMode={fieldMode}
-      />
+      {/* Center: Tools with shortcuts */}
+      <div className="flex items-center gap-1">
+        {toolOptions.map((tool) => (
+          <button
+            key={tool.value}
+            onClick={() => onToolChange(tool.value as 'select' | 'connect' | 'note')}
+            className={`
+              flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all
+              ${activeTool === tool.value
+                ? fieldMode
+                  ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/50'
+                  : 'bg-amber-100 text-amber-700 ring-1 ring-amber-500/30'
+                : fieldMode
+                  ? 'text-stone-400 hover:bg-stone-800 hover:text-stone-200'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+              }
+            `}
+            title={`${tool.label} (${tool.shortcut})`}
+          >
+            <Icon name={tool.icon} className="text-lg" />
+            <span className="hidden md:inline">{tool.label}</span>
+            <span className={`text-xs opacity-60 hidden lg:inline ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`}>
+              {tool.shortcut}
+            </span>
+          </button>
+        ))}
+      </div>
 
       {/* Right: Actions */}
       <Toolbar>
@@ -133,7 +157,23 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           fieldMode={fieldMode}
         />
 
-        <div className={`w-px h-6 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+        {onDelete && (
+          <>
+            <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+            <IconButton
+              icon="delete"
+              ariaLabel="Delete selected"
+              title="Delete (Delete key)"
+              onClick={onDelete}
+              disabled={!hasSelection}
+              variant="ghost"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          </>
+        )}
+
+        <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
 
         <ActionButton
           label="Export"

@@ -132,24 +132,24 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
     <div
       className={`
         flex flex-col h-full border-r transition-colors
-        ${isFocused ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200 bg-white'}
+        ${isFocused ? 'border-blue-500/30 bg-blue-900/10' : 'border-slate-700 bg-slate-800'}
       `}
       onClick={onFocus}
     >
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-slate-200 bg-white">
+      <div className="flex-shrink-0 p-4 border-b border-slate-700 bg-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <h3 className="font-bold text-white flex items-center gap-2">
               <Icon name="source" className="text-blue-500" />
               Your Files
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5">
               Files from your selected folder
             </p>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-slate-800">{stats.totalManifests}</div>
+            <div className="text-lg font-bold text-white">{stats.totalManifests}</div>
             <div className="text-[10px] text-slate-400">{stats.totalFiles} files</div>
           </div>
         </div>
@@ -159,13 +159,13 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
           <div className="mb-3">
             <button
               onClick={() => setShowCheckpoints(!showCheckpoints)}
-              className="w-full p-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700 flex items-center justify-between hover:bg-amber-100 transition-colors"
+              className="w-full p-2 bg-amber-900/30 border border-amber-700/50 rounded-lg text-sm text-amber-400 flex items-center justify-between hover:bg-amber-900/50 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Icon name="history" className="text-amber-500" />
                 <span>{checkpoints.length} unfinished import{checkpoints.length !== 1 ? 's' : ''} available</span>
               </div>
-              <Icon name={showCheckpoints ? 'expand_less' : 'expand_more'} className="text-amber-500" />
+              <Icon name={showCheckpoints ? 'expand_less' : 'expand_more'} className="text-amber-400" />
             </button>
 
             {showCheckpoints && (
@@ -173,20 +173,20 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
                 {checkpoints.map(cp => (
                   <div
                     key={cp.id}
-                    className="p-3 bg-white border border-slate-200 rounded-lg"
+                    className="p-3 bg-slate-700 border border-slate-600 rounded-lg"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm text-slate-700 truncate">
+                      <span className="font-medium text-sm text-slate-200 truncate">
                         {cp.sourceName}
                       </span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full bg-${getCheckpointStatusColor(cp.status)}-100 text-${getCheckpointStatusColor(cp.status)}-700`}>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full bg-${getCheckpointStatusColor(cp.status)}-900/50 text-${getCheckpointStatusColor(cp.status)}-400`}>
                         {cp.status === 'in_progress' ? 'In Progress' : 'Paused'}
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-500 mb-2">
+                    <div className="text-[10px] text-slate-400 mb-2">
                       {formatCheckpointAge(cp.timestamp)} • {cp.processedFiles} of {cp.totalFiles} files processed
                     </div>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-2">
+                    <div className="w-full bg-slate-600 h-1.5 rounded-full overflow-hidden mb-2">
                       <div
                         className="bg-amber-500 h-full transition-all"
                         style={{ width: `${cp.progress}%` }}
@@ -212,34 +212,34 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={`Filter ${t('Manifest').toLowerCase()}s...`}
-            className="w-full pl-8 pr-3 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg outline-none focus:border-blue-400 focus:bg-white transition-colors"
+            className="w-full pl-8 pr-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg outline-none focus:border-blue-400 focus:bg-slate-600 text-white placeholder-slate-400 transition-colors"
           />
           <Icon name="search" className="absolute left-2.5 top-2.5 text-slate-400 text-sm" />
           {filterText && (
             <button
               onClick={() => setFilterText('')}
-              className="absolute right-2 top-2 p-0.5 rounded hover:bg-slate-200"
+              className="absolute right-2 top-2 p-0.5 rounded hover:bg-slate-600"
             >
-              <Icon name="close" className="text-sm text-slate-400" />
+              <Icon name="close" className="text-sm text-slate-500" />
             </button>
           )}
         </div>
 
         {/* Selection actions */}
         {selectedIds.length > 0 && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-            <span className="text-[11px] font-medium text-blue-600">
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700">
+            <span className="text-[11px] font-medium text-blue-400">
               {selectedIds.length} selected
             </span>
             <button
               onClick={onClearSelection}
-              className="text-[11px] text-slate-500 hover:text-slate-700 underline"
+              className="text-[11px] text-slate-400 hover:text-white underline"
             >
               Clear
             </button>
             <button
               onClick={onSelectAll}
-              className="text-[11px] text-slate-500 hover:text-slate-700 underline"
+              className="text-[11px] text-slate-400 hover:text-white underline"
             >
               Select All
             </button>
@@ -248,8 +248,8 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
 
         {/* Pattern detection summary */}
         {stats.patternsDetected > 0 && (
-          <div className="mt-3 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-700 flex items-center gap-2">
-            <Icon name="auto_awesome" className="text-emerald-500" />
+          <div className="mt-3 p-2 bg-emerald-900/20 border border-emerald-700/50 rounded-lg text-[11px] text-emerald-400 flex items-center gap-2">
+            <Icon name="auto_awesome" className="text-emerald-400" />
             {stats.patternsDetected} {t('Manifest').toLowerCase()}{stats.patternsDetected !== 1 ? 's' : ''} with detected sequence patterns
           </div>
         )}
@@ -262,10 +262,10 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
             {filterText ? (
               // Filter empty state
               <>
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Icon name="search_off" className="text-3xl text-slate-400" />
                 </div>
-                <p className="text-sm font-medium text-slate-700 mb-1">
+                <p className="text-sm font-medium text-slate-300 mb-1">
                   No {t('Manifest').toLowerCase()}s match your filter
                 </p>
                 <p className="text-xs text-slate-500">
@@ -275,28 +275,28 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
             ) : (
               // No files empty state
               <>
-                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Icon name="folder_open" className="text-3xl text-blue-400" />
                 </div>
-                <p className="text-sm font-medium text-slate-700 mb-1">
+                <p className="text-sm font-medium text-slate-300 mb-1">
                   No files found
                 </p>
                 <p className="text-xs text-slate-500 mb-4">
                   Start by adding files to organize your archive
                 </p>
-                <div className="bg-slate-50 rounded-lg p-3 text-left">
-                  <p className="text-[11px] font-medium text-slate-600 mb-2">Tips for getting started:</p>
-                  <ul className="text-[11px] text-slate-500 space-y-1">
+                <div className="bg-slate-700 rounded-lg p-3 text-left">
+                  <p className="text-[11px] font-medium text-slate-300 mb-2">Tips for getting started:</p>
+                  <ul className="text-[11px] text-slate-400 space-y-1">
                     <li className="flex items-start gap-1.5">
-                      <Icon name="check_circle" className="text-xs text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <Icon name="check_circle" className="text-xs text-emerald-400 mt-0.5 flex-shrink-0" />
                       <span>Drag and drop a folder of images</span>
                     </li>
                     <li className="flex items-start gap-1.5">
-                      <Icon name="check_circle" className="text-xs text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <Icon name="check_circle" className="text-xs text-emerald-400 mt-0.5 flex-shrink-0" />
                       <span>Use the "Add Files" button to browse</span>
                     </li>
                     <li className="flex items-start gap-1.5">
-                      <Icon name="check_circle" className="text-xs text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <Icon name="check_circle" className="text-xs text-emerald-400 mt-0.5 flex-shrink-0" />
                       <span>Files are automatically grouped into items</span>
                     </li>
                   </ul>
@@ -321,7 +321,7 @@ export const SourcePane: React.FC<SourcePaneProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 p-3 border-t border-slate-200 bg-slate-50 text-[10px] text-slate-500">
+      <div className="flex-shrink-0 p-3 border-t border-slate-700 bg-slate-800 text-[10px] text-slate-500">
         <div className="flex items-center justify-between">
           <span>
             Imported: {new Date(sourceManifests.createdAt).toLocaleString()}

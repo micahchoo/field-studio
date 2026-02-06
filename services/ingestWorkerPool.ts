@@ -282,6 +282,15 @@ export class IngestWorkerPool {
   /**
    * Flush pending writes to storage
    */
+  private quotaErrorHandler: (() => void) | null = null;
+
+  /**
+   * Set a callback for when quota is exceeded during ingest
+   */
+  setQuotaErrorHandler(handler: () => void): void {
+    this.quotaErrorHandler = handler;
+  }
+
   private async flushPendingWrites(): Promise<void> {
     if (this.pendingWrites.length === 0) return;
 
@@ -299,6 +308,16 @@ export class IngestWorkerPool {
             await storage.saveDerivative(assetId, 'thumb', thumbnailBlob);
           }
         } catch (error) {
+          // Check if this is a quota exceeded error
+          if (error instanceof DOMException && 
+              (error.name === 'QuotaExceededError' || error.message?.includes('quota'))) {
+            console.error('[IngestWorkerPool] Storage quota exceeded, pausing ingest');
+            // Put the write back in the queue to retry later
+            this.pendingWrites.unshift({ file, assetId, thumbnailBlob });
+            // Trigger the quota error handler
+            this.quotaErrorHandler?.();
+            return;
+          }
           console.error('[IngestWorkerPool] Failed to save asset:', assetId, error);
         }
       }));
@@ -624,12 +643,29 @@ export class IngestWorkerPool {
 // ============================================================================
 
 let ingestWorkerPool: IngestWorkerPool | null = null;
+let globalQuotaErrorHandler: (() => void) | null = null;
 
 export function getIngestWorkerPool(): IngestWorkerPool {
   if (!ingestWorkerPool) {
     ingestWorkerPool = new IngestWorkerPool();
+    // Set up global quota error handler if one was registered
+    if (globalQuotaErrorHandler) {
+      ingestWorkerPool.setQuotaErrorHandler(globalQuotaErrorHandler);
+    }
   }
   return ingestWorkerPool;
+}
+
+/**
+ * Set a global handler for quota exceeded errors during ingest.
+ * This should be called once at app initialization.
+ */
+export function setGlobalQuotaErrorHandler(handler: () => void): void {
+  globalQuotaErrorHandler = handler;
+  // If pool already exists, set handler immediately
+  if (ingestWorkerPool) {
+    ingestWorkerPool.setQuotaErrorHandler(handler);
+  }
 }
 
 export function resetIngestWorkerPool(): void {
