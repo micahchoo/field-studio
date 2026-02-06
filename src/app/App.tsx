@@ -595,7 +595,7 @@ const MainApp: React.FC = () => {
           resource={selectedItem}
           onUpdateResource={handleItemUpdate}
           settings={settings}
-          visible={showInspector && !!selectedId}
+          visible={showInspector && !!selectedId && !(currentMode === 'archive' && isCanvas(selectedItem))}
           isMobile={isMobile}
           onClose={() => { setShowInspector(false); setSelectedId(null); }}
           annotations={selectedItem && isCanvas(selectedItem)

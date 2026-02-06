@@ -5,6 +5,9 @@ import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { getFieldsByCategory, getVisibleFields, METADATA_TEMPLATES, MetadataComplexity } from '@/src/shared/constants';
 import { guidance } from '@/src/shared/services/guidanceService';
 
+// Admin mode key for localStorage
+const ADMIN_MODE_KEY = 'adminMode';
+
 interface PersonaSettingsProps {
   settings: AppSettings;
   onUpdate: (s: Partial<AppSettings>) => void;
@@ -12,6 +15,22 @@ interface PersonaSettingsProps {
 }
 
 export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUpdate, onClose }) => {
+  // Admin mode state
+  const [adminMode, setAdminMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(ADMIN_MODE_KEY) === 'true';
+    }
+    return false;
+  });
+
+  const toggleAdminMode = () => {
+    const newValue = !adminMode;
+    setAdminMode(newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ADMIN_MODE_KEY, newValue ? 'true' : 'false');
+    }
+  };
+
   // Escape key to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -201,6 +220,40 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                     </div>
                     <input type="checkbox" checked={settings.fieldMode} onChange={e => onUpdate({ fieldMode: e.target.checked })} className="rounded text-iiif-blue w-5 h-5"/>
                 </div>
+            </section>
+
+            <section className="pt-6 border-t border-slate-100 space-y-3">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Developer Tools</label>
+                <div className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${adminMode ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${adminMode ? 'bg-purple-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                            <Icon name="admin_panel_settings"/>
+                        </div>
+                        <div>
+                            <span className={`text-xs font-bold block ${adminMode ? 'text-purple-700' : 'text-slate-700'}`}>Admin Mode</span>
+                            <span className="text-[9px] text-slate-400 uppercase font-black">Access dependency explorer & tools</span>
+                        </div>
+                    </div>
+                    <input 
+                        type="checkbox" 
+                        checked={adminMode} 
+                        onChange={toggleAdminMode} 
+                        className="rounded text-purple-500 w-5 h-5"
+                    />
+                </div>
+                {adminMode && (
+                    <div className="p-3 bg-purple-50/50 rounded-lg border border-purple-100">
+                        <p className="text-[10px] text-purple-600 mb-2">
+                            Admin mode is enabled. You can now access:
+                        </p>
+                        <ul className="text-[10px] text-purple-600 space-y-1">
+                            <li className="flex items-center gap-1">
+                                <Icon name="account_tree" className="text-xs"/> 
+                                Dependency Explorer (Cmd+K → "Dependency Explorer")
+                            </li>
+                        </ul>
+                    </div>
+                )}
             </section>
 
             <HelpResetSection />

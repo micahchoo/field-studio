@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-06T07:20:08.051Z",
-  "totalFiles": 370,
+  "generatedAt": "2026-02-06T18:11:33.275Z",
+  "totalFiles": 373,
   "files": {
     "src/app/App.tsx": {
       "filePath": "src/app/App.tsx",
@@ -402,6 +402,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/app/providers",
+          "specifiers": [
+            "useAppMode"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/lib/hooks/useResponsive",
           "specifiers": [
             "useResponsive"
@@ -455,8 +466,76 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 32751,
-      "lines": 744
+      "size": 32242,
+      "lines": 743
+    },
+    "src/app/providers/AppModeProvider.tsx": {
+      "filePath": "src/app/providers/AppModeProvider.tsx",
+      "fileName": "AppModeProvider.tsx",
+      "directory": "src/app/providers",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "AppMode"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "AppModeState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AppModeActions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AppModeProviderProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AppModeProvider",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useAppModeState",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useAppModeActions",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useAppMode",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AppModeProvider",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/app/providers/index.tsx",
+        "src/app/providers/index.tsx"
+      ],
+      "size": 3723,
+      "lines": 125
     },
     "src/app/providers/ResourceContextProvider.tsx": {
       "filePath": "src/app/providers/ResourceContextProvider.tsx",
@@ -778,6 +857,17 @@
           "isInternalAlias": false
         },
         {
+          "source": "./AppModeProvider",
+          "specifiers": [
+            "AppModeProvider"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
           "source": "./useAppSettings",
           "specifiers": [
             "[re-export]:useAppSettings"
@@ -820,6 +910,19 @@
             "[re-export]:"
           ],
           "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AppModeProvider",
+          "specifiers": [
+            "[re-export]:useAppModeState",
+            "[re-export]:useAppModeActions",
+            "[re-export]:useAppMode"
+          ],
+          "isTypeImport": false,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -878,6 +981,21 @@
           "isTypeExport": true
         },
         {
+          "name": "useAppModeState",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useAppModeActions",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useAppMode",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
           "name": "AppProviders",
           "type": "default",
           "isTypeExport": false
@@ -886,14 +1004,16 @@
       "dependencies": [
         "src/app/providers/UserIntentProvider.tsx",
         "src/app/providers/ResourceContextProvider.tsx",
+        "src/app/providers/AppModeProvider.tsx",
         "src/app/providers/useAppSettings.ts",
         "src/app/providers/useAppSettings.ts",
         "src/app/providers/useTerminology.ts",
-        "src/app/providers/useTerminology.ts"
+        "src/app/providers/useTerminology.ts",
+        "src/app/providers/AppModeProvider.tsx"
       ],
       "dependents": [],
-      "size": 3258,
-      "lines": 100
+      "size": 3459,
+      "lines": 105
     },
     "src/app/providers/useAppSettings.ts": {
       "filePath": "src/app/providers/useAppSettings.ts",
@@ -1230,7 +1350,8 @@
             "IIIFItem",
             "IIIFCanvas",
             "IIIFManifest",
-            "IIIFCollection"
+            "IIIFCollection",
+            "AppSettings"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -1239,26 +1360,26 @@
           "isInternalAlias": true
         },
         {
-          "source": "../templates/BaseTemplate",
+          "source": "@/src/entities/manifest/model/validation/validator",
           "specifiers": [
-            "BaseTemplate"
+            "ValidationIssue"
           ],
-          "isTypeImport": false,
-          "isRelative": true,
+          "isTypeImport": true,
+          "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
-          "isInternalAlias": false
+          "isInternalAlias": true
         },
         {
-          "source": "../templates/FieldModeTemplate",
+          "source": "@/src/app/providers",
           "specifiers": [
-            "FieldModeTemplate"
+            "useAppMode"
           ],
           "isTypeImport": false,
-          "isRelative": true,
+          "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
-          "isInternalAlias": false
+          "isInternalAlias": true
         },
         {
           "source": "@/src/features/archive",
@@ -1286,17 +1407,6 @@
           "source": "@/src/features/metadata-edit",
           "specifiers": [
             "MetadataView"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "@/src/features/staging",
-          "specifiers": [
-            "StagingView"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -1388,15 +1498,12 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [
-        "src/app/templates/BaseTemplate.tsx",
-        "src/app/templates/FieldModeTemplate.tsx"
-      ],
+      "dependencies": [],
       "dependents": [
         "src/app/routes/index.ts"
       ],
-      "size": 12992,
-      "lines": 427
+      "size": 14129,
+      "lines": 400
     },
     "src/app/routes/index.ts": {
       "filePath": "src/app/routes/index.ts",
@@ -1473,10 +1580,9 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/app/routes/ViewRouter.tsx",
         "src/app/templates/index.ts"
       ],
-      "size": 3544,
+      "size": 3550,
       "lines": 113
     },
     "src/app/templates/FieldModeTemplate.tsx": {
@@ -1534,7 +1640,6 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/app/routes/ViewRouter.tsx",
         "src/app/templates/index.ts"
       ],
       "size": 2853,
@@ -8593,7 +8698,7 @@
         "src/features/dependency-explorer/index.ts",
         "src/features/dependency-explorer/ui/DependencyExplorer.tsx"
       ],
-      "size": 3589,
+      "size": 3602,
       "lines": 129
     },
     "src/features/dependency-explorer/types.ts": {
@@ -8638,6 +8743,7 @@
       "dependents": [
         "src/features/dependency-explorer/index.ts",
         "src/features/dependency-explorer/model/useDependencyData.ts",
+        "src/features/dependency-explorer/ui/ArchitecturePanel.tsx",
         "src/features/dependency-explorer/ui/CircularDepsPanel.tsx",
         "src/features/dependency-explorer/ui/DependencyExplorer.tsx",
         "src/features/dependency-explorer/ui/DependencyGraphView.tsx",
@@ -8645,8 +8751,65 @@
         "src/features/dependency-explorer/ui/OrphansPanel.tsx",
         "src/features/dependency-explorer/ui/StatsPanel.tsx"
       ],
-      "size": 1191,
+      "size": 1208,
       "lines": 52
+    },
+    "src/features/dependency-explorer/ui/ArchitecturePanel.tsx": {
+      "filePath": "src/features/dependency-explorer/ui/ArchitecturePanel.tsx",
+      "fileName": "ArchitecturePanel.tsx",
+      "directory": "src/features/dependency-explorer/ui",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "../types",
+          "specifiers": [
+            "DependencyGraph",
+            "FileAnalysis"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./CopyableSection",
+          "specifiers": [
+            "CopyableSection",
+            "formatLayersAsMarkdown",
+            "formatCrossLayerDepsAsMarkdown",
+            "formatHealthMetricsAsMarkdown",
+            "formatHotFilesAsMarkdown",
+            "formatHeavyFilesAsMarkdown"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ArchitecturePanel",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ArchitecturePanel",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/dependency-explorer/types.ts",
+        "src/features/dependency-explorer/ui/CopyableSection.tsx"
+      ],
+      "dependents": [
+        "src/features/dependency-explorer/ui/DependencyExplorer.tsx"
+      ],
+      "size": 15680,
+      "lines": 353
     },
     "src/features/dependency-explorer/ui/CircularDepsPanel.tsx": {
       "filePath": "src/features/dependency-explorer/ui/CircularDepsPanel.tsx",
@@ -8655,22 +8818,23 @@
       "extension": ".tsx",
       "imports": [
         {
-          "source": "react",
-          "specifiers": [
-            "default:React"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": true,
-          "isInternalAlias": false
-        },
-        {
           "source": "../types",
           "specifiers": [
             "FileAnalysis"
           ],
           "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./CopyableSection",
+          "specifiers": [
+            "CopyableSection",
+            "formatCircularDepsAsMarkdown"
+          ],
+          "isTypeImport": false,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -8690,13 +8854,94 @@
         }
       ],
       "dependencies": [
-        "src/features/dependency-explorer/types.ts"
+        "src/features/dependency-explorer/types.ts",
+        "src/features/dependency-explorer/ui/CopyableSection.tsx"
       ],
       "dependents": [
         "src/features/dependency-explorer/ui/DependencyExplorer.tsx"
       ],
-      "size": 3703,
-      "lines": 99
+      "size": 3545,
+      "lines": 92
+    },
+    "src/features/dependency-explorer/ui/CopyableSection.tsx": {
+      "filePath": "src/features/dependency-explorer/ui/CopyableSection.tsx",
+      "fileName": "CopyableSection.tsx",
+      "directory": "src/features/dependency-explorer/ui",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/ui/primitives",
+          "specifiers": [
+            "Button"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "CopyableSection",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatLayersAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatCrossLayerDepsAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatHealthMetricsAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatHotFilesAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatHeavyFilesAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatStatsAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatCircularDepsAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "formatOrphansAsMarkdown",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "CopyableSection",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/dependency-explorer/ui/ArchitecturePanel.tsx",
+        "src/features/dependency-explorer/ui/CircularDepsPanel.tsx",
+        "src/features/dependency-explorer/ui/OrphansPanel.tsx",
+        "src/features/dependency-explorer/ui/StatsPanel.tsx"
+      ],
+      "size": 6531,
+      "lines": 225
     },
     "src/features/dependency-explorer/ui/DependencyExplorer.tsx": {
       "filePath": "src/features/dependency-explorer/ui/DependencyExplorer.tsx",
@@ -8771,6 +9016,17 @@
           "isInternalAlias": false
         },
         {
+          "source": "./ArchitecturePanel",
+          "specifiers": [
+            "ArchitecturePanel"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
           "source": "../types",
           "specifiers": [
             "ViewMode",
@@ -8803,13 +9059,14 @@
         "src/features/dependency-explorer/ui/StatsPanel.tsx",
         "src/features/dependency-explorer/ui/CircularDepsPanel.tsx",
         "src/features/dependency-explorer/ui/OrphansPanel.tsx",
+        "src/features/dependency-explorer/ui/ArchitecturePanel.tsx",
         "src/features/dependency-explorer/types.ts"
       ],
       "dependents": [
         "src/features/dependency-explorer/index.ts"
       ],
-      "size": 17480,
-      "lines": 406
+      "size": 17680,
+      "lines": 410
     },
     "src/features/dependency-explorer/ui/DependencyGraphView.tsx": {
       "filePath": "src/features/dependency-explorer/ui/DependencyGraphView.tsx",
@@ -8908,22 +9165,23 @@
       "extension": ".tsx",
       "imports": [
         {
-          "source": "react",
-          "specifiers": [
-            "default:React"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": true,
-          "isInternalAlias": false
-        },
-        {
           "source": "../types",
           "specifiers": [
             "FileAnalysis"
           ],
           "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./CopyableSection",
+          "specifiers": [
+            "CopyableSection",
+            "formatOrphansAsMarkdown"
+          ],
+          "isTypeImport": false,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -8943,13 +9201,14 @@
         }
       ],
       "dependencies": [
-        "src/features/dependency-explorer/types.ts"
+        "src/features/dependency-explorer/types.ts",
+        "src/features/dependency-explorer/ui/CopyableSection.tsx"
       ],
       "dependents": [
         "src/features/dependency-explorer/ui/DependencyExplorer.tsx"
       ],
-      "size": 4379,
-      "lines": 114
+      "size": 4224,
+      "lines": 107
     },
     "src/features/dependency-explorer/ui/StatsPanel.tsx": {
       "filePath": "src/features/dependency-explorer/ui/StatsPanel.tsx",
@@ -8957,17 +9216,6 @@
       "directory": "src/features/dependency-explorer/ui",
       "extension": ".tsx",
       "imports": [
-        {
-          "source": "react",
-          "specifiers": [
-            "default:React"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": true,
-          "isInternalAlias": false
-        },
         {
           "source": "../types",
           "specifiers": [
@@ -8978,6 +9226,18 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./CopyableSection",
+          "specifiers": [
+            "CopyableSection",
+            "formatStatsAsMarkdown"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -8993,12 +9253,13 @@
         }
       ],
       "dependencies": [
-        "src/features/dependency-explorer/types.ts"
+        "src/features/dependency-explorer/types.ts",
+        "src/features/dependency-explorer/ui/CopyableSection.tsx"
       ],
       "dependents": [
         "src/features/dependency-explorer/ui/DependencyExplorer.tsx"
       ],
-      "size": 7630,
+      "size": 7727,
       "lines": 199
     },
     "src/features/export/model/archivalPackageService.ts": {
@@ -17635,8 +17896,8 @@
         "src/features/viewer/model/useMediaPlayer.ts"
       ],
       "dependents": [],
-      "size": 16082,
-      "lines": 519
+      "size": 17298,
+      "lines": 560
     },
     "src/features/viewer/model/useMediaPlayer.ts": {
       "filePath": "src/features/viewer/model/useMediaPlayer.ts",
@@ -21047,7 +21308,7 @@
         "src/features/viewer/ui/molecules/index.ts",
         "src/features/viewer/ui/molecules/index.ts"
       ],
-      "size": 4053,
+      "size": 4090,
       "lines": 149
     },
     "src/features/viewer/ui/molecules/ViewerEmptyState.tsx": {
@@ -25432,8 +25693,8 @@
         "src/shared/lib/hooks/index.ts",
         "src/shared/lib/hooks/index.ts"
       ],
-      "size": 1775,
-      "lines": 71
+      "size": 2849,
+      "lines": 101
     },
     "src/shared/lib/hooks/useStagingState.ts": {
       "filePath": "src/shared/lib/hooks/useStagingState.ts",
@@ -27675,7 +27936,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 22273,
+      "size": 22294,
       "lines": 719
     },
     "src/shared/ui/atoms/Icon.tsx": {
@@ -34210,6 +34471,18 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/app/providers",
+          "specifiers": [
+            "useAppMode",
+            "useAppModeState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "../types",
           "specifiers": [
             "[dynamic]"
@@ -34241,8 +34514,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 26101,
-      "lines": 584
+      "size": 26790,
+      "lines": 595
     },
     "src/widgets/OnboardingModal/ui/OnboardingModal.tsx": {
       "filePath": "src/widgets/OnboardingModal/ui/OnboardingModal.tsx",
@@ -34360,8 +34633,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 15441,
-      "lines": 283
+      "size": 18026,
+      "lines": 336
     },
     "src/widgets/QCDashboard/ui/QCDashboard.tsx": {
       "filePath": "src/widgets/QCDashboard/ui/QCDashboard.tsx",
@@ -34690,7 +34963,6 @@
     "@/src/features/metadata-edit/ui/organisms/MetadataEditorPanel",
     "@/src/features/search",
     "@/src/features/search/ui/organisms/SearchView",
-    "@/src/features/staging",
     "@/src/features/staging/ui/organisms/StagingWorkbench",
     "@/src/features/structure-view",
     "@/src/features/timeline",
@@ -34782,6 +35054,7 @@
     "@/src/widgets/StatusBar/ui/organisms/StatusBar",
     "@/src/widgets/StorageFullDialog/ui/StorageFullDialog",
     "@/types",
+    "@/ui/primitives",
     "@/ui/primitives/Button",
     "@/ui/primitives/Card",
     "@/ui/primitives/Input",
@@ -34874,13 +35147,13 @@
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx"
   ],
   "stats": {
-    "totalImports": 1472,
-    "totalExports": 2181,
-    "avgImportsPerFile": 3.9783783783783786,
+    "totalImports": 1480,
+    "totalExports": 2204,
+    "avgImportsPerFile": 3.967828418230563,
     "mostImported": [
       {
         "file": "src/features/dependency-explorer/types.ts",
-        "count": 8
+        "count": 9
       },
       {
         "file": "src/shared/config/tokens.ts",
@@ -34911,11 +35184,11 @@
         "count": 4
       },
       {
-        "file": "src/shared/lib/hooks/useViewport.ts",
+        "file": "src/features/dependency-explorer/ui/CopyableSection.tsx",
         "count": 4
       },
       {
-        "file": "src/shared/ui/molecules/ContextMenuItem.tsx",
+        "file": "src/shared/lib/hooks/useViewport.ts",
         "count": 4
       }
     ]

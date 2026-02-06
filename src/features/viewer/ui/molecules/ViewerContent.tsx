@@ -80,10 +80,10 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   // Image content with OpenSeadragon
   if (mediaType === 'image' && resolvedUrl) {
     return (
-      <div className="flex-1 relative bg-black overflow-hidden flex">
+      <div className="flex-1 relative bg-black overflow-hidden flex" style={{ height: '100%' }}>
         <div
           ref={osdContainerRef}
-          className="flex-1 w-full h-full"
+          className="absolute inset-0 w-full h-full"
           style={{ background: '#000' }}
         />
         {/* Annotation Overlay */}

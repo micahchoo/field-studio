@@ -2,8 +2,9 @@
  * Circular Dependencies Panel - Shows circular dependency chains
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { FileAnalysis } from '../types';
+import { CopyableSection, formatCircularDepsAsMarkdown } from './CopyableSection';
 
 interface CircularDepsPanelProps {
   circularDeps: string[][];
@@ -14,6 +15,8 @@ export const CircularDepsPanel: React.FC<CircularDepsPanelProps> = ({
   circularDeps,
   files,
 }) => {
+  const markdown = useMemo(() => formatCircularDepsAsMarkdown(circularDeps), [circularDeps]);
+
   if (circularDeps.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -33,18 +36,7 @@ export const CircularDepsPanel: React.FC<CircularDepsPanelProps> = ({
   return (
     <div className="h-full overflow-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="material-icons text-red-500 text-2xl">sync_problem</span>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-              Circular Dependencies
-            </h2>
-            <p className="text-sm text-slate-500">
-              Found {circularDeps.length} circular dependency chain(s) that should be refactored
-            </p>
-          </div>
-        </div>
-
+        <CopyableSection title={`Circular Dependencies (${circularDeps.length} found)`} getMarkdown={() => markdown}>
         <div className="space-y-4">
           {circularDeps.map((cycle, idx) => (
             <div
@@ -90,6 +82,7 @@ export const CircularDepsPanel: React.FC<CircularDepsPanelProps> = ({
             </div>
           ))}
         </div>
+        </CopyableSection>
       </div>
     </div>
   );

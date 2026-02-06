@@ -2,8 +2,9 @@
  * Orphans Panel - Shows files that aren't imported by any other file
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { FileAnalysis } from '../types';
+import { CopyableSection, formatOrphansAsMarkdown } from './CopyableSection';
 
 interface OrphansPanelProps {
   orphans: string[];
@@ -16,6 +17,8 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
   files,
   onSelectFile,
 }) => {
+  const markdown = useMemo(() => formatOrphansAsMarkdown(orphans, files), [orphans, files]);
+
   if (orphans.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -44,18 +47,7 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
   return (
     <div className="h-full overflow-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="material-icons text-yellow-500 text-2xl">link_off</span>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-              Unused Files (Orphans)
-            </h2>
-            <p className="text-sm text-slate-500">
-              Found {orphans.length} file(s) that aren't imported by any other file
-            </p>
-          </div>
-        </div>
-
+        <CopyableSection title={`Unused Files (Orphans) - ${orphans.length} found`} getMarkdown={() => markdown}>
         <div className="space-y-6">
           {Object.entries(grouped).map(([directory, dirFiles]) => (
             <div key={directory} className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -89,6 +81,7 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
             </div>
           ))}
         </div>
+        </CopyableSection>
 
         {/* Info Box */}
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">

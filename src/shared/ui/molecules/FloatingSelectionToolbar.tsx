@@ -272,7 +272,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
 
         {/* Action groups */}
         <div className="p-3">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col items-stretch gap-2">
             {/* Primary actions - always visible */}
             {actions
               .filter(a => a.variant === 'primary')
@@ -364,13 +364,14 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
             })}
 
             {/* Clear selection - always at end */}
-            <div className={`h-6 w-px mx-1 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+            <div className={`h-px w-full my-1 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
             <Button
               variant="ghost"
               size="sm"
               icon={<Icon name="close" className="text-sm" />}
               onClick={onClear}
               aria-label={`Clear selection of ${count} ${itemLabel}`}
+              className="w-full justify-center"
             >
               Clear
             </Button>

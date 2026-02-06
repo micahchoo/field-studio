@@ -2,321 +2,103 @@
  * ViewRouter
  *
  * Routes requests to feature views based on app mode.
- * Each route is wrapped with BaseTemplate and FieldModeTemplate.
- *
- * Usage:
- *   <ViewRouter
- *     currentMode="archive"
- *     selectedId={selectedId}
- *     root={root}
- *     onModeChange={setCurrentMode}
- *     onSelect={setSelectedId}
- *   />
+ * Renders view content only - no layout wrappers.
  *
  * Philosophy:
- * - Router knows about templates, not features directly
- * - Each route is wrapped with required context
- * - Incremental switchover: old components → new feature slices
+ * - Router ONLY handles view routing
+ * - Layout is handled at App.tsx level (single source of truth)
+ * - Views render content only, no headers/sidebars
  */
 
-import React, { useEffect } from 'react';
-import type { AppMode, IIIFItem, IIIFCanvas, IIIFManifest, IIIFCollection } from '@/src/shared/types';
-import { BaseTemplate } from '../templates/BaseTemplate';
-import { FieldModeTemplate } from '../templates/FieldModeTemplate';
+import React, { useMemo } from 'react';
+import type { AppMode, IIIFItem, IIIFCanvas, IIIFManifest, IIIFCollection, AppSettings } from '@/src/shared/types';
+import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
+import { useAppMode } from '@/src/app/providers';
 
-// NEW: Import feature slices (Phase 4)
+// Feature views
 import { ArchiveView } from '@/src/features/archive';
 import { BoardView } from '@/src/features/board-design';
 import { MetadataView } from '@/src/features/metadata-edit';
-import { StagingView } from '@/src/features/staging';
 import { SearchView } from '@/src/features/search';
 import { ViewerView } from '@/src/features/viewer';
 import { MapView } from '@/src/features/map';
-
-// NEW: Import timeline feature
 import { TimelineView } from '@/src/features/timeline';
-
-// NEW: Import structure view feature
 import { StructureTreeView } from '@/src/features/structure-view';
-
-// NEW: Import dependency explorer (admin-only)
 import { DependencyExplorer } from '@/src/features/dependency-explorer';
 
 export interface ViewRouterProps {
-  /** Current app mode (archive, boards, metadata, etc.) */
-  currentMode: AppMode;
-  /** Currently selected entity ID */
   selectedId: string | null;
-  /** IIIF tree root */
+  selectedItem?: IIIFItem | null;
   root: IIIFItem | null;
-  /** Show/hide sidebar */
-  showSidebar: boolean;
-  /** Callback when mode changes */
-  onModeChange: (mode: AppMode) => void;
-  /** Callback when selection changes */
-  onSelect: (id: string | null) => void;
-  /** Callback when sidebar toggle is clicked */
-  onSidebarToggle: () => void;
-  /** Optional sidebar content */
-  sidebarContent?: React.ReactNode;
-  /** Optional header content */
-  headerContent?: React.ReactNode;
+  onSelect?: (item: IIIFItem) => void;
+  onSelectId?: (id: string | null) => void;
+  validationIssuesMap?: Record<string, ValidationIssue[]>;
+  onUpdateRoot?: (newRoot: IIIFItem) => void;
+  onUpdateItem?: (updates: Partial<IIIFItem>) => void;
+  onBatchEdit?: (ids: string[]) => void;
+  onCatalogSelection?: (ids: string[]) => void;
+  settings?: AppSettings;
 }
 
-/**
- * Route dispatcher
- *
- * Maps app mode to appropriate view.
- * Wrapped with BaseTemplate for layout and FieldModeTemplate for context.
- *
- * During implementation, uses old components via OldViewRouter.
- * As features are implemented (Phase 4), routes are updated to use new feature slices.
- */
-export const ViewRouter: React.FC<ViewRouterProps> = ({
-  currentMode,
-  selectedId: _selectedId,
-  root,
-  showSidebar,
-  onModeChange,
-  onSelect,
-  onSidebarToggle,
-  sidebarContent,
-  headerContent
-}) => {
-  // Handle unknown mode fallback - useEffect to avoid setState during render
-  useEffect(() => {
-    const validModes: AppMode[] = ['archive', 'boards', 'metadata', 'collections', 'structure', 'search', 'viewer', 'trash', 'admin-deps'];
-    if (!validModes.includes(currentMode)) {
-      console.warn(`Unknown app mode: ${currentMode}, falling back to archive`);
-      onModeChange('archive');
+const findItemById = (node: any, id: string): any => {
+  if (node.id === id) return node;
+  if (node.items && Array.isArray(node.items)) {
+    for (const item of node.items) {
+      const found = findItemById(item, id);
+      if (found) return found;
     }
-  }, [currentMode, onModeChange]);
-  // Phase 4: Wire new feature slices incrementally
-  // Archive feature is now implemented - route to new ArchiveView
-  if (currentMode === 'archive') {
-    return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode, t, isAdvanced }) => (
-            <ArchiveView
-              root={root}
-              onSelect={(item) => onSelect(item.id)}
-              onOpen={(item) => {
-                // Open in viewer - could dispatch to change mode
-                onModeChange('viewer');
-                onSelect(item.id);
-              }}
-              onBatchEdit={(ids) => {
-                // Handle batch edit - could open batch editor
-                console.log('Batch edit:', ids);
-              }}
-              onUpdate={(newRoot) => {
-                // Handle root updates (e.g., after grouping)
-                console.log('Root updated:', newRoot);
-              }}
-              cx={cx}
-              fieldMode={fieldMode}
-              t={t}
-              isAdvanced={isAdvanced}
-              onSwitchView={onModeChange}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
-    );
   }
+  return null;
+};
 
-  // Phase 4b: Board Design feature - fully refactored organism
-  if (currentMode === 'boards') {
-    return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode, t, isAdvanced }) => (
-            <BoardView
-              root={root}
-              cx={cx}
-              fieldMode={fieldMode}
-              t={t}
-              isAdvanced={isAdvanced}
-              onExport={(state) => {
-                // Handle board export - could dispatch to export service
-                console.log('Board export:', state);
-              }}
-              onSwitchView={onModeChange}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
-    );
+const findFirstCanvas = (node: any): { canvas: IIIFCanvas | null; manifest: IIIFManifest | null } => {
+  if (node.type === 'Canvas') {
+    return { canvas: node as IIIFCanvas, manifest: null };
   }
-
-  // Phase 4c: Metadata Edit feature
-  if (currentMode === 'metadata') {
-    return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode }) => (
-            <MetadataView
-              root={root}
-              cx={cx}
-              fieldMode={fieldMode}
-              onUpdate={(newRoot) => {
-                // Handle metadata updates
-                console.log('Metadata updated:', newRoot);
-              }}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
-    );
+  if (node.items && Array.isArray(node.items)) {
+    for (const item of node.items) {
+      const result = findFirstCanvas(item);
+      if (result.canvas) {
+        if (node.type === 'Manifest') {
+          return { canvas: result.canvas, manifest: node as IIIFManifest };
+        }
+        return result;
+      }
+    }
   }
+  return { canvas: null, manifest: null };
+};
 
-  // Phase 4d: Staging feature
-  // NOTE: Staging/import functionality works via modal (StagingWorkbench)
-  // triggered by Import button in Sidebar. The modal-based flow is in App.tsx lines 558-569.
-  // Collections mode currently routes to archive view as placeholder.
-  // TODO: Implement full FSD-compliant staging workflow with proper state management
-  if (currentMode === 'collections') {
-    // Temporarily route to archive view since staging is modal-based
-    return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode, t, isAdvanced }) => (
-            <ArchiveView
-              root={root}
-              onSelect={(item) => onSelect(item.id)}
-              onOpen={(item) => {
-                onModeChange('viewer');
-                onSelect(item.id);
-              }}
-              onBatchEdit={(ids) => {
-                console.log('Batch edit:', ids);
-              }}
-              onUpdate={(newRoot) => {
-                console.log('Root updated:', newRoot);
-              }}
-              cx={cx}
-              fieldMode={fieldMode}
-              t={t}
-              isAdvanced={isAdvanced}
-              onSwitchView={onModeChange}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
-    );
-  }
+export const ViewRouter: React.FC<ViewRouterProps> = ({
+  selectedId,
+  selectedItem,
+  root,
+  onSelect,
+  onSelectId,
+  validationIssuesMap,
+  onUpdateRoot,
+  onBatchEdit,
+  onCatalogSelection,
+  settings,
+}) => {
+  const [currentMode, setCurrentMode] = useAppMode();
+  const viewerData = useMemo(() => {
+    if (!root) return { canvas: null, manifest: null };
 
-  // Phase 4g: Structure Tree View feature
-  if (currentMode === 'structure') {
-    return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx }) => (
-            <StructureTreeView
-              root={root}
-              selectedId={_selectedId}
-              onSelect={(id) => onSelect(id)}
-              onOpen={(item) => {
-                onSelect(item.id);
-                onModeChange('viewer');
-              }}
-              onUpdate={(newRoot) => {
-                console.log('Structure updated:', newRoot);
-              }}
-              className="h-full"
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
-    );
-  }
-
-  // Phase 4e: Search feature
-  if (currentMode === 'search') {
-    return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode, t }) => (
-            <SearchView
-              root={root}
-              onSelect={(id) => {
-                // Pipeline: Search result click -> Archive view with item selected
-                onSelect(id);
-                onModeChange('archive');
-              }}
-              onRevealMap={(id) => {
-                onSelect(id);
-                onModeChange('map');
-              }}
-              cx={cx}
-              fieldMode={fieldMode}
-              t={t}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
-    );
-  }
-
-  // Phase 4f: Viewer feature
-  // NOTE: This requires a selected canvas, falls back to archive if none selected
-  if (currentMode === 'viewer') {
-    // Find selected canvas and its parent manifest
     let selectedCanvas: IIIFCanvas | null = null;
     let parentManifest: IIIFManifest | null = null;
 
-    if (_selectedId && root) {
-      // Helper to find canvas in manifest
-      const findCanvasInManifest = (manifest: IIIFManifest, id: string): IIIFCanvas | null => {
-        if (manifest.items) {
-          return manifest.items.find((canvas) => canvas.id === id) || null;
-        }
-        return null;
-      };
-
-      // Check if root is a manifest
+    if (selectedId) {
       if (root.type === 'Manifest') {
         parentManifest = root as IIIFManifest;
-        selectedCanvas = findCanvasInManifest(parentManifest, _selectedId);
-      }
-      // Check if root is a collection
-      else if (root.type === 'Collection' && (root as IIIFCollection).items) {
-        for (const item of (root as IIIFCollection).items) {
+        selectedCanvas = findItemById(parentManifest, selectedId);
+        if (selectedCanvas?.type !== 'Canvas') selectedCanvas = null;
+      } else if (root.type === 'Collection') {
+        for (const item of (root as IIIFCollection).items || []) {
           if (item.type === 'Manifest') {
-            const canvas = findCanvasInManifest(item as IIIFManifest, _selectedId);
-            if (canvas) {
-              selectedCanvas = canvas;
+            const found = findItemById(item, selectedId);
+            if (found?.type === 'Canvas') {
+              selectedCanvas = found as IIIFCanvas;
               parentManifest = item as IIIFManifest;
               break;
             }
@@ -325,101 +107,292 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       }
     }
 
+    if (!selectedCanvas) {
+      const result = findFirstCanvas(root);
+      selectedCanvas = result.canvas;
+      parentManifest = result.manifest;
+    }
+
+    return { canvas: selectedCanvas, manifest: parentManifest };
+  }, [root, selectedId]);
+
+  // Archive view
+  if (currentMode === 'archive') {
+    const hasSelectedItem = !!selectedId && !!selectedItem;
+    const isCanvasSelected = selectedItem?.type === 'Canvas';
+
     return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode, t, isAdvanced }) => (
+      <div className="flex-1 flex min-h-0">
+        {/* Left: Archive Grid */}
+        <div className={`flex flex-col transition-all duration-300 ${hasSelectedItem ? 'w-80 border-r border-slate-200 dark:border-slate-800' : 'flex-1'}`}>
+          <ArchiveView
+            root={root}
+            onSelect={(item) => {
+              onSelect?.(item);
+              onSelectId?.(item.id);
+            }}
+            onOpen={(item) => {
+              onSelect?.(item);
+              onSelectId?.(item.id);
+              setCurrentMode('viewer');
+            }}
+            onBatchEdit={(ids) => onBatchEdit?.(ids)}
+            onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
+            cx={{
+              surface: 'bg-white dark:bg-slate-900',
+              text: 'text-slate-900 dark:text-slate-100',
+              accent: 'text-blue-600 dark:text-blue-400',
+              border: 'border-slate-200 dark:border-slate-700',
+              divider: 'border-slate-200 dark:border-slate-800',
+              headerBg: 'bg-white dark:bg-slate-900',
+              textMuted: 'text-slate-500 dark:text-slate-400',
+              input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
+              label: 'text-slate-700 dark:text-slate-300',
+              active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+              inactive: 'text-slate-600 dark:text-slate-400',
+              warningBg: 'bg-amber-50 dark:bg-amber-900/30',
+              pageBg: 'bg-slate-50 dark:bg-slate-950',
+            }}
+            fieldMode={settings?.fieldMode || false}
+            t={(key) => key}
+            isAdvanced={settings?.abstractionLevel === 'advanced'}
+            onSwitchView={setCurrentMode}
+            onCatalogSelection={onCatalogSelection}
+            validationIssues={validationIssuesMap}
+          />
+        </div>
+
+        {/* Right: Viewer Panel when canvas selected */}
+        {hasSelectedItem && isCanvasSelected && (
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-950">
             <ViewerView
-              item={selectedCanvas}
-              manifest={parentManifest}
-              onUpdate={(item) => {
-                console.log('Canvas updated:', item);
+              item={selectedItem as IIIFCanvas}
+              manifest={viewerData.manifest}
+              onUpdate={() => {}}
+              cx={{
+                surface: 'bg-slate-900',
+                text: 'text-white',
+                accent: 'text-blue-400',
+                border: 'border-slate-700',
+                divider: 'border-slate-800',
+                headerBg: 'bg-slate-900',
+                textMuted: 'text-slate-400',
+                input: 'bg-slate-800 border-slate-600',
+                label: 'text-slate-300',
+                active: 'bg-blue-900/30 text-blue-300',
+                inactive: 'text-slate-400',
+                warningBg: 'bg-amber-900/30',
+                pageBg: 'bg-slate-950',
               }}
-              cx={cx}
-              fieldMode={fieldMode}
-              t={t}
-              isAdvanced={isAdvanced}
+              fieldMode={settings?.fieldMode || false}
+              t={(key) => key}
+              isAdvanced={settings?.abstractionLevel === 'advanced'}
             />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
+          </div>
+        )}
+      </div>
     );
   }
 
-  // Phase 4g: Map feature
+  // Board view
+  if (currentMode === 'boards') {
+    return (
+      <BoardView
+        root={root}
+        cx={{
+          surface: 'bg-white dark:bg-slate-900',
+          text: 'text-slate-900 dark:text-slate-100',
+          accent: 'text-blue-600 dark:text-blue-400',
+          border: 'border-slate-200 dark:border-slate-700',
+          divider: 'border-slate-200 dark:border-slate-800',
+          headerBg: 'bg-white dark:bg-slate-900',
+          textMuted: 'text-slate-500 dark:text-slate-400',
+          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
+          label: 'text-slate-700 dark:text-slate-300',
+          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+          inactive: 'text-slate-600 dark:text-slate-400',
+          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
+          pageBg: 'bg-slate-50 dark:bg-slate-950',
+        }}
+        fieldMode={settings?.fieldMode || false}
+        t={(key) => key}
+        isAdvanced={settings?.abstractionLevel === 'advanced'}
+        onExport={() => {}}
+        onSwitchView={setCurrentMode}
+      />
+    );
+  }
+
+  // Metadata view
+  if (currentMode === 'metadata') {
+    return (
+      <MetadataView
+        root={root}
+        cx={{
+          surface: 'bg-white dark:bg-slate-900',
+          text: 'text-slate-900 dark:text-slate-100',
+          accent: 'text-blue-600 dark:text-blue-400',
+          border: 'border-slate-200 dark:border-slate-700',
+          divider: 'border-slate-200 dark:border-slate-800',
+          headerBg: 'bg-white dark:bg-slate-900',
+          textMuted: 'text-slate-500 dark:text-slate-400',
+          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
+          label: 'text-slate-700 dark:text-slate-300',
+          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+          inactive: 'text-slate-600 dark:text-slate-400',
+          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
+          pageBg: 'bg-slate-50 dark:bg-slate-950',
+        }}
+        fieldMode={settings?.fieldMode || false}
+        onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
+      />
+    );
+  }
+
+  // Structure view
+  if (currentMode === 'structure') {
+    return (
+      <StructureTreeView
+        root={root}
+        selectedId={selectedId}
+        onSelect={(id) => onSelectId?.(id)}
+        onOpen={(item) => {
+          onSelectId?.(item.id);
+          setCurrentMode('viewer');
+        }}
+        onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
+        className="h-full"
+      />
+    );
+  }
+
+  // Search view
+  if (currentMode === 'search') {
+    return (
+      <SearchView
+        root={root}
+        onSelect={(id) => {
+          onSelectId?.(id);
+          setCurrentMode('archive');
+        }}
+        onRevealMap={(id) => {
+          onSelectId?.(id);
+          setCurrentMode('map');
+        }}
+        cx={{
+          surface: 'bg-white dark:bg-slate-900',
+          text: 'text-slate-900 dark:text-slate-100',
+          accent: 'text-blue-600 dark:text-blue-400',
+          border: 'border-slate-200 dark:border-slate-700',
+          divider: 'border-slate-200 dark:border-slate-800',
+          headerBg: 'bg-white dark:bg-slate-900',
+          textMuted: 'text-slate-500 dark:text-slate-400',
+          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
+          label: 'text-slate-700 dark:text-slate-300',
+          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+          inactive: 'text-slate-600 dark:text-slate-400',
+          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
+          pageBg: 'bg-slate-50 dark:bg-slate-950',
+        }}
+        fieldMode={settings?.fieldMode || false}
+        t={(key) => key}
+      />
+    );
+  }
+
+  // Viewer view
+  if (currentMode === 'viewer') {
+    return (
+      <ViewerView
+        item={viewerData.canvas}
+        manifest={viewerData.manifest}
+        onUpdate={() => {}}
+        cx={{
+          surface: 'bg-slate-900',
+          text: 'text-white',
+          accent: 'text-blue-400',
+          border: 'border-slate-700',
+          divider: 'border-slate-800',
+          headerBg: 'bg-slate-900',
+          textMuted: 'text-slate-400',
+          input: 'bg-slate-800 border-slate-600',
+          label: 'text-slate-300',
+          active: 'bg-blue-900/30 text-blue-300',
+          inactive: 'text-slate-400',
+          warningBg: 'bg-amber-900/30',
+          pageBg: 'bg-slate-950',
+        }}
+        fieldMode={settings?.fieldMode || false}
+        t={(key) => key}
+        isAdvanced={settings?.abstractionLevel === 'advanced'}
+      />
+    );
+  }
+
+  // Map view
   if (currentMode === 'map') {
     return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode, t, isAdvanced }) => (
-            <MapView
-              root={root}
-              onSelect={(item) => onSelect(item.id)}
-              cx={cx}
-              fieldMode={fieldMode}
-              t={t}
-              isAdvanced={isAdvanced}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
+      <MapView
+        root={root}
+        onSelect={(item) => onSelectId?.(item.id)}
+        cx={{
+          surface: 'bg-white dark:bg-slate-900',
+          text: 'text-slate-900 dark:text-slate-100',
+          accent: 'text-blue-600 dark:text-blue-400',
+          border: 'border-slate-200 dark:border-slate-700',
+          divider: 'border-slate-200 dark:border-slate-800',
+          headerBg: 'bg-white dark:bg-slate-900',
+          textMuted: 'text-slate-500 dark:text-slate-400',
+          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
+          label: 'text-slate-700 dark:text-slate-300',
+          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+          inactive: 'text-slate-600 dark:text-slate-400',
+          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
+          pageBg: 'bg-slate-50 dark:bg-slate-950',
+        }}
+        fieldMode={settings?.fieldMode || false}
+        t={(key) => key}
+        isAdvanced={settings?.abstractionLevel === 'advanced'}
+      />
     );
   }
 
-  // Phase 4h: Timeline feature
+  // Timeline view
   if (currentMode === 'timeline') {
     return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx, fieldMode }) => (
-            <TimelineView
-              root={root}
-              onSelect={(item) => onSelect(item.id)}
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
+      <TimelineView
+        root={root}
+        onSelect={(item) => onSelectId?.(item.id)}
+        cx={{
+          surface: 'bg-white dark:bg-slate-900',
+          text: 'text-slate-900 dark:text-slate-100',
+          accent: 'text-blue-600 dark:text-blue-400',
+          border: 'border-slate-200 dark:border-slate-700',
+          divider: 'border-slate-200 dark:border-slate-800',
+          headerBg: 'bg-white dark:bg-slate-900',
+          textMuted: 'text-slate-500 dark:text-slate-400',
+          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
+          label: 'text-slate-700 dark:text-slate-300',
+          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+          inactive: 'text-slate-600 dark:text-slate-400',
+          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
+          pageBg: 'bg-slate-50 dark:bg-slate-950',
+        }}
+        fieldMode={settings?.fieldMode || false}
+      />
     );
   }
 
-  // Admin-only: Dependency Explorer
+  // Admin dependency explorer
   if (currentMode === 'admin-deps') {
     return (
-      <BaseTemplate
-        showSidebar={showSidebar}
-        onSidebarToggle={onSidebarToggle}
-        sidebarContent={sidebarContent}
-        headerContent={headerContent}
-      >
-        <FieldModeTemplate>
-          {({ cx }) => (
-            <div className={`h-full ${cx('bg-white', 'bg-black')}`}>
-              <DependencyExplorer />
-            </div>
-          )}
-        </FieldModeTemplate>
-      </BaseTemplate>
+      <div className="h-full bg-slate-50 dark:bg-slate-950 p-6">
+        <DependencyExplorer />
+      </div>
     );
   }
 
-  // Unknown mode - will be handled by useEffect above
+  // Default: archive
   return null;
 };
 

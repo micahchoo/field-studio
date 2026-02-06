@@ -12,6 +12,7 @@ import { FileDetailPanel } from './FileDetailPanel';
 import { StatsPanel } from './StatsPanel';
 import { CircularDepsPanel } from './CircularDepsPanel';
 import { OrphansPanel } from './OrphansPanel';
+import { ArchitecturePanel } from './ArchitecturePanel';
 import type { ViewMode, FilterType, FileAnalysis } from '../types';
 
 interface DependencyExplorerProps {
@@ -148,11 +149,12 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
         {/* View Mode Tabs */}
         <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-700 rounded-lg p-1">
           {[
-            { id: 'list', label: 'List', icon: 'list' },
-            { id: 'graph', label: 'Graph', icon: 'hub' },
-            { id: 'stats', label: 'Stats', icon: 'bar_chart' },
-            { id: 'circular', label: 'Circular', icon: 'sync_problem' },
-            { id: 'orphans', label: 'Orphans', icon: 'link_off' },
+        { id: 'list', label: 'List', icon: 'list' },
+          { id: 'graph', label: 'Graph', icon: 'hub' },
+          { id: 'architecture', label: 'Architecture', icon: 'architecture' },
+          { id: 'stats', label: 'Stats', icon: 'bar_chart' },
+          { id: 'circular', label: 'Circular', icon: 'sync_problem' },
+          { id: 'orphans', label: 'Orphans', icon: 'link_off' },
           ].map(({ id, label, icon }) => (
             <button
               key={id}
@@ -381,6 +383,8 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             onSelectFile={setSelectedFile}
           />
         )}
+
+        {viewMode === 'architecture' && <ArchitecturePanel data={data} />}
 
         {viewMode === 'stats' && <StatsPanel data={data} />}
 

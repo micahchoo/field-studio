@@ -1,4 +1,4 @@
-/**
+  /**
  * Viewer Feature Model
  *
  * Domain-specific state management for the IIIF viewer.
@@ -228,6 +228,16 @@ export const useViewer = (
       return;
     }
 
+    // Debug: Log canvas structure
+    console.log('[useViewer] Resolving image for canvas:', {
+      id: item.id,
+      hasItems: !!item.items,
+      itemsLength: item.items?.length,
+      firstPage: item.items?.[0],
+      firstAnnotation: item.items?.[0]?.items?.[0],
+      body: item.items?.[0]?.items?.[0]?.body
+    });
+
     // Use the comprehensive image source resolver from entity layer
     // This handles blob URLs, file refs, IIIF Image Services, and fallbacks
     try {
@@ -259,6 +269,7 @@ export const useViewer = (
   // Initialize/destroy OpenSeadragon
   useEffect(() => {
     let isActive = true;
+    let resizeObserver: ResizeObserver | null = null;
 
     // Debug logging
     console.log('[useViewer] OSD effect triggered:', { 
@@ -269,11 +280,15 @@ export const useViewer = (
       hasOpenSeadragon: typeof OpenSeadragon !== 'undefined'
     });
 
-    if (mediaType === 'image' && item && osdContainerRef.current && resolvedImageUrl) {
+    const initializeOSD = () => {
+      if (!isActive || !osdContainerRef.current || !resolvedImageUrl || mediaType !== 'image') {
+        return false;
+      }
+
       // Check if OpenSeadragon is available
       if (typeof OpenSeadragon === 'undefined') {
         console.error('[useViewer] OpenSeadragon is not loaded!');
-        return;
+        return false;
       }
 
       // Destroy existing viewer
@@ -315,62 +330,92 @@ export const useViewer = (
 
       console.log('[useViewer] Initializing OSD with tileSource:', tileSource);
 
-      if (isActive) {
-        try {
-          // Ensure container has dimensions
-          const container = osdContainerRef.current;
-          const rect = container.getBoundingClientRect();
-          if (rect.width === 0 || rect.height === 0) {
-            console.warn('[useViewer] OSD container has zero dimensions, delaying initialization');
-            return;
+      try {
+        // Ensure container has dimensions
+        const container = osdContainerRef.current;
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+          console.warn('[useViewer] OSD container has zero dimensions, will retry when resized');
+          return false;
+        }
+
+        viewerRef.current = OpenSeadragon({
+          element: container,
+          prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
+          tileSources: tileSource,
+          gestureSettingsMouse: { clickToZoom: false },
+          showNavigationControl: false,
+          blendTime: 0.1,
+          immediateRender: true,
+          imageLoaderLimit: 2,
+          maxImageCacheCount: 50,
+          debugMode: false,
+        });
+
+        console.log('[useViewer] OSD viewer initialized successfully');
+
+        // Track zoom level changes
+        viewerRef.current.addHandler('zoom', () => {
+          if (viewerRef.current && isMountedRef.current) {
+            const zoom = viewerRef.current.viewport.getZoom();
+            setZoomLevel(Math.round(zoom * 100));
           }
+        });
 
-          viewerRef.current = OpenSeadragon({
-            element: container,
-            prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
-            tileSources: tileSource,
-            gestureSettingsMouse: { clickToZoom: false },
-            showNavigationControl: false,
-            blendTime: 0.1,
-            immediateRender: true,
-            imageLoaderLimit: 2,
-            maxImageCacheCount: 50,
-            debugMode: false,
-          });
+        // Handle open events for debugging
+        viewerRef.current.addHandler('open', () => {
+          console.log('[useViewer] OSD image opened successfully');
+        });
 
-          console.log('[useViewer] OSD viewer initialized successfully');
+        viewerRef.current.addHandler('open-failed', (e: any) => {
+          console.error('[useViewer] OSD failed to open image:', e);
+        });
 
-          // Track zoom level changes
-          viewerRef.current.addHandler('zoom', () => {
-            if (viewerRef.current && isMountedRef.current) {
-              const zoom = viewerRef.current.viewport.getZoom();
-              setZoomLevel(Math.round(zoom * 100));
-            }
-          });
+        return true;
+      } catch (e) {
+        console.error('[useViewer] Error initializing OSD viewer:', e);
+        return false;
+      }
+    };
 
-          // Handle open events for debugging
-          viewerRef.current.addHandler('open', () => {
-            console.log('[useViewer] OSD image opened successfully');
-          });
+    // Try to initialize immediately
+    const initialized = initializeOSD();
 
-          viewerRef.current.addHandler('open-failed', (e: any) => {
-            console.error('[useViewer] OSD failed to open image:', e);
-          });
-        } catch (e) {
-          console.error('[useViewer] Error initializing OSD viewer:', e);
+    // If not initialized due to zero dimensions, watch for resize
+    if (!initialized && osdContainerRef.current && mediaType === 'image' && resolvedImageUrl) {
+      console.log('[useViewer] Setting up resize observer to retry initialization');
+      
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          if (width > 0 && height > 0 && !viewerRef.current) {
+            console.log('[useViewer] Container resized, retrying OSD initialization');
+            initializeOSD();
+          }
+        }
+      });
+      
+      resizeObserver.observe(osdContainerRef.current);
+    }
+
+    // Handle window resize for responsive viewer
+    const handleResize = () => {
+      if (viewerRef.current && viewerRef.current.viewport) {
+        try {
+          viewerRef.current.viewport.resize();
+        } catch (error) {
+          console.warn('[useViewer] Error during viewport resize:', error);
         }
       }
-    } else {
-      if (mediaType === 'image' && !resolvedImageUrl) {
-        console.warn('[useViewer] Cannot initialize OSD: no resolved image URL');
-      }
-      if (mediaType === 'image' && !osdContainerRef.current) {
-        console.warn('[useViewer] Cannot initialize OSD: container ref not ready');
-      }
-    }
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
       isActive = false;
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (viewerRef.current) {
         try {
           viewerRef.current.removeAllHandlers();

@@ -2,8 +2,9 @@
  * Stats Panel - Shows overall dependency statistics
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { DependencyGraph } from '../types';
+import { CopyableSection, formatStatsAsMarkdown } from './CopyableSection';
 
 interface StatsPanelProps {
   data: DependencyGraph;
@@ -12,14 +13,13 @@ interface StatsPanelProps {
 export const StatsPanel: React.FC<StatsPanelProps> = ({ data }) => {
   const { stats, externalDependencies, circularDependencies, orphans } = data;
 
+  const markdown = useMemo(() => formatStatsAsMarkdown(data), [data]);
+
   return (
     <div className="h-full overflow-auto p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Overview Cards */}
-        <section>
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-            Overview
-          </h2>
+        <CopyableSection title="Overview" getMarkdown={() => markdown}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard
               icon="description"
@@ -46,7 +46,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ data }) => {
               color="orange"
             />
           </div>
-        </section>
+        </CopyableSection>
 
         {/* Most Imported Files */}
         <section>

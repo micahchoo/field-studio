@@ -55,6 +55,7 @@ import { ToastProvider } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
 import { UserIntentProvider } from './UserIntentProvider';
 import { ResourceContextProvider } from './ResourceContextProvider';
+import { AppModeProvider } from './AppModeProvider';
 
 export interface AppProvidersProps {
   children: ReactNode;
@@ -72,7 +73,9 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => (
       <ErrorBoundary>
         <UserIntentProvider>
           <ResourceContextProvider>
-            {children}
+            <AppModeProvider>
+              {children}
+            </AppModeProvider>
           </ResourceContextProvider>
         </UserIntentProvider>
       </ErrorBoundary>
@@ -97,3 +100,5 @@ export type {
   UseTerminologyOptions,
   UseTerminologyReturn,
 } from './useTerminology';
+
+export { useAppModeState, useAppModeActions, useAppMode } from './AppModeProvider';

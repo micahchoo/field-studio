@@ -20,7 +20,7 @@ interface UseDependencyDataReturn {
   refresh: () => void;
 }
 
-const DATA_URL = '/dependencies.json';
+const DATA_URL = '/field-studio/dependencies.json';
 
 export function useDependencyData(options: UseDependencyDataOptions = {}): UseDependencyDataReturn {
   const { searchQuery = '', filterType = 'all', sortBy = 'name', sortOrder = 'asc' } = options;

@@ -47,5 +47,5 @@ export interface DependencyGraph {
   };
 }
 
-export type ViewMode = 'list' | 'graph' | 'stats' | 'circular' | 'orphans';
+export type ViewMode = 'list' | 'graph' | 'architecture' | 'stats' | 'circular' | 'orphans';
 export type FilterType = 'all' | 'components' | 'hooks' | 'utils' | 'services' | 'types';

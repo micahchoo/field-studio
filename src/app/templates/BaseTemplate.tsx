@@ -101,7 +101,7 @@ export const BaseTemplate: React.FC<BaseTemplateProps> = ({
         )}
 
         {/* Main content area */}
-        <main className="flex-1 overflow-y-auto" role="main">
+        <main className="flex-1 min-h-0 flex flex-col" role="main">
           {children}
         </main>
       </div>
