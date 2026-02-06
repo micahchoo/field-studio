@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { getIIIFValue, IIIFItem, isCollection, isManifest } from '@/src/shared/types';
-import { CanopyConfig, ExportOptions, exportService, ImageApiOptions, VirtualFile } from '@/src/shared/services/exportService';
-import { ArchivalPackageOptions, archivalPackageService } from '@/src/shared/services/archivalPackageService';
+import { CanopyConfig, ExportOptions, exportService, ImageApiOptions, VirtualFile } from '../model/exportService';
+import { ArchivalPackageOptions, archivalPackageService } from '../model/archivalPackageService';
 import { activityStream as activityStreamService } from '@/src/shared/services/activityStream';
-import { ValidationIssue, validator } from '@/src/shared/services/validator';
+import { ValidationIssue, validator } from '@/src/entities/manifest/model/validation/validator';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { ExportDryRun } from './ExportDryRun';
-import { FirstTimeHint } from './Tooltip';
+import { FirstTimeHint } from '@/src/shared/ui/molecules/Tooltip';
 import FileSaver from 'file-saver';
 import JSZip from 'jszip';
 
