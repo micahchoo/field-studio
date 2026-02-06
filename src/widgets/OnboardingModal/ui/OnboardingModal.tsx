@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { AbstractionLevel } from '@/src/shared/types';
-import { ExperienceSelector } from '../src/widgets/ExperienceSelector';
+import { ExperienceSelector } from '@/src/widgets/ExperienceSelector/ExperienceSelector';
 
 interface OnboardingModalProps {
   onComplete: (level: AbstractionLevel) => void;
