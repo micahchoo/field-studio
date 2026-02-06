@@ -10,8 +10,8 @@
 
 import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
-import { LunrDocument, searchService } from './searchService';
-import { DEFAULT_SEARCH_CONFIG, fieldRegistry } from './fieldRegistry';
+import { LunrDocument, searchService } from '@/src/shared/services/searchService';
+import { DEFAULT_SEARCH_CONFIG, fieldRegistry } from '@/src/shared/services/fieldRegistry';
 import {
   createImageServiceReference,
   generateInfoJson,

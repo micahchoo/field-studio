@@ -32,6 +32,7 @@ export {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IIIFAnnotation, IIIFCanvas, IIIFManifest } from '@/src/shared/types';
 import { contentSearchService } from '@/src/entities/annotation/model/contentSearchService';
+import { resolveImageSource } from '@/src/entities/canvas/model/imageSourceResolver';
 
 declare const OpenSeadragon: any;
 
@@ -96,10 +97,16 @@ export interface UseViewerReturn extends ViewerState {
 // Helper Functions
 // ============================================================================
 
-const detectMediaType = (mimeType: string): MediaType => {
-  if (mimeType.startsWith('video/')) return 'video';
-  if (mimeType.startsWith('audio/')) return 'audio';
-  if (mimeType.startsWith('image/')) return 'image';
+const detectMediaType = (mimeTypeOrType: string): MediaType => {
+  // First check if it's a IIIF type (e.g., "Image", "Video", "Sound")
+  if (mimeTypeOrType === 'Image') return 'image';
+  if (mimeTypeOrType === 'Video') return 'video';
+  if (mimeTypeOrType === 'Sound' || mimeTypeOrType === 'Audio') return 'audio';
+
+  // Then check MIME types
+  if (mimeTypeOrType.startsWith('video/')) return 'video';
+  if (mimeTypeOrType.startsWith('audio/')) return 'audio';
+  if (mimeTypeOrType.startsWith('image/')) return 'image';
   return 'other';
 };
 
@@ -199,13 +206,16 @@ export const useViewer = (
     }
 
     const paintingBody = item.items?.[0]?.items?.[0]?.body as any;
-    const mimeType = paintingBody?.format || '';
-    
-    setMediaType(detectMediaType(mimeType));
+
+    // Try IIIF type first (e.g., "Image", "Video", "Sound")
+    // Then fall back to MIME type format (e.g., "image/jpeg", "video/mp4")
+    const typeHint = paintingBody?.type || paintingBody?.format || '';
+
+    setMediaType(detectMediaType(typeHint));
     setAnnotations(extractAnnotations(item));
   }, [item?.id]);
 
-  // Resolve image URL
+  // Resolve image URL using entity-layer resolver
   useEffect(() => {
     // Cleanup previous object URL
     if (objectUrlRef.current) {
@@ -218,29 +228,33 @@ export const useViewer = (
       return;
     }
 
-    // Check for blob URL
-    if (item._blobUrl) {
-      setResolvedImageUrl(item._blobUrl);
-      return;
-    }
+    // Use the comprehensive image source resolver from entity layer
+    // This handles blob URLs, file refs, IIIF Image Services, and fallbacks
+    try {
+      const resolved = resolveImageSource(item);
 
-    // Check for file ref (create object URL)
-    if (item._fileRef && item._fileRef instanceof Blob) {
-      try {
-        const url = URL.createObjectURL(item._fileRef);
-        objectUrlRef.current = url;
-        setResolvedImageUrl(url);
-      } catch (e) {
-        console.error('Failed to create object URL', e);
-        setResolvedImageUrl(null);
+      // If resolved is a blob URL that we created, track it for cleanup
+      if (resolved && resolved.url && resolved.url.startsWith('blob:')) {
+        objectUrlRef.current = resolved.url;
       }
-      return;
-    }
 
-    // Use painting body ID
-    const paintingBody = item.items?.[0]?.items?.[0]?.body as any;
-    setResolvedImageUrl(paintingBody?.id || null);
-  }, [item]);
+      setResolvedImageUrl(resolved?.url || null);
+
+      if (resolved?.url) {
+        console.log('[useViewer] Image resolved:', {
+          type: resolved.type,
+          url: resolved.url,
+          hasService: !!resolved.serviceId,
+          profile: resolved.profile
+        });
+      } else {
+        console.warn('[useViewer] Could not resolve image URL for canvas:', item.id);
+      }
+    } catch (e) {
+      console.error('[useViewer] Error resolving image source:', e);
+      setResolvedImageUrl(null);
+    }
+  }, [item?.id]);
 
   // Initialize/destroy OpenSeadragon
   useEffect(() => {
@@ -273,12 +287,31 @@ export const useViewer = (
         viewerRef.current = null;
       }
 
-      const paintingBody = item.items?.[0]?.items?.[0]?.body as any;
-      const serviceId = paintingBody?.service?.[0]?.id;
-      
-      const tileSource = serviceId 
-        ? `${serviceId}/info.json`
-        : { type: 'image', url: resolvedImageUrl };
+      // Get detailed image source info to check for IIIF Image Service
+      let tileSource: any;
+      try {
+        const resolved = resolveImageSource(item);
+        const paintingBody = item.items?.[0]?.items?.[0]?.body as any;
+
+        // Prefer IIIF Image Service if available and properly resolved
+        if (resolved?.serviceId && resolved?.profile) {
+          // OpenSeadragon expects IIIF Image API endpoint
+          tileSource = `${resolved.serviceId}/info.json`;
+          console.log('[useViewer] Using IIIF Image Service:', tileSource);
+        } else if (paintingBody?.service?.[0]?.id) {
+          // Fallback: use service from body if resolver didn't extract it
+          tileSource = `${paintingBody.service[0].id}/info.json`;
+          console.log('[useViewer] Using painting body service:', tileSource);
+        } else {
+          // No IIIF service, use direct image URL
+          tileSource = { type: 'image', url: resolvedImageUrl };
+          console.log('[useViewer] Using direct image URL:', resolvedImageUrl);
+        }
+      } catch (e) {
+        // Fallback if resolver fails
+        tileSource = { type: 'image', url: resolvedImageUrl };
+        console.error('[useViewer] Error detecting IIIF service, using direct URL:', e);
+      }
 
       console.log('[useViewer] Initializing OSD with tileSource:', tileSource);
 

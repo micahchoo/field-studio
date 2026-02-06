@@ -226,6 +226,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
 
   // Handle manifest drag start
   const handleManifestDragStart = useCallback((e: React.DragEvent, manifestIds: string[]) => {
+    if (!e.dataTransfer) return;
     e.dataTransfer.setData('application/iiif-manifest-ids', JSON.stringify(manifestIds));
     e.dataTransfer.effectAllowed = 'copyMove';
   }, []);

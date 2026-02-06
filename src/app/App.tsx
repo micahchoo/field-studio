@@ -194,6 +194,8 @@ const MainApp: React.FC = () => {
     { id: 'fieldmode', label: 'Toggle Field Mode', icon: 'contrast', onExecute: toggleFieldMode, section: 'View' as const, description: 'Toggle high-contrast field mode' },
     { id: 'sidebar', label: 'Toggle Sidebar', icon: 'side_navigation', onExecute: () => setShowSidebar(s => !s), section: 'View' as const, description: 'Show or hide the sidebar' },
     { id: 'inspector', label: 'Toggle Inspector', icon: 'info', onExecute: () => setShowInspector(s => !s), section: 'View' as const, description: 'Show or hide the inspector panel' },
+    // Admin-only commands
+    { id: 'deps', label: 'Dependency Explorer (Admin)', icon: 'account_tree', onExecute: () => setCurrentMode('admin-deps'), section: 'Admin' as const, description: 'View code dependencies and imports/exports (requires ?admin=true)' },
   ], [exportDialog.open, externalImport.open, personaSettings.open, qcDashboard.open, toggleFieldMode]);
 
   // ============================================================================
@@ -277,12 +279,37 @@ const MainApp: React.FC = () => {
 
   // Auto-save interval
   useEffect(() => {
-    const interval = setInterval(() => {
+    let consecutiveFailures = 0;
+    const maxFailures = 3;
+
+    const interval = setInterval(async () => {
       if (rootId && saveStatus === 'saved') {
-        const currentRoot = exportRoot();
-        if (currentRoot) storage.saveProject(currentRoot);
+        try {
+          // Check storage quota before attempting save
+          const quotaCheck = await storage.isStorageCriticallyFull();
+          if (quotaCheck.full) {
+            // Skip auto-save if storage is critically full
+            console.warn('[App] Auto-save skipped: Storage critically full', quotaCheck.usagePercent);
+            return;
+          }
+
+          const currentRoot = exportRoot();
+          if (currentRoot) {
+            await storage.saveProject(currentRoot);
+            consecutiveFailures = 0; // Reset on success
+          }
+        } catch (error) {
+          consecutiveFailures++;
+          console.warn(`[App] Auto-save failed (${consecutiveFailures}/${maxFailures}):`, error);
+
+          // Stop auto-save after too many failures to prevent spam
+          if (consecutiveFailures >= maxFailures) {
+            console.error('[App] Auto-save disabled after repeated failures');
+          }
+        }
       }
     }, settings.autoSaveInterval * 1000);
+
     return () => clearInterval(interval);
   }, [rootId, exportRoot, settings.autoSaveInterval, saveStatus]);
 
@@ -305,7 +332,13 @@ const MainApp: React.FC = () => {
     setSaveStatus('saving');
     storage.saveProject(newRoot)
       .then(() => { setSaveStatus('saved'); checkStorage(); })
-      .catch(() => { setSaveStatus('error'); showToast("Failed to save project!", 'error'); });
+      .catch((error) => {
+        setSaveStatus('error');
+        const msg = error instanceof DOMException && error.name === 'ReadOnlyError'
+          ? 'Storage is full - database is read-only. Export your archive immediately.'
+          : 'Failed to save project!';
+        showToast(msg, 'error');
+      });
   }, [loadRoot, showToast]);
 
   const findItem = useCallback((node: IIIFItem | null, id: string): IIIFItem | null => {
@@ -328,7 +361,13 @@ const MainApp: React.FC = () => {
       if (updatedRoot) {
         storage.saveProject(updatedRoot)
           .then(() => { setSaveStatus('saved'); checkStorage(); })
-          .catch(() => { setSaveStatus('error'); showToast("Failed to save project!", 'error'); });
+          .catch((error) => {
+            setSaveStatus('error');
+            const msg = error instanceof DOMException && error.name === 'ReadOnlyError'
+              ? 'Storage is full - database is read-only. Export your archive immediately.'
+              : 'Failed to save project!';
+            showToast(msg, 'error');
+          });
       }
     }
   }, [selectedId, dispatch, exportRoot, showToast]);
@@ -438,7 +477,13 @@ const MainApp: React.FC = () => {
       if (updatedRoot) {
         storage.saveProject(updatedRoot)
           .then(() => { setSaveStatus('saved'); checkStorage(); })
-          .catch(() => { setSaveStatus('error'); showToast("Failed to save project!", 'error'); });
+          .catch((error) => {
+            setSaveStatus('error');
+            const msg = error instanceof DOMException && error.name === 'ReadOnlyError'
+              ? 'Storage is full - database is read-only. Export your archive immediately.'
+              : 'Failed to save project!';
+            showToast(msg, 'error');
+          });
       }
     }
   }, [root, findItem, batchUpdate, exportRoot, showToast]);

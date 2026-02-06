@@ -40,8 +40,9 @@ import {
   getParentId,
   NormalizedState,
 } from '@/src/shared/services/vault';
-import { ValidationIssue } from '@/src/shared/services/validator';
-import { BreadcrumbSegment } from './useBreadcrumbPath';
+import { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
+
+// BreadcrumbSegment type defined inline below (used only in this file)
 
 // ============================================================================
 // Types
@@ -57,6 +58,16 @@ export type NormalizedEntity =
   | IIIFRange
   | IIIFAnnotationPage
   | IIIFAnnotation;
+
+/**
+ * Breadcrumb segment for displaying navigation path
+ */
+export interface BreadcrumbSegment {
+  id: string;
+  label: string;
+  type: 'Collection' | 'Manifest' | 'Canvas';
+  isCurrent: boolean;
+}
 
 /**
  * Tree node structure for hierarchical views

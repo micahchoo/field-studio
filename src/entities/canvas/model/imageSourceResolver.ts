@@ -39,7 +39,7 @@ import type {
   IIIFExternalWebResource,
   IIIFItem
 } from '@/src/shared/types';
-import type { ImageApiProfile, ImageServiceInfo } from '../utils/iiifImageApi';
+import type { ImageApiProfile, ImageServiceInfo } from '@/utils/iiifImageApi';
 
 // ============================================================================
 // Feature Flag Check

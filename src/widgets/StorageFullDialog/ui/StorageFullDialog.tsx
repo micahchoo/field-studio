@@ -31,6 +31,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 }) => {
   const [stats, setStats] = useState<StorageStats | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isClearingDerivatives, setIsClearingDerivatives] = useState(false);
   const [cleared, setCleared] = useState(false);
 
   useEffect(() => {
@@ -61,6 +62,22 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const handleClearDerivatives = async () => {
+    setIsClearingDerivatives(true);
+    try {
+      const count = await storage.clearDerivatives();
+      // Reload stats to show updated storage
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await loadStats();
+      alert(`Cleared ${count} thumbnail images. Storage should now have more space.`);
+    } catch (e) {
+      console.error('Failed to clear derivatives:', e);
+      alert('Failed to clear derivatives. Try the full clear option instead.');
+    } finally {
+      setIsClearingDerivatives(false);
+    }
+  };
+
   const handleClearStorage = async () => {
     if (!confirm('This will delete ALL imported files and derivatives. Your project structure will be preserved. Continue?')) {
       return;
@@ -74,7 +91,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
       await db.clear('derivatives');
       await db.clear('tiles');
       await db.clear('tileManifests');
-      
+
       setCleared(true);
       setTimeout(() => {
         window.location.reload();
@@ -171,6 +188,24 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
                 >
                   <Icon name="download" />
                   Export Archive to File
+                </button>
+
+                <button
+                  onClick={handleClearDerivatives}
+                  disabled={isClearingDerivatives}
+                  className="w-full py-3 px-4 bg-amber-700 hover:bg-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {isClearingDerivatives ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Clearing Thumbnails...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="image_not_supported" />
+                      Clear Thumbnails (Free Space)
+                    </>
+                  )}
                 </button>
 
                 <button

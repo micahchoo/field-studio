@@ -1,5 +1,5 @@
 
-export type AppMode = 'archive' | 'collections' | 'structure' | 'boards' | 'search' | 'viewer' | 'metadata' | 'trash';
+export type AppMode = 'archive' | 'collections' | 'structure' | 'boards' | 'search' | 'viewer' | 'metadata' | 'trash' | 'admin-deps';
 export type ViewType = 'files' | 'iiif';
 export type IIIFMotivation = 'painting' | 'supplementing' | 'commenting' | 'tagging' | 'linking' | 'identifying' | 'describing' | 'contentState' | string;
 export type ConnectionType = 'depicts' | 'transcribes' | 'relatesTo' | 'contradicts' | 'precedes';

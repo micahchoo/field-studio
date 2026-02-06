@@ -15,7 +15,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { contentStateService, ViewportState } from '@/src/shared/services/contentState';
-import { useToast } from './Toast';
+import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { COLORS, PATTERNS, SPACING, TOUCH_TARGETS } from '@/src/shared/config/design-tokens';
 

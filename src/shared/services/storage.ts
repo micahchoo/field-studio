@@ -262,7 +262,19 @@ class StorageService {
   async saveProject(root: IIIFItem): Promise<void> {
     return this.saveWithQuotaCheck('save project', async () => {
       const db = await this.getDB();
-      await db.put(PROJECT_STORE, root, 'root');
+      try {
+        await db.put(PROJECT_STORE, root, 'root');
+      } catch (error) {
+        // Handle read-only mode error
+        if (error instanceof DOMException && error.name === 'ReadOnlyError') {
+          this._warningCallback?.({
+            type: 'save_failed',
+            message: 'Database is in read-only mode. Storage quota may be exceeded. Export your data immediately to prevent loss.',
+            usagePercent: 1
+          });
+        }
+        throw error;
+      }
     });
   }
 
@@ -274,6 +286,15 @@ class StorageService {
         console.error("Failed to load project from IDB", e);
         return undefined;
     }
+  }
+
+  async clearDerivatives(): Promise<number> {
+    const db = await this.getDB();
+    const allKeys = await db.getAllKeys(DERIVATIVES_STORE);
+    for (const key of allKeys) {
+      await db.delete(DERIVATIVES_STORE, key);
+    }
+    return allKeys.length;
   }
 
   async clear(): Promise<void> {

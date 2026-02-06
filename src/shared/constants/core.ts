@@ -64,17 +64,22 @@ export const DEFAULTS = {
     thumbnailHeight: 250,
     maxFileSize: 100 * 1024 * 1024, // 100MB
   },
-  
+
   MAP_CONFIG: {
     tileLayer: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap contributors',
     defaultZoom: 2,
     defaultCenter: [20, 0] as [number, number]
   },
-  
+
   ZOOM_CONFIG: {
     min: 0.1,
     max: 5,
     step: 0.1
   }
 } as const;
+
+// Export individual defaults for use in AppSettings
+export const DEFAULT_INGEST_PREFS = DEFAULTS.INGEST_PREFS;
+export const DEFAULT_MAP_CONFIG = DEFAULTS.MAP_CONFIG;
+export const DEFAULT_ZOOM_CONFIG = DEFAULTS.ZOOM_CONFIG;

@@ -1,7 +1,8 @@
 import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { ValidationIssue } from './validator';
-import { createLanguageMap, findNodeById, generateValidUri } from '@/utils';
-import { DEFAULT_INGEST_PREFS, IIIF_SPEC } from '@/src/shared/constants';
+import { createLanguageMap, findNodeById, generateValidUri, generateUUID, normalizeUri } from '@/utils';
+import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants/core';
+import { IIIF_SPEC } from '@/src/shared/constants/iiif';
 import {
   COMMON_RIGHTS_URIS,
   getMinimumTemplate,
@@ -335,8 +336,9 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // ID must be HTTP(S) URI
   if (msg.includes('id must be a valid http') || (msg.includes('http') && msg.includes('uri'))) {
     if (!healed.id || !healed.id.startsWith('http')) {
-      const suffix = healed.id || generateValidUri('Resource').split('/').pop();
-      healed.id = generateValidUri(healed.type || 'Resource', encodeURIComponent(suffix || 'item'));
+      const baseUri = normalizeUri(healed.type || 'Resource');
+      const suffix = healed.id ? healed.id.split('/').pop() || generateUUID() : generateUUID();
+      healed.id = `${baseUri}/${encodeURIComponent(suffix)}`;
     }
     return { success: true, updatedItem: healed, message: 'Converted ID to valid HTTP URI' };
   }

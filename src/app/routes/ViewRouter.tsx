@@ -20,7 +20,7 @@
  */
 
 import React, { useEffect } from 'react';
-import type { AppMode, IIIFItem } from '@/src/shared/types';
+import type { AppMode, IIIFItem, IIIFCanvas, IIIFManifest, IIIFCollection } from '@/src/shared/types';
 import { BaseTemplate } from '../templates/BaseTemplate';
 import { FieldModeTemplate } from '../templates/FieldModeTemplate';
 
@@ -38,6 +38,9 @@ import { TimelineView } from '@/src/features/timeline';
 
 // NEW: Import structure view feature
 import { StructureTreeView } from '@/src/features/structure-view';
+
+// NEW: Import dependency explorer (admin-only)
+import { DependencyExplorer } from '@/src/features/dependency-explorer';
 
 export interface ViewRouterProps {
   /** Current app mode (archive, boards, metadata, etc.) */
@@ -82,7 +85,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
 }) => {
   // Handle unknown mode fallback - useEffect to avoid setState during render
   useEffect(() => {
-    const validModes: AppMode[] = ['archive', 'boards', 'metadata', 'collections', 'structure', 'search', 'viewer', 'trash'];
+    const validModes: AppMode[] = ['archive', 'boards', 'metadata', 'collections', 'structure', 'search', 'viewer', 'trash', 'admin-deps'];
     if (!validModes.includes(currentMode)) {
       console.warn(`Unknown app mode: ${currentMode}, falling back to archive`);
       onModeChange('archive');
@@ -390,6 +393,26 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               cx={cx}
               fieldMode={fieldMode}
             />
+          )}
+        </FieldModeTemplate>
+      </BaseTemplate>
+    );
+  }
+
+  // Admin-only: Dependency Explorer
+  if (currentMode === 'admin-deps') {
+    return (
+      <BaseTemplate
+        showSidebar={showSidebar}
+        onSidebarToggle={onSidebarToggle}
+        sidebarContent={sidebarContent}
+        headerContent={headerContent}
+      >
+        <FieldModeTemplate>
+          {({ cx }) => (
+            <div className={`h-full ${cx('bg-white', 'bg-black')}`}>
+              <DependencyExplorer />
+            </div>
           )}
         </FieldModeTemplate>
       </BaseTemplate>

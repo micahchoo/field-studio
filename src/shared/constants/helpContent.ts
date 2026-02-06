@@ -59,6 +59,14 @@ export const QUICK_REF_METADATA: QuickRefItem[] = [
   { icon: 'download', label: 'Export CSV', description: 'Export metadata as spreadsheet' },
 ];
 
+export const QUICK_REF_STAGING: QuickRefItem[] = [
+  { icon: 'upload', label: 'Ingest', description: 'Add new items to staging area' },
+  { icon: 'edit', label: 'Edit', description: 'Edit staging item details' },
+  { icon: 'publish', label: 'Publish', description: 'Move items to archive' },
+  { icon: 'delete', label: 'Delete', shortcut: 'Del', description: 'Remove from staging' },
+  { icon: 'undo', label: 'Undo', shortcut: 'Cmd+Z', description: 'Undo last action' },
+];
+
 // ============================================================================
 // Tooltip Content (field-level help)
 // ============================================================================

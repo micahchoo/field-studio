@@ -11,7 +11,10 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "analyze": "tsx scripts/analyze-imports.ts",
+    "analyze:watch": "tsx scripts/analyze-imports.ts --watch",
+    "postinstall": "node -e \"if(process.env.NODE_ENV!=='production'){const fs=require('fs');const hook='#!/bin/sh\\n# Post-commit hook - Updates dependency graph after each commit\\necho \\\"🔍 Updating dependency graph...\\\"\\nunset LD_LIBRARY_PATH && npx tsx scripts/analyze-imports.ts';try{fs.writeFileSync('.git/hooks/post-commit',hook);fs.chmodSync('.git/hooks/post-commit','755');console.log('✓ post-commit hook installed')}catch(e){}\""
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
