@@ -142,6 +142,53 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [badgeTooltip, setBadgeTooltip] = useState<{text: string; x: number; y: number} | null>(null);
 
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+
+  // Find the actual index in the full items array
+  const getItemIndex = (id: string) => items.findIndex(item => item.id === id);
+
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (!reorderEnabled || !onReorder) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    if (!reorderEnabled || draggedIndex === null) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dropTargetIndex !== index) {
+      setDropTargetIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the grid entirely
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget?.closest?.('[data-grid-item]')) {
+      setDropTargetIndex(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (!reorderEnabled || draggedIndex === null || !onReorder) return;
+    if (draggedIndex !== toIndex) {
+      onReorder(draggedIndex, toIndex);
+    }
+    setDraggedIndex(null);
+    setDropTargetIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDropTargetIndex(null);
+  };
+
   const densityClasses = {
     compact: 'gap-2',
     comfortable: 'gap-4',
@@ -154,20 +201,38 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
     spacious: 'p-3',
   };
 
-  const renderItem = (asset: IIIFCanvas) => {
+  const renderItem = (asset: IIIFCanvas, visualIndex: number) => {
     const selected = isSelected(asset.id);
     const dna = getFileDNA(asset);
     const thumbUrls = resolveHierarchicalThumbs(asset, 200);
     const config = RESOURCE_TYPE_CONFIG['Canvas'];
     const isHovered = hoveredId === asset.id;
+    const itemIndex = visibleRange.start + visualIndex;
+    const isDragging = draggedIndex === itemIndex;
+    const isDropTarget = dropTargetIndex === itemIndex && draggedIndex !== null && draggedIndex !== itemIndex;
 
     return (
       <div
         key={asset.id}
+        data-grid-item
+        draggable={reorderEnabled && !!onReorder}
+        onDragStart={(e) => handleDragStart(e, itemIndex)}
+        onDragOver={(e) => handleDragOver(e, itemIndex)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, itemIndex)}
+        onDragEnd={handleDragEnd}
         onContextMenu={(e) => onContextMenu(e, asset.id)}
         className={`
-          group relative rounded-xl cursor-pointer transition-all duration-200
+          group relative rounded-xl transition-all duration-200
+          ${reorderEnabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
           ${paddingClasses[density || 'comfortable']}
+          ${isDragging ? 'opacity-50 scale-95' : ''}
+          ${isDropTarget
+            ? fieldMode
+              ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-black'
+              : 'ring-2 ring-blue-500 ring-offset-2'
+            : ''
+          }
           ${selected
             ? 'bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-500 shadow-md'
             : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:shadow-lg hover:border-stone-300 dark:hover:border-stone-600'
@@ -303,7 +368,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
 
       {topSpacer > 0 && <div style={{ height: topSpacer }} aria-hidden="true" />}
       <div className={`grid ${densityClasses[density]} ${gridColsClass}`}>
-        {visibleItems.map(renderItem)}
+        {visibleItems.map((item, index) => renderItem(item, index))}
       </div>
       {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
 

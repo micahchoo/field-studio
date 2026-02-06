@@ -318,6 +318,45 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
     }
   }, [selectedIds, archiveToBoard, onSwitchView]);
 
+  // Reorder handler - moves canvas from one position to another
+  const handleReorder = useCallback((fromIndex: number, toIndex: number) => {
+    if (!root || !onUpdate) return;
+
+    // Find the parent manifest containing these canvases
+    // For now, assume all canvases come from the first manifest in a collection
+    // or the root itself if it's a manifest
+    const newRoot = JSON.parse(JSON.stringify(root));
+
+    const reorderInParent = (parent: any): boolean => {
+      if (!parent.items || !Array.isArray(parent.items)) return false;
+
+      // Check if this parent contains canvases
+      const hasCanvases = parent.items.some((item: any) => item.type === 'Canvas');
+      if (hasCanvases) {
+        // Reorder the items array
+        const items = [...parent.items];
+        const [movedItem] = items.splice(fromIndex, 1);
+        items.splice(toIndex, 0, movedItem);
+        parent.items = items;
+        return true;
+      }
+
+      // Recurse into children (manifests in collection)
+      for (const item of parent.items) {
+        if (reorderInParent(item)) return true;
+      }
+      return false;
+    };
+
+    if (reorderInParent(newRoot)) {
+      onUpdate(newRoot);
+      showToast('Canvas reordered', 'success');
+    }
+  }, [root, onUpdate, showToast]);
+
+  // Reorder is enabled when viewer panel is closed (full grid mode)
+  const reorderEnabled = !filmstripMode && showViewerPanel === false;
+
   // Render content view
   const renderContentView = () => {
     switch (view) {
@@ -340,6 +379,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             onClearFilter={handleClearFilter}
             density={density}
             onDensityChange={setDensity}
+            reorderEnabled={reorderEnabled}
+            onReorder={handleReorder}
           />
         );
       case 'list':

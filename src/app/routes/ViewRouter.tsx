@@ -94,6 +94,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   onSelectId,
   validationIssuesMap,
   onUpdateRoot,
+  onUpdateItem,
   onBatchEdit,
   onCatalogSelection,
   settings,
