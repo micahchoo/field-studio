@@ -15,7 +15,7 @@ import {
   getEntity,
   getParentId,
   NormalizedState
-} from '@/services/vault';
+} from '@/src/entities/manifest/model/vault';
 import type { IIIFCanvas } from '@/src/shared/types';
 
 /**

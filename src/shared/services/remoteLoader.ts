@@ -1,7 +1,7 @@
 
 import { IIIFItem, isCollection, isManifest } from '../types';
-import { virtualManifestFactory } from '@/services/virtualManifestFactory';
-import { specBridge } from '@/services/specBridge';
+import { virtualManifestFactory } from './virtualManifestFactory';
+import { specBridge } from './specBridge';
 import { authService, AuthService } from './authService';
 import { validateResource } from '@/utils/iiifSchema';
 

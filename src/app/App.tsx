@@ -11,7 +11,7 @@ import { StagingWorkbench } from '@/components/staging/StagingWorkbench';
 import { ExportDialog } from '@/components/ExportDialog';
 import { ContextualHelp } from '@/components/ContextualHelp';
 import { QuickReference } from '@/components/Tooltip';
-import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from '@/constants/helpContent';
+import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from '@/src/shared/constants/helpContent';
 import { QCDashboard } from '@/components/QCDashboard';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { ExternalImportDialog } from '@/components/ExternalImportDialog';
