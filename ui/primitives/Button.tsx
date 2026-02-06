@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { COLORS, INTERACTION, LAYOUT, SPACING, TOUCH_TARGETS } from '../../designSystem';
+import { COLORS, INTERACTION, LAYOUT, SPACING, TOUCH_TARGETS } from '../../src/shared/config/design-tokens';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 export type ButtonSize = 'sm' | 'base' | 'lg' | 'xl';

@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { COLORS, ELEVATION, INTERACTION, LAYOUT, SPACING } from '../../designSystem';
+import { COLORS, ELEVATION, INTERACTION, LAYOUT, SPACING } from '../../src/shared/config/design-tokens';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Content rendered in the card header region */

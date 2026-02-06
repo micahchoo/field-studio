@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { COLORS, INTERACTION, LAYOUT, PATTERNS, SPACING, TOUCH_TARGETS, TYPOGRAPHY } from '../../designSystem';
+import { COLORS, INTERACTION, LAYOUT, PATTERNS, SPACING, TOUCH_TARGETS, TYPOGRAPHY } from '../../src/shared/config/design-tokens';
 
 export type InputSize = 'sm' | 'base' | 'lg';
 

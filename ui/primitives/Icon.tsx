@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { TYPOGRAPHY } from '../../designSystem';
+import { TYPOGRAPHY } from '../../src/shared/config/design-tokens';
 
 export type IconSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';
 
