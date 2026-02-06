@@ -55,7 +55,7 @@ import {
   ingestTreeWithWorkers,
   IngestWorkerPool,
   PoolStats
-} from './ingestWorkerPool';
+} from '../ingest/ingestWorkerPool';
 import type {
   IngestCompleteMessage,
   IngestErrorMessage,
