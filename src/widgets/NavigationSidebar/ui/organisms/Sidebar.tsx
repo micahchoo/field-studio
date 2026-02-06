@@ -10,14 +10,13 @@ import {
 } from '@/utils/iiifHierarchy';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
 import { useAppSettings } from '@/src/app/providers/useAppSettings';
+import { useAppMode, useAppModeState } from '@/src/app/providers';
 
 interface SidebarProps {
   root: IIIFItem | null;
   selectedId: string | null;
-  currentMode: AppMode;
   viewType: ViewType;
   onSelect: (id: string) => void;
-  onModeChange: (mode: AppMode) => void;
   onViewTypeChange: (type: ViewType) => void;
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExportTrigger: () => void;
@@ -239,11 +238,13 @@ const TreeItem: React.FC<{
 };
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
-  root, selectedId, currentMode, viewType, onSelect, onModeChange, onViewTypeChange,
+  root, selectedId, viewType, onSelect, onViewTypeChange,
   onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport,
   onOpenSettings, onToggleQuickHelp, isMobile, onClose, onAbstractionLevelChange
 }) {
   const { settings, updateSettings } = useAppSettings();
+  const [currentMode, setCurrentMode] = useAppMode();
+  const { changedAt, previousMode } = useAppModeState();
   const [filterText, setFilterText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -327,10 +328,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
           {/* PRIMARY NAVIGATION - Main app sections */}
           <nav className="p-3">
             <div className="space-y-1">
-              <NavItem icon="inventory_2" label="Archive" active={currentMode === 'archive'} onClick={() => onModeChange('archive')} fieldMode={settings.fieldMode} />
-              <NavItem icon="account_tree" label="Structure" active={currentMode === 'structure'} onClick={() => onModeChange('structure')} fieldMode={settings.fieldMode} />
-              <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => onModeChange('metadata')} fieldMode={settings.fieldMode} />
-              <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => onModeChange('boards')} fieldMode={settings.fieldMode} />
+              <NavItem icon="inventory_2" label="Archive" active={currentMode === 'archive'} onClick={() => setCurrentMode('archive')} fieldMode={settings.fieldMode} />
+              <NavItem icon="account_tree" label="Structure" active={currentMode === 'structure'} onClick={() => setCurrentMode('structure')} fieldMode={settings.fieldMode} />
+              <NavItem icon="table_chart" label="Catalog" active={currentMode === 'metadata'} onClick={() => setCurrentMode('metadata')} fieldMode={settings.fieldMode} />
+              <NavItem icon="dashboard" label="Boards" active={currentMode === 'boards'} onClick={() => setCurrentMode('boards')} fieldMode={settings.fieldMode} />
             </div>
           </nav>
 
@@ -471,6 +472,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             </div>
           )}
           
+          {/* Debug: App Mode Indicator */}
+          <div className="px-3 py-1 border-b border-slate-800/50 text-[10px] text-slate-500 flex items-center justify-between">
+            <span>Mode: <span className="font-mono">{currentMode}</span></span>
+            <span title={`Changed at ${new Date(changedAt).toISOString()}`}>
+              {changedAt ? `${Math.round((Date.now() - changedAt) / 1000)}s ago` : 'never'}
+            </span>
+          </div>
+          
           {/* Quick Actions Row */}
           <div className="flex items-center p-2 gap-1">
             <button
@@ -577,7 +586,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
     </>
   );
 }, (prev, next) => {
-  return prev.root?.id === next.root?.id && 
+  // Don't check currentMode - it comes from a hook, not props
+  // The component will re-render when currentMode changes via the hook
+  return prev.root?.id === next.root?.id &&
          prev.selectedId === next.selectedId &&
-         prev.currentMode === next.currentMode;
+         prev.visible === next.visible;
 });

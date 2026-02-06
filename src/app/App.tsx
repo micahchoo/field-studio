@@ -37,6 +37,7 @@ import { useBulkOperations, useUndoRedoShortcuts, useVault, VaultProvider } from
 import { actions } from '@/src/entities/manifest/model/actions';
 import { UserIntentProvider } from '@/src/app/providers/UserIntentProvider';
 import { ResourceContextProvider } from '@/src/app/providers/ResourceContextProvider';
+import { useAppMode } from '@/src/app/providers';
 
 // Custom hooks for cleaner state management
 import { useResponsive } from '@/src/shared/lib/hooks/useResponsive';
@@ -86,7 +87,7 @@ const MainApp: React.FC = () => {
   const [showInspector, setShowInspector] = useState(false);
 
   // ---- Navigation State ----
-  const [currentMode, setCurrentMode] = useState<AppMode>('archive');
+  const [currentMode, setCurrentMode] = useAppMode();
   const [viewType, setViewType] = useState<ViewType>('iiif');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -496,6 +497,18 @@ const MainApp: React.FC = () => {
       .catch(() => { setSaveStatus('error'); showToast("Failed to save rollback!", 'error'); });
   }, [loadRoot, showToast]);
 
+  // Debug logging for currentMode mismatch
+  useEffect(() => {
+    console.log('currentMode updated:', currentMode);
+  }, [currentMode]);
+
+  // Close sidebar on mobile when mode changes
+  useEffect(() => {
+    if (isMobile) {
+      setShowSidebar(false);
+    }
+  }, [currentMode, isMobile, setShowSidebar]);
+
   // ============================================================================
   // Derived State
   // ============================================================================
@@ -538,7 +551,6 @@ const MainApp: React.FC = () => {
         <Sidebar
           root={root}
           selectedId={selectedId}
-          currentMode={currentMode}
           viewType={viewType}
           abstractionLevel={settings.abstractionLevel}
           visible={showSidebar}
@@ -549,7 +561,6 @@ const MainApp: React.FC = () => {
             if (isMobile) setShowSidebar(false);
           }}
           onClose={() => setShowSidebar(false)}
-          onModeChange={(m) => { setCurrentMode(m); if (isMobile) setShowSidebar(false); }}
           onViewTypeChange={setViewType}
           onImport={(e) => e.target.files && setStagingTree(buildTree(Array.from(e.target.files)))}
           onExportTrigger={exportDialog.open}
@@ -562,30 +573,18 @@ const MainApp: React.FC = () => {
         />
 
         <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-14' : ''} transition-colors duration-300`}>
+          {/* View content */}
           <ViewRouter
-            currentMode={currentMode}
             root={root}
             selectedItem={selectedItem}
             selectedId={selectedId}
             validationIssuesMap={validationIssuesMap}
-            fieldMode={settings.fieldMode}
-            abstractionLevel={settings.abstractionLevel}
-            isMobile={isMobile}
-            filterIds={pipelineContext.filterIds}
-            preloadedManifest={pipelineContext.preloadedManifest}
             onUpdateRoot={handleUpdateRoot}
             onUpdateItem={handleItemUpdate}
             onSelect={(item) => { setSelectedId(item.id); if (!isMobile) setShowInspector(true); }}
             onSelectId={setSelectedId}
-            onOpenItem={(item) => { setSelectedId(item.id); setCurrentMode('viewer'); }}
             onBatchEdit={(ids) => { setBatchIds(ids); batchEditor.open(); }}
-            onReveal={handleReveal}
-            onSynthesize={handleManifestSynthesis}
             onCatalogSelection={handleArchiveCatalog}
-            onClearFilter={() => setPipelineContext(ctx => ({ ...ctx, filterIds: null }))}
-            onComposerOpened={() => setPipelineContext(ctx => ({ ...ctx, preloadedManifest: null }))}
-            onModeChange={setCurrentMode}
-            onShowInspector={() => setShowInspector(true)}
             settings={settings}
           />
           <ContextualHelp mode={currentMode} isInspectorOpen={showInspector && !!selectedItem && !settings.fieldMode} />
