@@ -1,7 +1,7 @@
 
 import { ArchiveCollection, ArchiveLayout, FileTree, SourceManifest, SourceManifests } from '@/src/shared/types';
 import { filenameRelationshipPatterns } from '@/utils/filenameUtils';
-import { buildTree } from './iiifBuilder';
+import { buildTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
 import { MIME_TYPE_MAP } from '@/src/shared/constants';
 
 /**
