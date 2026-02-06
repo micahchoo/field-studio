@@ -41,13 +41,13 @@ import {
   getRelationshipType,
   getValidChildTypes,
   isValidChildType
-} from '../utils/iiifHierarchy';
+} from '@/utils/iiifHierarchy';
 import {
   validateBehaviors as centralizedValidateBehaviors,
   findBehaviorConflicts,
   isValidNavDate,
   isValidViewingDirection
-} from '../utils';
+} from '@/utils';
 
 // ============================================================================
 // Action Types
