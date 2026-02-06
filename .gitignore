@@ -149,7 +149,7 @@ target/
 
 # Archived full project
 archive-full-*/
-
+_archived
 # Temporary stuff
 Stuff/
 
