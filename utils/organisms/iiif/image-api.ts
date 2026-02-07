@@ -532,7 +532,7 @@ export function isImageService3(
   height?: number;
 } {
   if (!service || typeof service !== 'object') return false;
-  const s = service as Record<string, unknown>;
+  const s = service as unknown as Record<string, unknown>;
   return (
     typeof s.id === 'string' &&
     s.type === 'ImageService3' &&

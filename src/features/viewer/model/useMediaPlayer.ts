@@ -7,7 +7,7 @@
  * @module features/viewer/model/useMediaPlayer
  */
 
-import { useCallback, useRef, useState, KeyboardEvent } from 'react';
+import { KeyboardEvent, useCallback, useRef, useState } from 'react';
 
 export interface MediaState {
   currentTime: number;

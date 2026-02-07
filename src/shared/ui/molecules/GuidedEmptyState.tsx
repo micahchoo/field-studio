@@ -267,7 +267,7 @@ export const GuidedEmptyState: React.FC<GuidedEmptyStateProps> = ({
                 className={`
                   rounded-xl border transition-all duration-300
                   ${styles.container}
-                  ${step.active ? 'ring-2 ring-offset-2 ' + (fieldMode ? 'ring-blue-500 ring-offset-slate-900' : 'ring-blue-500 ring-offset-white') : ''}
+                  ${step.active ? `ring-2 ring-offset-2 ${fieldMode ? 'ring-blue-500 ring-offset-slate-900' : 'ring-blue-500 ring-offset-white'}` : ''}
                   ${expandableSteps ? 'cursor-pointer hover:shadow-md' : ''}
                 `}
                 onClick={() => expandableSteps && setExpandedStep(isExpanded ? null : step.id)}
@@ -367,7 +367,7 @@ export const GuidedEmptyState: React.FC<GuidedEmptyStateProps> = ({
 
         {/* Show more/less */}
         {expandableSteps && steps.length > 3 && (
-          <button
+          <Button variant="ghost" size="bare"
             onClick={() => setShowAllSteps(!showAllSteps)}
             className={`
               w-full mt-4 py-2 text-sm font-medium
@@ -383,7 +383,7 @@ export const GuidedEmptyState: React.FC<GuidedEmptyStateProps> = ({
             ) : (
               <>Show all {steps.length} steps <Icon name="expand_more" className="inline ml-1" /></>
             )}
-          </button>
+          </Button>
         )}
       </div>
 

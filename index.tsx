@@ -54,13 +54,20 @@ window.addEventListener('unhandledrejection', event => {
 
 console.log("[Index] Starting application bootstrap...");
 
-if ('serviceWorker' in navigator) {
+// Service Worker Registration - done early to ensure IIIF requests are intercepted
+const swReadyPromise = (async () => {
+  if (!('serviceWorker' in navigator)) {
+    console.log('[SW] Service workers not supported');
+    return false;
+  }
+
+  // Set up message handler for SW communication
   navigator.serviceWorker.addEventListener('message', async (event) => {
     // Handle search queries from service worker
     if (event.data && event.data.type === 'SEARCH_QUERY') {
       const { query, url } = event.data;
       const results = searchService.search(query);
-      
+
       const iiifResponse = {
         "@context": IIIF_SPEC.SEARCH_2.CONTEXT,
         "id": url,
@@ -87,14 +94,14 @@ if ('serviceWorker' in navigator) {
     // Handle tile requests from service worker
     if (event.data && event.data.type === 'TILE_REQUEST') {
       const { requestId, assetId, level, x, y, format } = event.data;
-      
+
       try {
         const blob = await storage.tiles.getTile(assetId, level, x, y);
-        
+
         if (blob) {
           // Convert blob to array buffer for transfer
           const arrayBuffer = await blob.arrayBuffer();
-          
+
           // Send response back to service worker
           navigator.serviceWorker.controller?.postMessage({
             type: 'TILE_RESPONSE',
@@ -124,10 +131,10 @@ if ('serviceWorker' in navigator) {
     // Handle tile manifest requests from service worker
     if (event.data && event.data.type === 'TILE_MANIFEST_REQUEST') {
       const { requestId, assetId } = event.data;
-      
+
       try {
         const manifest = await storage.tiles.getTileManifest(assetId);
-        
+
         navigator.serviceWorker.controller?.postMessage({
           type: 'TILE_MANIFEST_RESPONSE',
           requestId,
@@ -145,17 +152,51 @@ if ('serviceWorker' in navigator) {
     }
   });
 
-  window.addEventListener('load', () => {
-    // Simplified registration to avoid URL constructor issues in specific security contexts
-    navigator.serviceWorker.register('sw.js')
-      .then(registration => {
-        console.log('[SW] Registered successfully with scope:', registration.scope);
-      })
-      .catch(registrationError => {
-        console.warn('[SW] Registration failed:', registrationError);
+  try {
+    // Register SW immediately, don't wait for window.load
+    const registration = await navigator.serviceWorker.register('sw.js');
+    console.log('[SW] Registered successfully with scope:', registration.scope);
+
+    // Wait for the SW to be active and controlling the page
+    if (navigator.serviceWorker.controller) {
+      console.log('[SW] Already controlling page');
+      return true;
+    }
+
+    // Wait for the SW to become active
+    const sw = registration.installing || registration.waiting || registration.active;
+    if (sw) {
+      await new Promise<void>((resolve) => {
+        if (sw.state === 'activated') {
+          resolve();
+          return;
+        }
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'activated') {
+            resolve();
+          }
+        });
       });
-  });
-}
+
+      // Force the new SW to take control immediately
+      if (registration.active) {
+        await registration.active.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      // Wait a brief moment for the controller to be set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('[SW] Activated and controlling:', !!navigator.serviceWorker.controller);
+    }
+
+    return true;
+  } catch (registrationError) {
+    console.warn('[SW] Registration failed:', registrationError);
+    return false;
+  }
+})();
+
+// Export for use in other modules that need to wait for SW
+(window as any).__swReady = swReadyPromise;
 
 try {
   const rootElement = document.getElementById('root');

@@ -12,8 +12,8 @@
  * @module features/metadata-edit/model/useInspectorValidation
  */
 
-import { useMemo, useCallback } from 'react';
-import type { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas } from '@/src/shared/types';
+import { useCallback, useMemo } from 'react';
+import type { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
 
 export type ValidationSeverity = 'error' | 'warning' | 'info';
 
@@ -164,7 +164,7 @@ const validationRules = [
     description: 'This collection contains no items. Add manifests or sub-collections.',
     check: (item: IIIFItem) => {
       if (item.type !== 'Collection') return false;
-      const items = (item as IIIFCollection).items;
+      const {items} = (item as IIIFCollection);
       return !items || items.length === 0;
     },
     autoFix: null,
@@ -179,7 +179,7 @@ const validationRules = [
     description: 'This manifest contains no canvases. Add at least one canvas.',
     check: (item: IIIFItem) => {
       if (item.type !== 'Manifest') return false;
-      const items = (item as IIIFManifest).items;
+      const {items} = (item as IIIFManifest);
       return !items || items.length === 0;
     },
     autoFix: null,
@@ -253,12 +253,12 @@ export function useInspectorValidation(
             description: rule.description,
             field: rule.field,
             autoFixable: !!rule.autoFix,
-            currentValue: (resource as Record<string, unknown>)[rule.field],
+            currentValue: (resource as unknown as Record<string, unknown>)[rule.field],
           };
         }
         return null;
       })
-      .filter((issue): issue is ValidationIssue => issue !== null);
+      .filter((issue): issue is NonNullable<typeof issue> => issue !== null) as ValidationIssue[];
   }, [resource]);
 
   // Count by severity

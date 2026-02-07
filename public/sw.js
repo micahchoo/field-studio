@@ -833,9 +833,113 @@ async function handleImageRequest(request) {
   }
 }
 
+// ============================================================================
+// Media (Audio/Video) Request Handling
+// ============================================================================
+
+// Media URL pattern: /media/{assetId}.{ext} or /iiif/media/{assetId}.{ext}
+const MEDIA_URL_PATTERN = /\/(iiif\/)?media\/([^\/]+)\.(mp3|mp4|webm|ogg|wav|m4a|aac|flac)$/;
+
+/**
+ * Get MIME type from file extension
+ */
+function getMediaMimeType(ext) {
+  const mimeTypes = {
+    'mp3': 'audio/mpeg',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'ogg': 'audio/ogg',
+    'wav': 'audio/wav',
+    'm4a': 'audio/mp4',
+    'aac': 'audio/aac',
+    'flac': 'audio/flac'
+  };
+  return mimeTypes[ext.toLowerCase()] || 'application/octet-stream';
+}
+
+/**
+ * Handle media (audio/video) requests from IndexedDB
+ */
+async function handleMediaRequest(request, assetId, format) {
+  console.log('[SW] Handling media request:', assetId, format);
+
+  try {
+    // Open IndexedDB to get the media file
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+
+    // Get the blob from files store
+    const transaction = db.transaction(FILES_STORE, 'readonly');
+    const store = transaction.objectStore(FILES_STORE);
+
+    const blob = await new Promise((resolve, reject) => {
+      const request = store.get(assetId);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+
+    db.close();
+
+    if (!blob) {
+      console.warn('[SW] Media not found in IndexedDB:', assetId);
+      return new Response('Media not found', {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+
+    const mimeType = getMediaMimeType(format);
+
+    // Handle range requests for streaming
+    const rangeHeader = request.headers.get('Range');
+    if (rangeHeader) {
+      const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+      if (match) {
+        const start = parseInt(match[1], 10);
+        const end = match[2] ? parseInt(match[2], 10) : blob.size - 1;
+        const chunk = blob.slice(start, end + 1);
+
+        return new Response(chunk, {
+          status: 206,
+          statusText: 'Partial Content',
+          headers: {
+            'Content-Type': mimeType,
+            'Content-Length': chunk.size.toString(),
+            'Content-Range': `bytes ${start}-${end}/${blob.size}`,
+            'Accept-Ranges': 'bytes',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+    }
+
+    // Return full media file
+    return new Response(blob, {
+      status: 200,
+      headers: {
+        'Content-Type': mimeType,
+        'Content-Length': blob.size.toString(),
+        'Accept-Ranges': 'bytes',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'max-age=31536000, immutable'
+      }
+    });
+
+  } catch (error) {
+    console.error('[SW] Error handling media request:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  
+
   // Check if this is a tile request
   const tileMatch = url.pathname.match(TILE_URL_PATTERN);
   if (tileMatch) {
@@ -843,7 +947,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleTileRequest(event.request, assetId, parseInt(level, 10), parseInt(x, 10), parseInt(y, 10), format));
     return;
   }
-  
+
   // Check if this is a tile info request
   const tileInfoMatch = url.pathname.match(TILE_INFO_PATTERN);
   if (tileInfoMatch) {
@@ -851,10 +955,18 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleTileInfoRequest(assetId));
     return;
   }
-  
+
+  // Check if this is a media (audio/video) request
+  const mediaMatch = url.pathname.match(MEDIA_URL_PATTERN);
+  if (mediaMatch) {
+    const [, , assetId, format] = mediaMatch;
+    event.respondWith(handleMediaRequest(event.request, assetId, format));
+    return;
+  }
+
   // Flexible matching: any path containing /iiif/image/ or /image/ followed by IIIF patterns
   const isIIIFImage = /\/(iiif\/)?image\/[^\/]+\/(info\.json|.+?\/default\.(jpg|jpeg|png|webp|gif))$/.test(url.pathname);
-  
+
   if (isIIIFImage) {
     event.respondWith(handleImageRequest(event.request));
   }

@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { CONSTANTS } from '@/src/shared/constants';
 
@@ -48,6 +49,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Auto-dismiss toasts when clicking anywhere or limit exceeded
   useEffect(() => {
+    if (toasts.length === 0) return;
+
     const handleClick = () => {
       // Dismiss oldest toast on click (progressive dismissal)
       if (toasts.length > 0) {
@@ -56,11 +59,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
 
-    // Only add listener when toasts are showing
-    if (toasts.length > 0) {
+    // Delay listener to avoid dismissing from the same click that triggered the toast
+    const timeoutId = setTimeout(() => {
       document.addEventListener('click', handleClick);
-      return () => document.removeEventListener('click', handleClick);
-    }
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClick);
+    };
   }, [toasts]);
 
   const showToast = useCallback((message: string, type: ToastType = 'info', action?: ToastAction) => {
@@ -120,7 +127,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             role={toast.type === 'error' ? 'alert' : 'status'}
             aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
             aria-atomic="true"
-            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex flex-col gap-2 animate-bounce-in ${
+            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex flex-col gap-2 animate-fade-in ${
               toast.type === 'success' ? 'bg-white border-green-200 text-green-800' :
               toast.type === 'error' ? 'bg-white border-red-200 text-red-800' :
               toast.type === 'warning' ? 'bg-white border-amber-200 text-amber-800' :
@@ -140,18 +147,18 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 />
                 <span className="text-sm font-medium truncate">{toast.message}</span>
               </div>
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => dismissToast(toast.id)}
                 className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-600"
                 aria-label="Dismiss notification"
                 type="button"
               >
                 <Icon name="close" className="text-xs opacity-50 hover:opacity-100" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
             {toast.action && (
               <div className="flex justify-end">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={() => {
                     toast.action?.onClick();
                     dismissToast(toast.id);
@@ -167,7 +174,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   type="button"
                 >
                   {toast.action.label}
-                </button>
+                </Button>
               </div>
             )}
           </div>

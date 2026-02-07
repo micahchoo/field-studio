@@ -3,6 +3,7 @@
  * TODO: Recover or reimplement this component
  */
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 
 export interface SendToCollectionModalProps {
   isOpen?: boolean;
@@ -31,7 +32,7 @@ export const SendToCollectionModal: React.FC<SendToCollectionModalProps> = ({
     }}>
       <h3>SendToCollectionModal (Stub)</h3>
       <p>This component needs to be recovered or reimplemented.</p>
-      <button onClick={onClose}>Close</button>
+      <Button variant="ghost" size="bare" onClick={onClose}>Close</Button>
     </div>
   );
 };

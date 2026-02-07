@@ -12,9 +12,9 @@
  * - Field mode support
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { getIIIFValue, type IIIFCanvas } from '@/src/shared/types';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 import { getFileDNA } from '../../model';
 
@@ -331,7 +331,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                       : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                     }
                   `}>
-                    {dna.mediaType}
+                    {canvas.type}
                   </span>
                 </td>
 
@@ -357,7 +357,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
 
                 {/* Actions */}
                 <td className="px-3 py-2">
-                  <button
+                  <Button variant="ghost" size="bare"
                     onClick={(e) => {
                       e.stopPropagation();
                       onContextMenu(e, canvas.id);
@@ -371,7 +371,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                     `}
                   >
                     <Icon name="more_vert" className="text-sm" />
-                  </button>
+                  </Button>
                 </td>
               </tr>
             );

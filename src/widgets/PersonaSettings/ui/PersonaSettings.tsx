@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { AppSettings } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { getVisibleFields, MetadataComplexity } from '@/src/shared/constants';
@@ -62,7 +63,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Workbench Configuration</p>
              </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400"><Icon name="close"/></button>
+          <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400"><Icon name="close"/></Button>
         </div>
 
         <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
@@ -96,7 +97,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                     <div className="relative pt-2">
                         <div className="flex justify-between mb-2">
                             {complexityLevels.map((c, idx) => (
-                                <button
+                                <Button variant="ghost" size="bare"
                                     key={c.level}
                                     onClick={() => onUpdate({ metadataComplexity: c.level })}
                                     className={`text-[9px] font-black uppercase tracking-tight transition-colors ${
@@ -106,7 +107,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                                     }`}
                                 >
                                     {c.label}
-                                </button>
+                                </Button>
                             ))}
                         </div>
 
@@ -210,7 +211,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
         </div>
 
         <div className="p-6 bg-slate-50 border-t flex justify-end">
-            <button onClick={onClose} className="bg-slate-800 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl">Commit Environment Profile</button>
+            <Button variant="ghost" size="bare" onClick={onClose} className="bg-slate-800 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl">Commit Environment Profile</Button>
         </div>
       </div>
     </div>
@@ -247,13 +248,13 @@ const HelpResetSection: React.FC = () => {
                         <span className="text-[9px] text-slate-400">{tipCount} tips dismissed</span>
                     </div>
                     <div className="flex gap-2">
-                        <button
+                        <Button variant="ghost" size="bare"
                             onClick={handleResetTooltips}
                             className="text-[10px] font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                         >
                             Reset Tooltips
-                        </button>
-                        <button
+                        </Button>
+                        <Button variant="ghost" size="bare"
                             onClick={handleReset}
                             className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
                                 resetConfirm
@@ -262,7 +263,7 @@ const HelpResetSection: React.FC = () => {
                             }`}
                         >
                             {resetConfirm ? 'Click to Confirm' : 'Reset All Help'}
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 <p className="text-[10px] text-slate-400 leading-relaxed">

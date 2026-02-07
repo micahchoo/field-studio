@@ -14,8 +14,8 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { ModalDialog } from '@/src/shared/ui/molecules';
-import { Button } from '@/ui/primitives/Button';
 import { DEFAULT_MAP_CONFIG } from '@/src/shared/constants';
 
 declare const L: any;
@@ -66,12 +66,12 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
       if (!match) map.locate({ setView: true, maxZoom: 10 });
 
-      map.on('click', (e: any) => {
+      map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
         marker.setLatLng(e.latlng);
         setCoords(e.latlng);
       });
 
-      marker.on('dragend', (_e: any) => {
+      marker.on('dragend', () => {
         // eslint-disable-next-line @field-studio/useeffect-restrictions
         setCoords(marker.getLatLng());
       });

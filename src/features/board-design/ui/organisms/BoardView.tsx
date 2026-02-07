@@ -223,12 +223,12 @@ export const BoardView: React.FC<BoardViewProps> = ({
     const canvasWidth = canvasRef.current?.clientWidth || 800;
     const canvasHeight = canvasRef.current?.clientHeight || 600;
 
-    const textItem: IIIFItem = {
+    const textItem = {
       id: `text-${Date.now()}`,
-      type: 'Text' as any,
+      type: 'Text' as const,
       label: { en: ['Text Layer'] },
       _text: 'Double-click to edit...',
-    };
+    } as unknown as IIIFItem;
 
     const newItem = createBoardItem(textItem, {
       x: canvasWidth / 2 - 100,
@@ -343,7 +343,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
     // Check pipeline state first (preferred)
     if (!pipelineLoadedRef.current && root && pipeline.intent === 'compose' && pipeline.selectedIds.length > 0) {
       pipelineLoadedRef.current = true;
-      const selectedIds = pipeline.selectedIds;
+      const {selectedIds} = pipeline;
 
       // Find items in root and add them to board
       const itemsToAdd: IIIFItem[] = [];
@@ -453,7 +453,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
         id: `template-${template.id}-${i}-${Date.now()}`,
         type: 'Canvas',
         label: { en: [`${template.name} ${i + 1}`] },
-        thumbnail: [{ id: `https://picsum.photos/200/200?random=${i}-${Date.now()}`, type: 'Image' }],
+        thumbnail: [{ id: `https://picsum.photos/200/200?random=${i}-${Date.now()}`, type: 'Image', format: 'image/jpeg' }],
       };
 
       // Add template-specific IIIF metadata to placeholders

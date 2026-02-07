@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-06T22:18:32.200Z",
-  "totalFiles": 378,
+  "generatedAt": "2026-02-06T23:13:11.058Z",
+  "totalFiles": 379,
   "files": {
     "src/app/App.tsx": {
       "filePath": "src/app/App.tsx",
@@ -1063,6 +1063,11 @@
       ],
       "exports": [
         {
+          "name": "UseAppSettingsReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "useAppSettings",
           "type": "named",
           "isTypeExport": false
@@ -1078,7 +1083,7 @@
         "src/app/providers/index.tsx",
         "src/app/providers/index.tsx"
       ],
-      "size": 2514,
+      "size": 2521,
       "lines": 86
     },
     "src/app/providers/useTerminology.ts": {
@@ -1181,16 +1186,16 @@
           "isInternalAlias": false
         },
         {
-          "source": "./useIIIFEntity",
+          "source": "@/src/entities/manifest/model/hooks/useIIIFEntity",
           "specifiers": [
             "useVaultState",
             ""
           ],
           "isTypeImport": false,
-          "isRelative": true,
+          "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
-          "isInternalAlias": false
+          "isInternalAlias": true
         },
         {
           "source": "@/src/shared/types",
@@ -1212,7 +1217,7 @@
           "isInternalAlias": true
         },
         {
-          "source": "@/src/shared/services/vault",
+          "source": "@/src/entities/manifest/model/vault",
           "specifiers": [
             "EntityType",
             "getAncestors",
@@ -1334,7 +1339,7 @@
       "dependents": [
         "src/app/providers/ResourceContextProvider.tsx"
       ],
-      "size": 16075,
+      "size": 16117,
       "lines": 586
     },
     "src/app/routes/ViewRouter.tsx": {
@@ -1515,8 +1520,8 @@
       "dependents": [
         "src/app/routes/index.ts"
       ],
-      "size": 23826,
-      "lines": 636
+      "size": 23967,
+      "lines": 638
     },
     "src/app/routes/index.ts": {
       "filePath": "src/app/routes/index.ts",
@@ -2978,6 +2983,8 @@
             "IIIFCanvas",
             "IIIFItem",
             "IIIFManifest",
+            "IIIFRange",
+            "IIIFRangeReference",
             "LanguageMap"
           ],
           "isTypeImport": false,
@@ -3082,8 +3089,8 @@
       "dependents": [
         "src/entities/manifest/model/hooks/useIIIFEntity.tsx"
       ],
-      "size": 28944,
-      "lines": 948
+      "size": 38422,
+      "lines": 1200
     },
     "src/entities/manifest/model/builders/autoStructure.ts": {
       "filePath": "src/entities/manifest/model/builders/autoStructure.ts",
@@ -3274,8 +3281,8 @@
             "getContentTypeFromFilename",
             "getMimeType",
             "IMAGE_API_PROTOCOL",
-            "isImageMime",
-            "isTimeBasedMime",
+            "isImageMimeType",
+            "isTimeBasedMimeType",
             "suggestBehaviors",
             "validateResource"
           ],
@@ -3397,7 +3404,7 @@
         "src/entities/manifest/model/ingest/ingestWorkerPool.ts"
       ],
       "dependents": [],
-      "size": 57684,
+      "size": 57724,
       "lines": 1704
     },
     "src/entities/manifest/model/hooks/useIIIFEntity.tsx": {
@@ -4645,7 +4652,7 @@
           "isInternalAlias": false
         },
         {
-          "source": "@/types",
+          "source": "@/src/shared/types",
           "specifiers": [
             "[dynamic]"
           ],
@@ -4687,7 +4694,7 @@
         "src/entities/manifest/model/vault/index.ts",
         "src/entities/manifest/model/vault/vault.ts"
       ],
-      "size": 4347,
+      "size": 4358,
       "lines": 155
     },
     "src/entities/manifest/model/vault/extensions.ts": {
@@ -4765,7 +4772,7 @@
       "extension": ".ts",
       "imports": [
         {
-          "source": "@/src/shared/types",
+          "source": "./types",
           "specifiers": [
             "[re-export]:EntityType",
             "[re-export]:NormalizedState",
@@ -4776,10 +4783,10 @@
             "[re-export]:EmptyTrashResult"
           ],
           "isTypeImport": true,
-          "isRelative": false,
+          "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
-          "isInternalAlias": true
+          "isInternalAlias": false
         },
         {
           "source": "./cloning",
@@ -5256,6 +5263,7 @@
         }
       ],
       "dependencies": [
+        "src/entities/manifest/model/vault/types.ts",
         "src/entities/manifest/model/vault/cloning.ts",
         "src/entities/manifest/model/vault/extensions.ts",
         "src/entities/manifest/model/vault/normalization.ts",
@@ -5271,7 +5279,7 @@
         "src/entities/manifest/model/vault/queries.ts"
       ],
       "dependents": [],
-      "size": 3706,
+      "size": 3695,
       "lines": 143
     },
     "src/entities/manifest/model/vault/movement.ts": {
@@ -5696,6 +5704,7 @@
       ],
       "dependencies": [],
       "dependents": [
+        "src/entities/manifest/model/vault/index.ts",
         "src/entities/manifest/model/vault/vault.ts"
       ],
       "size": 3789,
@@ -8537,6 +8546,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/lib/hooks/useHistory",
           "specifiers": [
             "useHistory"
@@ -8665,8 +8685,8 @@
         "src/features/board-design/index.ts",
         "src/features/board-design/index.ts"
       ],
-      "size": 22543,
-      "lines": 726
+      "size": 22520,
+      "lines": 720
     },
     "src/features/dependency-explorer/index.ts": {
       "filePath": "src/features/dependency-explorer/index.ts",
@@ -10371,6 +10391,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon"
@@ -10457,8 +10488,8 @@
         "src/features/map/index.ts",
         "src/features/map/index.ts"
       ],
-      "size": 10161,
-      "lines": 284
+      "size": 10061,
+      "lines": 274
     },
     "src/features/metadata-edit/index.ts": {
       "filePath": "src/features/metadata-edit/index.ts",
@@ -10555,6 +10586,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./ui/molecules/StructureTabPanel",
+          "specifiers": [
+            "[re-export]:StructureTabPanel"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -10602,6 +10644,11 @@
           "name": "CSVImportResult",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "StructureTabPanel",
+          "type": "named",
+          "isTypeExport": false
         }
       ],
       "dependencies": [
@@ -10611,11 +10658,12 @@
         "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx",
         "src/features/metadata-edit/ui/organisms/Inspector.tsx",
         "src/features/metadata-edit/ui/molecules/CSVImportModal.tsx",
-        "src/features/metadata-edit/ui/molecules/CSVImportModal.tsx"
+        "src/features/metadata-edit/ui/molecules/CSVImportModal.tsx",
+        "src/features/metadata-edit/ui/molecules/StructureTabPanel.tsx"
       ],
       "dependents": [],
-      "size": 2235,
-      "lines": 55
+      "size": 2306,
+      "lines": 57
     },
     "src/features/metadata-edit/model/index.ts": {
       "filePath": "src/features/metadata-edit/model/index.ts",
@@ -10912,14 +10960,20 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
-        {
-          "name": "ContextualStyles",
-          "type": "named",
-          "isTypeExport": true
-        },
         {
           "name": "AnnotationItemProps",
           "type": "named",
@@ -10940,8 +10994,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/AnnotationsTabPanel.tsx"
       ],
-      "size": 2839,
-      "lines": 101
+      "size": 2644,
+      "lines": 88
     },
     "src/features/metadata-edit/ui/atoms/AutoMapButton.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/AutoMapButton.tsx",
@@ -11145,8 +11199,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
-      "size": 2493,
-      "lines": 90
+      "size": 2551,
+      "lines": 92
     },
     "src/features/metadata-edit/ui/atoms/ColumnSelector.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/ColumnSelector.tsx",
@@ -11825,8 +11879,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
-      "size": 2088,
-      "lines": 82
+      "size": 2150,
+      "lines": 84
     },
     "src/features/metadata-edit/ui/atoms/PropertyLabel.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/PropertyLabel.tsx",
@@ -11878,8 +11932,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
-      "size": 1507,
-      "lines": 60
+      "size": 1576,
+      "lines": 62
     },
     "src/features/metadata-edit/ui/atoms/PropertySelector.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/PropertySelector.tsx",
@@ -12076,8 +12130,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
-      "size": 1619,
-      "lines": 65
+      "size": 1673,
+      "lines": 67
     },
     "src/features/metadata-edit/ui/atoms/ShareButton.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/ShareButton.tsx",
@@ -12511,8 +12565,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
-      "size": 1706,
-      "lines": 66
+      "size": 1823,
+      "lines": 68
     },
     "src/features/metadata-edit/ui/atoms/index.ts": {
       "filePath": "src/features/metadata-edit/ui/atoms/index.ts",
@@ -13670,6 +13724,72 @@
       "size": 2449,
       "lines": 86
     },
+    "src/features/metadata-edit/ui/molecules/StructureTabPanel.tsx": {
+      "filePath": "src/features/metadata-edit/ui/molecules/StructureTabPanel.tsx",
+      "fileName": "StructureTabPanel.tsx",
+      "directory": "src/features/metadata-edit/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFManifest",
+            "IIIFRange",
+            "IIIFRangeReference",
+            "IIIFCanvas",
+            "getIIIFValue",
+            "LanguageMap",
+            "AppSettings"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/atoms/Icon",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "StructureTabPanel",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "StructureTabPanel",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/metadata-edit/index.ts",
+        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+      ],
+      "size": 22692,
+      "lines": 654
+    },
     "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
       "fileName": "TechnicalTabPanel.tsx",
@@ -14045,8 +14165,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx"
       ],
-      "size": 5712,
-      "lines": 190
+      "size": 5892,
+      "lines": 196
     },
     "src/features/metadata-edit/ui/organisms/BatchEditor.tsx": {
       "filePath": "src/features/metadata-edit/ui/organisms/BatchEditor.tsx",
@@ -14310,6 +14430,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "../molecules/StructureTabPanel",
+          "specifiers": [
+            "StructureTabPanel"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "[dynamic]"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -14323,13 +14465,14 @@
         "src/features/metadata-edit/ui/atoms/ShareButton.tsx",
         "src/features/metadata-edit/ui/molecules/GeoEditor.tsx",
         "src/features/metadata-edit/ui/atoms/ValidatedInput.tsx",
-        "src/features/metadata-edit/model/useInspectorValidation.ts"
+        "src/features/metadata-edit/model/useInspectorValidation.ts",
+        "src/features/metadata-edit/ui/molecules/StructureTabPanel.tsx"
       ],
       "dependents": [
         "src/features/metadata-edit/index.ts"
       ],
-      "size": 37016,
-      "lines": 826
+      "size": 36254,
+      "lines": 817
     },
     "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx",
@@ -14545,6 +14688,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/molecules/ViewContainer",
           "specifiers": [
             "ViewContainer"
@@ -14676,8 +14830,8 @@
         "src/features/metadata-edit/index.ts",
         "src/features/metadata-edit/index.ts"
       ],
-      "size": 26139,
-      "lines": 739
+      "size": 26016,
+      "lines": 728
     },
     "src/features/search/index.ts": {
       "filePath": "src/features/search/index.ts",
@@ -14902,6 +15056,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon"
@@ -14989,8 +15154,8 @@
         "src/features/search/index.ts",
         "src/features/search/index.ts"
       ],
-      "size": 14918,
-      "lines": 388
+      "size": 14818,
+      "lines": 378
     },
     "src/features/staging/index.ts": {
       "filePath": "src/features/staging/index.ts",
@@ -15581,6 +15746,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/molecules/ViewContainer",
           "specifiers": [
             "ViewContainer"
@@ -15667,8 +15843,8 @@
         "src/features/staging/index.ts",
         "src/features/staging/index.ts"
       ],
-      "size": 16321,
-      "lines": 456
+      "size": 16199,
+      "lines": 445
     },
     "src/features/staging/ui/organisms/StagingWorkbench.tsx": {
       "filePath": "src/features/staging/ui/organisms/StagingWorkbench.tsx",
@@ -16797,6 +16973,7 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
+            "AbstractionLevel",
             "AppMode",
             "getIIIFValue",
             "IIIFItem",
@@ -16865,28 +17042,6 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
-        },
-        {
-          "source": "../types",
-          "specifiers": [
-            "[dynamic]"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../types",
-          "specifiers": [
-            "[dynamic]"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -16898,7 +17053,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 26101,
+      "size": 26081,
       "lines": 584
     },
     "src/features/structure-view/ui/organisms/StructureTreeView.tsx": {
@@ -17280,6 +17435,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon"
@@ -17358,8 +17524,8 @@
         "src/features/timeline/index.ts",
         "src/features/timeline/index.ts"
       ],
-      "size": 9458,
-      "lines": 267
+      "size": 9336,
+      "lines": 256
     },
     "src/features/viewer/index.ts": {
       "filePath": "src/features/viewer/index.ts",
@@ -23045,6 +23211,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "../molecules",
           "specifiers": [
             "AnnotationDrawingOverlay",
@@ -23122,8 +23299,8 @@
         "src/features/viewer/index.ts",
         "src/features/viewer/index.ts"
       ],
-      "size": 12818,
-      "lines": 371
+      "size": 12670,
+      "lines": 359
     },
     "src/shared/config/design-tokens.ts": {
       "filePath": "src/shared/config/design-tokens.ts",
@@ -23949,6 +24126,11 @@
           "isTypeExport": false
         },
         {
+          "name": "VIEWING_DIRECTION_VALUES",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
           "name": "VIEWING_DIRECTIONS",
           "type": "named",
           "isTypeExport": false
@@ -23973,8 +24155,8 @@
       "dependents": [
         "src/shared/constants/index.ts"
       ],
-      "size": 7423,
-      "lines": 251
+      "size": 7765,
+      "lines": 261
     },
     "src/shared/constants/image.ts": {
       "filePath": "src/shared/constants/image.ts",
@@ -25189,7 +25371,7 @@
         "src/shared/lib/hooks/index.ts",
         "src/shared/lib/hooks/index.ts"
       ],
-      "size": 6446,
+      "size": 6407,
       "lines": 173
     },
     "src/shared/lib/hooks/useDebouncedCallback.ts": {
@@ -26829,6 +27011,7 @@
       ],
       "dependencies": [],
       "dependents": [
+        "src/shared/services/index.ts",
         "src/shared/services/index.ts"
       ],
       "size": 14069,
@@ -26932,6 +27115,7 @@
       ],
       "dependencies": [],
       "dependents": [
+        "src/shared/services/index.ts",
         "src/shared/services/index.ts"
       ],
       "size": 2974,
@@ -27022,9 +27206,31 @@
         {
           "source": "./contentState",
           "specifiers": [
-            "[re-export]:parseContentState",
-            "[re-export]:createContentState",
-            "[re-export]:isContentStateUri"
+            "[re-export]:contentStateService"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./contentState",
+          "specifiers": [
+            "[re-export]:ContentState"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./remoteLoader",
+          "specifiers": [
+            "[re-export]:fetchRemoteManifest",
+            "[re-export]:fetchRemoteResource",
+            "[re-export]:requiresAuth"
           ],
           "isTypeImport": false,
           "isRelative": true,
@@ -27035,9 +27241,11 @@
         {
           "source": "./remoteLoader",
           "specifiers": [
-            "[re-export]:remoteLoader"
+            "[re-export]:RemoteResource",
+            "[re-export]:FetchResult",
+            "[re-export]:FetchOptions"
           ],
-          "isTypeImport": false,
+          "isTypeImport": true,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -27079,7 +27287,7 @@
         {
           "source": "./metadataHarvester",
           "specifiers": [
-            "[re-export]:metadataHarvester"
+            "[re-export]:extractMetadata"
           ],
           "isTypeImport": false,
           "isRelative": true,
@@ -27090,7 +27298,33 @@
         {
           "source": "./metadataTemplateService",
           "specifiers": [
-            "[re-export]:metadataTemplateService"
+            "[re-export]:exportMetadataTemplate",
+            "[re-export]:previewMetadataTemplate",
+            "[re-export]:getVocabularyOptions",
+            "[re-export]:downloadMetadataTemplate"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./metadataTemplateService",
+          "specifiers": [
+            "[re-export]:MetadataTemplateOptions",
+            "[re-export]:MetadataTemplateExport"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./guidanceService",
+          "specifiers": [
+            "[re-export]:guidance"
           ],
           "isTypeImport": false,
           "isRelative": true,
@@ -27101,9 +27335,9 @@
         {
           "source": "./guidanceService",
           "specifiers": [
-            "[re-export]:guidanceService"
+            "[re-export]:GuidanceTopic"
           ],
-          "isTypeImport": false,
+          "isTypeImport": true,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -27192,24 +27426,44 @@
           "isTypeExport": true
         },
         {
-          "name": "parseContentState",
+          "name": "contentStateService",
           "type": "named",
           "isTypeExport": false
         },
         {
-          "name": "createContentState",
+          "name": "ContentState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "fetchRemoteManifest",
           "type": "named",
           "isTypeExport": false
         },
         {
-          "name": "isContentStateUri",
+          "name": "fetchRemoteResource",
           "type": "named",
           "isTypeExport": false
         },
         {
-          "name": "remoteLoader",
+          "name": "requiresAuth",
           "type": "named",
           "isTypeExport": false
+        },
+        {
+          "name": "RemoteResource",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "FetchResult",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "FetchOptions",
+          "type": "named",
+          "isTypeExport": true
         },
         {
           "name": "searchService",
@@ -27227,19 +27481,49 @@
           "isTypeExport": false
         },
         {
-          "name": "metadataHarvester",
+          "name": "extractMetadata",
           "type": "named",
           "isTypeExport": false
         },
         {
-          "name": "metadataTemplateService",
+          "name": "exportMetadataTemplate",
           "type": "named",
           "isTypeExport": false
         },
         {
-          "name": "guidanceService",
+          "name": "previewMetadataTemplate",
           "type": "named",
           "isTypeExport": false
+        },
+        {
+          "name": "getVocabularyOptions",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "downloadMetadataTemplate",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "MetadataTemplateOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MetadataTemplateExport",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "guidance",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "GuidanceTopic",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [
@@ -27250,17 +27534,21 @@
         "src/shared/services/authService.ts",
         "src/shared/services/authService.ts",
         "src/shared/services/contentState.ts",
+        "src/shared/services/contentState.ts",
+        "src/shared/services/remoteLoader.ts",
         "src/shared/services/remoteLoader.ts",
         "src/shared/services/searchService.ts",
         "src/shared/services/fieldRegistry.ts",
         "src/shared/services/provenanceService.ts",
         "src/shared/services/metadataHarvester.ts",
         "src/shared/services/metadataTemplateService.ts",
+        "src/shared/services/metadataTemplateService.ts",
+        "src/shared/services/guidanceService.ts",
         "src/shared/services/guidanceService.ts"
       ],
       "dependents": [],
-      "size": 2852,
-      "lines": 71
+      "size": 3221,
+      "lines": 84
     },
     "src/shared/services/logger.ts": {
       "filePath": "src/shared/services/logger.ts",
@@ -27453,6 +27741,7 @@
       ],
       "dependencies": [],
       "dependents": [
+        "src/shared/services/index.ts",
         "src/shared/services/index.ts"
       ],
       "size": 6915,
@@ -27763,6 +28052,7 @@
         "src/shared/services/authService.ts"
       ],
       "dependents": [
+        "src/shared/services/index.ts",
         "src/shared/services/index.ts"
       ],
       "size": 7423,
@@ -28211,6 +28501,23 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/vault/types",
+          "specifiers": [
+            "[re-export]:EntityType",
+            "[re-export]:NormalizedState",
+            "[re-export]:TrashedEntity",
+            "[re-export]:VaultSnapshot",
+            "[re-export]:RemoveOptions",
+            "[re-export]:RestoreOptions",
+            "[re-export]:EmptyTrashResult"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -28478,12 +28785,47 @@
           "name": "LanguageString",
           "type": "named",
           "isTypeExport": false
+        },
+        {
+          "name": "EntityType",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "NormalizedState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "TrashedEntity",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "VaultSnapshot",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "RemoveOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "RestoreOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "EmptyTrashResult",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 22294,
-      "lines": 719
+      "size": 22714,
+      "lines": 732
     },
     "src/shared/ui/atoms/Icon.tsx": {
       "filePath": "src/shared/ui/atoms/Icon.tsx",
@@ -28605,8 +28947,8 @@
         "src/shared/ui/atoms/index.ts",
         "src/shared/ui/atoms/index.ts"
       ],
-      "size": 834,
-      "lines": 41
+      "size": 885,
+      "lines": 43
     },
     "src/shared/ui/atoms/StepIndicator.tsx": {
       "filePath": "src/shared/ui/atoms/StepIndicator.tsx",
@@ -28659,8 +29001,8 @@
         "src/shared/ui/atoms/index.ts",
         "src/shared/ui/atoms/index.ts"
       ],
-      "size": 2038,
-      "lines": 80
+      "size": 2089,
+      "lines": 82
     },
     "src/shared/ui/atoms/TabButtonBase.tsx": {
       "filePath": "src/shared/ui/atoms/TabButtonBase.tsx",
@@ -30512,8 +30854,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 3721,
-      "lines": 145
+      "size": 3763,
+      "lines": 146
     },
     "src/shared/ui/molecules/ListContainer.tsx": {
       "filePath": "src/shared/ui/molecules/ListContainer.tsx",
@@ -31403,7 +31745,7 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 3142,
+      "size": 3214,
       "lines": 116
     },
     "src/shared/ui/molecules/SelectionToolbar.tsx": {
@@ -33698,7 +34040,7 @@
         "src/shared/ui/molecules/PipelineBanner.tsx"
       ],
       "dependents": [],
-      "size": 6668,
+      "size": 6717,
       "lines": 185
     },
     "src/shared/workers/index.ts": {
@@ -35048,6 +35390,7 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
+            "AbstractionLevel",
             "AppMode",
             "getIIIFValue",
             "IIIFItem",
@@ -35128,28 +35471,6 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
-        },
-        {
-          "source": "../types",
-          "specifiers": [
-            "[dynamic]"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../types",
-          "specifiers": [
-            "[dynamic]"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -35161,7 +35482,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 28856,
+      "size": 28836,
       "lines": 658
     },
     "src/widgets/OnboardingModal/ui/OnboardingModal.tsx": {
@@ -35415,7 +35736,7 @@
           "isInternalAlias": true
         },
         {
-          "source": "@/src/shared/services/validator",
+          "source": "@/src/entities/manifest/model/validation/validator",
           "specifiers": [
             "ValidationIssue"
           ],
@@ -35446,7 +35767,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 5810,
+      "size": 5829,
       "lines": 132
     },
     "src/widgets/StatusBar/ui/organisms/StatusBar.tsx": {
@@ -35591,6 +35912,7 @@
     "@/src/entities/manifest/model/validation/validationHealer",
     "@/src/entities/manifest/model/validation/validator",
     "@/src/entities/manifest/model/vault",
+    "@/src/entities/manifest/model/vault/types",
     "@/src/features/archive",
     "@/src/features/archive/model",
     "@/src/features/archive/ui/organisms/ArchiveHeader",
@@ -35656,8 +35978,6 @@
     "@/src/shared/services/remoteLoader",
     "@/src/shared/services/searchService",
     "@/src/shared/services/storage",
-    "@/src/shared/services/validator",
-    "@/src/shared/services/vault",
     "@/src/shared/types",
     "@/src/shared/ui/atoms",
     "@/src/shared/ui/atoms/Icon",
@@ -35698,7 +36018,6 @@
     "@/src/widgets/QCDashboard/ui/QCDashboard",
     "@/src/widgets/StatusBar/ui/organisms/StatusBar",
     "@/src/widgets/StorageFullDialog/ui/StorageFullDialog",
-    "@/types",
     "@/ui/primitives",
     "@/ui/primitives/Button",
     "@/ui/primitives/Card",
@@ -35793,9 +36112,9 @@
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx"
   ],
   "stats": {
-    "totalImports": 1513,
-    "totalExports": 2237,
-    "avgImportsPerFile": 4.002645502645502,
+    "totalImports": 1528,
+    "totalExports": 2258,
+    "avgImportsPerFile": 4.031662269129288,
     "mostImported": [
       {
         "file": "src/features/dependency-explorer/types.ts",

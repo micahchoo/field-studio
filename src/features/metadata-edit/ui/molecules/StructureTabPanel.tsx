@@ -10,15 +10,16 @@
  * Conforms to IIIF Presentation 3.0 structures specification.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import {
+  AppSettings,
+  getIIIFValue,
+  IIIFCanvas,
   IIIFManifest,
   IIIFRange,
   IIIFRangeReference,
-  IIIFCanvas,
-  getIIIFValue,
-  LanguageMap,
-  AppSettings
+  LanguageMap
 } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
@@ -107,7 +108,7 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
       >
         {/* Expand/Collapse toggle */}
         {hasChildren ? (
-          <button
+          <Button variant="ghost" size="bare"
             onClick={(e) => { e.stopPropagation(); onToggle(); }}
             className={`p-0.5 rounded ${fieldMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`}
           >
@@ -115,7 +116,7 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
               name={isExpanded ? 'expand_more' : 'chevron_right'}
               className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
             />
-          </button>
+          </Button>
         ) : (
           <div className="w-5" />
         )}
@@ -151,18 +152,18 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
+          <Button variant="ghost" size="bare"
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className={`p-1 rounded ${fieldMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
           >
             <Icon name="edit" className="text-[10px]" />
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost" size="bare"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className={`p-1 rounded hover:bg-red-100 text-red-400 hover:text-red-600`}
           >
             <Icon name="delete" className="text-[10px]" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -239,12 +240,12 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
           <h3 className={`font-bold ${fieldMode ? 'text-white' : 'text-slate-800'}`}>
             {isEditing ? 'Edit Range' : 'Create New Range'}
           </h3>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onClose}
             className={`p-1 rounded ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
           >
             <Icon name="close" className={fieldMode ? 'text-slate-400' : 'text-slate-500'} />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -327,7 +328,7 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
           flex items-center justify-end gap-2 px-4 py-3 border-t
           ${fieldMode ? 'border-slate-700' : 'border-slate-200'}
         `}>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onClose}
             className={`
               px-4 py-2 rounded-lg text-sm font-medium transition-colors
@@ -338,8 +339,8 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
             `}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost" size="bare"
             onClick={handleSave}
             disabled={!label.trim()}
             className={`
@@ -351,7 +352,7 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
             `}
           >
             {isEditing ? 'Save Changes' : 'Create Range'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -599,7 +600,7 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
       </div>
 
       {/* Add Range button */}
-      <button
+      <Button variant="ghost" size="bare"
         onClick={() => { setEditingRange(null); setModalOpen(true); }}
         className={`
           w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed
@@ -612,7 +613,7 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
       >
         <Icon name="add" className="text-sm" />
         Add Range
-      </button>
+      </Button>
 
       {/* Range tree */}
       {structures.length > 0 ? (

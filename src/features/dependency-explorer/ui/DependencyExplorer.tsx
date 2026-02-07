@@ -5,7 +5,8 @@
  * Accessible only when ?admin=true is in URL or localStorage has adminMode=true
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { useDependencyData } from '../model/useDependencyData';
 import { DependencyGraphView } from './DependencyGraphView';
 import { FileDetailPanel } from './FileDetailPanel';
@@ -13,7 +14,7 @@ import { StatsPanel } from './StatsPanel';
 import { CircularDepsPanel } from './CircularDepsPanel';
 import { OrphansPanel } from './OrphansPanel';
 import { ArchitecturePanel } from './ArchitecturePanel';
-import type { ViewMode, FilterType, FileAnalysis } from '../types';
+import type { FileAnalysis, FilterType, ViewMode } from '../types';
 
 interface DependencyExplorerProps {
   className?: string;
@@ -103,12 +104,12 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             Failed to Load Data
           </h2>
           <p className="text-red-600 dark:text-red-300 mb-4">{error.message}</p>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={refresh}
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -156,7 +157,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
           { id: 'circular', label: 'Circular', icon: 'sync_problem' },
           { id: 'orphans', label: 'Orphans', icon: 'link_off' },
           ].map(({ id, label, icon }) => (
-            <button
+            <Button variant="ghost" size="bare"
               key={id}
               onClick={() => setViewMode(id as ViewMode)}
               className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
@@ -167,17 +168,17 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             >
               <span className="material-icons text-sm">{icon}</span>
               <span className="hidden sm:inline">{label}</span>
-            </button>
+            </Button>
           ))}
         </div>
 
-        <button
+        <Button variant="ghost" size="bare"
           onClick={refresh}
           className="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
           title="Refresh"
         >
           <span className="material-icons text-sm">refresh</span>
-        </button>
+        </Button>
       </header>
 
       {/* Toolbar */}
@@ -195,12 +196,12 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             className="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {searchQuery && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={() => setSearchQuery('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <span className="material-icons text-sm">close</span>
-            </button>
+            </Button>
           )}
         </div>
 

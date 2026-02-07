@@ -3,6 +3,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useFocusTrap } from '@/src/shared/lib/hooks/useFocusTrap';
 import {
@@ -222,19 +223,19 @@ ${categoriesHtml}
                 aria-label="Search keyboard shortcuts"
               />
               {searchQuery && (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full"
                   aria-label="Clear search"
                 >
                   <Icon name="close" className="text-slate-400 text-sm" />
-                </button>
+                </Button>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handlePrint}
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
               aria-label="Print cheat sheet"
@@ -242,14 +243,14 @@ ${categoriesHtml}
             >
               <Icon name="print" className="text-lg" />
               <span className="hidden sm:inline">Print</span>
-            </button>
-            <button
+            </Button>
+            <Button variant="ghost" size="bare"
               onClick={onClose}
               className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               aria-label="Close shortcuts overlay"
             >
               <Icon name="close" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -274,7 +275,7 @@ ${categoriesHtml}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:inline">Category:</span>
             {sortedCategories.slice(0, 4).map((cat, idx) => (
-              <button
+              <Button variant="ghost" size="bare"
                 key={cat}
                 onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 ${selectedCategory === cat ? 'bg-iiif-blue text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
@@ -282,24 +283,24 @@ ${categoriesHtml}
               >
                 <Icon name={getCategoryIcon(cat)} className="text-sm" />
                 {getCategoryLabel(cat)}
-              </button>
+              </Button>
             ))}
             {selectedCategory && !sortedCategories.slice(0, 4).includes(selectedCategory) && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setSelectedCategory(null)}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-iiif-blue text-white transition-all"
               >
                 {getCategoryLabel(selectedCategory)}
-              </button>
+              </Button>
             )}
             {selectedCategory && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setSelectedCategory(null)}
                 className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 aria-label="Clear category filter"
               >
                 Clear
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -310,12 +311,12 @@ ${categoriesHtml}
               <Icon name="search_off" className="text-5xl mb-4 mx-auto text-slate-300 dark:text-slate-600" />
               <p className="text-slate-500 dark:text-slate-400 mb-2">No shortcuts found</p>
               <p className="text-sm text-slate-400 dark:text-slate-500">Try adjusting your search or filters</p>
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSelectedContext('all'); }}
                 className="mt-4 px-4 py-2 text-sm text-iiif-blue hover:underline"
               >
                 Clear all filters
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="space-y-6">

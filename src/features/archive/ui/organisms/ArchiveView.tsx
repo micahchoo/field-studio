@@ -17,7 +17,7 @@ import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { useGridVirtualization, useIIIFTraversal, usePipeline, useResponsive, useSharedSelection } from '@/src/shared/lib/hooks';
 import { IIIF_CONFIG, IIIF_SPEC } from '@/src/shared/constants';
 import { isValidChildType } from '@/utils/iiifHierarchy';
-import { ContextMenu, type ContextMenuSection, FloatingSelectionToolbar, BreadcrumbNav, type BreadcrumbItem, GuidedEmptyState, PipelineBanner } from '@/src/shared/ui/molecules';
+import { type BreadcrumbItem, BreadcrumbNav, ContextMenu, type ContextMenuSectionType, FloatingSelectionToolbar, GuidedEmptyState, PipelineBanner } from '@/src/shared/ui/molecules';
 import { createLanguageMap, generateUUID } from '@/utils/iiifTypes';
 import { ArchiveHeader } from './ArchiveHeader';
 import { ArchiveGrid } from './ArchiveGrid';
@@ -68,6 +68,8 @@ export interface ArchiveViewProps {
   onToggleInspectorPanel?: () => void;
   /** Whether a canvas is currently selected (for showing panel controls) */
   hasCanvasSelected?: boolean;
+  /** Whether advanced mode is enabled (deprecated, kept for API compatibility) */
+  isAdvanced?: boolean;
 }
 
 /**
@@ -210,9 +212,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   }, [filmstripMode, fieldMode]);
 
   const { visibleRange: gridVisibleRange, columns: gridColumns } = useGridVirtualization({
-    totalItems: filteredCanvases.length,
-    itemSize: gridItemSize,
-    containerRef: scrollContainerRef,
+    itemWidth: gridItemSize.width,
+    itemHeight: gridItemSize.height,
     overscan: 3,
   });
 
@@ -449,7 +450,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             : canvas.label?.en?.[0] || canvas.label?.none?.[0] || 'Untitled';
 
           return (
-            <button
+            <Button variant="ghost" size="bare"
               key={canvas.id}
               onClick={(e) => handleItemClick(e, canvas)}
               onDoubleClick={() => onOpen(canvas)}
@@ -505,7 +506,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
                   <span className="material-icons text-lg">check_circle</span>
                 </div>
               )}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -587,7 +588,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
       {/* Context Menu - Enhanced with pipeline actions */}
       {contextMenu && (() => {
         const targetItem = allCanvases.find(c => c.id === contextMenu.targetId);
-        const sections: ContextMenuSection[] = [
+        const sections: ContextMenuSectionType[] = [
           {
             title: 'Actions',
             items: [

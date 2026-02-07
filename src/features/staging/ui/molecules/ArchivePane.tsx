@@ -5,7 +5,8 @@
  * Displays collections and allows organizing manifests into them.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { SourceManifest, SourceManifests } from '@/src/shared/types';
 import type { ArchiveLayout, ArchiveNode } from '@/src/shared/lib/hooks/useStagingState';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
@@ -45,13 +46,13 @@ const ArchivePaneHeader: React.FC<{
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-slate-700">Archive Layout</h3>
-        <button
+        <Button variant="ghost" size="bare"
           onClick={() => setShowNewCollectionInput(!showNewCollectionInput)}
           className="p-1 hover:bg-slate-200 rounded text-slate-600 text-sm"
           title="Create new collection"
         >
           <Icon name="add" className="text-base" />
-        </button>
+        </Button>
       </div>
 
       {showNewCollectionInput && (
@@ -68,12 +69,12 @@ const ArchivePaneHeader: React.FC<{
             className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
             autoFocus
           />
-          <button
+          <Button variant="ghost" size="bare"
             onClick={handleCreate}
             className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Create
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -106,7 +107,7 @@ const CollectionNode: React.FC<{
     <div className="border-b border-slate-100" onClick={onFocus}>
       {/* Collection header */}
       <div className="flex items-center gap-2 p-2 hover:bg-slate-100 cursor-pointer group">
-        <button
+        <Button variant="ghost" size="bare"
           onClick={() => setIsExpanded(!isExpanded)}
           className="p-0.5 hover:bg-slate-300 rounded"
         >
@@ -114,7 +115,7 @@ const CollectionNode: React.FC<{
             name={isExpanded ? 'expand_more' : 'chevron_right'}
             className="text-base"
           />
-        </button>
+        </Button>
 
         <Icon name="folder" className="text-base text-blue-500" />
 
@@ -145,7 +146,7 @@ const CollectionNode: React.FC<{
 
         {/* Actions */}
         <div className="hidden group-hover:flex gap-1">
-          <button
+          <Button variant="ghost" size="bare"
             onClick={(e) => {
               e.stopPropagation();
               setIsRenaming(true);
@@ -154,8 +155,8 @@ const CollectionNode: React.FC<{
             title="Rename"
           >
             <Icon name="edit" className="text-sm" />
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost" size="bare"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
@@ -164,7 +165,7 @@ const CollectionNode: React.FC<{
             title="Delete"
           >
             <Icon name="delete" className="text-sm" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -184,7 +185,7 @@ const CollectionNode: React.FC<{
               >
                 <Icon name="description" className="text-sm text-slate-400" />
                 <span className="flex-1 truncate">{manifest.name}</span>
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={(e) => {
                     e.stopPropagation();
                     onRemove([manifestId]);
@@ -193,7 +194,7 @@ const CollectionNode: React.FC<{
                   title="Remove from collection"
                 >
                   <Icon name="close" className="text-sm" />
-                </button>
+                </Button>
               </div>
             );
           })}

@@ -488,6 +488,40 @@ export const PROPERTY_MATRIX: Record<
 };
 
 // ============================================================================
+// Pre-computed Property Lists (built once at module init)
+// ============================================================================
+
+const _allowedByType = new Map<string, string[]>();
+const _requiredByType = new Map<string, string[]>();
+const _recommendedByType = new Map<string, string[]>();
+// O(1) lookup: "property:type" -> requirement
+const _requirementCache = new Map<string, ValidationRequirement>();
+
+// Build all caches in a single pass over PROPERTY_MATRIX
+{
+  const allTypes = new Set<string>();
+  for (const types of Object.values(PROPERTY_MATRIX)) {
+    for (const t of Object.keys(types)) allTypes.add(t);
+  }
+
+  for (const type of allTypes) {
+    const allowed: string[] = [];
+    const required: string[] = [];
+    const recommended: string[] = [];
+    for (const [prop, types] of Object.entries(PROPERTY_MATRIX)) {
+      const req = types[type as IIIFResourceType];
+      if (req) _requirementCache.set(`${prop}:${type}`, req);
+      if (req !== 'NOT_ALLOWED') allowed.push(prop);
+      if (req === 'REQUIRED') required.push(prop);
+      if (req === 'RECOMMENDED') recommended.push(prop);
+    }
+    _allowedByType.set(type, allowed);
+    _requiredByType.set(type, required);
+    _recommendedByType.set(type, recommended);
+  }
+}
+
+// ============================================================================
 // Property Validation Functions
 // ============================================================================
 
@@ -495,7 +529,7 @@ export function getPropertyRequirement(
   property: string,
   resourceType: IIIFResourceType
 ): ValidationRequirement {
-  return PROPERTY_MATRIX[property]?.[resourceType] || 'OPTIONAL';
+  return _requirementCache.get(`${property}:${resourceType}`) || 'OPTIONAL';
 }
 
 export function isPropertyAllowed(
@@ -509,25 +543,19 @@ export function isPropertyAllowed(
 export function getAllowedProperties(
   resourceType: IIIFResourceType
 ): string[] {
-  return Object.entries(PROPERTY_MATRIX)
-    .filter(([, types]) => types[resourceType] !== 'NOT_ALLOWED')
-    .map(([prop]) => prop);
+  return _allowedByType.get(resourceType) || [];
 }
 
 export function getRequiredProperties(
   resourceType: IIIFResourceType
 ): string[] {
-  return Object.entries(PROPERTY_MATRIX)
-    .filter(([, types]) => types[resourceType] === 'REQUIRED')
-    .map(([prop]) => prop);
+  return _requiredByType.get(resourceType) || [];
 }
 
 export function getRecommendedProperties(
   resourceType: IIIFResourceType
 ): string[] {
-  return Object.entries(PROPERTY_MATRIX)
-    .filter(([, types]) => types[resourceType] === 'RECOMMENDED')
-    .map(([prop]) => prop);
+  return _recommendedByType.get(resourceType) || [];
 }
 
 // ============================================================================

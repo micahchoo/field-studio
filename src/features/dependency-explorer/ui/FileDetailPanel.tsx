@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { FileAnalysis } from '../types';
 
 interface FileDetailPanelProps {
@@ -39,12 +40,12 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
             </h2>
             <p className="text-xs text-slate-500 font-mono mt-1">{file.directory}/</p>
           </div>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onClose}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
           >
             <span className="material-icons text-sm">close</span>
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-4">
@@ -149,13 +150,13 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
                       {imp.source}
                     </div>
                     {resolvedFile && (
-                      <button
+                      <Button variant="ghost" size="bare"
                         onClick={() => handleFileClick(resolvedFile)}
                         className="text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 mt-1 flex items-center gap-1"
                       >
                         <span className="material-icons text-xs">open_in_new</span>
                         {resolvedFile.split('/').pop()}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 );
@@ -193,7 +194,7 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
             </h3>
             <div className="space-y-1 max-h-48 overflow-auto">
               {file.dependents.map((depPath, idx) => (
-                <button
+                <Button variant="ghost" size="bare"
                   key={idx}
                   onClick={() => handleFileClick(depPath)}
                   className="w-full text-left px-2 py-1.5 bg-white dark:bg-slate-700 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
@@ -201,7 +202,7 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
                   <div className="font-mono text-xs text-slate-500 truncate">
                     {depPath}
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           </section>

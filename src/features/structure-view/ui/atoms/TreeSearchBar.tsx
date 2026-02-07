@@ -14,6 +14,7 @@
  */
 
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface TreeSearchBarProps {
@@ -85,7 +86,7 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
         />
         {/* Clear button */}
         {query && (
-          <button
+          <Button variant="ghost" size="bare"
             type="button"
             onClick={() => onQueryChange('')}
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
@@ -94,7 +95,7 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         )}
       </div>
       
@@ -114,12 +115,12 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
             )}
           </span>
           {matchCount === 0 && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={() => onQueryChange('')}
               className="text-sm text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium transition-colors"
             >
               Clear search
-            </button>
+            </Button>
           )}
         </div>
       )}

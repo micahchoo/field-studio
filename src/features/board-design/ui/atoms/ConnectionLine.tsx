@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { ConnectionType } from '../../model';
 
 export interface ConnectionLineProps {
@@ -31,11 +32,7 @@ export interface ConnectionLineProps {
   /** Callback when connection is clicked */
   onSelect: (id: string) => void;
   /** Contextual styles */
-  cx: {
-    svgStroke: string;
-    svgFill: string;
-    accent: string;
-  };
+  cx: ContextualClassNames;
   /** Field mode flag */
   fieldMode: boolean;
 }

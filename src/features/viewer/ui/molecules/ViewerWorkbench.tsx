@@ -16,9 +16,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { IconButton, TabBar } from '@/src/shared/ui/molecules';
 import {
-  ParameterSection, PresetSelector, CoordinateInput, ImagePreview,
-  PreviewHeader, UrlBar, RotationDial, UpscaleToggle,
-  QualitySelector, FormatSelector, CodePanel, WorkbenchFooter,
+  CodePanel, CoordinateInput, FormatSelector, ImagePreview,
+  ParameterSection, PresetSelector, PreviewHeader, QualitySelector,
+  RotationDial, UpscaleToggle, UrlBar, WorkbenchFooter,
 } from '@/src/features/viewer/ui/atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { IIIFCanvas } from '@/src/shared/types';

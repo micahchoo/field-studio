@@ -2,7 +2,7 @@
  * Hook for loading and querying dependency data
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DependencyGraph, FileAnalysis, FilterType } from '../types';
 
 interface UseDependencyDataOptions {

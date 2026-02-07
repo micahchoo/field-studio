@@ -20,7 +20,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { IIIFItem } from '@/src/shared/types';
-import { VirtualTreeList, StructureToolbar, EmptyStructure } from '../molecules';
+import { EmptyStructure, StructureToolbar, VirtualTreeList } from '../molecules';
 import { TreeSearchBar } from '../atoms';
 import { useStructureTree } from '../../model/useStructureTree';
 import type { DropPosition } from '../atoms/DropIndicator';

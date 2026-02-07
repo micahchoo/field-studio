@@ -12,7 +12,7 @@
  * @module features/metadata-edit/ui/atoms/FileDropZone
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 

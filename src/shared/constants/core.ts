@@ -37,7 +37,9 @@ export const IIIF_CONFIG = {
     ANNOTATION_PAGE: (parentId: string, type: string) => `${parentId}/page/${type}`,
     ANNOTATION: (parentId: string, id: string) => `${parentId}/annotation/${id}`,
     SEARCH_SERVICE: (baseUrl: string, resourceId: string) => `${baseUrl}/search/${resourceId}`,
-    IMAGE_SERVICE: (baseUrl: string, assetId: string) => `${baseUrl}/image/${assetId}`
+    IMAGE_SERVICE: (baseUrl: string, assetId: string) => `${baseUrl}/image/${assetId}`,
+    /** Media service for audio/video files - intercepted by SW */
+    MEDIA_SERVICE: (baseUrl: string, assetId: string, ext: string) => `${baseUrl}/media/${assetId}.${ext}`
   },
 
   /**

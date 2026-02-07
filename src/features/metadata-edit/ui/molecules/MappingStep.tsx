@@ -14,11 +14,8 @@
  */
 
 import React from 'react';
-import { Icon, Button } from '@/src/shared/ui/atoms';
-import { ColumnSelector, type PropertyOption } from '../atoms';
-import { MappingRow } from '../atoms';
-import { FilePreview } from '../atoms';
-import { AutoMapButton } from '../atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
+import { AutoMapButton, ColumnSelector, FilePreview, MappingRow, type PropertyOption } from '../atoms';
 import type { CSVColumnMapping } from '@/src/features/ingest/model/csvImporter';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 

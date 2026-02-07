@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 export type ValidationStatus = 'pristine' | 'valid' | 'invalid' | 'validating';
@@ -242,14 +243,14 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
             <Icon name="error" className="text-[10px] mt-0.5 shrink-0" />
             <span className="flex-1">{validation.message}</span>
             {validation.fix && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={validation.fix}
                 className="shrink-0 ml-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-[9px] font-bold uppercase hover:bg-green-200 transition-colors"
                 aria-label={`Fix: ${validation.fixDescription || 'Auto-fix this issue'}`}
                 title={validation.fixDescription || 'Auto-fix this issue'}
               >
                 Fix
-              </button>
+              </Button>
             )}
           </div>
         )}

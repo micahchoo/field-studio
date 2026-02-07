@@ -59,3 +59,6 @@ export type { KeyboardShortcutsModalProps } from './KeyboardShortcutsModal';
 
 export { AnnotationDrawingOverlay } from './AnnotationDrawingOverlay';
 export type { AnnotationDrawingOverlayProps } from './AnnotationDrawingOverlay';
+
+export { TimeAnnotationOverlay } from './TimeAnnotationOverlay';
+export type { TimeAnnotationOverlayProps } from './TimeAnnotationOverlay';

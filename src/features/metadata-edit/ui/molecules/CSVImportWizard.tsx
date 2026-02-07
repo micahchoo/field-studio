@@ -14,9 +14,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Icon } from '@/src/shared/ui/atoms';
-import { Button } from '@/ui/primitives/Button';
-import { StepIndicator as WizardStepIndicator, StepConnector as WizardStepConnector } from '@/src/shared/ui/atoms';
+import { Button, Icon, StepConnector as WizardStepConnector, StepIndicator as WizardStepIndicator } from '@/src/shared/ui/atoms';
 import { UploadStep } from './UploadStep';
 import { MappingStep } from './MappingStep';
 import { ResultStep } from './ResultStep';

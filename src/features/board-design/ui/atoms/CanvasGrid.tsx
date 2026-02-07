@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface CanvasGridProps {
   /** Grid cell size in pixels */
@@ -22,10 +23,7 @@ export interface CanvasGridProps {
   /** Whether grid is visible */
   visible?: boolean;
   /** Contextual styles */
-  cx: {
-    gridBg: string;
-    gridLine: string;
-  };
+  cx: ContextualClassNames;
   /** Field mode flag */
   fieldMode: boolean;
 }

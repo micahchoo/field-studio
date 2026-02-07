@@ -262,27 +262,17 @@ export function highlightMatches(
 
 /**
  * Escape HTML special characters
+ * Uses direct string replacement — faster than creating DOM elements per call
  */
 function escapeHtml(text: string): string {
   if (!text) return '';
 
-  // Try DOM method first (faster in real browsers)
-  if (typeof document !== 'undefined' && document.createElement) {
-    try {
-      const div = document.createElement('div');
-      div.textContent = text;
-      const escaped = div.innerHTML;
-      // Verify it actually escaped (some test environments don't work correctly)
-      if (text.includes('<') && !escaped.includes('&lt;')) {
-        throw new Error('DOM escape failed');
-      }
-      return escaped;
-    } catch {
-      // Fall through to manual escape
-    }
+  // Fast check: if no special chars, return as-is
+  if (!text.includes('&') && !text.includes('<') && !text.includes('>') &&
+      !text.includes('"') && !text.includes("'")) {
+    return text;
   }
 
-  // Fallback to manual escaping (reliable in all environments)
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

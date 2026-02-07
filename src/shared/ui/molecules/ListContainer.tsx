@@ -103,7 +103,7 @@ export const ListContainer: React.FC<ListContainerProps> = ({
             <Button
               onClick={onHeaderAction}
               variant="ghost"
-              size="xs"
+              size="sm"
               icon={<Icon name={headerActionIcon} className="text-xs" />}
             >
               {headerActionLabel}

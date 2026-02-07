@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
@@ -200,13 +201,13 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                     <p className="text-sm text-slate-500">Editing {ids.length} items</p>
                 </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"><Icon name="close" /></button>
+            <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"><Icon name="close" /></Button>
         </div>
 
         <div className="flex border-b bg-white shrink-0">
-            <button onClick={() => setActiveTab('rename')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'rename' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Rename</button>
-            <button onClick={() => setActiveTab('metadata')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'metadata' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Metadata</button>
-            <button onClick={() => setActiveTab('patterns')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'patterns' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Pattern Detector</button>
+            <Button variant="ghost" size="bare" onClick={() => setActiveTab('rename')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'rename' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Rename</Button>
+            <Button variant="ghost" size="bare" onClick={() => setActiveTab('metadata')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'metadata' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Metadata</Button>
+            <Button variant="ghost" size="bare" onClick={() => setActiveTab('patterns')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'patterns' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Pattern Detector</Button>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
@@ -245,10 +246,10 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                                     <select value={m.property} onChange={e => setFieldMappings(fieldMappings.map((x, idx) => idx === i ? {...x, property: e.target.value} : x))} className="flex-1 p-2 border rounded text-xs">
                                         {IIIF_PROPERTY_SUGGESTIONS.map(p => <option key={p} value={p}>{p}</option>)}
                                     </select>
-                                    <button onClick={() => setFieldMappings(fieldMappings.filter((_, idx) => idx !== i))} className="text-red-400"><Icon name="delete" className="text-sm"/></button>
+                                    <Button variant="ghost" size="bare" onClick={() => setFieldMappings(fieldMappings.filter((_, idx) => idx !== i))} className="text-red-400"><Icon name="delete" className="text-sm"/></Button>
                                 </div>
                             ))}
-                            <button onClick={() => setFieldMappings([...fieldMappings, { group: fieldMappings.length + 1, property: 'Subject' }])} className="text-[10px] font-bold text-iiif-blue uppercase">+ Add Group Mapping</button>
+                            <Button variant="ghost" size="bare" onClick={() => setFieldMappings([...fieldMappings, { group: fieldMappings.length + 1, property: 'Subject' }])} className="text-[10px] font-bold text-iiif-blue uppercase">+ Add Group Mapping</Button>
                         </div>
                     </div>
                 )}
@@ -280,7 +281,7 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
         <div className="p-6 bg-slate-50 border-t flex justify-between items-center">
             <div>
               {existingSnapshot && onRollback && (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={() => setShowRollbackConfirm(true)}
                   className="px-4 py-2 text-amber-700 bg-amber-50 border border-amber-200 font-bold hover:bg-amber-100 rounded-xl flex items-center gap-2 text-sm"
                 >
@@ -289,12 +290,12 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                   <span className="text-[10px] text-amber-500 ml-1">
                     ({existingSnapshot.itemCount} items, {formatTimestamp(existingSnapshot.timestamp)})
                   </span>
-                </button>
+                </Button>
               )}
             </div>
             <div className="flex gap-3">
-              <button onClick={onClose} className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Cancel</button>
-              <button onClick={handleApply} className="px-10 py-2 bg-iiif-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 flex items-center gap-2">Apply Changes <Icon name="play_arrow"/></button>
+              <Button variant="ghost" size="bare" onClick={onClose} className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Cancel</Button>
+              <Button variant="ghost" size="bare" onClick={handleApply} className="px-10 py-2 bg-iiif-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 flex items-center gap-2">Apply Changes <Icon name="play_arrow"/></Button>
             </div>
         </div>
 
@@ -322,18 +323,18 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                 </p>
               </div>
               <div className="flex gap-3 justify-end">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={() => setShowRollbackConfirm(false)}
                   className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost" size="bare"
                   onClick={handleRollback}
                   className="px-6 py-2 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 flex items-center gap-2"
                 >
                   <Icon name="history" /> Rollback
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -344,8 +345,8 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
 };
 
 const PlaceholderBtn: React.FC<{ label: string, tag: string, onClick: (s: string) => void, current: string }> = ({ label, tag, onClick, current }) => (
-    <button onClick={() => onClick(current + tag)} className="flex flex-col items-start p-2 rounded-lg bg-white border border-slate-200 hover:border-iiif-blue transition-all text-left">
+    <Button variant="ghost" size="bare" onClick={() => onClick(current + tag)} className="flex flex-col items-start p-2 rounded-lg bg-white border border-slate-200 hover:border-iiif-blue transition-all text-left">
         <span className="text-[8px] font-black text-slate-400 uppercase">{label}</span>
         <code className="text-xs font-mono font-bold text-iiif-blue">{tag}</code>
-    </button>
+    </Button>
 );

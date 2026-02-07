@@ -65,12 +65,12 @@ export function resolveImageSource(
   // Look in painting annotations
   if (canvas.items && canvas.items.length > 0) {
     const annotationPage = canvas.items[0];
-    const ap = annotationPage as Record<string, unknown>;
+    const ap = annotationPage as unknown as Record<string, unknown>;
     const items = ap.items as IIIFItem[] | undefined;
 
     if (items && items.length > 0) {
       const annotation = items[0];
-      const a = annotation as Record<string, unknown>;
+      const a = annotation as unknown as Record<string, unknown>;
       const body = a.body as ImageSourceResult | undefined;
 
       if (body) {
@@ -92,7 +92,7 @@ export function resolveThumbUrl(
   item: IIIFItemLike,
   defaultSize = 200
 ): string | undefined {
-  const i = item as Record<string, unknown>;
+  const i = item as unknown as Record<string, unknown>;
 
   // Direct thumbnail
   if (i.thumbnail && Array.isArray(i.thumbnail) && i.thumbnail.length > 0) {
@@ -188,8 +188,8 @@ export function hasDeepZoomCapability(canvas: IIIFCanvasLike): boolean {
   if (source.service && Array.isArray(source.service)) {
     return source.service.some(
       (s) =>
-        (s as Record<string, string>).type === 'ImageService2' ||
-        (s as Record<string, string>).type === 'ImageService3'
+        (s as unknown as Record<string, string>).type === 'ImageService2' ||
+        (s as unknown as Record<string, string>).type === 'ImageService3'
     );
   }
 
@@ -206,7 +206,7 @@ export function getImageServiceInfo(
   if (!source?.service) return undefined;
 
   if (Array.isArray(source.service) && source.service.length > 0) {
-    return source.service[0] as Record<string, unknown>;
+    return source.service[0] as unknown as Record<string, unknown>;
   }
 
   return undefined;

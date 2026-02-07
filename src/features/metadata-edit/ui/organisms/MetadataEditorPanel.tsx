@@ -21,8 +21,7 @@
 
 import React, { useEffect } from 'react';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
-import { TabBar } from '@/src/shared/ui/molecules';
-import { ModalDialog } from '@/src/shared/ui/molecules';
+import { ModalDialog, TabBar } from '@/src/shared/ui/molecules';
 import { EmptyProperties } from '../atoms/EmptyProperties';
 import { MetadataTabPanel } from '../molecules/MetadataTabPanel';
 import { TechnicalTabPanel } from '../molecules/TechnicalTabPanel';
@@ -228,6 +227,7 @@ export const MetadataEditorPanel: React.FC<MetadataEditorPanelProps> = ({
 
       {showLocationPicker && (
         <LocationPickerModal
+          isOpen={!!showLocationPicker}
           initialValue={showLocationPicker.value}
           onSave={(val) => {
             const newMeta = [...(resource.metadata || [])];

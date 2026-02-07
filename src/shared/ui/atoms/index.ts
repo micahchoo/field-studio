@@ -59,3 +59,9 @@ export type { StepIndicatorProps } from './StepIndicator';
 // ============================================================================
 export { StepConnector } from './StepConnector';
 export type { StepConnectorProps } from './StepConnector';
+
+// ============================================================================
+// ZoomControl Atom - Zoom in/out/reset controls
+// ============================================================================
+export { ZoomControl } from './ZoomControl';
+export type { ZoomControlProps } from './ZoomControl';

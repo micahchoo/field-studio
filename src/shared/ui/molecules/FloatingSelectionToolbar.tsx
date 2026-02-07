@@ -242,7 +242,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
               </span>
             </div>
 
-            <button
+            <Button variant="ghost" size="bare"
               onClick={() => setShowThumbnails(false)}
               className={`
                 ml-auto p-1 rounded hover:bg-black/10 transition-colors
@@ -251,13 +251,13 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
               aria-label="Hide thumbnails"
             >
               <Icon name="expand_less" className="text-sm" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Collapsed thumbnail toggle */}
         {!showThumbnails && (
-          <button
+          <Button variant="ghost" size="bare"
             onClick={() => setShowThumbnails(true)}
             className={`
               w-full p-2 flex items-center justify-center gap-2 text-xs
@@ -267,7 +267,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
           >
             <Icon name="expand_more" className="text-sm" />
             Show {count} selected
-          </button>
+          </Button>
         )}
 
         {/* Action groups */}
@@ -334,7 +334,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
                           role="menu"
                         >
                           {groupActions.map(action => (
-                            <button
+                            <Button variant="ghost" size="bare"
                               key={action.id}
                               onClick={() => {
                                 action.onClick();
@@ -353,7 +353,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
                             >
                               <Icon name={action.icon} className="text-sm opacity-70" />
                               <span className="text-sm">{action.label}</span>
-                            </button>
+                            </Button>
                           ))}
                         </div>
                       )}

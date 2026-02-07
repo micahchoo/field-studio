@@ -18,12 +18,11 @@ import { IconButton } from '@/src/shared/ui/molecules';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
 import {
-  pointsToSvgPath,
   createSvgSelector,
+  type SpatialDrawingMode,
   parseSvgSelector,
-  getBoundingBox,
+  pointsToSvgPath,
   simplifyPath,
-  type DrawingMode,
 } from '../../model/annotation';
 import type { Point } from '@/src/shared/constants/viewport';
 
@@ -34,10 +33,10 @@ export interface AnnotationDrawingOverlayProps {
   viewerRef: React.MutableRefObject<any>;
   /** Whether annotation mode is active */
   isActive: boolean;
-  /** Current drawing mode - controlled by toolbar */
-  drawingMode: DrawingMode;
+  /** Current drawing mode - controlled by toolbar (spatial modes only) */
+  drawingMode: SpatialDrawingMode;
   /** Callback when drawing mode changes */
-  onDrawingModeChange: (mode: DrawingMode) => void;
+  onDrawingModeChange: (mode: SpatialDrawingMode) => void;
   /** Callback when annotation is created */
   onCreateAnnotation: (annotation: IIIFAnnotation) => void;
   /** Callback to close annotation mode */
@@ -294,7 +293,7 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
     handleClear();
   }, [points, annotationText, motivation, canvas, onCreateAnnotation, handleClear]);
 
-  const setModeWithClear = useCallback((newMode: DrawingMode) => {
+  const setModeWithClear = useCallback((newMode: SpatialDrawingMode) => {
     onDrawingModeChange(newMode);
     handleClear();
   }, [onDrawingModeChange, handleClear]);
@@ -359,10 +358,12 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
     return dist < closeThreshold;
   })();
 
-  if (!isActive) return null;
-
   const accentColor = fieldMode ? 'rgb(234, 179, 8)' : 'rgb(34, 197, 94)'; // yellow-500 or green-500
   const accentColorFaded = fieldMode ? 'rgba(234, 179, 8, 0.2)' : 'rgba(34, 197, 94, 0.2)';
+
+  // Only render when annotation mode is active
+  // Existing annotations are shown in the Inspector panel when mode is off
+  if (!isActive) return null;
 
   return (
     <>

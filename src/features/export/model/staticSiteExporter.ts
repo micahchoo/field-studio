@@ -245,14 +245,14 @@ class StaticSiteExporter {
    * Collect all items (canvases) from the tree
    */
   private collectItems(root: IIIFItem): IIIFCanvas[] {
-    return getAllCanvases(root);
+    return getAllCanvases(root) as IIIFCanvas[];
   }
 
   /**
    * Collect all manifests from the tree
    */
   private collectManifests(root: IIIFItem): IIIFManifest[] {
-    return getAllManifests(root);
+    return getAllManifests(root) as IIIFManifest[];
   }
 
   /**
@@ -478,20 +478,22 @@ class StaticSiteExporter {
       ...preset.sizes.filter(s => s > 0)
     ].filter((v, i, a) => v > 0 && a.indexOf(v) === i);  // Dedupe and filter zeros
 
-    // Use centralized info.json generation
-    return generateInfoJson(
+    // Use centralized info.json generation and add custom sizes/tiles
+    const baseInfo = generateInfoJson(
       `${cfg.baseUrl}/img/derivatives/iiif/${pid}`,
       width,
       height,
-      'level0',
-      {
-        sizes: generateStandardSizes(width, height, targetWidths),
-        tiles: cfg.tileSizes.map(size => ({
-          width: size,
-          scaleFactors: preset.scaleFactors
-        }))
-      }
+      'level0'
     );
+
+    return {
+      ...baseInfo,
+      sizes: generateStandardSizes(width, height, Math.max(...targetWidths)),
+      tiles: cfg.tileSizes.map(size => ({
+        width: size,
+        scaleFactors: preset.scaleFactors
+      }))
+    };
   }
 
   /**

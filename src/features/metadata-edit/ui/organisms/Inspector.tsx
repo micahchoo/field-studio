@@ -1,24 +1,31 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFItem, IIIFManifest, isManifest } from '@/src/shared/types';
-import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { MuseumLabel } from '@/src/shared/ui/molecules/MuseumLabel';
 import { ShareButton } from '../atoms/ShareButton';
 import { GeoEditor } from '../molecules/GeoEditor';
 import { ValidatedInput } from '../atoms/ValidatedInput';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
 import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
+// TODO: [FSD] Proper fix is to receive `t` via props from FieldModeTemplate
+// eslint-disable-next-line no-restricted-imports
 import { useTerminology } from '@/src/app/providers/useTerminology';
 import { isPropertyAllowed } from '@/utils/iiifSchema';
-import { getValidationForField, ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 import { suggestBehaviors } from '@/utils/iiifBehaviors';
 import { resolvePreviewUrl } from '@/utils/imageSourceResolver';
 import { useDebouncedValue } from '@/src/shared/lib/hooks/useDebouncedValue';
 import { usePersistedTab } from '@/src/shared/lib/hooks/usePersistedTab';
-import { useInspectorValidation } from '../../model/useInspectorValidation';
+import { useInspectorValidation, type ValidationIssue } from '../../model/useInspectorValidation';
 import { useMetadataEditor } from '@/src/shared/lib/hooks/useMetadataEditor';
 import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
 import { StructureTabPanel } from '../molecules/StructureTabPanel';
+
+/** Time range for audio/video annotations */
+interface TimeRange {
+  start: number;
+  end?: number;
+}
 
 interface InspectorProps {
   resource: IIIFItem | null;
@@ -35,7 +42,7 @@ interface InspectorProps {
   canvases?: import('@/src/shared/types').IIIFCanvas[];
   /** Whether annotation drawing mode is active */
   annotationModeActive?: boolean;
-  /** Current annotation drawing state */
+  /** Current annotation drawing state (for spatial annotations) */
   annotationDrawingState?: {
     pointCount: number;
     isDrawing: boolean;
@@ -53,6 +60,14 @@ interface InspectorProps {
   onSaveAnnotation?: () => void;
   /** Callback to clear the annotation drawing */
   onClearAnnotation?: () => void;
+  /** Current media type for the resource (image/audio/video/other) */
+  mediaType?: 'image' | 'video' | 'audio' | 'other';
+  /** Time range for audio/video annotations */
+  timeRange?: TimeRange | null;
+  /** Current playback time for audio/video */
+  currentPlaybackTime?: number;
+  /** Force a specific tab to be active */
+  forceTab?: 'metadata' | 'annotations' | 'structure' | 'learn' | 'design';
 }
 
 
@@ -86,7 +101,7 @@ const DebouncedField = ({ value, onChange, inputType = 'input', rows, ...props }
   rows?: number;
   [key: string]: any;
 }) => {
-  const { localValue, handleChange, flush } = useDebouncedValue(value ?? '', onChange);
+  const { value: localValue, setValue: handleChange, flush } = useDebouncedValue(value ?? '', onChange);
 
   const common = {
     ...props,
@@ -114,8 +129,8 @@ interface ValidatedFieldProps {
 const ValidatedField: React.FC<ValidatedFieldProps> = ({
   label, value, onChange, issues, settings, inputType, rows
 }) => {
-  const hasError = issues.some(i => i.level === 'error');
-  const hasWarning = issues.some(i => i.level === 'warning');
+  const hasError = issues.some(i => i.severity === 'error');
+  const hasWarning = issues.some(i => i.severity === 'warning');
   
   const borderColor = hasError
     ? (settings.fieldMode ? 'border-red-500' : 'border-red-400')
@@ -147,19 +162,19 @@ const ValidatedField: React.FC<ValidatedFieldProps> = ({
         <div className="mt-1.5 space-y-1">
           {issues.map((issue, idx) => (
             <div key={idx} className={`text-[10px] flex items-center gap-1 ${
-              issue.level === 'error' ? 'text-red-500' :
-              issue.level === 'warning' ? 'text-amber-500' :
+              issue.severity === 'error' ? 'text-red-500' :
+              issue.severity === 'warning' ? 'text-amber-500' :
               'text-blue-500'
             }`}>
-              <Icon name={issue.level === 'error' ? 'error' : issue.level === 'warning' ? 'warning' : 'info'} className="text-[10px]" />
-              {issue.message}
-              {issue.fixable && (
-                <button
+              <Icon name={issue.severity === 'error' ? 'error' : issue.severity === 'warning' ? 'warning' : 'info'} className="text-[10px]" />
+              {issue.title}
+              {issue.autoFixable && (
+                <Button variant="ghost" size="bare"
                   onClick={() => {/* handled by parent */}}
                   className="ml-1 text-green-600 hover:underline"
                 >
                   Fix
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -218,6 +233,19 @@ const AnnotationItem = ({
   );
 };
 
+/** Format time for display (MM:SS.ms or HH:MM:SS.ms) */
+const formatTimeForDisplay = (seconds: number): string => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 100);
+
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+};
+
 const InspectorComponent: React.FC<InspectorProps> = ({
   resource: resourceProp,
   onUpdateResource,
@@ -236,6 +264,10 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   onAnnotationMotivationChange,
   onSaveAnnotation,
   onClearAnnotation,
+  mediaType,
+  timeRange,
+  currentPlaybackTime,
+  forceTab,
 }) => {
   // Stabilize resource reference to prevent infinite re-renders
   const resource = useMemo(() => resourceProp, [resourceProp?.id, resourceProp?.type]);
@@ -265,11 +297,18 @@ const InspectorComponent: React.FC<InspectorProps> = ({
     'metadata'
   );
 
+  // Force tab when annotation mode is activated
+  React.useEffect(() => {
+    if (forceTab && ALLOWED_TABS.includes(forceTab as any)) {
+      setTab(forceTab);
+    }
+  }, [forceTab, setTab]);
+
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
 
   // Validation lifecycle (run + fix + fixAll)
-  const { issues: validationIssues, fixIssue, fixAllIssues } = useInspectorValidation(resource);
+  const { issues: validationIssues, fixIssue, fixAll } = useInspectorValidation(resource);
 
   // Metadata CRUD
   const { updateField, addField, removeField, availableProperties } = useMetadataEditor(
@@ -277,21 +316,24 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   );
 
   // Validation memoized values - must be called before any conditional returns
-  const labelValidation = useMemo(() =>
-    getValidationForField(validationIssues, 'label', (issue) => {
-      const fixed = fixIssue(issue);
-      if (fixed) onUpdateResource(fixed);
-    }) || { status: 'pristine' as const },
-    [validationIssues, fixIssue, onUpdateResource]
-  );
+  // Helper to get validation status for a specific field
+  const getFieldValidation = useCallback((fieldName: string) => {
+    const fieldIssues = validationIssues.filter(i => i.field === fieldName);
+    if (fieldIssues.length === 0) return { status: 'pristine' as const };
+    const hasError = fieldIssues.some(i => i.severity === 'error');
+    const firstIssue = fieldIssues[0];
+    return {
+      status: 'invalid' as const,
+      message: firstIssue.title,
+      fix: firstIssue.autoFixable ? () => {
+        const fixed = fixIssue(firstIssue.id);
+        if (fixed) onUpdateResource(fixed);
+      } : undefined,
+    };
+  }, [validationIssues, fixIssue, onUpdateResource]);
 
-  const summaryValidation = useMemo(() =>
-    getValidationForField(validationIssues, 'summary', (issue) => {
-      const fixed = fixIssue(issue);
-      if (fixed) onUpdateResource(fixed);
-    }) || { status: 'pristine' as const },
-    [validationIssues, fixIssue, onUpdateResource]
-  );
+  const labelValidation = useMemo(() => getFieldValidation('label'), [getFieldValidation]);
+  const summaryValidation = useMemo(() => getFieldValidation('summary'), [getFieldValidation]);
 
   // Return null AFTER all hooks (React Rules of Hooks)
   if (!visible || !resource) return null;
@@ -374,20 +416,20 @@ const InspectorComponent: React.FC<InspectorProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <ShareButton item={resource} fieldMode={settings.fieldMode} />
-          <button 
+          <Button variant="ghost" size="bare" 
             aria-label="Close Inspector"
             onClick={onClose} 
             className={`p-2 rounded-lg ${settings.fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-200'}`}
           >
             <Icon name="close"/>
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Consolidated Tabs */}
       <div role="tablist" aria-label="Inspector tabs" className={`flex border-b shrink-0 ${settings.fieldMode ? `bg-black` + ` ${cx.border}` : 'bg-white'}`}>
         {availableTabs.map(t => (
-          <button
+          <Button variant="ghost" size="bare"
             key={t}
             className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider transition-all border-b-2 ${
               tab === t ? cx.active : cx.inactive
@@ -406,7 +448,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                 )}
               </span>
             ) : t}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -422,20 +464,20 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                     <Icon name="report_problem" className="text-sm" />
                     <span>Issues ({validationIssues.length})</span>
                   </div>
-                  {validationIssues.some(i => i.fixable) && (
-                    <button
-                      onClick={() => fixAllIssues().then(fixed => { if (fixed) onUpdateResource(fixed); })}
+                  {validationIssues.some(i => i.autoFixable) && (
+                    <Button variant="ghost" size="bare"
+                      onClick={() => { const fixed = fixAll(); if (fixed) onUpdateResource(fixed); }}
                       className={`text-[8px] font-bold uppercase px-2 py-1 rounded ${settings.fieldMode ? 'bg-green-900 text-green-400' : 'bg-green-100 text-green-700'}`}
                     >
                       Fix All
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {validationIssues.map((issue) => (
-                  <div key={issue.id} className={`flex items-start gap-2 text-[10px] ${issue.level === 'error' ? 'text-red-500' : (settings.fieldMode ? 'text-slate-400' : 'text-orange-700')}`}>
-                    <span className="shrink-0">{issue.message}</span>
-                    {issue.fixable && (
-                      <button onClick={() => { const fixed = fixIssue(issue); if (fixed) onUpdateResource(fixed); }} className="text-[8px] text-green-600 hover:underline">Fix</button>
+                  <div key={issue.id} className={`flex items-start gap-2 text-[10px] ${issue.severity === 'error' ? 'text-red-500' : (settings.fieldMode ? 'text-slate-400' : 'text-orange-700')}`}>
+                    <span className="shrink-0">{issue.title}</span>
+                    {issue.autoFixable && (
+                      <Button variant="ghost" size="bare" onClick={() => { const fixed = fixIssue(issue.id); if (fixed) onUpdateResource(fixed); }} className="text-[8px] text-green-600 hover:underline">Fix</Button>
                     )}
                   </div>
                 ))}
@@ -476,22 +518,22 @@ const InspectorComponent: React.FC<InspectorProps> = ({
               <div className="flex justify-between items-center mb-3">
                 <label className={`text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>{t('Metadata')}</label>
                 <div className="relative">
-                  <button 
+                  <Button variant="ghost" size="bare" 
                     onClick={() => setShowAddMenu(!showAddMenu)} 
                     className={`text-[10px] font-bold uppercase flex items-center gap-1 ${cx.accent}`}
                   >
                     Add <Icon name="add" className="text-[10px]"/>
-                  </button>
+                  </Button>
                   {showAddMenu && (
                     <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 min-w-[160px] max-h-[250px] overflow-y-auto">
                       {availableProperties.map(p => (
-                        <button
+                        <Button variant="ghost" size="bare"
                           key={p}
                           onClick={() => { addField(p); setShowAddMenu(false); }}
                           className="w-full px-3 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50"
                         >
                           {p}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -513,12 +555,12 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                         value={mVal}
                         onChange={(val: string) => updateField(idx, mKey, val)}
                       />
-                      <button
+                      <Button variant="ghost" size="bare"
                         onClick={() => removeField(idx)}
                         className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"
                       >
                         <Icon name="close" className="text-xs"/>
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
@@ -548,12 +590,12 @@ const InspectorComponent: React.FC<InspectorProps> = ({
               <div className={`pt-4 border-t ${cx.divider}`}>
                 <div className="flex justify-between items-center mb-2">
                   <label className={`text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>Location</label>
-                  <button 
+                  <Button variant="ghost" size="bare" 
                     onClick={() => onUpdateResource({ navPlace: undefined } as any)}
                     className="text-[10px] text-red-400 hover:text-red-600 font-bold uppercase"
                   >
                     Remove
-                  </button>
+                  </Button>
                 </div>
                 <div className={`border rounded-lg overflow-hidden ${settings.fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
                   <GeoEditor
@@ -571,18 +613,18 @@ const InspectorComponent: React.FC<InspectorProps> = ({
               <div className={`pt-4 border-t ${cx.divider}`}>
                 <div className="flex justify-between items-center mb-2">
                   <label className={`block text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>Behaviors</label>
-                  <button 
+                  <Button variant="ghost" size="bare" 
                     onClick={handleSuggestBehaviors}
                     className={`text-[9px] font-bold uppercase px-2 py-1 rounded border ${settings.fieldMode ? 'border-slate-700 text-yellow-400' : 'border-slate-200 text-blue-600'}`}
                   >
                     Auto
-                  </button>
+                  </Button>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {(resource.behavior || []).map((b, i) => (
                     <span key={i} className={`text-[9px] font-bold px-2 py-1 rounded-full ${settings.fieldMode ? 'bg-slate-800 text-yellow-400' : 'bg-purple-100 text-purple-700'}`}>
                       {b}
-                      <button
+                      <Button variant="ghost" size="bare"
                         onClick={() => {
                           const newBehaviors = resource.behavior?.filter((_, idx) => idx !== i);
                           onUpdateResource({ behavior: newBehaviors?.length ? newBehaviors : undefined });
@@ -590,7 +632,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                         className="ml-1 hover:text-red-500"
                       >
                         ×
-                      </button>
+                      </Button>
                     </span>
                   ))}
                 </div>
@@ -610,26 +652,66 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                   : 'bg-green-50 border-green-400'
               }`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Icon name="gesture" className={`${settings.fieldMode ? 'text-yellow-400' : 'text-green-600'}`} />
+                  <Icon name={mediaType === 'image' ? 'gesture' : 'timer'} className={`${settings.fieldMode ? 'text-yellow-400' : 'text-green-600'}`} />
                   <span className={`text-xs font-bold uppercase ${settings.fieldMode ? 'text-yellow-400' : 'text-green-700'}`}>
-                    Creating Annotation
+                    {mediaType === 'image' ? 'Creating Annotation' : 'Time-Based Annotation'}
                   </span>
                 </div>
 
-                {/* Drawing Status */}
+                {/* Status - differs based on media type */}
                 <div className={`mb-3 p-2 rounded-lg text-xs ${
                   settings.fieldMode ? 'bg-black/40 text-stone-300' : 'bg-white text-slate-600'
                 }`}>
-                  {annotationDrawingState?.pointCount === 0
-                    ? 'Draw a shape on the image to select a region'
-                    : annotationDrawingState?.isDrawing
-                      ? `Drawing... ${annotationDrawingState.pointCount} points`
-                      : `Shape ready with ${annotationDrawingState?.pointCount || 0} points`
-                  }
+                  {mediaType === 'image' ? (
+                    // Spatial annotation status
+                    annotationDrawingState?.pointCount === 0
+                      ? 'Draw a shape on the image to select a region'
+                      : annotationDrawingState?.isDrawing
+                        ? `Drawing... ${annotationDrawingState.pointCount} points`
+                        : `Shape ready with ${annotationDrawingState?.pointCount || 0} points`
+                  ) : (
+                    // Time-based annotation status
+                    !timeRange
+                      ? 'Click on the timeline to set start time, then drag or click again to set end time'
+                      : timeRange.end !== undefined
+                        ? (
+                          <div className="flex items-center gap-2">
+                            <Icon name="schedule" className="text-sm" />
+                            <span>
+                              Range: <strong>{formatTimeForDisplay(timeRange.start)}</strong>
+                              {' → '}
+                              <strong>{formatTimeForDisplay(timeRange.end)}</strong>
+                              <span className="opacity-60 ml-1">
+                                ({formatTimeForDisplay(timeRange.end - timeRange.start)} duration)
+                              </span>
+                            </span>
+                          </div>
+                        )
+                        : (
+                          <div className="flex items-center gap-2">
+                            <Icon name="schedule" className="text-sm" />
+                            <span>
+                              Point: <strong>{formatTimeForDisplay(timeRange.start)}</strong>
+                              <span className="opacity-60 ml-1">(click/drag for range)</span>
+                            </span>
+                          </div>
+                        )
+                  )}
                 </div>
 
-                {/* Form - only show when shape is ready */}
-                {annotationDrawingState && annotationDrawingState.pointCount >= 3 && !annotationDrawingState.isDrawing && (
+                {/* Current playback time indicator for AV */}
+                {(mediaType === 'audio' || mediaType === 'video') && currentPlaybackTime !== undefined && (
+                  <div className={`mb-3 px-2 py-1 rounded text-[10px] flex items-center gap-1 ${
+                    settings.fieldMode ? 'bg-black/20 text-stone-400' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    <Icon name="play_arrow" className="text-xs" />
+                    Current: {formatTimeForDisplay(currentPlaybackTime)}
+                  </div>
+                )}
+
+                {/* Form - show when region/time is ready */}
+                {((mediaType === 'image' && annotationDrawingState && annotationDrawingState.pointCount >= 3 && !annotationDrawingState.isDrawing) ||
+                  ((mediaType === 'audio' || mediaType === 'video') && timeRange !== null)) && (
                   <div className="space-y-3">
                     <div>
                       <label className={`block text-[10px] font-bold uppercase mb-1.5 ${
@@ -677,7 +759,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                     </div>
 
                     <div className="flex gap-2">
-                      <button
+                      <Button variant="ghost" size="bare"
                         onClick={onClearAnnotation}
                         className={`
                           flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors
@@ -688,8 +770,8 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                         `}
                       >
                         Clear
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost" size="bare"
                         onClick={onSaveAnnotation}
                         disabled={!annotationText.trim()}
                         className={`
@@ -702,7 +784,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                       >
                         <Icon name="save" className="inline mr-1" />
                         Save
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -810,7 +892,19 @@ const InspectorComponent: React.FC<InspectorProps> = ({
 };
 
 export const Inspector = React.memo(InspectorComponent, (prev, next) => {
-  // Custom comparison: only re-render if selectedId or fieldMode changes
+  // Custom comparison: re-render when these props change
+  // Note: currentPlaybackTime is intentionally excluded to prevent re-renders during playback
   return prev.resource?.id === next.resource?.id &&
-         prev.settings.fieldMode === next.settings.fieldMode;
+         prev.visible === next.visible &&
+         prev.settings.fieldMode === next.settings.fieldMode &&
+         prev.annotationModeActive === next.annotationModeActive &&
+         prev.annotationDrawingState?.pointCount === next.annotationDrawingState?.pointCount &&
+         prev.annotationDrawingState?.isDrawing === next.annotationDrawingState?.isDrawing &&
+         prev.annotationDrawingState?.canSave === next.annotationDrawingState?.canSave &&
+         prev.annotationText === next.annotationText &&
+         prev.annotationMotivation === next.annotationMotivation &&
+         prev.timeRange?.start === next.timeRange?.start &&
+         prev.timeRange?.end === next.timeRange?.end &&
+         prev.mediaType === next.mediaType &&
+         prev.forceTab === next.forceTab;
 });

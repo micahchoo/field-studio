@@ -13,6 +13,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { contentStateService, ViewportState } from '@/src/shared/services/contentState';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
@@ -188,7 +189,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   // Field mode: simple button
   if (fieldMode) {
     return (
-      <button
+      <Button variant="ghost" size="bare"
         onClick={handleFieldModeShare}
         draggable
         onDragStart={handleDragStart}
@@ -210,14 +211,14 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         title="Share this view"
       >
         <Icon name="share" className="text-2xl" />
-      </button>
+      </Button>
     );
   }
 
   // Desktop mode: dropdown menu
   return (
     <div className="relative" ref={menuRef}>
-      <button
+      <Button variant="ghost" size="bare"
         onClick={() => setShowMenu(!showMenu)}
         draggable
         onDragStart={handleDragStart}
@@ -244,7 +245,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         <Icon name="share" className="text-base" />
         <span>{PATTERNS.shareButton.label}</span>
         <Icon name="expand_more" className="text-base opacity-50" />
-      </button>
+      </Button>
 
       {showMenu && (
         <div
@@ -262,7 +263,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 
           <div className="p-2 space-y-1">
             {/* Copy View Link */}
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handleCopyViewLink}
               className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-blue-50 text-left transition-colors group"
               role="menuitem"
@@ -278,11 +279,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                   {selectedRegion ? 'Share exact zoom & position' : 'Share current canvas'}
                 </div>
               </div>
-            </button>
+            </Button>
 
             {/* Copy Canvas Link (simpler) */}
             {selectedRegion && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleCopyCanvasLink}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
                 role="menuitem"
@@ -298,11 +299,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                     Link to canvas (no zoom)
                   </div>
                 </div>
-              </button>
+              </Button>
             )}
 
             {/* Embed Code */}
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handleCopyEmbedCode}
               className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
               role="menuitem"
@@ -318,10 +319,10 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                   HTML iframe for websites
                 </div>
               </div>
-            </button>
+            </Button>
 
             {/* Copy JSON */}
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handleCopyJson}
               className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
               role="menuitem"
@@ -337,11 +338,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                   IIIF Content State Annotation
                 </div>
               </div>
-            </button>
+            </Button>
 
             {/* Native Share (if available) */}
             {typeof navigator !== 'undefined' && navigator.share && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleNativeShare}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
                 role="menuitem"
@@ -355,7 +356,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                     Open system share dialog
                   </div>
                 </div>
-              </button>
+              </Button>
             )}
           </div>
 

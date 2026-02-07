@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem, isCollection, isManifest } from '@/src/shared/types';
 import { CanopyConfig, ExportOptions, exportService, ImageApiOptions, VirtualFile } from '../model/exportService';
 import { ArchivalPackageOptions, archivalPackageService } from '../model/archivalPackageService';
@@ -108,8 +109,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
           
           const issueMap = validator.validateTree(root);
           setIntegrityIssues(Object.values(issueMap).flat());
-      } catch (e: any) {
-          setErrorMsg(e.message);
+      } catch (e: unknown) {
+          setErrorMsg(e instanceof Error ? e.message : 'Export preview failed');
       } finally {
           setProcessing(false);
       }
@@ -132,8 +133,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
         });
         FileSaver.saveAs(blob, `canopy-export-${new Date().toISOString().split('T')[0]}.zip`);
         onClose();
-    } catch (e: any) {
-        setErrorMsg(e.message);
+    } catch (e: unknown) {
+        setErrorMsg(e instanceof Error ? e.message : 'Export failed');
         setStep('dry-run');
     }
   };
@@ -199,8 +200,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
       setProgress({ status: 'Complete!', percent: 100 });
       await new Promise(r => setTimeout(r, 500));
       onClose();
-    } catch (e: any) {
-      setErrorMsg(e.message || 'Failed to export activity log');
+    } catch (e: unknown) {
+      setErrorMsg(e instanceof Error ? e.message : 'Failed to export activity log');
       setStep('config');
     }
   };
@@ -256,8 +257,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
       setProgress({ status: 'Complete!', percent: 100 });
       await new Promise(r => setTimeout(r, 500));
       onClose();
-    } catch (e: any) {
-      setErrorMsg(e.message || `Failed to create ${format.toUpperCase()} package`);
+    } catch (e: unknown) {
+      setErrorMsg(e instanceof Error ? e.message : `Failed to create ${format.toUpperCase()} package`);
       setStep('archival-config');
     }
   };
@@ -319,9 +320,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                     </div>
                 </div>
                 {step !== 'exporting' && (
-                    <button onClick={onClose} aria-label="Close dialog" className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                    <Button variant="ghost" size="bare" onClick={onClose} aria-label="Close dialog" className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
                         <Icon name="close"/>
-                    </button>
+                    </Button>
                 )}
             </div>
             
@@ -346,7 +347,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                         />
                         <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-labelledby="export-format-label">
                             <span id="export-format-label" className="sr-only">Choose Export Format</span>
-                            <button
+                            <Button variant="ghost" size="bare"
                                 role="radio"
                                 aria-checked={format === 'canopy'}
                                 className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'canopy' ? 'border-iiif-blue bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
@@ -356,8 +357,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 <div className="font-bold text-sm text-slate-800 mb-1">Canopy IIIF Site</div>
                                 <p className="text-[10px] text-slate-500 leading-tight">Modern Next.js static site with search, mapping, and themes.</p>
                                 {format === 'canopy' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
-                            </button>
-                            <button
+                            </Button>
+                            <Button variant="ghost" size="bare"
                                 role="radio"
                                 aria-checked={format === 'raw-iiif'}
                                 className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'raw-iiif' ? 'border-iiif-blue bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
@@ -367,7 +368,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 <div className="font-bold text-sm text-slate-800 mb-1">Raw IIIF</div>
                                 <p className="text-[10px] text-slate-500 leading-tight">JSON documents and assets only.</p>
                                 {format === 'raw-iiif' && <div className="absolute top-4 right-4 text-iiif-blue"><Icon name="check_circle"/></div>}
-                            </button>
+                            </Button>
                         </div>
 
                         {/* Archival Preservation Formats */}
@@ -376,7 +377,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 <Icon name="archive" className="text-sm" /> Digital Preservation
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <button
+                                <Button variant="ghost" size="bare"
                                     role="radio"
                                     aria-checked={format === 'ocfl'}
                                     className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'ocfl' ? 'border-amber-600 bg-amber-50' : 'border-slate-100 hover:border-slate-200'}`}
@@ -386,8 +387,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                     <div className="font-bold text-sm text-slate-800 mb-1">OCFL Package</div>
                                     <p className="text-[10px] text-slate-500 leading-tight">Oxford Common File Layout 1.1 with versioning.</p>
                                     {format === 'ocfl' && <div className="absolute top-4 right-4 text-amber-600"><Icon name="check_circle"/></div>}
-                                </button>
-                                <button
+                                </Button>
+                                <Button variant="ghost" size="bare"
                                     role="radio"
                                     aria-checked={format === 'bagit'}
                                     className={`p-5 rounded-2xl border-2 text-left transition-all relative group ${format === 'bagit' ? 'border-purple-600 bg-purple-50' : 'border-slate-100 hover:border-slate-200'}`}
@@ -397,7 +398,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                     <div className="font-bold text-sm text-slate-800 mb-1">BagIt Bag</div>
                                     <p className="text-[10px] text-slate-500 leading-tight">RFC 8493 compliant with checksums.</p>
                                     {format === 'bagit' && <div className="absolute top-4 right-4 text-purple-600"><Icon name="check_circle"/></div>}
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
@@ -406,7 +407,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                             <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                 <Icon name="history" className="text-sm" /> Change Tracking
                             </h3>
-                            <button
+                            <Button variant="ghost" size="bare"
                                 role="radio"
                                 aria-checked={format === 'activity-log'}
                                 className={`p-5 rounded-2xl border-2 text-left transition-all relative group w-full ${format === 'activity-log' ? 'border-cyan-600 bg-cyan-50' : 'border-slate-100 hover:border-slate-200'}`}
@@ -416,7 +417,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                                 <div className="font-bold text-sm text-slate-800 mb-1">Activity Log (Change Discovery)</div>
                                 <p className="text-[10px] text-slate-500 leading-tight">IIIF Change Discovery API 1.0 format. Tracks all create/update/delete operations for sync.</p>
                                 {format === 'activity-log' && <div className="absolute top-4 right-4 text-cyan-600"><Icon name="check_circle"/></div>}
-                            </button>
+                            </Button>
                         </div>
 
                         {format === 'canopy' && (
@@ -827,8 +828,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
             <div className="p-6 bg-slate-50 border-t flex justify-between items-center shrink-0">
                 {step === 'config' && (
                     <>
-                        <button onClick={onClose} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Cancel</button>
-                        <button
+                        <Button variant="ghost" size="bare" onClick={onClose} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Cancel</Button>
+                        <Button variant="ghost" size="bare"
                             onClick={() => {
                                 if (format === 'canopy') setStep('canopy-config');
                                 else if (format === 'ocfl' || format === 'bagit') setStep('archival-config');
@@ -838,41 +839,41 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
                             className={`text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl flex items-center gap-2 transition-all active:scale-95 ${format === 'activity-log' ? 'bg-cyan-600 hover:bg-cyan-700' : 'bg-iiif-blue hover:bg-blue-700'}`}
                         >
                             {format === 'canopy' ? 'Configure Site' : format === 'ocfl' || format === 'bagit' ? 'Configure Package' : format === 'activity-log' ? 'Export Log' : 'Start Dry Run'} <Icon name={format === 'activity-log' ? 'download' : 'arrow_forward'} />
-                        </button>
+                        </Button>
                     </>
                 )}
                 {step === 'archival-config' && (
                     <>
-                        <button onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back</button>
-                        <button
+                        <Button variant="ghost" size="bare" onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back</Button>
+                        <Button variant="ghost" size="bare"
                             onClick={handleArchivalExport}
                             className={`text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl flex items-center gap-2 transition-all active:scale-95 ${format === 'ocfl' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'}`}
                         >
                             Export {format.toUpperCase()} <Icon name="download" />
-                        </button>
+                        </Button>
                     </>
                 )}
                 {step === 'canopy-config' && (
                     <>
-                        <button onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back</button>
-                        <button
+                        <Button variant="ghost" size="bare" onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back</Button>
+                        <Button variant="ghost" size="bare"
                             onClick={handleCanopyExport}
                             className="bg-iiif-blue text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-700 shadow-xl flex items-center gap-2 transition-all active:scale-95"
                         >
                             Generate Site Config <Icon name="arrow_forward" />
-                        </button>
+                        </Button>
                     </>
                 )}
                 {step === 'dry-run' && !processing && (
                     <>
-                        <button onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back to Settings</button>
-                        <button
+                        <Button variant="ghost" size="bare" onClick={() => setStep('config')} className="px-6 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors uppercase tracking-widest text-xs">Back to Settings</Button>
+                        <Button variant="ghost" size="bare"
                             onClick={handleFinalExport}
                             disabled={criticalErrors.length > 0 && !ignoreErrors}
                             className="bg-green-600 text-white px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-green-700 shadow-xl flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Finalize & Download ZIP <Icon name="download" />
-                        </button>
+                        </Button>
                     </>
                 )}
             </div>

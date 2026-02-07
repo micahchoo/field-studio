@@ -44,7 +44,7 @@ export interface ArchiveHeaderProps {
   /** Callback to batch edit selected items */
   onBatchEdit: () => void;
   /** Callback to compose selected items on a Board */
-  onComposeOnBoard: () => void;
+  onComposeOnBoard?: () => void;
   /** Contextual styles from template */
   cx: {
     surface: string;
@@ -234,7 +234,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
             <>
               <div className={`h-6 w-px ${fieldMode ? 'bg-yellow-700' : 'bg-slate-600'}`} />
               <div className="flex items-center gap-1">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={onToggleInspectorPanel}
                   className={`p-1.5 rounded-lg transition-colors ${
                     showInspectorPanel
@@ -244,8 +244,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                   title={showInspectorPanel ? 'Hide Inspector' : 'Show Inspector'}
                 >
                   <Icon name="info" className="text-lg" />
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost" size="bare"
                   onClick={onToggleViewerPanel}
                   className={`p-1.5 rounded-lg transition-colors ${
                     showViewerPanel
@@ -255,7 +255,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                   title={showViewerPanel ? 'Close Viewer' : 'Open Viewer'}
                 >
                   <Icon name={showViewerPanel ? 'visibility' : 'visibility_off'} className="text-lg" />
-                </button>
+                </Button>
               </div>
             </>
           )}

@@ -6,6 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import {
   GeocodedLocation,
   GeoFeature,
@@ -110,7 +111,7 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
       }
 
       // Handle map clicks for adding markers
-      map.on('click', (e: any) => {
+      map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
         if (drawMode === 'marker' && editable) {
           const feature = navPlaceService.createPointFeature(e.latlng.lat, e.latlng.lng);
           addFeatureToNavPlace(feature);
@@ -294,7 +295,7 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
           <>
             {/* Search */}
             <div className="relative">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setShowSearch(!showSearch)}
                 className={`p-2 rounded-lg transition-colors ${
                   showSearch ? 'bg-iiif-blue text-white' : 'hover:bg-slate-200'
@@ -302,7 +303,7 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
                 title="Search location"
               >
                 <Icon name="search" />
-              </button>
+              </Button>
 
               {showSearch && (
                 <div className="absolute top-full right-0 mt-1 w-80 bg-white rounded-lg shadow-xl border z-50">
@@ -316,19 +317,19 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
                       className="flex-1 px-3 py-2 border rounded-lg text-sm"
                       autoFocus
                     />
-                    <button
+                    <Button variant="ghost" size="bare"
                       onClick={handleSearch}
                       disabled={isSearching}
                       className="px-3 py-2 bg-iiif-blue text-white rounded-lg text-sm disabled:opacity-50"
                     >
                       {isSearching ? '...' : 'Go'}
-                    </button>
+                    </Button>
                   </div>
 
                   {searchResults.length > 0 && (
                     <div className="max-h-60 overflow-auto border-t">
                       {searchResults.map((result, index) => (
-                        <button
+                        <Button variant="ghost" size="bare"
                           key={index}
                           onClick={() => handleSelectLocation(result)}
                           className="w-full px-3 py-2 text-left hover:bg-slate-50 text-sm border-b last:border-b-0"
@@ -339,7 +340,7 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
                           <div className="text-xs text-slate-500">
                             {navPlaceService.formatCoordinates(result.lat, result.lng)}
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -349,7 +350,7 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
 
             {/* Drawing tools */}
             <div className="flex items-center border-l pl-2 ml-2">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setDrawMode(drawMode === 'marker' ? null : 'marker')}
                 className={`p-2 rounded-lg transition-colors ${
                   drawMode === 'marker' ? 'bg-iiif-blue text-white' : 'hover:bg-slate-200'
@@ -357,25 +358,25 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
                 title="Add marker (click on map)"
               >
                 <Icon name="place" />
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost" size="bare"
                 onClick={handleAddCurrentView}
                 className="p-2 rounded-lg hover:bg-slate-200 transition-colors"
                 title="Add current view as boundary"
               >
                 <Icon name="crop_free" />
-              </button>
+              </Button>
             </div>
 
             {/* Clear */}
             {navPlace && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleClear}
                 className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
                 title="Clear all locations"
               >
                 <Icon name="delete" />
-              </button>
+              </Button>
             )}
           </>
         )}
@@ -412,12 +413,12 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
       {drawMode && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-iiif-blue text-white px-4 py-2 rounded-full text-sm shadow-lg z-50">
           Click on map to add {drawMode}
-          <button
+          <Button variant="ghost" size="bare"
             onClick={() => setDrawMode(null)}
             className="ml-2 hover:text-red-200"
           >
             ×
-          </button>
+          </Button>
         </div>
       )}
     </div>

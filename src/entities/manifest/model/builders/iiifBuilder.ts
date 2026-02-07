@@ -22,7 +22,7 @@ import {
   LegacyProgressCallback
 } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
-import { DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC, IMAGE_QUALITY, MIME_TYPE_MAP } from '@/src/shared/constants';
+import { DEFAULT_INGEST_PREFS, FEATURE_FLAGS, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC, IMAGE_QUALITY, MIME_TYPE_MAP, USE_ENHANCED_PROGRESS, USE_WORKER_INGEST } from '@/src/shared/constants';
 import { load } from 'js-yaml';
 import { extractMetadata } from '@/src/shared/services/metadataHarvester';
 import { generateDerivativeAsync, getTileWorkerPool } from '../ingest/tileWorker';
@@ -44,7 +44,6 @@ import {
   suggestBehaviors,
   validateResource
 } from '@/utils';
-import { FEATURE_FLAGS, USE_ENHANCED_PROGRESS, USE_WORKER_INGEST } from '@/src/shared/constants';
 import { getFileLifecycleManager } from './fileLifecycle';
 
 // ============================================================================
@@ -270,7 +269,7 @@ const isFileLifecycleEnabled = (): boolean => {
  * Check if worker-based ingest is enabled
  */
 const isWorkerIngestEnabled = (): boolean => {
-  return USE_WORKER_INGEST === true;
+  return USE_WORKER_INGEST as boolean;
 };
 
 /**
@@ -777,6 +776,12 @@ const processNodeWithProgress = async (
           width: preset.thumbnailWidth
         }] : undefined;
 
+        // Use MEDIA_SERVICE for audio/video, IMAGE_SERVICE for images
+        const isAudioVideo = iiifType === 'Sound' || iiifType === 'Video';
+        const bodyId = isAudioVideo
+          ? IIIF_CONFIG.ID_PATTERNS.MEDIA_SERVICE(baseUrl, assetId, ext)
+          : `${IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId)}/full/max/0/default.jpg`;
+
         const paintingAnnotation: IIIFAnnotation = {
           id: `${canvasId}/annotation/painting`,
           type: "Annotation",
@@ -784,7 +789,7 @@ const processNodeWithProgress = async (
           motivation: "painting",
           target: canvasId,
           body: {
-            id: `${IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId)}/full/max/0/default.jpg`,
+            id: bodyId,
             type: iiifType as any,
             format: MIME_TYPE_MAP[ext]?.format || 'image/jpeg',
             service: isImage ? [
@@ -1118,14 +1123,20 @@ const processNode = async (
                 }
             ] : undefined;
 
+            // Use MEDIA_SERVICE for audio/video, IMAGE_SERVICE for images
+            const isAudioVideo = iiifType === 'Sound' || iiifType === 'Video';
+            const bodyId = isAudioVideo
+              ? IIIF_CONFIG.ID_PATTERNS.MEDIA_SERVICE(baseUrl, assetId, ext)
+              : `${IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId)}/full/max/0/default.jpg`;
+
             const paintingAnnotation: IIIFAnnotation = {
                 id: `${canvasId}/annotation/painting`,
                 type: "Annotation",
-                label: { none: ["Content Resource"] }, 
+                label: { none: ["Content Resource"] },
                 motivation: "painting",
                 target: canvasId,
                 body: {
-                    id: `${IIIF_CONFIG.ID_PATTERNS.IMAGE_SERVICE(baseUrl, assetId)}/full/max/0/default.jpg`,
+                    id: bodyId,
                     type: iiifType as any,
                     format: MIME_TYPE_MAP[ext]?.format || 'image/jpeg',
                     // Use centralized Image API service reference

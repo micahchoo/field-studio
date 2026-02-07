@@ -730,10 +730,10 @@ export const CONTEXTUAL_TOKENS = {
   },
 
   // Helper functions for contextual styling
-  getContextStyle(contextKey: keyof CONTEXTUAL_TOKENS['contexts']) {
+  getContextStyle(contextKey: keyof typeof CONTEXTUAL_TOKENS['contexts']) {
     return this.contexts[contextKey];
   },
-  getMicrocopy(key: keyof CONTEXTUAL_TOKENS['microcopy'], ...args: any[]) {
+  getMicrocopy(key: keyof typeof CONTEXTUAL_TOKENS['microcopy'], ...args: any[]) {
     const fn = this.microcopy[key];
     return typeof fn === 'function' ? fn(...args) : fn;
   }

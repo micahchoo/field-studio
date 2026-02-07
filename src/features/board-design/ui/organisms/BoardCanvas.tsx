@@ -17,6 +17,7 @@
 
 import React, { forwardRef } from 'react';
 import type { IIIFItem } from '@/src/shared/types';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import {
   type BoardItem,
   type Connection,
@@ -59,18 +60,7 @@ export interface BoardCanvasProps {
   /** Background mode */
   bgMode?: 'grid' | 'dark' | 'light';
   /** Contextual styles from template */
-  cx: {
-    surface: string;
-    text: string;
-    accent: string;
-    canvasBg: string;
-    gridBg: string;
-    gridLine: string;
-    svgStroke: string;
-    svgFill: string;
-    placeholderBg: string;
-    placeholderIcon: string;
-  };
+  cx: ContextualClassNames;
   /** Current field mode */
   fieldMode: boolean;
 }
@@ -135,9 +125,10 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       <div
         ref={combinedSetRefs}
         className={`
-          flex-1 relative overflow-hidden cursor-${activeTool === 'select' ? 'default' : 'crosshair'}
+          flex-1 relative overflow-hidden
           ${bgModeClasses[bgMode]}
         `}
+        style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair' }}
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

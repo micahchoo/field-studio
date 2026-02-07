@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { BoardItem } from '../../model';
 import { Icon } from '@/src/shared/ui/atoms';
 
@@ -36,13 +37,7 @@ export interface BoardNodeProps {
   /** Callback when connection starts */
   onConnectStart: (id: string) => void;
   /** Contextual styles */
-  cx: {
-    surface: string;
-    text: string;
-    accent: string;
-    placeholderBg: string;
-    placeholderIcon: string;
-  };
+  cx: ContextualClassNames;
   /** Field mode flag */
   fieldMode: boolean;
 }
@@ -82,7 +77,7 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
     <div
       onMouseDown={handleMouseDown}
       className={`
-        absolute rounded-lg shadow-lg overflow-hidden cursor-move
+        absolute rounded-lg shadow-lg cursor-move
         transition-shadow
         ${selected ? 'ring-2 ring-offset-2' : ''}
         ${connectingFrom ? 'ring-2 ring-yellow-400' : ''}
@@ -96,7 +91,7 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
       }}
     >
       {/* Thumbnail or placeholder */}
-      <div className={`h-24 ${cx.placeholderBg} flex items-center justify-center`}>
+      <div className={`h-24 ${cx.placeholderBg} flex items-center justify-center overflow-hidden rounded-t-lg`}>
         {resource.blobUrl ? (
           <img src={resource.blobUrl} alt={resource.label} className="w-full h-full object-cover" />
         ) : (

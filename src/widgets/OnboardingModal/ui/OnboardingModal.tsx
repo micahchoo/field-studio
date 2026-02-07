@@ -10,6 +10,7 @@
  */
 
 import React, { useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { AbstractionLevel } from '@/src/shared/types';
 import { ExperienceSelector } from '@/src/widgets/ExperienceSelector/ExperienceSelector';
@@ -90,14 +91,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
 
             {/* Actions */}
             <div className="space-y-3">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleQuickStart}
                 className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
               >
                 Get Started (Essential Mode)
                 <Icon name="arrow_forward" />
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost" size="bare"
                 onClick={() => setShowExpertise(true)}
                 className="w-full text-slate-600 px-6 py-3 rounded-xl text-sm hover:text-slate-800 hover:bg-slate-50 transition-colors border border-slate-200 hover:border-slate-300"
               >
@@ -105,7 +106,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                   <Icon name="tune" className="text-slate-400" />
                   Customize my experience level
                 </div>
-              </button>
+              </Button>
             </div>
 
             {/* Help hint */}
@@ -118,13 +119,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
           <div className="p-8 animate-in slide-in-from-right-4 duration-300">
             {/* Back Button - Clearer navigation */}
             <div className="flex items-center justify-between mb-6">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setShowExpertise(false)}
                 className="flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm px-3 py-1.5 hover:bg-slate-50 rounded-lg transition-colors"
               >
                 <Icon name="arrow_back" className="text-sm" />
                 Back to welcome
-              </button>
+              </Button>
               <div className="text-sm text-slate-500">
                 Step 2 of 2
               </div>
@@ -150,19 +151,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={handleSkipSelection}
                   className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
                 >
                   Skip for now
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost" size="bare"
                   onClick={handleConfirmSelection}
                   className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
                 >
                   Continue with {selectedLevel === 'simple' ? 'Essential' : 
                                 selectedLevel === 'standard' ? 'Complete' : 'Expert'}
-                </button>
+                </Button>
               </div>
             </div>
 

@@ -12,6 +12,7 @@
  */
 
 import React, { useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { IIIFItem } from '@/src/shared/types';
 
 export interface BoardTemplate {
@@ -162,7 +163,7 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
 
         {/* Primary CTAs */}
         <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-          <button
+          <Button variant="ghost" size="bare"
             onClick={() => setShowDemoPrompt(true)}
             className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all ${
               fieldMode
@@ -175,8 +176,8 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Start with Demo
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost" size="bare"
             onClick={onBrowseArchive}
             className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all border ${
               fieldMode
@@ -188,16 +189,16 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Browse Archive
-          </button>
+          </Button>
         </div>
 
         {/* Start Blank Link */}
-        <button
+        <Button variant="ghost" size="bare"
           onClick={onStartBlank}
           className={`text-sm underline-offset-4 hover:underline transition-all ${cx.textMuted}`}
         >
           Or start with a blank canvas →
-        </button>
+        </Button>
       </div>
 
       {/* Template Gallery */}
@@ -207,7 +208,7 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {TEMPLATES.map((template) => (
-            <button
+            <Button variant="ghost" size="bare"
               key={template.id}
               onClick={() => onSelectTemplate(template)}
               onMouseEnter={() => setHoveredTemplate(template.id)}
@@ -236,7 +237,7 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -251,15 +252,15 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
               You can modify or delete these items anytime.
             </p>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setShowDemoPrompt(false)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   fieldMode ? 'text-stone-400 hover:text-stone-200' : 'text-stone-600 hover:text-stone-800'
                 }`}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost" size="bare"
                 onClick={() => {
                   setShowDemoPrompt(false);
                   // Create a narrative template with demo flag
@@ -270,7 +271,7 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
                 }`}
               >
                 Create Demo Board
-              </button>
+              </Button>
             </div>
           </div>
         </div>

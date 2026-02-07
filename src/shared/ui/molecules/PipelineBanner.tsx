@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '../atoms';
 import { usePipeline } from '../../lib/hooks/usePipeline';
 
@@ -139,7 +140,7 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
       {/* Left: Back button + Summary */}
       <div className="flex items-center gap-3">
         {pipeline.breadcrumbs.length > 0 && (
-          <button
+          <Button variant="ghost" size="bare"
             onClick={handleBack}
             className={`
               flex items-center gap-1 px-2 py-1 rounded-md
@@ -152,7 +153,7 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
             <span className="text-sm font-medium">
               {pipeline.breadcrumbs[pipeline.breadcrumbs.length - 1]?.label || 'Back'}
             </span>
-          </button>
+          </Button>
         )}
 
         <div className="flex items-center gap-2">
@@ -164,7 +165,7 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
       </div>
 
       {/* Right: Clear button */}
-      <button
+      <Button variant="ghost" size="bare"
         onClick={handleClear}
         className={`
           flex items-center gap-1 px-2 py-1 rounded-md
@@ -175,7 +176,7 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
       >
         <Icon name="close" className="text-lg" />
         <span className="text-sm hidden sm:inline">Clear</span>
-      </button>
+      </Button>
     </div>
   );
 };

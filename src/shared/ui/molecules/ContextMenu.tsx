@@ -22,9 +22,15 @@ import { ContextMenuSection } from './ContextMenuSection';
 import { ContextMenuSelectionBadge } from './ContextMenuSelectionBadge';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
+const defaultCx: ContextualClassNames = {
+  surface: 'bg-white dark:bg-slate-900',
+  text: 'text-slate-900 dark:text-slate-100',
+  accent: 'text-blue-600 dark:text-blue-400',
+};
+
 // Re-export types from sub-components for backwards compatibility
-export type { ContextMenuItemProps as ContextMenuItem } from './ContextMenuItem';
-export type { ContextMenuSectionProps as ContextMenuSection } from './ContextMenuSection';
+export type { ContextMenuItemProps } from './ContextMenuItem';
+export type { ContextMenuSectionProps } from './ContextMenuSection';
 
 // Keep interfaces here for backwards compatibility
 export interface ContextMenuItem {
@@ -104,7 +110,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   className = '',
   maxHeight = 400,
   selectionCount = 1,
-  cx = {},
+  cx = defaultCx,
   fieldMode: _fieldMode = false,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -208,7 +214,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       `}
       style={{
         left: x,
-        top: x,
+        top: y,
         maxHeight,
         overflowY: 'auto',
       }}

@@ -36,22 +36,22 @@ export function generateThumbnailMetadata(
   maxWidth = 400
 ): ThumbnailSpec | undefined {
   // If resource has thumbnail property, use it
-  const r = resource as Record<string, unknown>;
+  const r = resource as unknown as Record<string, unknown>;
   if (r.thumbnail && Array.isArray(r.thumbnail) && r.thumbnail.length > 0) {
     return r.thumbnail[0] as ThumbnailSpec;
   }
 
   // For Canvas, try to get from painting annotation
   if (resource.type === 'Canvas') {
-    const canvas = resource as Record<string, unknown>;
+    const canvas = resource as unknown as Record<string, unknown>;
     const items = canvas.items as IIIFItem[] | undefined;
     if (items && items.length > 0) {
       const annotationPage = items[0];
-      const ap = annotationPage as Record<string, unknown>;
+      const ap = annotationPage as unknown as Record<string, unknown>;
       const annotations = ap.items as IIIFItem[] | undefined;
       if (annotations && annotations.length > 0) {
         const annotation = annotations[0];
-        const a = annotation as Record<string, unknown>;
+        const a = annotation as unknown as Record<string, unknown>;
         const body = a.body as ThumbnailSpec | undefined;
         if (body) {
           return {
@@ -105,11 +105,11 @@ export function getStackedThumbnails(
  * Generate a summary for a resource
  */
 export function generateSummary(resource: IIIFItem): string {
-  const r = resource as Record<string, unknown>;
+  const r = resource as unknown as Record<string, unknown>;
 
   // Use existing summary if available
   if (r.summary) {
-    const summary = r.summary as Record<string, string[]>;
+    const summary = r.summary as unknown as Record<string, string[]>;
     const values = Object.values(summary).flat();
     return values[0] || '';
   }
@@ -154,7 +154,7 @@ export function enrichTreeMetadata(root: IIIFItem): Map<string, EnrichmentResult
     const result = enrichIIIFMetadata(item);
     enriched.set(item.id, result);
 
-    const r = item as Record<string, unknown>;
+    const r = item as unknown as Record<string, unknown>;
     const items = r.items as IIIFItem[] | undefined;
     if (items) {
       items.forEach(process);

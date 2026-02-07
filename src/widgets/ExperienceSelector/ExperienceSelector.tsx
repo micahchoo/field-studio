@@ -13,8 +13,9 @@
  */
 
 import React, { useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { AbstractionLevel } from '@/src/shared/types';
-import { COLORS, SPACING, LAYOUT, INTERACTION } from '@/src/shared/config/design-tokens';
+import { COLORS, INTERACTION, LAYOUT, SPACING } from '@/src/shared/config/design-tokens';
 
 export interface ExperienceSelectorProps {
   /** Current selected level */
@@ -196,21 +197,21 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
           Tailor the interface to your expertise. This affects which tools and options are visible.
         </p>
         <div className="mt-3 flex items-center justify-center gap-4">
-          <button
+          <Button variant="ghost" size="bare"
             onClick={handleHelpClick}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors hover:bg-slate-50"
             style={{ color: COLORS.primary[600], borderColor: COLORS.primary[300] }}
           >
             <span className="text-base">💡</span>
             {showHelp ? 'Hide help' : 'Help me choose'}
-          </button>
+          </Button>
           {showSkipOption && onSkip && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={onSkip}
               className="text-sm px-3 py-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
             >
               Skip for now (uses Complete)
-            </button>
+            </Button>
           )}
         </div>
       </div>

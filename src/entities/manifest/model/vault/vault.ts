@@ -8,14 +8,13 @@
  * This follows the widget pattern - a self-contained unit with state and behavior.
  */
 
-import type { IIIFItem, IIIFManifest } from '@/src/shared/types';
-import type { NormalizedState, VaultSnapshot } from '@/src/shared/types';
-import { normalize, createEmptyState } from './normalization';
+import type { IIIFItem, IIIFManifest, NormalizedState, VaultSnapshot } from '@/src/shared/types';
+import { createEmptyState, normalize } from './normalization';
 import { denormalize } from './denormalization';
-import { getEntity, getParentId, getChildIds, getEntitiesByType } from './queries';
-import { getCollectionsContaining, getCollectionMembers, isOrphanManifest, getOrphanManifests, addToCollection, removeFromCollection } from './collections';
-import { updateEntity, addEntity, removeEntity } from './updates';
-import { moveEntityToTrash, restoreEntityFromTrash, emptyTrash } from './trash';
+import { getChildIds, getEntitiesByType, getEntity, getParentId } from './queries';
+import { addToCollection, getCollectionMembers, getCollectionsContaining, getOrphanManifests, isOrphanManifest, removeFromCollection } from './collections';
+import { addEntity, removeEntity, updateEntity } from './updates';
+import { emptyTrash, moveEntityToTrash, restoreEntityFromTrash } from './trash';
 import { moveEntity, reorderChildren } from './movement';
 
 /**

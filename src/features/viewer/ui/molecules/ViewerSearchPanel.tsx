@@ -17,7 +17,7 @@
  * FAILURE PREVENTED: Search timeouts, result overflow, focus loss
  */
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Icon, Input } from '@/src/shared/ui/atoms';
 import { IconButton } from '@/src/shared/ui/molecules';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
@@ -155,7 +155,7 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
 
   // Debounced input handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const {value} = e.target;
     setLocalQuery(value);
     setQuery(value);
     setSelectedIndex(-1);

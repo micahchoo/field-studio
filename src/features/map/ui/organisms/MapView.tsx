@@ -26,11 +26,10 @@
 import React from 'react';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Icon, ZoomControl } from '@/src/shared/ui/atoms';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { MapMarker } from '@/src/shared/ui/molecules/MapMarker';
 import { ClusterBadge } from '@/src/shared/ui/molecules/ClusterBadge';
-import { ZoomControl } from '@/src/features/viewer/ui/atoms';
 import {
   formatBounds,
   formatCoordinates,

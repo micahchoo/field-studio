@@ -1,5 +1,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
@@ -276,7 +277,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
               { mode: 'freehand' as const, icon: 'gesture', label: 'Freehand' },
               { mode: 'select' as const, icon: 'pan_tool', label: 'Pan' }
             ].map(m => (
-              <button
+              <Button variant="ghost" size="bare"
                 key={m.mode}
                 onClick={() => { setMode(m.mode); handleClear(); }}
                 className={`px-2 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 ${
@@ -284,21 +285,21 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
                 }`}
               >
                 <Icon name={m.icon} className="text-xs"/> {m.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
+          <Button variant="ghost" size="bare"
             onClick={() => setShowExisting(!showExisting)}
             className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${showExisting ? 'bg-blue-600 text-white' : 'bg-white/5 text-white/40'}`}
           >
             {existingSvgAnnotations.length} Existing
-          </button>
-          <button onClick={onClose} className="px-3 py-1 text-white/40 hover:text-white font-bold text-sm hover:bg-white/10 rounded">
+          </Button>
+          <Button variant="ghost" size="bare" onClick={onClose} className="px-3 py-1 text-white/40 hover:text-white font-bold text-sm hover:bg-white/10 rounded">
             Done
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -497,31 +498,31 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
             </div>
 
             <div className="flex gap-2">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleUndo}
                 disabled={points.length === 0}
                 className="flex-1 bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white/60 text-[10px] font-bold uppercase py-2 rounded-lg flex items-center justify-center gap-1"
               >
                 <Icon name="undo" className="text-xs"/> Undo
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost" size="bare"
                 onClick={handleClear}
                 disabled={points.length === 0}
                 className="flex-1 bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white/60 text-[10px] font-bold uppercase py-2 rounded-lg flex items-center justify-center gap-1"
               >
                 <Icon name="clear" className="text-xs"/> Clear
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className="p-3 border-t border-white/10">
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handleSave}
               disabled={points.length < 3 || !annotationText.trim()}
               className="w-full bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs transition-all"
             >
               <Icon name="save" className="inline mr-1.5 text-xs"/> Create Annotation
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface ToolbarProps {

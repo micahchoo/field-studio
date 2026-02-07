@@ -5,8 +5,7 @@
  * These provide fast access to entities and their relationships.
  */
 
-import type { IIIFItem } from '@/src/shared/types';
-import type { EntityType, NormalizedState } from '@/src/shared/types';
+import type { EntityType, IIIFItem, NormalizedState } from '@/src/shared/types';
 
 /**
  * Get an entity by ID - O(1)

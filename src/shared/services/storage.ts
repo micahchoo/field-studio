@@ -281,7 +281,8 @@ class StorageService {
   async loadProject(): Promise<IIIFItem | undefined> {
     const db = await this.getDB();
     try {
-        return await db.get(PROJECT_STORE, 'root');
+        const root = await db.get(PROJECT_STORE, 'root');
+        return root;
     } catch (e) {
         console.error("Failed to load project from IDB", e);
         return undefined;

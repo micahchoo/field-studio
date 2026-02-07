@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem, isCollection } from '@/src/shared/types';
 import { AuthRequiredResult, fetchRemoteResource, requiresAuth } from '@/src/shared/services/remoteLoader';
 import { AuthService } from '@/src/shared/services/authService';
@@ -61,11 +62,11 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
       }
 
       setPreview(result.item);
-    } catch (e: any) {
-      if (e.name === 'AbortError') {
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') {
         setError('Request timed out after 30 seconds. The server may be slow or unavailable.');
       } else {
-        setError(e.message || "Failed to load manifest");
+        setError(e instanceof Error ? e.message : 'Failed to load manifest');
       }
     } finally {
       clearTimeout(timeoutId);
@@ -88,9 +89,9 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
             <Icon name="cloud_download" className="text-iiif-blue"/> 
             Import External IIIF
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <Button variant="ghost" size="bare" onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <Icon name="close"/>
-          </button>
+          </Button>
         </div>
 
         <div className="p-6 space-y-4">
@@ -105,13 +106,13 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
                 placeholder="https://example.org/iiif/manifest.json"
                 className="flex-1 border border-slate-300 rounded px-3 py-2 text-sm focus:border-iiif-blue focus:ring-1 focus:ring-iiif-blue outline-none"
               />
-              <button 
+              <Button variant="ghost" size="bare" 
                 onClick={handleFetch}
                 disabled={loading || !url}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded font-bold text-sm disabled:opacity-50"
               >
                 {loading ? <Icon name="sync" className="animate-spin"/> : 'Fetch'}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -152,16 +153,16 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
         </div>
 
         <div className="p-4 border-t bg-slate-50 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 font-bold text-sm hover:bg-slate-200 rounded">
+          <Button variant="ghost" size="bare" onClick={onClose} className="px-4 py-2 text-slate-600 font-bold text-sm hover:bg-slate-200 rounded">
             Cancel
-          </button>
-          <button 
+          </Button>
+          <Button variant="ghost" size="bare" 
             onClick={handleConfirm}
             disabled={!preview}
             className="bg-iiif-blue text-white px-6 py-2 rounded font-bold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
           >
             <Icon name="add" /> Add to Archive
-          </button>
+          </Button>
         </div>
       </div>
     </div>

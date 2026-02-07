@@ -11,9 +11,9 @@ import type {
   IIIFCollection,
   IIIFItem,
   IIIFManifest,
-  IIIFRange
+  IIIFRange,
+  NormalizedState
 } from '@/src/shared/types';
-import type { NormalizedState } from '@/src/shared/types';
 import { cloneAsRecord, recordAs } from './cloning';
 import { applyExtensions } from './extensions';
 
@@ -103,16 +103,54 @@ function denormalizeManifest(state: NormalizedState, id: string): IIIFManifest {
 }
 
 /**
+ * Check if an annotation page contains painting annotations
+ */
+function isPaintingAnnotationPage(state: NormalizedState, pageId: string): boolean {
+  const annoIds = state.references[pageId] || [];
+
+  for (const annoId of annoIds) {
+    const anno = state.entities.Annotation[annoId];
+    if (anno) {
+      const motivation = (anno as unknown as Record<string, unknown>).motivation;
+      if (motivation === 'painting') {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Denormalize a Canvas with its annotation pages
+ * Separates painting annotations (canvas.items) from non-painting (canvas.annotations)
  */
 export function denormalizeCanvas(state: NormalizedState, id: string): IIIFCanvas {
   const canvas = cloneAsRecord(state.entities.Canvas[id]);
   const pageIds = state.references[id] || [];
 
-  // Reconstruct painting annotation pages
-  canvas.items = pageIds
-    .filter(pid => state.typeIndex[pid] === 'AnnotationPage')
-    .map(pid => denormalizeAnnotationPage(state, pid));
+  // Filter to only annotation pages
+  const annotationPageIds = pageIds.filter(pid => state.typeIndex[pid] === 'AnnotationPage');
+
+  // Separate painting vs non-painting annotation pages based on annotation motivation
+  const paintingPageIds: string[] = [];
+  const nonPaintingPageIds: string[] = [];
+
+  for (const pageId of annotationPageIds) {
+    if (isPaintingAnnotationPage(state, pageId)) {
+      paintingPageIds.push(pageId);
+    } else {
+      nonPaintingPageIds.push(pageId);
+    }
+  }
+
+  // Reconstruct painting annotation pages (canvas.items)
+  canvas.items = paintingPageIds.map(pid => denormalizeAnnotationPage(state, pid));
+
+  // Reconstruct non-painting annotation pages (canvas.annotations)
+  if (nonPaintingPageIds.length > 0) {
+    canvas.annotations = nonPaintingPageIds.map(pid => denormalizeAnnotationPage(state, pid));
+  }
 
   // Apply preserved extensions
   applyExtensions(canvas, state.extensions[id]);

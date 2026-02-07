@@ -1,6 +1,6 @@
 import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { ValidationIssue } from './validator';
-import { createLanguageMap, findNodeById, generateValidUri, generateUUID, normalizeUri } from '@/utils';
+import { createLanguageMap, findNodeById, generateUUID, generateValidUri, normalizeUri } from '@/utils';
 import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants/core';
 import { IIIF_SPEC } from '@/src/shared/constants/iiif';
 import {

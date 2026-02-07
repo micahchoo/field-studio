@@ -113,7 +113,7 @@ export const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   const renderedAnnotations = useMemo(() => {
     return annotations.map((annotation) => {
       const isSelected = annotation.id === selectedId;
-      const target = annotation.target;
+      const {target} = annotation;
 
       // Extract region from target
       let region: { x: number; y: number; w: number; h: number } | null = null;
@@ -154,7 +154,7 @@ export const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
     <svg
       className="absolute inset-0 pointer-events-auto"
       viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMid meet"
       style={{ width: '100%', height: '100%' }}
     >
       {renderedAnnotations.map(({ annotation, isSelected, region, path }) => {

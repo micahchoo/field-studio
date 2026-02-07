@@ -10,16 +10,20 @@
  * - Views render content only, no headers/sidebars
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import type { AppMode, IIIFItem, IIIFCanvas, IIIFManifest, IIIFCollection, AppSettings, IIIFAnnotation } from '@/src/shared/types';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import type { AppMode, AppSettings, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
 import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 import { useAppMode } from '@/src/app/providers';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
+import { createTimeAnnotation } from '@/src/features/viewer/model/annotation';
+import { useVaultDispatch, useVaultState } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
+import { actions } from '@/src/entities/manifest/model/actions';
+import { storage } from '@/src/shared/services/storage';
 
 // Feature views
 import { ArchiveView } from '@/src/features/archive';
 import { BoardView } from '@/src/features/board-design';
-import { MetadataView, Inspector } from '@/src/features/metadata-edit';
+import { Inspector, MetadataView } from '@/src/features/metadata-edit';
 import { SearchView } from '@/src/features/search';
 import { ViewerView } from '@/src/features/viewer';
 import { MapView } from '@/src/features/map';
@@ -86,6 +90,28 @@ const getCanvasAnnotations = (canvas: IIIFCanvas | null): IIIFAnnotation[] => {
   return annotations;
 };
 
+// Detect media type from canvas
+const getCanvasMediaType = (canvas: IIIFCanvas | IIIFItem | null): 'image' | 'video' | 'audio' | 'other' => {
+  if (!canvas) return 'other';
+
+  // Check annotation pages for painting motivations
+  const items = (canvas as IIIFCanvas).items;
+  if (!items || items.length === 0) return 'other';
+
+  for (const page of items) {
+    if (page.items) {
+      for (const anno of page.items) {
+        const body = anno.body as { type?: string };
+        if (body?.type === 'Image') return 'image';
+        if (body?.type === 'Video') return 'video';
+        if (body?.type === 'Sound') return 'audio';
+      }
+    }
+  }
+
+  return 'other';
+};
+
 export const ViewRouter: React.FC<ViewRouterProps> = ({
   selectedId,
   selectedItem,
@@ -117,20 +143,48 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     canSave: false,
   });
 
+  // Time-based annotation state (for audio/video)
+  const [timeRange, setTimeRange] = useState<{ start: number; end?: number } | null>(null);
+  const [currentPlaybackTime, setCurrentPlaybackTime] = useState(0);
+
+  // Throttle playback time updates to prevent excessive re-renders
+  const lastPlaybackUpdateRef = useRef<number>(0);
+  const playbackTimeRef = useRef<number>(0);
+  const handlePlaybackTimeChange = useCallback((time: number) => {
+    playbackTimeRef.current = time;
+    const now = Date.now();
+    // Only update state every 500ms to prevent lag
+    if (now - lastPlaybackUpdateRef.current > 500) {
+      lastPlaybackUpdateRef.current = now;
+      setCurrentPlaybackTime(time);
+    }
+  }, []);
+
+  // Force annotations tab when annotation mode is active
+  const [forceAnnotationsTab, setForceAnnotationsTab] = useState(false);
+
+  // Handle annotation tool toggle - auto-open inspector
+  const handleAnnotationToolToggle = useCallback((active: boolean) => {
+    setShowAnnotationTool(active);
+    if (active) {
+      // Open inspector and switch to annotations tab
+      setShowInspectorPanel(true);
+      setForceAnnotationsTab(true);
+    } else {
+      setForceAnnotationsTab(false);
+      // Clear any in-progress annotation
+      setAnnotationText('');
+      setTimeRange(null);
+    }
+  }, []);
+
+  // Vault dispatch for creating time annotations directly
+  const { dispatch } = useVaultDispatch();
+  const { exportRoot } = useVaultState();
+
   // Refs for annotation controls exposed from AnnotationDrawingOverlay
   const annotationSaveRef = useRef<(() => void) | null>(null);
   const annotationClearRef = useRef<(() => void) | null>(null);
-
-  // Handlers for annotation actions
-  const handleSaveAnnotation = useCallback(() => {
-    annotationSaveRef.current?.();
-    setAnnotationText('');
-  }, []);
-
-  const handleClearAnnotation = useCallback(() => {
-    annotationClearRef.current?.();
-    setAnnotationText('');
-  }, []);
 
   const viewerData = useMemo(() => {
     if (!root) return { canvas: null, manifest: null };
@@ -173,6 +227,44 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     }
     return [];
   }, [selectedItem]);
+
+  // Get media type of selected canvas
+  const selectedMediaType = useMemo(() => {
+    if (selectedItem?.type === 'Canvas') {
+      return getCanvasMediaType(selectedItem);
+    }
+    return 'other';
+  }, [selectedItem]);
+
+  // Handlers for annotation actions
+  const handleSaveAnnotation = useCallback(() => {
+    if (selectedMediaType === 'audio' || selectedMediaType === 'video') {
+      // Time-based annotation for audio/video - create directly, no ref indirection
+      if (timeRange && annotationText.trim() && selectedItem?.id) {
+        const annotation = createTimeAnnotation(selectedItem.id, timeRange, annotationText, annotationMotivation);
+        const result = dispatch(actions.addAnnotation(selectedItem.id, annotation));
+        if (result) {
+          const updatedRoot = exportRoot();
+          if (updatedRoot) {
+            storage.saveProject(updatedRoot)
+              .then(() => console.log('[ViewRouter] Time annotation saved to IndexedDB'))
+              .catch((err) => console.error('[ViewRouter] Failed to save:', err));
+          }
+        }
+      }
+    } else {
+      // Spatial annotation for images
+      annotationSaveRef.current?.();
+    }
+    setAnnotationText('');
+    setTimeRange(null);
+  }, [selectedMediaType, timeRange, annotationText, annotationMotivation, selectedItem, dispatch, exportRoot]);
+
+  const handleClearAnnotation = useCallback(() => {
+    annotationClearRef.current?.();
+    setAnnotationText('');
+    setTimeRange(null); // Clear time range
+  }, []);
 
   // Archive view
   if (currentMode === 'archive') {
@@ -324,7 +416,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           <div className={`flex-1 flex flex-col min-h-0 ${isFieldMode ? 'bg-black' : 'bg-slate-950'}`}>
             {/* Viewer header with close + inspector buttons */}
             <div className={`shrink-0 px-4 py-2 border-b flex items-center justify-end gap-2 ${isFieldMode ? 'bg-black border-yellow-900/50' : 'bg-slate-900 border-slate-700'}`}>
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => setShowInspectorPanel(!showInspectorPanel)}
                 className={`p-1.5 rounded-lg transition-colors ${
                   showInspectorPanel
@@ -334,38 +426,43 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                 title={showInspectorPanel ? 'Hide Inspector' : 'Show Inspector'}
               >
                 <Icon name="info" className="text-lg" />
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost" size="bare"
                 onClick={() => setShowViewerPanel(false)}
                 className={`p-1.5 rounded-lg transition-colors ${isFieldMode ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-slate-400 hover:bg-slate-800'}`}
                 title="Close Viewer"
               >
                 <Icon name="close" className="text-lg" />
-              </button>
+              </Button>
             </div>
-            <div className="flex-1 flex min-h-0">
-              <div className={`flex-1 flex flex-col min-h-0 ${showInspectorPanel ? 'w-2/3' : 'w-full'}`}>
+            <div className="flex-1 flex min-h-0 overflow-hidden">
+              <div className={`flex flex-col min-h-0 min-w-0 ${showInspectorPanel ? 'flex-1' : 'w-full'}`}>
                 <ViewerView
                   item={selectedItem as IIIFCanvas}
                   manifest={viewerData.manifest}
-                  onUpdate={() => {}}
+                  onUpdate={(updates) => onUpdateItem?.(updates)}
                   cx={viewerCx}
                   fieldMode={isFieldMode}
                   t={(key) => key}
                   isAdvanced={settings?.abstractionLevel === 'advanced'}
                   // Controlled annotation mode for Inspector integration
                   annotationToolActive={showAnnotationTool}
-                  onAnnotationToolToggle={setShowAnnotationTool}
+                  onAnnotationToolToggle={handleAnnotationToolToggle}
                   annotationText={annotationText}
                   annotationMotivation={annotationMotivation}
                   onAnnotationDrawingStateChange={setAnnotationDrawingState}
                   onAnnotationSaveRef={(fn) => { annotationSaveRef.current = fn; }}
                   onAnnotationClearRef={(fn) => { annotationClearRef.current = fn; }}
+                  // Time-based annotation props
+                  timeRange={timeRange}
+                  onTimeRangeChange={setTimeRange}
+                  currentPlaybackTime={currentPlaybackTime}
+                  onPlaybackTimeChange={handlePlaybackTimeChange}
                 />
               </div>
               {/* Inspector Panel - Full Inspector with tabs */}
               {showInspectorPanel && settings && (
-                <div className="w-80 shrink-0 min-h-0 overflow-auto">
+                <div className="w-80 shrink-0 min-h-0 overflow-hidden border-l border-slate-700">
                   <Inspector
                     resource={selectedItem}
                     onUpdateResource={(updates) => onUpdateItem?.(updates)}
@@ -385,6 +482,12 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                     onAnnotationMotivationChange={setAnnotationMotivation}
                     onSaveAnnotation={handleSaveAnnotation}
                     onClearAnnotation={handleClearAnnotation}
+                    // Time-based annotation props
+                    mediaType={selectedMediaType}
+                    timeRange={timeRange}
+                    currentPlaybackTime={currentPlaybackTime}
+                    // Force annotations tab when annotation mode is active
+                    forceTab={forceAnnotationsTab ? 'annotations' : undefined}
                   />
                 </div>
               )}
@@ -558,7 +661,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       <ViewerView
         item={viewerData.canvas}
         manifest={viewerData.manifest}
-        onUpdate={() => {}}
+        onUpdate={(updates) => onUpdateItem?.(updates)}
         cx={viewerCx}
         fieldMode={isFieldMode}
         t={(key) => key}

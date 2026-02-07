@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { BoardItem } from '../../model';
 import { BoardNode } from '../atoms/BoardNode';
 
@@ -30,13 +31,7 @@ export interface BoardNodeLayerProps {
   /** Callback when connection starts */
   onConnectStart: (id: string) => void;
   /** Contextual styles */
-  cx: {
-    surface: string;
-    text: string;
-    accent: string;
-    placeholderBg: string;
-    placeholderIcon: string;
-  };
+  cx: ContextualClassNames;
   /** Field mode flag */
   fieldMode: boolean;
 }

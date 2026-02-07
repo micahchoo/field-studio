@@ -1,5 +1,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { guidance } from '@/src/shared/services/guidanceService';
 
@@ -120,13 +121,13 @@ export const Tooltip: React.FC<TooltipProps> = ({
             <div className="px-3 py-2 border-b border-slate-700 flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-white">{content.title}</span>
               {!persist && (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={(e) => { e.stopPropagation(); dismiss(); }}
                   className="text-slate-400 hover:text-white text-xs"
                   title="Don't show again"
                 >
                   <Icon name="close" className="text-xs" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -190,13 +191,13 @@ export const QuickReference: React.FC<QuickRefProps> = ({ title, items, isOpen, 
       <div className="w-72 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
         <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">{title}</h3>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onToggle}
             className="p-1 hover:bg-slate-200 rounded transition-colors"
             aria-label="Close quick help"
           >
             <Icon name="close" className="text-slate-500 text-sm" />
-          </button>
+          </Button>
         </div>
         <div className="p-2 max-h-80 overflow-y-auto">
           {items.map((item, i) => (
@@ -262,13 +263,13 @@ export const FirstTimeHint: React.FC<FirstTimeHintProps> = ({
     <div className={`flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 ${className}`}>
       <Icon name={icon} className="text-blue-500 text-sm shrink-0" />
       <span className="flex-1">{message}</span>
-      <button
+      <Button variant="ghost" size="bare"
         onClick={dismiss}
         className="text-blue-400 hover:text-blue-600 shrink-0"
         title="Dismiss"
       >
         <Icon name="close" className="text-xs" />
-      </button>
+      </Button>
     </div>
   );
 };
@@ -304,13 +305,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <p className="text-sm text-slate-500 max-w-md mb-6">{description}</p>
 
       {action && (
-        <button
+        <Button variant="ghost" size="bare"
           onClick={action.onClick}
           className="px-6 py-2.5 bg-iiif-blue text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           {action.label}
           <Icon name="arrow_forward" className="text-sm" />
-        </button>
+        </Button>
       )}
 
       {tips && tips.length > 0 && (

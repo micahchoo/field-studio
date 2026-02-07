@@ -129,13 +129,13 @@ export function isValidLanguageMap(value: unknown): value is LanguageMap {
 
 export function isValidMetadataEntry(entry: unknown): entry is MetadataEntry {
   if (!entry || typeof entry !== 'object') return false;
-  const e = entry as Record<string, unknown>;
+  const e = entry as unknown as Record<string, unknown>;
   return isValidLanguageMap(e.label) && isValidLanguageMap(e.value);
 }
 
 export function isValidAgent(agent: unknown): agent is Agent {
   if (!agent || typeof agent !== 'object') return false;
-  const a = agent as Record<string, unknown>;
+  const a = agent as unknown as Record<string, unknown>;
 
   if (typeof a.id !== 'string') return false;
   if (a.type !== 'Agent') return false;
@@ -146,7 +146,7 @@ export function isValidAgent(agent: unknown): agent is Agent {
 
 export function isValidReference(ref: unknown): ref is Reference {
   if (!ref || typeof ref !== 'object') return false;
-  const r = ref as Record<string, unknown>;
+  const r = ref as unknown as Record<string, unknown>;
 
   if (typeof r.id !== 'string') return false;
   if (typeof r.type !== 'string') return false;
@@ -159,7 +159,7 @@ export function isValidExternalResource(
   resource: unknown
 ): resource is ExternalResource {
   if (!resource || typeof resource !== 'object') return false;
-  const r = resource as Record<string, unknown>;
+  const r = resource as unknown as Record<string, unknown>;
 
   if (typeof r.id !== 'string') return false;
   if (typeof r.type !== 'string') return false;
@@ -174,19 +174,16 @@ export function isValidExternalResource(
   return true;
 }
 
+const _CONTENT_RESOURCE_TYPES = new Set(['Image', 'Video', 'Sound', 'Text', 'Dataset', 'Model']);
+
 export function isValidContentResource(
   resource: unknown
 ): resource is ContentResource {
   if (!resource || typeof resource !== 'object') return false;
-  const r = resource as Record<string, unknown>;
+  const r = resource as unknown as Record<string, unknown>;
 
   if (typeof r.id !== 'string') return false;
-  if (
-    !['Image', 'Video', 'Sound', 'Text', 'Dataset', 'Model'].includes(
-      r.type as string
-    )
-  )
-    return false;
+  if (!_CONTENT_RESOURCE_TYPES.has(r.type as string)) return false;
 
   if (r.format !== undefined && typeof r.format !== 'string') return false;
   if (r.width !== undefined && (typeof r.width !== 'number' || r.width <= 0))
@@ -272,8 +269,10 @@ export const IIIF_MOTIVATIONS: IIIFMotivation[] = [
   'moderating',
 ];
 
+const _MOTIVATION_SET = new Set<string>(IIIF_MOTIVATIONS);
+
 export function isValidMotivation(motivation: string): boolean {
-  return IIIF_MOTIVATIONS.includes(motivation as IIIFMotivation);
+  return _MOTIVATION_SET.has(motivation);
 }
 
 export function isPaintingMotivation(
@@ -297,7 +296,9 @@ export function isValidNavDate(dateString: string): boolean {
 }
 
 export function formatNavDate(date: Date): string {
-  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  // Direct substring is faster than regex for a predictable format
+  const iso = date.toISOString();
+  return iso.substring(0, 19) + 'Z';
 }
 
 export function isValidDimension(value: unknown): value is number {

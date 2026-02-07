@@ -273,6 +273,49 @@ export const BEHAVIOR_DESCRIPTIONS: Record<IIIFBehavior, BehaviorDescription> =
   };
 
 // ============================================================================
+// Pre-computed Lookup Maps (built once at module init)
+// ============================================================================
+
+// O(1) lookup: behavior -> disjoint set
+const _behaviorToDisjointSet = new Map<IIIFBehavior, DisjointSet>();
+// O(1) lookup: behavior -> Set of values in its disjoint set
+const _behaviorToDisjointValues = new Map<IIIFBehavior, Set<IIIFBehavior>>();
+// O(1) lookup: disjoint set name -> DisjointSet
+const _disjointSetByName = new Map<string, DisjointSet>();
+// O(1) lookup: behavior -> Set of valid resource types
+const _behaviorValidTypes = new Map<IIIFBehavior, Set<string>>();
+// O(1) lookup: resourceType -> list of valid behaviors
+const _validBehaviorsForType = new Map<string, IIIFBehavior[]>();
+
+// Build behavior -> valid types map
+for (const [behavior, types] of Object.entries(BEHAVIOR_VALIDITY_MATRIX)) {
+  _behaviorValidTypes.set(behavior as IIIFBehavior, new Set(types));
+}
+
+// Build disjoint set lookup maps
+for (const set of DISJOINT_SETS) {
+  _disjointSetByName.set(set.name, set);
+  const valuesSet = new Set(set.values);
+  for (const behavior of set.values) {
+    _behaviorToDisjointSet.set(behavior, set);
+    _behaviorToDisjointValues.set(behavior, valuesSet);
+  }
+}
+
+// Build valid behaviors per type
+const allTypes = new Set<string>();
+for (const types of Object.values(BEHAVIOR_VALIDITY_MATRIX)) {
+  for (const t of types) allTypes.add(t);
+}
+for (const type of allTypes) {
+  const behaviors: IIIFBehavior[] = [];
+  for (const [behavior, typeSet] of _behaviorValidTypes) {
+    if (typeSet.has(type)) behaviors.push(behavior);
+  }
+  _validBehaviorsForType.set(type, behaviors);
+}
+
+// ============================================================================
 // Validation Functions
 // ============================================================================
 
@@ -280,20 +323,17 @@ export function isBehaviorValidForType(
   behavior: IIIFBehavior,
   resourceType: string
 ): boolean {
-  const validTypes = BEHAVIOR_VALIDITY_MATRIX[behavior] || [];
-  return validTypes.includes(resourceType);
+  return _behaviorValidTypes.get(behavior)?.has(resourceType) ?? false;
 }
 
 export function getValidBehaviorsForType(resourceType: string): IIIFBehavior[] {
-  return (Object.keys(BEHAVIOR_VALIDITY_MATRIX) as IIIFBehavior[]).filter(
-    (behavior) => isBehaviorValidForType(behavior, resourceType)
-  );
+  return _validBehaviorsForType.get(resourceType) || [];
 }
 
 export function getDisjointSetForBehavior(
   behavior: IIIFBehavior
 ): DisjointSet | undefined {
-  return DISJOINT_SETS.find((set) => set.values.includes(behavior));
+  return _behaviorToDisjointSet.get(behavior);
 }
 
 export function findBehaviorConflicts(
@@ -305,10 +345,10 @@ export function findBehaviorConflicts(
   }> = [];
 
   for (const behavior of behaviors) {
-    const disjointSet = getDisjointSetForBehavior(behavior);
-    if (disjointSet) {
+    const disjointValues = _behaviorToDisjointValues.get(behavior);
+    if (disjointValues) {
       const conflicting = behaviors.filter(
-        (b) => b !== behavior && disjointSet.values.includes(b)
+        (b) => b !== behavior && disjointValues.has(b)
       );
       if (conflicting.length > 0) {
         conflicts.push({ behavior, conflictsWith: conflicting });
@@ -320,8 +360,7 @@ export function findBehaviorConflicts(
 }
 
 export function getDefaultBehavior(disjointSetName: string): IIIFBehavior | undefined {
-  const set = DISJOINT_SETS.find((s) => s.name === disjointSetName);
-  return set?.default;
+  return _disjointSetByName.get(disjointSetName)?.default;
 }
 
 // ============================================================================
@@ -369,16 +408,14 @@ export function resolveEffectiveBehaviors(
 
   // Add own behaviors, replacing conflicts
   for (const behavior of ownBehaviors) {
-    const disjointSet = getDisjointSetForBehavior(behavior);
-    if (disjointSet) {
+    const disjointValues = _behaviorToDisjointValues.get(behavior);
+    if (disjointValues) {
       // Remove any existing behavior from this disjoint set
-      const toRemove = effective.filter((b) =>
-        disjointSet.values.includes(b)
-      );
-      toRemove.forEach((b) => {
-        const idx = effective.indexOf(b);
-        if (idx > -1) effective.splice(idx, 1);
-      });
+      for (let i = effective.length - 1; i >= 0; i--) {
+        if (disjointValues.has(effective[i])) {
+          effective.splice(i, 1);
+        }
+      }
     }
     if (!effective.includes(behavior)) {
       effective.push(behavior);

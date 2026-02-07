@@ -21,9 +21,9 @@
 import React from 'react';
 import { EmptyState } from '@/src/shared/ui/molecules';
 import { MediaPlayer } from './MediaPlayer';
-import { AnnotationOverlay, type IIIFAnnotation } from './AnnotationOverlay';
+import { AnnotationOverlay } from './AnnotationOverlay';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
-import type { IIIFCanvas } from '@/src/shared/types';
+import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
 
 export interface ViewerContentProps {
   /** Canvas to display */
@@ -44,6 +44,18 @@ export interface ViewerContentProps {
   canvasHeight?: number;
   /** Called when annotation is clicked */
   onAnnotationClick?: (annotation: IIIFAnnotation) => void;
+  /** Called when a new annotation is created */
+  onCreateAnnotation?: (annotation: IIIFAnnotation) => void;
+  /** Whether annotation mode is active (for AV content) */
+  annotationModeActive?: boolean;
+  /** Toggle annotation mode (for AV content) */
+  onAnnotationModeToggle?: (active: boolean) => void;
+  /** Current time range selection for time-based annotations */
+  timeRange?: { start: number; end?: number } | null;
+  /** Callback when time range changes */
+  onTimeRangeChange?: (range: { start: number; end?: number } | null) => void;
+  /** Callback to report current playback time */
+  onPlaybackTimeUpdate?: (time: number) => void;
   /** Contextual styles from template */
   cx: ContextualClassNames;
   /** Current field mode */
@@ -74,6 +86,12 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   canvasWidth = 1000,
   canvasHeight = 1500,
   onAnnotationClick,
+  onCreateAnnotation,
+  annotationModeActive,
+  onAnnotationModeToggle,
+  timeRange,
+  onTimeRangeChange,
+  onPlaybackTimeUpdate,
   cx,
   fieldMode,
 }) => {
@@ -90,11 +108,11 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
         {/* Annotation Overlay */}
         {annotations.length > 0 && (
           <AnnotationOverlay
-            annotations={annotations}
+            annotations={annotations as any}
             canvasWidth={canvasWidth}
             canvasHeight={canvasHeight}
             selectedId={selectedAnnotationId}
-            onAnnotationClick={onAnnotationClick}
+            onAnnotationClick={onAnnotationClick as any}
             fieldMode={fieldMode}
           />
         )}
@@ -102,33 +120,45 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     );
   }
 
-  // Video content
+  // Video content - fills entire container like OSD
   if (mediaType === 'video' && resolvedUrl) {
-    const bgClass = fieldMode ? 'bg-black' : 'bg-slate-100 dark:bg-slate-900';
     return (
-      <div className={`flex-1 flex items-center justify-center ${bgClass}`}>
+      <div className="flex-1 relative overflow-hidden" style={{ height: '100%' }}>
         <MediaPlayer
           canvas={canvas}
           src={resolvedUrl}
           mediaType="video"
+          annotations={annotations as any}
+          annotationModeActive={annotationModeActive}
+          onAnnotationModeToggle={onAnnotationModeToggle}
+          timeRange={timeRange}
+          onTimeRangeChange={onTimeRangeChange}
+          onTimeUpdate={onPlaybackTimeUpdate}
           cx={cx}
           fieldMode={fieldMode}
+          className="absolute inset-0"
         />
       </div>
     );
   }
 
-  // Audio content
+  // Audio content - fills entire container like OSD
   if (mediaType === 'audio' && resolvedUrl) {
-    const bgClass = fieldMode ? 'bg-black' : 'bg-slate-100 dark:bg-slate-900';
     return (
-      <div className={`flex-1 flex items-center justify-center ${bgClass}`}>
+      <div className="flex-1 relative overflow-hidden" style={{ height: '100%' }}>
         <MediaPlayer
           canvas={canvas}
           src={resolvedUrl}
           mediaType="audio"
+          annotations={annotations as any}
+          annotationModeActive={annotationModeActive}
+          onAnnotationModeToggle={onAnnotationModeToggle}
+          timeRange={timeRange}
+          onTimeRangeChange={onTimeRangeChange}
+          onTimeUpdate={onPlaybackTimeUpdate}
           cx={cx}
           fieldMode={fieldMode}
+          className="absolute inset-0"
         />
       </div>
     );

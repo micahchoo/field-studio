@@ -4,7 +4,7 @@
  * Makes any section of the dependency explorer copyable as non-table markdown.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button } from '@/ui/primitives';
 
 interface CopyableSectionProps {

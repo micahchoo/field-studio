@@ -21,7 +21,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import type { IIIFItem } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { FacetPill } from '@/src/shared/ui/molecules/FacetPill';
 import { ResultCard } from '@/src/shared/ui/molecules/ResultCard';
 import { SearchField } from '@/src/shared/ui/molecules/SearchField';
@@ -178,7 +178,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             <div className={`mb-4 flex flex-wrap gap-2 text-sm ${cx.textMuted}`}>
               <span>Try:</span>
               {['sunset', 'archaeological site', '2017', 'portrait'].map((tip) => (
-                <button
+                <Button variant="ghost" size="bare"
                   key={tip}
                   onClick={() => setQuery(tip)}
                   className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
@@ -188,7 +188,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   }`}
                 >
                   {tip}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -196,14 +196,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
           {/* Search Field with Autocomplete */}
           <div className="relative">
             <SearchField
-              ref={inputRef}
               value={query}
               onChange={setQuery}
-              onFocus={() => {}}
-              onKeyDown={handleKeyDown}
               placeholder="Search for items, metadata, or content..."
               autoFocus
-              onClear={query ? clearQuery : undefined}
               cx={cx}
               fieldMode={fieldMode}
             />
@@ -326,7 +322,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
               <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
               <p className="text-sm mb-2">No results for "{query}"</p>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={clearQuery}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     fieldMode
@@ -335,8 +331,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   }`}
                 >
                   Clear Search
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost" size="bare"
                   onClick={() => setFilter('All')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     fieldMode
@@ -345,7 +341,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   }`}
                 >
                   Reset Filters
-                </button>
+                </Button>
               </div>
               <p className={`text-xs mt-4 ${fieldMode ? 'text-stone-500' : 'text-stone-500'}`}>
                 Try different keywords or check your spelling

@@ -1,5 +1,6 @@
 
 import React, { useCallback, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFCanvas, IIIFItem } from '@/src/shared/types';
 import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
@@ -61,7 +62,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
       const id = crypto.randomUUID();
       const newLayer: PlacedResource = {
           id,
-          resource: item,
+          resource: item as PlacedResource['resource'],
           x: 100, y: 100, w: 400, h: 300,
           opacity: 1, locked: false
       };
@@ -128,31 +129,31 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
           <div className="h-6 w-px bg-white/10"></div>
           <div className="flex bg-white/5 border border-white/10 rounded p-1" role="group" aria-label="Background Mode">
               {(['grid', 'dark', 'light'] as const).map(m => (
-                  <button key={m} onClick={() => setBgMode(m)} aria-pressed={bgMode === m} className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${bgMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{m}</button>
+                  <Button variant="ghost" size="bare" key={m} onClick={() => setBgMode(m)} aria-pressed={bgMode === m} className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${bgMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{m}</Button>
               ))}
           </div>
-          <button onClick={addTextLayer} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"><Icon name="title" className="text-xs"/> Add Text</button>
+          <Button variant="ghost" size="bare" onClick={addTextLayer} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"><Icon name="title" className="text-xs"/> Add Text</Button>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-white/5 border border-white/10 rounded p-1" role="group" aria-label="Undo/Redo">
-              <button onClick={undo} disabled={!canUndo} aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)" className={`p-1 ${canUndo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="undo"/></button>
-              <button onClick={redo} disabled={!canRedo} aria-label="Redo (Ctrl+Shift+Z)" title="Redo (Ctrl+Shift+Z)" className={`p-1 ${canRedo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="redo"/></button>
+              <Button variant="ghost" size="bare" onClick={undo} disabled={!canUndo} aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)" className={`p-1 ${canUndo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="undo"/></Button>
+              <Button variant="ghost" size="bare" onClick={redo} disabled={!canRedo} aria-label="Redo (Ctrl+Shift+Z)" title="Redo (Ctrl+Shift+Z)" className={`p-1 ${canRedo ? 'text-white/40 hover:text-white' : 'text-white/10 cursor-not-allowed'}`}><Icon name="redo"/></Button>
           </div>
           <div className="flex bg-white/5 border border-white/10 rounded p-1">
-              <button onClick={viewport.zoomOut} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></button>
+              <Button variant="ghost" size="bare" onClick={viewport.zoomOut} aria-label="Zoom Out" className="p-1 text-white/40 hover:text-white"><Icon name="remove"/></Button>
               <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center" aria-live="polite">{viewport.scalePercent}%</span>
-              <button onClick={viewport.zoomIn} aria-label="Zoom In" className="p-1 text-white/40 hover:text-white"><Icon name="add"/></button>
+              <Button variant="ghost" size="bare" onClick={viewport.zoomIn} aria-label="Zoom In" className="p-1 text-white/40 hover:text-white"><Icon name="add"/></Button>
           </div>
-          <button onClick={onClose} aria-label="Cancel and close workspace" className="px-4 py-2 text-white/40 hover:text-white font-bold text-sm">Cancel</button>
-          <button onClick={handleSave} aria-label="Apply composition to canvas" className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-black uppercase tracking-widest text-xs hover:bg-indigo-500 shadow-xl transition-all">Apply Composition</button>
+          <Button variant="ghost" size="bare" onClick={onClose} aria-label="Cancel and close workspace" className="px-4 py-2 text-white/40 hover:text-white font-bold text-sm">Cancel</Button>
+          <Button variant="ghost" size="bare" onClick={handleSave} aria-label="Apply composition to canvas" className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-black uppercase tracking-widest text-xs hover:bg-indigo-500 shadow-xl transition-all">Apply Composition</Button>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-80 bg-slate-900 border-r border-white/10 flex flex-col">
             <div className="flex border-b border-white/10">
-                <button onClick={() => setSidebarTab('layers')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${sidebarTab === 'layers' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/40'}`}>Layers</button>
-                <button onClick={() => setSidebarTab('library')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${sidebarTab === 'library' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/40'}`}>Library</button>
+                <Button variant="ghost" size="bare" onClick={() => setSidebarTab('layers')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${sidebarTab === 'layers' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/40'}`}>Layers</Button>
+                <Button variant="ghost" size="bare" onClick={() => setSidebarTab('library')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${sidebarTab === 'library' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/40'}`}>Library</Button>
             </div>
             
             {sidebarTab === 'layers' ? (
@@ -172,10 +173,10 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-[11px] font-bold text-white truncate max-w-[140px]">{getIIIFValue(l.resource.label, 'none')}</span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); updateLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer" aria-label={l.locked ? "Unlock Layer" : "Lock Layer"}><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'down'); }} className="p-1 hover:bg-white/10 rounded" title="Move Back" aria-label="Move Layer Back"><Icon name="arrow_downward" className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); moveLayer(i, 'up'); }} className="p-1 hover:bg-white/10 rounded" title="Move Forward" aria-label="Move Layer Forward"><Icon name="arrow_upward" className="text-[14px]"/></button>
-                                <button onClick={(e) => { e.stopPropagation(); updateLayers(prev => prev.filter(x => x.id !== l.id)); }} className="p-1 hover:bg-red-500 text-white rounded" title="Remove Layer" aria-label="Remove Layer"><Icon name="delete" className="text-[14px]"/></button>
+                                <Button variant="ghost" size="bare" onClick={(e) => { e.stopPropagation(); updateLayers(layers.map(x => x.id === l.id ? {...x, locked: !x.locked} : x)); }} className={`p-1 rounded ${l.locked ? 'text-indigo-400' : 'text-white/20'}`} title="Lock Layer" aria-label={l.locked ? "Unlock Layer" : "Lock Layer"}><Icon name={l.locked ? 'lock' : 'lock_open'} className="text-[14px]"/></Button>
+                                <Button variant="ghost" size="bare" onClick={(e) => { e.stopPropagation(); moveLayer(i, 'down'); }} className="p-1 hover:bg-white/10 rounded" title="Move Back" aria-label="Move Layer Back"><Icon name="arrow_downward" className="text-[14px]"/></Button>
+                                <Button variant="ghost" size="bare" onClick={(e) => { e.stopPropagation(); moveLayer(i, 'up'); }} className="p-1 hover:bg-white/10 rounded" title="Move Forward" aria-label="Move Layer Forward"><Icon name="arrow_upward" className="text-[14px]"/></Button>
+                                <Button variant="ghost" size="bare" onClick={(e) => { e.stopPropagation(); updateLayers(prev => prev.filter(x => x.id !== l.id)); }} className="p-1 hover:bg-red-500 text-white rounded" title="Remove Layer" aria-label="Remove Layer"><Icon name="delete" className="text-[14px]"/></Button>
                             </div>
                         </div>
                         <div className={`space-y-3 ${l.locked ? 'opacity-40 pointer-events-none' : ''}`}>
@@ -194,8 +195,8 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                         </div>
                         {activeId === l.id && !l.locked && (
                             <div className="mt-3 pt-3 border-t border-white/10 flex gap-2">
-                                <button onClick={(e) => { e.stopPropagation(); alignActive('center'); }} className="flex-1 bg-white/5 hover:bg-white/10 text-[8px] font-black uppercase py-1 rounded">Center</button>
-                                <button onClick={(e) => { e.stopPropagation(); alignActive('fill'); }} className="flex-1 bg-white/5 hover:bg-white/10 text-[8px] font-black uppercase py-1 rounded">Fill</button>
+                                <Button variant="ghost" size="bare" onClick={(e) => { e.stopPropagation(); alignActive('center'); }} className="flex-1 bg-white/5 hover:bg-white/10 text-[8px] font-black uppercase py-1 rounded">Center</Button>
+                                <Button variant="ghost" size="bare" onClick={(e) => { e.stopPropagation(); alignActive('fill'); }} className="flex-1 bg-white/5 hover:bg-white/10 text-[8px] font-black uppercase py-1 rounded">Fill</Button>
                             </div>
                         )}
                     </div>
@@ -369,8 +370,9 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
                                         {['nw', 'ne', 'sw', 'se'].map(h => (
                                             <div
                                                 key={h}
-                                                className={`absolute w-3 h-3 bg-white border border-indigo-500 rounded-full z-50 cursor-${h}-resize`}
+                                                className="absolute w-3 h-3 bg-white border border-indigo-500 rounded-full z-50"
                                                 style={{
+                                                    cursor: `${h}-resize`,
                                                     top: h.includes('n') ? -6 : 'auto',
                                                     bottom: h.includes('s') ? -6 : 'auto',
                                                     left: h.includes('w') ? -6 : 'auto',

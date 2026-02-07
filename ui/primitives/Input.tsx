@@ -62,7 +62,7 @@ export const Input: React.FC<InputProps> = ({
     color: disabled ? COLORS.text.disabled : COLORS.text.primary,
     backgroundColor: disabled ? COLORS.background.tertiary : COLORS.background.primary,
     transition: `border-color ${INTERACTION.duration.base} ${INTERACTION.easing.default}`,
-    outline: 'none',
+    // Note: outline removed to allow global :focus-visible rule to work (WCAG 2.1 2.4.7)
     boxSizing: 'border-box',
     ...sizeStyles[size],
     ...style,

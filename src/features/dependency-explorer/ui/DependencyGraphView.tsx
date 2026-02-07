@@ -3,6 +3,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { FileAnalysis } from '../types';
 
 interface DependencyGraphViewProps {
@@ -102,7 +103,7 @@ function renderTreeNodes(
         {files.length > 0 && (
           <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
             {files.map((file: FileAnalysis) => (
-              <button
+              <Button variant="ghost" size="bare"
                 key={file.filePath}
                 onClick={() => onSelectFile(file)}
                 className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/80 dark:hover:bg-white/5 transition-colors ${
@@ -125,7 +126,7 @@ function renderTreeNodes(
                     </span>
                   )}
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         )}

@@ -6,25 +6,25 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { IIIFItem, IIIFCollection, IIIFManifest, IIIFCanvas } from '@/src/shared/types';
+import type { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
 import {
+  buildTreeIndex,
+  findNodeById,
+  findParent,
+  getAllCanvases,
   getAllCollections,
   getAllManifests,
-  getAllCanvases,
-  findNodeById,
-  getPathToNode,
-  buildTreeIndex,
-  getTreeDepthStats,
   getChildren,
-  findParent,
+  getPathToNode,
+  getTreeDepthStats,
   type TreeIndex,
   type TreeStats,
 } from '@/utils/organisms/iiif/traversal';
 import {
-  getRelationshipType,
   canHaveMultipleParents,
-  isValidChildType,
+  getRelationshipType,
   getValidChildTypes,
+  isValidChildType,
 } from '@/utils/organisms/iiif/hierarchy';
 import type { IIIFRelationshipType } from '@/utils/organisms/iiif/hierarchy';
 

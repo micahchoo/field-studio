@@ -1,5 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { SourceManifests } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { SUPPORTED_LANGUAGES } from '@/src/shared/constants';
@@ -69,12 +70,12 @@ export const MetadataTemplateExport: React.FC<MetadataTemplateExportProps> = ({
               CSV template for offline metadata editing
             </p>
           </div>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"
           >
             <Icon name="close" />
-          </button>
+          </Button>
         </div>
 
         {/* Options */}
@@ -247,19 +248,19 @@ export const MetadataTemplateExport: React.FC<MetadataTemplateExportProps> = ({
             Fill in the template and re-import to apply metadata
           </div>
           <div className="flex gap-2">
-            <button
+            <Button variant="ghost" size="bare"
               onClick={onClose}
               className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button variant="ghost" size="bare"
               onClick={handleDownload}
               className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 flex items-center gap-2"
             >
               <Icon name="download" />
               Download Template
-            </button>
+            </Button>
           </div>
         </div>
       </div>

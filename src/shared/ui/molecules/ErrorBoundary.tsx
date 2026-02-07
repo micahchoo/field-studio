@@ -1,6 +1,7 @@
 
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 
 interface Props {
@@ -85,12 +86,12 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
 
               <div className="flex gap-3 justify-end">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={() => window.location.reload()}
                   className="px-4 py-2 bg-slate-800 text-white rounded font-bold text-sm hover:bg-slate-700 flex items-center gap-2"
                 >
                   <Icon name="refresh" /> Reload Application
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -142,19 +143,19 @@ export const ViewErrorFallback: React.FC<ViewErrorFallbackProps> = ({ viewName, 
 
           <div className="flex gap-2 justify-end pt-2">
             {onSwitchView && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={onSwitchView}
                 className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded text-sm font-medium flex items-center gap-1"
               >
                 <Icon name="swap_horiz" className="text-sm" /> Switch View
-              </button>
+              </Button>
             )}
-            <button
+            <Button variant="ghost" size="bare"
               onClick={onRetry}
               className="px-3 py-1.5 bg-amber-500 text-white rounded text-sm font-bold hover:bg-amber-600 flex items-center gap-1"
             >
               <Icon name="refresh" className="text-sm" /> Try Again
-            </button>
+            </Button>
           </div>
         </div>
       </div>

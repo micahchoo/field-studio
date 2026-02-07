@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 
 interface ExpandButtonProps {
   isExpanded: boolean;
@@ -25,7 +26,7 @@ export const ExpandButton: React.FC<ExpandButtonProps> = ({
   }
 
   return (
-    <button
+    <Button variant="ghost" size="bare"
       type="button"
       onClick={onClick}
       className={`w-5 h-5 inline-flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${className}`}
@@ -39,7 +40,7 @@ export const ExpandButton: React.FC<ExpandButtonProps> = ({
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
-    </button>
+    </Button>
   );
 };
 

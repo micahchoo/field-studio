@@ -258,11 +258,11 @@ export function findAllOfTypeSimple<T extends IIIFItem = IIIFItem>(
     if (node.type === type) {
       results.push(node as T);
     }
-    const items = (node as Record<string, unknown>).items as
+    const items = (node as unknown as Record<string, unknown>).items as
       | IIIFItem[]
       | undefined;
     if (items && Array.isArray(items)) {
-      items.forEach(traverse);
+      for (let i = 0; i < items.length; i++) traverse(items[i]);
     }
   };
 
@@ -491,7 +491,7 @@ export function findCollectionsContaining(
         results.push(col);
       }
     }
-    const items = (node as Record<string, IIIFItem[]>).items || [];
+    const items = (node as unknown as Record<string, IIIFItem[]>).items || [];
     items.forEach(traverse);
   };
 
@@ -499,7 +499,7 @@ export function findCollectionsContaining(
   return results;
 }
 
-interface ManifestWithItems {
+interface ManifestWithGenericItems {
   id: string;
   type: 'Manifest';
   items?: IIIFItem[];
@@ -511,7 +511,7 @@ interface ManifestWithItems {
 export function findCanvasParent(
   root: IIIFItem,
   canvasId: string
-): ManifestWithItems | null {
+): ManifestWithGenericItems | null {
   const traverse = (node: IIIFItem): ManifestWithItems | null => {
     if (node.type === 'Manifest') {
       const manifest = node as ManifestWithItems;
@@ -520,7 +520,7 @@ export function findCanvasParent(
       }
     }
 
-    const items = (node as Record<string, IIIFItem[]>).items || [];
+    const items = (node as unknown as Record<string, IIIFItem[]>).items || [];
     for (const child of items) {
       const found = traverse(child);
       if (found) return found;
@@ -536,6 +536,19 @@ export function findCanvasParent(
 // Validation
 // ============================================================================
 
+// Module-level constants — avoids recreating on every call
+const VALID_CHILDREN: Record<string, string[]> = {
+  Collection: ['Collection', 'Manifest'],
+  Manifest: ['Canvas'],
+  Canvas: ['AnnotationPage'],
+  AnnotationPage: ['Annotation'],
+  Range: ['Range', 'Canvas'],
+};
+const VALID_CHILDREN_SET: Record<string, Set<string>> = {};
+for (const [parent, children] of Object.entries(VALID_CHILDREN)) {
+  VALID_CHILDREN_SET[parent] = new Set(children);
+}
+
 /**
  * Check if adding a child to a parent is valid according to IIIF spec
  */
@@ -543,28 +556,12 @@ export function isValidChildType(
   parentType: string,
   childType: string
 ): boolean {
-  const validChildren: Record<string, string[]> = {
-    Collection: ['Collection', 'Manifest'],
-    Manifest: ['Canvas'],
-    Canvas: ['AnnotationPage'],
-    AnnotationPage: ['Annotation'],
-    Range: ['Range', 'Canvas'],
-  };
-
-  return validChildren[parentType]?.includes(childType) || false;
+  return VALID_CHILDREN_SET[parentType]?.has(childType) ?? false;
 }
 
 /**
  * Get the valid child types for a parent type
  */
 export function getValidChildTypes(parentType: string): string[] {
-  const validChildren: Record<string, string[]> = {
-    Collection: ['Collection', 'Manifest'],
-    Manifest: ['Canvas'],
-    Canvas: ['AnnotationPage'],
-    AnnotationPage: ['Annotation'],
-    Range: ['Range'],
-  };
-
-  return validChildren[parentType] || [];
+  return VALID_CHILDREN[parentType] || [];
 }

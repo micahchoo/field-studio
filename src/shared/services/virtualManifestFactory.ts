@@ -143,8 +143,8 @@ class VirtualManifestFactory {
   getMimeType(url: string): string {
     // Try centralized utility first
     const mimeFromUtils = getMimeType(url);
-    if (mimeFromUtils) return mimeFromUtils;
-    
+    if (mimeFromUtils) return mimeFromUtils.format;
+
     // Fall back to local mapping for edge cases
     const ext = this.getExtension(url);
     return LOCAL_MIME_TYPES[ext] || 'application/octet-stream';

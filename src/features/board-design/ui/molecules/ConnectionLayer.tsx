@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { AnchorSide, BoardItem, Connection } from '../../model';
 import { ConnectionLine } from '../atoms/ConnectionLine';
 
@@ -26,11 +27,7 @@ export interface ConnectionLayerProps {
   /** Callback when connection is selected */
   onSelectConnection: (id: string) => void;
   /** Contextual styles */
-  cx: {
-    svgStroke: string;
-    svgFill: string;
-    accent: string;
-  };
+  cx: ContextualClassNames;
   /** Field mode flag */
   fieldMode: boolean;
 }

@@ -1,13 +1,18 @@
 /**
  * Annotation Tool Model
  *
- * Domain-specific logic for the polygon annotation tool.
- * Manages drawing state, point manipulation, and annotation creation.
+ * Domain-specific logic for annotation tools including:
+ * - Spatial annotations (polygon, rectangle, freehand) for images
+ * - Time-based annotations for audio/video content
  *
  * ATOMIC DESIGN COMPLIANCE:
  * - Pure business logic, no UI concerns
  * - Reactive hooks for drawing state
- * - SVG path utilities
+ * - SVG path utilities for spatial annotations
+ * - Media fragment utilities for time-based annotations
+ *
+ * @see https://www.w3.org/TR/media-frags/ - W3C Media Fragments URI 1.0
+ * @see https://iiif.io/api/annex/oai/#temporal-media - IIIF Temporal Annotation
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,7 +23,36 @@ import type { Point } from '@/src/shared/constants/viewport';
 // Types
 // ============================================================================
 
-export type DrawingMode = 'polygon' | 'rectangle' | 'freehand' | 'select';
+/** Spatial drawing modes for image annotations */
+export type SpatialDrawingMode = 'polygon' | 'rectangle' | 'freehand' | 'select';
+
+/** Time-based drawing mode for AV annotations */
+export type TimeDrawingMode = 'timeRange';
+
+/** Combined drawing modes */
+export type DrawingMode = SpatialDrawingMode | TimeDrawingMode;
+
+/** Time range for audio/video annotations */
+export interface TimeRange {
+  /** Start time in seconds */
+  start: number;
+  /** End time in seconds (optional for point-in-time annotations) */
+  end?: number;
+}
+
+/** State for time-based annotation tool */
+export interface TimeAnnotationState {
+  /** Current time range being defined */
+  timeRange: TimeRange | null;
+  /** Whether we're in the process of selecting a range */
+  isSelecting: boolean;
+  /** Whether start has been set */
+  hasStart: boolean;
+  /** Annotation text */
+  annotationText: string;
+  /** Annotation motivation */
+  motivation: 'commenting' | 'tagging' | 'describing';
+}
 
 export interface AnnotationState {
   mode: DrawingMode;
@@ -105,6 +139,128 @@ export const getBoundingBox = (points: Point[]) => {
     width: Math.max(...xs) - Math.min(...xs),
     height: Math.max(...ys) - Math.min(...ys),
   };
+};
+
+// ============================================================================
+// Time Fragment Utilities (W3C Media Fragments)
+// ============================================================================
+
+/**
+ * Create a media fragment selector for time-based annotations
+ * Uses W3C Media Fragments URI 1.0 specification
+ * @see https://www.w3.org/TR/media-frags/
+ */
+export const createTimeFragmentSelector = (
+  timeRange: TimeRange
+): { type: 'FragmentSelector'; conformsTo: string; value: string } => {
+  const value = timeRange.end !== undefined
+    ? `t=${timeRange.start.toFixed(2)},${timeRange.end.toFixed(2)}`
+    : `t=${timeRange.start.toFixed(2)}`;
+
+  return {
+    type: 'FragmentSelector',
+    conformsTo: 'http://www.w3.org/TR/media-frags/',
+    value,
+  };
+};
+
+/**
+ * Parse a media fragment selector to extract time range
+ * Handles formats: t=10, t=10,20, t=10.5,20.75
+ */
+export const parseTimeFragmentSelector = (value: string): TimeRange | null => {
+  // Match temporal fragment: t=start or t=start,end
+  const match = value.match(/t=(\d+(?:\.\d+)?)(,(\d+(?:\.\d+)?))?/);
+  if (!match) return null;
+
+  const start = parseFloat(match[1]);
+  const end = match[3] ? parseFloat(match[3]) : undefined;
+
+  return { start, end };
+};
+
+/**
+ * Format time for display (MM:SS.ms or HH:MM:SS.ms)
+ */
+export const formatTimeForDisplay = (seconds: number): string => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 100);
+
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Create a IIIF-compliant time-based annotation
+ */
+export const createTimeAnnotation = (
+  canvasId: string,
+  timeRange: TimeRange,
+  text: string,
+  motivation: 'commenting' | 'tagging' | 'describing' = 'commenting'
+): IIIFAnnotation => {
+  return {
+    id: `${canvasId}/annotation/time-${Date.now()}`,
+    type: 'Annotation',
+    motivation,
+    body: {
+      type: 'TextualBody',
+      value: text.trim(),
+      format: 'text/plain',
+    },
+    target: {
+      type: 'SpecificResource',
+      source: canvasId,
+      selector: createTimeFragmentSelector(timeRange),
+    },
+  };
+};
+
+/**
+ * Check if an annotation is time-based
+ */
+export const isTimeBasedAnnotation = (annotation: IIIFAnnotation): boolean => {
+  const target = annotation.target as { selector?: { type?: string; value?: string } };
+  if (!target?.selector) return false;
+
+  // Check for FragmentSelector with time fragment
+  if (target.selector.type === 'FragmentSelector') {
+    return target.selector.value?.startsWith('t=') || false;
+  }
+
+  // Also check if source URL contains media fragment
+  const source = (annotation.target as { source?: string })?.source;
+  if (typeof source === 'string' && source.includes('#t=')) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Extract time range from a time-based annotation
+ */
+export const getAnnotationTimeRange = (annotation: IIIFAnnotation): TimeRange | null => {
+  const target = annotation.target as { selector?: { type?: string; value?: string }; source?: string };
+
+  // Check FragmentSelector first
+  if (target?.selector?.type === 'FragmentSelector' && target.selector.value) {
+    return parseTimeFragmentSelector(target.selector.value);
+  }
+
+  // Check source URL for media fragment
+  if (typeof target?.source === 'string') {
+    const fragMatch = target.source.match(/#(.+)$/);
+    if (fragMatch) {
+      return parseTimeFragmentSelector(fragMatch[1]);
+    }
+  }
+
+  return null;
 };
 
 // ============================================================================
@@ -379,5 +535,142 @@ export const useAnnotation = (
     handleSave,
     getCanvasCoords,
     updateScale,
+  };
+};
+
+// ============================================================================
+// Time-Based Annotation Hook
+// ============================================================================
+
+export interface UseTimeAnnotationReturn extends TimeAnnotationState {
+  /** Whether the tool is active */
+  isActive: boolean;
+  /** Can save annotation (has range and text) */
+  canSave: boolean;
+  /** Existing time-based annotations */
+  existingTimeAnnotations: IIIFAnnotation[];
+  /** Set start time */
+  setStartTime: (time: number) => void;
+  /** Set end time */
+  setEndTime: (time: number) => void;
+  /** Set time range directly */
+  setTimeRange: (range: TimeRange | null) => void;
+  /** Set annotation text */
+  setAnnotationText: (text: string) => void;
+  /** Set motivation */
+  setMotivation: (mot: 'commenting' | 'tagging' | 'describing') => void;
+  /** Clear current selection */
+  handleClear: () => void;
+  /** Save current annotation */
+  handleSave: () => IIIFAnnotation | null;
+  /** Start selection mode */
+  startSelecting: () => void;
+  /** Cancel selection */
+  cancelSelecting: () => void;
+}
+
+/**
+ * Hook for managing time-based annotations on audio/video content
+ */
+export const useTimeAnnotation = (
+  canvasId: string,
+  duration: number,
+  existingAnnotations: IIIFAnnotation[],
+  onCreateAnnotation: (annotation: IIIFAnnotation) => void
+): UseTimeAnnotationReturn => {
+  const [isActive, setIsActive] = useState(false);
+  const [timeRange, setTimeRangeState] = useState<TimeRange | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [hasStart, setHasStart] = useState(false);
+  const [annotationText, setAnnotationText] = useState('');
+  const [motivation, setMotivation] = useState<'commenting' | 'tagging' | 'describing'>('commenting');
+
+  // Filter existing time-based annotations for this canvas
+  const existingTimeAnnotations = existingAnnotations.filter(isTimeBasedAnnotation);
+
+  const setTimeRange = useCallback((range: TimeRange | null) => {
+    setTimeRangeState(range);
+    if (range) {
+      setHasStart(true);
+    }
+  }, []);
+
+  const setStartTime = useCallback((time: number) => {
+    const clampedTime = Math.max(0, Math.min(time, duration));
+    setTimeRangeState(prev => ({
+      start: clampedTime,
+      end: prev?.end !== undefined && prev.end > clampedTime ? prev.end : undefined,
+    }));
+    setHasStart(true);
+    setIsSelecting(true);
+  }, [duration]);
+
+  const setEndTime = useCallback((time: number) => {
+    if (!hasStart) return;
+
+    const clampedTime = Math.max(0, Math.min(time, duration));
+    setTimeRangeState(prev => {
+      if (!prev) return null;
+      // Ensure end is after start
+      const start = Math.min(prev.start, clampedTime);
+      const end = Math.max(prev.start, clampedTime);
+      return { start, end };
+    });
+    setIsSelecting(false);
+  }, [hasStart, duration]);
+
+  const handleClear = useCallback(() => {
+    setTimeRangeState(null);
+    setIsSelecting(false);
+    setHasStart(false);
+    setAnnotationText('');
+  }, []);
+
+  const startSelecting = useCallback(() => {
+    setIsActive(true);
+    setIsSelecting(true);
+    handleClear();
+  }, [handleClear]);
+
+  const cancelSelecting = useCallback(() => {
+    setIsActive(false);
+    handleClear();
+  }, [handleClear]);
+
+  const handleSave = useCallback((): IIIFAnnotation | null => {
+    if (!timeRange || !annotationText.trim()) return null;
+
+    const annotation = createTimeAnnotation(
+      canvasId,
+      timeRange,
+      annotationText,
+      motivation
+    );
+
+    onCreateAnnotation(annotation);
+    handleClear();
+    return annotation;
+  }, [timeRange, annotationText, motivation, canvasId, onCreateAnnotation, handleClear]);
+
+  const canSave = timeRange !== null && annotationText.trim().length > 0;
+
+  return {
+    isActive,
+    timeRange,
+    isSelecting,
+    hasStart,
+    annotationText,
+    motivation,
+    canSave,
+    existingTimeAnnotations,
+    setStartTime,
+    setEndTime,
+    setTimeRange,
+    setAnnotationText,
+    setMotivation,
+    handleClear,
+    handleSave,
+    startSelecting,
+    cancelSelecting,
   };
 };

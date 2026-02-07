@@ -1,5 +1,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { AbstractionLevel, FileTree, IIIFItem, IngestResult, SourceManifest, SourceManifests } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { buildSourceManifests, findManifest, getAllCollections } from '@/src/entities/collection/model/stagingService';
@@ -13,6 +14,8 @@ import { SourcePane } from '../molecules/SourcePane';
 import { ArchivePane } from '../molecules/ArchivePane';
 import { SendToCollectionModal } from '../molecules/SendToCollectionModal';
 import { MetadataTemplateExport } from '../molecules/MetadataTemplateExport';
+// TODO: [FSD] Proper fix is to receive `t` via props from FieldModeTemplate
+// eslint-disable-next-line no-restricted-imports
 import { useTerminology } from '@/src/app/providers/useTerminology';
 
 interface StagingWorkbenchProps {
@@ -378,13 +381,13 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Metadata template export */}
-          <button
+          <Button variant="ghost" size="bare"
             onClick={() => setShowMetadataExport(true)}
             className="px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg flex items-center gap-2 transition-colors"
           >
             <Icon name="table_chart" className="text-slate-400" />
             Export Template
-          </button>
+          </Button>
 
           {/* Merge toggle */}
           {existingRoot && (
@@ -400,21 +403,21 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
           )}
 
           {/* Ingest button */}
-          <button
+          <Button variant="ghost" size="bare"
             onClick={handleIngest}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 flex items-center gap-2 shadow-lg transition-colors"
           >
             <Icon name="publish" />
             Import {t('Archive')}
-          </button>
+          </Button>
 
           {/* Close */}
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onCancel}
             className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
           >
             <Icon name="close" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -435,7 +438,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
                 Unorganized items will be imported but won't appear in your archive structure.
               </p>
             </div>
-            <button
+            <Button variant="ghost" size="bare"
               className="text-xs font-medium text-orange-700 hover:text-orange-900 underline"
               onClick={() => {
                 // Auto-organize unassigned manifests
@@ -449,7 +452,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
               }}
             >
               Auto-organize
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -474,13 +477,13 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
               if (shiftKey && selectedIds.length > 0) {
                 // Range selection
                 const lastSelected = selectedIds[selectedIds.length - 1];
-                selectRange(lastSelected, id, allManifestIds);
+                selectRange(lastSelected, id);
               } else {
-                toggleSelection(id, metaKey);
+                toggleSelection(id);
               }
             }}
             onClearSelection={clearSelection}
-            onReorder={reorderCanvases}
+            onReorder={undefined}
             onDragStart={(manifestId) => {
               // Adapter: SourcePane expects just manifestId, but we need to start drag
               const ids = selectedIds.includes(manifestId) ? selectedIds : [manifestId];

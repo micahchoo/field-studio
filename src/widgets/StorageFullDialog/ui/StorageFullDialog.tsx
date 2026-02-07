@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { storage } from '@/src/shared/services/storage';
 
@@ -59,7 +60,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   const handleClearDerivatives = async () => {
@@ -182,15 +183,15 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 
               {/* Actions */}
               <div className="space-y-3">
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={onExport}
                   className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Icon name="download" />
                   Export Archive to File
-                </button>
+                </Button>
 
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={handleClearDerivatives}
                   disabled={isClearingDerivatives}
                   className="w-full py-3 px-4 bg-amber-700 hover:bg-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
@@ -206,9 +207,9 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
                       Clear Thumbnails (Free Space)
                     </>
                   )}
-                </button>
+                </Button>
 
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={handleClearStorage}
                   disabled={isClearing}
                   className="w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
@@ -224,14 +225,14 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
                       Clear All Files (Keep Structure)
                     </>
                   )}
-                </button>
+                </Button>
 
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={onClose}
                   className="w-full py-3 px-4 text-slate-400 hover:text-white text-sm transition-colors"
                 >
                   I'll manage this later
-                </button>
+                </Button>
               </div>
 
               {/* Tip */}

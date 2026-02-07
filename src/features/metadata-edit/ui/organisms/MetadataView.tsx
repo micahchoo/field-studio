@@ -312,12 +312,12 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
           {filterIds && filterIds.length > 0 && onClearFilter && (
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${fieldMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'}`}>
               <span>{filterIds.length} selected</span>
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={onClearFilter}
                 className="hover:underline font-medium"
               >
                 Clear
-              </button>
+              </Button>
             </div>
           )}
 

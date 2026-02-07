@@ -10,7 +10,7 @@ import React from 'react';
 import { COLORS, INTERACTION, LAYOUT, SPACING, TOUCH_TARGETS } from '../../src/shared/config/design-tokens';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-export type ButtonSize = 'sm' | 'base' | 'lg' | 'xl';
+export type ButtonSize = 'bare' | 'sm' | 'base' | 'lg' | 'xl';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual variant */
@@ -58,6 +58,9 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
 };
 
 const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
+  bare: {
+    // No sizing - allows Tailwind classes to control appearance
+  },
   sm: {
     height: TOUCH_TARGETS.button.sm.height,
     padding: TOUCH_TARGETS.button.sm.padding,
@@ -105,7 +108,7 @@ export const Button: React.FC<ButtonProps> = ({
     fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: INTERACTION.duration.base,
-    outline: 'none',
+    // Note: outline removed to allow global :focus-visible rule to work (WCAG 2.1 2.4.7)
     width: fullWidth ? '100%' : 'auto',
     opacity: disabled ? 0.6 : 1,
     ...variantStyles[variant],

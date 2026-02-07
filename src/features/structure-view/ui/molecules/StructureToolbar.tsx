@@ -12,6 +12,7 @@
  */
 
 import React, { useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 
 interface StructureToolbarProps {
   totalNodes: number;
@@ -51,13 +52,13 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
           {totalNodes} {totalNodes === 1 ? 'item' : 'items'}
         </span>
         {selectedCount > 0 && (
-          <button
+          <Button variant="ghost" size="bare"
             type="button"
             onClick={onClearSelection}
             className="text-sm text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium transition-colors"
           >
             Clear selection
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -75,7 +76,7 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
     >
       {/* Left: View options in overflow menu */}
       <div className="relative">
-        <button
+        <Button variant="ghost" size="bare"
           type="button"
           onClick={() => setShowMenu(!showMenu)}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
@@ -86,7 +87,7 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
           <span>View</span>
-        </button>
+        </Button>
 
         {/* Dropdown menu */}
         {showMenu && (
@@ -96,7 +97,7 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
               onClick={() => setShowMenu(false)}
             />
             <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-stone-800 rounded-lg shadow-lg border border-stone-200 dark:border-stone-700 py-1 z-20">
-              <button
+              <Button variant="ghost" size="bare"
                 type="button"
                 onClick={() => {
                   onExpandAll();
@@ -105,8 +106,8 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
                 className="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
               >
                 Expand all
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost" size="bare"
                 type="button"
                 onClick={() => {
                   onCollapseAll();
@@ -115,7 +116,7 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
                 className="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
               >
                 Collapse all
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -131,13 +132,13 @@ export const StructureToolbar: React.FC<StructureToolbarProps> = ({
             <span className="px-2.5 py-1 text-sm font-medium text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 rounded-full">
               {selectedCount} selected
             </span>
-            <button
+            <Button variant="ghost" size="bare"
               type="button"
               onClick={onClearSelection}
               className="text-sm text-stone-500 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
             >
               Clear
-            </button>
+            </Button>
           </div>
         )}
       </div>

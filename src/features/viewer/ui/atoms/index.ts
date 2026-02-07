@@ -15,8 +15,9 @@
 // Viewer Controls Atoms - Navigation and zoom controls
 // ============================================================================
 
-export { ZoomControl } from './ZoomControl';
-export type { ZoomControlProps } from './ZoomControl';
+// Re-export from shared (moved for cross-feature use)
+export { ZoomControl } from '@/src/shared/ui/atoms/ZoomControl';
+export type { ZoomControlProps } from '@/src/shared/ui/atoms/ZoomControl';
 
 export { PageCounter } from './PageCounter';
 export type { PageCounterProps } from './PageCounter';

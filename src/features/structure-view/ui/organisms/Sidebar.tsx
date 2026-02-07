@@ -1,5 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { AbstractionLevel, AppMode, getIIIFValue, IIIFItem, ViewType } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { CONSTANTS, RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
@@ -43,7 +44,7 @@ const NavItem: React.FC<{
   disabled?: boolean; 
   title?: string;
 }> = ({ icon, label, active, onClick, fieldMode, disabled, title }) => (
-  <button
+  <Button variant="ghost" size="bare"
     onClick={onClick}
     disabled={disabled}
     title={title}
@@ -72,7 +73,7 @@ const NavItem: React.FC<{
       `} 
     />
     <span className="text-sm">{label}</span>
-  </button>
+  </Button>
 );
 
 // Types that should show in sidebar - stop at Canvas level, don't show AnnotationPages or Content Resources
@@ -90,19 +91,19 @@ const TreeItem: React.FC<{
   const config = RESOURCE_TYPE_CONFIG[item.type] || RESOURCE_TYPE_CONFIG['Content'];
   
   // Get children but filter out types we don't want to show
-  const rawChildren = (item as any).items || (item as any).annotations || [];
-  const children = rawChildren.filter((child: any) => !STOP_TRAVERSAL_TYPES.has(child.type));
+  const rawChildren = item.items || item.annotations || [];
+  const children = rawChildren.filter((child: IIIFItem) => !STOP_TRAVERSAL_TYPES.has(child.type));
   const hasChildren = children.length > 0;
   
   // Stop rendering if this is a content-level type
   if (STOP_TRAVERSAL_TYPES.has(item.type)) return null;
   
   const label = getIIIFValue(item.label) || 'Untitled';
-  const displayLabel = viewType === 'files' ? ((item as any)._filename || item.id.split('/').pop()) : label;
+  const displayLabel = viewType === 'files' ? (item._filename || item.id.split('/').pop()) : label;
 
   // Filter logic - check if this item or any children match
   const matchesText = !filterText || displayLabel.toLowerCase().includes(filterText.toLowerCase());
-  const childMatches = hasChildren && children.some((child: any) => {
+  const childMatches = hasChildren && children.some((child) => {
     const childLabel = getIIIFValue(child.label) || child.id || '';
     return childLabel.toLowerCase().includes(filterText.toLowerCase());
   });
@@ -189,7 +190,7 @@ const TreeItem: React.FC<{
         }}
         onClick={() => onSelect(item.id)}
       >
-        <button 
+        <Button variant="ghost" size="bare" 
           aria-label={expanded ? `Collapse ${displayLabel}` : `Expand ${displayLabel}`}
           aria-expanded={expanded}
           tabIndex={-1}
@@ -200,7 +201,7 @@ const TreeItem: React.FC<{
             name={expanded ? "expand_more" : "chevron_right"} 
             className={`transition-transform duration-200 text-base ${expanded ? 'rotate-0' : '-rotate-90'} ${fieldMode ? "text-slate-400" : "text-slate-500"}`} 
           />
-        </button>
+        </Button>
         
         {/* Visual priority indicator */}
         {isPriority && (
@@ -249,7 +250,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Check if we have data
-  const hasData = root && ((root as any).items?.length > 0 || (root as any).type);
+  const hasData = root && (root.items?.length || root.type);
 
   const handleImportClick = () => {
     console.log('[Sidebar] Import button clicked');
@@ -311,13 +312,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               {CONSTANTS.APP_NAME}
             </div>
             <div className={`text-[9px] transition-colors ${settings.fieldMode ? 'text-yellow-400/60' : 'text-slate-500'}`}>
-              {root ? `${(root as any).items?.length || 0} items` : 'No archive'}
+              {root ? `${root.items?.length || 0} items` : 'No archive'}
             </div>
           </div>
           {isMobile && (
-              <button onClick={onClose} aria-label="Close sidebar" className={`p-1.5 transition-colors ${settings.fieldMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-500 hover:text-white'}`}>
+              <Button variant="ghost" size="bare" onClick={onClose} aria-label="Close sidebar" className={`p-1.5 transition-colors ${settings.fieldMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-500 hover:text-white'}`}>
                 <Icon name="close" className="text-lg"/>
-              </button>
+              </Button>
           )}
         </div>
         
@@ -361,7 +362,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               />
               
               <div className="space-y-2">
-                <button
+                <Button variant="ghost" size="bare"
                   type="button"
                   onClick={handleImportClick}
                   className={`
@@ -375,9 +376,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                 >
                   <Icon name="folder_open" className="text-base" />
                   Import Folder
-                </button>
+                </Button>
                 
-                <button
+                <Button variant="ghost" size="bare"
                   type="button"
                   onClick={onOpenExternalImport}
                   className={`
@@ -391,7 +392,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                 >
                   <Icon name="cloud_download" className="text-base" />
                   Import from URL
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -404,7 +405,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                   Archive
                 </span>
                 <span className="text-[10px] text-slate-600">
-                  {(root as any).items?.length || 0} items
+                  {root?.items?.length || 0} items
                 </span>
               </div>
               <div className={`
@@ -436,12 +437,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                   className="w-full text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg pl-9 pr-8 py-2 outline-none focus:border-slate-500 transition-all text-slate-200 placeholder:text-slate-500"
                 />
                 {filterText && (
-                  <button
+                  <Button variant="ghost" size="bare"
                     onClick={() => setFilterText('')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300"
                   >
                     <Icon name="close" className="text-xs" />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -453,7 +454,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
           {/* Export Button - Only show when data exists */}
           {hasData && (
             <div className={`p-3 border-b ${settings.fieldMode ? 'border-yellow-400/20' : 'border-slate-800'}`}>
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={onExportTrigger}
                 className={`
                   w-full py-2.5 rounded-lg text-sm font-bold
@@ -467,13 +468,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               >
                 <Icon name="download" className="text-base" />
                 Export Archive
-              </button>
+              </Button>
             </div>
           )}
           
           {/* Quick Actions Row */}
           <div className="flex items-center p-2 gap-1">
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handleFieldModeToggle}
               className={`
                 flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
@@ -487,9 +488,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             >
               <Icon name={settings.fieldMode ? "wb_sunny" : "nights_stay"} className="text-sm" />
               <span>{settings.fieldMode ? 'FIELD ON' : 'Field'}</span>
-            </button>
+            </Button>
             
-            <button
+            <Button variant="ghost" size="bare"
               onClick={() => onModeChange('search')}
               className={`
                 flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
@@ -502,9 +503,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             >
               <Icon name="search" className="text-sm" />
               <span>Search</span>
-            </button>
+            </Button>
             
-            <button
+            <Button variant="ghost" size="bare"
               onClick={() => setShowSettings(!showSettings)}
               className={`
                 flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
@@ -517,36 +518,36 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             >
               <Icon name="settings" className="text-sm" />
               <span>Settings</span>
-            </button>
+            </Button>
           </div>
           
           {/* Collapsible Settings Panel */}
           {showSettings && (
             <div className="px-3 pb-3 space-y-1 border-t border-slate-800 pt-2">
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={onOpenSettings}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
               >
                 <Icon name="tune" className="text-base" />
                 <span>App Settings</span>
-              </button>
+              </Button>
               {onAbstractionLevelChange && (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={() => onAbstractionLevelChange(settings.abstractionLevel === 'simple' ? 'standard' : 'simple')}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
                 >
                   <Icon name="layers" className="text-base" />
                   <span>Mode: {settings.abstractionLevel === 'simple' ? 'Simple' : settings.abstractionLevel === 'advanced' ? 'Advanced' : 'Standard'}</span>
-                </button>
+                </Button>
               )}
               {onToggleQuickHelp && (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={onToggleQuickHelp}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
                 >
                   <Icon name="help_outline" className="text-base" />
                   <span>Keyboard Shortcuts</span>
-                </button>
+                </Button>
               )}
             </div>
           )}

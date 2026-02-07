@@ -20,6 +20,12 @@ import { Icon } from '../atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import { UI_TIMING } from '../../config/tokens';
 
+const defaultCx: ContextualClassNames = {
+  surface: 'bg-white dark:bg-slate-900',
+  text: 'text-slate-900 dark:text-slate-100',
+  accent: 'text-blue-600 dark:text-blue-400',
+};
+
 export interface LoadingStateProps {
   /** Optional status message */
   message?: string;
@@ -110,7 +116,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   fullHeight = false,
   skeleton = false,
   className = '',
-  cx = {},
+  cx = defaultCx,
   fieldMode: _fieldMode = false,
   progress,
   spinner = false,

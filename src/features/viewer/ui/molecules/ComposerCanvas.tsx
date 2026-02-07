@@ -197,8 +197,9 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
                     {['nw', 'ne', 'sw', 'se'].map((h) => (
                       <div
                         key={h}
-                        className={`absolute w-3 h-3 bg-white border border-indigo-500 rounded-full z-50 cursor-${h}-resize`}
+                        className="absolute w-3 h-3 bg-white border border-indigo-500 rounded-full z-50"
                         style={{
+                          cursor: `${h}-resize`,
                           top: h.includes('n') ? -6 : 'auto',
                           bottom: h.includes('s') ? -6 : 'auto',
                           left: h.includes('w') ? -6 : 'auto',

@@ -1,20 +1,10 @@
 /**
  * ViewerToolbar Molecule
  *
- * Composes: IconButton + ZoomControl + Icon atoms
- *
- * Toolbar for IIIF viewer with zoom controls, annotation badges,
- * search, workbench, composer, and fullscreen toggles.
- *
- * ATOMIC DESIGN COMPLIANCE:
- * - Receives cx and fieldMode via props (no hook calls)
- * - Composes molecules: IconButton, ZoomControl
- * - Composes atoms: Icon
- * - Local UI state only
- * - No domain logic - all actions passed as callbacks
- *
- * IDEAL OUTCOME: Consistent viewer toolbar across all viewer modes
- * FAILURE PREVENTED: Missing controls, inconsistent button states
+ * Simplified toolbar for IIIF viewer with clear groupings:
+ * - Left: Title
+ * - Center: View controls (zoom, rotation for images)
+ * - Right: Actions (annotate, metadata, fullscreen)
  *
  * @module features/viewer/ui/molecules/ViewerToolbar
  */
@@ -26,6 +16,27 @@ import { ZoomControl } from '@/src/features/viewer/ui/atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export type AnnotationDrawingMode = 'polygon' | 'rectangle' | 'freehand' | 'select';
+
+/** Toolbar button group with label */
+const ToolbarGroup: React.FC<{
+  label?: string;
+  children: React.ReactNode;
+  fieldMode?: boolean;
+}> = ({ label, children, fieldMode }) => (
+  <div className="flex items-center gap-0.5">
+    {label && (
+      <span className={`text-[9px] font-bold uppercase tracking-wider mr-1 ${fieldMode ? 'text-yellow-400/60' : 'text-slate-500'}`}>
+        {label}
+      </span>
+    )}
+    {children}
+  </div>
+);
+
+/** Vertical divider */
+const ToolbarDivider: React.FC<{ cx: ContextualClassNames }> = ({ cx }) => (
+  <div className={`w-px h-6 mx-1 ${cx.divider}`} />
+);
 
 export interface ViewerToolbarProps {
   /** Canvas label/title to display */
@@ -169,24 +180,20 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
   annotationDrawingMode,
 }) => {
   const iconName = mediaType === 'video' ? 'movie' : mediaType === 'audio' ? 'audiotrack' : 'image';
+  const isAV = mediaType === 'audio' || mediaType === 'video';
 
   return (
-    <div
-      className={`h-14 border-b flex items-center justify-between px-4 shrink-0 z-20 ${cx.headerBg} ${cx.border}`}
-    >
-      {/* Left: Title */}
-      <div className="flex items-center gap-3 min-w-0">
-        <Icon name={iconName} className={`${cx.accent} shrink-0`} />
-        <h2 className={`font-bold truncate ${cx.text}`}>
-          {label}
-        </h2>
+    <div className={`h-12 border-b flex items-center justify-between px-3 shrink-0 z-20 ${cx.headerBg} ${cx.border}`}>
+      {/* Left: Title & Type */}
+      <div className="flex items-center gap-2 min-w-0 flex-shrink">
+        <Icon name={iconName} className={`${cx.accent} shrink-0 text-sm`} />
+        <h2 className={`text-sm font-medium truncate ${cx.text}`}>{label}</h2>
       </div>
 
-      {/* Right: Toolbar Actions */}
-      <div className="flex items-center gap-1">
-        {mediaType === 'image' && (
-          <>
-            {/* Zoom Controls */}
+      {/* Center: View Controls (images only) */}
+      {mediaType === 'image' && (
+        <div className="flex items-center gap-1">
+          <ToolbarGroup fieldMode={fieldMode}>
             <ZoomControl
               zoom={zoomLevel / 100}
               onZoomChange={(z) => {
@@ -198,268 +205,143 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
               disabled={!viewerReady}
               cx={cx}
             />
+          </ToolbarGroup>
 
-            {/* Divider */}
-            <div className={`w-px h-6 ${cx.divider}`} />
+          <ToolbarDivider cx={cx} />
 
-            {/* Rotation Controls */}
+          <ToolbarGroup fieldMode={fieldMode}>
             {onRotateCCW && (
               <IconButton
                 icon="rotate_left"
-                ariaLabel="Rotate counter-clockwise"
+                ariaLabel="Rotate left"
                 onClick={onRotateCCW}
                 disabled={!viewerReady}
                 variant="ghost"
+                size="sm"
                 cx={cx}
                 fieldMode={fieldMode}
               />
             )}
-
             {rotation !== 0 && (
-              <span className={`text-xs font-mono ${fieldMode ? 'text-yellow-400' : 'text-blue-400'}`}>
+              <span className={`text-[10px] font-mono px-1 ${fieldMode ? 'text-yellow-400' : 'text-blue-400'}`}>
                 {rotation}°
               </span>
             )}
-
             {onRotateCW && (
               <IconButton
                 icon="rotate_right"
-                ariaLabel="Rotate clockwise"
+                ariaLabel="Rotate right"
                 onClick={onRotateCW}
                 disabled={!viewerReady}
                 variant="ghost"
+                size="sm"
                 cx={cx}
                 fieldMode={fieldMode}
               />
             )}
-
-            {/* Flip Button */}
             {onFlipHorizontal && (
               <IconButton
                 icon="flip"
-                ariaLabel="Flip horizontally"
+                ariaLabel="Flip"
                 onClick={onFlipHorizontal}
                 disabled={!viewerReady}
                 variant={isFlipped ? 'primary' : 'ghost'}
+                size="sm"
                 cx={cx}
                 fieldMode={fieldMode}
               />
             )}
+          </ToolbarGroup>
+        </div>
+      )}
 
-            {/* Navigator Toggle */}
-            {onToggleNavigator && (
-              <IconButton
-                icon="picture_in_picture"
-                ariaLabel="Toggle navigator"
-                onClick={onToggleNavigator}
-                disabled={!viewerReady}
-                variant={showNavigator ? 'primary' : 'ghost'}
-                cx={cx}
-                fieldMode={fieldMode}
-              />
-            )}
-
-            {/* Divider */}
-            <div className={`w-px h-6 ${cx.divider}`} />
-
-            {/* Annotation Badge */}
-            <div
-              className={`p-2 rounded-lg relative cursor-pointer transition-colors ${
-                annotationCount > 0
-                  ? fieldMode ? 'text-yellow-400' : 'text-green-400'
-                  : cx.textMuted
-              } ${fieldMode ? 'hover:bg-yellow-900/30' : 'hover:bg-slate-700'} hover:${cx.text}`}
-              title={`${annotationCount} Annotation${annotationCount !== 1 ? 's' : ''}`}
-            >
-              <Icon name="sticky_note_2" />
-              {annotationCount > 0 && (
-                <span className={`absolute -top-1 -right-1 w-4 h-4 text-white text-[9px] font-bold rounded-full flex items-center justify-center ${
-                  fieldMode ? 'bg-yellow-500' : 'bg-green-500'
-                }`}>
-                  {annotationCount}
-                </span>
-              )}
-            </div>
-          </>
+      {/* Right: Actions */}
+      <div className="flex items-center gap-0.5">
+        {/* Annotation Count Badge - always visible */}
+        {annotationCount > 0 && (
+          <div
+            className={`px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 mr-1 ${
+              fieldMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-500'
+            }`}
+            title={`${annotationCount} annotation${annotationCount !== 1 ? 's' : ''}`}
+          >
+            <Icon name="sticky_note_2" className="text-xs" />
+            {annotationCount}
+          </div>
         )}
 
-        {/* Search Button */}
-        {hasSearchService && (
-          <IconButton
-            icon="search"
-            ariaLabel="Search in Manifest"
-            onClick={onToggleSearch}
-            variant={showSearchPanel ? 'primary' : 'ghost'}
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-        )}
+        {/* Annotate Button - works for all media types */}
+        <button
+          onClick={onToggleAnnotationTool}
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+            showAnnotationTool
+              ? fieldMode ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'
+              : fieldMode ? 'bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/50' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+          }`}
+        >
+          <Icon name={isAV ? 'timer' : 'gesture'} className="text-base" />
+          <span>Annotate</span>
+        </button>
 
-        {/* Image Workbench Button */}
-        {mediaType === 'image' && (
-          <IconButton
-            icon="tune"
-            ariaLabel="Image Request Workbench"
-            onClick={onToggleWorkbench}
-            variant={showWorkbench ? 'primary' : 'ghost'}
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-        )}
-
-        {/* Add to Board Button (replaces Canvas Composer) */}
-        <IconButton
-          icon="dashboard"
-          ariaLabel="Add to Board"
-          onClick={onToggleComposer}
-          variant="ghost"
-          cx={cx}
-          fieldMode={fieldMode}
-        />
-
-        {/* Annotation Tool Button */}
-        {mediaType === 'image' && (
-          <IconButton
-            icon="gesture"
-            ariaLabel="Annotation Tool"
-            onClick={onToggleAnnotationTool}
-            variant={showAnnotationTool ? 'primary' : 'ghost'}
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-        )}
-
-        {/* Drawing Mode Buttons - shown when annotation tool is active */}
-        {showAnnotationTool && onAnnotationModeChange && (
+        {/* Drawing mode buttons - only for images when annotation active */}
+        {showAnnotationTool && mediaType === 'image' && onAnnotationModeChange && (
           <>
-            <div className={`w-px h-6 ${cx.divider}`} />
-
-            <IconButton
-              icon="pentagon"
-              ariaLabel="Polygon mode"
-              onClick={() => onAnnotationModeChange('polygon')}
-              variant={annotationDrawingMode === 'polygon' ? 'primary' : 'ghost'}
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-            <IconButton
-              icon="crop_square"
-              ariaLabel="Rectangle mode"
-              onClick={() => onAnnotationModeChange('rectangle')}
-              variant={annotationDrawingMode === 'rectangle' ? 'primary' : 'ghost'}
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-            <IconButton
-              icon="gesture"
-              ariaLabel="Freehand mode"
-              onClick={() => onAnnotationModeChange('freehand')}
-              variant={annotationDrawingMode === 'freehand' ? 'primary' : 'ghost'}
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-            <IconButton
-              icon="pan_tool"
-              ariaLabel="Pan mode (disable drawing)"
-              onClick={() => onAnnotationModeChange('select')}
-              variant={annotationDrawingMode === 'select' ? 'primary' : 'ghost'}
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-
-            <div className={`w-px h-6 ${cx.divider}`} />
-
-            {onAnnotationUndo && (
+            <ToolbarDivider cx={cx} />
+            <ToolbarGroup fieldMode={fieldMode}>
               <IconButton
-                icon="undo"
-                ariaLabel="Undo last point"
-                onClick={onAnnotationUndo}
-                variant="ghost"
+                icon="pentagon"
+                ariaLabel="Polygon"
+                onClick={() => onAnnotationModeChange('polygon')}
+                variant={annotationDrawingMode === 'polygon' ? 'primary' : 'ghost'}
+                size="sm"
                 cx={cx}
                 fieldMode={fieldMode}
               />
-            )}
-            {onAnnotationClear && (
               <IconButton
-                icon="delete_outline"
-                ariaLabel="Clear drawing"
-                onClick={onAnnotationClear}
-                variant="ghost"
+                icon="crop_square"
+                ariaLabel="Rectangle"
+                onClick={() => onAnnotationModeChange('rectangle')}
+                variant={annotationDrawingMode === 'rectangle' ? 'primary' : 'ghost'}
+                size="sm"
                 cx={cx}
                 fieldMode={fieldMode}
               />
-            )}
+              <IconButton
+                icon="draw"
+                ariaLabel="Freehand"
+                onClick={() => onAnnotationModeChange('freehand')}
+                variant={annotationDrawingMode === 'freehand' ? 'primary' : 'ghost'}
+                size="sm"
+                cx={cx}
+                fieldMode={fieldMode}
+              />
+            </ToolbarGroup>
+            <ToolbarGroup fieldMode={fieldMode}>
+              {onAnnotationUndo && (
+                <IconButton icon="undo" ariaLabel="Undo" onClick={onAnnotationUndo} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
+              )}
+              {onAnnotationClear && (
+                <IconButton icon="delete_outline" ariaLabel="Clear" onClick={onAnnotationClear} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
+              )}
+            </ToolbarGroup>
           </>
         )}
 
-        {/* Metadata Toggle */}
-        <IconButton
-          icon="info"
-          ariaLabel="Canvas Metadata"
-          onClick={onToggleMetadata}
-          variant="ghost"
-          cx={cx}
-          fieldMode={fieldMode}
-        />
+        <ToolbarDivider cx={cx} />
 
-        {/* Screenshot */}
-        {onTakeScreenshot && mediaType === 'image' && (
-          <IconButton
-            icon="photo_camera"
-            ariaLabel="Take Screenshot"
-            onClick={onTakeScreenshot}
-            disabled={!viewerReady}
-            variant="ghost"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
+        {/* Secondary actions - collapsed into fewer buttons */}
+        {hasSearchService && (
+          <IconButton icon="search" ariaLabel="Search" onClick={onToggleSearch} variant={showSearchPanel ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
         )}
 
-        {/* Download */}
-        {canDownload && (
-          <IconButton
-            icon="download"
-            ariaLabel="Download Image"
-            onClick={onDownload || (() => {})}
-            disabled={!onDownload}
-            variant="ghost"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
+        {mediaType === 'image' && onToggleNavigator && (
+          <IconButton icon="picture_in_picture" ariaLabel="Navigator" onClick={onToggleNavigator} variant={showNavigator ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
         )}
 
-        {/* Keyboard Shortcuts */}
-        {onToggleKeyboardHelp && (
-          <IconButton
-            icon="keyboard"
-            ariaLabel="Keyboard Shortcuts"
-            onClick={onToggleKeyboardHelp}
-            variant="ghost"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-        )}
+        <IconButton icon={isFullscreen ? 'fullscreen_exit' : 'fullscreen'} ariaLabel="Fullscreen" onClick={onToggleFullscreen} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
 
-        {/* Fullscreen */}
-        <IconButton
-          icon={isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
-          ariaLabel="Toggle Fullscreen"
-          onClick={onToggleFullscreen}
-          variant="ghost"
-          cx={cx}
-          fieldMode={fieldMode}
-        />
-
-        {/* Filmstrip Toggle */}
         {hasMultipleCanvases && (
-          <IconButton
-            icon="view_carousel"
-            ariaLabel="Toggle Canvas Navigator"
-            onClick={onToggleFilmstrip}
-            variant={showFilmstrip ? 'primary' : 'ghost'}
-            cx={cx}
-            fieldMode={fieldMode}
-          />
+          <IconButton icon="view_carousel" ariaLabel="Filmstrip" onClick={onToggleFilmstrip} variant={showFilmstrip ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
         )}
       </div>
     </div>

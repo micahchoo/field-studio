@@ -248,7 +248,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             <div className="absolute inset-0 bg-amber-500/10 z-10 pointer-events-none" />
           )}
           {/* Checkmark button - clicking this toggles multiselect */}
-          <button
+          <Button variant="ghost" size="bare"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -271,7 +271,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-          </button>
+          </Button>
 
           <StackedThumbnail
             urls={thumbUrls}
@@ -285,7 +285,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
           {/* Metadata badges with tooltips */}
           <div className="absolute bottom-2 right-2 flex gap-1">
             {dna.hasTime && (
-              <button
+              <Button variant="ghost" size="bare"
                 className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-sm hover:bg-amber-600 transition-colors"
                 onMouseEnter={(e) => setBadgeTooltip({text: 'Has date/time metadata', x: e.clientX, y: e.clientY})}
                 onMouseLeave={() => setBadgeTooltip(null)}
@@ -294,10 +294,10 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </button>
+              </Button>
             )}
             {dna.hasLocation && (
-              <button
+              <Button variant="ghost" size="bare"
                 className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm hover:bg-emerald-600 transition-colors"
                 onMouseEnter={(e) => setBadgeTooltip({text: 'Has GPS location data', x: e.clientX, y: e.clientY})}
                 onMouseLeave={() => setBadgeTooltip(null)}
@@ -306,10 +306,10 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 </svg>
-              </button>
+              </Button>
             )}
             {dna.hasDevice && (
-              <button
+              <Button variant="ghost" size="bare"
                 className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm hover:bg-sky-600 transition-colors"
                 onMouseEnter={(e) => setBadgeTooltip({text: 'Has camera/device info', x: e.clientX, y: e.clientY})}
                 onMouseLeave={() => setBadgeTooltip(null)}
@@ -318,7 +318,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 </svg>
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -346,7 +346,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
         <span className="text-xs text-stone-500 dark:text-stone-400">View:</span>
         <div className="flex items-center bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5">
           {(['compact', 'comfortable', 'spacious'] as const).map((d) => (
-            <button
+            <Button variant="ghost" size="bare"
               key={d}
               onClick={() => onDensityChange?.(d)}
               className={`
@@ -361,7 +361,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
               {d === 'compact' && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>}
               {d === 'comfortable' && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>}
               {d === 'spacious' && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" /></svg>}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

@@ -1185,7 +1185,7 @@ ${featuredInfo}
             width,
             height,
             // Pre-generated sizes for quick loading (§5.3)
-            sizes: generateStandardSizes(width, height, DEFAULT_DERIVATIVE_SIZES)
+            sizes: generateStandardSizes(width, height, Math.max(...DEFAULT_DERIVATIVE_SIZES))
         };
 
         // Add tiles for deep zoom if requested (§5.4)

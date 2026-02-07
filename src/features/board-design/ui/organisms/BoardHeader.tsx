@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { IconButton } from '@/src/shared/ui/molecules/IconButton';
@@ -137,7 +137,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         {/* Tool Selection */}
         <div className="flex items-center gap-1">
           {toolOptions.map((tool) => (
-            <button
+            <Button variant="ghost" size="bare"
               key={tool.value}
               onClick={() => onToolChange(tool.value as 'select' | 'connect' | 'note' | 'text')}
               className={`
@@ -158,7 +158,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               <span className={`text-xs opacity-60 hidden lg:inline ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`}>
                 {tool.shortcut}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -169,7 +169,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         {onBgModeChange && (
           <div className={`flex rounded-lg p-0.5 ${fieldMode ? 'bg-stone-800' : 'bg-stone-100'}`}>
             {bgModeOptions.map((opt) => (
-              <button
+              <Button variant="ghost" size="bare"
                 key={opt.value}
                 onClick={() => onBgModeChange(opt.value)}
                 className={`
@@ -186,7 +186,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
                 title={`${opt.label} background`}
               >
                 {opt.label}
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -197,7 +197,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
             <div className="flex items-center gap-0.5">
               {alignOptions.map((opt) => (
-                <button
+                <Button variant="ghost" size="bare"
                   key={opt.type}
                   onClick={() => onAlign(opt.type)}
                   className={`
@@ -210,7 +210,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
                   title={opt.label}
                 >
                   <Icon name={opt.icon} className="text-lg" />
-                </button>
+                </Button>
               ))}
             </div>
           </>

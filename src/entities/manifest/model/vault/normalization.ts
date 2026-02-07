@@ -7,14 +7,15 @@
 
 import { sanitizeAnnotationBody } from '@/utils/sanitization';
 import type {
+  EntityType,
   IIIFAnnotationPage,
   IIIFCanvas,
   IIIFCollection,
   IIIFItem,
   IIIFManifest,
-  IIIFRange
+  IIIFRange,
+  NormalizedState
 } from '@/src/shared/types';
-import type { EntityType, NormalizedState } from '@/src/shared/types';
 import { cloneAsRecord, hasType } from './cloning';
 import { extractExtensions } from './extensions';
 

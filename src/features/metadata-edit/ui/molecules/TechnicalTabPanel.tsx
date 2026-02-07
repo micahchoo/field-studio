@@ -18,9 +18,9 @@
  * @module features/metadata-edit/ui/molecules/TechnicalTabPanel
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { type IIIFItem } from '@/src/shared/types';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { PropertyInput } from '../atoms/PropertyInput';
 import { PropertyLabel } from '../atoms/PropertyLabel';
 import { RightsSelector } from '../atoms/RightsSelector';
@@ -140,8 +140,8 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
             cx={cx}
           />
           <ViewingDirectionSelector
-            value={resource.viewingDirection || 'left-to-right'}
-            onChange={(val) => onUpdateResource({ viewingDirection: val })}
+            value={resource.viewingDirection ?? 'left-to-right'}
+            onChange={(val) => onUpdateResource({ viewingDirection: val as typeof resource.viewingDirection })}
             cx={cx}
             fieldMode={fieldMode}
             className={inputClass}
@@ -190,7 +190,7 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
 
       {/* === ADVANCED PROPERTIES TOGGLE === */}
       <div className={`pt-4 border-t ${fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
-        <button
+        <Button variant="ghost" size="bare"
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={`flex items-center gap-2 text-sm font-medium w-full ${
             fieldMode
@@ -202,7 +202,7 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
         >
           <Icon name={showAdvanced ? 'expand_less' : 'expand_more'} className="text-lg" />
           {showAdvanced ? 'Hide Advanced Properties' : 'Show Advanced Properties'}
-        </button>
+        </Button>
       </div>
 
       {/* === ADVANCED PROPERTIES === */}

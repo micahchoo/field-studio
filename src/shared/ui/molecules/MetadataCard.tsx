@@ -356,7 +356,7 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
               `}
             >
               {/* Group header */}
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => toggleGroup(group)}
                 className={`
                   w-full flex items-center justify-between px-4 py-3
@@ -381,7 +381,7 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
                   name={isExpanded ? 'expand_less' : 'expand_more'}
                   className={`text-sm ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}
                 />
-              </button>
+              </Button>
 
               {/* Group content */}
               {isExpanded && (

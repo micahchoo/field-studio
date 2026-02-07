@@ -280,6 +280,12 @@ export function sanitizeForInput(value: string, options?: ValidationOptions): st
   return sanitizeInput(value, options);
 }
 
+// Non-global patterns for .test() — avoids lastIndex state issues
+const _SCRIPT_TEST = /<script[^>]*>[\s\S]*?<\/script>|<script[^>]*\/>/i;
+const _HTML_TAG_TEST = /<[^>]*>/i;
+const _EVENT_HANDLER_TEST = /\s*on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/i;
+const _CONTROL_CHAR_TEST = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/;
+
 /**
  * Checks if a string contains potentially dangerous content
  *
@@ -293,16 +299,11 @@ export function checkForDangerousContent(value: string): {
   hasControlChars: boolean;
   isSafe: boolean;
 } {
-  const hasScript = SCRIPT_PATTERN.test(value);
-  const hasHtml = HTML_TAG_PATTERN.test(value);
-  const hasEventHandlers = EVENT_HANDLER_PATTERN.test(value);
-  const hasControlChars = CONTROL_CHAR_PATTERN.test(value);
-
-  // Reset regex lastIndex
-  SCRIPT_PATTERN.lastIndex = 0;
-  HTML_TAG_PATTERN.lastIndex = 0;
-  EVENT_HANDLER_PATTERN.lastIndex = 0;
-  CONTROL_CHAR_PATTERN.lastIndex = 0;
+  // Use non-global patterns — no lastIndex reset needed
+  const hasScript = _SCRIPT_TEST.test(value);
+  const hasHtml = _HTML_TAG_TEST.test(value);
+  const hasEventHandlers = _EVENT_HANDLER_TEST.test(value);
+  const hasControlChars = _CONTROL_CHAR_TEST.test(value);
 
   return {
     hasHtml,

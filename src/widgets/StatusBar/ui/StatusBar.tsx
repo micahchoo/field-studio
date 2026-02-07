@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
@@ -76,13 +77,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             <Icon name="check_box" className="text-[14px] text-iiif-blue" />
             <span className="text-iiif-blue font-medium">{effectiveSelectionCount} selected</span>
             {onClearSelection && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={onClearSelection}
                 className="ml-1 hover:text-white transition-colors"
                 title="Clear selection"
               >
                 <Icon name="close" className="text-[12px]" />
-              </button>
+              </Button>
             )}
           </div>
         )}

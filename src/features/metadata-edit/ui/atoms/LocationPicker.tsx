@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { Icon, Button } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface LocationPickerProps {

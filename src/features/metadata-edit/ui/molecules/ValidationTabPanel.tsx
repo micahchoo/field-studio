@@ -13,7 +13,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Icon } from '@/src/shared/ui/atoms';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { EmptyState } from '@/src/shared/ui/molecules';
 import { ValidationFixAction } from '../atoms';
 import type { ValidationIssue } from '../../model/useInspectorValidation';
@@ -98,7 +98,7 @@ export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
           <span className={`text-sm ${fieldMode ? 'text-slate-300' : 'text-slate-600'}`}>
             {autoFixableCount} issue{autoFixableCount !== 1 ? 's' : ''} can be auto-fixed
           </span>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onFixAll}
             className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-1.5 ${
               fieldMode
@@ -108,7 +108,7 @@ export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
           >
             <Icon name="auto_fix" className="text-sm" />
             Fix All
-          </button>
+          </Button>
         </div>
       )}
 

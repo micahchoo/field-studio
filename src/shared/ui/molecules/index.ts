@@ -64,7 +64,7 @@ export type { MuseumLabelProps, MuseumLabelType } from './MuseumLabel';
 
 // Context Menu
 export { ContextMenu } from './ContextMenu';
-export type { ContextMenuProps, ContextMenuItem as ContextMenuItemType, ContextMenuSection as ContextMenuSectionType } from './ContextMenu';
+export type { ContextMenuProps, ContextMenuItem as ContextMenuItemType, ContextMenuSectionType } from './ContextMenu';
 
 // Context Menu Sub-components
 export { ContextMenuItem, getContextMenuItemClasses, getContextMenuIconClasses } from './ContextMenuItem';

@@ -21,6 +21,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import {
@@ -175,13 +176,13 @@ const FileListItem: React.FC<{
         </div>
       )}
       {file.status === 'error' && onRetry && (
-        <button
+        <Button variant="ghost" size="bare"
           onClick={onRetry}
           className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
           title="Retry"
         >
           <Icon name="refresh" className="text-sm text-slate-500" />
-        </button>
+        </Button>
       )}
     </div>
   </div>
@@ -248,31 +249,31 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
           <StageIndicator stage={progress.stage} />
           <div className="flex items-center gap-2">
             {!progress.isPaused && progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => controls.pause()}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                 title="Pause"
               >
                 <Icon name="pause" className="text-sm text-slate-500" />
-              </button>
+              </Button>
             )}
             {progress.isPaused && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => controls.resume()}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                 title="Resume"
               >
                 <Icon name="play_arrow" className="text-sm text-green-500" />
-              </button>
+              </Button>
             )}
             {progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleCancel}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                 title="Cancel"
               >
                 <Icon name="cancel" className="text-sm text-red-500" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -338,31 +339,31 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
           <StageIndicator stage={progress.stage} />
           <div className="flex items-center gap-1">
             {!progress.isPaused && progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => controls.pause()}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 title="Pause"
               >
                 <Icon name="pause" className="text-slate-500" />
-              </button>
+              </Button>
             )}
             {progress.isPaused && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={() => controls.resume()}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 title="Resume"
               >
                 <Icon name="play_arrow" className="text-green-500" />
-              </button>
+              </Button>
             )}
             {progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleCancel}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 title="Cancel"
               >
                 <Icon name="cancel" className="text-red-500" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -434,7 +435,7 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
 
       {/* Activity Log */}
       <div className="border-b border-slate-200 dark:border-slate-700">
-        <button
+        <Button variant="ghost" size="bare"
           onClick={() => setShowLog(!showLog)}
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
         >
@@ -447,7 +448,7 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
             name={showLog ? 'expand_less' : 'expand_more'}
             className="text-slate-400 transition-transform"
           />
-        </button>
+        </Button>
 
         {showLog && (
           <div className="max-h-48 overflow-y-auto">
@@ -464,7 +465,7 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
 
       {/* File List */}
       <div>
-        <button
+        <Button variant="ghost" size="bare"
           onClick={() => setShowFiles(!showFiles)}
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
         >
@@ -498,7 +499,7 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
             name={showFiles ? 'expand_less' : 'expand_more'}
             className="text-slate-400 transition-transform"
           />
-        </button>
+        </Button>
 
         {showFiles && (
           <div className="max-h-64 overflow-y-auto">

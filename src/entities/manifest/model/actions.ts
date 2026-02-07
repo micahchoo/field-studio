@@ -45,11 +45,13 @@ import {
   isValidChildType
 } from '@/utils/iiifHierarchy';
 import {
-  validateBehaviors as centralizedValidateBehaviors,
-  findBehaviorConflicts,
   isValidNavDate,
   isValidViewingDirection
 } from '@/utils';
+import {
+  validateBehaviors as centralizedValidateBehaviors,
+  findBehaviorConflicts,
+} from '@/utils/iiifBehaviors';
 
 // ============================================================================
 // Action Types
@@ -404,9 +406,52 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
           return { success: false, state, error: 'Annotation must have an id' };
         }
 
+        // Annotations must be inside an AnnotationPage
+        // Check if there's an existing non-painting annotation page for this canvas
+        const canvasChildIds = state.references[action.canvasId] || [];
+        let annotationPageId: string | null = null;
+
+        // Look for existing non-painting annotation page
+        for (const childId of canvasChildIds) {
+          if (state.typeIndex[childId] === 'AnnotationPage') {
+            // Check if this page contains non-painting annotations
+            const pageAnnoIds = state.references[childId] || [];
+            // Consider it a non-painting page if:
+            // 1. It's empty (new page) or
+            // 2. First annotation is not painting
+            if (pageAnnoIds.length === 0) {
+              // Skip empty painting pages (these are for images/videos)
+              continue;
+            }
+            const firstAnno = state.entities.Annotation[pageAnnoIds[0]];
+            if (firstAnno && (firstAnno as unknown as Record<string, unknown>).motivation !== 'painting') {
+              annotationPageId = childId;
+              break;
+            }
+          }
+        }
+
+        let newState = state;
+
+        // If no non-painting annotation page exists, create one
+        if (!annotationPageId) {
+          annotationPageId = `${action.canvasId}/annotations/supplementing`;
+          const annotationPage = {
+            id: annotationPageId,
+            type: 'AnnotationPage' as const,
+            items: []
+          };
+
+          // Add the annotation page to the state
+          newState = addEntity(newState, annotationPage as IIIFItem, action.canvasId);
+        }
+
+        // Add the annotation to the annotation page
+        newState = addEntity(newState, action.annotation as IIIFItem, annotationPageId);
+
         return {
           success: true,
-          state: addEntity(state, action.annotation as IIIFItem, action.canvasId),
+          state: newState,
           changes: [{ property: 'annotations', oldValue: null, newValue: action.annotation.id }]
         };
       }

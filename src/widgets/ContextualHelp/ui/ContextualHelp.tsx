@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { guidance } from '@/src/shared/services/guidanceService';
 import { WELCOME_MESSAGES } from '@/src/shared/constants/helpContent';
@@ -69,13 +70,13 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
               </ul>
             )}
           </div>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={dismiss}
             className="text-slate-400 hover:text-slate-600 p-1 shrink-0"
             title="Dismiss"
           >
             <Icon name="close" className="text-sm" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -94,7 +95,7 @@ export const ViewHelp: React.FC<{ mode: string }> = ({ mode }) => {
 
   return (
     <div className="relative">
-      <button
+      <Button variant="ghost" size="bare"
         onClick={() => setExpanded(!expanded)}
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
@@ -106,7 +107,7 @@ export const ViewHelp: React.FC<{ mode: string }> = ({ mode }) => {
       >
         <Icon name="help_outline" className="text-sm" />
         {expanded && <span>Help</span>}
-      </button>
+      </Button>
 
       {expanded && (
         <div

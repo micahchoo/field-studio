@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { authService, AuthService, AuthState, ProbeResponse } from '@/src/shared/services/authService';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 
@@ -267,15 +268,15 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
 
         {/* Actions */}
         <div className="p-4 border-t bg-slate-50 flex gap-3 justify-end">
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onClose}
             className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium text-sm"
           >
             Cancel
-          </button>
+          </Button>
 
           {state.status === 'unauthenticated' && accessService && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={handleLogin}
               disabled={isLoggingIn}
               className="px-6 py-2 bg-iiif-blue text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
@@ -291,19 +292,19 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
                   {loginLabel}
                 </>
               )}
-            </button>
+            </Button>
           )}
 
           {state.status === 'degraded' && (
             <>
-              <button
+              <Button variant="ghost" size="bare"
                 onClick={handleUseDegraded}
                 className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-100"
               >
                 Use Substitute
-              </button>
+              </Button>
               {accessService && (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={handleLogin}
                   disabled={isLoggingIn}
                   className="px-6 py-2 bg-iiif-blue text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
@@ -319,27 +320,27 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
                       {loginLabel}
                     </>
                   )}
-                </button>
+                </Button>
               )}
             </>
           )}
 
           {state.status === 'authenticated' && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={() => onComplete(state)}
               className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700"
             >
               Continue
-            </button>
+            </Button>
           )}
 
           {state.status === 'error' && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={probeForAccess}
               className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-100"
             >
               Retry
-            </button>
+            </Button>
           )}
         </div>
       </div>

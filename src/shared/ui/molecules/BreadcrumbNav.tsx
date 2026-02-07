@@ -151,14 +151,14 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
       {/* Home button */}
       {onHomeClick && (
         <>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onHomeClick}
             className={getItemStyles('root')}
             aria-label={t('Archive')}
             title={`Go to ${t('Archive')}`}
           >
             <Icon name="home" className="text-sm" />
-          </button>
+          </Button>
           {renderSeparator()}
         </>
       )}
@@ -184,7 +184,7 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
             <div className="relative">
               {hasSiblings && !isCurrent ? (
                 <>
-                  <button
+                  <Button variant="ghost" size="bare"
                     onClick={() => setExpandedItem(isExpanded ? null : item.id)}
                     className={getItemStyles(item.type, isCurrent)}
                     aria-expanded={isExpanded}
@@ -207,7 +207,7 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
                         {item.childCount}
                       </span>
                     )}
-                  </button>
+                  </Button>
 
                   {/* Siblings dropdown */}
                   {isExpanded && item.siblings && (
@@ -224,7 +224,7 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
                         Siblings
                       </div>
                       {item.siblings.map(sibling => (
-                        <button
+                        <Button variant="ghost" size="bare"
                           key={sibling.id}
                           onClick={() => {
                             sibling.onClick?.();
@@ -256,13 +256,13 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
                               {sibling.childCount}
                             </span>
                           )}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
                 </>
               ) : (
-                <button
+                <Button variant="ghost" size="bare"
                   onClick={item.onClick}
                   disabled={isCurrent || !item.onClick}
                   className={getItemStyles(item.type, isCurrent)}
@@ -280,7 +280,7 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
                       {item.childCount}
                     </span>
                   )}
-                </button>
+                </Button>
               )}
             </div>
 

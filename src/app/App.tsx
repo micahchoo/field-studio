@@ -1,5 +1,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type IIIFItem, isCanvas, isCollection, type ViewType } from '@/src/shared/types';
 import { ToastProvider, useToast } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
@@ -11,7 +12,7 @@ import { StagingWorkbench } from '@/src/features/staging/ui/organisms/StagingWor
 import { ExportDialog } from '@/src/features/export/ui/ExportDialog';
 import { ContextualHelp } from '@/src/widgets/ContextualHelp/ui/ContextualHelp';
 import { QuickReference } from '@/src/shared/ui/molecules/Tooltip';
-import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER, QUICK_REF_STAGING } from '@/src/shared/constants/helpContent';
+import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STAGING, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER } from '@/src/shared/constants/helpContent';
 import { QCDashboard } from '@/src/widgets/QCDashboard/ui/QCDashboard';
 import { OnboardingModal } from '@/src/widgets/OnboardingModal/ui/OnboardingModal';
 import { ExternalImportDialog } from '@/src/features/ingest/ui/ExternalImportDialog';
@@ -62,8 +63,8 @@ const MainApp: React.FC = () => {
   // ---- Vault State (normalized IIIF data) ----
   const { state, dispatch, loadRoot, exportRoot, rootId } = useVault();
   const { batchUpdate } = useBulkOperations();
-  // Stabilize root reference - only re-export when rootId changes
-  const root = useMemo(() => exportRoot(), [rootId]);
+  // Re-export root when vault state changes (including entity updates like annotations)
+  const root = useMemo(() => exportRoot(), [state]);
 
   // ---- Custom Hooks ----
   const { isMobile, isTablet: _isTablet } = useResponsive();
@@ -563,13 +564,13 @@ const MainApp: React.FC = () => {
         {/* Mobile Header */}
         {isMobile && (
           <header className="absolute top-0 left-0 right-0 h-14 bg-slate-900 z-[100] flex items-center px-4 justify-between shadow-lg">
-            <button onClick={() => setShowSidebar(true)} aria-label="Open sidebar" className="text-white p-2">
+            <Button variant="ghost" size="bare" onClick={() => setShowSidebar(true)} aria-label="Open sidebar" className="text-white p-2">
               <Icon name="menu" />
-            </button>
+            </Button>
             <div className="text-yellow-400 font-black tracking-tighter uppercase text-xs">Field Studio</div>
-            <button onClick={() => selectedItem && setShowInspector(true)} aria-label="Open inspector" className={`text-white p-2 ${!selectedItem ? 'opacity-20' : ''}`}>
+            <Button variant="ghost" size="bare" onClick={() => selectedItem && setShowInspector(true)} aria-label="Open inspector" className={`text-white p-2 ${!selectedItem ? 'opacity-20' : ''}`}>
               <Icon name="info" />
-            </button>
+            </Button>
           </header>
         )}
 

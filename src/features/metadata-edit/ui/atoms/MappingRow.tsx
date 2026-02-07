@@ -16,8 +16,8 @@ import React from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
 import { IconButton } from '@/src/shared/ui/molecules';
 import { ColumnSelector } from './ColumnSelector';
-import { PropertySelector, type PropertyOption } from './PropertySelector';
-import { LanguageTag, type LanguageOption } from './LanguageTag';
+import { type PropertyOption, PropertySelector } from './PropertySelector';
+import { type LanguageOption, LanguageTag } from './LanguageTag';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface MappingRowProps {

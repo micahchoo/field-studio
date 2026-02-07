@@ -10,7 +10,7 @@
 
 import React, { useMemo } from 'react';
 import type { DependencyGraph, FileAnalysis } from '../types';
-import { CopyableSection, formatLayersAsMarkdown, formatCrossLayerDepsAsMarkdown, formatHealthMetricsAsMarkdown, formatHotFilesAsMarkdown, formatHeavyFilesAsMarkdown } from './CopyableSection';
+import { CopyableSection, formatCrossLayerDepsAsMarkdown, formatHealthMetricsAsMarkdown, formatHeavyFilesAsMarkdown, formatHotFilesAsMarkdown, formatLayersAsMarkdown } from './CopyableSection';
 
 interface ArchitecturePanelProps {
   data: DependencyGraph;

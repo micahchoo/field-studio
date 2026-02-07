@@ -181,12 +181,16 @@ export const VaultProvider: React.FC<VaultProviderProps> = ({
   }, [dispatcher]);
 
   // State context value - memoized to prevent unnecessary re-renders
+  // NOTE: exportRoot reads from dispatcher.getState() (always fresh) rather than
+  // the React state closure. This ensures that calling exportRoot() immediately
+  // after dispatch() returns the updated tree, even before React re-renders.
+  // The useMemo still depends on [state] so consumers re-render when state changes.
   const stateContextValue = useMemo<VaultStateContextValue>(() => ({
     state,
     getEntity: (id: string) => getEntity(state, id),
-    exportRoot: () => denormalize(state),
+    exportRoot: () => denormalize(dispatcher.getState()),
     rootId: state.rootId
-  }), [state]);
+  }), [state, dispatcher]);
 
   // Dispatch context value - memoized with stable reference
   const dispatchContextValue = useMemo<VaultDispatchContextValue>(() => ({

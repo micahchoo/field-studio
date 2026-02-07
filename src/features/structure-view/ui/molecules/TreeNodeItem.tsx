@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { StructureNodeIcon, ExpandButton, NodeLabel, DropIndicator } from '../atoms';
+import { DropIndicator, ExpandButton, NodeLabel, StructureNodeIcon } from '../atoms';
 import type { StructureNode } from '../../model/useStructureTree';
 import type { DropPosition } from '../atoms/DropIndicator';
 
@@ -42,7 +42,7 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   const calculateDropPosition = useCallback((e: React.DragEvent<HTMLDivElement>): DropPosition => {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    const height = rect.height;
+    const {height} = rect;
 
     if (y < height * 0.25) return 'before';
     if (y > height * 0.75) return 'after';

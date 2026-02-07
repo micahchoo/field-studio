@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
@@ -127,24 +128,24 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         {/* Help Section */}
         <div className="pl-3 border-l border-slate-800 flex items-center gap-2">
           {onOpenKeyboardShortcuts && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={onOpenKeyboardShortcuts}
               className="flex items-center gap-1 hover:text-slate-200 transition-colors"
               title="Keyboard Shortcuts"
             >
               <Icon name="keyboard" className="text-[14px]" />
               <kbd className="px-1 py-0.5 bg-slate-800 rounded text-[9px] font-mono">?</kbd>
-            </button>
+            </Button>
           )}
           {onToggleQuickHelp && (
-            <button
+            <Button variant="ghost" size="bare"
               onClick={onToggleQuickHelp}
               className={`flex items-center gap-1 transition-colors ${quickHelpOpen ? 'text-sky-400' : 'hover:text-slate-200'}`}
               title="Quick Help"
             >
               <Icon name="help_outline" className="text-[14px]" />
               <span className="hidden sm:inline">Help</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

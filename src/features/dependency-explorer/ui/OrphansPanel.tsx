@@ -3,6 +3,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { Button } from '@/src/shared/ui/atoms';
 import type { FileAnalysis } from '../types';
 import { CopyableSection, formatOrphansAsMarkdown } from './CopyableSection';
 
@@ -58,7 +59,8 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-700">
                 {dirFiles.map((file) => (
-                  <button
+                  <Button
+                    variant="ghost"
                     key={file.filePath}
                     onClick={() => onSelectFile(file)}
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
@@ -75,7 +77,7 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
                       </div>
                     </div>
                     <span className="material-icons text-slate-400">chevron_right</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

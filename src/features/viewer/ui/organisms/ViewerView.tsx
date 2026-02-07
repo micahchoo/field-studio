@@ -19,7 +19,9 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { getIIIFValue, type IIIFAnnotation, type IIIFCanvas, type IIIFManifest } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
+import { storage } from '@/src/shared/services/storage';
 import {
+  type AnnotationDrawingMode,
   AnnotationDrawingOverlay,
   FilmstripNavigator,
   KeyboardShortcutsModal,
@@ -29,10 +31,9 @@ import {
   ViewerPanels,
   ViewerToolbar,
   ViewerWorkbench,
-  type AnnotationDrawingMode,
 } from '../molecules';
-import { useViewer, type DrawingMode } from '../../model';
-import { useVaultDispatch } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
+import { type SpatialDrawingMode, useViewer } from '../../model';
+import { useVaultDispatch, useVaultState } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { actions } from '@/src/entities/manifest/model/actions';
 
 // Note: CanvasComposer has been phased out in favor of Board View
@@ -68,6 +69,16 @@ export interface ViewerViewProps {
   onAnnotationSaveRef?: (fn: () => void) => void;
   /** Ref callback to expose clear function */
   onAnnotationClearRef?: (fn: () => void) => void;
+  /** Current time range for time-based annotations (controlled mode) */
+  timeRange?: { start: number; end?: number } | null;
+  /** Callback when time range changes */
+  onTimeRangeChange?: (range: { start: number; end?: number } | null) => void;
+  /** Current playback time */
+  currentPlaybackTime?: number;
+  /** Callback when playback time updates */
+  onPlaybackTimeChange?: (time: number) => void;
+  /** Ref callback to expose time annotation create function */
+  onTimeAnnotationCreateRef?: (fn: (text: string, motivation: 'commenting' | 'tagging' | 'describing') => void) => void;
 }
 
 export const ViewerView: React.FC<ViewerViewProps> = ({
@@ -90,6 +101,12 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   onAnnotationDrawingStateChange,
   onAnnotationSaveRef,
   onAnnotationClearRef,
+  // Controlled time range props
+  timeRange: timeRangeProp,
+  onTimeRangeChange: onTimeRangeChangeProp,
+  currentPlaybackTime: currentPlaybackTimeProp,
+  onPlaybackTimeChange,
+  onTimeAnnotationCreateRef: _onTimeAnnotationCreateRef,
 }) => {
   const [showWorkbench, setShowWorkbench] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
@@ -109,13 +126,34 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   const annotationMotivation = isControlledAnnotation ? (annotationMotivationProp ?? 'commenting') : internalAnnotationMotivation;
 
   // Annotation drawing state - controlled from toolbar, used by overlay
-  const [annotationDrawingMode, setAnnotationDrawingMode] = useState<DrawingMode>('polygon');
+  // Note: Uses SpatialDrawingMode because time-based annotation is handled separately in MediaPlayer
+  const [annotationDrawingMode, setAnnotationDrawingMode] = useState<SpatialDrawingMode>('polygon');
   const annotationUndoRef = useRef<(() => void) | null>(null);
   const annotationClearRef = useRef<(() => void) | null>(null);
   const annotationSaveRef = useRef<(() => void) | null>(null);
 
+  // Time-based annotation state (for audio/video) - use controlled props if provided
+  const [internalTimeRange, setInternalTimeRange] = useState<{ start: number; end?: number } | null>(null);
+  const [internalPlaybackTime, setInternalPlaybackTime] = useState(0);
+
+  // Use controlled or internal state for time range
+  const isControlledTimeRange = timeRangeProp !== undefined;
+  const timeRange = isControlledTimeRange ? timeRangeProp : internalTimeRange;
+  const setTimeRange = isControlledTimeRange
+    ? (range: { start: number; end?: number } | null) => onTimeRangeChangeProp?.(range)
+    : setInternalTimeRange;
+  const currentPlaybackTime = currentPlaybackTimeProp !== undefined ? currentPlaybackTimeProp : internalPlaybackTime;
+  const handlePlaybackTimeUpdate = (time: number) => {
+    if (onPlaybackTimeChange) {
+      onPlaybackTimeChange(time);
+    } else {
+      setInternalPlaybackTime(time);
+    }
+  };
+
   // Get vault dispatch for persisting annotations
   const { dispatch } = useVaultDispatch();
+  const { exportRoot } = useVaultState();
 
   const {
     mediaType,
@@ -161,44 +199,29 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
     }
   }, [takeScreenshot]);
 
-  // Handle creating annotation - persist to vault and update canvas
+  // Handle creating annotation - persist to vault and save to IndexedDB
+  // The vault now properly handles annotation page creation/lookup
   const handleCreateAnnotation = useCallback((annotation: IIIFAnnotation) => {
     if (!item?.id) {
       console.warn('[ViewerView] Cannot create annotation: no canvas selected');
       return;
     }
 
-    // Dispatch to vault to persist the annotation
+    // Dispatch to vault - it handles AnnotationPage structure internally
     const result = dispatch(actions.addAnnotation(item.id, annotation));
     if (result) {
       console.log('[ViewerView] Annotation persisted to canvas:', item.id, annotation.id);
 
-      // Also update the canvas through onUpdate to ensure UI refresh
-      if (onUpdate && item) {
-        // Create a new annotations array by adding the new annotation
-        const existingPages = item.annotations || [];
-        let annotationPage = existingPages[0];
-
-        if (!annotationPage) {
-          // Create a new annotation page if none exists
-          annotationPage = {
-            id: `${item.id}/annotations/1`,
-            type: 'AnnotationPage',
-            items: [annotation]
-          } as any;
-          onUpdate({ annotations: [annotationPage] });
-        } else {
-          // Add to existing annotation page
-          const updatedPage = {
-            ...annotationPage,
-            items: [...(annotationPage.items || []), annotation]
-          };
-          onUpdate({ annotations: [updatedPage, ...existingPages.slice(1)] });
-        }
+      // Save to IndexedDB - export the updated root and persist
+      const updatedRoot = exportRoot();
+      if (updatedRoot) {
+        storage.saveProject(updatedRoot)
+          .then(() => console.log('[ViewerView] Saved to IndexedDB'))
+          .catch((err) => console.error('[ViewerView] Failed to save:', err));
       }
     }
     // Keep annotation tool open so user can add more annotations
-  }, [item, dispatch, onUpdate]);
+  }, [item, dispatch, exportRoot]);
 
   // Handle adding current canvas to Board
   const handleAddToBoard = () => {
@@ -208,11 +231,12 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   };
 
   const currentSearchService = manifest?.service?.find(
-    (s: any) => s.type === 'SearchService2' || s.profile?.includes('search')
+    (s: { type?: string; profile?: string | string[] }) =>
+      s.type === 'SearchService2' || (Array.isArray(s.profile) ? s.profile.some(p => p.includes('search')) : s.profile?.includes('search'))
   ) || null;
 
   if (!item) {
-    return <ViewerEmptyState t={t} cx={cx as any} fieldMode={fieldMode} />;
+    return <ViewerEmptyState t={t} cx={cx} fieldMode={fieldMode} />;
   }
 
   const label = getIIIFValue(item.label);
@@ -262,7 +286,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         onToggleMetadata={() => {}}
         onToggleFullscreen={toggleFullscreen}
         onToggleFilmstrip={toggleFilmstrip}
-        cx={cx as any}
+        cx={cx}
         fieldMode={fieldMode}
       />
 
@@ -273,35 +297,43 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
           resolvedUrl={resolvedImageUrl}
           osdContainerRef={osdContainerRef}
           annotations={annotations as any}
-          cx={cx as any}
+          onCreateAnnotation={handleCreateAnnotation}
+          annotationModeActive={showAnnotationTool && (mediaType === 'audio' || mediaType === 'video')}
+          onAnnotationModeToggle={(active) => setShowAnnotationTool(active)}
+          timeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+          onPlaybackTimeUpdate={handlePlaybackTimeUpdate}
+          cx={cx}
           fieldMode={fieldMode}
         />
 
-        {/* Integrated Annotation Drawing Overlay */}
-        <AnnotationDrawingOverlay
-          canvas={item}
-          viewerRef={viewerRef}
-          isActive={showAnnotationTool}
-          drawingMode={annotationDrawingMode}
-          onDrawingModeChange={setAnnotationDrawingMode}
-          onCreateAnnotation={handleCreateAnnotation}
-          onClose={() => setShowAnnotationTool(false)}
-          existingAnnotations={annotations}
-          onUndoRef={(fn) => { annotationUndoRef.current = fn; }}
-          onClearRef={(fn) => {
-            annotationClearRef.current = fn;
-            onAnnotationClearRef?.(fn);
-          }}
-          onSaveRef={(fn) => {
-            annotationSaveRef.current = fn;
-            onAnnotationSaveRef?.(fn);
-          }}
-          onDrawingStateChange={onAnnotationDrawingStateChange}
-          annotationText={annotationText}
-          annotationMotivation={annotationMotivation}
-          cx={cx as any}
-          fieldMode={fieldMode}
-        />
+        {/* Integrated Annotation Drawing Overlay - only for images */}
+        {mediaType === 'image' && (
+          <AnnotationDrawingOverlay
+            canvas={item}
+            viewerRef={viewerRef}
+            isActive={showAnnotationTool}
+            drawingMode={annotationDrawingMode}
+            onDrawingModeChange={setAnnotationDrawingMode}
+            onCreateAnnotation={handleCreateAnnotation}
+            onClose={() => setShowAnnotationTool(false)}
+            existingAnnotations={annotations}
+            onUndoRef={(fn) => { annotationUndoRef.current = fn; }}
+            onClearRef={(fn) => {
+              annotationClearRef.current = fn;
+              onAnnotationClearRef?.(fn);
+            }}
+            onSaveRef={(fn) => {
+              annotationSaveRef.current = fn;
+              onAnnotationSaveRef?.(fn);
+            }}
+            onDrawingStateChange={onAnnotationDrawingStateChange}
+            annotationText={annotationText}
+            annotationMotivation={annotationMotivation}
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+        )}
       </div>
 
       <FilmstripNavigator
@@ -309,7 +341,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         totalItems={totalItems}
         loadingStatus={resolvedImageUrl ? 'Image loaded' : 'Loading...'}
         label={t('Canvas')}
-        cx={cx as any}
+        cx={cx}
         fieldMode={fieldMode}
       />
 
@@ -322,7 +354,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
             console.log('Applied IIIF URL:', url);
             setShowWorkbench(false);
           }}
-          cx={cx as any}
+          cx={cx}
           fieldMode={fieldMode}
         />
       )}
@@ -340,7 +372,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
           console.log('Searching for:', query);
           return [];
         }}
-        cx={cx as any}
+        cx={cx}
         fieldMode={fieldMode}
       />
 
@@ -348,7 +380,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
       <KeyboardShortcutsModal
         isOpen={showKeyboardHelp}
         onClose={toggleKeyboardHelp}
-        cx={cx as any}
+        cx={cx}
         fieldMode={fieldMode}
       />
     </div>

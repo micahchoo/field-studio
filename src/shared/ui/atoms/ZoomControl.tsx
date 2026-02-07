@@ -23,7 +23,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { Button } from '@/src/shared/ui/atoms';
+import { Button } from '@/ui/primitives/Button';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface ZoomControlProps {

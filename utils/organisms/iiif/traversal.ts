@@ -52,25 +52,36 @@ export interface TreeIndex {
 export function getChildren(item: IIIFItem): IIIFItem[] {
   if (!item || typeof item !== 'object') return [];
 
+  const i = item as unknown as Record<string, unknown>;
+  const items = i.items as IIIFItem[] | undefined;
+  const annotations = i.annotations as IIIFItem[] | undefined;
+  const structures = i.structures as IIIFItem[] | undefined;
+
+  const hasItems = items && Array.isArray(items);
+  const hasAnnotations = annotations && Array.isArray(annotations);
+  const hasStructures = structures && Array.isArray(structures);
+
+  // Fast path: only items (most common case)
+  if (hasItems && !hasAnnotations && !hasStructures) {
+    return items;
+  }
+
+  if (!hasItems && !hasAnnotations && !hasStructures) {
+    return [];
+  }
+
+  // Slow path: multiple arrays need merging
   const children: IIIFItem[] = [];
-  const i = item as Record<string, unknown>;
-
-  // Main items array
-  if (i.items && Array.isArray(i.items)) {
-    children.push(...(i.items as IIIFItem[]));
+  if (hasItems) {
+    for (let j = 0; j < items.length; j++) children.push(items[j]);
   }
-
-  // Annotations array
-  if (i.annotations && Array.isArray(i.annotations)) {
-    children.push(...(i.annotations as IIIFItem[]));
+  if (hasAnnotations) {
+    for (let j = 0; j < annotations.length; j++) children.push(annotations[j]);
   }
-
-  // Structures array
-  if (i.structures && Array.isArray(i.structures)) {
-    children.push(...(i.structures as IIIFItem[]));
+  if (hasStructures) {
+    for (let j = 0; j < structures.length; j++) children.push(structures[j]);
   }
-
-  return children.filter((child) => child && typeof child === 'object');
+  return children;
 }
 
 /**
@@ -84,17 +95,15 @@ export function traverse<T = void>(
   const results: T[] = [];
   const { maxDepth = 0, detectCycles = true } = options;
   const visited = detectCycles ? new Set<string>() : null;
-  let maxDepthReached = 0;
+  // Mutable path array — push/pop instead of copying on every recursion
+  const mutablePath: string[] = [];
 
   function visit(
     item: IIIFItem,
     parent: IIIFItem | null,
     depth: number,
-    path: string[]
   ): void {
     if (maxDepth > 0 && depth > maxDepth) return;
-
-    maxDepthReached = Math.max(maxDepthReached, depth);
 
     if (visited && item.id) {
       if (visited.has(item.id)) return;
@@ -104,7 +113,7 @@ export function traverse<T = void>(
     const context: TraversalContext = {
       depth,
       parent,
-      path,
+      path: mutablePath.slice(), // snapshot only when callback actually uses it
       visited: visited || new Set(),
     };
     const result = callback(item, context);
@@ -114,12 +123,14 @@ export function traverse<T = void>(
     }
 
     const children = getChildren(item);
-    for (const child of children) {
-      visit(child, item, depth + 1, [...path, item.id]);
+    mutablePath.push(item.id);
+    for (let i = 0; i < children.length; i++) {
+      visit(children[i], item, depth + 1);
     }
+    mutablePath.pop();
   }
 
-  visit(root, null, 0, []);
+  visit(root, null, 0);
   return results;
 }
 
@@ -187,16 +198,19 @@ export function findParent(
   root: IIIFItem,
   childId: string
 ): IIIFItem | null {
-  let parent: IIIFItem | null = null;
-
-  traverse(root, (item) => {
-    const children = getChildren(item);
-    if (children.some((child) => child.id === childId)) {
-      parent = item;
+  // Dedicated search with early termination (avoids full tree traversal)
+  function search(node: IIIFItem): IIIFItem | null {
+    const children = getChildren(node);
+    for (let i = 0; i < children.length; i++) {
+      if (children[i].id === childId) return node;
     }
-  });
-
-  return parent;
+    for (let i = 0; i < children.length; i++) {
+      const found = search(children[i]);
+      if (found) return found;
+    }
+    return null;
+  }
+  return search(root);
 }
 
 /**
@@ -206,25 +220,27 @@ export function getPathToNode(
   root: IIIFItem,
   targetId: string
 ): IIIFItem[] {
-  const path: IIIFItem[] = [];
+  // Use mutable stack with push/pop instead of creating new arrays at each level
+  const stack: IIIFItem[] = [];
 
-  const findPath = (node: IIIFItem, currentPath: IIIFItem[]): boolean => {
+  const findPath = (node: IIIFItem): boolean => {
     if (node.id === targetId) {
-      path.push(...currentPath);
       return true;
     }
 
+    stack.push(node);
     const children = getChildren(node);
-    for (const child of children) {
-      if (findPath(child, [...currentPath, node])) {
+    for (let i = 0; i < children.length; i++) {
+      if (findPath(children[i])) {
         return true;
       }
     }
+    stack.pop();
     return false;
   };
 
-  findPath(root, []);
-  return path;
+  findPath(root);
+  return stack;
 }
 
 // ============================================================================
@@ -367,10 +383,20 @@ export function findDuplicateIds(root: IIIFItem): DuplicateIdResult[] {
 }
 
 /**
- * Check if tree has duplicate IDs
+ * Check if tree has duplicate IDs (short-circuits on first duplicate)
  */
 export function hasDuplicateIds(root: IIIFItem): boolean {
-  return findDuplicateIds(root).length > 0;
+  const seen = new Set<string>();
+  const check = (node: IIIFItem): boolean => {
+    if (seen.has(node.id)) return true;
+    seen.add(node.id);
+    const children = getChildren(node);
+    for (let i = 0; i < children.length; i++) {
+      if (check(children[i])) return true;
+    }
+    return false;
+  };
+  return check(root);
 }
 
 // ============================================================================
@@ -381,20 +407,21 @@ export function hasDuplicateIds(root: IIIFItem): boolean {
  * Flatten tree to array (breadth-first)
  */
 export function flattenTree(root: IIIFItem): IIIFItem[] {
-  const result: IIIFItem[] = [];
-  const queue: IIIFItem[] = [root];
-  const visited = new Set<string>();
+  const result: IIIFItem[] = [root];
+  const visited = new Set<string>([root.id]);
+  // Use index pointer instead of shift() which is O(n) on arrays
+  let head = 0;
 
-  while (queue.length > 0) {
-    const item = queue.shift()!;
-
-    if (visited.has(item.id)) continue;
-    visited.add(item.id);
-
-    result.push(item);
-
+  while (head < result.length) {
+    const item = result[head++];
     const children = getChildren(item);
-    queue.push(...children);
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (!visited.has(child.id)) {
+        visited.add(child.id);
+        result.push(child);
+      }
+    }
   }
 
   return result;

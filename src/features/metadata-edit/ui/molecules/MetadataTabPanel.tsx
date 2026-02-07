@@ -17,8 +17,7 @@
 
 import React, { useState } from 'react';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
-import { Icon } from '@/src/shared/ui/atoms';
-import { Button } from '@/ui/primitives/Button';
+import { Button, Icon } from '@/src/shared/ui/atoms';
 import { LocationPicker } from '../atoms/LocationPicker';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
@@ -89,7 +88,7 @@ const FormSection: React.FC<FormSectionProps> = ({ title, icon, children, collap
 
   return (
     <div className={`rounded-xl border ${fieldMode ? 'bg-stone-900/50 border-stone-800' : 'bg-white border-stone-200'} overflow-hidden`}>
-      <button
+      <Button variant="ghost" size="bare"
         onClick={toggle}
         className={`w-full px-4 py-3 flex items-center justify-between ${fieldMode ? 'hover:bg-stone-800' : 'hover:bg-stone-50'} transition-colors`}
       >
@@ -107,7 +106,7 @@ const FormSection: React.FC<FormSectionProps> = ({ title, icon, children, collap
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
-      </button>
+      </Button>
       {!collapsedState && <div className="px-4 pb-4 space-y-4">{children}</div>}
     </div>
   );
@@ -367,8 +366,8 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
           {resource.requiredStatement && (
             <TextField
               label="Attribution"
-              value={getIIIFValue(resource.requiredStatement, language)}
-              onChange={(val) => onUpdateResource({ requiredStatement: { [language]: [val] } })}
+              value={getIIIFValue(resource.requiredStatement.value, language)}
+              onChange={(val) => onUpdateResource({ requiredStatement: { label: resource.requiredStatement!.label, value: { [language]: [val] } } })}
               placeholder="e.g., © 2024 Example Institution"
               fieldMode={fieldMode}
               hint="How this item should be credited"
@@ -444,7 +443,7 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
                         {dc}
                       </span>
                     )}
-                    <button
+                    <Button variant="ghost" size="bare"
                       onClick={() => {
                         const newMeta = metadata.filter((_, i) => i !== actualIdx);
                         onUpdateResource({ metadata: newMeta });
@@ -453,7 +452,7 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
                       title="Remove field"
                     >
                       <Icon name="close" className="text-xs" />
-                    </button>
+                    </Button>
                   </div>
                   <input
                     type="text"
@@ -476,7 +475,7 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
       )}
 
       {/* Add Custom Field Button */}
-      <button
+      <Button variant="ghost" size="bare"
         onClick={() => {
           onUpdateResource({
             metadata: [
@@ -493,7 +492,7 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
       >
         <Icon name="add" className="text-sm" />
         Add Custom Field
-      </button>
+      </Button>
     </div>
   );
 };

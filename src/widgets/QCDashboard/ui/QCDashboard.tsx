@@ -91,9 +91,9 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
             path.push(...currentPath, nodeInfo);
             return true;
         }
-        const children = (node as any).items || (node as any).annotations || [];
+        const children = node.items || node.annotations || [];
         for (const child of children) {
-            if (traverse(child, [...currentPath, nodeInfo])) return true;
+            if (traverse(child as IIIFItem, [...currentPath, nodeInfo])) return true;
         }
         return false;
     };
@@ -128,8 +128,9 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
               Object.assign(node, updates);
               return true;
           }
-          const children = (node as any).items || (node as any).annotations || (node as any).structures || [];
-          for (const child of children) if (traverse(child)) return true;
+          const nodeWithStructures = node as IIIFItem & { structures?: IIIFItem[] };
+          const children = node.items || node.annotations || nodeWithStructures.structures || [];
+          for (const child of children) if (traverse(child as IIIFItem)) return true;
           return false;
       };
       if (traverse(newRoot)) onUpdate(newRoot);
@@ -347,7 +348,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                             <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
                                 {previewPath.map((p, i) => (
                                     <div key={i} style={{ paddingLeft: (i * 12) + 12 }} className={`flex items-center gap-2 p-2 border-b last:border-b-0 ${i === previewPath.length - 1 ? 'bg-blue-50 border-l-4 border-l-iiif-blue' : 'bg-white opacity-60'}`}>
-                                        <Icon name={isCollection(p as any) ? 'folder' : isManifest(p as any) ? 'menu_book' : 'crop_original'} className={`text-xs ${i === previewPath.length - 1 ? 'text-iiif-blue' : 'text-slate-400'}`}/>
+                                        <Icon name={p.type === 'Collection' ? 'folder' : p.type === 'Manifest' ? 'menu_book' : 'crop_original'} className={`text-xs ${i === previewPath.length - 1 ? 'text-iiif-blue' : 'text-slate-400'}`}/>
                                         <span className={`text-[10px] truncate ${i === previewPath.length - 1 ? 'font-bold text-slate-800' : 'text-slate-500'}`}>{p.label}</span>
                                     </div>
                                 ))}

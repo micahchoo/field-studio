@@ -13,7 +13,7 @@
  * @module shared/ui/molecules/ModalDialog
  */
 
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useId } from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
 
@@ -77,6 +77,8 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
   preventBackdropClose = false,
   className = '',
 }) => {
+  const titleId = useId();
+
   // Handle ESC key
   useEffect(() => {
     if (!isOpen) return;
@@ -120,7 +122,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
       >
         {/* Header */}
         <div className={headerClass}>
@@ -132,7 +134,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
             )}
             <div>
               <h2
-                id="modal-title"
+                id={titleId}
                 className={`text-lg font-bold ${fieldMode ? 'text-slate-200' : 'text-slate-800'}`}
               >
                 {title}
@@ -144,7 +146,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
               )}
             </div>
           </div>
-          <button
+          <Button variant="ghost" size="bare"
             onClick={onClose}
             className={`p-2 rounded-lg ${
               fieldMode
@@ -154,7 +156,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
             aria-label="Close modal"
           >
             <Icon name="close" />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
