@@ -48,6 +48,7 @@
     ".github",
     ".claude",
     ".roo",
-    ".vscode"
+    ".vscode",
+    "scripts"
   ]
 }
