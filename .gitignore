@@ -128,12 +128,12 @@ bun.lockb
 *.tsbuildinfo
 
 # Compiled output
-./dist/
-./lib/
-./esm/
-./cjs/
-./out/
-./target/
+/dist/
+/lib/
+/esm/
+/cjs/
+/out/
+/target/
 
 # ----------------------------------------------------------------------
 # Project-specific directories
