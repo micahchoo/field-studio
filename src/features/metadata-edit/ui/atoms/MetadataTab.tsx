@@ -62,8 +62,8 @@ export const MetadataTab: React.FC<MetadataTabProps> = ({
         active
           ? `text-${cx.accent} border-b-2 border-${cx.accent}`
           : fieldMode
-            ? 'text-slate-500 hover:text-slate-300'
-            : 'text-slate-500 hover:text-slate-800'
+            ? 'text-nb-black/50 hover:text-nb-black/30'
+            : 'text-nb-black/50 hover:text-nb-black'
       }`}
     >
       {label}

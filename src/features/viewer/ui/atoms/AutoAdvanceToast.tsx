@@ -46,31 +46,31 @@ export const AutoAdvanceToast: React.FC<AutoAdvanceToastProps> = ({
   }, [remaining, onAdvance]);
 
   return (
-    <div className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2.5 rounded-xl shadow-lg backdrop-blur-sm border animate-in slide-in-from-bottom-4 ${
+    <div className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2.5 shadow-brutal backdrop-blur-sm border animate-in slide-in-from-bottom-4 ${
       fieldMode
-        ? 'bg-slate-900/95 border-slate-700'
-        : 'bg-white/95 border-slate-200'
+        ? 'bg-nb-black/95 border-nb-black/80'
+        : 'bg-nb-white border-nb-black/20'
     }`}>
       <Icon
         name="skip_next"
-        className={`text-lg ${fieldMode ? 'text-yellow-400' : 'text-blue-500'}`}
+        className={`text-lg ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}
       />
       <div>
-        <div className={`text-sm font-medium ${fieldMode ? 'text-white' : 'text-slate-700'}`}>
+        <div className={`text-sm font-medium ${fieldMode ? 'text-white' : 'text-nb-black/80'}`}>
           Next: {nextLabel}
         </div>
-        <div className={`text-xs ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}>
+        <div className={`text-xs ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}>
           in {remaining}s
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className={`w-16 h-1 rounded-full overflow-hidden ${
-        fieldMode ? 'bg-slate-700' : 'bg-slate-200'
+      <div className={`w-16 h-1 overflow-hidden ${
+        fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'
       }`}>
         <div
-          className={`h-full rounded-full transition-all duration-1000 ease-linear ${
-            fieldMode ? 'bg-yellow-400' : 'bg-blue-500'
+          className={`h-full transition-nb duration-1000 ease-linear ${
+            fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue'
           }`}
           style={{ width: `${((duration - remaining) / duration) * 100}%` }}
         />

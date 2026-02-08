@@ -35,21 +35,21 @@ const severityConfig: Record<
 > = {
   error: {
     icon: 'error',
-    borderColor: 'border-red-200 dark:border-red-900',
-    bgColor: 'bg-red-50 dark:bg-red-950/30',
-    iconColor: 'text-red-500',
+    borderColor: 'border-nb-red/30',
+    bgColor: 'bg-nb-red/10',
+    iconColor: 'text-nb-red',
   },
   warning: {
     icon: 'warning',
-    borderColor: 'border-amber-200 dark:border-amber-900',
-    bgColor: 'bg-amber-50 dark:bg-amber-950/30',
-    iconColor: 'text-amber-500',
+    borderColor: 'border-nb-orange',
+    bgColor: 'bg-nb-orange/30',
+    iconColor: 'text-nb-orange',
   },
   info: {
     icon: 'info',
-    borderColor: 'border-blue-200 dark:border-blue-900',
-    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
-    iconColor: 'text-blue-500',
+    borderColor: 'border-nb-blue/30',
+    bgColor: 'bg-nb-blue/10',
+    iconColor: 'text-nb-blue',
   },
 };
 
@@ -69,7 +69,7 @@ export const ValidationFixAction: React.FC<ValidationFixActionProps> = ({
 
   return (
     <div
-      className={`p-3 rounded-lg border ${config.borderColor} ${config.bgColor} flex items-start gap-3`}
+      className={`p-3 border ${config.borderColor} ${config.bgColor} flex items-start gap-3`}
     >
       <Icon
         name={config.icon}
@@ -81,24 +81,24 @@ export const ValidationFixAction: React.FC<ValidationFixActionProps> = ({
           <div>
             <h4
               className={`text-sm font-medium ${
-                fieldMode ? 'text-slate-200' : 'text-slate-800'
+                fieldMode ? 'text-nb-black/20' : 'text-nb-black'
               }`}
             >
               {issue.title}
             </h4>
             <p
               className={`text-xs mt-0.5 ${
-                fieldMode ? 'text-slate-400' : 'text-slate-600'
+                fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'
               }`}
             >
               {issue.description}
             </p>
             {issue.field && (
               <code
-                className={`text-[10px] mt-1 inline-block px-1.5 py-0.5 rounded ${
+                className={`text-[10px] mt-1 inline-block px-1.5 py-0.5 ${
                   fieldMode
-                    ? 'bg-slate-800 text-slate-400'
-                    : 'bg-slate-100 text-slate-500'
+                    ? 'bg-nb-black text-nb-black/40'
+                    : 'bg-nb-cream text-nb-black/50'
                 }`}
               >
                 {issue.field}

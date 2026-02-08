@@ -121,7 +121,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     {
       label: 'Group into Manifest',
       icon: 'auto_stories' as const,
-      iconClass: fieldMode ? 'text-yellow-400' : 'text-green-400',
+      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-green',
       onClick: onGroupIntoManifest,
     },
     ...(selectionHasGPS
@@ -129,7 +129,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
           {
             label: 'View on Map',
             icon: 'explore' as const,
-            iconClass: fieldMode ? 'text-yellow-400' : 'text-blue-400',
+            iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-blue',
             onClick: onOpenMap,
           },
         ]
@@ -137,13 +137,13 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     {
       label: 'Edit in Catalog',
       icon: 'table_chart' as const,
-      iconClass: fieldMode ? 'text-yellow-400' : 'text-amber-400',
+      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-orange',
       onClick: onEditMetadata,
     },
     {
       label: 'Compose on Board',
       icon: 'dashboard' as const,
-      iconClass: fieldMode ? 'text-yellow-400' : 'text-pink-400',
+      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-pink',
       onClick: onComposeOnBoard,
     },
   ];
@@ -153,7 +153,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     {
       label: 'Group',
       icon: 'auto_stories' as const,
-      iconClass: fieldMode ? 'text-yellow-400' : 'text-green-400',
+      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-green',
       onClick: onGroupIntoManifest,
     },
     ...(selectionHasGPS
@@ -161,7 +161,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
           {
             label: 'Map',
             icon: 'explore' as const,
-            iconClass: fieldMode ? 'text-yellow-400' : 'text-blue-400',
+            iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-blue',
             onClick: onOpenMap,
           },
         ]
@@ -169,32 +169,32 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     {
       label: 'Catalog',
       icon: 'table_chart' as const,
-      iconClass: fieldMode ? 'text-yellow-400' : 'text-amber-400',
+      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-orange',
       onClick: onEditMetadata,
     },
     {
       label: 'Board',
       icon: 'dashboard' as const,
-      iconClass: fieldMode ? 'text-yellow-400' : 'text-pink-400',
+      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-pink',
       onClick: onComposeOnBoard,
     },
   ];
 
   // Selection bar colors based on field mode
-  const selectionBarBg = fieldMode ? 'bg-yellow-900/50' : 'bg-slate-800';
-  const selectionBarBorder = fieldMode ? 'border-yellow-700' : 'border-slate-700';
-  const selectionTextColor = fieldMode ? 'text-yellow-100' : 'text-white';
+  const selectionBarBg = fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-black';
+  const selectionBarBorder = fieldMode ? 'border-nb-yellow' : 'border-nb-black/80';
+  const selectionTextColor = fieldMode ? 'text-nb-yellow/40' : 'text-white';
 
   return (
     <>
       {/* Main header */}
-      <div className={`h-header border-b px-6 flex items-center justify-between shadow-sm z-10 shrink-0 ${cx.headerBg || cx.surface} ${cx.border || 'border-slate-200 dark:border-slate-700'}`}>
+      <div className={`h-header border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode px-6 flex items-center justify-between shadow-brutal-sm z-10 shrink-0 ${cx.border || 'border-nb-black/20'}`}>
         <div className="flex items-center gap-4">
-          <h2 className={`font-bold text-lg ${cx.accent}`}>Archive</h2>
+          <h2 className="text-nb-lg font-bold text-mode-accent">Archive</h2>
           {!isMobile && !hasSelection && !showReorderMode && (
             <>
-              <div className={`h-4 w-px ${fieldMode ? 'bg-yellow-700' : 'bg-slate-500'}`} />
-              <div className={`flex items-center gap-2 text-[10px] font-black uppercase ${cx.textMuted || 'text-slate-400'}`}>
+              <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
+              <div className={`flex items-center gap-2 text-nb-caption font-bold uppercase tracking-wider font-mono ${cx.textMuted || 'text-nb-black/40'}`}>
                 Select items to begin synthesis pipeline
               </div>
             </>
@@ -202,8 +202,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
           {/* Reorder mode indicator - shown when viewer is closed but item selected */}
           {!isMobile && showReorderMode && (
             <>
-              <div className={`h-4 w-px ${fieldMode ? 'bg-yellow-700' : 'bg-slate-500'}`} />
-              <span className={`text-xs font-medium ${fieldMode ? 'text-yellow-200' : 'text-slate-400'}`}>
+              <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
+              <span className={`text-xs font-medium ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
                 Viewer closed — reorder enabled
               </span>
             </>
@@ -232,14 +232,14 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
           {/* Viewer panel controls - shown when canvas selected */}
           {hasCanvasSelected && onToggleInspectorPanel && onToggleViewerPanel && (
             <>
-              <div className={`h-6 w-px ${fieldMode ? 'bg-yellow-700' : 'bg-slate-600'}`} />
+              <div className={`h-6 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/60'}`} />
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="bare"
                   onClick={onToggleInspectorPanel}
-                  className={`p-1.5 rounded-lg transition-colors ${
+                  className={`p-1.5 transition-nb ${
                     showInspectorPanel
-                      ? fieldMode ? 'bg-yellow-500/30 text-yellow-400' : 'bg-blue-500/30 text-blue-400'
-                      : fieldMode ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-slate-400 hover:bg-slate-700'
+                      ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/30 text-nb-blue'
+                      : fieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/40 hover:bg-nb-black/80'
                   }`}
                   title={showInspectorPanel ? 'Hide Inspector' : 'Show Inspector'}
                 >
@@ -247,10 +247,10 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                 </Button>
                 <Button variant="ghost" size="bare"
                   onClick={onToggleViewerPanel}
-                  className={`p-1.5 rounded-lg transition-colors ${
+                  className={`p-1.5 transition-nb ${
                     showViewerPanel
-                      ? fieldMode ? 'bg-yellow-500/30 text-yellow-400' : 'bg-blue-500/30 text-blue-400'
-                      : fieldMode ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-slate-400 hover:bg-slate-700'
+                      ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/30 text-nb-blue'
+                      : fieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/40 hover:bg-nb-black/80'
                   }`}
                   title={showViewerPanel ? 'Close Viewer' : 'Open Viewer'}
                 >
@@ -296,8 +296,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
 
       {/* Mobile floating selection bar */}
       {isMobile && hasSelection && (
-        <div className="absolute z-[100] animate-in slide-in-from-bottom-4 duration-300 bottom-8 left-4 right-4 translate-x-0">
-          <div className={`${fieldMode ? 'bg-black/95 border-yellow-700' : 'bg-slate-900/95 border-slate-700'} backdrop-blur-md border shadow-2xl rounded-2xl p-1 flex items-center gap-1 ring-4 ring-black/10 overflow-x-auto no-scrollbar max-w-full`}>
+        <div className="absolute z-[100] animate-in slide-in-from-bottom-4 bottom-8 left-4 right-4 translate-x-0">
+          <div className={`${fieldMode ? 'bg-nb-black/95 border-nb-yellow' : 'bg-nb-black/95 border-nb-black/80'} backdrop-blur-md border shadow-brutal-lg  p-1 flex items-center gap-1 ring-4 ring-black/10 overflow-x-auto no-scrollbar max-w-full`}>
             <div className="flex p-1 gap-1 shrink-0">
               {mobileActions.map((action) => (
                 <Button
@@ -311,7 +311,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                   {action.label}
                 </Button>
               ))}
-              <div className={`w-px h-8 ${fieldMode ? 'bg-yellow-700' : 'bg-slate-700'} mx-1`} />
+              <div className={`w-px h-8 ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/80'} mx-1`} />
               <Button
                 onClick={onClearSelection}
                 variant="ghost"

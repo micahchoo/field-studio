@@ -81,10 +81,10 @@ export const StartPropertyEditor: React.FC<StartPropertyEditorProps> = ({
       <div className="flex items-center gap-1.5">
         <Icon
           name="start"
-          className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
+          className={`text-sm ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}
         />
         <span className={`text-xs font-semibold uppercase tracking-wider ${
-          fieldMode ? 'text-slate-400' : 'text-slate-500'
+          fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
         }`}>
           Start Canvas
         </span>
@@ -96,10 +96,10 @@ export const StartPropertyEditor: React.FC<StartPropertyEditorProps> = ({
           value={value?.type === 'Canvas' ? value.id : value?.source || ''}
           onChange={(e) => handleCanvasSelect(e.target.value)}
           disabled={disabled}
-          className={`flex-1 text-sm rounded-md border px-2 py-1.5 ${
+          className={`flex-1 text-sm border px-2 py-1.5 ${
             fieldMode
-              ? 'bg-slate-900 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
+              ? 'bg-nb-black border-nb-black/60 text-white'
+              : 'bg-nb-white border-nb-black/20 text-nb-black/80'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <option value="">No start canvas</option>
@@ -115,7 +115,7 @@ export const StartPropertyEditor: React.FC<StartPropertyEditorProps> = ({
             variant="ghost"
             size="bare"
             onClick={() => onChange(undefined)}
-            icon={<Icon name="close" className="text-sm text-red-400" />}
+            icon={<Icon name="close" className="text-sm text-nb-red" />}
             title="Clear start"
             aria-label="Clear start canvas"
           />
@@ -155,7 +155,7 @@ export const StartPropertyEditor: React.FC<StartPropertyEditorProps> = ({
               <Icon name="schedule" className="text-sm mr-1" />
               Set start time
               {value?.type === 'SpecificResource' && value.selector?.t !== undefined && (
-                <span className={`ml-1 ${fieldMode ? 'text-yellow-400' : 'text-blue-500'}`}>
+                <span className={`ml-1 ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}>
                   (t={value.selector.t}s)
                 </span>
               )}

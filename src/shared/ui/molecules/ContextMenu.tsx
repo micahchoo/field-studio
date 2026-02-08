@@ -23,9 +23,9 @@ import { ContextMenuSelectionBadge } from './ContextMenuSelectionBadge';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 const defaultCx: ContextualClassNames = {
-  surface: 'bg-white dark:bg-slate-900',
-  text: 'text-slate-900 dark:text-slate-100',
-  accent: 'text-blue-600 dark:text-blue-400',
+  surface:'bg-nb-white',
+  text:'text-nb-black/10',
+  accent:'text-nb-blue',
 };
 
 // Re-export types from sub-components for backwards compatibility
@@ -45,8 +45,8 @@ export interface ContextMenuItem {
   /** Whether the item is disabled */
   disabled?: boolean;
   /** Visual variant */
-  variant?: 'default' | 'danger' | 'primary';
-  /** Keyboard shortcut to display (e.g., "Ctrl+C") */
+  variant?:'default' |'danger' |'primary';
+  /** Keyboard shortcut to display (e.g.,"Ctrl+C") */
   shortcut?: string;
   /** Tooltip/description */
   description?: string;
@@ -95,7 +95,7 @@ export interface ContextMenuProps {
  *   sections={[
  *     {
  *       items: [
- *         { id: 'open', label: 'Open', icon: 'visibility', onClick: () => {} },
+ *         { id:'open', label:'Open', icon:'visibility', onClick: () => {} },
  *       ]
  *     }
  *   ]}
@@ -107,7 +107,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   sections,
   onClose,
   isOpen,
-  className = '',
+  className ='',
   maxHeight = 400,
   selectionCount = 1,
   cx = defaultCx,
@@ -143,7 +143,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     if (!isOpen) return undefined;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key ==='Escape') {
         onClose();
       }
     };
@@ -185,8 +185,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   useEffect(() => {
     if (isOpen && menuRef.current) {
       const pos = computePosition();
-      menuRef.current.style.left = `${pos.x}px`;
-      menuRef.current.style.top = `${pos.y}px`;
+      menuRef.current.style.left =`${pos.x}px`;
+      menuRef.current.style.top =`${pos.y}px`;
     }
   }, [isOpen, computePosition]);
 
@@ -198,8 +198,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   if (validSections.length === 0) return null;
 
   // Fallback background if cx.surface is not defined or transparent
-  const bgClass = cx.surface || 'bg-white';
-  const borderClass = cx.border || 'border-slate-200';
+  const bgClass = cx.surface ||'bg-nb-white';
+  const borderClass = cx.border ||'border-nb-black/20';
 
   return (
     <div
@@ -208,15 +208,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         fixed z-[1000]
         ${bgClass}
         ${borderClass}
-        border shadow-2xl rounded-xl py-2 min-w-[220px]
+        border shadow-brutal-lg  py-2 min-w-[220px]
         animate-in fade-in zoom-in-95 duration-100
         ${className}
-      `}
+`}
       style={{
         left: x,
         top: y,
         maxHeight,
-        overflowY: 'auto',
+        overflowY:'auto',
       }}
       onContextMenu={(e) => e.preventDefault()}
       role="menu"
@@ -227,7 +227,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       {/* Menu sections */}
       {validSections.map((section, sectionIndex) => (
         <ContextMenuSection
-          key={section.title || `section-${sectionIndex}`}
+          key={section.title ||`section-${sectionIndex}`}
           title={section.title}
           items={section.items}
           showDivider={sectionIndex > 0}

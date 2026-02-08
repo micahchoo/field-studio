@@ -48,32 +48,32 @@ export const ListItemBase: React.FC<ListItemBaseProps> = ({
   onClick,
   showDelete = false,
   onDelete,
-  deleteIcon = 'close',
-  deleteAriaLabel = 'Delete item',
+  deleteIcon ='close',
+  deleteAriaLabel ='Delete item',
   disabled = false,
   fieldMode = false,
-  accentColor = 'blue',
-  className = '',
+  accentColor ='blue',
+  className ='',
 }) => {
   // Static Tailwind class mappings (dynamic interpolation breaks JIT)
   const accentStyles: Record<string, { selected: string; selectedField: string }> = {
-    blue: { selected: 'border-blue-400 bg-blue-50', selectedField: 'border-blue-500 bg-blue-900/20' },
-    green: { selected: 'border-green-400 bg-green-50', selectedField: 'border-green-500 bg-green-900/20' },
-    red: { selected: 'border-red-400 bg-red-50', selectedField: 'border-red-500 bg-red-900/20' },
-    purple: { selected: 'border-purple-400 bg-purple-50', selectedField: 'border-purple-500 bg-purple-900/20' },
-    amber: { selected: 'border-amber-400 bg-amber-50', selectedField: 'border-amber-500 bg-amber-900/20' },
+    blue: { selected:'border-nb-blue bg-nb-blue/10', selectedField:'border-nb-blue bg-nb-blue/20' },
+    green: { selected:'border-nb-green bg-nb-green/10', selectedField:'border-nb-green bg-nb-green/20' },
+    red: { selected:'border-nb-red bg-nb-red/10', selectedField:'border-nb-red bg-nb-red/20' },
+    purple: { selected:'border-nb-purple/60 bg-nb-purple/5', selectedField:'border-nb-purple bg-nb-purple/20' },
+    amber: { selected:'border-nb-orange bg-nb-orange/10', selectedField:'border-nb-orange bg-nb-orange/10' },
   };
   const accent = accentStyles[accentColor] || accentStyles.blue;
 
-  const containerClass = `p-3 rounded border transition-colors ${className} ${
+  const containerClass =`p-3 border transition-nb ${className} ${
     selected
       ? fieldMode
         ? accent.selectedField
         : accent.selected
       : fieldMode
-        ? 'border-slate-800 hover:border-slate-600 bg-slate-900'
-        : 'border-slate-200 hover:border-slate-300 bg-slate-50'
-  } ${onClick && !disabled ? 'cursor-pointer' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+        ?'border-nb-black hover:border-nb-black/60 bg-nb-black'
+        :'border-nb-black/20 hover:border-nb-black/20 bg-nb-white'
+  } ${onClick && !disabled ?'cursor-pointer' :''} ${disabled ?'opacity-50 cursor-not-allowed' :''}`;
 
   const handleClick = (e: React.MouseEvent) => {
     if (!disabled && onClick) {
@@ -101,7 +101,7 @@ export const ListItemBase: React.FC<ListItemBaseProps> = ({
             disabled={disabled}
             variant="ghost"
             size="sm"
-            className={fieldMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}
+            className={fieldMode ?'text-nb-black/50 hover:text-nb-black/30' :'text-nb-black/40 hover:text-nb-black/60'}
           />
         )}
       </div>

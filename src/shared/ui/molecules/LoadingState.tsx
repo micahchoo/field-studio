@@ -21,16 +21,16 @@ import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualS
 import { UI_TIMING } from '../../config/tokens';
 
 const defaultCx: ContextualClassNames = {
-  surface: 'bg-white dark:bg-slate-900',
-  text: 'text-slate-900 dark:text-slate-100',
-  accent: 'text-blue-600 dark:text-blue-400',
+  surface:'bg-nb-white',
+  text:'text-nb-black/10',
+  accent:'text-nb-blue',
 };
 
 export interface LoadingStateProps {
   /** Optional status message */
   message?: string;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?:'sm' |'md' |'lg';
   /** Full container height (centered) */
   fullHeight?: boolean;
   /** Show skeleton placeholder instead of spinner */
@@ -50,9 +50,9 @@ export interface LoadingStateProps {
 }
 
 const sizeClasses = {
-  sm: { icon: 'text-lg', spinner: 'w-5 h-5', text: 'text-sm' },
-  md: { icon: 'text-2xl', spinner: 'w-8 h-8', text: 'text-base' },
-  lg: { icon: 'text-4xl', spinner: 'w-12 h-12', text: 'text-lg' },
+  sm: { icon:'text-lg', spinner:'w-5 h-5', text:'text-sm' },
+  md: { icon:'text-2xl', spinner:'w-8 h-8', text:'text-base' },
+  lg: { icon:'text-4xl', spinner:'w-12 h-12', text:'text-lg' },
 };
 
 /**
@@ -68,26 +68,26 @@ const ProgressBar: React.FC<{
   return (
     <div className="w-full max-w-xs">
       <div className="flex justify-between items-center mb-1.5">
-        <span className={`text-xs ${cx?.textMuted || 'text-slate-500'}`}>
+        <span className={`text-xs ${cx?.textMuted ||'text-nb-black/50'}`}>
           Processing...
         </span>
-        <span className={`text-xs font-semibold ${fieldMode ? 'text-blue-400' : 'text-blue-600'}`}>
+        <span className={`text-xs font-semibold ${fieldMode ?'text-nb-blue' :'text-nb-blue'}`}>
           {Math.round(clampedProgress)}%
         </span>
       </div>
       <div className={`
-        h-2 rounded-full overflow-hidden
-        ${fieldMode ? 'bg-slate-800' : 'bg-slate-200'}
-      `}>
+        h-2  overflow-hidden
+        ${fieldMode ?'bg-nb-black' :'bg-nb-cream'}
+`}>
         <div
           className={`
-            h-full rounded-full transition-all duration-300 ease-out
+            h-full  transition-nb  ease-out
             ${fieldMode 
-              ? 'bg-gradient-to-r from-blue-600 to-blue-400' 
-              : 'bg-gradient-to-r from-blue-600 to-blue-400'
+              ?'bg-gradient-to-r from-nb-blue to-blue-400' 
+              :'bg-gradient-to-r from-nb-blue to-blue-400'
             }
-          `}
-          style={{ width: `${clampedProgress}%` }}
+`}
+          style={{ width:`${clampedProgress}%` }}
         />
       </div>
     </div>
@@ -111,11 +111,11 @@ const ProgressBar: React.FC<{
  * />
  */
 export const LoadingState: React.FC<LoadingStateProps> = ({
-  message = 'Loading...',
-  size = 'md',
+  message ='Loading...',
+  size ='md',
   fullHeight = false,
   skeleton = false,
-  className = '',
+  className ='',
   cx = defaultCx,
   fieldMode: _fieldMode = false,
   progress,
@@ -130,13 +130,13 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
       <div
         className={`
           animate-pulse
-          ${fullHeight ? 'h-full flex items-center justify-center' : ''}
+          ${fullHeight ?'h-full flex items-center justify-center' :''}
           ${className}
-        `}
+`}
         role="status"
         aria-label={message}
       >
-        <div className={`${cx.subtleBg} rounded-md w-full h-24`} />
+        <div className={`${cx.subtleBg} w-full h-24`} />
       </div>
     );
   }
@@ -145,9 +145,9 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     <div
       className={`
         flex flex-col items-center justify-center gap-4
-        ${fullHeight ? 'h-full min-h-[200px]' : 'py-8'}
+        ${fullHeight ?'h-full min-h-[200px]' :'py-8'}
         ${className}
-      `}
+`}
       role="status"
       aria-live="polite"
     >
@@ -160,12 +160,12 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           <div
             className={`
               ${sizeClass.spinner}
-              rounded-full
-              border-2 ${_fieldMode ? 'border-slate-700' : 'border-slate-200'}
+              
+              border-2 ${_fieldMode ?'border-nb-black/80' :'border-nb-black/20'}
               border-t-transparent
               animate-spin
-            `}
-            style={{ animationDuration: `${UI_TIMING.animation * 2}ms` }}
+`}
+            style={{ animationDuration:`${UI_TIMING.animation * 2}ms` }}
             aria-hidden="true"
           />
 
@@ -174,8 +174,8 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
             className={`
               absolute inset-0
               flex items-center justify-center
-              ${sizeClass.icon} ${cx.textMuted || 'text-slate-400'}
-            `}
+              ${sizeClass.icon} ${cx.textMuted ||'text-nb-black/40'}
+`}
           >
             <Icon name="refresh" className="animate-pulse" aria-hidden="true" />
           </div>
@@ -184,11 +184,11 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
 
       {/* Message */}
       <div className="text-center">
-        <p className={`${sizeClass.text} ${cx.textMuted || 'text-slate-500'} font-medium`}>
+        <p className={`${sizeClass.text} ${cx.textMuted ||'text-nb-black/50'} font-medium`}>
           {message}
         </p>
         {statusText && (
-          <p className={`text-xs mt-1 ${cx.textMuted || 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${cx.textMuted ||'text-nb-black/40'}`}>
             {statusText}
           </p>
         )}

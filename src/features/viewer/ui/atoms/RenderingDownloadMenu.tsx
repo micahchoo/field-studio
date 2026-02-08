@@ -67,13 +67,13 @@ export const RenderingDownloadMenu: React.FC<RenderingDownloadMenuProps> = ({
       />
 
       {open && (
-        <div className={`absolute right-0 top-full mt-1 z-30 min-w-[200px] rounded-lg shadow-lg border py-1 ${
+        <div className={`absolute right-0 top-full mt-1 z-30 min-w-[200px] shadow-brutal border py-1 ${
           fieldMode
-            ? 'bg-slate-900 border-slate-700'
-            : 'bg-white border-slate-200'
+            ? 'bg-nb-black border-nb-black/80'
+            : 'bg-nb-white border-nb-black/20'
         }`}>
           <div className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider ${
-            fieldMode ? 'text-slate-500' : 'text-slate-400'
+            fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'
           }`}>
             Downloads
           </div>
@@ -91,16 +91,16 @@ export const RenderingDownloadMenu: React.FC<RenderingDownloadMenuProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm transition-nb ${
                   fieldMode
-                    ? 'text-slate-300 hover:bg-slate-800'
-                    : 'text-slate-600 hover:bg-slate-50'
+                    ? 'text-nb-black/30 hover:bg-nb-black'
+                    : 'text-nb-black/60 hover:bg-nb-white'
                 }`}
               >
                 <Icon name="description" className="text-base" />
                 <span className="flex-1">{label}</span>
                 {item.format && (
-                  <span className={`text-[10px] ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                  <span className={`text-[10px] ${fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'}`}>
                     {FORMAT_LABELS[item.format] || item.format}
                   </span>
                 )}

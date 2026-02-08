@@ -73,7 +73,7 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
         onClick={() => setShowMenu(!showMenu)}
         variant="ghost"
         size="sm"
-        className={`p-1 ${cx?.iconButton ?? 'text-slate-400 hover:text-slate-600'}`}
+        className={`p-1 ${cx?.iconButton ??'text-nb-black/40 hover:text-nb-black/60'}`}
       />
 
       {showMenu && (
@@ -86,7 +86,7 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
           />
           {/* Menu dropdown */}
           <div
-            className={`absolute right-0 top-full mt-1 w-48 border ${cx?.surface ?? 'bg-white border-slate-200'} rounded-lg shadow-lg z-20 py-1`}
+            className={`absolute right-0 top-full mt-1 w-48 border ${cx?.surface ??'bg-nb-white border-nb-black/20'} shadow-brutal z-20 py-1`}
             role="menu"
           >
             {onAddSubCollection && (
@@ -94,10 +94,10 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
                 onClick={() => handleAction(onAddSubCollection)}
                 variant="ghost"
                 size="sm"
-                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ?? 'text-slate-700'} hover:bg-slate-50 flex items-center gap-2 justify-start`}
+                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ??'text-nb-black/80'} hover:bg-nb-white flex items-center gap-2 justify-start`}
                 role="menuitem"
               >
-                <Icon name="create_new_folder" className={cx?.textMuted ?? 'text-slate-400'} />
+                <Icon name="create_new_folder" className={cx?.textMuted ??'text-nb-black/40'} />
                 Add sub-collection
               </Button>
             )}
@@ -106,10 +106,10 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
                 onClick={() => handleAction(onRename)}
                 variant="ghost"
                 size="sm"
-                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ?? 'text-slate-700'} hover:bg-slate-50 flex items-center gap-2 justify-start`}
+                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ??'text-nb-black/80'} hover:bg-nb-white flex items-center gap-2 justify-start`}
                 role="menuitem"
               >
-                <Icon name="edit" className={cx?.textMuted ?? 'text-slate-400'} />
+                <Icon name="edit" className={cx?.textMuted ??'text-nb-black/40'} />
                 Rename
               </Button>
             )}
@@ -118,10 +118,10 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
                 onClick={() => handleAction(onDelete)}
                 variant="ghost"
                 size="sm"
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 justify-start"
+                className="w-full px-4 py-2 text-left text-sm text-nb-red hover:bg-nb-red/10 flex items-center gap-2 justify-start"
                 role="menuitem"
               >
-                <Icon name="delete" className="text-red-400" />
+                <Icon name="delete" className="text-nb-red" />
                 Delete
               </Button>
             )}

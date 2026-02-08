@@ -82,11 +82,11 @@ export const CollectionCardHeader: React.FC<CollectionCardHeaderProps> = ({
       {/* Icon */}
       <div
         className={`
-          w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-          ${isRoot ? 'bg-amber-200' : 'bg-amber-100'}
-        `}
+          w-10 h-10  flex items-center justify-center flex-shrink-0
+          ${isRoot ?'bg-nb-orange/30' :'bg-nb-orange/20'}
+`}
       >
-        <Icon name={isRoot ? 'folder_special' : 'folder'} className="text-xl text-amber-600" />
+        <Icon name={isRoot ?'folder_special' :'folder'} className="text-xl text-nb-orange" />
       </div>
 
       {/* Name and counts */}
@@ -100,24 +100,24 @@ export const CollectionCardHeader: React.FC<CollectionCardHeaderProps> = ({
         ) : (
           <>
             <div
-              className={`font-medium ${cx?.text ?? 'text-slate-800'} truncate ${!isRoot && onRename ? 'cursor-pointer hover:text-blue-600' : ''}`}
+              className={`font-medium ${cx?.text ??'text-nb-black'} truncate ${!isRoot && onRename ?'cursor-pointer hover:text-nb-blue' :''}`}
               onClick={handleNameClick}
-              title={isRoot ? name : onRename ? 'Click to rename' : name}
+              title={isRoot ? name : onRename ?'Click to rename' : name}
             >
               {name}
               {isRoot && (
-                <span className="ml-2 text-[10px] text-amber-600 font-bold">(ROOT)</span>
+                <span className="ml-2 text-[10px] text-nb-orange font-bold">(ROOT)</span>
               )}
             </div>
-            <div className={`flex items-center gap-2 text-[11px] ${cx?.textMuted ?? 'text-slate-500'}`}>
+            <div className={`flex items-center gap-2 text-[11px] ${cx?.textMuted ??'text-nb-black/50'}`}>
               <span>
-                {manifestCount} {manifestCount === 1 ? 'manifest' : 'manifests'}
+                {manifestCount} {manifestCount === 1 ?'manifest' :'manifests'}
               </span>
               {subCollectionCount > 0 && (
                 <>
-                  <span className={cx?.label ?? 'text-slate-400'}>|</span>
+                  <span className={cx?.label ??'text-nb-black/40'}>|</span>
                   <span>
-                    {subCollectionCount} sub-{subCollectionCount === 1 ? 'collection' : 'collections'}
+                    {subCollectionCount} sub-{subCollectionCount === 1 ?'collection' :'collections'}
                   </span>
                 </>
               )}

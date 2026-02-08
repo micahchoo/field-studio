@@ -57,13 +57,13 @@ export interface ViewContainerProps {
  * <ViewContainer
  *   title="Archive"
  *   icon="inventory_2"
- *   filter={{ value: filter, onChange: setFilter, placeholder: "Search items..." }}
+ *   filter={{ value: filter, onChange: setFilter, placeholder:"Search items..." }}
  *   viewToggle={{
  *     value: viewMode,
  *     onChange: setViewMode,
  *     options: [
- *       { value: 'grid', icon: 'grid_view', label: 'Grid' },
- *       { value: 'list', icon: 'list', label: 'List' },
+ *       { value:'grid', icon:'grid_view', label:'Grid' },
+ *       { value:'list', icon:'list', label:'List' },
  *     ]
  *   }}
  *   headerActions={<Button onClick={onCreate}>Create</Button>}
@@ -72,9 +72,9 @@ export interface ViewContainerProps {
  * </ViewContainer>
  */
 const defaultCx: ContextualClassNames = {
-  surface: 'bg-white dark:bg-slate-900',
-  text: 'text-slate-900 dark:text-slate-100',
-  accent: 'text-blue-600 dark:text-blue-400',
+  surface:'bg-nb-white',
+  text:'text-nb-black/10',
+  accent:'text-nb-blue',
 };
 
 export const ViewContainer: React.FC<ViewContainerProps> = ({
@@ -85,8 +85,8 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
   viewToggle,
   headerActions,
   header,
-  className = '',
-  contentClassName = '',
+  className ='',
+  contentClassName ='',
   cx = defaultCx,
   fieldMode = false,
 }) => {
@@ -99,9 +99,9 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
       className={`
         flex flex-col h-full
         ${cx.surface}
-        rounded-lg overflow-hidden
+         overflow-hidden
         ${className}
-      `}
+`}
     >
       {/* Header */}
       {hasHeader && (
@@ -115,7 +115,7 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
               px-4 py-3
               border-b ${cx.border}
               ${cx.headerBg}
-            `}
+`}
           >
             {/* Title */}
             {(title || icon) && (
@@ -141,7 +141,7 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
                 <SearchField
                   value={filter.value}
                   onChange={filter.onChange}
-                  placeholder={filter.placeholder || 'Search...'}
+                  placeholder={filter.placeholder ||'Search...'}
                   showClear
                   cx={cx}
                   fieldMode={fieldMode}
@@ -178,7 +178,7 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
         className={`
           flex-1 overflow-auto
           ${contentClassName}
-        `}
+`}
       >
         {children}
       </div>

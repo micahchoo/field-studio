@@ -252,20 +252,10 @@ export function containsDangerousContent(content: unknown): boolean {
   }
   
   const text = String(content);
-  
-  // Check for script tags
-  const hasScriptTags = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(text);
-  
-  // Check for event handlers
-  const hasEventHandlers = /\s(on\w+)\s*=/i.test(text);
-  
-  // Check for javascript: protocol
-  const hasJsProtocol = /javascript:/i.test(text);
-  
-  // Check for data: URI with executable content
-  const hasDataUri = /data:text\/html/i.test(text);
-  
-  return hasScriptTags || hasEventHandlers || hasJsProtocol || hasDataUri;
+
+  // Single pass: script tags, event handlers, javascript: protocol, data: HTML URI
+  const dangerousPattern = /<script\b|\son\w+\s*=|javascript:|data:text\/html/i;
+  return dangerousPattern.test(text);
 }
 
 /**

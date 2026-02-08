@@ -14,6 +14,11 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          // Annotorious imports 'openseadragon' as an ES module, but the app
+          // loads OSD v4.1.0 from CDN as a global. Without this alias Vite
+          // resolves to node_modules/openseadragon v5.0.1, causing a version
+          // mismatch that breaks the GL annotation overlay rendering.
+          'openseadragon': path.resolve(__dirname, 'src/shared/lib/openseadragon-shim.ts'),
         }
       },
       optimizeDeps: {

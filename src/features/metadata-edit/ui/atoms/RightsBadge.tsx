@@ -42,8 +42,8 @@ export const RightsBadge: React.FC<RightsBadgeProps> = ({
   if (!value) {
     return (
       <span
-        className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-          fieldMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-500'
+        className={`text-[10px] px-2 py-0.5 font-semibold ${
+          fieldMode ? 'bg-nb-black text-nb-black/50' : 'bg-nb-cream text-nb-black/50'
         } ${className}`}
       >
         No rights statement
@@ -58,21 +58,21 @@ export const RightsBadge: React.FC<RightsBadgeProps> = ({
   const getStyle = () => {
     if (value.includes('creativecommons.org')) {
       if (value.includes('zero')) {
-        return fieldMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800';
+        return fieldMode ? 'bg-nb-green/30 text-nb-green' : 'bg-nb-green/20 text-nb-green';
       }
-      return fieldMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800';
+      return fieldMode ? 'bg-nb-blue/30 text-nb-blue' : 'bg-nb-blue/20 text-nb-blue';
     }
     if (value.includes('rightsstatements.org')) {
       if (value.includes('InC')) {
-        return fieldMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800';
+        return fieldMode ? 'bg-nb-red/30 text-nb-red' : 'bg-nb-red/20 text-nb-red';
       }
-      return fieldMode ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-100 text-amber-800';
+      return fieldMode ? 'bg-nb-orange/10 text-nb-orange' : 'bg-nb-orange/20 text-nb-orange';
     }
-    return fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-700';
+    return fieldMode ? 'bg-nb-black text-nb-black/40' : 'bg-nb-cream text-nb-black/80';
   };
 
-  const baseClass = `text-[10px] px-2 py-0.5 rounded-full font-semibold ${getStyle()} ${
-    interactive ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+  const baseClass = `text-[10px] px-2 py-0.5 font-semibold ${getStyle()} ${
+    interactive ? 'cursor-pointer hover:opacity-80 transition-nb' : ''
   } ${className}`;
 
   return (

@@ -44,7 +44,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const errorCount = validationIssues.filter(i => i.level === 'error').length;
   const warningCount = validationIssues.filter(i => i.level === 'warning').length;
   
-  const statusColor = errorCount > 0 ? 'text-red-500' : warningCount > 0 ? 'text-amber-500' : 'text-green-500';
+  const statusColor = errorCount > 0 ? 'text-nb-red' : warningCount > 0 ? 'text-nb-orange' : 'text-nb-green';
   const statusIcon = errorCount > 0 ? 'error' : warningCount > 0 ? 'warning' : 'verified';
   const statusText = errorCount > 0 ? `${errorCount} Errors` : warningCount > 0 ? `${warningCount} Warnings` : 'IIIF Valid';
 
@@ -65,21 +65,21 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const hasMultiSelection = effectiveSelectionCount > 0;
 
   return (
-    <div className="h-7 bg-slate-950 border-t border-slate-800 flex items-center justify-between px-3 text-[11px] text-slate-400 select-none z-50">
+    <div className="h-7 bg-nb-black border-t border-nb-black flex items-center justify-between px-3 text-[11px] text-nb-black/40 select-none z-50">
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5 hover:text-slate-200 cursor-pointer transition-colors" title="Total items in archive">
+        <div className="flex items-center gap-1.5 hover:text-nb-black/20 cursor-pointer transition-nb" title="Total items in archive">
             <Icon name="inventory_2" className="text-[14px]" />
             <span>{totalItems} Items</span>
         </div>
         
         {showSelectionCount && hasMultiSelection && (
-          <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800">
+          <div className="flex items-center gap-1.5 pl-3 border-l border-nb-black">
             <Icon name="check_box" className="text-[14px] text-iiif-blue" />
             <span className="text-iiif-blue font-medium">{effectiveSelectionCount} selected</span>
             {onClearSelection && (
               <Button variant="ghost" size="bare"
                 onClick={onClearSelection}
-                className="ml-1 hover:text-white transition-colors"
+                className="ml-1 hover:text-white transition-nb"
                 title="Clear selection"
               >
                 <Icon name="close" className="text-[12px]" />
@@ -89,8 +89,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         )}
         
         {selectedItem && !hasMultiSelection && (
-             <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800 text-slate-300">
-                <Icon name="check_circle" className="text-[14px] text-green-500" />
+             <div className="flex items-center gap-1.5 pl-3 border-l border-nb-black text-nb-black/30">
+                <Icon name="check_circle" className="text-[14px] text-nb-green" />
                 <span className="truncate max-w-[200px]">Selected: {getIIIFValue(selectedItem.label, 'none') || 'Untitled'}</span>
             </div>
         )}
@@ -98,11 +98,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       <div className="flex items-center gap-4">
         {/* Save Status Indicator */}
-        <div className="flex items-center gap-1.5 px-3 border-r border-slate-800" title="Project Save Status">
-            {saveStatus === 'saving' && <Icon name="sync" className="text-[14px] animate-spin text-blue-400"/>}
-            {saveStatus === 'saved' && <Icon name="cloud_done" className="text-[14px] text-slate-500"/>}
-            {saveStatus === 'error' && <Icon name="cloud_off" className="text-[14px] text-red-500"/>}
-            <span className={saveStatus === 'error' ? 'text-red-500' : saveStatus === 'saving' ? 'text-blue-400' : 'text-slate-500'}>
+        <div className="flex items-center gap-1.5 px-3 border-r border-nb-black" title="Project Save Status">
+            {saveStatus === 'saving' && <Icon name="sync" className="text-[14px] animate-spin text-nb-blue"/>}
+            {saveStatus === 'saved' && <Icon name="cloud_done" className="text-[14px] text-nb-black/50"/>}
+            {saveStatus === 'error' && <Icon name="cloud_off" className="text-[14px] text-nb-red"/>}
+            <span className={saveStatus === 'error' ? 'text-nb-red' : saveStatus === 'saving' ? 'text-nb-blue' : 'text-nb-black/50'}>
                 {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'error' ? 'Save Failed' : 'Saved'}
             </span>
         </div>
@@ -116,11 +116,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             <span>{statusText}</span>
         </div>
         
-        <div className="pl-3 border-l border-slate-800 flex items-center gap-2" title={storageUsage ? `${formatBytes(storageUsage.usage)} / ${formatBytes(storageUsage.quota)}` : 'Storage unknown'}>
+        <div className="pl-3 border-l border-nb-black flex items-center gap-2" title={storageUsage ? `${formatBytes(storageUsage.usage)} / ${formatBytes(storageUsage.quota)}` : 'Storage unknown'}>
              <span>Storage</span>
-             <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+             <div className="w-16 h-1.5 bg-nb-black overflow-hidden">
                  <div 
-                    className={`h-full ${usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : 'bg-slate-500'}`} 
+                    className={`h-full ${usagePercent > 80 ? 'bg-nb-red' : usagePercent > 50 ? 'bg-nb-orange' : 'bg-nb-black/40'}`} 
                     style={{ width: `${usagePercent}%` }}
                  ></div>
              </div>

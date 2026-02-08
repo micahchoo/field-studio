@@ -30,6 +30,7 @@ import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { PipelineBanner } from '@/src/shared/ui/molecules/PipelineBanner';
 import { Button } from '@/ui/primitives/Button';
 import { Icon } from '@/src/shared/ui/atoms';
+import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { usePipeline } from '@/src/shared/lib/hooks';
 import {
   extractColumns,
@@ -52,6 +53,8 @@ export interface MetadataViewProps {
   filterIds?: string[] | null;
   /** Called to clear ID filter */
   onClearFilter?: () => void;
+  /** Abstraction level for showing/hiding advanced tabs */
+  abstractionLevel?: 'simple' | 'standard' | 'advanced';
 }
 
 // Column width configuration for better readability
@@ -91,6 +94,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
   onUpdate,
   filterIds: filterIdsProp,
   onClearFilter,
+  abstractionLevel = 'standard',
 }) => {
   // Pipeline state - provides cross-view selection
   const pipeline = usePipeline();
@@ -243,6 +247,9 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
     { value: 'Collection', label: 'Collections', icon: 'folder' },
     { value: 'Manifest', label: 'Manifests', icon: 'photo_album' },
     { value: 'Canvas', label: 'Items', icon: 'image' },
+    ...(abstractionLevel === 'advanced' ? [
+      { value: 'All Entities' as ResourceTab, label: 'All Entities', icon: 'data_object' },
+    ] : []),
   ];
 
   // Empty state when no root
@@ -283,16 +290,16 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
         cx={cx}
         fieldMode={fieldMode}
         header={
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode px-4 py-3 border-b border-nb-black/20">
           {/* Resource type tabs */}
-          <div className={`flex rounded-lg ${fieldMode ? 'bg-yellow-900/40' : 'bg-slate-100'} p-1`}>
+          <div className={`flex ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream'} p-1`}>
             {tabs.map((tab) => (
               <Button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
                 variant={activeTab === tab.value ? 'primary' : 'ghost'}
                 size="sm"
-                className={`text-xs font-medium ${activeTab === tab.value ? '' : fieldMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600'}`}
+                className={`text-xs font-medium ${activeTab === tab.value ? '' : fieldMode ? 'text-nb-black/40 hover:text-nb-black/20' : 'text-nb-black/60'}`}
               >
                 {tab.label}
               </Button>
@@ -310,7 +317,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
 
           {/* ID filter indicator */}
           {filterIds && filterIds.length > 0 && onClearFilter && (
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${fieldMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'}`}>
+            <div className={`flex items-center gap-2 px-3 py-1.5 text-xs ${fieldMode ? 'bg-nb-blue/30 text-nb-blue/60' : 'bg-nb-blue/10 text-nb-blue'}`}>
               <span>{filterIds.length} selected</span>
               <Button variant="ghost" size="bare"
                 onClick={onClearFilter}
@@ -358,7 +365,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
       {/* Spreadsheet table with improved readability */}
       <div 
         ref={tableContainerRef}
-        className={`flex-1 overflow-auto ${fieldMode ? 'bg-black' : 'bg-white'} rounded-lg border ${cx.border}`}
+        className={`flex-1 overflow-auto ${fieldMode ? 'bg-nb-black' : 'bg-nb-white'}  border ${cx.border}`}
       >
         {filteredItems.length === 0 ? (
           <EmptyState
@@ -375,7 +382,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
           />
         ) : (
           <table className="w-full text-sm border-collapse">
-            <thead className={`sticky top-0 z-10 ${fieldMode ? 'bg-yellow-900/40' : 'bg-slate-50'}`}>
+            <thead className={`sticky top-0 z-10 ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-white'}`}>
               <tr>
                 {/* Row number column */}
                 <th 
@@ -397,7 +404,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
                       className={`
                         px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider
                         ${cx.textMuted} border-b ${cx.border}
-                        ${col === 'label' ? (fieldMode ? 'bg-yellow-900/30' : 'bg-slate-100') : ''}
+                        ${col === 'label' ? (fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream') : ''}
                       `}
                       style={{ width: config.width, minWidth: config.minWidth }}
                     >
@@ -413,7 +420,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
                     className={`
                       px-4 py-2 text-left text-[9px] font-semibold uppercase tracking-wider
                       ${cx.textMuted} border-b ${cx.border}
-                      ${fieldMode ? 'bg-yellow-900/20' : 'bg-slate-100/50'}
+                      ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream/50'}
                     `}
                   >
                     Descriptive Metadata
@@ -427,7 +434,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
                     className={`
                       px-4 py-2 text-left text-[9px] font-semibold uppercase tracking-wider
                       ${cx.textMuted} border-b ${cx.border}
-                      ${fieldMode ? 'bg-yellow-900/20' : 'bg-slate-100/50'}
+                      ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream/50'}
                     `}
                   >
                     Custom Fields ({columnGroups.custom.length})
@@ -437,7 +444,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
 
               {/* Second header row for individual column names in groups */}
               {(columnGroups.descriptive.length > 0 || columnGroups.custom.length > 0) && (
-                <tr className={`${fieldMode ? 'bg-yellow-900/20' : 'bg-slate-50'}`}>
+                <tr className={`${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-white'}`}>
                   <th colSpan={columnGroups.core.length + 1}></th>
                   {columnGroups.descriptive.map((col) => {
                     const config = getColumnConfig(col);
@@ -478,8 +485,8 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
                   key={item.id}
                   className={`
                     border-b ${cx.border} 
-                    ${fieldMode ? 'hover:bg-yellow-900/30' : 'hover:bg-slate-50'} 
-                    transition-colors
+                    ${fieldMode ? 'hover:bg-nb-yellow/20' : 'hover:bg-nb-white'} 
+                    transition-nb
                   `}
                 >
                   {/* Row number */}
@@ -495,7 +502,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
                     return (
                       <td
                         key={col}
-                        className={`px-4 py-2 ${col === 'label' ? (fieldMode ? 'bg-yellow-900/20' : 'bg-slate-50/50') : ''}`}
+                        className={`px-4 py-2 ${col === 'label' ? (fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream') : ''}`}
                         style={{ width: config.width, minWidth: config.minWidth }}
                         onClick={() => setEditingCell({ itemId: item.id, column: col })}
                       >
@@ -507,23 +514,17 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
                             {item.id.split('/').pop() || item.id}
                           </code>
                         )}
-                        {col === 'type' && (
-                          <span className={`
-                            inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase
-                            ${fieldMode
-                              ? item.type === 'Collection' ? 'bg-purple-900/50 text-purple-300'
-                                : item.type === 'Manifest' ? 'bg-blue-900/50 text-blue-300'
-                                : item.type === 'Canvas' ? 'bg-green-900/50 text-green-300'
-                                : ''
-                              : item.type === 'Collection' ? 'bg-purple-100 text-purple-700'
-                                : item.type === 'Manifest' ? 'bg-blue-100 text-blue-700'
-                                : item.type === 'Canvas' ? 'bg-green-100 text-green-700'
-                                : ''
-                            }
-                          `}>
-                            {item.type}
-                          </span>
-                        )}
+                        {col === 'type' && (() => {
+                          const typeConfig = RESOURCE_TYPE_CONFIG[item.type];
+                          const badgeClasses = typeConfig
+                            ? `${typeConfig.bgClass} ${typeConfig.colorClass}`
+                            : 'bg-nb-cream text-nb-black/60';
+                          return (
+                            <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium uppercase ${badgeClasses}`}>
+                              {item.type}
+                            </span>
+                          );
+                        })()}
                         {col === 'label' && (
                           <EditableCell
                             value={item.label}
@@ -619,7 +620,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
       <div className={`
         flex items-center justify-between px-4 py-3 
         border-t ${cx.border}
-        ${fieldMode ? 'bg-yellow-900/30' : 'bg-slate-50'}
+        ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-white'}
       `}>
         <div className={`text-xs ${cx.textMuted}`}>
           {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
@@ -628,7 +629,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
         
         {hasUnsavedChanges && (
           <div className="flex items-center gap-3">
-            <span className={`text-xs ${fieldMode ? 'text-amber-400' : 'text-amber-600'}`}>
+            <span className={`text-xs ${fieldMode ? 'text-nb-orange' : 'text-nb-orange'}`}>
               Unsaved changes
             </span>
             <Button
@@ -701,10 +702,10 @@ const EditableCell: React.FC<EditableCellProps> = ({
         className={`
           w-full px-2 py-1 text-sm rounded
           ${fieldMode
-            ? 'bg-yellow-900/30 border-yellow-700 text-white focus:border-yellow-500'
-            : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
+            ? 'bg-nb-yellow/20 border-nb-yellow text-white focus:border-nb-yellow'
+            : 'bg-nb-white border-nb-black/20 text-nb-black focus:border-nb-blue'
           }
-          border outline-none focus:ring-2 focus:ring-blue-500/20
+          border outline-none focus:ring-2 focus:ring-nb-blue/20
         `}
       />
     );
@@ -714,7 +715,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
     <span 
       className={`
         ${truncate ? 'truncate block max-w-[200px]' : ''}
-        ${!value ? 'text-slate-400 italic' : ''}
+        ${!value ? 'text-nb-black/40 italic' : ''}
         ${className}
       `}
       title={value}

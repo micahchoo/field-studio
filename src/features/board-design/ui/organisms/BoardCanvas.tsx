@@ -7,15 +7,10 @@
  * IDEAL OUTCOME: Smooth pan/zoom, intuitive item dragging, clear connection lines
  * FAILURE PREVENTED: Lost items off-canvas, unclear drop targets, janky animations
  *
- * ATOMIC DESIGN COMPLIANCE:
- * - Uses BoardNodeLayer, ConnectionLayer, CanvasGrid, BoardControls molecules
- * - No inline rendering of atoms
- * - Under 120 lines
- *
  * @module features/board-design/ui/organisms/BoardCanvas
  */
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import type { IIIFItem } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import {
@@ -31,43 +26,28 @@ import { BoardControls } from '../molecules/BoardControls';
 import { useCanvasDrag } from '../../hooks/useCanvasDrag';
 
 export interface BoardCanvasProps {
-  /** Items to render on the canvas */
   items: BoardItem[];
-  /** Connections between items */
   connections: Connection[];
-  /** Currently selected item ID */
   selectedItemId: string | null;
-  /** ID of item being connected from */
   connectingFrom: string | null;
-  /** Active tool mode */
   activeTool: 'select' | 'connect' | 'note' | 'text';
-  /** Viewport state (pan/zoom) */
   viewport: { x: number; y: number; zoom: number };
-  /** Viewport change callback */
   onViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
-  /** Item selection callback */
   onSelectItem: (id: string | null) => void;
-  /** Item move callback */
   onMoveItem: (id: string, position: { x: number; y: number }) => void;
-  /** Connection start callback */
+  onResizeItem?: (id: string, size: { w: number; h: number }) => void;
   onStartConnection: (fromId: string) => void;
-  /** Connection complete callback */
   onCompleteConnection: (toId: string, type?: ConnectionType) => void;
-  /** Add item callback */
   onAddItem: (resource: IIIFItem, position: { x: number; y: number }) => void;
-  /** Root item for drag-drop resources */
+  onAddNote?: (position: { x: number; y: number }) => void;
   root: IIIFItem | null;
-  /** Background mode */
+  onDoubleClickItem?: (id: string) => void;
+  onContextMenuItem?: (e: React.MouseEvent, id: string) => void;
   bgMode?: 'grid' | 'dark' | 'light';
-  /** Contextual styles from template */
   cx: ContextualClassNames;
-  /** Current field mode */
   fieldMode: boolean;
 }
 
-/**
- * BoardCanvas Organism
- */
 export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
   (
     {
@@ -80,22 +60,38 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       onViewportChange,
       onSelectItem,
       onMoveItem,
+      onResizeItem,
       onStartConnection,
-      onCompleteConnection: _onCompleteConnection,
-      onAddItem: _onAddItem,
-      root: _root,
+      onCompleteConnection,
+      onAddNote,
+      onDoubleClickItem,
+      onContextMenuItem,
       bgMode = 'grid',
       cx,
       fieldMode,
     },
     ref
   ) => {
+    // Resize tracking state
+    const resizeRef = useRef<{
+      itemId: string;
+      direction: string;
+      startX: number;
+      startY: number;
+      startW: number;
+      startH: number;
+      startItemX: number;
+      startItemY: number;
+    } | null>(null);
+    const [isResizing, setIsResizing] = useState(false);
+
     const {
       setRefs,
       selectedConnectionId,
-      handleCanvasClick,
-      handleMouseMove,
-      handleMouseUp,
+      screenToCanvas,
+      handleCanvasClick: basCanvasClick,
+      handleMouseMove: basMouseMove,
+      handleMouseUp: basMouseUp,
       handleDragStart,
       handleSelectConnection,
     } = useCanvasDrag({
@@ -114,11 +110,117 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       }
     };
 
-    // Background mode classes
+    // Handle canvas click — also handles note tool clicks
+    const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+      if (activeTool === 'note' && onAddNote) {
+        const pos = screenToCanvas(e.clientX, e.clientY);
+        onAddNote(pos);
+        return;
+      }
+      basCanvasClick(e);
+    }, [activeTool, onAddNote, screenToCanvas, basCanvasClick]);
+
+    // Handle resize start from BoardNode
+    const handleResizeStart = useCallback((
+      itemId: string,
+      direction: string,
+      startPos: { x: number; y: number },
+      startSize: { w: number; h: number }
+    ) => {
+      const item = items.find(i => i.id === itemId);
+      resizeRef.current = {
+        itemId,
+        direction,
+        startX: startPos.x,
+        startY: startPos.y,
+        startW: startSize.w,
+        startH: startSize.h,
+        startItemX: item?.x || 0,
+        startItemY: item?.y || 0,
+      };
+      setIsResizing(true);
+    }, [items]);
+
+    // Handle mouse move — resize or drag
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+      if (isResizing && resizeRef.current && onResizeItem) {
+        const r = resizeRef.current;
+        const dx = (e.clientX - r.startX) / viewport.zoom;
+        const dy = (e.clientY - r.startY) / viewport.zoom;
+
+        let newW = r.startW;
+        let newH = r.startH;
+
+        // Calculate new size based on resize direction
+        if (r.direction.includes('e')) newW = r.startW + dx;
+        if (r.direction.includes('w')) newW = r.startW - dx;
+        if (r.direction.includes('s')) newH = r.startH + dy;
+        if (r.direction.includes('n')) newH = r.startH - dy;
+
+        onResizeItem(r.itemId, { w: Math.max(80, newW), h: Math.max(60, newH) });
+
+        // For nw/ne/sw corners, also move position
+        if (r.direction.includes('w') || r.direction.includes('n')) {
+          const newX = r.direction.includes('w') ? r.startItemX + dx : r.startItemX;
+          const newY = r.direction.includes('n') ? r.startItemY + dy : r.startItemY;
+          onMoveItem(r.itemId, { x: newX, y: newY });
+        }
+        return;
+      }
+      basMouseMove(e);
+    }, [isResizing, viewport.zoom, onResizeItem, onMoveItem, basMouseMove]);
+
+    // Handle mouse up — end resize or drag
+    const handleMouseUp = useCallback(() => {
+      if (isResizing) {
+        resizeRef.current = null;
+        setIsResizing(false);
+        return;
+      }
+      basMouseUp();
+    }, [isResizing, basMouseUp]);
+
+    // Handle node click in connect mode — complete connection
+    const handleNodeSelect = useCallback((id: string) => {
+      if (activeTool === 'connect' && connectingFrom && connectingFrom !== id) {
+        onCompleteConnection(id);
+        return;
+      }
+      onSelectItem(id);
+    }, [activeTool, connectingFrom, onCompleteConnection, onSelectItem]);
+
+    // Handle node connect start (anchor click)
+    const handleConnectStart = useCallback((id: string) => {
+      if (activeTool === 'connect') {
+        onStartConnection(id);
+      }
+    }, [activeTool, onStartConnection]);
+
+    // Compute viewport rect for minimap
+    const viewportRect = useMemo(() => {
+      const width = 800;
+      const height = 600;
+      return {
+        x: -viewport.x / viewport.zoom,
+        y: -viewport.y / viewport.zoom,
+        width: width / viewport.zoom,
+        height: height / viewport.zoom,
+      };
+    }, [viewport]);
+
+    // MiniMap click-to-pan
+    const handleMiniMapPan = useCallback((x: number, y: number) => {
+      onViewportChange({
+        x: -x * viewport.zoom + 400,
+        y: -y * viewport.zoom + 300,
+        zoom: viewport.zoom,
+      });
+    }, [viewport.zoom, onViewportChange]);
+
     const bgModeClasses = {
       grid: cx.canvasBg,
-      dark: 'bg-slate-900',
-      light: 'bg-slate-100',
+      dark: 'bg-nb-black',
+      light: 'bg-nb-cream',
     };
 
     return (
@@ -142,10 +244,8 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
           }}
           className="absolute inset-0"
         >
-          {/* Grid background (only in grid mode) */}
           {bgMode === 'grid' && <CanvasGrid cx={cx} />}
 
-          {/* Connections layer */}
           <ConnectionLayer
             connections={connections}
             items={items}
@@ -155,27 +255,29 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
             fieldMode={fieldMode}
           />
 
-          {/* Nodes layer */}
           <BoardNodeLayer
             items={items}
             selectedItemId={selectedItemId}
             connectingFrom={connectingFrom}
-            onSelectItem={onSelectItem}
+            onSelectItem={handleNodeSelect}
             onDragStart={handleDragStart}
-            onConnectStart={onStartConnection}
+            onConnectStart={handleConnectStart}
+            onResizeStart={onResizeItem ? handleResizeStart : undefined}
+            onDoubleClickItem={onDoubleClickItem}
+            onContextMenuItem={onContextMenuItem}
             cx={cx}
             fieldMode={fieldMode}
           />
         </div>
 
-        {/* MiniMap (optional) */}
         <MiniMap
           items={items}
+          viewportRect={viewportRect}
+          onViewportChange={handleMiniMapPan}
           cx={cx}
           fieldMode={fieldMode}
         />
 
-        {/* Viewport controls */}
         <BoardControls
           viewport={viewport}
           onViewportChange={onViewportChange}

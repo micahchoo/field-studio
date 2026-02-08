@@ -104,7 +104,7 @@ export class ProvenanceService {
    * Generate a unique entry ID
    */
   private generateEntryId(): string {
-    return `prov-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `prov-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
   }
 
   /**

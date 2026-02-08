@@ -220,10 +220,10 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
   }, {} as Record<string, SearchResult[]>);
 
   // Styling based on field mode
-  const bgClass = fieldMode ? 'bg-slate-950' : 'bg-white';
-  const textClass = fieldMode ? 'text-white' : 'text-slate-900';
-  const borderClass = fieldMode ? 'border-slate-800' : 'border-slate-200';
-  const mutedTextClass = fieldMode ? 'text-slate-400' : 'text-slate-500';
+  const bgClass = fieldMode ? 'bg-nb-black' : 'bg-nb-white';
+  const textClass = fieldMode ? 'text-white' : 'text-nb-black';
+  const borderClass = fieldMode ? 'border-nb-black' : 'border-nb-black/20';
+  const mutedTextClass = fieldMode ? 'text-nb-black/40' : 'text-nb-black/50';
 
   if (!searchService) {
     return (
@@ -248,7 +248,7 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
             onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Search within manifest..."
-            className={`w-full pl-10 pr-10 ${fieldMode ? '!bg-slate-900 !border-slate-700 !text-white' : '!bg-white !border-slate-200'}`}
+            className={`w-full pl-10 pr-10 ${fieldMode ? '!bg-nb-black !border-nb-black/80 !text-white' : '!bg-nb-white !border-nb-black/20'}`}
             aria-label="Search within manifest"
             aria-autocomplete="list"
             aria-controls="search-suggestions"
@@ -272,7 +272,7 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
             <ul
               id="search-suggestions"
               role="listbox"
-              className={`absolute top-full left-0 right-0 mt-1 ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} border rounded-lg shadow-lg z-20 max-h-60 overflow-auto`}
+              className={`absolute top-full left-0 right-0 mt-1 ${fieldMode ? 'bg-nb-black border-nb-black/80' : 'bg-nb-white border-nb-black/20'} border  shadow-brutal z-20 max-h-60 overflow-auto`}
             >
               {suggestions.map((term, index) => (
                 <li
@@ -282,8 +282,8 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
                   onClick={() => selectSuggestion(term)}
                   className={`px-4 py-2 cursor-pointer flex items-center justify-between ${
                     index === selectedIndex
-                      ? fieldMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600'
-                      : fieldMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-50'
+                      ? fieldMode ? 'bg-nb-blue text-nb-blue/60' : 'bg-nb-blue/10 text-nb-blue'
+                      : fieldMode ? 'hover:bg-nb-black text-nb-black/30' : 'hover:bg-nb-white'
                   }`}
                 >
                   <span className="text-sm">{term.value}</span>
@@ -301,12 +301,12 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
       <div className="flex-1 overflow-auto">
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="w-6 h-6 border-2 border-nb-black/20 border-t-nb-blue animate-spin"></div>
           </div>
         )}
 
         {error && (
-          <div className={`p-4 m-3 ${fieldMode ? 'bg-red-900/30 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'} border rounded-lg text-sm`}>
+          <div className={`p-4 m-3 ${fieldMode ? 'bg-nb-red/30 border-nb-red text-nb-red/60' : 'bg-nb-red/10 border-nb-red/30 text-nb-red'} border  text-sm`}>
             <Icon name="error" className="inline mr-2" />
             {error}
           </div>
@@ -322,7 +322,7 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
         {!loading && results.length > 0 && (
           <>
             {/* Results Header */}
-            <div className={`px-4 py-2 ${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50'} border-b text-xs font-medium ${mutedTextClass} sticky top-0`}>
+            <div className={`px-4 py-2 ${fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white'} border-b text-xs font-medium ${mutedTextClass} sticky top-0`}>
               {total} result{total !== 1 ? 's' : ''} for "{query}"
             </div>
 
@@ -333,12 +333,12 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
                   key={canvasId}
                   className={`${
                     currentCanvasId === canvasId
-                      ? fieldMode ? 'bg-blue-900/30' : 'bg-blue-50/50'
+                      ? fieldMode ? 'bg-nb-blue/30' : 'bg-nb-blue/10'
                       : ''
                   }`}
                 >
                   {/* Canvas Header */}
-                  <div className={`px-4 py-2 ${fieldMode ? 'bg-slate-900/50' : 'bg-slate-100/50'} text-xs font-medium ${mutedTextClass} flex items-center gap-2`}>
+                  <div className={`px-4 py-2 ${fieldMode ? 'bg-nb-black/50' : 'bg-nb-cream/50'} text-xs font-medium ${mutedTextClass} flex items-center gap-2`}>
                     <Icon name="image" className="text-sm" />
                     <span className="truncate flex-1">
                       {canvasId.split('/').pop()}
@@ -354,10 +354,10 @@ export const ViewerSearchPanel: React.FC<ViewerSearchPanelProps> = ({
                       key={`${result.canvasId}-${index}`}
                       onClick={() => onResultSelect(result)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onResultSelect(result); }}
-                      className={`w-full px-4 py-3 text-left transition-colors group cursor-pointer ${
+                      className={`w-full px-4 py-3 text-left transition-nb group cursor-pointer ${
                         fieldMode
-                          ? 'hover:bg-slate-800 text-slate-300'
-                          : 'hover:bg-slate-50 text-slate-700'
+                          ? 'hover:bg-nb-black text-nb-black/30'
+                          : 'hover:bg-nb-white text-nb-black/80'
                       }`}
                       role="button"
                       tabIndex={0}
@@ -398,7 +398,7 @@ const SearchResultItem: React.FC<{
       part.toLowerCase() === searchQuery.toLowerCase() ? (
         <mark
           key={i}
-          className={`${fieldMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-200 text-yellow-900'} px-0.5 rounded`}
+          className={`${fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-yellow/60 text-nb-yellow'} px-0.5 rounded`}
         >
           {part}
         </mark>
@@ -410,17 +410,17 @@ const SearchResultItem: React.FC<{
 
   return (
     <div>
-      <p className={`text-sm leading-relaxed ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`}>
+      <p className={`text-sm leading-relaxed ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/80'}`}>
         {result.selector ? (
           <>
             {result.selector.prefix && (
-              <span className={fieldMode ? 'text-slate-500' : 'text-slate-400'}>...{result.selector.prefix}</span>
+              <span className={fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}>...{result.selector.prefix}</span>
             )}
-            <mark className={`${fieldMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-200 text-yellow-900'} px-0.5 rounded font-medium`}>
+            <mark className={`${fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-yellow/60 text-nb-yellow'} px-0.5 font-medium`}>
               {result.selector.exact}
             </mark>
             {result.selector.suffix && (
-              <span className={fieldMode ? 'text-slate-500' : 'text-slate-400'}>{result.selector.suffix}...</span>
+              <span className={fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}>{result.selector.suffix}...</span>
             )}
           </>
         ) : (
@@ -429,7 +429,7 @@ const SearchResultItem: React.FC<{
       </p>
 
       {/* Location info */}
-      <div className={`flex items-center gap-3 mt-1.5 text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+      <div className={`flex items-center gap-3 mt-1.5 text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
         {result.region && (
           <span className="flex items-center gap-1">
             <Icon name="crop" className="text-sm" />
@@ -445,7 +445,7 @@ const SearchResultItem: React.FC<{
         )}
         <Icon
           name="arrow_forward"
-          className={`text-sm ml-auto opacity-0 group-hover:opacity-100 transition-opacity ${fieldMode ? 'text-slate-400' : ''}`}
+          className={`text-sm ml-auto opacity-0 group-hover:opacity-100 transition-nb ${fieldMode ? 'text-nb-black/40' : ''}`}
         />
       </div>
     </div>

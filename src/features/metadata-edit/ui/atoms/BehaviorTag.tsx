@@ -51,37 +51,37 @@ export const BehaviorTag: React.FC<BehaviorTagProps> = ({
   const getCategoryColor = () => {
     switch (category) {
       case 'time':
-        return 'bg-purple-100 text-purple-600';
+        return 'bg-nb-purple/10 text-nb-purple';
       case 'layout':
-        return 'bg-amber-100 text-amber-600';
+        return 'bg-nb-orange/20 text-nb-orange';
       case 'browsing':
-        return 'bg-emerald-100 text-emerald-600';
+        return 'bg-nb-green/20 text-nb-green';
       case 'page':
-        return 'bg-blue-100 text-blue-600';
+        return 'bg-nb-blue/20 text-nb-blue';
       case 'navigation':
-        return 'bg-indigo-100 text-indigo-600';
+        return 'bg-nb-blue/20 text-nb-blue';
       default:
-        return fieldMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-600';
+        return fieldMode ? 'bg-nb-black text-nb-black/50' : 'bg-nb-cream text-nb-black/60';
     }
   };
 
-  const baseClass = onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
+  const baseClass = onClick ? 'cursor-pointer hover:opacity-80 transition-nb' : '';
 
   return (
     <div
-      className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold ${baseClass} ${
+      className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 font-semibold ${baseClass} ${
         active
-          ? 'bg-blue-600 text-white'
+          ? 'bg-nb-blue text-white'
           : fieldMode
-            ? 'bg-slate-800 text-slate-400'
-            : 'bg-slate-200 text-slate-600'
+            ? 'bg-nb-black text-nb-black/40'
+            : 'bg-nb-cream text-nb-black/60'
       } ${className}`}
       onClick={onClick}
       title={definition?.description || behavior}
     >
       <span>{label}</span>
       {showCategory && category && (
-        <span className={`text-[8px] px-1 rounded uppercase ${getCategoryColor()}`}>
+        <span className={`text-[8px] px-1 uppercase ${getCategoryColor()}`}>
           {category}
         </span>
       )}

@@ -70,9 +70,9 @@ export const BehaviorSelector: React.FC<BehaviorSelectorProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className={`text-xs font-bold mb-2 flex justify-between ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`}>
+      <div className={`text-xs font-bold mb-2 flex justify-between ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/80'}`}>
         {label}
-        <span className={`text-[9px] font-mono px-1 rounded ${fieldMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-50 text-slate-400'}`}>
+        <span className={`text-[9px] font-mono px-1 ${fieldMode ? 'bg-nb-yellow/10 text-nb-yellow/60' : 'bg-nb-cream text-nb-black/60'}`}>
           behavior
         </span>
       </div>
@@ -86,16 +86,16 @@ export const BehaviorSelector: React.FC<BehaviorSelectorProps> = ({
           return (
             <label
               key={behavior}
-              className={`flex items-start gap-2 text-xs cursor-pointer p-2.5 rounded-lg border transition-all ${
+              className={`flex items-start gap-2 text-xs cursor-pointer p-2.5 border transition-nb ${
                 hasConflict && isChecked
-                  ? 'border-red-300 bg-red-50'
+                  ? 'border-nb-red/40 bg-nb-red/10'
                   : isChecked
                     ? fieldMode
-                      ? 'border-blue-800 bg-blue-900/30'
-                      : 'border-blue-200 bg-blue-50'
+                      ? 'border-nb-blue bg-nb-blue/30'
+                      : 'border-nb-blue/30 bg-nb-blue/10'
                     : fieldMode
-                      ? 'border-slate-800 hover:bg-slate-900'
-                      : 'border-slate-100 hover:bg-slate-50'
+                      ? 'border-nb-black hover:bg-nb-black'
+                      : 'border-nb-black/10 hover:bg-nb-white'
               }`}
               title={definition?.description || behavior}
             >
@@ -103,31 +103,31 @@ export const BehaviorSelector: React.FC<BehaviorSelectorProps> = ({
                 type="checkbox"
                 checked={isChecked}
                 onChange={(e) => handleToggle(behavior, e.target.checked)}
-                className="rounded text-blue-600 mt-0.5 shrink-0"
+                className="text-nb-blue mt-0.5 shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span
                     className={`font-semibold ${
-                      hasConflict && isChecked ? 'text-red-700' : fieldMode ? 'text-slate-300' : 'text-slate-700'
+                      hasConflict && isChecked ? 'text-nb-red' : fieldMode ? 'text-nb-yellow/70' : 'text-nb-black/80'
                     }`}
                   >
                     {definition?.label || behavior}
                   </span>
                   {definition?.category && (
                     <span
-                      className={`text-[8px] px-1.5 py-0.5 rounded uppercase font-bold ${
+                      className={`text-[8px] px-1.5 py-0.5 uppercase font-bold ${
                         definition.category === 'time'
-                          ? 'bg-purple-100 text-purple-600'
+                          ? 'bg-nb-purple/10 text-nb-purple'
                           : definition.category === 'layout'
-                            ? 'bg-amber-100 text-amber-600'
+                            ? 'bg-nb-orange/20 text-nb-orange'
                             : definition.category === 'browsing'
-                              ? 'bg-emerald-100 text-emerald-600'
+                              ? 'bg-nb-green/20 text-nb-green'
                               : definition.category === 'page'
-                                ? 'bg-blue-100 text-blue-600'
+                                ? 'bg-nb-blue/20 text-nb-blue'
                                 : fieldMode
-                                  ? 'bg-slate-800 text-slate-500'
-                                  : 'bg-slate-100 text-slate-600'
+                                  ? 'bg-nb-yellow/10 text-nb-yellow/60'
+                                  : 'bg-nb-cream text-nb-black/60'
                       }`}
                     >
                       {definition.category}
@@ -135,12 +135,12 @@ export const BehaviorSelector: React.FC<BehaviorSelectorProps> = ({
                   )}
                 </div>
                 {definition?.description && (
-                  <p className={`text-[10px] mt-0.5 leading-snug ${fieldMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                  <p className={`text-[10px] mt-0.5 leading-snug ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/60'}`}>
                     {definition.description}
                   </p>
                 )}
                 {hasConflict && isChecked && (
-                  <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1">
+                  <p className="text-[10px] text-nb-red mt-1 flex items-center gap-1">
                     <Icon name="warning" className="text-xs" /> Conflicts with: {conflictingWith.join(', ')}
                   </p>
                 )}
@@ -151,15 +151,15 @@ export const BehaviorSelector: React.FC<BehaviorSelectorProps> = ({
       </div>
 
       {showSummary && selected.length > 0 && (
-        <div className={`mt-3 p-2 rounded border ${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
-          <div className={`text-[10px] uppercase font-bold mb-1 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+        <div className={`mt-3 p-2 border ${fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white border-nb-black/10'}`}>
+          <div className={`text-[10px] uppercase font-bold mb-1 ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/60'}`}>
             Active Behaviors
           </div>
           <div className="flex flex-wrap gap-1">
             {selected.map((b) => (
               <span
                 key={b}
-                className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold"
+                className="text-[10px] bg-nb-blue text-white px-2 py-0.5 font-semibold"
               >
                 {BEHAVIOR_DEFINITIONS[b]?.label || b}
               </span>

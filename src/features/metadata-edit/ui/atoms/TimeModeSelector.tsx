@@ -86,10 +86,10 @@ export const TimeModeSelector: React.FC<TimeModeSelectorProps> = ({
       <div className="flex items-center gap-1.5">
         <Icon
           name="timer"
-          className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
+          className={`text-sm ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}
         />
         <span className={`text-xs font-semibold uppercase tracking-wider ${
-          fieldMode ? 'text-slate-400' : 'text-slate-500'
+          fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
         }`}>
           Time Mode
         </span>
@@ -105,24 +105,24 @@ export const TimeModeSelector: React.FC<TimeModeSelectorProps> = ({
               aria-checked={isActive}
               disabled={disabled}
               onClick={() => onChange(opt.mode)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 border text-left transition-nb ${
                 isActive
                   ? fieldMode
-                    ? 'border-yellow-700 bg-yellow-900/20 text-white'
-                    : 'border-blue-300 bg-blue-50 text-blue-800'
+                    ? 'border-nb-yellow bg-nb-yellow/20 text-white'
+                    : 'border-nb-blue/40 bg-nb-blue/10 text-nb-blue'
                   : fieldMode
-                    ? 'border-slate-700 bg-slate-800/30 text-slate-400 hover:bg-slate-800'
-                    : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                    ? 'border-nb-black/80 bg-nb-black/30 text-nb-black/40 hover:bg-nb-black'
+                    : 'border-nb-black/20 bg-nb-white text-nb-black/50 hover:bg-nb-white'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+              <span className={`w-3.5 h-3.5 border-2 flex items-center justify-center shrink-0 ${
                 isActive
-                  ? fieldMode ? 'border-yellow-400' : 'border-blue-500'
-                  : fieldMode ? 'border-slate-600' : 'border-slate-300'
+                  ? fieldMode ? 'border-nb-yellow' : 'border-nb-blue'
+                  : fieldMode ? 'border-nb-black/60' : 'border-nb-black/20'
               }`}>
                 {isActive && (
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    fieldMode ? 'bg-yellow-400' : 'bg-blue-500'
+                  <span className={`w-1.5 h-1.5 ${
+                    fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue'
                   }`} />
                 )}
               </span>
@@ -131,8 +131,8 @@ export const TimeModeSelector: React.FC<TimeModeSelectorProps> = ({
                 <div className="text-sm font-medium">{opt.label}</div>
                 <div className={`text-xs ${
                   isActive
-                    ? fieldMode ? 'text-yellow-400/60' : 'text-blue-500'
-                    : fieldMode ? 'text-slate-600' : 'text-slate-400'
+                    ? fieldMode ? 'text-nb-yellow/60' : 'text-nb-blue'
+                    : fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'
                 }`}>
                   {opt.description}
                 </div>

@@ -57,7 +57,7 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex-1 relative overflow-hidden bg-slate-950 cursor-crosshair"
+      className="flex-1 relative overflow-hidden bg-nb-black cursor-crosshair"
       onMouseMove={onMouseMove}
       onClick={onClick}
       onMouseDown={onMouseDown}

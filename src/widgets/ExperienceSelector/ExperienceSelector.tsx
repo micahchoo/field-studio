@@ -120,7 +120,7 @@ const ComplexityDots: React.FC<{ complexity: number; activeColor: string }> = ({
     {[1, 2, 3].map((dot) => (
       <div
         key={dot}
-        className={`w-2 h-2 rounded-full transition-all duration-300 ${dot <= complexity ? '' : 'opacity-30'}`}
+        className={`w-2 h-2 transition-nb ${dot <= complexity ? '' : 'opacity-30'}`}
         style={{
           backgroundColor: dot <= complexity ? activeColor : COLORS.border.default,
           transform: dot <= complexity ? 'scale(1.1)' : 'scale(0.9)'
@@ -137,22 +137,22 @@ const ComplexityDots: React.FC<{ complexity: number; activeColor: string }> = ({
  * Help Me Choose Preview Component
  */
 const HelpPreview: React.FC<{ option: ExperienceOption }> = ({ option }) => (
-  <div className="mt-4 p-4 rounded-xl border" style={{ borderColor: option.color.light, backgroundColor: `${option.color.light}20` }}>
+  <div className="mt-4 p-4 border" style={{ borderColor: option.color.light, backgroundColor: `${option.color.light}20` }}>
     <div className="flex items-center justify-between mb-2">
       <h4 className="font-semibold" style={{ color: option.color.dark }}>Preview: {option.title} Mode</h4>
       <span className="text-sm" style={{ color: COLORS.text.secondary }}>UI will show:</span>
     </div>
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: option.color.primary }} />
+        <div className="w-3 h-3 " style={{ backgroundColor: option.color.primary }} />
         <span className="text-sm">Simplified toolbar with 5-7 main actions</span>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: option.color.primary }} />
+        <div className="w-3 h-3 " style={{ backgroundColor: option.color.primary }} />
         <span className="text-sm">{option.complexity === 1 ? 'Friendly labels' : 'Technical terminology'}</span>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: option.color.primary }} />
+        <div className="w-3 h-3 " style={{ backgroundColor: option.color.primary }} />
         <span className="text-sm">{option.complexity === 3 ? 'JSON editor visible' : 'Guided forms'}</span>
       </div>
     </div>
@@ -199,7 +199,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
         <div className="mt-3 flex items-center justify-center gap-4">
           <Button variant="ghost" size="bare"
             onClick={handleHelpClick}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors hover:bg-slate-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm border transition-nb hover:bg-nb-white"
             style={{ color: COLORS.primary[600], borderColor: COLORS.primary[300] }}
           >
             <span className="text-base">💡</span>
@@ -208,7 +208,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
           {showSkipOption && onSkip && (
             <Button variant="ghost" size="bare"
               onClick={onSkip}
-              className="text-sm px-3 py-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              className="text-sm px-3 py-1.5 text-nb-black/50 hover:text-nb-black/80 hover:bg-nb-white transition-nb"
             >
               Skip for now (uses Complete)
             </Button>
@@ -224,7 +224,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
             <div
               key={option.level}
               onClick={() => handleOptionClick(option)}
-              className="relative cursor-pointer rounded-2xl border-2 p-5 transition-all duration-300 hover:scale-[1.02] active:scale-[0.99]"
+              className="relative cursor-pointer border-2 p-5 transition-nb hover:scale-[1.02] active:scale-[0.99]"
               style={{
                 borderColor: isSelected ? option.color.primary : COLORS.border.default,
                 backgroundColor: isSelected ? `${option.color.light}30` : COLORS.background.elevated,
@@ -236,7 +236,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
               {/* Selection Indicator */}
               <div className="absolute top-4 right-4">
                 <div
-                  className="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+                  className="w-6 h-6 border-2 flex items-center justify-center transition-nb"
                   style={{
                     borderColor: isSelected ? option.color.primary : COLORS.border.default,
                     backgroundColor: isSelected ? option.color.primary : 'transparent'
@@ -253,7 +253,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
               {/* Icon & Title */}
               <div className="flex items-start gap-3 mb-4">
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                  className="w-12 h-12 flex items-center justify-center text-2xl"
                   style={{ backgroundColor: `${option.color.primary}15` }}
                 >
                   {option.icon}
@@ -285,7 +285,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
                   {option.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <div
-                        className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                        className="w-1.5 h-1.5 mt-1.5 flex-shrink-0"
                         style={{ backgroundColor: option.color.primary }}
                       />
                       <span className="text-sm" style={{ color: COLORS.text.secondary }}>
@@ -299,7 +299,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
               {/* Selected Indicator Bar */}
               {isSelected && (
                 <div
-                  className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl transition-all"
+                  className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl transition-nb"
                   style={{ backgroundColor: option.color.primary }}
                 />
               )}
@@ -310,7 +310,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
 
       {/* Help Preview */}
       {showHelp && helpOption && (
-        <div className="mt-6 animate-in fade-in duration-300">
+        <div className="mt-6 animate-in fade-in ">
           <HelpPreview option={EXPERIENCE_OPTIONS.find(o => o.level === helpOption)!} />
         </div>
       )}

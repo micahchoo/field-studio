@@ -35,7 +35,7 @@ export const MatchHighlight: React.FC<MatchHighlightProps> = ({
   text,
   query,
   className = '',
-  highlightClassName = 'bg-yellow-200 dark:bg-yellow-900/40 text-slate-900 dark:text-slate-100',
+  highlightClassName = 'bg-nb-yellow/40 text-nb-black/10',
 }) => {
   const segments = useMemo(() => {
     if (!query.trim()) {
@@ -85,7 +85,7 @@ export const MatchHighlight: React.FC<MatchHighlightProps> = ({
         segment.isMatch ? (
           <mark
             key={index}
-            className={`${highlightClassName} rounded px-0.5`}
+            className={`${highlightClassName} px-0.5`}
           >
             {segment.text}
           </mark>

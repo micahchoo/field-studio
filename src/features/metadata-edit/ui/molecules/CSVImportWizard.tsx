@@ -122,9 +122,9 @@ export const CSVImportWizard: React.FC<CSVImportWizardProps> = ({
   }, [supportedProperties]);
 
   return (
-    <div className={`flex flex-col h-full ${fieldMode ? 'bg-slate-900' : 'bg-white'}`}>
+    <div className={`flex flex-col h-full ${fieldMode ? 'bg-nb-black' : 'bg-nb-white'}`}>
       {/* Progress indicator */}
-      <div className={`flex items-center px-6 py-3 border-b ${fieldMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`flex items-center px-6 py-3 border-b ${fieldMode ? 'bg-nb-black border-nb-black/80' : 'bg-nb-white border-nb-black/20'}`}>
         <WizardStepIndicator step={1} label="Upload" active={step === 'upload'} completed={step !== 'upload'} />
         <WizardStepConnector completed={step !== 'upload'} />
         <WizardStepIndicator step={2} label="Map" active={step === 'map'} completed={step === 'result'} />
@@ -135,9 +135,9 @@ export const CSVImportWizard: React.FC<CSVImportWizardProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         {error && (
-          <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${fieldMode ? 'bg-red-900/30 border border-red-700' : 'bg-red-50 border border-red-200'}`}>
-            <Icon name="error" className={fieldMode ? 'text-red-400' : 'text-red-500'} />
-            <span className={`text-sm ${fieldMode ? 'text-red-300' : 'text-red-700'}`}>{error}</span>
+          <div className={`mb-4 p-4 flex items-center gap-3 ${fieldMode ? 'bg-nb-red/30 border border-nb-red' : 'bg-nb-red/10 border border-nb-red/30'}`}>
+            <Icon name="error" className={fieldMode ? 'text-nb-red' : 'text-nb-red'} />
+            <span className={`text-sm ${fieldMode ? 'text-nb-red/60' : 'text-nb-red'}`}>{error}</span>
           </div>
         )}
 
@@ -173,8 +173,8 @@ export const CSVImportWizard: React.FC<CSVImportWizardProps> = ({
       </div>
 
       {/* Footer */}
-      <div className={`flex items-center justify-between p-4 border-t ${fieldMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-        <div className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}>
+      <div className={`flex items-center justify-between p-4 border-t ${fieldMode ? 'bg-nb-black border-nb-black/80' : 'bg-nb-white border-nb-black/20'}`}>
+        <div className={`text-sm ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}>
           {step === 'map' && (
             <span>
               {rows.length} rows • {mappings.filter((m) => m.iiifProperty).length} mappings configured

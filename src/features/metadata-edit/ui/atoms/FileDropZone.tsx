@@ -75,23 +75,23 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
   );
 
   const dropZoneClasses = isDragging
-    ? 'bg-blue-100 border-blue-400'
-    : 'bg-blue-50 border-transparent';
+    ? 'bg-nb-blue/20 border-nb-blue'
+    : 'bg-nb-blue/10 border-transparent';
 
   return (
     <div
-      className={`flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed rounded-xl transition-colors ${dropZoneClasses}`}
+      className={`flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed transition-nb ${dropZoneClasses}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
-        <Icon name="cloud_upload" className="text-4xl text-blue-500" />
+      <div className="w-24 h-24 bg-nb-white flex items-center justify-center mb-6 shadow-brutal-sm">
+        <Icon name="cloud_upload" className="text-4xl text-nb-blue" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-800 mb-2">
+      <h3 className="text-lg font-semibold text-nb-black mb-2">
         Upload CSV File
       </h3>
-      <p className="text-sm text-slate-500 text-center max-w-md mb-6">
+      <p className="text-sm text-nb-black/50 text-center max-w-md mb-6">
         Drag and drop a CSV file here, or click to select. The first row should
         contain column headers.
       </p>
@@ -104,10 +104,10 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
           className="sr-only"
         />
         <span
-          className={`px-6 py-3 font-medium rounded-lg inline-flex items-center gap-2 transition-colors ${
+          className={`px-6 py-3 font-medium inline-flex items-center gap-2 transition-nb ${
             isLoading
-              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-nb-cream text-nb-black/50 cursor-not-allowed'
+              : 'bg-nb-blue text-white hover:bg-nb-blue'
           }`}
         >
           {isLoading ? (

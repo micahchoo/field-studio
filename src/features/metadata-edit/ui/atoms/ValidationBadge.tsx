@@ -33,18 +33,18 @@ const statusConfig: Record<
 > = {
   success: {
     icon: 'check_circle',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
+    bgColor: 'bg-nb-green/10',
+    textColor: 'text-nb-green',
   },
   warning: {
     icon: 'warning',
-    bgColor: 'bg-amber-50',
-    textColor: 'text-amber-700',
+    bgColor: 'bg-nb-orange/10',
+    textColor: 'text-nb-orange',
   },
   error: {
     icon: 'error',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700',
+    bgColor: 'bg-nb-red/10',
+    textColor: 'text-nb-red',
   },
 };
 
@@ -58,7 +58,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
   const displayIcon = icon || config.icon;
 
   return (
-    <div className={`p-4 rounded-lg ${config.bgColor} ${config.textColor}`}>
+    <div className={`p-4 ${config.bgColor} ${config.textColor}`}>
       <Icon name={displayIcon} className="text-2xl mb-2" />
       {value !== undefined && (
         <div className="text-2xl font-bold">{value}</div>

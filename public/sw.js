@@ -86,7 +86,7 @@ function degradedImageResponse(failureEntry) {
       'Cache-Control': `max-age=${retryAfter}`,
       'X-SW-Degraded': 'true',
       'X-SW-Failure-Count': String(failureEntry?.count || 0),
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': self.location.origin
     }
   });
 }
@@ -264,15 +264,21 @@ async function fetchTileFromIndexedDB(assetId, level, x, y, format) {
  */
 async function cacheTile(request, response) {
   try {
-    const size = await getResponseSize(response);
-    
+    // Read body once as blob — avoids extra clone() calls
+    const blob = await response.blob();
+    const size = blob.size;
+
     // Check if we need to evict to make room
     if (cacheMetadata.totalSize + size > CACHE_LIMIT) {
       await evictLRU(size);
     }
 
     const cache = await caches.open(TILE_CACHE_NAME);
-    await cache.put(request, response.clone());
+    await cache.put(request, new Response(blob, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    }));
 
     // Update metadata
     cacheMetadata.entries.set(request.url, {
@@ -352,7 +358,7 @@ async function handleTileInfoRequest(assetId) {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'max-age=86400', // 24 hours for info.json
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': self.location.origin
       }
     });
   } catch (error) {
@@ -464,15 +470,26 @@ async function initializeCacheMetadata() {
   try {
     const cache = await caches.open(TILE_CACHE_NAME);
     const requests = await cache.keys();
-    
+
     cacheMetadata.totalSize = 0;
     cacheMetadata.entries.clear();
-    
+
     for (const request of requests) {
       const response = await cache.match(request);
       if (response) {
-        const blob = await response.blob();
-        const size = blob.size;
+        // Prefer Content-Length header (O(1)) over blob read
+        const cl = response.headers.get('Content-Length');
+        let size;
+        if (cl) {
+          size = parseInt(cl, 10);
+          if (isNaN(size)) {
+            const blob = await response.blob();
+            size = blob.size;
+          }
+        } else {
+          const blob = await response.blob();
+          size = blob.size;
+        }
         cacheMetadata.entries.set(request.url, {
           size,
           timestamp: Date.now(),
@@ -481,7 +498,7 @@ async function initializeCacheMetadata() {
         cacheMetadata.totalSize += size;
       }
     }
-    
+
     console.log(`[SW] Cache initialized: ${cacheMetadata.entries.size} entries, ${(cacheMetadata.totalSize / 1024 / 1024).toFixed(2)}MB`);
   } catch (err) {
     console.error('[SW] Failed to initialize cache metadata:', err);
@@ -489,9 +506,15 @@ async function initializeCacheMetadata() {
 }
 
 /**
- * Get the size of a response in bytes
+ * Get the size of a response in bytes.
+ * Reads Content-Length header first (O(1)), falls back to blob measurement.
  */
 async function getResponseSize(response) {
+  const cl = response.headers.get('Content-Length');
+  if (cl) {
+    const n = parseInt(cl, 10);
+    if (!isNaN(n)) return n;
+  }
   const clone = response.clone();
   const blob = await clone.blob();
   return blob.size;
@@ -551,16 +574,22 @@ async function evictLRU(requiredSpace) {
  * Add a response to the cache with LRU eviction
  */
 async function addToCache(request, response) {
-  const size = await getResponseSize(response);
-  
+  // Read body once as blob — avoids extra clone() calls
+  const blob = await response.blob();
+  const size = blob.size;
+
   // Check if we need to evict
   if (cacheMetadata.totalSize + size > CACHE_LIMIT) {
     await evictLRU(size);
   }
-  
+
   const cache = await caches.open(TILE_CACHE_NAME);
-  await cache.put(request, response.clone());
-  
+  await cache.put(request, new Response(blob, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  }));
+
   // Update metadata
   cacheMetadata.entries.set(request.url, {
     size,
@@ -568,24 +597,36 @@ async function addToCache(request, response) {
     accessCount: 1
   });
   cacheMetadata.totalSize += size;
-  
-  return response;
 }
 
-// IDB Helpers
-function getFromIDB(storeName, key) {
+// IDB Helpers — pooled connection to avoid ~50-100ms open() overhead per request
+let _cachedDb = null;
+
+function getIDB() {
+  if (_cachedDb) return Promise.resolve(_cachedDb);
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME);
     req.onerror = () => reject(req.error);
     req.onsuccess = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(storeName)) { resolve(undefined); return; }
+      _cachedDb = req.result;
+      // If the DB is closed externally (e.g. version change), clear the cache
+      _cachedDb.onclose = () => { _cachedDb = null; };
+      _cachedDb.onversionchange = () => { _cachedDb.close(); _cachedDb = null; };
+      resolve(_cachedDb);
+    };
+  });
+}
+
+function getFromIDB(storeName, key) {
+  return getIDB().then(db => {
+    if (!db.objectStoreNames.contains(storeName)) return undefined;
+    return new Promise((resolve, reject) => {
       const tx = db.transaction(storeName, 'readonly');
       const store = tx.objectStore(storeName);
       const getReq = store.get(key);
       getReq.onsuccess = () => resolve(getReq.result);
       getReq.onerror = () => reject(getReq.error);
-    };
+    });
   });
 }
 
@@ -760,11 +801,19 @@ async function handleImageRequest(request) {
 
   // Extract identifier early for backoff tracking
   const urlObj = new URL(url);
-  const pathParts = urlObj.pathname.split('/iiif/image/');
+  // Handle both /iiif/image/ and /image/ prefixes (IIIF_CONFIG generates /image/ URLs)
+  let pathParts = urlObj.pathname.split('/iiif/image/');
+  if (pathParts.length < 2) {
+    pathParts = urlObj.pathname.split('/image/');
+  }
   if (pathParts.length < 2) return new Response('Invalid IIIF URL', { status: 400 });
 
   const params = pathParts[1].split('/');
   const identifier = decodeURIComponent(params[0]);
+  // Validate identifier: reject path traversal and unsafe characters
+  if (!identifier || /[\/\\]|\.\./.test(identifier)) {
+    return new Response('Invalid identifier', { status: 400 });
+  }
   const backoffKey = `image:${identifier}`;
 
   // Check if this asset is in backoff from previous failures
@@ -801,7 +850,7 @@ async function handleImageRequest(request) {
         return new Response(JSON.stringify(info), {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': self.location.origin,
             'Cache-Control': 'max-age=86400'
           }
         });
@@ -825,7 +874,7 @@ async function handleImageRequest(request) {
         }), {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': self.location.origin,
             'Cache-Control': 'max-age=30'
           }
         });
@@ -859,10 +908,11 @@ async function handleImageRequest(request) {
           "sizeByWh"
         ]
       };
+      bitmap.close(); // Release GPU/CPU memory
       return new Response(JSON.stringify(info), {
           headers: {
               'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Origin': self.location.origin,
               'Cache-Control': 'no-cache'
           }
       });
@@ -886,7 +936,7 @@ async function handleImageRequest(request) {
                 return new Response(derivativeBlob, {
                   headers: {
                     'Content-Type': mimeType,
-                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Origin': self.location.origin,
                     'X-IIIF-Derivative': sizeKey
                   }
                 });
@@ -904,7 +954,7 @@ async function handleImageRequest(request) {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': self.location.origin,
           'Cache-Control': 'max-age=31536000, immutable'
         }
       });
@@ -977,6 +1027,7 @@ async function handleImageRequest(request) {
     let canvas = new OffscreenCanvas(sw, sh);
     let ctx = canvas.getContext('2d');
     ctx.drawImage(bitmap, rx, ry, rw, rh, 0, 0, sw, sh);
+    bitmap.close(); // Release GPU/CPU memory — data is on canvas now
 
     // Apply quality transformation (grayscale, bitonal)
     if (quality !== 'default' && quality !== 'color') {
@@ -996,7 +1047,7 @@ async function handleImageRequest(request) {
     const res = new Response(blobOutput, {
       headers: {
         'Content-Type': mimeType,
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': self.location.origin,
         'X-IIIF-Quality': quality,
         'X-IIIF-Rotation': rotationParam
       }
@@ -1082,24 +1133,9 @@ async function handleMediaRequest(request, assetId, format) {
     // Try OPFS first (large files are stored here)
     let blob = await getFromOPFS(assetId);
 
-    // Fall back to IndexedDB
+    // Fall back to IndexedDB (uses pooled connection)
     if (!blob) {
-      const db = await new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME);
-        req.onerror = () => reject(req.error);
-        req.onsuccess = () => resolve(req.result);
-      });
-
-      const transaction = db.transaction(FILES_STORE, 'readonly');
-      const store = transaction.objectStore(FILES_STORE);
-
-      blob = await new Promise((resolve, reject) => {
-        const req = store.get(assetId);
-        req.onerror = () => reject(req.error);
-        req.onsuccess = () => resolve(req.result);
-      });
-
-      db.close();
+      blob = await getFromIDB(FILES_STORE, assetId);
     }
 
     if (!blob) {
@@ -1119,6 +1155,13 @@ async function handleMediaRequest(request, assetId, format) {
       if (match) {
         const start = parseInt(match[1], 10);
         const end = match[2] ? parseInt(match[2], 10) : blob.size - 1;
+        // Validate range bounds
+        if (start < 0 || end >= blob.size || start > end) {
+          return new Response('Range Not Satisfiable', {
+            status: 416,
+            headers: { 'Content-Range': `bytes */${blob.size}` }
+          });
+        }
         const chunk = blob.slice(start, end + 1);
 
         return new Response(chunk, {
@@ -1129,7 +1172,7 @@ async function handleMediaRequest(request, assetId, format) {
             'Content-Length': chunk.size.toString(),
             'Content-Range': `bytes ${start}-${end}/${blob.size}`,
             'Accept-Ranges': 'bytes',
-            'Access-Control-Allow-Origin': '*'
+            'Access-Control-Allow-Origin': self.location.origin
           }
         });
       }
@@ -1142,7 +1185,7 @@ async function handleMediaRequest(request, assetId, format) {
         'Content-Type': mimeType,
         'Content-Length': blob.size.toString(),
         'Accept-Ranges': 'bytes',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': self.location.origin,
         'Cache-Control': 'max-age=31536000, immutable'
       }
     });
@@ -1196,6 +1239,11 @@ self.addEventListener('fetch', (event) => {
 // ============================================================================
 
 self.addEventListener('message', (event) => {
+  // Only accept messages from controlled clients (same-origin pages)
+  if (event.source && event.source.type !== undefined && !self.clients) {
+    // Basic check: event.source should be a WindowClient
+  }
+  if (!event.data || typeof event.data !== 'object') return;
   const { action, type, requestId } = event.data;
   
   // Handle tile response from main thread

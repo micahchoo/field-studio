@@ -35,8 +35,8 @@ export const EmptyProperties: React.FC<EmptyPropertiesProps> = ({
 }) => {
   const containerClasses = `w-80 border-l flex flex-col items-center justify-center ${
     fieldMode
-      ? 'bg-slate-950 border-slate-800 text-slate-500'
-      : 'bg-white border-slate-200 text-slate-400'
+      ? 'bg-nb-black border-nb-black text-nb-black/50'
+      : 'bg-nb-white border-nb-black/20 text-nb-black/40'
   }`;
 
   return (

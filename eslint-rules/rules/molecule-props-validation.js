@@ -66,6 +66,7 @@ const rule = {
     let hasPropsInterface = false;
     let hasCxProp = false;
     let hasFieldModeProp = false;
+    let hasThemeProp = false; // theme?: ThemeTokens is an acceptable alternative
     let interfaceNode = null;
     let componentNameFromExport = null;
 
@@ -102,6 +103,14 @@ const rule = {
                 member.key.name === 'fieldMode'
             );
           }
+
+          // Check for theme property (acceptable alternative to cx + fieldMode)
+          hasThemeProp = node.body.body.some(
+            (member) =>
+              member.type === 'TSPropertySignature' &&
+              member.key &&
+              member.key.name === 'theme'
+          );
         }
       },
 
@@ -130,6 +139,14 @@ const rule = {
                 member.key.name === 'fieldMode'
             );
           }
+
+          // Check for theme property (acceptable alternative)
+          hasThemeProp = members.some(
+            (member) =>
+              member.type === 'TSPropertySignature' &&
+              member.key &&
+              member.key.name === 'theme'
+          );
         }
       },
 
@@ -137,6 +154,11 @@ const rule = {
       'Program:exit'() {
         if (!hasPropsInterface) {
           // Skip if no props interface found (might use inline props)
+          return;
+        }
+
+        // theme?: ThemeTokens is an acceptable alternative to cx + fieldMode
+        if (hasThemeProp) {
           return;
         }
 

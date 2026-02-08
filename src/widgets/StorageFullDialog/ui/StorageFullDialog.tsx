@@ -108,17 +108,17 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-slate-900 rounded-2xl shadow-2xl border border-red-500/30 overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-nb-black/80 backdrop-blur-sm">
+      <div className="w-full max-w-lg bg-nb-black shadow-brutal-lg border border-nb-red/30 overflow-hidden">
         {/* Header */}
-        <div className="bg-red-500/10 border-b border-red-500/20 p-6">
+        <div className="bg-nb-red/10 border-b border-nb-red/20 p-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-              <Icon name="storage" className="text-2xl text-red-400" />
+            <div className="w-12 h-12 bg-nb-red/20 flex items-center justify-center">
+              <Icon name="storage" className="text-2xl text-nb-red" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Storage Full</h2>
-              <p className="text-red-300 text-sm">Browser storage quota exceeded</p>
+              <p className="text-nb-red/60 text-sm">Browser storage quota exceeded</p>
             </div>
           </div>
         </div>
@@ -127,33 +127,33 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
         <div className="p-6 space-y-6">
           {cleared ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <Icon name="check" className="text-3xl text-green-400" />
+              <div className="w-16 h-16 bg-nb-green/20 flex items-center justify-center mx-auto mb-4">
+                <Icon name="check" className="text-3xl text-nb-green" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Storage Cleared</h3>
-              <p className="text-slate-400">Reloading page...</p>
+              <p className="text-nb-black/40">Reloading page...</p>
             </div>
           ) : (
             <>
               {/* Stats */}
               {stats && (
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="bg-nb-black/50 p-4 border border-nb-black/80">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-slate-400 text-sm">Storage Used</span>
+                    <span className="text-nb-black/40 text-sm">Storage Used</span>
                     <span className="text-white font-mono font-bold">
                       {formatBytes(stats.usage)} / {formatBytes(stats.quota)}
                     </span>
                   </div>
                   
                   {/* Progress bar */}
-                  <div className="h-3 bg-slate-700 rounded-full overflow-hidden mb-3">
+                  <div className="h-3 bg-nb-black/80 overflow-hidden mb-3">
                     <div 
-                      className="h-full bg-red-500 rounded-full"
+                      className="h-full bg-nb-red "
                       style={{ width: `${Math.min(stats.usagePercent, 100)}%` }}
                     />
                   </div>
                   
-                  <div className="flex justify-between text-xs text-slate-500">
+                  <div className="flex justify-between text-xs text-nb-black/50">
                     <span>{stats.assetCount} assets stored</span>
                     <span>{stats.usagePercent.toFixed(1)}% full</span>
                   </div>
@@ -162,20 +162,20 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 
               {/* Explanation */}
               <div className="space-y-3">
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <p className="text-nb-black/30 text-sm leading-relaxed">
                   Your browser's storage is full. This happens when:
                 </p>
-                <ul className="text-slate-400 text-sm space-y-2 ml-4">
+                <ul className="text-nb-black/40 text-sm space-y-2 ml-4">
                   <li className="flex items-start gap-2">
-                    <span className="text-red-400 mt-0.5">•</span>
+                    <span className="text-nb-red mt-0.5">•</span>
                     You've imported many large images
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-red-400 mt-0.5">•</span>
+                    <span className="text-nb-red mt-0.5">•</span>
                     High-resolution derivatives were generated
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-red-400 mt-0.5">•</span>
+                    <span className="text-nb-red mt-0.5">•</span>
                     Tile pyramids for the viewer consumed space
                   </li>
                 </ul>
@@ -185,7 +185,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
               <div className="space-y-3">
                 <Button variant="ghost" size="bare"
                   onClick={onExport}
-                  className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
+                  className="w-full py-3 px-4 bg-nb-blue hover:bg-nb-blue text-white font-semibold flex items-center justify-center gap-2 transition-nb"
                 >
                   <Icon name="download" />
                   Export Archive to File
@@ -194,11 +194,11 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
                 <Button variant="ghost" size="bare"
                   onClick={handleClearDerivatives}
                   disabled={isClearingDerivatives}
-                  className="w-full py-3 px-4 bg-amber-700 hover:bg-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  className="w-full py-3 px-4 bg-nb-orange hover:bg-nb-orange text-white font-semibold flex items-center justify-center gap-2 transition-nb disabled:opacity-50"
                 >
                   {isClearingDerivatives ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white animate-spin" />
                       Clearing Thumbnails...
                     </>
                   ) : (
@@ -212,11 +212,11 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
                 <Button variant="ghost" size="bare"
                   onClick={handleClearStorage}
                   disabled={isClearing}
-                  className="w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  className="w-full py-3 px-4 bg-nb-black/80 hover:bg-nb-black/60 text-white font-semibold flex items-center justify-center gap-2 transition-nb disabled:opacity-50"
                 >
                   {isClearing ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white animate-spin" />
                       Clearing...
                     </>
                   ) : (
@@ -229,16 +229,16 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 
                 <Button variant="ghost" size="bare"
                   onClick={onClose}
-                  className="w-full py-3 px-4 text-slate-400 hover:text-white text-sm transition-colors"
+                  className="w-full py-3 px-4 text-nb-black/40 hover:text-white text-sm transition-nb"
                 >
                   I'll manage this later
                 </Button>
               </div>
 
               {/* Tip */}
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex gap-3">
-                <Icon name="lightbulb" className="text-blue-400 shrink-0 mt-0.5" />
-                <p className="text-blue-300 text-xs">
+              <div className="bg-nb-blue/10 border border-nb-blue/20 p-3 flex gap-3">
+                <Icon name="lightbulb" className="text-nb-blue shrink-0 mt-0.5" />
+                <p className="text-nb-blue/60 text-xs">
                   <strong>Tip:</strong> After exporting, you can re-import the archive file 
                   later without hitting storage limits, since the export doesn't store 
                   derivatives or tiles.

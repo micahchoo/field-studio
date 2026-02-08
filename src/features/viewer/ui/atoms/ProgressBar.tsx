@@ -88,15 +88,15 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     [currentTime, duration, onSeek]
   );
 
-  const trackBg = fieldMode ? 'bg-slate-600' : 'bg-white/30';
-  const progressBg = fieldMode ? 'bg-yellow-500' : 'bg-blue-500';
-  const bufferBg = fieldMode ? 'bg-slate-500' : 'bg-white/20';
-  const handleColor = fieldMode ? 'bg-yellow-300' : 'bg-white';
+  const trackBg = fieldMode ? 'bg-nb-black/60' : 'bg-nb-white/30';
+  const progressBg = fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue';
+  const bufferBg = fieldMode ? 'bg-nb-black/40' : 'bg-nb-white/20';
+  const handleColor = fieldMode ? 'bg-nb-yellow' : 'bg-nb-white';
 
   return (
     <div
       ref={progressRef}
-      className={`relative rounded-full cursor-pointer group ${trackBg} ${className}`}
+      className={`relative cursor-pointer group ${trackBg} ${className}`}
       style={{ height }}
       onClick={handleClick}
       role="slider"
@@ -110,20 +110,20 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       {/* Buffered progress */}
       {buffered > 0 && (
         <div
-          className={`absolute top-0 left-0 h-full rounded-full ${bufferBg}`}
+          className={`absolute top-0 left-0 h-full ${bufferBg}`}
           style={{ width: `${bufferPercent}%` }}
         />
       )}
 
       {/* Playback progress */}
       <div
-        className={`absolute top-0 left-0 h-full rounded-full ${progressBg} transition-all duration-75`}
+        className={`absolute top-0 left-0 h-full ${progressBg} transition-nb duration-75`}
         style={{ width: `${progress}%` }}
       >
         {/* Scrubber handle */}
         {showHandle && (
           <div
-            className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${handleColor} opacity-0 group-hover:opacity-100 transition-opacity shadow-md`}
+            className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 ${handleColor} opacity-0 group-hover:opacity-100 transition-nb shadow-brutal-sm`}
             style={{ transform: 'translate(50%, -50%)' }}
           />
         )}

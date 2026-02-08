@@ -27,7 +27,7 @@ export interface ToolDividerProps {
 export const ToolDivider: React.FC<ToolDividerProps> = ({ cx: _cx, fieldMode }) => {
   return (
     <div
-      className={`w-8 h-px my-2 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`}
+      className={`w-8 h-px my-2 ${fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'}`}
       aria-hidden="true"
     />
   );

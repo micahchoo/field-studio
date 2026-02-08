@@ -43,7 +43,7 @@ export interface SelectFieldProps {
   label?: string;
   /** Whether to show label */
   showLabel?: boolean;
-  /** Optional hint text (e.g., "dc:title") */
+  /** Optional hint text (e.g.,"dc:title") */
   hint?: string;
   /** Field mode for dark theme */
   fieldMode?: boolean;
@@ -56,27 +56,27 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   onChange,
   options,
   groups,
-  placeholder = 'Select an option...',
+  placeholder ='Select an option...',
   disabled = false,
   label,
   showLabel = false,
   hint,
   fieldMode = false,
-  className = '',
+  className ='',
 }) => {
-  const inputClass = `w-full text-sm p-2.5 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+  const inputClass =`w-full text-sm p-2.5 border focus:ring-2 focus:ring-nb-blue focus:border-nb-blue outline-none transition-nb ${
     fieldMode
-      ? 'bg-slate-800 text-slate-200 border-slate-700'
-      : 'bg-white text-slate-900 border-slate-300'
-  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`;
+      ?'bg-nb-black text-nb-black/20 border-nb-black/80'
+      :'bg-nb-white text-nb-black border-nb-black/20'
+  } ${disabled ?'opacity-50 cursor-not-allowed' :''} ${className}`;
 
   return (
     <div className="space-y-1.5">
       {showLabel && label && (
-        <div className={`flex justify-between items-center ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`}>
+        <div className={`flex justify-between items-center ${fieldMode ?'text-nb-black/30' :'text-nb-black/80'}`}>
           <label className="block text-xs font-bold">{label}</label>
           {hint && (
-            <span className={`text-[9px] font-mono px-1 rounded ${fieldMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-50 text-slate-400'}`}>
+            <span className={`text-[9px] font-mono px-1 ${fieldMode ?'bg-nb-black text-nb-black/50' :'bg-nb-white text-nb-black/40'}`}>
               {hint}
             </span>
           )}

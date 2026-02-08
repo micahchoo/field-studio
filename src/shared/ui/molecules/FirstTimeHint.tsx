@@ -31,8 +31,8 @@ export interface FirstTimeHintProps {
 export const FirstTimeHint: React.FC<FirstTimeHintProps> = ({
   id,
   message,
-  icon = 'lightbulb',
-  className = '',
+  icon ='lightbulb',
+  className ='',
   initialDismissed = false,
   onDismiss,
 }) => {
@@ -46,12 +46,12 @@ export const FirstTimeHint: React.FC<FirstTimeHintProps> = ({
   if (!visible) return null;
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 ${className}`}>
-      <Icon name={icon} className="text-blue-500 text-sm shrink-0" />
+    <div className={`flex items-center gap-2 px-3 py-2 bg-nb-blue/10 border border-nb-blue/20 text-xs text-nb-blue ${className}`}>
+      <Icon name={icon} className="text-nb-blue text-sm shrink-0" />
       <span className="flex-1">{message}</span>
       <Button variant="ghost" size="bare"
         onClick={dismiss}
-        className="text-blue-400 hover:text-blue-600 shrink-0"
+        className="text-nb-blue hover:text-nb-blue shrink-0"
         title="Dismiss"
       >
         <Icon name="close" className="text-xs" />

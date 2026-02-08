@@ -57,10 +57,10 @@ export const UrlBar: React.FC<UrlBarProps> = ({
     setTimeout(() => setShowCopied(false), 2000);
   }, [url]);
 
-  const mutedTextClass = fieldMode ? 'text-slate-400' : 'text-slate-500';
+  const mutedTextClass = fieldMode ? 'text-nb-black/40' : 'text-nb-black/50';
 
   return (
-    <div className="p-3 bg-slate-950 font-mono text-xs border-t border-white/10 shrink-0">
+    <div className="p-3 bg-nb-black font-mono text-xs border-t border-white/10 shrink-0">
       <div className="flex items-center gap-1">
         <span className={`${mutedTextClass} truncate max-w-[150px]`}>{imageId}/</span>
         <UrlSegment value={region} label="Region" color="green" />
@@ -81,7 +81,7 @@ export const UrlBar: React.FC<UrlBarProps> = ({
           size="sm"
           className="!text-white/60 hover:!text-white"
         />
-        {showCopied && <span className="text-green-400 text-xs">Copied!</span>}
+        {showCopied && <span className="text-nb-green text-xs">Copied!</span>}
       </div>
     </div>
   );

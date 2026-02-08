@@ -104,14 +104,14 @@ export const ComposerToolbar: React.FC<ComposerToolbarProps> = ({
   cx: _cx,
 }) => {
   return (
-    <div className="h-14 bg-slate-900 border-b border-white/10 flex items-center justify-between px-6 shrink-0 shadow-2xl">
+    <div className="h-14 bg-nb-black border-b border-white/10 flex items-center justify-between px-6 shrink-0 shadow-brutal-lg">
       {/* Left: Title & Dimensions */}
       <div className="flex items-center gap-6">
         <h2 className="text-white font-bold flex items-center gap-2">
-          <Icon name="auto_awesome_motion" className="text-indigo-400" />
+          <Icon name="auto_awesome_motion" className="text-nb-blue" />
           Synthesis Workspace
         </h2>
-        <div className="h-6 w-px bg-white/10" />
+        <div className="h-6 w-px bg-nb-white/10" />
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
             Dimensions
@@ -121,7 +121,7 @@ export const ComposerToolbar: React.FC<ComposerToolbarProps> = ({
             aria-label="Canvas Width"
             value={width}
             onChange={(e) => onWidthChange(Number(e.target.value))}
-            className="w-16 bg-white/5 text-white text-[10px] border border-white/10 rounded px-1 outline-none"
+            className="w-16 bg-nb-white/5 text-white text-[10px] border border-white/10 px-1 outline-none"
           />
           <span className="text-white/20">×</span>
           <input
@@ -129,12 +129,12 @@ export const ComposerToolbar: React.FC<ComposerToolbarProps> = ({
             aria-label="Canvas Height"
             value={height}
             onChange={(e) => onHeightChange(Number(e.target.value))}
-            className="w-16 bg-white/5 text-white text-[10px] border border-white/10 rounded px-1 outline-none"
+            className="w-16 bg-nb-white/5 text-white text-[10px] border border-white/10 px-1 outline-none"
           />
         </div>
-        <div className="h-6 w-px bg-white/10" />
+        <div className="h-6 w-px bg-nb-white/10" />
         <div
-          className="flex bg-white/5 border border-white/10 rounded p-1"
+          className="flex bg-nb-white/5 border border-white/10 p-1"
           role="group"
           aria-label="Background Mode"
         >
@@ -165,7 +165,7 @@ export const ComposerToolbar: React.FC<ComposerToolbarProps> = ({
       <div className="flex items-center gap-3">
         {/* Undo/Redo */}
         <div
-          className="flex bg-white/5 border border-white/10 rounded p-1"
+          className="flex bg-nb-white/5 border border-white/10 p-1"
           role="group"
           aria-label="Undo/Redo"
         >
@@ -192,7 +192,7 @@ export const ComposerToolbar: React.FC<ComposerToolbarProps> = ({
         </div>
 
         {/* Zoom */}
-        <div className="flex bg-white/5 border border-white/10 rounded p-1">
+        <div className="flex bg-nb-white/5 border border-white/10 p-1">
           <Button
             onClick={onZoomOut}
             variant="ghost"

@@ -31,41 +31,41 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
   };
 
   return (
-    <div className="w-96 border-l border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 overflow-auto">
-      <div className="sticky top-0 bg-slate-50 dark:bg-slate-800/95 backdrop-blur border-b border-slate-200 dark:border-slate-700 p-4">
+    <div className="w-96 border-l border-nb-black/20 bg-nb-cream overflow-auto">
+      <div className="sticky top-0 bg-nb-white backdrop-blur border-b border-nb-black/20 p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-200 break-all">
+            <h2 className="font-semibold text-nb-black/20 break-all">
               {file.fileName}
             </h2>
-            <p className="text-xs text-slate-500 font-mono mt-1">{file.directory}/</p>
+            <p className="text-xs text-nb-black/50 font-mono mt-1">{file.directory}/</p>
           </div>
           <Button variant="ghost" size="bare"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
+            className="p-1 text-nb-black/40 hover:text-nb-black/60 rounded"
           >
             <span className="material-icons text-sm">close</span>
           </Button>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-4">
-          <div className="text-center p-2 bg-white dark:bg-slate-700 rounded">
-            <div className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+          <div className="text-center p-2 bg-nb-white/80 rounded">
+            <div className="text-lg font-semibold text-nb-black/70">
               {file.imports.length}
             </div>
-            <div className="text-xs text-slate-500">Imports</div>
+            <div className="text-xs text-nb-black/50">Imports</div>
           </div>
-          <div className="text-center p-2 bg-white dark:bg-slate-700 rounded">
-            <div className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+          <div className="text-center p-2 bg-nb-white/80 rounded">
+            <div className="text-lg font-semibold text-nb-black/70">
               {file.exports.length}
             </div>
-            <div className="text-xs text-slate-500">Exports</div>
+            <div className="text-xs text-nb-black/50">Exports</div>
           </div>
-          <div className="text-center p-2 bg-white dark:bg-slate-700 rounded">
-            <div className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+          <div className="text-center p-2 bg-nb-white/80 rounded">
+            <div className="text-lg font-semibold text-nb-black/70">
               {file.dependents.length}
             </div>
-            <div className="text-xs text-slate-500">Used By</div>
+            <div className="text-xs text-nb-black/50">Used By</div>
           </div>
         </div>
       </div>
@@ -74,28 +74,28 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
         {/* Exports Section */}
         {file.exports.length > 0 && (
           <section>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <span className="material-icons text-green-500 text-sm">logout</span>
+            <h3 className="text-sm font-medium text-nb-black/70 mb-2 flex items-center gap-2">
+              <span className="material-icons text-nb-green text-sm">logout</span>
               Exports ({file.exports.length})
             </h3>
             <div className="space-y-1">
               {file.exports.map((exp, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 px-2 py-1.5 bg-white dark:bg-slate-700 rounded text-sm"
+                  className="flex items-center gap-2 px-2 py-1.5 bg-nb-white/80 text-sm"
                 >
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                  <span className={`text-xs px-1.5 py-0.5 ${
                     exp.type === 'default'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                      : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
+                      ? 'bg-nb-blue/20 text-nb-blue'
+                      : 'bg-nb-cream text-nb-black/50'
                   }`}>
                     {exp.type}
                   </span>
-                  <span className="font-mono text-slate-800 dark:text-slate-200">
+                  <span className="font-mono text-nb-black/20">
                     {exp.name}
                   </span>
                   {exp.isTypeExport && (
-                    <span className="text-xs text-purple-600 dark:text-purple-400">type</span>
+                    <span className="text-xs text-nb-purple400">type</span>
                   )}
                 </div>
               ))}
@@ -106,21 +106,21 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
         {/* Alias Imports */}
         {aliasImports.length > 0 && (
           <section>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <span className="material-icons text-purple-500 text-sm">shortcut</span>
+            <h3 className="text-sm font-medium text-nb-black/70 mb-2 flex items-center gap-2">
+              <span className="material-icons text-nb-purple text-sm">shortcut</span>
               Alias Imports ({aliasImports.length})
             </h3>
             <div className="space-y-1">
               {aliasImports.map((imp, idx) => (
                 <div
                   key={idx}
-                  className="px-2 py-1.5 bg-white dark:bg-slate-700 rounded text-sm"
+                  className="px-2 py-1.5 bg-nb-white/80 text-sm"
                 >
-                  <div className="font-mono text-xs text-purple-600 dark:text-purple-400">
+                  <div className="font-mono text-xs text-nb-purple400">
                     {imp.source}
                   </div>
                   {imp.specifiers.length > 0 && !imp.specifiers[0].startsWith('[') && (
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-nb-black/50 mt-1">
                       {imp.specifiers.slice(0, 5).join(', ')}
                       {imp.specifiers.length > 5 && ` +${imp.specifiers.length - 5} more`}
                     </div>
@@ -134,8 +134,8 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
         {/* Internal Imports */}
         {internalImports.length > 0 && (
           <section>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <span className="material-icons text-blue-500 text-sm">arrow_forward</span>
+            <h3 className="text-sm font-medium text-nb-black/70 mb-2 flex items-center gap-2">
+              <span className="material-icons text-nb-blue text-sm">arrow_forward</span>
               Internal Imports ({internalImports.length})
             </h3>
             <div className="space-y-1">
@@ -144,15 +144,15 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
                 return (
                   <div
                     key={idx}
-                    className="px-2 py-1.5 bg-white dark:bg-slate-700 rounded text-sm"
+                    className="px-2 py-1.5 bg-nb-white/80 text-sm"
                   >
-                    <div className="font-mono text-xs text-blue-600 dark:text-blue-400">
+                    <div className="font-mono text-xs text-nb-blue">
                       {imp.source}
                     </div>
                     {resolvedFile && (
                       <Button variant="ghost" size="bare"
                         onClick={() => handleFileClick(resolvedFile)}
-                        className="text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 mt-1 flex items-center gap-1"
+                        className="text-xs text-nb-black/50 hover:text-nb-blue mt-1 flex items-center gap-1"
                       >
                         <span className="material-icons text-xs">open_in_new</span>
                         {resolvedFile.split('/').pop()}
@@ -168,15 +168,15 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
         {/* External Dependencies */}
         {externalImports.length > 0 && (
           <section>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <span className="material-icons text-orange-500 text-sm">language</span>
+            <h3 className="text-sm font-medium text-nb-black/70 mb-2 flex items-center gap-2">
+              <span className="material-icons text-nb-orange text-sm">language</span>
               External Dependencies ({externalImports.length})
             </h3>
             <div className="flex flex-wrap gap-1">
               {externalImports.map((imp, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-1 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 text-xs rounded border border-orange-200 dark:border-orange-800"
+                  className="px-2 py-1 bg-nb-orange/20 text-nb-orange text-xs border border-nb-orange"
                 >
                   {imp.source}
                 </span>
@@ -188,8 +188,8 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
         {/* Dependents (Files that import this) */}
         {file.dependents.length > 0 && (
           <section>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <span className="material-icons text-green-500 text-sm">arrow_back</span>
+            <h3 className="text-sm font-medium text-nb-black/70 mb-2 flex items-center gap-2">
+              <span className="material-icons text-nb-green text-sm">arrow_back</span>
               Used By ({file.dependents.length})
             </h3>
             <div className="space-y-1 max-h-48 overflow-auto">
@@ -197,9 +197,9 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
                 <Button variant="ghost" size="bare"
                   key={idx}
                   onClick={() => handleFileClick(depPath)}
-                  className="w-full text-left px-2 py-1.5 bg-white dark:bg-slate-700 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
+                  className="w-full text-left px-2 py-1.5 bg-nb-white/80 text-sm hover:bg-nb-cream transition-nb"
                 >
-                  <div className="font-mono text-xs text-slate-500 truncate">
+                  <div className="font-mono text-xs text-nb-black/50 truncate">
                     {depPath}
                   </div>
                 </Button>
@@ -209,11 +209,11 @@ export const FileDetailPanel: React.FC<FileDetailPanelProps> = ({
         )}
 
         {/* File Info */}
-        <section className="pt-4 border-t border-slate-200 dark:border-slate-700">
-          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <section className="pt-4 border-t border-nb-black/20">
+          <h3 className="text-sm font-medium text-nb-black/70 mb-2">
             File Info
           </h3>
-          <div className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
+          <div className="space-y-1 text-sm text-nb-black/50">
             <div className="flex justify-between">
               <span>Lines:</span>
               <span>{file.lines}</span>

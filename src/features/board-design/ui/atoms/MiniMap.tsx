@@ -73,19 +73,19 @@ export const MiniMap: React.FC<MiniMapProps> = ({
   return (
     <div
       className={`
-        absolute bottom-4 left-4 w-40 h-28 p-2 rounded-lg shadow-lg
-        ${cx.surface} border ${fieldMode ? 'border-slate-700' : 'border-slate-300'}
+        absolute bottom-4 left-4 w-40 h-28 p-2  shadow-brutal
+        ${cx.surface} border ${fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'}
         backdrop-blur-sm bg-opacity-90
       `}
     >
       <div className="text-xs font-medium mb-1">Canvas Overview</div>
       <div
-        className="relative w-full h-20 rounded border border-slate-400 overflow-hidden cursor-pointer"
+        className="relative w-full h-20 border border-nb-black/30 overflow-hidden cursor-pointer"
         onClick={handleClick}
         aria-label="MiniMap - click to pan"
       >
         {/* Background */}
-        <div className="absolute inset-0 bg-slate-800 opacity-20" />
+        <div className="absolute inset-0 bg-nb-black opacity-20" />
 
         {/* Items */}
         {items.map((item) => {
@@ -96,7 +96,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
           return (
             <div
               key={item.id}
-              className="absolute bg-blue-500 opacity-70 rounded-sm"
+              className="absolute bg-nb-blue opacity-70 "
               style={{
                 left: `${x}px`,
                 top: `${y}px`,
@@ -111,7 +111,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
         {/* Viewport rectangle */}
         {viewportRect && (
           <div
-            className="absolute border-2 border-yellow-400 bg-yellow-400 bg-opacity-20"
+            className="absolute border-2 border-nb-yellow bg-nb-yellow bg-opacity-20"
             style={{
               left: `${(viewportRect.x - effectiveBounds.minX) * scale}px`,
               top: `${(viewportRect.y - effectiveBounds.minY) * scale}px`,

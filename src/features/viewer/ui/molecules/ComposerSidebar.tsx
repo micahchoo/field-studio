@@ -74,7 +74,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
   cx: _cx,
 }) => {
   return (
-    <div className="w-inspector bg-slate-900 border-r border-white/10 flex flex-col">
+    <div className="w-inspector bg-nb-black border-r border-white/10 flex flex-col">
       {/* Tabs */}
       <div className="flex border-b border-white/10">
         <Button
@@ -84,7 +84,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
           fullWidth
           className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${
             activeTab === 'layers'
-              ? 'text-indigo-400 border-b-2 border-indigo-400'
+              ? 'text-nb-blue border-b-2 border-nb-blue'
               : 'text-white/40'
           }`}
         >
@@ -97,7 +97,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
           fullWidth
           className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${
             activeTab === 'library'
-              ? 'text-indigo-400 border-b-2 border-indigo-400'
+              ? 'text-nb-blue border-b-2 border-nb-blue'
               : 'text-white/40'
           }`}
         >
@@ -113,7 +113,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
           aria-label="Resource Layers"
         >
           {layers.length === 0 ? (
-            <div className="text-center py-20 text-slate-600 italic text-sm">
+            <div className="text-center py-20 text-nb-black/60 italic text-sm">
               No items on canvas.
             </div>
           ) : (
@@ -130,10 +130,10 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                   }
                 }}
                 onClick={() => onLayerSelect(layer.id)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer group outline-none focus:ring-2 focus:ring-indigo-500 ${
+                className={`p-4 border transition-nb cursor-pointer group outline-none focus:ring-2 focus:ring-nb-blue ${
                   activeLayerId === layer.id
-                    ? 'bg-indigo-600/20 border-indigo-500'
-                    : 'bg-white/5 border-white/5 hover:border-white/20'
+                    ? 'bg-nb-blue/20 border-nb-blue'
+                    : 'bg-nb-white/5 border-white/5 hover:border-white/20'
                 }`}
               >
                 {/* Layer Header */}
@@ -141,7 +141,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                   <span className="text-[11px] font-bold text-white truncate max-w-[140px]">
                     {getIIIFValue(layer.resource.label, 'none') || 'Untitled'}
                   </span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-nb">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -152,7 +152,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                       icon={<Icon name={layer.locked ? 'lock' : 'lock_open'} className="text-[14px]" />}
                       title="Lock Layer"
                       aria-label={layer.locked ? 'Unlock Layer' : 'Lock Layer'}
-                      className={`p-1 rounded ${layer.locked ? 'text-indigo-400' : 'text-white/20'}`}
+                      className={`p-1 ${layer.locked ? 'text-nb-blue' : 'text-white/20'}`}
                     />
                     <Button
                       onClick={(e) => {
@@ -188,7 +188,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                       icon={<Icon name="delete" className="text-[14px]" />}
                       title="Remove Layer"
                       aria-label="Remove Layer"
-                      className="p-1 hover:text-red-400"
+                      className="p-1 hover:text-nb-red"
                     />
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                           onChange={(e) =>
                             onLayerPropertyChange(layer.id, f, Number(e.target.value))
                           }
-                          className="w-full bg-black/40 text-white text-[10px] border-none rounded p-1 outline-none"
+                          className="w-full bg-nb-black/40 text-white text-[10px] border-none p-1 outline-none"
                         />
                       </div>
                     ))}
@@ -235,7 +235,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                       onChange={(e) =>
                         onLayerOpacityChange(layer.id, Number(e.target.value))
                       }
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-nb-blue"
                     />
                   </div>
                 </div>
@@ -248,7 +248,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                         e.stopPropagation();
                         onLayerAlign('center');
                       }}
-                      className="flex-1 bg-white/5 hover:bg-white/10 text-[8px] font-black uppercase py-1 rounded"
+                      className="flex-1 bg-nb-white/5 hover:bg-nb-white/10 text-[8px] font-black uppercase py-1 rounded"
                     >
                       Center
                     </div>
@@ -257,7 +257,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                         e.stopPropagation();
                         onLayerAlign('fill');
                       }}
-                      className="flex-1 bg-white/5 hover:bg-white/10 text-[8px] font-black uppercase py-1 rounded"
+                      className="flex-1 bg-nb-white/5 hover:bg-nb-white/10 text-[8px] font-black uppercase py-1 rounded"
                     >
                       Fill
                     </div>
@@ -277,9 +277,9 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
                 e.dataTransfer.setData('application/iiif-item-id', item.id)
               }
               onClick={() => onLibraryItemSelect(item)}
-              className="p-3 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer group flex items-center gap-3 border border-transparent hover:border-indigo-500/50"
+              className="p-3 bg-nb-white/5 hover:bg-nb-white/10 cursor-pointer group flex items-center gap-3 border border-transparent hover:border-nb-blue/50"
             >
-              <div className="w-10 h-10 bg-black rounded overflow-hidden shrink-0">
+              <div className="w-10 h-10 bg-nb-black overflow-hidden shrink-0">
                 {item.thumbnail?.[0]?.id || item._blobUrl ? (
                   <img
                     src={item.thumbnail?.[0]?.id || item._blobUrl}
@@ -300,7 +300,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
               </div>
               <Icon
                 name="add_circle"
-                className="text-white/20 group-hover:text-indigo-400 ml-auto"
+                className="text-white/20 group-hover:text-nb-blue ml-auto"
               />
             </div>
           ))}

@@ -34,24 +34,24 @@ export interface ParameterSectionProps {
 
 const colorClasses = {
   green: {
-    label: 'text-green-600',
-    darkLabel: 'text-green-400',
+    label: 'text-nb-green',
+    darkLabel: 'text-nb-green',
   },
   blue: {
-    label: 'text-blue-600',
-    darkLabel: 'text-blue-400',
+    label: 'text-nb-blue',
+    darkLabel: 'text-nb-blue',
   },
   orange: {
-    label: 'text-orange-600',
+    label: 'text-nb-orange',
     darkLabel: 'text-orange-400',
   },
   purple: {
-    label: 'text-purple-600',
-    darkLabel: 'text-purple-400',
+    label: 'text-nb-purple',
+    darkLabel: 'text-nb-purple/60',
   },
   yellow: {
-    label: 'text-yellow-600',
-    darkLabel: 'text-yellow-400',
+    label: 'text-nb-yellow',
+    darkLabel: 'text-nb-yellow',
   },
 };
 
@@ -66,8 +66,8 @@ export const ParameterSection: React.FC<ParameterSectionProps> = ({
 }) => {
   const colors = colorClasses[color];
   const labelClass = fieldMode ? colors.darkLabel : colors.label;
-  const textClass = fieldMode ? 'text-white' : 'text-slate-900';
-  const mutedTextClass = fieldMode ? 'text-slate-400' : 'text-slate-500';
+  const textClass = fieldMode ? 'text-white' : 'text-nb-black';
+  const mutedTextClass = fieldMode ? 'text-nb-black/40' : 'text-nb-black/50';
 
   return (
     <section className="space-y-3">

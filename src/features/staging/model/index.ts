@@ -24,7 +24,8 @@
  * @module features/staging/model
  */
 
-import type { IIIFCollection, IIIFManifest } from '@/src/shared/types';
+import type { IIIFCollection, IIIFManifest, FileTree } from '@/src/shared/types';
+import type { ContextMenuSectionType } from '@/src/shared/ui/molecules/ContextMenu';
 import { collection, manifest } from '@/src/entities';
 
 // Re-export entity models for convenience
@@ -372,3 +373,403 @@ export const findSimilarFilenames = (filenames: string[]): string[][] => {
 
   return groups;
 };
+
+// ============================================================================
+// Node Annotations — IIIF overrides for FileTree nodes
+// ============================================================================
+
+export interface NodeAnnotations {
+  iiifIntent?: 'Collection' | 'Manifest' | 'Range' | 'Canvas';
+  iiifBehavior?: string[];
+  viewingDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
+  label?: string;
+  excluded?: boolean;
+  rights?: string;
+  navDate?: string;
+  start?: boolean;
+  provider?: string;
+}
+
+// ============================================================================
+// FlatFileTreeNode — Virtualised-list–friendly flat representation
+// ============================================================================
+
+export interface FlatFileTreeNode {
+  path: string;
+  name: string;
+  depth: number;
+  isDirectory: boolean;
+  file: File | null;
+  childCount: number;
+  totalFileCount: number;
+  size: number;
+  isExpanded: boolean;
+  annotations: NodeAnnotations;
+}
+
+// ============================================================================
+// flattenFileTree — recursive flatten respecting expand state
+// ============================================================================
+
+function countFilesRecursive(tree: FileTree): number {
+  let count = tree.files.size;
+  for (const dir of tree.directories.values()) {
+    count += countFilesRecursive(dir);
+  }
+  return count;
+}
+
+export function flattenFileTree(
+  tree: FileTree,
+  expandedPaths: Set<string>,
+  annotationsMap: Map<string, NodeAnnotations>,
+  depth = 0,
+): FlatFileTreeNode[] {
+  const nodes: FlatFileTreeNode[] = [];
+
+  // Sort directories alphabetically
+  const sortedDirs = [...tree.directories.entries()].sort(([a], [b]) => a.localeCompare(b));
+  // Sort files alphabetically
+  const sortedFiles = [...tree.files.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+  for (const [, dir] of sortedDirs) {
+    const dirPath = dir.path;
+    const isExpanded = expandedPaths.has(dirPath);
+    const ann = annotationsMap.get(dirPath) || {};
+
+    nodes.push({
+      path: dirPath,
+      name: dir.name,
+      depth,
+      isDirectory: true,
+      file: null,
+      childCount: dir.directories.size + dir.files.size,
+      totalFileCount: countFilesRecursive(dir),
+      size: 0,
+      isExpanded,
+      annotations: ann,
+    });
+
+    if (isExpanded) {
+      nodes.push(...flattenFileTree(dir, expandedPaths, annotationsMap, depth + 1));
+    }
+  }
+
+  for (const [fileName, file] of sortedFiles) {
+    const filePath = tree.path ? `${tree.path}/${fileName}` : fileName;
+    const ann = annotationsMap.get(filePath) || {};
+
+    nodes.push({
+      path: filePath,
+      name: fileName,
+      depth,
+      isDirectory: false,
+      file,
+      childCount: 0,
+      totalFileCount: 0,
+      size: file.size,
+      isExpanded: false,
+      annotations: ann,
+    });
+  }
+
+  return nodes;
+}
+
+// ============================================================================
+// Context menu section builders
+// ============================================================================
+
+export function buildDirectoryMenuSections(
+  path: string,
+  annotations: NodeAnnotations,
+  onAnnotationChange: (path: string, ann: NodeAnnotations) => void,
+  onBehaviorModal: (path: string, resourceType: string) => void,
+  onClose: () => void,
+  metadataCallbacks?: {
+    onRightsModal?: (path: string) => void;
+    onNavDateModal?: (path: string) => void;
+  },
+): ContextMenuSectionType[] {
+  const currentIntent = annotations.iiifIntent;
+  const currentDir = annotations.viewingDirection;
+
+  return [
+    {
+      title: 'IIIF Structure',
+      items: [
+        {
+          id: 'intent-collection',
+          label: currentIntent === 'Collection' ? '\u2713 Collection' : 'Collection',
+          icon: 'collections_bookmark',
+          onClick: () => {
+            onAnnotationChange(path, { ...annotations, iiifIntent: currentIntent === 'Collection' ? undefined : 'Collection' });
+            onClose();
+          },
+        },
+        {
+          id: 'intent-manifest',
+          label: currentIntent === 'Manifest' ? '\u2713 Manifest' : 'Manifest',
+          icon: 'auto_stories',
+          onClick: () => {
+            onAnnotationChange(path, { ...annotations, iiifIntent: currentIntent === 'Manifest' ? undefined : 'Manifest' });
+            onClose();
+          },
+        },
+        {
+          id: 'intent-range',
+          label: currentIntent === 'Range' ? '\u2713 Range' : 'Range',
+          icon: 'segment',
+          onClick: () => {
+            onAnnotationChange(path, { ...annotations, iiifIntent: currentIntent === 'Range' ? undefined : 'Range' });
+            onClose();
+          },
+        },
+        {
+          id: 'intent-clear',
+          label: 'Clear Structure',
+          icon: 'block',
+          onClick: () => {
+            onAnnotationChange(path, { ...annotations, iiifIntent: undefined });
+            onClose();
+          },
+          disabled: !currentIntent,
+        },
+      ],
+    },
+    {
+      title: 'Viewing Direction',
+      items: [
+        { id: 'vd-ltr', label: currentDir === 'left-to-right' ? '\u2713 Left to Right' : 'Left to Right', icon: 'arrow_forward', onClick: () => { onAnnotationChange(path, { ...annotations, viewingDirection: currentDir === 'left-to-right' ? undefined : 'left-to-right' }); onClose(); } },
+        { id: 'vd-rtl', label: currentDir === 'right-to-left' ? '\u2713 Right to Left' : 'Right to Left', icon: 'arrow_back', onClick: () => { onAnnotationChange(path, { ...annotations, viewingDirection: currentDir === 'right-to-left' ? undefined : 'right-to-left' }); onClose(); } },
+        { id: 'vd-ttb', label: currentDir === 'top-to-bottom' ? '\u2713 Top to Bottom' : 'Top to Bottom', icon: 'arrow_downward', onClick: () => { onAnnotationChange(path, { ...annotations, viewingDirection: currentDir === 'top-to-bottom' ? undefined : 'top-to-bottom' }); onClose(); } },
+        { id: 'vd-btt', label: currentDir === 'bottom-to-top' ? '\u2713 Bottom to Top' : 'Bottom to Top', icon: 'arrow_upward', onClick: () => { onAnnotationChange(path, { ...annotations, viewingDirection: currentDir === 'bottom-to-top' ? undefined : 'bottom-to-top' }); onClose(); } },
+      ],
+    },
+    {
+      items: [
+        {
+          id: 'set-behavior',
+          label: 'Set Behavior\u2026',
+          icon: 'tune',
+          onClick: () => {
+            const resourceType = annotations.iiifIntent || 'Manifest';
+            onBehaviorModal(path, resourceType);
+            onClose();
+          },
+        },
+      ],
+    },
+    ...(metadataCallbacks ? [{
+      title: 'Metadata',
+      items: [
+        ...(metadataCallbacks.onRightsModal ? [{
+          id: 'set-rights',
+          label: annotations.rights ? '\u2713 Rights' : 'Set Rights\u2026',
+          icon: 'copyright',
+          onClick: () => {
+            metadataCallbacks.onRightsModal!(path);
+            onClose();
+          },
+        }] : []),
+        ...(metadataCallbacks.onNavDateModal ? [{
+          id: 'set-navdate',
+          label: annotations.navDate ? '\u2713 Date' : 'Set Date\u2026',
+          icon: 'calendar_today',
+          onClick: () => {
+            metadataCallbacks.onNavDateModal!(path);
+            onClose();
+          },
+        }] : []),
+      ],
+    }] : []),
+  ];
+}
+
+export function buildFileMenuSections(
+  path: string,
+  annotations: NodeAnnotations,
+  onAnnotationChange: (path: string, ann: NodeAnnotations) => void,
+  onClose: () => void,
+  metadataCallbacks?: {
+    onRightsModal?: (path: string) => void;
+    onNavDateModal?: (path: string) => void;
+    onSetStart?: (path: string) => void;
+  },
+): ContextMenuSectionType[] {
+  const behaviors = annotations.iiifBehavior || [];
+  const hasFacing = behaviors.includes('facing-pages');
+  const hasNonPaged = behaviors.includes('non-paged');
+  const isExcluded = !!annotations.excluded;
+
+  return [
+    {
+      title: 'Canvas Properties',
+      items: [
+        {
+          id: 'facing-pages',
+          label: hasFacing ? '\u2713 Facing Pages' : 'Facing Pages',
+          icon: 'menu_book',
+          onClick: () => {
+            const next = hasFacing
+              ? behaviors.filter(b => b !== 'facing-pages')
+              : [...behaviors.filter(b => b !== 'non-paged'), 'facing-pages'];
+            onAnnotationChange(path, { ...annotations, iiifBehavior: next });
+            onClose();
+          },
+        },
+        {
+          id: 'non-paged',
+          label: hasNonPaged ? '\u2713 Non-Paged' : 'Non-Paged',
+          icon: 'insert_page_break',
+          onClick: () => {
+            const next = hasNonPaged
+              ? behaviors.filter(b => b !== 'non-paged')
+              : [...behaviors.filter(b => b !== 'facing-pages'), 'non-paged'];
+            onAnnotationChange(path, { ...annotations, iiifBehavior: next });
+            onClose();
+          },
+        },
+        {
+          id: 'exclude',
+          label: isExcluded ? '\u2713 Excluded from Import' : 'Exclude from Import',
+          icon: 'visibility_off',
+          variant: isExcluded ? 'danger' : 'default',
+          onClick: () => {
+            onAnnotationChange(path, { ...annotations, excluded: !isExcluded });
+            onClose();
+          },
+        },
+      ],
+    },
+    ...(metadataCallbacks ? [{
+      title: 'Metadata',
+      items: [
+        ...(metadataCallbacks.onRightsModal ? [{
+          id: 'set-rights',
+          label: annotations.rights ? '\u2713 Rights' : 'Set Rights\u2026',
+          icon: 'copyright',
+          onClick: () => {
+            metadataCallbacks.onRightsModal!(path);
+            onClose();
+          },
+        }] : []),
+        ...(metadataCallbacks.onNavDateModal ? [{
+          id: 'set-navdate',
+          label: annotations.navDate ? '\u2713 Date' : 'Set Date\u2026',
+          icon: 'calendar_today',
+          onClick: () => {
+            metadataCallbacks.onNavDateModal!(path);
+            onClose();
+          },
+        }] : []),
+        ...(metadataCallbacks.onSetStart ? [{
+          id: 'set-start',
+          label: annotations.start ? '\u2713 Start Canvas' : 'Set as Start Canvas',
+          icon: 'star',
+          onClick: () => {
+            onAnnotationChange(path, { ...annotations, start: !annotations.start });
+            onClose();
+          },
+        }] : []),
+      ],
+    }] : []),
+  ];
+}
+
+export function buildCollectionMenuSections(
+  collectionId: string,
+  callbacks: {
+    onRename: (id: string) => void;
+    onDelete: (id: string) => void;
+    onCreateSub: (parentId: string) => void;
+    onBehaviorModal: (id: string, resourceType: string) => void;
+  },
+  onClose: () => void,
+): ContextMenuSectionType[] {
+  return [
+    {
+      title: 'Properties',
+      items: [
+        {
+          id: 'col-behavior',
+          label: 'Set Behavior\u2026',
+          icon: 'tune',
+          onClick: () => { callbacks.onBehaviorModal(collectionId, 'Collection'); onClose(); },
+        },
+      ],
+    },
+    {
+      title: 'Organize',
+      items: [
+        {
+          id: 'col-add-sub',
+          label: 'Add Sub-Collection',
+          icon: 'create_new_folder',
+          onClick: () => { callbacks.onCreateSub(collectionId); onClose(); },
+        },
+        {
+          id: 'col-rename',
+          label: 'Rename',
+          icon: 'edit',
+          onClick: () => { callbacks.onRename(collectionId); onClose(); },
+        },
+        {
+          id: 'col-delete',
+          label: 'Delete',
+          icon: 'delete',
+          variant: 'danger',
+          onClick: () => { callbacks.onDelete(collectionId); onClose(); },
+        },
+      ],
+    },
+  ];
+}
+
+// ============================================================================
+// Apply annotations to FileTree for ingest
+// ============================================================================
+
+export function applyAnnotationsToTree(
+  tree: FileTree,
+  annotationsMap: Map<string, NodeAnnotations>,
+): FileTree {
+  const ann = annotationsMap.get(tree.path);
+
+  // Clone maps
+  const newFiles = new Map<string, File>();
+  const newDirs = new Map<string, FileTree>();
+
+  // Filter out excluded files, detect start canvas
+  let startCanvasName: string | undefined;
+  for (const [name, file] of tree.files) {
+    const filePath = tree.path ? `${tree.path}/${name}` : name;
+    const fileAnn = annotationsMap.get(filePath);
+    if (!fileAnn?.excluded) {
+      newFiles.set(name, file);
+    }
+    if (fileAnn?.start) {
+      startCanvasName = name;
+    }
+  }
+
+  // Recursively apply to directories
+  for (const [name, dir] of tree.directories) {
+    const dirAnn = annotationsMap.get(dir.path);
+    if (!dirAnn?.excluded) {
+      newDirs.set(name, applyAnnotationsToTree(dir, annotationsMap));
+    }
+  }
+
+  return {
+    ...tree,
+    files: newFiles,
+    directories: newDirs,
+    iiifIntent: ann?.iiifIntent ?? tree.iiifIntent,
+    iiifBehavior: ann?.iiifBehavior ?? tree.iiifBehavior,
+    viewingDirection: ann?.viewingDirection ?? tree.viewingDirection,
+    rights: ann?.rights ?? tree.rights,
+    navDate: ann?.navDate ?? tree.navDate,
+    startCanvasName: startCanvasName ?? tree.startCanvasName,
+  };
+}

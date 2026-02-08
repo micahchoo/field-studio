@@ -71,8 +71,8 @@ export const MappingStep: React.FC<MappingStepProps> = ({
       {/* Filename column selector */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-slate-700">
-            Filename Column <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-nb-black/80">
+            Filename Column <span className="text-nb-red">*</span>
           </label>
           {onAutoDetect && (
             <AutoMapButton
@@ -82,7 +82,7 @@ export const MappingStep: React.FC<MappingStepProps> = ({
             />
           )}
         </div>
-        <p className="text-xs text-slate-500 mb-2">
+        <p className="text-xs text-nb-black/50 mb-2">
           Select the column that contains filenames for matching with IIIF resources
         </p>
         <ColumnSelector
@@ -97,8 +97,8 @@ export const MappingStep: React.FC<MappingStepProps> = ({
       {hasData && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium text-slate-700">Data Preview</h4>
-            <span className="text-xs text-slate-500">
+            <h4 className="text-sm font-medium text-nb-black/80">Data Preview</h4>
+            <span className="text-xs text-nb-black/50">
               {rows.length} rows • {headers.length} columns
             </span>
           </div>
@@ -114,7 +114,7 @@ export const MappingStep: React.FC<MappingStepProps> = ({
       {/* Column mappings */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-slate-700">Column Mappings</h4>
+          <h4 className="text-sm font-medium text-nb-black/80">Column Mappings</h4>
           <div className="flex items-center gap-3">
             <Button
               onClick={onAddMapping}
@@ -146,14 +146,14 @@ export const MappingStep: React.FC<MappingStepProps> = ({
           ))}
 
           {mappings.length === 0 && (
-            <div className="text-center py-8 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
+            <div className="text-center py-8 text-nb-black/50 border-2 border-dashed border-nb-black/20 ">
               <Icon name="table_rows" className="text-3xl mb-2 opacity-50" />
               <p className="text-sm">No mappings configured</p>
               <Button
                 onClick={onAddMapping}
                 variant="ghost"
                 size="sm"
-                className="mt-2 text-blue-600 hover:text-blue-700"
+                className="mt-2 text-nb-blue hover:text-nb-blue"
               >
                 Add your first mapping
               </Button>

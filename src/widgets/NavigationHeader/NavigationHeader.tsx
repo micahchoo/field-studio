@@ -155,7 +155,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
       role="banner"
     >
       {/* Top Row: Brand, Breadcrumb, User Context */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/50 dark:border-slate-800/50">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-nb-black/20">
         {/* Left: Brand & Breadcrumb */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <HeaderTopBar fieldMode={fieldMode} textColor={cx.text} />

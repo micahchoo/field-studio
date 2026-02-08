@@ -20,6 +20,10 @@ export interface BoardToolbarProps {
   selectedItemId: string | null;
   /** Delete callback */
   onDelete: () => void;
+  /** Group callback — creates a group from currently selected items */
+  onGroup?: () => void;
+  /** Whether grouping is available (needs selection) */
+  canGroup?: boolean;
   /** Contextual styles from template */
   cx: {
     surface: string;
@@ -59,6 +63,8 @@ export const BoardToolbar: React.FC<BoardToolbarProps> = ({
   onToolChange,
   selectedItemId,
   onDelete,
+  onGroup,
+  canGroup = false,
   cx: _cx,
   fieldMode: _fieldMode,
 }) => {
@@ -66,7 +72,7 @@ export const BoardToolbar: React.FC<BoardToolbarProps> = ({
     <div
       className={`
         w-16 flex flex-col items-center py-4 gap-2 border-r
-        ${_fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-200'}
+        ${_fieldMode ? 'bg-nb-black border-nb-black/80' : 'bg-nb-white border-nb-black/20'}
       `}
     >
       {/* Tools */}
@@ -85,9 +91,20 @@ export const BoardToolbar: React.FC<BoardToolbarProps> = ({
       ))}
 
       {/* Divider */}
-      <div className={`w-8 h-px my-2 ${_fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+      <div className={`w-8 h-px my-2 ${_fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'}`} />
 
       {/* Selected Item Actions */}
+      <IconButton
+        icon="group_work"
+        ariaLabel="Group selected items"
+        onClick={canGroup ? onGroup || (() => {}) : () => {}}
+        variant="ghost"
+        disabled={!canGroup}
+        shortcut="G"
+        size="md"
+        className="w-10 h-10"
+      />
+
       <IconButton
         icon="delete"
         ariaLabel="Delete selected"

@@ -78,12 +78,12 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
   const getBgClass = () => {
     switch (bgMode) {
       case 'light':
-        return 'bg-slate-200';
+        return 'bg-nb-cream';
       case 'dark':
-        return 'bg-slate-900';
+        return 'bg-nb-black';
       case 'grid':
       default:
-        return 'bg-black';
+        return 'bg-nb-black';
     }
   };
 
@@ -100,7 +100,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
       onDrop={onDrop}
     >
       <div
-        className="relative shadow-[0_0_100px_rgba(79,70,229,0.2)] bg-slate-900 border border-white/5"
+        className="relative shadow-[0_0_100px_rgba(79,70,229,0.2)] bg-nb-black border border-white/5"
         style={{
           width: width * scale,
           height: height * scale,
@@ -114,7 +114,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
       >
         {/* Empty State */}
         {layers.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 pointer-events-none border-2 border-dashed border-white/10 m-4 rounded-3xl">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 pointer-events-none border-2 border-dashed border-white/10 m-4 ">
             <Icon name="layers" className="text-6xl mb-4" />
             <h3 className="text-xl font-bold uppercase tracking-widest">
               Composition Canvas
@@ -130,9 +130,9 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
           <div
             key={layer.id}
             onClick={() => onLayerSelect(layer.id)}
-            className={`absolute group select-none transition-all ${
+            className={`absolute group select-none transition-nb ${
               activeLayerId === layer.id
-                ? 'ring-2 ring-indigo-500 z-50 shadow-2xl'
+                ? 'ring-2 ring-nb-blue z-50 shadow-brutal-lg'
                 : 'z-10'
             }`}
             style={{
@@ -158,7 +158,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
                 className="w-full h-full object-cover pointer-events-none"
               />
             ) : layer.resource.type === 'Sound' ? (
-              <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center border border-slate-600">
+              <div className="w-full h-full bg-nb-black flex flex-col items-center justify-center border border-nb-black/60">
                 <Icon name="audiotrack" className="text-4xl text-white/50" />
                 <span className="text-[10px] text-white/50 mt-2">
                   Audio Layer
@@ -171,7 +171,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
                 alt={getIIIFValue(layer.resource.label, 'none') || 'Layer Image'}
               />
             ) : (
-              <div className="w-full h-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
+              <div className="w-full h-full bg-nb-blue/10 flex items-center justify-center text-nb-blue border border-nb-blue/20">
                 <Icon name="image" className="text-4xl" />
               </div>
             )}
@@ -180,7 +180,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
             {activeLayerId === layer.id && (
               <>
                 {/* Label */}
-                <div className="absolute -top-6 left-0 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-lg flex items-center gap-1">
+                <div className="absolute -top-6 left-0 bg-nb-blue text-white text-[10px] px-2 py-0.5 font-bold shadow-brutal flex items-center gap-1">
                   <Icon
                     name={layer.locked ? 'lock' : 'auto_fix_high'}
                     className="text-[10px]"
@@ -189,7 +189,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
                 </div>
 
                 {/* Selection Border */}
-                <div className="absolute inset-0 border-2 border-indigo-500/50 pointer-events-none" />
+                <div className="absolute inset-0 border-2 border-nb-blue/50 pointer-events-none" />
 
                 {/* Resize Handles */}
                 {!layer.locked && (
@@ -197,7 +197,7 @@ export const ComposerCanvas: React.FC<ComposerCanvasProps> = ({
                     {['nw', 'ne', 'sw', 'se'].map((h) => (
                       <div
                         key={h}
-                        className="absolute w-3 h-3 bg-white border border-indigo-500 rounded-full z-50"
+                        className="absolute w-3 h-3 bg-nb-white border border-nb-blue z-50"
                         style={{
                           cursor: `${h}-resize`,
                           top: h.includes('n') ? -6 : 'auto',

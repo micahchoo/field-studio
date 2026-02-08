@@ -52,20 +52,20 @@ export const ConnectionTypeBadge: React.FC<ConnectionTypeBadgeProps> = ({
   };
 
   const typeColors: Record<ConnectionType, { bg: string; text: string }> = {
-    associated: { bg: 'bg-blue-100', text: 'text-blue-800' },
-    partOf: { bg: 'bg-green-100', text: 'text-green-800' },
-    similarTo: { bg: 'bg-purple-100', text: 'text-purple-800' },
-    references: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-    requires: { bg: 'bg-red-100', text: 'text-red-800' },
+    associated: { bg: 'bg-nb-blue/20', text: 'text-nb-blue' },
+    partOf: { bg: 'bg-nb-green/20', text: 'text-nb-green' },
+    similarTo: { bg: 'bg-nb-purple/10', text: 'text-nb-purple' },
+    references: { bg: 'bg-nb-yellow/20', text: 'text-nb-yellow' },
+    requires: { bg: 'bg-nb-red/20', text: 'text-nb-red' },
     sequence: { bg: 'bg-cyan-100', text: 'text-cyan-800' },
   };
 
   const fieldModeColors: Record<ConnectionType, { bg: string; text: string }> = {
-    associated: { bg: 'bg-blue-900', text: 'text-blue-200' },
-    partOf: { bg: 'bg-green-900', text: 'text-green-200' },
-    similarTo: { bg: 'bg-purple-900', text: 'text-purple-200' },
-    references: { bg: 'bg-yellow-900', text: 'text-yellow-200' },
-    requires: { bg: 'bg-red-900', text: 'text-red-200' },
+    associated: { bg: 'bg-nb-blue', text: 'text-nb-blue/40' },
+    partOf: { bg: 'bg-nb-green', text: 'text-nb-green/40' },
+    similarTo: { bg: 'bg-nb-purple', text: 'text-nb-purple/20' },
+    references: { bg: 'bg-nb-yellow/20', text: 'text-nb-yellow/60' },
+    requires: { bg: 'bg-nb-red', text: 'text-nb-red/40' },
     sequence: { bg: 'bg-cyan-900', text: 'text-cyan-200' },
   };
 
@@ -82,11 +82,11 @@ export const ConnectionTypeBadge: React.FC<ConnectionTypeBadgeProps> = ({
     <span
       onClick={handleClick}
       className={`
-        inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+        inline-flex items-center px-2 py-1  text-xs font-medium
         ${colors.bg} ${colors.text}
-        ${selected ? 'ring-2 ring-offset-1 ring-yellow-400' : ''}
+        ${selected ? 'ring-2 ring-offset-1 ring-nb-yellow' : ''}
         ${clickable ? 'cursor-pointer hover:opacity-90' : 'cursor-default'}
-        transition-opacity
+        transition-nb
       `}
       title={`Connection type: ${label}`}
       aria-label={`${label} connection`}

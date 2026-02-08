@@ -34,8 +34,8 @@ export const CodePanel: React.FC<CodePanelProps> = ({
   cx: _cx,
   fieldMode = false,
 }) => {
-  const mutedTextClass = fieldMode ? 'text-slate-400' : 'text-slate-500';
-  const preBg = fieldMode ? 'bg-slate-950' : 'bg-slate-900';
+  const mutedTextClass = fieldMode ? 'text-nb-black/40' : 'text-nb-black/50';
+  const preBg = fieldMode ? 'bg-nb-black' : 'bg-nb-black';
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -45,12 +45,12 @@ export const CodePanel: React.FC<CodePanelProps> = ({
     <div className="p-4 space-y-4">
       <div className="space-y-2">
         <label className={`text-[10px] font-bold uppercase tracking-wider ${mutedTextClass}`}>cURL</label>
-        <pre className={`${preBg} text-green-400 text-xs p-3 rounded-lg overflow-x-auto font-mono`}>{curlCommand}</pre>
+        <pre className={`${preBg} text-nb-green text-xs p-3  overflow-x-auto font-mono`}>{curlCommand}</pre>
         <ActionButton label="Copy cURL" onClick={() => copyToClipboard(curlCommand)} variant="ghost" size="sm" />
       </div>
       <div className="space-y-2">
         <label className={`text-[10px] font-bold uppercase tracking-wider ${mutedTextClass}`}>HTML</label>
-        <pre className={`${preBg} text-blue-400 text-xs p-3 rounded-lg overflow-x-auto font-mono`}>{htmlTag}</pre>
+        <pre className={`${preBg} text-nb-blue text-xs p-3  overflow-x-auto font-mono`}>{htmlTag}</pre>
         <ActionButton label="Copy HTML" onClick={() => copyToClipboard(htmlTag)} variant="ghost" size="sm" />
       </div>
     </div>

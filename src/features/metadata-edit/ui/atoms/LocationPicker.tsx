@@ -39,8 +39,8 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   className = '',
   title = 'Pick Location on Map',
 }) => {
-  const buttonClass = `bg-green-100 hover:bg-green-200 text-green-700 p-1.5 rounded border border-green-200 transition-colors flex-shrink-0 ${
-    fieldMode ? 'bg-green-900/30 text-green-400 border-green-800' : ''
+  const buttonClass = `bg-nb-green/20 hover:bg-nb-green/30 text-nb-green p-1.5 border border-nb-green/30 transition-nb flex-shrink-0 ${
+    fieldMode ? 'bg-nb-green/30 text-nb-green border-nb-green' : ''
   } ${className}`;
 
   return (

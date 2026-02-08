@@ -82,7 +82,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   const footer = (
     <div className="flex justify-between items-center">
-      <div className="text-xs font-mono bg-slate-100 px-3 py-1.5 rounded border">
+      <div className="text-xs font-mono bg-nb-cream px-3 py-1.5 border">
         {coords
           ? `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
           : 'Click map to select'}
@@ -92,7 +92,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         variant="primary"
         size="sm"
         disabled={!coords}
-        className="bg-green-600 hover:bg-green-700"
+        className="bg-nb-green hover:bg-nb-green"
       >
         Confirm Location
       </Button>
@@ -105,13 +105,13 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
       onClose={onClose}
       title="Pick Location"
       icon="location_on"
-      iconColor="bg-green-100 text-green-600"
+      iconColor="bg-nb-green/20 text-nb-green"
       size="md"
       height="500px"
       zIndex={2000}
       footer={footer}
     >
-      <div className="relative bg-slate-100 h-full">
+      <div className="relative bg-nb-cream h-full">
         <div ref={mapRef} className="absolute inset-0" />
       </div>
     </ModalDialog>

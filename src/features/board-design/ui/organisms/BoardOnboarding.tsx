@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
 import type { IIIFItem } from '@/src/shared/types';
+import { TemplateItemPicker } from '../molecules/TemplateItemPicker';
 
 export type BoardLayoutType =
   | 'narrative'
@@ -44,14 +45,18 @@ export interface BoardTemplate {
 }
 
 export interface BoardOnboardingProps {
-  /** Called when user selects a template */
+  /** Called when user selects a template (demo flow) */
   onSelectTemplate: (template: BoardTemplate) => void;
+  /** Called when user picks template + items via the picker */
+  onSelectTemplateWithItems?: (template: BoardTemplate, items: IIIFItem[]) => void;
   /** Called when user wants to start from scratch */
   onStartBlank: () => void;
   /** Called when user wants to browse archive */
   onBrowseArchive: () => void;
   /** Root item for getting sample items */
   root: IIIFItem | null;
+  /** Available archive items for the template item picker */
+  availableItems?: IIIFItem[];
   /** Contextual styles */
   cx: {
     surface: string;
@@ -73,6 +78,7 @@ const TEMPLATES: BoardTemplate[] = [
     previewLayout: 'narrative',
     itemCount: 4,
     defaultBehavior: ['individuals'],
+    connectionType: 'sequence',
   },
   {
     id: 'comparison',
@@ -81,6 +87,7 @@ const TEMPLATES: BoardTemplate[] = [
     icon: 'compare',
     previewLayout: 'comparison',
     itemCount: 2,
+    defaultBehavior: ['individuals'],
     connectionType: 'similarTo',
   },
   {
@@ -90,6 +97,7 @@ const TEMPLATES: BoardTemplate[] = [
     icon: 'view_timeline',
     previewLayout: 'timeline',
     itemCount: 5,
+    connectionType: 'sequence',
   },
   {
     id: 'map',
@@ -98,6 +106,7 @@ const TEMPLATES: BoardTemplate[] = [
     icon: 'map',
     previewLayout: 'map',
     itemCount: 3,
+    connectionType: 'associated',
   },
   {
     id: 'storyboard',
@@ -163,7 +172,7 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
   layout,
   fieldMode,
 }) => {
-  const baseItemClass = `absolute w-8 h-8 rounded ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`;
+  const baseItemClass = `absolute w-8 h-8 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`;
   const lineColor = fieldMode ? '#78716c' : '#d6d3d1';
   const accentColor = fieldMode ? '#d97706' : '#f59e0b';
 
@@ -181,14 +190,14 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
     ),
     comparison: (
       <div className="relative w-full h-full flex items-center justify-center gap-4">
-        <div className={`w-10 h-12 rounded ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
-        <div className={`text-lg ${fieldMode ? 'text-stone-600' : 'text-stone-400'}`}>{'\u2194'}</div>
-        <div className={`w-10 h-12 rounded ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+        <div className={`w-10 h-12 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+        <div className={`text-lg ${fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'}`}>{'\u2194'}</div>
+        <div className={`w-10 h-12 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
       </div>
     ),
     timeline: (
       <div className="relative w-full h-full flex items-center">
-        <div className={`absolute left-2 right-2 h-0.5 ${fieldMode ? 'bg-stone-600' : 'bg-stone-300'}`} />
+        <div className={`absolute left-2 right-2 h-0.5 ${fieldMode ? 'bg-nb-black/60' : 'bg-nb-black/20'}`} />
         <div className={`${baseItemClass} left-4 top-5`} />
         <div className={`${baseItemClass} left-16 top-3`} />
         <div className={`${baseItemClass} left-28 top-6`} />
@@ -198,18 +207,18 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
     ),
     map: (
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className={`absolute w-16 h-12 rounded-full ${fieldMode ? 'bg-stone-800' : 'bg-stone-100'} opacity-50`} />
-        <div className={`absolute left-4 top-3 w-6 h-6 rounded-full ${fieldMode ? 'bg-amber-600' : 'bg-amber-400'}`} />
-        <div className={`absolute right-6 top-8 w-5 h-5 rounded-full ${fieldMode ? 'bg-amber-700' : 'bg-amber-500'}`} />
-        <div className={`absolute left-12 bottom-4 w-4 h-4 rounded-full ${fieldMode ? 'bg-amber-500' : 'bg-amber-300'}`} />
+        <div className={`absolute w-16 h-12 ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'} opacity-50`} />
+        <div className={`absolute left-4 top-3 w-6 h-6 ${fieldMode ? 'bg-nb-orange' : 'bg-nb-orange'}`} />
+        <div className={`absolute right-6 top-8 w-5 h-5 ${fieldMode ? 'bg-nb-orange' : 'bg-nb-orange'}`} />
+        <div className={`absolute left-12 bottom-4 w-4 h-4 ${fieldMode ? 'bg-nb-orange' : 'bg-nb-orange/40'}`} />
       </div>
     ),
     storyboard: (
       <div className="relative w-full h-full flex items-end pb-1">
         {[0, 1, 2, 3].map(i => (
           <div key={i} className="flex-1 flex flex-col items-center gap-0.5 px-0.5">
-            <div className={`w-full h-6 rounded-sm ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
-            <div className={`w-full h-2 rounded-sm ${fieldMode ? 'bg-stone-800' : 'bg-stone-100'}`} />
+            <div className={`w-full h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+            <div className={`w-full h-2 ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`} />
           </div>
         ))}
         <svg className="absolute top-3 left-0 w-full" viewBox="0 0 80 4" preserveAspectRatio="none">
@@ -220,7 +229,7 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
     'choice-comparison': (
       <div className="relative w-full h-full flex items-center justify-center gap-1">
         {[0, 1, 2].map(i => (
-          <div key={i} className={`w-8 h-10 rounded ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'} border ${fieldMode ? 'border-stone-600' : 'border-stone-300'}`} />
+          <div key={i} className={`w-8 h-10 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'} border ${fieldMode ? 'border-nb-black/60' : 'border-nb-black/20'}`} />
         ))}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 80 40">
           <line x1="28" y1="20" x2="38" y2="20" stroke={accentColor} strokeWidth="0.8" />
@@ -230,12 +239,12 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
     ),
     'annotation-review': (
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className={`w-10 h-10 rounded ${fieldMode ? 'bg-stone-600' : 'bg-stone-300'} z-10`} />
+        <div className={`w-10 h-10 ${fieldMode ? 'bg-nb-black/60' : 'bg-nb-black/20'} z-10`} />
         {[0, 1, 2, 3].map(i => {
           const angle = (i / 4) * Math.PI * 2 - Math.PI / 2;
           const r = 18;
           return (
-            <div key={i} className={`absolute w-5 h-5 rounded ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`}
+            <div key={i} className={`absolute w-5 h-5 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`}
               style={{ left: `calc(50% + ${Math.cos(angle) * r}px - 10px)`, top: `calc(50% + ${Math.sin(angle) * r}px - 10px)` }}
             />
           );
@@ -246,15 +255,15 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
       <div className="relative w-full h-full flex flex-col items-center justify-center gap-1">
         {[0, 1].map(row => (
           <div key={row} className="flex gap-0.5">
-            <div className={`w-12 h-8 rounded-l ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
-            <div className={`w-12 h-8 rounded-r ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+            <div className={`w-12 h-8 rounded-l ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+            <div className={`w-12 h-8 rounded-r ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
           </div>
         ))}
       </div>
     ),
     'provenance-map': (
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className={`w-8 h-8 rounded ${fieldMode ? 'bg-amber-700' : 'bg-amber-300'} z-10`} />
+        <div className={`w-8 h-8 ${fieldMode ? 'bg-nb-orange' : 'bg-nb-orange/40'} z-10`} />
         {[0, 1, 2, 3].map(i => {
           const positions = [
             { left: '15%', top: '15%' },
@@ -263,7 +272,7 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
             { left: '70%', top: '65%' },
           ];
           return (
-            <div key={i} className={`absolute w-5 h-5 rounded ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`}
+            <div key={i} className={`absolute w-5 h-5 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`}
               style={positions[i]}
             />
           );
@@ -279,7 +288,7 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
     'scroll-layout': (
       <div className="relative w-full h-full flex flex-col items-center justify-center gap-0.5">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className={`w-16 h-4 rounded-sm ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+          <div key={i} className={`w-16 h-4 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
         ))}
         <svg className="absolute right-3 top-2 bottom-2 w-2" viewBox="0 0 4 40">
           <line x1="2" y1="2" x2="2" y2="38" stroke={lineColor} strokeWidth="0.5" />
@@ -294,21 +303,24 @@ const TemplatePreview: React.FC<{ layout: BoardTemplate['previewLayout']; itemCo
 
 export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
   onSelectTemplate,
+  onSelectTemplateWithItems,
   onStartBlank,
   onBrowseArchive,
+  availableItems = [],
   cx,
   fieldMode,
 }) => {
   const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null);
   const [showDemoPrompt, setShowDemoPrompt] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<BoardTemplate | null>(null);
 
   return (
     <div className={`h-full flex flex-col ${cx.surface}`}>
       {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">
         {/* Icon */}
-        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${fieldMode ? 'bg-amber-900/30' : 'bg-amber-100'}`}>
-          <svg className={`w-10 h-10 ${fieldMode ? 'text-amber-400' : 'text-amber-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={`w-20 h-20 flex items-center justify-center mb-6 ${fieldMode ? 'bg-nb-orange/10' : 'bg-nb-orange/20'}`}>
+          <svg className={`w-10 h-10 ${fieldMode ? 'text-nb-orange' : 'text-nb-orange'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
         </div>
@@ -328,10 +340,10 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
         <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
           <Button variant="ghost" size="bare"
             onClick={() => setShowDemoPrompt(true)}
-            className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all ${
+            className={`px-6 py-3 font-medium flex items-center gap-2 transition-nb ${
               fieldMode
-                ? 'bg-amber-600 hover:bg-amber-500 text-white'
-                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25'
+                ? 'bg-nb-orange hover:bg-nb-orange text-white'
+                : 'bg-nb-orange hover:bg-nb-orange text-white shadow-brutal shadow-nb-orange/20'
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,10 +354,10 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
           </Button>
           <Button variant="ghost" size="bare"
             onClick={onBrowseArchive}
-            className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all border ${
+            className={`px-6 py-3 font-medium flex items-center gap-2 transition-nb border ${
               fieldMode
-                ? 'border-stone-600 text-stone-300 hover:bg-stone-800'
-                : 'border-stone-300 text-stone-700 hover:bg-stone-50'
+                ? 'border-nb-black/60 text-nb-black/20 hover:bg-nb-black'
+                : 'border-nb-black/20 text-nb-black/70 hover:bg-nb-cream'
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -358,14 +370,14 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
         {/* Start Blank Link */}
         <Button variant="ghost" size="bare"
           onClick={onStartBlank}
-          className={`text-sm underline-offset-4 hover:underline transition-all ${cx.textMuted}`}
+          className={`text-sm underline-offset-4 hover:underline transition-nb ${cx.textMuted}`}
         >
           Or start with a blank canvas →
         </Button>
       </div>
 
       {/* Template Gallery */}
-      <div className={`border-t ${cx.border} px-8 py-6`}>
+      <div className={`border-t-2 border-t-mode-accent ${cx.border} px-8 py-6`}>
         <h2 className={`text-sm font-semibold uppercase tracking-wider mb-4 ${cx.textMuted}`}>
           Choose a Template
         </h2>
@@ -373,17 +385,23 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
           {TEMPLATES.map((template) => (
             <Button variant="ghost" size="bare"
               key={template.id}
-              onClick={() => onSelectTemplate(template)}
+              onClick={() => {
+                if (onSelectTemplateWithItems && availableItems.length > 0) {
+                  setPendingTemplate(template);
+                } else {
+                  onSelectTemplate(template);
+                }
+              }}
               onMouseEnter={() => setHoveredTemplate(template.id)}
               onMouseLeave={() => setHoveredTemplate(null)}
-              className={`text-left p-4 rounded-xl border transition-all duration-200 group ${
+              className={`text-left p-4 border transition-nb group ${
                 fieldMode
-                  ? `border-stone-700 hover:border-amber-600 hover:bg-stone-800 ${hoveredTemplate === template.id ? 'border-amber-600 bg-stone-800' : ''}`
-                  : `border-stone-200 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/10 ${hoveredTemplate === template.id ? 'border-amber-400 shadow-lg shadow-amber-500/10' : 'bg-white'}`
+                  ? `border-nb-black/70 hover:border-nb-orange hover:bg-nb-black ${hoveredTemplate === template.id ? 'border-nb-orange bg-nb-black' : ''}`
+                  : `border-nb-black/10 hover:border-nb-orange hover:shadow-brutal hover:shadow-nb-orange/10 ${hoveredTemplate === template.id ? 'border-nb-orange shadow-brutal shadow-nb-orange/10' : 'bg-nb-white'}`
               }`}
             >
               {/* Preview */}
-              <div className={`h-16 rounded-lg mb-3 overflow-hidden relative ${fieldMode ? 'bg-stone-900' : 'bg-stone-50'}`}>
+              <div className={`h-16 mb-3 overflow-hidden relative ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
                 <TemplatePreview layout={template.previewLayout} itemCount={template.itemCount} fieldMode={fieldMode} />
               </div>
 
@@ -392,10 +410,10 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
               <p className={`text-xs line-clamp-2 ${cx.textMuted}`}>{template.description}</p>
 
               {/* Hover hint */}
-              <div className={`mt-2 text-xs font-medium flex items-center gap-1 transition-all ${
-                fieldMode ? 'text-amber-400' : 'text-amber-600'
+              <div className={`mt-2 text-xs font-medium flex items-center gap-1 transition-nb ${
+                fieldMode ? 'text-nb-orange' : 'text-nb-orange'
               } ${hoveredTemplate === template.id ? 'opacity-100' : 'opacity-0'}`}>
-                Click to use
+                {onSelectTemplateWithItems && availableItems.length > 0 ? 'Choose items' : 'Click to use'}
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -407,18 +425,18 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
 
       {/* Demo Prompt Modal */}
       {showDemoPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`max-w-md w-full rounded-2xl p-6 ${fieldMode ? 'bg-stone-900 border border-stone-700' : 'bg-white shadow-xl'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nb-black/50">
+          <div className={`max-w-md w-full p-6 ${fieldMode ? 'bg-nb-black border border-nb-black/70' : 'bg-nb-white shadow-brutal'}`}>
             <h3 className={`text-xl font-bold mb-2 ${cx.text}`}>Start with Demo</h3>
             <p className={`mb-6 ${cx.textMuted}`}>
-              We'll create a sample board with a few items so you can see how connections and layouts work. 
+              We'll create a sample board with a few items so you can see how connections and layouts work.
               You can modify or delete these items anytime.
             </p>
             <div className="flex gap-3 justify-end">
               <Button variant="ghost" size="bare"
                 onClick={() => setShowDemoPrompt(false)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  fieldMode ? 'text-stone-400 hover:text-stone-200' : 'text-stone-600 hover:text-stone-800'
+                className={`px-4 py-2 font-medium transition-nb ${
+                  fieldMode ? 'text-nb-black/40 hover:text-nb-black/10' : 'text-nb-black/60 hover:text-nb-black'
                 }`}
               >
                 Cancel
@@ -429,8 +447,8 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
                   // Create a narrative template with demo flag
                   onSelectTemplate({ ...TEMPLATES[0], id: 'narrative-demo' });
                 }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  fieldMode ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+                className={`px-4 py-2 font-medium transition-nb ${
+                  fieldMode ? 'bg-nb-orange hover:bg-nb-orange text-white' : 'bg-nb-orange hover:bg-nb-orange text-white'
                 }`}
               >
                 Create Demo Board
@@ -438,6 +456,22 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Template Item Picker Modal */}
+      {pendingTemplate && onSelectTemplateWithItems && (
+        <TemplateItemPicker
+          isOpen={!!pendingTemplate}
+          onClose={() => setPendingTemplate(null)}
+          template={pendingTemplate}
+          availableItems={availableItems}
+          onConfirm={(template, items) => {
+            setPendingTemplate(null);
+            onSelectTemplateWithItems(template, items);
+          }}
+          cx={cx}
+          fieldMode={fieldMode}
+        />
       )}
     </div>
   );

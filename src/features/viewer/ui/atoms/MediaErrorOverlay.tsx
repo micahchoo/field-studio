@@ -62,10 +62,10 @@ export const MediaErrorOverlay: React.FC<MediaErrorOverlayProps> = ({
   const displayMessage = message || defaultMessages[errorType];
   const iconName = errorIcons[errorType];
 
-  const bgClass = fieldMode ? 'bg-slate-900/90' : 'bg-black/80';
-  const iconColor = fieldMode ? 'text-red-400' : 'text-red-400';
-  const titleColor = fieldMode ? 'text-yellow-400' : 'text-white';
-  const messageColor = fieldMode ? 'text-slate-300' : 'text-slate-300';
+  const bgClass = fieldMode ? 'bg-nb-black/90' : 'bg-nb-black/80';
+  const iconColor = fieldMode ? 'text-nb-red' : 'text-nb-red';
+  const titleColor = fieldMode ? 'text-nb-yellow' : 'text-white';
+  const messageColor = fieldMode ? 'text-nb-black/30' : 'text-nb-black/30';
 
   return (
     <div

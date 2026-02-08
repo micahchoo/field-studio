@@ -41,7 +41,7 @@ export interface ListContainerProps {
   /** Field mode for dark theme */
   fieldMode?: boolean;
   /** Spacing between items (Tailwind space-y-* value) */
-  itemSpacing?: 'space-y-1' | 'space-y-2' | 'space-y-3' | 'space-y-4';
+  itemSpacing?:'space-y-1' |'space-y-2' |'space-y-3' |'space-y-4';
   /** Additional CSS class */
   className?: string;
 }
@@ -50,16 +50,16 @@ export const ListContainer: React.FC<ListContainerProps> = ({
   children,
   title,
   count,
-  emptyIcon = 'inbox',
-  emptyMessage = 'No items yet',
+  emptyIcon ='inbox',
+  emptyMessage ='No items yet',
   emptyActionLabel,
   onEmptyAction,
   headerActionLabel,
   onHeaderAction,
-  headerActionIcon = 'add',
+  headerActionIcon ='add',
   fieldMode = false,
-  itemSpacing = 'space-y-2',
-  className = '',
+  itemSpacing ='space-y-2',
+  className ='',
 }) => {
   const hasItems = React.Children.count(children) > 0;
 
@@ -69,15 +69,15 @@ export const ListContainer: React.FC<ListContainerProps> = ({
       <div className={`text-center py-10 ${className}`}>
         <Icon
           name={emptyIcon}
-          className={`text-4xl mb-2 ${fieldMode ? 'text-slate-600' : 'text-slate-300'}`}
+          className={`text-4xl mb-2 ${fieldMode ?'text-nb-black/60' :'text-nb-black/30'}`}
         />
-        <p className={`text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-500'}`}>
+        <p className={`text-xs ${fieldMode ?'text-nb-black/50' :'text-nb-black/50'}`}>
           {emptyMessage}
         </p>
         {onEmptyAction && emptyActionLabel && (
           <Button
             onClick={onEmptyAction}
-            variant={fieldMode ? 'secondary' : 'primary'}
+            variant={fieldMode ?'secondary' :'primary'}
             size="sm"
             className="mt-4"
           >
@@ -94,9 +94,9 @@ export const ListContainer: React.FC<ListContainerProps> = ({
       {(title || count !== undefined || onHeaderAction) && (
         <div className="flex justify-between items-center mb-3">
           {title && (
-            <span className={`text-[10px] font-bold uppercase ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-[10px] font-bold uppercase ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}>
               {title}
-              {count !== undefined && ` (${count})`}
+              {count !== undefined &&` (${count})`}
             </span>
           )}
           {onHeaderAction && headerActionLabel && (

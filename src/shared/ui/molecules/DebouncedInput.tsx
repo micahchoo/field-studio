@@ -28,7 +28,7 @@ export interface DebouncedInputProps {
   /** Max length validation */
   maxLength?: number;
   /** Input type */
-  type?: 'text' | 'search' | 'email' | 'url';
+  type?:'text' |'search' |'email' |'url';
   /** Additional CSS classes */
   className?: string;
   /** Disabled state */
@@ -63,11 +63,11 @@ export interface DebouncedInputProps {
 export const DebouncedInput: React.FC<DebouncedInputProps> = ({
   value,
   onChange,
-  placeholder = 'Enter text...',
+  placeholder ='Enter text...',
   debounceMs = INPUT_CONSTRAINTS.debounceMs,
   maxLength = INPUT_CONSTRAINTS.maxLengthDefault,
-  type = 'text',
-  className = '',
+  type ='text',
+  className ='',
   disabled = false,
   autoFocus = false,
   id,
@@ -145,10 +145,10 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
         className={`
           w-full
           ${cx.input}
-          ${isDebouncing ? 'opacity-80' : ''}
-          transition-opacity
+          ${isDebouncing ?'opacity-80' :''}
+          transition-nb
           duration-${UI_TIMING.transition}
-        `}
+`}
       />
 
       {/* Character count indicator */}
@@ -156,8 +156,8 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
         <span
           className={`
             absolute right-3 top-2.5 text-xs
-            ${isNearLimit ? 'text-amber-500 font-medium' : cx.textMuted}
-          `}
+            ${isNearLimit ?'text-nb-orange font-medium' : cx.textMuted}
+`}
           aria-live="polite"
         >
           {characterCount}/{maxLength}
@@ -171,7 +171,7 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
             absolute right-3 top-2.5 text-xs
             ${cx.textMuted}
             animate-pulse
-          `}
+`}
           aria-hidden="true"
         >
           ...

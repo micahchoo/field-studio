@@ -271,7 +271,7 @@ export const VirtualTreeList: React.FC<VirtualTreeListProps> = ({
 
       {/* Empty state */}
       {nodes.length === 0 && (
-        <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+        <div className="flex items-center justify-center h-full text-nb-black/40 text-sm">
           No items to display
         </div>
       )}

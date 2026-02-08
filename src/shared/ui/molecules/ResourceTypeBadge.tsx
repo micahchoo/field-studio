@@ -1,10 +1,10 @@
 /**
  * ResourceTypeBadge Molecule
  *
- * Composes: Icon + label (receives `t` terminology function via props)
+ * Composes: Icon + label (receives`t` terminology function via props)
  *
  * Displays IIIF resource type (Manifest, Canvas, Collection, etc.) with appropriate icon.
- * Receives `t` function via props from organism (respects abstraction level).
+ * Receives`t` function via props from organism (respects abstraction level).
  * NOTE: Does NOT call useTerminology — receives t() via props.
  *
  * IDEAL OUTCOME: Shows correct icon and label for any IIIF resource type
@@ -17,13 +17,13 @@ import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualS
 
 // Mapping of resource types to icon names
 const RESOURCE_ICONS: Record<string, string> = {
-  Collection: 'folder',
-  Manifest: 'description',
-  Canvas: 'image',
-  AnnotationPage: 'note',
-  Annotation: 'sticky_note_2',
-  Range: 'folder_special',
-  ContentResource: 'image',
+  Collection:'folder',
+  Manifest:'description',
+  Canvas:'image',
+  AnnotationPage:'note',
+  Annotation:'sticky_note_2',
+  Range:'folder_special',
+  ContentResource:'image',
 };
 
 export interface ResourceTypeBadgeProps {
@@ -47,7 +47,7 @@ export interface ResourceTypeBadgeProps {
  *
  * @example
  * <ResourceTypeBadge type="Manifest" />
- * [Shows icon + "Manifest" (or "Item Group" in simple mode)]
+ * [Shows icon +"Manifest" (or"Item Group" in simple mode)]
  *
  * @example
  * <ResourceTypeBadge type="Canvas" iconOnly />
@@ -56,14 +56,14 @@ export interface ResourceTypeBadgeProps {
 export const ResourceTypeBadge: React.FC<ResourceTypeBadgeProps> = ({
   type,
   iconOnly = false,
-  className = '',
+  className ='',
   title,
   cx,
   t,
 }) => {
 
   // Memoize icon lookup
-  const iconName = useMemo(() => RESOURCE_ICONS[type] || 'info', [type]);
+  const iconName = useMemo(() => RESOURCE_ICONS[type] ||'info', [type]);
 
   // Memoize label
   const label = useMemo(() => t(type), [type, t]);
@@ -71,11 +71,11 @@ export const ResourceTypeBadge: React.FC<ResourceTypeBadgeProps> = ({
   return (
     <div
       className={`
-        inline-flex items-center gap-2 px-2 py-1 rounded-md
+        inline-flex items-center gap-2 px-2 py-1 
         ${cx.subtleBg} ${cx.subtleText}
         ${className}
-      `}
-      title={title || `Resource type: ${label}`}
+`}
+      title={title ||`Resource type: ${label}`}
     >
       <Icon name={iconName} className="text-sm" aria-hidden="true" />
 

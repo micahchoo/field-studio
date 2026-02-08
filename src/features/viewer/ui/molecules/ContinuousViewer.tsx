@@ -128,7 +128,7 @@ export const ContinuousViewer: React.FC<ContinuousViewerProps> = ({
       ref={containerRef}
       className={`flex-1 overflow-auto ${
         horizontal ? 'flex flex-row' : 'flex flex-col'
-      } ${fieldMode ? 'bg-black' : 'bg-slate-100'}`}
+      } ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}
       style={{ gap: `${gap}px` }}
     >
       {canvases.map((canvas, index) => {
@@ -147,8 +147,8 @@ export const ContinuousViewer: React.FC<ContinuousViewerProps> = ({
             className={`shrink-0 relative ${
               isActive
                 ? fieldMode
-                  ? 'ring-2 ring-yellow-400/50'
-                  : 'ring-2 ring-blue-400/50'
+                  ? 'ring-2 ring-nb-yellow/50'
+                  : 'ring-2 ring-nb-blue/50'
                 : ''
             }`}
             style={horizontal
@@ -165,9 +165,9 @@ export const ContinuousViewer: React.FC<ContinuousViewerProps> = ({
               />
             ) : (
               <div className={`w-full h-full flex items-center justify-center ${
-                fieldMode ? 'bg-slate-900' : 'bg-slate-200'
+                fieldMode ? 'bg-nb-black' : 'bg-nb-cream'
               }`}>
-                <span className={`text-xs ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                <span className={`text-xs ${fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'}`}>
                   {getIIIFValue(canvas.label) || `Canvas ${index + 1}`}
                 </span>
               </div>
@@ -176,8 +176,8 @@ export const ContinuousViewer: React.FC<ContinuousViewerProps> = ({
             {/* Canvas label overlay */}
             <div className={`absolute bottom-0 left-0 right-0 px-2 py-1 text-[10px] ${
               fieldMode
-                ? 'bg-black/60 text-slate-400'
-                : 'bg-white/60 text-slate-500'
+                ? 'bg-nb-black/60 text-nb-black/40'
+                : 'bg-nb-white/60 text-nb-black/50'
             }`}>
               {index + 1}. {getIIIFValue(canvas.label) || 'Untitled'}
             </div>

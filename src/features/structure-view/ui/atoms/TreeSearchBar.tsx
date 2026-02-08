@@ -7,7 +7,7 @@
  * BOLD AESTHETIC:
  * - Warm stone palette with amber accents
  * - Refined typography (serif for counts)
- * - Generous padding and rounded corners
+ * - Generous padding and corners
  * - Subtle focus states
  *
  * @module features/structure-view/ui/atoms/TreeSearchBar
@@ -56,7 +56,7 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
       {/* Search input with refined styling */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg className="h-4 w-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4 text-nb-black/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
@@ -68,13 +68,13 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
           autoFocus={autoFocus}
           className={`
             w-full pl-10 pr-10 py-2.5
-            bg-white dark:bg-stone-800
-            border border-stone-200 dark:border-stone-700
-            rounded-xl
-            text-sm text-stone-900 dark:text-stone-100
-            placeholder:text-stone-400
-            focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500
-            transition-all duration-200
+            bg-nb-black
+            border border-nb-black/20
+            
+            text-sm text-nb-cream
+            placeholder:text-nb-black/40
+            focus:outline-none focus:ring-2 focus:ring-nb-orange/30 focus:border-nb-orange
+            transition-nb 
           `}
           aria-label="Search structure tree"
         />
@@ -83,7 +83,7 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
           <Button variant="ghost" size="bare"
             type="button"
             onClick={() => onQueryChange('')}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-nb-black/40 hover:text-nb-black/60 transition-nb"
             aria-label="Clear search"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,14 +96,14 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
       {/* Match count info with refined typography */}
       {showMatchInfo && (
         <div className="flex justify-between items-center text-sm px-1">
-          <span className="text-stone-500 dark:text-stone-400 font-serif">
+          <span className="text-nb-black/50 font-serif">
             {matchCount === 0 ? (
               'No matches found'
             ) : (
               <>
-                <span className="font-medium text-stone-700 dark:text-stone-300">{matchCount}</span>
+                <span className="font-medium text-nb-black/20">{matchCount}</span>
                 {' '}of{' '}
-                <span className="text-stone-500">{totalCount}</span>
+                <span className="text-nb-black/50">{totalCount}</span>
                 {' '}items
               </>
             )}
@@ -111,7 +111,7 @@ export const TreeSearchBar: React.FC<TreeSearchBarProps> = ({
           {matchCount === 0 && (
             <Button variant="ghost" size="bare"
               onClick={() => onQueryChange('')}
-              className="text-sm text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium transition-colors"
+              className="text-sm text-nb-orange hover:text-nb-orange font-medium transition-nb"
             >
               Clear search
             </Button>

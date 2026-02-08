@@ -59,11 +59,11 @@ export interface SearchFieldProps {
 export const SearchField: React.FC<SearchFieldProps> = ({
   value,
   onChange,
-  placeholder = 'Search...',
+  placeholder ='Search...',
   width = INPUT_CONSTRAINTS.width.search,
   autoFocus = false,
   showClear = true,
-  className = '',
+  className ='',
   cx = {},
   fieldMode: _fieldMode = false,
 }) => {
@@ -83,7 +83,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         className={`
           absolute left-3 top-2.5 text-lg pointer-events-none
           ${cx.label}
-        `}
+`}
         aria-hidden="true"
       />
 
@@ -95,11 +95,11 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         onChange={handleChange}
         autoFocus={autoFocus}
         className={`
-          w-full pl-10 pr-8 py-2 border rounded-md text-sm
-          outline-none transition-all
+          w-full pl-10 pr-8 py-2 border  text-sm
+          outline-none transition-nb
           focus:ring-2 focus:ring-offset-2
           ${cx.searchInput}
-        `}
+`}
         aria-label="Search"
       />
 
@@ -110,10 +110,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({
           variant="ghost"
           size="sm"
           className={`
-            absolute right-2 top-2 p-0.5 rounded-full
-            transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1
+            absolute right-2 top-2 p-0.5 
+            transition-nb focus:outline-none focus:ring-2 focus:ring-offset-1
             ${cx.iconButton}
-          `}
+`}
           title="Clear search"
           aria-label="Clear search"
         >

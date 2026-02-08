@@ -25,13 +25,13 @@ export interface StepConnectorProps {
 
 export const StepConnector: React.FC<StepConnectorProps> = ({
   completed,
-  width = 'w-16',
-  className = '',
+  width ='w-16',
+  className ='',
 }) => {
   return (
     <div
       className={`h-0.5 mx-2 ${width} ${
-        completed ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'
+        completed ?'bg-nb-green' :'bg-nb-cream/80'
       } ${className}`}
     />
   );

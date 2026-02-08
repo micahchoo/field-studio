@@ -73,32 +73,32 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
   // Status styles
   const statusStyles = {
     error: {
-      bg: fieldMode ? 'bg-red-950/50' : 'bg-red-50',
-      border: fieldMode ? 'border-red-900' : 'border-red-200',
+      bg: fieldMode ? 'bg-red-950/50' : 'bg-nb-red/10',
+      border: fieldMode ? 'border-nb-red' : 'border-nb-red/30',
       icon: 'error',
-      iconColor: 'text-red-500',
-      text: fieldMode ? 'text-red-200' : 'text-red-800',
+      iconColor: 'text-nb-red',
+      text: fieldMode ? 'text-nb-red/40' : 'text-nb-red',
     },
     warning: {
-      bg: fieldMode ? 'bg-amber-950/50' : 'bg-amber-50',
-      border: fieldMode ? 'border-amber-900' : 'border-amber-200',
+      bg: fieldMode ? 'bg-nb-orange/10' : 'bg-nb-orange/10',
+      border: fieldMode ? 'border-nb-orange' : 'border-nb-orange/20',
       icon: 'warning',
-      iconColor: 'text-amber-500',
-      text: fieldMode ? 'text-amber-200' : 'text-amber-800',
+      iconColor: 'text-nb-orange',
+      text: fieldMode ? 'text-nb-orange/40' : 'text-nb-orange',
     },
     info: {
-      bg: fieldMode ? 'bg-blue-950/50' : 'bg-blue-50',
-      border: fieldMode ? 'border-blue-900' : 'border-blue-200',
+      bg: fieldMode ? 'bg-blue-950/50' : 'bg-nb-blue/10',
+      border: fieldMode ? 'border-nb-blue' : 'border-nb-blue/30',
       icon: 'info',
-      iconColor: 'text-blue-500',
-      text: fieldMode ? 'text-blue-200' : 'text-blue-800',
+      iconColor: 'text-nb-blue',
+      text: fieldMode ? 'text-nb-blue/40' : 'text-nb-blue',
     },
     success: {
-      bg: fieldMode ? 'bg-green-950/50' : 'bg-green-50',
-      border: fieldMode ? 'border-green-900' : 'border-green-200',
+      bg: fieldMode ? 'bg-green-950/50' : 'bg-nb-green/10',
+      border: fieldMode ? 'border-nb-green' : 'border-nb-green/30',
       icon: 'check_circle',
-      iconColor: 'text-green-500',
-      text: fieldMode ? 'text-green-200' : 'text-green-800',
+      iconColor: 'text-nb-green',
+      text: fieldMode ? 'text-nb-green/40' : 'text-nb-green',
     },
   };
 
@@ -107,7 +107,7 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
   if (issues.length === 0) {
     return (
       <div
-        className={`p-3 rounded-lg border ${styles.bg} ${styles.border} flex items-center gap-3`}
+        className={`p-3 border ${styles.bg} ${styles.border} flex items-center gap-3`}
       >
         <Icon name={styles.icon} className={`text-xl ${styles.iconColor}`} />
         <span className={`text-sm font-medium ${styles.text}`}>
@@ -119,7 +119,7 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
 
   return (
     <div
-      className={`p-3 rounded-lg border ${styles.bg} ${styles.border}`}
+      className={`p-3 border ${styles.bg} ${styles.border}`}
       role="alert"
       aria-live="polite"
     >

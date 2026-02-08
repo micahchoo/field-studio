@@ -40,7 +40,7 @@ export const DependencyGraphView: React.FC<DependencyGraphViewProps> = ({
 
   if (files.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-500">
+      <div className="flex items-center justify-center h-full text-nb-black/50">
         No files to display
       </div>
     );
@@ -75,50 +75,50 @@ function renderTreeNodes(
 
     // Color code by directory type
     const getColorClass = () => {
-      if (key.includes('feature')) return 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10';
-      if (key.includes('shared')) return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10';
-      if (key.includes('entity')) return 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10';
-      if (key.includes('widget')) return 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10';
-      if (key.includes('app')) return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10';
-      return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800';
+      if (key.includes('feature')) return 'border-nb-purple/20 bg-nb-purple/5';
+      if (key.includes('shared')) return 'border-nb-blue/30 bg-nb-blue/10';
+      if (key.includes('entity')) return 'border-nb-green/30 bg-nb-green/10';
+      if (key.includes('widget')) return 'border-nb-orange bg-nb-orange/10';
+      if (key.includes('app')) return 'border-nb-red/30 bg-nb-red/10';
+      return 'border-nb-black/20 bg-nb-white';
     };
 
     nodes.push(
       <div
         key={fullPath}
-        className={`rounded-lg border ${getColorClass()} overflow-hidden`}
+        className={` border ${getColorClass()} overflow-hidden`}
       >
-        <div className="px-3 py-2 border-b border-inherit bg-white/50 dark:bg-black/20">
+        <div className="px-3 py-2 border-b border-inherit bg-nb-cream/20">
           <div className="flex items-center gap-2">
-            <span className="material-icons text-sm text-slate-500">folder</span>
-            <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">
+            <span className="material-icons text-sm text-nb-black/50">folder</span>
+            <span className="font-medium text-nb-black/70 text-sm">
               {key}
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-nb-black/40">
               ({files.length} files)
             </span>
           </div>
         </div>
         
         {files.length > 0 && (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <div className="divide-y divide-nb-black/10">
             {files.map((file: FileAnalysis) => (
               <Button variant="ghost" size="bare"
                 key={file.filePath}
                 onClick={() => onSelectFile(file)}
-                className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/80 dark:hover:bg-white/5 transition-colors ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-nb-white/80 transition-nb ${
                   selectedFile?.filePath === file.filePath
-                    ? 'bg-blue-50/80 dark:bg-blue-900/20'
+                    ? 'bg-nb-blue/10'
                     : ''
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <FileIcon extension={file.extension} />
-                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                  <span className="text-sm text-nb-black/70 truncate">
                     {file.fileName}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-slate-400">
+                <div className="flex items-center gap-1 text-xs text-nb-black/40">
                   {file.dependents.length > 0 && (
                     <span className="flex items-center gap-0.5">
                       <span className="material-icons text-xs">arrow_back</span>
@@ -134,7 +134,7 @@ function renderTreeNodes(
         {/* Nested directories */}
         {hasChildren && (
           <div className="px-2 pb-2">
-            <div className="border-l-2 border-slate-200 dark:border-slate-700 pl-2 space-y-2 mt-2">
+            <div className="border-l-2 border-nb-black/20 pl-2 space-y-2 mt-2">
               {renderTreeNodes(value, fullPath, depth + 1, selectedFile, onSelectFile)}
             </div>
           </div>
@@ -155,10 +155,10 @@ function FileIcon({ extension }: { extension: string }) {
   };
 
   const getColor = () => {
-    if (extension === '.tsx' || extension === '.jsx') return 'text-blue-500';
-    if (extension === '.ts') return 'text-cyan-500';
-    if (extension === '.css' || extension === '.scss') return 'text-pink-500';
-    return 'text-slate-400';
+    if (extension === '.tsx' || extension === '.jsx') return 'text-nb-blue';
+    if (extension === '.ts') return 'text-nb-blue';
+    if (extension === '.css' || extension === '.scss') return 'text-nb-pink';
+    return 'text-nb-black/40';
   };
 
   return (

@@ -34,9 +34,9 @@ const spinnerSizes = {
 };
 
 const opacityClasses = {
-  light: 'bg-black/30',
-  medium: 'bg-black/50',
-  dark: 'bg-black/70',
+  light: 'bg-nb-black/30',
+  medium: 'bg-nb-black/50',
+  dark: 'bg-nb-black/70',
 };
 
 export const MediaLoadingOverlay: React.FC<MediaLoadingOverlayProps> = ({
@@ -47,10 +47,10 @@ export const MediaLoadingOverlay: React.FC<MediaLoadingOverlayProps> = ({
   fieldMode = false,
 }) => {
   const size = spinnerSizes[spinnerSize];
-  const bgClass = fieldMode ? 'bg-slate-900/60' : opacityClasses[opacity];
+  const bgClass = fieldMode ? 'bg-nb-black/60' : opacityClasses[opacity];
 
   const spinnerColor = fieldMode ? '#facc15' : '#ffffff';
-  const textColor = fieldMode ? 'text-yellow-400' : 'text-white';
+  const textColor = fieldMode ? 'text-nb-yellow' : 'text-white';
 
   return (
     <div
@@ -60,7 +60,7 @@ export const MediaLoadingOverlay: React.FC<MediaLoadingOverlayProps> = ({
       aria-busy="true"
     >
       <div
-        className="rounded-full animate-spin"
+        className=" animate-spin"
         style={{
           width: size.width,
           height: size.height,

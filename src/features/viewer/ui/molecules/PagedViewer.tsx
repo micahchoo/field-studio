@@ -144,7 +144,7 @@ export const PagedViewer: React.FC<PagedViewerProps> = ({
   const rectoCanvas = isRTL ? spread.verso : spread.recto;
 
   return (
-    <div className={`flex-1 flex flex-col ${fieldMode ? 'bg-black' : 'bg-slate-100'}`}>
+    <div className={`flex-1 flex flex-col ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
       {/* Spread area */}
       <div className="flex-1 flex items-center justify-center p-4 gap-1">
         {/* Verso (left page) */}
@@ -163,7 +163,7 @@ export const PagedViewer: React.FC<PagedViewerProps> = ({
 
         {/* Spine divider */}
         {versoCanvas && rectoCanvas && (
-          <div className={`w-px h-3/4 ${fieldMode ? 'bg-slate-700' : 'bg-slate-300'}`} />
+          <div className={`w-px h-3/4 ${fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'}`} />
         )}
 
         {/* Recto (right page) */}
@@ -184,8 +184,8 @@ export const PagedViewer: React.FC<PagedViewerProps> = ({
       {/* Navigation footer */}
       <div className={`flex items-center justify-center gap-4 px-4 py-2.5 border-t ${
         fieldMode
-          ? 'border-slate-800 bg-slate-950'
-          : 'border-slate-200 bg-white'
+          ? 'border-nb-black bg-nb-black'
+          : 'border-nb-black/20 bg-nb-white'
       }`}>
         <Button
           variant="ghost"
@@ -196,7 +196,7 @@ export const PagedViewer: React.FC<PagedViewerProps> = ({
           aria-label="Previous spread"
         />
 
-        <span className={`text-sm tabular-nums ${fieldMode ? 'text-slate-400' : 'text-slate-600'}`}>
+        <span className={`text-sm tabular-nums ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
           Pages {currentIndex * 2 + 1}–{Math.min((currentIndex + 1) * 2, canvases.length)} of {canvases.length}
         </span>
 
@@ -233,19 +233,19 @@ const PageImage: React.FC<PageImageProps> = ({ canvas, url, side, fieldMode }) =
         <img
           src={url}
           alt={getIIIFValue(canvas.label) || `Page`}
-          className={`max-h-full max-w-full object-contain shadow-lg ${
+          className={`max-h-full max-w-full object-contain shadow-brutal ${
             side === 'verso' ? 'rounded-l-sm' : 'rounded-r-sm'
           }`}
           loading="lazy"
         />
       ) : (
-        <div className={`w-64 h-96 flex items-center justify-center rounded ${
-          fieldMode ? 'bg-slate-900' : 'bg-slate-200'
+        <div className={`w-64 h-96 flex items-center justify-center ${
+          fieldMode ? 'bg-nb-black' : 'bg-nb-cream'
         }`}>
-          <Icon name="image" className={`text-3xl ${fieldMode ? 'text-slate-700' : 'text-slate-300'}`} />
+          <Icon name="image" className={`text-3xl ${fieldMode ? 'text-nb-black/80' : 'text-nb-black/30'}`} />
         </div>
       )}
-      <div className={`mt-1 text-[10px] ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+      <div className={`mt-1 text-[10px] ${fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'}`}>
         {getIIIFValue(canvas.label) || 'Untitled'}
       </div>
     </div>

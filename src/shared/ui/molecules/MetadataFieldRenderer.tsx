@@ -32,26 +32,26 @@ export interface MetadataFieldRendererProps {
  * Format a field value for display
  */
 export const formatFieldValue = (value: string | string[] | null, type?: string): string => {
-  if (value === null || value === undefined) return '\u2014';
+  if (value === null || value === undefined) return'\u2014';
 
   if (Array.isArray(value)) {
-    return value.join(', ') || '\u2014';
+    return value.join(',') ||'\u2014';
   }
 
-  if (type === 'date' && value) {
+  if (type ==='date' && value) {
     try {
       const date = new Date(value);
       return date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        year:'numeric',
+        month:'long',
+        day:'numeric',
       });
     } catch {
       return value;
     }
   }
 
-  return value || '\u2014';
+  return value ||'\u2014';
 };
 
 export const MetadataFieldRenderer: React.FC<MetadataFieldRendererProps> = ({
@@ -64,34 +64,34 @@ export const MetadataFieldRenderer: React.FC<MetadataFieldRendererProps> = ({
   const hasError = field.error;
 
   if (isEditing && field.editable) {
-    const inputClass = `
-      w-full px-3 py-2 rounded-lg text-sm
-      border transition-colors
+    const inputClass =`
+      w-full px-3 py-2  text-sm
+      border transition-nb
       ${fieldMode
-        ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500'
-        : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
+        ?'bg-nb-black border-nb-black/80 text-white focus:border-nb-blue'
+        :'bg-nb-white border-nb-black/20 text-nb-black focus:border-nb-blue'
       }
-      ${hasError ? 'border-red-500' : ''}
-    `;
+      ${hasError ?'border-nb-red' :''}
+`;
 
     return (
       <div key={field.id} className="space-y-1">
-        <label className={`text-xs font-medium ${fieldMode ? 'text-slate-400' : 'text-slate-600'}`}>
+        <label className={`text-xs font-medium ${fieldMode ?'text-nb-black/40' :'text-nb-black/60'}`}>
           {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
+          {field.required && <span className="text-nb-red ml-1">*</span>}
         </label>
 
-        {field.type === 'textarea' ? (
+        {field.type ==='textarea' ? (
           <textarea
-            value={(field.value as string) || ''}
+            value={(field.value as string) ||''}
             onChange={(e) => onFieldChange?.(field.id, e.target.value)}
             rows={3}
             className={`${inputClass} resize-none`}
             placeholder={`Enter ${field.label.toLowerCase()}`}
           />
-        ) : field.type === 'select' && field.options ? (
+        ) : field.type ==='select' && field.options ? (
           <select
-            value={(field.value as string) || ''}
+            value={(field.value as string) ||''}
             onChange={(e) => onFieldChange?.(field.id, e.target.value)}
             className={inputClass}
           >
@@ -102,8 +102,8 @@ export const MetadataFieldRenderer: React.FC<MetadataFieldRendererProps> = ({
           </select>
         ) : (
           <input
-            type={field.type === 'date' ? 'date' : field.type === 'url' ? 'url' : 'text'}
-            value={(field.value as string) || ''}
+            type={field.type ==='date' ?'date' : field.type ==='url' ?'url' :'text'}
+            value={(field.value as string) ||''}
             onChange={(e) => onFieldChange?.(field.id, e.target.value)}
             className={inputClass}
             placeholder={`Enter ${field.label.toLowerCase()}`}
@@ -111,14 +111,14 @@ export const MetadataFieldRenderer: React.FC<MetadataFieldRendererProps> = ({
         )}
 
         {hasError && (
-          <p className="text-xs text-red-500 flex items-center gap-1">
+          <p className="text-xs text-nb-red flex items-center gap-1">
             <Icon name="error" className="text-xs" />
             {field.error}
           </p>
         )}
 
         {field.helpText && !hasError && (
-          <p className={`text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-xs ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}>
             {field.helpText}
           </p>
         )}
@@ -129,10 +129,10 @@ export const MetadataFieldRenderer: React.FC<MetadataFieldRendererProps> = ({
   // Read-only display
   return (
     <div key={field.id} className="flex flex-col">
-      <span className={`text-xs font-medium mb-1 ${fieldMode ? 'text-slate-500' : 'text-slate-500'}`}>
+      <span className={`text-xs font-medium mb-1 ${fieldMode ?'text-nb-black/50' :'text-nb-black/50'}`}>
         {field.label}
       </span>
-      <span className={`text-sm ${fieldMode ? 'text-white' : 'text-slate-900'}`}>
+      <span className={`text-sm ${fieldMode ?'text-white' :'text-nb-black'}`}>
         {displayValue}
       </span>
     </div>

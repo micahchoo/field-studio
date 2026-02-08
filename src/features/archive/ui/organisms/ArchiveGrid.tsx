@@ -11,7 +11,7 @@
  *
  * BOLD AESTHETIC:
  * - Strong selection states with amber accent
- * - Generous whitespace and rounded corners
+ * - Generous whitespace and corners
  * - Layered depth with shadows
  * - Refined typography
  */
@@ -209,7 +209,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
   };
 
   const paddingClasses = {
-    compact: 'p-1.5',
+    compact: 'p-1',
     comfortable: 'p-2',
     spacious: 'p-3',
   };
@@ -236,29 +236,29 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
         onDragEnd={handleDragEnd}
         onContextMenu={(e) => onContextMenu(e, asset.id)}
         className={`
-          group relative rounded-xl transition-all duration-200
+          group relative  transition-nb 
           ${reorderEnabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
           ${paddingClasses[density || 'comfortable']}
           ${isDragging ? 'opacity-50 scale-95' : ''}
           ${isDropTarget
             ? fieldMode
-              ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-black'
-              : 'ring-2 ring-blue-500 ring-offset-2'
+              ? 'ring-2 ring-nb-yellow ring-offset-2 ring-offset-black'
+              : 'ring-2 ring-nb-blue ring-offset-2'
             : ''
           }
           ${selected
-            ? 'bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-500 shadow-md'
-            : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:shadow-lg hover:border-stone-300 dark:hover:border-stone-600'
+            ? 'bg-nb-orange/20 border-2 border-nb-orange shadow-brutal-sm'
+            : 'bg-nb-black border border-nb-black/20 hover:shadow-brutal hover:border-nb-black/20'
           }
         `}
         onClick={(e) => onItemClick(e, asset)}
         onMouseEnter={() => setHoveredId(asset.id)}
         onMouseLeave={() => setHoveredId(null)}
       >
-        <div className="aspect-square rounded-lg overflow-hidden flex items-center justify-center mb-2 relative bg-stone-100 dark:bg-stone-900">
+        <div className="aspect-square overflow-hidden flex items-center justify-center mb-2 relative bg-nb-black">
           {/* Selection checkmark overlay */}
           {selected && (
-            <div className="absolute inset-0 bg-amber-500/10 z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-nb-orange/10 z-10 pointer-events-none" />
           )}
           {/* Checkmark button - clicking this toggles multiselect */}
           <Button variant="ghost" size="bare"
@@ -269,15 +269,15 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             }}
             className={`
               absolute top-2 right-2 z-20
-              w-6 h-6 rounded-full flex items-center justify-center
-              transition-all duration-200
+              w-6 h-6  flex items-center justify-center
+              transition-nb 
               ${selected
                 ? fieldMode
-                  ? 'bg-yellow-500 text-white scale-100'
-                  : 'bg-amber-500 text-white scale-100'
-                : 'bg-white/90 text-stone-400 scale-0 group-hover:scale-100 hover:bg-stone-100'
+                  ? 'bg-nb-yellow text-white scale-100'
+                  : 'bg-nb-orange text-white scale-100'
+                : 'bg-nb-white/90 text-nb-black/40 scale-0 group-hover:scale-100 hover:bg-nb-cream'
               }
-              shadow-sm cursor-pointer
+              shadow-brutal-sm cursor-pointer
             `}
             title={selected ? 'Deselect' : 'Select (add to selection)'}
           >
@@ -299,7 +299,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
           <div className="absolute bottom-2 right-2 flex gap-1">
             {dna.hasTime && (
               <Button variant="ghost" size="bare"
-                className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-sm hover:bg-amber-600 transition-colors"
+                className="w-5 h-5 bg-nb-orange text-white flex items-center justify-center shadow-brutal-sm hover:bg-nb-orange transition-nb"
                 onMouseEnter={(e) => setBadgeTooltip({text: 'Has date/time metadata', x: e.clientX, y: e.clientY})}
                 onMouseLeave={() => setBadgeTooltip(null)}
                 title="Has Time metadata"
@@ -311,7 +311,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             )}
             {dna.hasLocation && (
               <Button variant="ghost" size="bare"
-                className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm hover:bg-emerald-600 transition-colors"
+                className="w-5 h-5 bg-nb-green/100 text-white flex items-center justify-center shadow-brutal-sm hover:bg-nb-green transition-nb"
                 onMouseEnter={(e) => setBadgeTooltip({text: 'Has GPS location data', x: e.clientX, y: e.clientY})}
                 onMouseLeave={() => setBadgeTooltip(null)}
                 title="Has GPS metadata"
@@ -323,7 +323,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             )}
             {dna.hasDevice && (
               <Button variant="ghost" size="bare"
-                className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm hover:bg-sky-600 transition-colors"
+                className="w-5 h-5 bg-sky-500 text-white flex items-center justify-center shadow-brutal-sm hover:bg-sky-600 transition-nb"
                 onMouseEnter={(e) => setBadgeTooltip({text: 'Has camera/device info', x: e.clientX, y: e.clientY})}
                 onMouseLeave={() => setBadgeTooltip(null)}
                 title="Has Device metadata"
@@ -333,16 +333,23 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
                 </svg>
               </Button>
             )}
+            {asset.rights && (
+              <Button variant="ghost" size="bare"
+                className="w-5 h-5 bg-nb-purple text-white flex items-center justify-center shadow-brutal-sm hover:bg-nb-purple/80 transition-nb"
+                onMouseEnter={(e) => setBadgeTooltip({text: `Rights: ${asset.rights}`, x: e.clientX, y: e.clientY})}
+                onMouseLeave={() => setBadgeTooltip(null)}
+                title={`Rights: ${asset.rights}`}
+              >
+                <Icon name="copyright" className="text-[10px]" />
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Filename with hover tooltip */}
-        <div className="px-1 min-w-0">
+        <div className="px-1 min-w-0 h-6 flex items-center">
           <div
-            className={`
-              font-medium truncate text-stone-800 dark:text-stone-200
-              ${(density || 'comfortable') === 'compact' ? 'text-[11px]' : 'text-xs'}
-            `}
+            className="text-nb-xs font-medium truncate text-nb-black"
             title={getIIIFValue(asset.label)}
           >
             {getIIIFValue(asset.label)}
@@ -357,23 +364,23 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
       {/* Density controls toolbar */}
       <div className="flex items-center justify-end gap-2 mb-4">
         {directionLabel && (
-          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-            fieldMode ? 'bg-slate-800 text-yellow-400' : 'bg-purple-100 text-purple-700'
+          <span className={`text-nb-micro font-bold uppercase px-1.5 py-0.5 ${
+            fieldMode ? 'bg-nb-black text-nb-yellow' : 'bg-nb-purple/10 text-nb-purple'
           }`}>
             {viewingDirection === 'right-to-left' ? '\u2190' : viewingDirection === 'top-to-bottom' ? '\u2193' : '\u2191'} {directionLabel}
           </span>
         )}
-        <span className="text-xs text-stone-500 dark:text-stone-400">View:</span>
-        <div className="flex items-center bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5">
+        <span className="text-xs text-nb-black/50">View:</span>
+        <div className="flex items-center bg-nb-black p-0.5">
           {(['compact', 'comfortable', 'spacious'] as const).map((d) => (
             <Button variant="ghost" size="bare"
               key={d}
               onClick={() => onDensityChange?.(d)}
               className={`
-                px-2 py-1 text-xs font-medium rounded-md transition-all
+                px-2 py-1 text-xs font-medium  transition-nb
                 ${density === d
-                  ? 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 shadow-sm'
-                  : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+                  ? 'bg-nb-black/70 text-nb-black shadow-brutal-sm'
+                  : 'text-nb-black/50 hover:text-nb-black/70'
                 }
               `}
               title={`${d.charAt(0).toUpperCase() + d.slice(1)} view`}
@@ -395,15 +402,15 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
       {/* Refined empty state */}
       {items.length === 0 && (
         <div className="p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-            <svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 mx-auto mb-4 bg-nb-black flex items-center justify-center">
+            <svg className="w-8 h-8 text-nb-black/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <div className="text-lg font-medium text-stone-800 dark:text-stone-200 mb-2">
+          <div className="text-lg font-medium text-nb-black mb-2">
             {filter ? 'No matching items found' : 'Your archive is empty'}
           </div>
-          <p className="text-sm text-stone-500 dark:text-stone-400 max-w-sm mx-auto">
+          <p className="text-sm text-nb-black/50 max-w-sm mx-auto">
             {filter
               ? `Try adjusting your search for "${filter}" or clear the filter to see all items.`
               : 'Import photos and documents to start building your archive.'}
@@ -424,7 +431,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
       {/* Badge tooltip */}
       {badgeTooltip && (
         <div
-          className="fixed z-50 px-2 py-1 bg-stone-800 text-white text-xs rounded shadow-lg pointer-events-none"
+          className="fixed z-50 px-2 py-1 bg-nb-black text-white text-xs shadow-brutal pointer-events-none"
           style={{ left: badgeTooltip.x, top: badgeTooltip.y - 30 }}
         >
           {badgeTooltip.text}

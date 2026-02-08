@@ -53,10 +53,6 @@ export interface UserIntentActions {
   clearIntent: () => void;
   /** Update meta data */
   updateMeta: (meta: Record<string, unknown>) => void;
-  /** Check if intent matches */
-  isIntent: (intent: UserIntent) => boolean;
-  /** Get contextual styling tokens for current intent */
-  getContextualStyles: () => React.CSSProperties;
 }
 
 // ============================================================================
@@ -110,39 +106,11 @@ export const UserIntentProvider: React.FC<UserIntentProviderProps> = ({
     }));
   }, []);
 
-  const isIntent = useCallback((intent: UserIntent) => {
-    return state.intent === intent;
-  }, [state.intent]);
-
-  const getContextualStyles = useCallback((): React.CSSProperties => {
-    const contextKey = state.intent as keyof typeof CONTEXTUAL_TOKENS.contexts;
-    const context = CONTEXTUAL_TOKENS.contexts[contextKey];
-    if (!context) return {};
-    
-    // Build styles based on available properties (contexts have different shapes)
-    const styles: React.CSSProperties = {};
-    if ('border' in context) {
-      styles.borderColor = context.border;
-    }
-    if ('background' in context) {
-      styles.backgroundColor = context.background;
-    }
-    if ('opacity' in context) {
-      styles.opacity = context.opacity;
-    }
-    if ('filter' in context) {
-      styles.filter = context.filter;
-    }
-    return styles;
-  }, [state.intent]);
-
   const actions = useMemo<UserIntentActions>(() => ({
     setIntent,
     clearIntent,
     updateMeta,
-    isIntent,
-    getContextualStyles,
-  }), [setIntent, clearIntent, updateMeta, isIntent, getContextualStyles]);
+  }), [setIntent, clearIntent, updateMeta]);
 
   const stateValue = useMemo(() => state, [state]);
 
@@ -184,20 +152,56 @@ export function useUserIntentDispatch(): UserIntentActions {
 /**
  * Combined hook for convenience (triggers re‑renders on state changes)
  */
-export function useUserIntent(): UserIntentState & UserIntentActions {
+export function useUserIntent(): UserIntentState & UserIntentActions & {
+  isIntent: (intent: UserIntent) => boolean;
+  getContextualStyles: () => React.CSSProperties;
+} {
   const state = useUserIntentState();
   const actions = useUserIntentDispatch();
-  return { ...state, ...actions };
+  return {
+    ...state,
+    ...actions,
+    isIntent: (intent: UserIntent) => state.intent === intent,
+    getContextualStyles: () => {
+      const contextKey = state.intent as keyof typeof CONTEXTUAL_TOKENS.contexts;
+      const context = CONTEXTUAL_TOKENS.contexts[contextKey];
+      if (!context) return {};
+      const styles: React.CSSProperties = {};
+      if ('border' in context) styles.borderColor = context.border;
+      if ('background' in context) styles.backgroundColor = context.background;
+      if ('opacity' in context) styles.opacity = context.opacity;
+      if ('filter' in context) styles.filter = context.filter;
+      return styles;
+    },
+  };
 }
 
 /**
  * Optional access (returns null if not in provider)
  */
-export function useUserIntentOptional(): (UserIntentState & UserIntentActions) | null {
+export function useUserIntentOptional(): (UserIntentState & UserIntentActions & {
+  isIntent: (intent: UserIntent) => boolean;
+  getContextualStyles: () => React.CSSProperties;
+}) | null {
   const state = useContext(UserIntentStateContext);
   const actions = useContext(UserIntentDispatchContext);
   if (!state || !actions) return null;
-  return { ...state, ...actions };
+  return {
+    ...state,
+    ...actions,
+    isIntent: (intent: UserIntent) => state.intent === intent,
+    getContextualStyles: () => {
+      const contextKey = state.intent as keyof typeof CONTEXTUAL_TOKENS.contexts;
+      const context = CONTEXTUAL_TOKENS.contexts[contextKey];
+      if (!context) return {};
+      const styles: React.CSSProperties = {};
+      if ('border' in context) styles.borderColor = context.border;
+      if ('background' in context) styles.backgroundColor = context.background;
+      if ('opacity' in context) styles.opacity = context.opacity;
+      if ('filter' in context) styles.filter = context.filter;
+      return styles;
+    },
+  };
 }
 
 // ============================================================================

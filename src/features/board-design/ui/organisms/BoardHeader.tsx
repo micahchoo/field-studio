@@ -9,11 +9,13 @@
  */
 
 import React, { useState } from 'react';
+import type { IIIFItem } from '@/src/shared/types';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { IconButton } from '@/src/shared/ui/molecules/IconButton';
 import { ActionButton } from '@/src/shared/ui/molecules/ActionButton';
+import { ShareButton } from '@/src/features/metadata-edit/ui/atoms/ShareButton';
 import type { LayoutArrangement } from '../../model';
 
 export type BackgroundMode = 'grid' | 'dark' | 'light';
@@ -33,6 +35,10 @@ export interface BoardHeaderProps {
   onUndo: () => void;
   /** Redo callback */
   onRedo: () => void;
+  /** Save callback */
+  onSave?: () => void;
+  /** Whether the board has unsaved changes */
+  isDirty?: boolean;
   /** Export callback */
   onExport: () => void;
   /** Delete callback (optional - shows delete button when provided) */
@@ -55,6 +61,10 @@ export interface BoardHeaderProps {
   onSnapToggle?: () => void;
   /** Auto-arrange items in a layout */
   onAutoArrange?: (arrangement: LayoutArrangement) => void;
+  /** Toggle inspector panel */
+  onToggleInspector?: () => void;
+  /** Currently selected IIIF resource (for sharing) */
+  selectedResource?: IIIFItem | null;
   /** Contextual styles from template */
   cx: {
     surface: string;
@@ -76,6 +86,8 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   canRedo,
   onUndo,
   onRedo,
+  onSave,
+  isDirty,
   onExport,
   onDelete,
   hasSelection,
@@ -87,6 +99,8 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   snapEnabled,
   onSnapToggle,
   onAutoArrange,
+  onToggleInspector,
+  selectedResource,
   cx,
   fieldMode,
 }) => {
@@ -123,26 +137,26 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   return (
     <div
       className={`
-        h-header border-b px-4 flex items-center justify-between
-        ${fieldMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}
+        h-header border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode px-6 flex items-center justify-between
+        ${fieldMode ? 'border-nb-black' : 'border-nb-black/10'}
       `}
     >
       {/* Left: Title + Stats */}
       <div className="flex items-center gap-4">
         <div
           className={`
-            p-2 rounded-lg
-            ${fieldMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}
+            p-2 
+            ${fieldMode ? 'bg-nb-orange/20 text-nb-orange' : 'bg-nb-orange/20 text-nb-orange'}
           `}
         >
           <Icon name="dashboard" className="text-xl" />
         </div>
         <div>
-          <h2 className={`font-bold ${fieldMode ? 'text-stone-200' : 'text-stone-800'}`}>
+          <h2 className="font-bold text-mode-accent">
             {title}
           </h2>
           {(itemCount !== undefined || connectionCount !== undefined) && (
-            <p className={`text-xs ${fieldMode ? 'text-stone-500' : 'text-stone-500'}`}>
+            <p className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
               {itemCount !== undefined && `${itemCount} items`}
               {itemCount !== undefined && connectionCount !== undefined && ' · '}
               {connectionCount !== undefined && `${connectionCount} connections`}
@@ -160,21 +174,21 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               key={tool.value}
               onClick={() => onToolChange(tool.value as 'select' | 'connect' | 'note' | 'text')}
               className={`
-                flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                flex items-center gap-2 px-3 py-2  text-sm font-medium transition-nb
                 ${activeTool === tool.value
                   ? fieldMode
-                    ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/50'
-                    : 'bg-amber-100 text-amber-700 ring-1 ring-amber-500/30'
+                    ? 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/50'
+                    : 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/30'
                   : fieldMode
-                    ? 'text-stone-400 hover:bg-stone-800 hover:text-stone-200'
-                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+                    ? 'text-nb-black/40 hover:bg-nb-black hover:text-nb-black/10'
+                    : 'text-nb-black/60 hover:bg-nb-cream hover:text-nb-black'
                 }
               `}
               title={`${tool.label} (${tool.shortcut})`}
             >
               <Icon name={tool.icon} className="text-lg" />
               <span className="hidden md:inline">{tool.label}</span>
-              <span className={`text-xs opacity-60 hidden lg:inline ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`}>
+              <span className={`text-xs opacity-60 hidden lg:inline ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
                 {tool.shortcut}
               </span>
             </Button>
@@ -182,24 +196,24 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         </div>
 
         {/* Separator */}
-        <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+        <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
 
         {/* Background Mode Toggle */}
         {onBgModeChange && (
-          <div className={`flex rounded-lg p-0.5 ${fieldMode ? 'bg-stone-800' : 'bg-stone-100'}`}>
+          <div className={`flex p-0.5 ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
             {bgModeOptions.map((opt) => (
               <Button variant="ghost" size="bare"
                 key={opt.value}
                 onClick={() => onBgModeChange(opt.value)}
                 className={`
-                  px-2 py-1 text-xs font-medium rounded transition-all
+                  px-2 py-1 text-xs font-medium transition-nb
                   ${bgMode === opt.value
                     ? fieldMode
-                      ? 'bg-stone-700 text-stone-200'
-                      : 'bg-white text-stone-700 shadow-sm'
+                      ? 'bg-nb-black/70 text-nb-black/10'
+                      : 'bg-nb-white text-nb-black/70 shadow-brutal-sm'
                     : fieldMode
-                      ? 'text-stone-500 hover:text-stone-300'
-                      : 'text-stone-500 hover:text-stone-700'
+                      ? 'text-nb-black/50 hover:text-nb-black/20'
+                      : 'text-nb-black/50 hover:text-nb-black/70'
                   }
                 `}
                 title={`${opt.label} background`}
@@ -213,17 +227,17 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         {/* Alignment Tools (shown when item selected) */}
         {hasSelection && onAlign && (
           <>
-            <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+            <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
             <div className="flex items-center gap-0.5">
               {alignOptions.map((opt) => (
                 <Button variant="ghost" size="bare"
                   key={opt.type}
                   onClick={() => onAlign(opt.type)}
                   className={`
-                    p-1.5 rounded transition-all
+                    p-1.5 transition-nb
                     ${fieldMode
-                      ? 'text-stone-400 hover:bg-stone-800 hover:text-stone-200'
-                      : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
+                      ? 'text-nb-black/40 hover:bg-nb-black hover:text-nb-black/10'
+                      : 'text-nb-black/50 hover:bg-nb-cream hover:text-nb-black/70'
                     }
                   `}
                   title={opt.label}
@@ -236,21 +250,21 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         )}
 
         {/* Separator */}
-        <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+        <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
 
         {/* Snap-to-Grid Toggle */}
         {onSnapToggle && (
           <Button variant="ghost" size="bare"
             onClick={onSnapToggle}
             className={`
-              flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all
+              flex items-center gap-1 px-2 py-1.5  text-xs font-medium transition-nb
               ${snapEnabled
                 ? fieldMode
-                  ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/50'
-                  : 'bg-amber-100 text-amber-700 ring-1 ring-amber-500/30'
+                  ? 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/50'
+                  : 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/30'
                 : fieldMode
-                  ? 'text-stone-500 hover:bg-stone-800 hover:text-stone-300'
-                  : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
+                  ? 'text-nb-black/50 hover:bg-nb-black hover:text-nb-black/20'
+                  : 'text-nb-black/50 hover:bg-nb-cream hover:text-nb-black/70'
               }
             `}
             title="Snap to Grid (G)"
@@ -266,10 +280,10 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             <Button variant="ghost" size="bare"
               onClick={() => setShowLayoutMenu((s) => !s)}
               className={`
-                flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all
+                flex items-center gap-1 px-2 py-1.5  text-xs font-medium transition-nb
                 ${fieldMode
-                  ? 'text-stone-400 hover:bg-stone-800 hover:text-stone-200'
-                  : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
+                  ? 'text-nb-black/40 hover:bg-nb-black hover:text-nb-black/10'
+                  : 'text-nb-black/50 hover:bg-nb-cream hover:text-nb-black/70'
                 }
               `}
               title="Auto Layout (L)"
@@ -278,8 +292,8 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               <span className="hidden md:inline">Layout</span>
             </Button>
             {showLayoutMenu && (
-              <div className={`absolute top-full left-0 mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[140px] ${
-                fieldMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'
+              <div className={`absolute top-full left-0 mt-1 z-50 shadow-brutal border py-1 min-w-[140px] ${
+                fieldMode ? 'bg-nb-black border-nb-black/70' : 'bg-nb-white border-nb-black/10'
               }`}>
                 {layoutOptions.map((opt) => (
                   <Button variant="ghost" size="bare"
@@ -289,10 +303,10 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
                       setShowLayoutMenu(false);
                     }}
                     className={`
-                      w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-all
+                      w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb
                       ${fieldMode
-                        ? 'text-stone-300 hover:bg-stone-700'
-                        : 'text-stone-700 hover:bg-stone-50'
+                        ? 'text-nb-black/20 hover:bg-nb-black/70'
+                        : 'text-nb-black/70 hover:bg-nb-cream'
                       }
                     `}
                   >
@@ -331,7 +345,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 
         {onDelete && (
           <>
-            <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+            <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
             <IconButton
               icon="delete"
               ariaLabel="Delete selected"
@@ -345,7 +359,19 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           </>
         )}
 
-        <div className={`w-px h-6 ${fieldMode ? 'bg-stone-700' : 'bg-stone-200'}`} />
+        <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+
+        {onSave && (
+          <ActionButton
+            label={isDirty ? 'Save' : 'Saved'}
+            icon="save"
+            onClick={onSave}
+            variant={isDirty ? 'primary' : 'ghost'}
+            size="sm"
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+        )}
 
         <ActionButton
           label="Export"
@@ -356,6 +382,29 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           cx={cx}
           fieldMode={fieldMode}
         />
+
+        {onToggleInspector && (
+          <>
+            <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+            <IconButton
+              icon="info"
+              ariaLabel="Toggle Inspector"
+              title="Inspector (I)"
+              onClick={onToggleInspector}
+              variant="ghost"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          </>
+        )}
+
+        {selectedResource && (
+          <ShareButton
+            item={selectedResource}
+            fieldMode={fieldMode}
+            size="sm"
+          />
+        )}
       </Toolbar>
     </div>
   );

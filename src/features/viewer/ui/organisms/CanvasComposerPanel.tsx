@@ -118,7 +118,7 @@ export const CanvasComposerPanel: React.FC<CanvasComposerPanelProps> = ({
   );
 
   return (
-    <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col">
+    <div className="absolute inset-0 z-50 bg-nb-black flex flex-col">
       <ComposerToolbar
         width={dimensions.w}
         height={dimensions.h}
@@ -191,24 +191,24 @@ export const CanvasComposerPanel: React.FC<CanvasComposerPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="h-8 bg-slate-950 border-t border-white/5 flex items-center justify-between px-6 text-[10px] text-white/30 uppercase font-black tracking-widest">
+      <div className="h-8 bg-nb-black border-t border-white/5 flex items-center justify-between px-6 text-[10px] text-white/30 uppercase font-black tracking-widest">
         <div className="flex gap-4">
           <span>Archive Synthesis Engine</span>
           <span>{layers.length} Active Parts</span>
         </div>
         <div className="flex gap-4">
           <span>
-            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Scroll</kbd> Zoom
+            <kbd className="bg-nb-white/10 px-1.5 py-0.5 text-[8px]">Scroll</kbd> Zoom
           </span>
           <span>
-            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">+/-</kbd> Zoom
+            <kbd className="bg-nb-white/10 px-1.5 py-0.5 text-[8px]">+/-</kbd> Zoom
           </span>
           <span>
-            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Shift+Drag</kbd>{' '}
+            <kbd className="bg-nb-white/10 px-1.5 py-0.5 text-[8px]">Shift+Drag</kbd>{' '}
             Pan
           </span>
           <span>
-            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">Cmd+Z</kbd> Undo
+            <kbd className="bg-nb-white/10 px-1.5 py-0.5 text-[8px]">Cmd+Z</kbd> Undo
           </span>
         </div>
       </div>

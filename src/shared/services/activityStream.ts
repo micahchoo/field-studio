@@ -178,7 +178,7 @@ class ActivityStreamService {
     let deviceId = await db.get('metadata', 'deviceId') as string | undefined;
 
     if (!deviceId) {
-      deviceId = `device-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      deviceId = `device-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
       await db.put('metadata', deviceId, 'deviceId');
     }
 

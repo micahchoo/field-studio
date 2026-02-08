@@ -47,18 +47,18 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
 
   return (
     <div
-      className={`absolute top-3 right-3 z-20 rounded-xl shadow-lg backdrop-blur-sm border ${
+      className={`absolute top-3 right-3 z-20 shadow-brutal backdrop-blur-sm border ${
         fieldMode
-          ? 'bg-slate-900/90 border-slate-700'
-          : 'bg-white/90 border-slate-200'
+          ? 'bg-nb-black/90 border-nb-black/80'
+          : 'bg-nb-white/90 border-nb-black/20'
       }`}
       role="radiogroup"
       aria-label="Image choice selection"
     >
       <div className={`px-3 py-2 text-xs font-semibold uppercase tracking-wider border-b ${
         fieldMode
-          ? 'text-slate-400 border-slate-700'
-          : 'text-slate-500 border-slate-200'
+          ? 'text-nb-black/40 border-nb-black/80'
+          : 'text-nb-black/50 border-nb-black/20'
       }`}>
         <Icon name="layers" className="text-sm mr-1 align-text-bottom" />
         Choice
@@ -72,34 +72,34 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
               role="radio"
               aria-checked={isActive}
               onClick={() => onSelect(index)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-nb ${
                 isActive
                   ? fieldMode
-                    ? 'bg-yellow-900/30 text-yellow-300'
-                    : 'bg-blue-50 text-blue-700'
+                    ? 'bg-nb-yellow/20 text-nb-yellow'
+                    : 'bg-nb-blue/10 text-nb-blue'
                   : fieldMode
-                    ? 'text-slate-300 hover:bg-slate-800'
-                    : 'text-slate-600 hover:bg-slate-50'
+                    ? 'text-nb-black/30 hover:bg-nb-black'
+                    : 'text-nb-black/60 hover:bg-nb-white'
               }`}
             >
-              <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+              <span className={`w-3.5 h-3.5 border-2 flex items-center justify-center shrink-0 ${
                 isActive
                   ? fieldMode
-                    ? 'border-yellow-400'
-                    : 'border-blue-500'
+                    ? 'border-nb-yellow'
+                    : 'border-nb-blue'
                   : fieldMode
-                    ? 'border-slate-600'
-                    : 'border-slate-300'
+                    ? 'border-nb-black/60'
+                    : 'border-nb-black/20'
               }`}>
                 {isActive && (
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    fieldMode ? 'bg-yellow-400' : 'bg-blue-500'
+                  <span className={`w-1.5 h-1.5 ${
+                    fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue'
                   }`} />
                 )}
               </span>
               <span className="truncate flex-1 text-left">{item.label}</span>
               <span className={`text-[10px] tabular-nums ${
-                fieldMode ? 'text-slate-600' : 'text-slate-400'
+                fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'
               }`}>
                 {index + 1}
               </span>

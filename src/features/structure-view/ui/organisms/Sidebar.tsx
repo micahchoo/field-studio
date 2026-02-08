@@ -50,14 +50,14 @@ const NavItem: React.FC<{
     title={title}
     aria-current={active ? 'page' : undefined}
     className={`
-      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 group
+      w-full flex items-center gap-3 px-3 py-2.5  font-medium transition-nb  group
       ${active 
         ? (fieldMode 
-          ? 'bg-yellow-400 text-black font-bold shadow-lg shadow-yellow-400/20 border-2 border-yellow-400' 
-          : 'bg-slate-700 text-white shadow-sm') 
+          ? 'bg-nb-yellow text-black font-bold shadow-brutal shadow-yellow-400/20 border-2 border-nb-yellow' 
+          : 'bg-nb-black/80 text-white shadow-brutal-sm') 
         : (fieldMode 
-          ? 'text-yellow-400/80 hover:bg-yellow-400/10 hover:text-yellow-400 border-2 border-transparent' 
-          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-300')
+          ? 'text-nb-yellow/80 hover:bg-nb-yellow/10 hover:text-nb-yellow border-2 border-transparent' 
+          : 'text-nb-black/40 hover:bg-nb-black/50 hover:text-nb-black/30')
       }
       ${disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}
     `}
@@ -65,10 +65,10 @@ const NavItem: React.FC<{
     <Icon 
       name={icon} 
       className={`
-        text-lg transition-colors
+        text-lg transition-nb
         ${active 
           ? (fieldMode ? "text-black" : "text-white") 
-          : (fieldMode ? "text-yellow-400/70 group-hover:text-yellow-400" : "text-slate-500 group-hover:text-slate-300")
+          : (fieldMode ? "text-nb-yellow/70 group-hover:text-nb-yellow" : "text-nb-black/50 group-hover:text-nb-black/30")
         }
       `} 
     />
@@ -176,13 +176,13 @@ const TreeItem: React.FC<{
           border-l-2 py-2
           ${isSelected 
             ? (fieldMode 
-              ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400 font-bold shadow-md' 
-              : 'bg-blue-500/20 border-blue-500 text-white shadow-inner')
+              ? 'bg-nb-yellow/20 border-nb-yellow text-nb-yellow font-bold shadow-brutal-sm' 
+              : 'bg-nb-blue/20 border-nb-blue text-white shadow-inner')
             : (fieldMode 
-              ? 'border-transparent text-slate-300 hover:bg-slate-800 hover:border-slate-600' 
-              : 'border-transparent text-slate-300 hover:text-white hover:bg-slate-800/50 hover:border-slate-600')
+              ? 'border-transparent text-nb-black/30 hover:bg-nb-black hover:border-nb-black/60' 
+              : 'border-transparent text-nb-black/30 hover:text-white hover:bg-nb-black/50 hover:border-nb-black/60')
           }
-          ${isPriority && !isSelected ? (fieldMode ? 'text-white' : 'text-slate-200 font-medium') : ''}
+          ${isPriority && !isSelected ? (fieldMode ? 'text-white' : 'text-nb-black/20 font-medium') : ''}
         `}
         style={{ 
           // Flat hierarchy - minimal or no indentation, use visual cues instead
@@ -194,36 +194,36 @@ const TreeItem: React.FC<{
           aria-label={expanded ? `Collapse ${displayLabel}` : `Expand ${displayLabel}`}
           aria-expanded={expanded}
           tabIndex={-1}
-          className={`p-0.5 rounded hover:bg-white/10 transition-transform active:scale-95 ${!hasChildren ? 'invisible' : ''}`} 
+          className={`p-0.5 hover:bg-nb-white/10 transition-transform active:scale-95 ${!hasChildren ? 'invisible' : ''}`} 
           onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
         >
           <Icon 
             name={expanded ? "expand_more" : "chevron_right"} 
-            className={`transition-transform duration-200 text-base ${expanded ? 'rotate-0' : '-rotate-90'} ${fieldMode ? "text-slate-400" : "text-slate-500"}`} 
+            className={`transition-transform text-base ${expanded ? 'rotate-0' : '-rotate-90'} ${fieldMode ? "text-nb-black/40" : "text-nb-black/50"}`} 
           />
         </Button>
         
         {/* Visual priority indicator */}
         {isPriority && (
-          <div className={`w-1 h-4 rounded-full ${item.type === 'Manifest' ? 'bg-blue-500' : 'bg-emerald-500'} ${isSelected ? 'opacity-100' : 'opacity-70'}`} />
+          <div className={`w-1 h-4 ${item.type === 'Manifest' ? 'bg-nb-blue' : 'bg-nb-green/100'} ${isSelected ? 'opacity-100' : 'opacity-70'}`} />
         )}
         
         <Icon 
           name={viewType === 'files' ? 'folder' : config.icon} 
           className={`
-            transition-colors text-base
+            transition-nb text-base
             ${!isSelected ? config.colorClass : ''} 
             group-hover:brightness-125
             ${isPriority ? 'text-lg' : ''}
           `} 
         />
-        <span className={`text-xs truncate transition-colors flex-1 ${isPriority ? 'font-medium' : ''}`}>
+        <span className={`text-xs truncate transition-nb flex-1 ${isPriority ? 'font-medium' : ''}`}>
           {displayLabel}
         </span>
         
         {/* Child count badge for collections */}
         {item.type === 'Collection' && hasChildren && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-700 text-slate-400'}`}>
+          <span className={`text-[10px] px-1.5 py-0.5 ${fieldMode ? 'bg-nb-black text-nb-black/40' : 'bg-nb-black/80 text-nb-black/40'}`}>
             {children.length}
           </span>
         )}
@@ -285,38 +285,38 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
   });
 
   const sidebarStyles = isMobile
-    ? `fixed inset-y-0 left-0 z-[1000] w-80 shadow-2xl transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}`
+    ? `fixed inset-y-0 left-0 z-[1000] w-80 shadow-brutal-lg transition-transform ${visible ? 'translate-x-0' : '-translate-x-full'}`
     : `flex flex-col h-full border-r shrink-0 relative`;
 
   // Field mode: high contrast black/yellow, Normal: sleek slate
   const bgStyles = settings.fieldMode 
-    ? 'bg-black border-yellow-400/30' 
-    : 'bg-slate-900 border-slate-800 text-slate-300';
+    ? 'bg-nb-black border-nb-yellow/30' 
+    : 'bg-nb-black border-nb-black text-nb-black/30';
 
   return (
     <>
       {isMobile && visible && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[950]" onClick={onClose}></div>
+          <div className="fixed inset-0 bg-nb-black/80 backdrop-blur-sm z-[950]" onClick={onClose}></div>
       )}
       <aside
-        className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden transition-colors duration-300`}
+        className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden transition-nb `}
         style={isMobile ? undefined : panelStyle}
       >
         {/* Compact Header - App branding */}
-        <div className={`flex items-center px-3 shrink-0 gap-2 h-12 border-b ${settings.fieldMode ? 'border-yellow-400/30 bg-black' : 'border-slate-800 bg-slate-900'}`}>
-          <div className={`w-7 h-7 rounded flex items-center justify-center font-bold text-xs shadow transition-colors duration-300 ${settings.fieldMode ? 'bg-yellow-400 text-black' : 'bg-iiif-blue text-white'}`}>
+        <div className={`flex items-center px-3 shrink-0 gap-2 h-12 border-b ${settings.fieldMode ? 'border-nb-yellow/30 bg-nb-black' : 'border-nb-black bg-nb-black'}`}>
+          <div className={`w-7 h-7 flex items-center justify-center font-bold text-xs shadow transition-nb ${settings.fieldMode ? 'bg-nb-yellow text-black' : 'bg-iiif-blue text-white'}`}>
             <Icon name="photo_library" className="text-base" />
           </div>
           <div className="flex-1 overflow-hidden">
-            <div className={`text-xs font-bold tracking-tight truncate transition-colors duration-300 ${settings.fieldMode ? 'text-yellow-400' : 'text-white'}`}>
+            <div className={`text-xs font-bold tracking-tight truncate transition-nb ${settings.fieldMode ? 'text-nb-yellow' : 'text-white'}`}>
               {CONSTANTS.APP_NAME}
             </div>
-            <div className={`text-[9px] transition-colors ${settings.fieldMode ? 'text-yellow-400/60' : 'text-slate-500'}`}>
+            <div className={`text-[9px] transition-nb ${settings.fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/50'}`}>
               {root ? `${root.items?.length || 0} items` : 'No archive'}
             </div>
           </div>
           {isMobile && (
-              <Button variant="ghost" size="bare" onClick={onClose} aria-label="Close sidebar" className={`p-1.5 transition-colors ${settings.fieldMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-500 hover:text-white'}`}>
+              <Button variant="ghost" size="bare" onClick={onClose} aria-label="Close sidebar" className={`p-1.5 transition-nb ${settings.fieldMode ? 'text-nb-yellow hover:text-nb-yellow' : 'text-nb-black/50 hover:text-white'}`}>
                 <Icon name="close" className="text-lg"/>
               </Button>
           )}
@@ -338,13 +338,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
           {/* IMPORT SECTION - High contrast in field mode */}
           <div className="px-3 pb-3">
             <div className={`
-              rounded-xl p-4 border-2 transition-colors duration-300
+               p-4 border-2 transition-nb 
               ${!hasData 
-                ? (settings.fieldMode ? 'bg-yellow-400/20 border-yellow-400' : 'bg-blue-600/10 border-blue-500/50')
-                : (settings.fieldMode ? 'bg-black border-yellow-400/30' : 'bg-slate-800/50 border-slate-700/50')
+                ? (settings.fieldMode ? 'bg-nb-yellow/20 border-nb-yellow' : 'bg-nb-blue/10 border-nb-blue/50')
+                : (settings.fieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-black/50 border-nb-black/60')
               }
             `}>
-              <div className={`text-[11px] font-semibold uppercase tracking-wider mb-3 transition-colors ${settings.fieldMode ? 'text-yellow-400' : 'text-slate-400'}`}>
+              <div className={`text-[11px] font-semibold uppercase tracking-wider mb-3 transition-nb ${settings.fieldMode ? 'text-nb-yellow' : 'text-nb-black/40'}`}>
                 Import
               </div>
               
@@ -366,11 +366,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                   type="button"
                   onClick={handleImportClick}
                   className={`
-                    w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg 
-                    font-bold text-sm transition-all duration-150
+                    w-full flex items-center justify-center gap-2 px-4 py-2.5  
+                    font-bold text-sm transition-nb 
                     ${settings.fieldMode
-                      ? 'bg-yellow-400 text-black hover:bg-yellow-300 shadow-lg shadow-yellow-400/30 border-2 border-yellow-400'
-                      : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20'
+                      ? 'bg-nb-yellow text-black hover:bg-nb-yellow shadow-brutal shadow-yellow-400/30 border-2 border-nb-yellow'
+                      : 'bg-nb-blue text-white hover:bg-nb-blue shadow-brutal shadow-nb-blue/20'
                     }
                   `}
                 >
@@ -382,11 +382,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                   type="button"
                   onClick={onOpenExternalImport}
                   className={`
-                    w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg 
-                    border-2 font-medium text-sm transition-all duration-150
+                    w-full flex items-center justify-center gap-2 px-4 py-2  
+                    border-2 font-medium text-sm transition-nb 
                     ${settings.fieldMode
-                      ? 'bg-black border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      ? 'bg-nb-black border-nb-yellow/50 text-nb-yellow hover:bg-nb-yellow/10 hover:border-nb-yellow'
+                      : 'bg-nb-black/50 border-nb-black/80 text-nb-black/40 hover:bg-nb-black hover:text-nb-black/20'
                     }
                   `}
                 >
@@ -401,16 +401,16 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
           {root && (
             <div className="flex-1 px-3 pb-3 min-h-0">
               <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                <span className="text-[10px] font-medium text-nb-black/50 uppercase tracking-wider">
                   Archive
                 </span>
-                <span className="text-[10px] text-slate-600">
+                <span className="text-[10px] text-nb-black/60">
                   {root?.items?.length || 0} items
                 </span>
               </div>
               <div className={`
-                rounded-lg border overflow-hidden
-                ${settings.fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-800/30 border-slate-800/50'}
+                 border overflow-hidden
+                ${settings.fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-black/30 border-nb-black/50'}
               `}>
                 <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
                   <TreeItem 
@@ -428,18 +428,18 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               </div>
               {/* Tree filter */}
               <div className="relative mt-2">
-                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-nb-black/50 text-sm" />
                 <input 
                   type="text" 
                   value={filterText} 
                   onChange={e => setFilterText(e.target.value)} 
                   placeholder="Filter manifests..." 
-                  className="w-full text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg pl-9 pr-8 py-2 outline-none focus:border-slate-500 transition-all text-slate-200 placeholder:text-slate-500"
+                  className="w-full text-sm bg-nb-black/50 border border-nb-black/60 pl-9 pr-8 py-2 outline-none focus:border-nb-black/40 transition-nb text-nb-black/20 placeholder:text-nb-black/50"
                 />
                 {filterText && (
                   <Button variant="ghost" size="bare"
                     onClick={() => setFilterText('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-nb-black/80 text-nb-black/50 hover:text-nb-black/30"
                   >
                     <Icon name="close" className="text-xs" />
                   </Button>
@@ -450,19 +450,19 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
         </div>
 
         {/* BOTTOM ACTIONS - Settings, Export, Help */}
-        <div className={`border-t shrink-0 transition-colors duration-300 ${settings.fieldMode ? 'border-yellow-400/30 bg-black' : 'border-slate-800 bg-slate-900'}`}>
+        <div className={`border-t shrink-0 transition-nb ${settings.fieldMode ? 'border-nb-yellow/30 bg-nb-black' : 'border-nb-black bg-nb-black'}`}>
           {/* Export Button - Only show when data exists */}
           {hasData && (
-            <div className={`p-3 border-b ${settings.fieldMode ? 'border-yellow-400/20' : 'border-slate-800'}`}>
+            <div className={`p-3 border-b ${settings.fieldMode ? 'border-nb-yellow/20' : 'border-nb-black'}`}>
               <Button variant="ghost" size="bare"
                 onClick={onExportTrigger}
                 className={`
-                  w-full py-2.5 rounded-lg text-sm font-bold
-                  flex items-center justify-center gap-2 shadow-lg
-                  transition-all duration-150 active:scale-[0.98]
+                  w-full py-2.5  text-sm font-bold
+                  flex items-center justify-center gap-2 shadow-brutal
+                  transition-nb  active:scale-[0.98]
                   ${settings.fieldMode
-                    ? 'bg-yellow-400 text-black hover:bg-yellow-300 shadow-yellow-400/30 border-2 border-yellow-400'
-                    : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20'
+                    ? 'bg-nb-yellow text-black hover:bg-nb-yellow shadow-yellow-400/30 border-2 border-nb-yellow'
+                    : 'bg-nb-blue text-white hover:bg-nb-blue shadow-nb-blue/20'
                   }
                 `}
               >
@@ -477,11 +477,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             <Button variant="ghost" size="bare"
               onClick={handleFieldModeToggle}
               className={`
-                flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
-                text-xs font-bold transition-all border-2
+                flex-1 flex items-center justify-center gap-2 px-2 py-2  
+                text-xs font-bold transition-nb border-2
                 ${settings.fieldMode 
-                  ? 'text-black bg-yellow-400 border-yellow-400 hover:bg-yellow-300' 
-                  : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200'
+                  ? 'text-black bg-nb-yellow border-nb-yellow hover:bg-nb-yellow' 
+                  : 'text-nb-black/40 border-transparent hover:bg-nb-black hover:text-nb-black/20'
                 }
               `}
               title={settings.fieldMode ? "Disable Field Mode" : "Enable Field Mode"}
@@ -493,11 +493,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             <Button variant="ghost" size="bare"
               onClick={() => onModeChange('search')}
               className={`
-                flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
-                text-xs font-medium transition-all border-2
+                flex-1 flex items-center justify-center gap-2 px-2 py-2  
+                text-xs font-medium transition-nb border-2
                 ${currentMode === 'search'
-                  ? (settings.fieldMode ? 'text-black bg-yellow-400 border-yellow-400' : 'text-blue-400 bg-blue-500/10 border-blue-500/30')
-                  : (settings.fieldMode ? 'text-yellow-400 border-yellow-400/30 hover:border-yellow-400 hover:bg-yellow-400/10' : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200')
+                  ? (settings.fieldMode ? 'text-black bg-nb-yellow border-nb-yellow' : 'text-nb-blue bg-nb-blue/10 border-nb-blue/30')
+                  : (settings.fieldMode ? 'text-nb-yellow border-nb-yellow/30 hover:border-nb-yellow hover:bg-nb-yellow/10' : 'text-nb-black/40 border-transparent hover:bg-nb-black hover:text-nb-black/20')
                 }
               `}
             >
@@ -508,11 +508,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             <Button variant="ghost" size="bare"
               onClick={() => setShowSettings(!showSettings)}
               className={`
-                flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg 
-                text-xs font-medium transition-all border-2
+                flex-1 flex items-center justify-center gap-2 px-2 py-2  
+                text-xs font-medium transition-nb border-2
                 ${showSettings 
-                  ? (settings.fieldMode ? 'text-black bg-yellow-400 border-yellow-400' : 'text-blue-400 bg-blue-500/10 border-blue-500/30')
-                  : (settings.fieldMode ? 'text-yellow-400 border-yellow-400/30 hover:border-yellow-400 hover:bg-yellow-400/10' : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200')
+                  ? (settings.fieldMode ? 'text-black bg-nb-yellow border-nb-yellow' : 'text-nb-blue bg-nb-blue/10 border-nb-blue/30')
+                  : (settings.fieldMode ? 'text-nb-yellow border-nb-yellow/30 hover:border-nb-yellow hover:bg-nb-yellow/10' : 'text-nb-black/40 border-transparent hover:bg-nb-black hover:text-nb-black/20')
                 }
               `}
             >
@@ -523,10 +523,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
           
           {/* Collapsible Settings Panel */}
           {showSettings && (
-            <div className="px-3 pb-3 space-y-1 border-t border-slate-800 pt-2">
+            <div className="px-3 pb-3 space-y-1 border-t border-nb-black pt-2">
               <Button variant="ghost" size="bare"
                 onClick={onOpenSettings}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
+                className="w-full flex items-center gap-3 px-3 py-2 text-nb-black/40 hover:text-nb-black/20 hover:bg-nb-black/50 transition-nb text-sm"
               >
                 <Icon name="tune" className="text-base" />
                 <span>App Settings</span>
@@ -534,7 +534,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               {onAbstractionLevelChange && (
                 <Button variant="ghost" size="bare"
                   onClick={() => onAbstractionLevelChange(settings.abstractionLevel === 'simple' ? 'standard' : 'simple')}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-nb-black/40 hover:text-nb-black/20 hover:bg-nb-black/50 transition-nb text-sm"
                 >
                   <Icon name="layers" className="text-base" />
                   <span>Mode: {settings.abstractionLevel === 'simple' ? 'Simple' : settings.abstractionLevel === 'advanced' ? 'Advanced' : 'Standard'}</span>
@@ -543,7 +543,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               {onToggleQuickHelp && (
                 <Button variant="ghost" size="bare"
                   onClick={onToggleQuickHelp}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all text-sm"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-nb-black/40 hover:text-nb-black/20 hover:bg-nb-black/50 transition-nb text-sm"
                 >
                   <Icon name="help_outline" className="text-base" />
                   <span>Keyboard Shortcuts</span>
@@ -559,17 +559,17 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             {...handleProps}
             className={`
               absolute right-0 top-0 bottom-0 w-1 z-30 group
-              cursor-col-resize transition-colors duration-150
-              hover:bg-slate-500/20
-              ${isResizing ? (settings.fieldMode ? 'bg-yellow-400/30' : 'bg-iiif-blue/30') : ''}
+              cursor-col-resize transition-nb 
+              hover:bg-nb-black/40
+              ${isResizing ? (settings.fieldMode ? 'bg-nb-yellow/30' : 'bg-iiif-blue/30') : ''}
             `}
           >
             <div className={`
-              absolute right-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full
-              transition-all duration-150 opacity-0 group-hover:opacity-100
+              absolute right-0 top-1/2 -translate-y-1/2 w-1 h-12 
+              transition-nb  opacity-0 group-hover:opacity-100
               ${isResizing
-                ? (settings.fieldMode ? 'bg-yellow-400' : 'bg-iiif-blue')
-                : 'bg-slate-500 group-hover:bg-iiif-blue'
+                ? (settings.fieldMode ? 'bg-nb-yellow' : 'bg-iiif-blue')
+                : 'bg-nb-black/40 group-hover:bg-iiif-blue'
               }
             `} />
           </div>

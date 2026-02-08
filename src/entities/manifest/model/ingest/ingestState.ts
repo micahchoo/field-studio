@@ -51,7 +51,7 @@ export async function calculateFileHash(file: Blob): Promise<string> {
  * Generate a unique checkpoint ID
  */
 function generateCheckpointId(): string {
-  return `${CHECKPOINT_PREFIX}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `${CHECKPOINT_PREFIX}${Date.now()}_${crypto.randomUUID().slice(0, 9)}`;
 }
 
 /**

@@ -8,77 +8,77 @@
 // ============================================================================
 
 export const COLORS = {
-  // Primary Palette
+  // Neobrutalist Primary Palette
   primary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6', // Main brand
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
+    50: '#FFF8E7',  // cream
+    100: '#E6EDFF',
+    200: '#99BBFF',
+    300: '#4D88FF',
+    400: '#0055FF',
+    500: '#0055FF', // nb-blue (main brand)
+    600: '#0044CC',
+    700: '#003399',
+    800: '#002266',
+    900: '#001133',
   },
 
-  // Semantic Colors
+  // Semantic Colors (bright neobrutalist)
   semantic: {
-    success: '#10b981',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
-    neutral: '#6b7280',
+    success: '#00CC66', // nb-green
+    warning: '#FF8800', // nb-orange
+    error: '#FF3333',   // nb-red
+    info: '#0055FF',    // nb-blue
+    neutral: '#000000',
   },
 
   // Background Hierarchy
   background: {
-    primary: '#ffffff',
-    secondary: '#f9fafb',
-    tertiary: '#f3f4f6',
-    elevated: '#ffffff',
-    overlay: 'rgba(0, 0, 0, 0.5)',
+    primary: '#FFFFFF',
+    secondary: '#FFF8E7', // cream
+    tertiary: '#FFF8E7',
+    elevated: '#FFFFFF',
+    overlay: 'rgba(0, 0, 0, 0.7)',
   },
 
   // Text Hierarchy
   text: {
-    primary: '#111827',
-    secondary: '#6b7280',
-    tertiary: '#9ca3af',
-    disabled: '#d1d5db',
-    inverse: '#ffffff',
+    primary: '#000000',
+    secondary: '#000000',
+    tertiary: '#666666',
+    disabled: '#999999',
+    inverse: '#FFFFFF',
   },
 
   // Border Colors
   border: {
-    default: '#e5e7eb',
-    focus: '#3b82f6',
-    error: '#ef4444',
-    success: '#10b981',
+    default: '#000000',
+    focus: '#0055FF',
+    error: '#FF3333',
+    success: '#00CC66',
   },
 
   // Field Mode (High Contrast)
   field: {
     background: '#000000',
-    foreground: '#ffff00',
-    accent: '#ff6b00',
-    border: '#ffff00',
+    foreground: '#FFE500',
+    accent: '#FFE500',
+    border: '#FFE500',
   },
 
-  // IIIF Resource Type Colors
+  // IIIF Resource Type Colors (bright neobrutalist)
   resource: {
-    Collection: '#8b5cf6',
-    Manifest: '#3b82f6',
-    Canvas: '#10b981',
-    Range: '#f59e0b',
-    Annotation: '#ec4899',
+    Collection: '#8833FF', // nb-purple
+    Manifest: '#0055FF',   // nb-blue
+    Canvas: '#00CC66',     // nb-green
+    Range: '#FF8800',      // nb-orange
+    Annotation: '#FF66B2', // nb-pink
   },
 } as const;
 
 export const TYPOGRAPHY = {
   fontFamily: {
-    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    mono: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, monospace',
+    sans: '"Space Grotesk", system-ui, sans-serif',
+    mono: '"JetBrains Mono", ui-monospace, monospace',
   },
 
   fontSize: {
@@ -108,12 +108,12 @@ export const TYPOGRAPHY = {
 
 export const ELEVATION = {
   none: 'none',
-  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-  base: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-  '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+  sm: '2px 2px 0 0 #000',   // brutal-sm
+  base: '4px 4px 0 0 #000', // brutal
+  md: '4px 4px 0 0 #000',   // brutal
+  lg: '6px 6px 0 0 #000',   // brutal-lg
+  xl: '6px 6px 0 0 #000',   // brutal-lg
+  '2xl': '8px 8px 0 0 #000',
 } as const;
 
 // ============================================================================
@@ -181,16 +181,16 @@ export const LAYOUT = {
     full: '100%',
   },
 
-  // Border radius
+  // Border radius - all zero for neobrutalist
   borderRadius: {
     none: '0',
-    sm: '0.125rem',  // 2px
-    base: '0.25rem', // 4px
-    md: '0.375rem',  // 6px
-    lg: '0.5rem',    // 8px
-    xl: '0.75rem',   // 12px
-    '2xl': '1rem',   // 16px
-    full: '9999px',
+    sm: '0',
+    base: '0',
+    md: '0',
+    lg: '0',
+    xl: '0',
+    '2xl': '0',
+    full: '0',
   },
 } as const;
 
@@ -239,36 +239,36 @@ export const TOUCH_TARGETS = {
 } as const;
 
 export const INTERACTION = {
-  // Animation timing
+  // Animation timing - fast and linear for neobrutalist
   duration: {
-    fast: '150ms',
-    base: '200ms',
-    slow: '300ms',
-    slower: '500ms',
+    fast: '100ms',
+    base: '100ms',
+    slow: '150ms',
+    slower: '200ms',
   },
 
-  // Easing functions
+  // Easing - linear for neobrutalist (no smooth curves)
   easing: {
-    default: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    in: 'cubic-bezier(0.4, 0, 1, 1)',
-    out: 'cubic-bezier(0, 0, 0.2, 1)',
-    inOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    default: 'linear',
+    in: 'linear',
+    out: 'linear',
+    inOut: 'linear',
   },
 
-  // Hover/focus states
+  // Hover/focus states - translate-based press feedback
   states: {
     hover: {
-      opacity: 0.9,
-      scale: 1.02,
+      opacity: 1,
+      scale: 1,
     },
     active: {
-      opacity: 0.8,
-      scale: 0.98,
+      opacity: 1,
+      scale: 1,
     },
     focus: {
-      ring: '2px',
+      ring: '3px',
       ringColor: COLORS.border.focus,
-      ringOffset: '2px',
+      ringOffset: '1px',
     },
   },
 } as const;
@@ -452,7 +452,7 @@ export const FEEDBACK = {
 // ============================================================================
 
 export const PATTERNS = {
-  // Modal dialog
+  // Modal dialog - neobrutalist thick borders
   modal: {
     overlay: {
       background: COLORS.background.overlay,
@@ -461,59 +461,63 @@ export const PATTERNS = {
     content: {
       maxWidth: '600px',
       padding: SPACING[6],
-      borderRadius: LAYOUT.borderRadius.lg,
-      shadow: ELEVATION.xl,
+      borderRadius: LAYOUT.borderRadius.none,
+      shadow: ELEVATION.lg,
     },
     header: {
       padding: SPACING[6],
-      borderBottom: `1px solid ${COLORS.border.default}`,
+      borderBottom: `4px solid ${COLORS.border.default}`,
     },
     footer: {
       padding: SPACING[6],
-      borderTop: `1px solid ${COLORS.border.default}`,
+      borderTop: `4px solid ${COLORS.border.default}`,
       justifyContent: 'flex-end',
       gap: SPACING[3],
     },
   },
 
-  // Card component
+  // Card component - neobrutalist offset shadow
   card: {
     padding: SPACING[4],
-    borderRadius: LAYOUT.borderRadius.lg,
-    border: `1px solid ${COLORS.border.default}`,
-    shadow: ELEVATION.sm,
+    borderRadius: LAYOUT.borderRadius.none,
+    border: `2px solid ${COLORS.border.default}`,
+    shadow: ELEVATION.base,
     hover: {
-      shadow: ELEVATION.md,
-      transform: 'translateY(-2px)',
+      shadow: ELEVATION.lg,
+      transform: 'translate(-2px, -2px)',
     },
   },
 
-  // Toolbar
+  // Toolbar - chunky bordered
   toolbar: {
     height: '48px',
     padding: `0 ${SPACING[4]}`,
     background: COLORS.background.secondary,
-    borderBottom: `1px solid ${COLORS.border.default}`,
+    borderBottom: `4px solid ${COLORS.border.default}`,
     gap: SPACING[2],
   },
 
-  // Form elements
+  // Form elements - neobrutalist thick borders, monospace values
   form: {
     label: {
-      fontSize: TYPOGRAPHY.fontSize.sm,
-      fontWeight: TYPOGRAPHY.fontWeight.medium,
+      fontSize: TYPOGRAPHY.fontSize.xs,
+      fontWeight: TYPOGRAPHY.fontWeight.bold,
       color: COLORS.text.primary,
       marginBottom: SPACING[1.5],
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.08em',
+      fontFamily: TYPOGRAPHY.fontFamily.mono,
     },
     input: {
       height: TOUCH_TARGETS.input.height.base,
       padding: TOUCH_TARGETS.input.padding,
-      border: `1px solid ${COLORS.border.default}`,
-      borderRadius: LAYOUT.borderRadius.md,
+      border: `2px solid ${COLORS.border.default}`,
+      borderRadius: LAYOUT.borderRadius.none,
       fontSize: TYPOGRAPHY.fontSize.base,
+      fontFamily: TYPOGRAPHY.fontFamily.mono,
       focus: {
         border: `2px solid ${COLORS.border.focus}`,
-        ring: `0 0 0 3px ${COLORS.primary[100]}`,
+        ring: 'none',
       },
     },
     helpText: {
@@ -525,13 +529,14 @@ export const PATTERNS = {
       fontSize: TYPOGRAPHY.fontSize.sm,
       color: COLORS.semantic.error,
       marginTop: SPACING[1.5],
+      fontWeight: TYPOGRAPHY.fontWeight.bold,
     },
   },
 
   // Share button (for Content State API)
   shareButton: {
     icon: '🔗',
-    label: 'Share',
+    label: 'SHARE',
     position: 'top-right',
     variant: 'secondary',
     tooltip: 'Generate shareable link',

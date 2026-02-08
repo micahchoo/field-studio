@@ -27,7 +27,7 @@ export interface SelectionToolbarProps {
   className?: string;
   /** Contextual styles from template (required for theming) */
   cx: ContextualClassNames;
-  /** Terminology function for "selected" label */
+  /** Terminology function for"selected" label */
   t: (key: string) => string;
   fieldMode?: boolean;
 }
@@ -51,8 +51,8 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   count,
   children,
   onClear,
-  itemLabel = 'items',
-  className = '',
+  itemLabel ='items',
+  className ='',
   cx,
   t,
 }) => {
@@ -68,10 +68,10 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
         flex items-center justify-between
         py-2 px-4
         ${cx.accentBadge}
-        rounded-md
+        
         animate-in fade-in slide-in-from-top-1
         ${className}
-      `}
+`}
       role="region"
       aria-label="Selection toolbar"
       aria-live="polite"

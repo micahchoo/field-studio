@@ -3,19 +3,109 @@
 @tailwind utilities;
 
 /* ============================================================================
-   Layout CSS Custom Properties
-
-   Single source of truth for layout dimensions. Referenced by Tailwind tokens
-   (h-header, w-inspector, etc.) defined in tailwind.config.js.
+   NEOBRUTALIST DESIGN SYSTEM — CSS Custom Properties
    ============================================================================ */
 
 @layer base {
   :root {
-    --header-h: 4rem;           /* 64px - view headers (Archive, Map, Timeline, Board) */
-    --header-compact-h: 3.5rem; /* 56px - mobile header, inspector header */
-    --status-bar-h: 1.75rem;    /* 28px */
-    --inspector-w: 20rem;       /* 320px */
-    --filmstrip-w: 18rem;       /* 288px */
+    /* Layout dimensions */
+    --header-h: 3.5rem;
+    --header-compact-h: 3rem;
+    --status-bar-h: 2rem;
+    --inspector-w: 22rem;
+    --filmstrip-w: 18rem;
+
+    /* Neobrutalist tokens */
+    --nb-accent: #0055FF;
+    --nb-surface: #FFFFFF;
+    --nb-text: #000000;
+    --nb-border: #000000;
+    --nb-shadow: #000000;
+    --nb-cream: #FFF8E7;
+
+    /* Accent hue (for legacy mode-accent compatibility) */
+    --mode-accent: var(--nb-accent);
+
+    /* ── Theme CSS variable fallbacks (light theme defaults) ──
+       These are overridden at runtime by ThemeRoot's inline style,
+       but serve as safe fallbacks for any CSS that reads them before
+       React mounts. */
+    --theme-surface-primary: #FFFFFF;
+    --theme-surface-secondary: #FFF8E7;
+    --theme-surface-elevated: #FFFFFF;
+    --theme-surface-overlay: rgba(0, 0, 0, 0.7);
+
+    --theme-text-primary: #000000;
+    --theme-text-secondary: #000000;
+    --theme-text-muted: #4D4D4D;
+    --theme-text-inverse: #FFFFFF;
+
+    --theme-accent-primary: #0055FF;
+    --theme-accent-hover: #0044CC;
+    --theme-accent-subtle: rgba(0, 85, 255, 0.08);
+
+    --theme-border-default: #000000;
+    --theme-border-subtle: rgba(0, 0, 0, 0.2);
+    --theme-border-focus: #0055FF;
+
+    --theme-shadow-color: #000000;
+    --theme-shadow-sm: 2px 2px 0 0 #000;
+    --theme-shadow-base: 4px 4px 0 0 #000;
+    --theme-shadow-lg: 6px 6px 0 0 #000;
+    --theme-shadow-active: 1px 1px 0 0 #000;
+
+    --theme-success-color: #00CC66;
+    --theme-warning-color: #FF8800;
+    --theme-error-color: #FF3333;
+    --theme-info-color: #0055FF;
+
+    --theme-selection-bg: #0055FF;
+    --theme-selection-text: #FFFFFF;
+
+    --theme-scrollbar-track: #FFF8E7;
+    --theme-scrollbar-thumb: #CCCCCC;
+    --theme-scrollbar-thumb-hover: #999999;
+
+    --theme-resource-collection: #8833FF;
+    --theme-resource-manifest: #0055FF;
+    --theme-resource-canvas: #00CC66;
+    --theme-resource-range: #FF8800;
+    --theme-resource-annotation: #FF66B2;
+
+    /* Forms */
+    --theme-input-bg: #FFFFFF;
+    --theme-input-border: #000000;
+    --theme-input-placeholder: rgba(0, 0, 0, 0.4);
+
+    /* Typography */
+    --theme-font-family-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+    --theme-font-size-xs: 0.75rem;
+    --theme-font-size-sm: 0.875rem;
+    --theme-font-size-md: 1rem;
+    --theme-font-size-lg: 1.25rem;
+    --theme-font-weight-bold: 700;
+
+    /* Spacing */
+    --theme-spacing-xs: 4px;
+    --theme-spacing-sm: 8px;
+    --theme-spacing-md: 16px;
+    --theme-spacing-lg: 24px;
+    --theme-spacing-xl: 32px;
+
+    /* Border Widths */
+    --theme-border-width-thin: 1px;
+    --theme-border-width-thick: 2px;
+  }
+
+  /* Field mode: black/yellow override (legacy, kept for nb-* var consumers) */
+  [data-field-mode="true"] {
+    --nb-accent: #FFE500;
+    --nb-surface: #000000;
+    --nb-text: #FFE500;
+    --nb-border: #FFE500;
+    --nb-shadow: #FFE500;
+    --nb-cream: #1a1a00;
+    --mode-accent: #FFE500;
   }
 
   html, body {
@@ -23,54 +113,126 @@
     overflow: hidden;
   }
 
-  *:focus-visible {
-    outline: 2px solid #005596;
-    outline-offset: 2px;
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
+  /* NEOBRUTALIST FOCUS: thick black outline, no rounded */
+  *:focus-visible {
+    outline: 3px solid var(--nb-accent);
+    outline-offset: 1px;
+  }
+
+  /* Bold selection highlight (theme-aware) */
   ::selection {
-    background: #005596;
-    color: white;
+    background: var(--theme-selection-bg, var(--nb-accent));
+    color: var(--theme-selection-text, #fff);
+  }
+
+  /* Remove all border-radius globally (neobrutalist) */
+  *, *::before, *::after {
+    border-radius: 0 !important;
   }
 }
 
 @layer components {
-  /* Custom Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  /* Mode-accent dynamic classes (respond to field mode via CSS variables) */
+  .border-l-mode-accent-border {
+    border-left-color: var(--nb-accent);
+  }
+
+  .border-mode-accent-border {
+    border-color: var(--nb-accent);
+  }
+
+  .bg-mode-accent-bg-subtle {
+    background-color: color-mix(in srgb, var(--nb-accent) 8%, var(--nb-surface));
+  }
+
+  .bg-mode-accent-bg-dark {
+    background-color: color-mix(in srgb, var(--nb-accent) 20%, var(--nb-surface));
+  }
+
+  .transition-mode {
+    transition: background-color 0.1s linear, border-color 0.1s linear, color 0.1s linear;
+  }
+
+  /* CHUNKY SQUARE SCROLLBARS (theme-aware) */
+  .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: var(--theme-scrollbar-track, var(--nb-cream)); border-left: 2px solid var(--theme-border-default, var(--nb-border)); }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--theme-scrollbar-thumb, var(--nb-border)); border: 2px solid var(--theme-scrollbar-track, var(--nb-cream)); }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--theme-scrollbar-thumb-hover, var(--nb-accent)); }
+
+  /* Global scrollbar override (theme-aware) */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--theme-scrollbar-track, transparent); }
+  ::-webkit-scrollbar-thumb { background: var(--theme-scrollbar-thumb, #ccc); border: 2px solid transparent; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--theme-scrollbar-thumb-hover, #999); }
 }
 
 @layer utilities {
-  /* Snappy transition */
-  .snappy-transition {
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Instant transitions for neobrutalist aesthetic */
+  .transition-nb {
+    transition: all 0.1s linear;
   }
 
-  /* Animations */
-  .animate-slide-in-right {
-    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Press feedback animation */
+  .nb-press:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 0 var(--nb-shadow);
   }
-  .animate-fade-in {
-    animation: fadeIn 0.2s ease-out forwards;
+
+  /* Multi-panel layout utilities */
+  .panel {
+    contain: layout style paint;
+    isolation: isolate;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    min-width: 0;
   }
-  .animate-scale-in {
-    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  .panel-fixed {
+    contain: layout style paint;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 0;
+    min-width: 0;
   }
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+/* Annotation mode indicators (preserved from original) */
+[data-annotation-mode="true"] .filmstrip-panel {
+  opacity: 0.5;
+  transition: opacity 0.1s linear;
+}
+[data-annotation-mode="true"] .viewer-chrome {
+  border-top: 3px solid var(--nb-accent);
+}
+[data-annotation-mode="true"] .sidebar-panel {
+  opacity: 0.7;
+  transition: opacity 0.1s linear;
+}
+[data-annotation-mode="true"] .inspector-panel {
+  box-shadow: inset 3px 0 0 0 var(--nb-accent);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Loading bar animation (chunky, not spinner) */
+@keyframes nbLoadBar {
+  0% { width: 0; }
+  50% { width: 70%; }
+  100% { width: 100%; }
 }
 
-@keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+.nb-loading-bar {
+  height: 4px;
+  background: var(--nb-accent);
+  animation: nbLoadBar 1.5s linear infinite;
+}
+
+/* Save pulse */
+@keyframes savePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }

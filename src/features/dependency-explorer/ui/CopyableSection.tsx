@@ -35,7 +35,7 @@ export const CopyableSection: React.FC<CopyableSectionProps> = ({
   return (
     <section className={`relative group ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-nb-black/20 flex items-center gap-2">
           {title}
         </h2>
         <Button
@@ -91,7 +91,7 @@ export function formatCrossLayerDepsAsMarkdown(
     if (deps) {
       const depList = Object.entries(deps)
         .filter(([_, count]) => count > 0)
-        .map(([target, count]) => `  - ${target}: ${count}`)
+        .map(([target, count]) => ` - ${target}: ${count}`)
         .join('\n');
       
       if (depList) {

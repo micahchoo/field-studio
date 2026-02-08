@@ -40,22 +40,22 @@ export const TabButtonBase: React.FC<TabButtonBaseProps> = ({
   id,
   icon,
   fieldMode = false,
-  className = '',
+  className ='',
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key ==='Enter' || e.key ==='') {
       e.preventDefault();
       onClick();
     }
   };
 
   const activeClass = fieldMode
-    ? 'text-blue-400 border-b-2 border-blue-400 bg-blue-900/20'
-    : 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50';
+    ?'text-nb-blue border-b-2 border-nb-blue bg-nb-blue/20'
+    :'text-nb-blue border-b-2 border-nb-blue bg-nb-blue/10';
 
   const inactiveClass = fieldMode
-    ? 'text-slate-500 hover:bg-slate-900'
-    : 'text-slate-500 hover:bg-slate-50';
+    ?'text-nb-black/50 hover:bg-nb-black'
+    :'text-nb-black/50 hover:bg-nb-white';
 
   return (
     <div

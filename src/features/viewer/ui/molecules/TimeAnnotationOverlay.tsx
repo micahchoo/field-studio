@@ -140,9 +140,9 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
   const timeToPercent = (time: number) => (time / duration) * 100;
 
   const accentColor = fieldMode ? 'rgb(234, 179, 8)' : 'rgb(34, 197, 94)';
-  const accentBg = fieldMode ? 'bg-yellow-500' : 'bg-green-500';
-  const accentBgFaded = fieldMode ? 'bg-yellow-500/30' : 'bg-green-500/30';
-  const textColor = fieldMode ? 'text-yellow-400' : 'text-green-400';
+  const accentBg = fieldMode ? 'bg-nb-yellow' : 'bg-nb-green';
+  const accentBgFaded = fieldMode ? 'bg-nb-yellow/30' : 'bg-nb-green/30';
+  const textColor = fieldMode ? 'text-nb-yellow' : 'text-nb-green';
 
   if (!isActive) {
     return (
@@ -152,7 +152,7 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
         onClick={() => onToggle(true)}
         variant="ghost"
         size="md"
-        className="!text-white hover:!text-blue-500"
+        className="!text-white hover:!text-nb-blue"
         fieldMode={fieldMode}
       />
     );
@@ -164,9 +164,9 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
       <div
         ref={progressRef}
         className={`
-          relative h-8 rounded cursor-crosshair
-          ${fieldMode ? 'bg-slate-800' : 'bg-slate-700'}
-          border ${fieldMode ? 'border-yellow-900/50' : 'border-slate-600'}
+          relative h-8 cursor-crosshair
+          ${fieldMode ? 'bg-nb-black' : 'bg-nb-black/80'}
+          border ${fieldMode ? 'border-nb-yellow/50' : 'border-nb-black/60'}
         `}
         onClick={handleProgressClick}
       >
@@ -183,9 +183,9 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
             <div
               key={anno.id}
               className={`
-                absolute top-1 bottom-1 rounded-sm cursor-pointer transition-all
-                ${hoveredAnnotation?.id === anno.id ? 'opacity-100 ring-2 ring-blue-400' : 'opacity-70'}
-                bg-blue-500/50 hover:bg-blue-500/70
+                absolute top-1 bottom-1  cursor-pointer transition-nb
+                ${hoveredAnnotation?.id === anno.id ? 'opacity-100 ring-2 ring-nb-blue' : 'opacity-70'}
+                bg-nb-blue/50 hover:bg-nb-blue/70
               `}
               style={{
                 left: `${startPercent}%`,
@@ -205,7 +205,7 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
         {/* Current selection */}
         {timeRange && (
           <div
-            className={`absolute top-1 bottom-1 rounded-sm ${accentBgFaded} border-2 ${fieldMode ? 'border-yellow-500' : 'border-green-500'}`}
+            className={`absolute top-1 bottom-1 ${accentBgFaded} border-2 ${fieldMode ? 'border-nb-yellow' : 'border-nb-green'}`}
             style={{
               left: `${timeToPercent(timeRange.start)}%`,
               width: `${timeRange.end !== undefined ? timeToPercent(timeRange.end) - timeToPercent(timeRange.start) : 0.5}%`,
@@ -215,13 +215,13 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
 
         {/* Current playback position indicator */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-white/80"
+          className="absolute top-0 bottom-0 w-0.5 bg-nb-white/80"
           style={{ left: `${timeToPercent(currentTime)}%` }}
         />
 
         {/* Instructions */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className={`text-xs font-medium ${fieldMode ? 'text-yellow-400/70' : 'text-white/50'}`}>
+          <span className={`text-xs font-medium ${fieldMode ? 'text-nb-yellow/70' : 'text-white/50'}`}>
             {!hasStart ? 'Click to set start time' :
              isSelecting ? 'Click to set end time' :
              'Range selected'}
@@ -232,13 +232,13 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
       {/* Annotation Form */}
       {timeRange && (
         <div className={`
-          mt-3 p-3 rounded-lg
-          ${fieldMode ? 'bg-slate-800 border border-yellow-900/50' : 'bg-slate-700 border border-slate-600'}
+          mt-3 p-3 
+          ${fieldMode ? 'bg-nb-black border border-nb-yellow/50' : 'bg-nb-black/80 border border-nb-black/60'}
         `}>
           {/* Time Range Display */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium ${fieldMode ? 'text-yellow-400' : 'text-green-400'}`}>
+              <span className={`text-xs font-medium ${fieldMode ? 'text-nb-yellow' : 'text-nb-green'}`}>
                 Start:
               </span>
               <span className="text-sm text-white font-mono">
@@ -248,16 +248,16 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleSetStartFromCurrent}
-                className={`text-xs ${fieldMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-blue-400 hover:text-blue-300'}`}
+                className={`text-xs ${fieldMode ? 'text-nb-yellow hover:text-nb-yellow' : 'text-nb-blue hover:text-nb-blue/60'}`}
               >
                 Use current
               </Button>
             </div>
             {timeRange.end !== undefined && (
               <>
-                <span className="text-slate-400">→</span>
+                <span className="text-nb-black/40">→</span>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${fieldMode ? 'text-yellow-400' : 'text-green-400'}`}>
+                  <span className={`text-xs font-medium ${fieldMode ? 'text-nb-yellow' : 'text-nb-green'}`}>
                     End:
                   </span>
                   <span className="text-sm text-white font-mono">
@@ -267,7 +267,7 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={handleSetEndFromCurrent}
-                    className={`text-xs ${fieldMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-blue-400 hover:text-blue-300'}`}
+                    className={`text-xs ${fieldMode ? 'text-nb-yellow hover:text-nb-yellow' : 'text-nb-blue hover:text-nb-blue/60'}`}
                   >
                     Use current
                   </Button>
@@ -278,14 +278,14 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
 
           {/* Motivation Selector */}
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs text-slate-400">Purpose:</span>
+            <span className="text-xs text-nb-black/40">Purpose:</span>
             {(['commenting', 'tagging', 'describing'] as const).map((mot) => (
               <Button
                 key={mot}
                 variant={motivation === mot ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setMotivation(mot)}
-                className={motivation === mot ? '' : 'text-slate-400'}
+                className={motivation === mot ? '' : 'text-nb-black/40'}
               >
                 {mot}
               </Button>
@@ -299,9 +299,9 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
             placeholder="Enter your annotation..."
             rows={2}
             className={`
-              w-full text-sm rounded p-2 border
-              ${fieldMode ? 'bg-slate-900 border-yellow-900/50 text-white placeholder-yellow-400/30' : 'bg-slate-800 border-slate-600 text-white placeholder-slate-500'}
-              focus:outline-none focus:ring-2 ${fieldMode ? 'focus:ring-yellow-500/50' : 'focus:ring-blue-500/50'}
+              w-full text-sm p-2 border
+              ${fieldMode ? 'bg-nb-black border-nb-yellow/50 text-white placeholder-yellow-400/30' : 'bg-nb-black border-nb-black/60 text-white placeholder-nb-black/50'}
+              focus:outline-none focus:ring-2 ${fieldMode ? 'focus:ring-nb-yellow/50' : 'focus:ring-nb-blue/50'}
             `}
           />
 
@@ -314,7 +314,7 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
                 handleClear();
                 onToggle(false);
               }}
-              className="text-slate-400 hover:text-white"
+              className="text-nb-black/40 hover:text-white"
             >
               <Icon name="close" className="mr-1" />
               Cancel
@@ -325,7 +325,7 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleClear}
-                className="text-slate-400 hover:text-white"
+                className="text-nb-black/40 hover:text-white"
               >
                 <Icon name="refresh" className="mr-1" />
                 Clear
@@ -352,13 +352,13 @@ export const TimeAnnotationOverlay: React.FC<TimeAnnotationOverlayProps> = ({
       {hoveredAnnotation && (
         <div className={`
           absolute -top-20 left-1/2 -translate-x-1/2 z-50
-          max-w-xs p-2 rounded-lg shadow-lg
-          ${fieldMode ? 'bg-slate-900 border border-yellow-900/50' : 'bg-slate-800 border border-slate-600'}
+          max-w-xs p-2  shadow-brutal
+          ${fieldMode ? 'bg-nb-black border border-nb-yellow/50' : 'bg-nb-black border border-nb-black/60'}
         `}>
           <p className="text-sm text-white">
             {(hoveredAnnotation.body as { value?: string })?.value || 'Annotation'}
           </p>
-          <p className={`text-xs mt-1 ${fieldMode ? 'text-yellow-400/70' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${fieldMode ? 'text-nb-yellow/70' : 'text-nb-black/40'}`}>
             {(() => {
               const range = getAnnotationTimeRange(hoveredAnnotation);
               if (!range) return '';

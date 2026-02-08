@@ -71,6 +71,7 @@ export type Action =
   | { type: 'REORDER_CANVASES'; manifestId: string; order: string[] }
   | { type: 'ADD_ANNOTATION'; canvasId: string; annotation: IIIFAnnotation }
   | { type: 'REMOVE_ANNOTATION'; canvasId: string; annotationId: string }
+  | { type: 'UPDATE_ANNOTATION'; annotationId: string; updates: Partial<Pick<IIIFAnnotation, 'body' | 'motivation'>> }
   | { type: 'UPDATE_CANVAS_DIMENSIONS'; canvasId: string; width: number; height: number }
   | { type: 'MOVE_ITEM'; itemId: string; newParentId: string; index?: number }
   | { type: 'BATCH_UPDATE'; updates: Array<{ id: string; changes: Partial<IIIFItem> }> }
@@ -96,7 +97,11 @@ export type Action =
   | { type: 'UPDATE_REQUIRED_STATEMENT'; id: string; requiredStatement: { label: LanguageMap; value: LanguageMap } | undefined }
   | { type: 'BATCH_UPDATE_NAV_DATE'; updates: Array<{ id: string; navDate: string }> }
   | { type: 'UPDATE_START'; id: string; start: { id: string; type: 'Canvas' | 'SpecificResource'; source?: string; selector?: unknown } | undefined }
-  | { type: 'UPDATE_RANGE_SUPPLEMENTARY'; rangeId: string; supplementary: { id: string; type: 'AnnotationCollection' } | undefined };
+  | { type: 'UPDATE_RANGE_SUPPLEMENTARY'; rangeId: string; supplementary: { id: string; type: 'AnnotationCollection' } | undefined }
+  // Phase 5: Board Design Actions
+  | { type: 'CREATE_BOARD'; boardId: string; title: string; behavior?: string[] }
+  | { type: 'UPDATE_BOARD_ITEM_POSITION'; annotationId: string; surfaceCanvasId: string; x: number; y: number; w: number; h: number }
+  | { type: 'REMOVE_BOARD_ITEM'; annotationId: string; surfaceCanvasId: string };
 
 export interface ActionResult {
   success: boolean;
@@ -472,6 +477,27 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
           success: true,
           state: removeEntity(state, action.annotationId),
           changes: [{ property: 'annotations', oldValue: action.annotationId, newValue: null }]
+        };
+      }
+
+      case 'UPDATE_ANNOTATION': {
+        const annotation = getEntity(state, action.annotationId);
+        if (!annotation) {
+          return { success: false, state, error: `Annotation not found: ${action.annotationId}` };
+        }
+
+        const changes: PropertyChange[] = [];
+        if (action.updates.body !== undefined) {
+          changes.push({ property: 'body', oldValue: (annotation as unknown as Record<string, unknown>).body, newValue: action.updates.body });
+        }
+        if (action.updates.motivation !== undefined) {
+          changes.push({ property: 'motivation', oldValue: (annotation as unknown as Record<string, unknown>).motivation, newValue: action.updates.motivation });
+        }
+
+        return {
+          success: true,
+          state: updateEntity(state, action.annotationId, action.updates as Partial<IIIFItem>),
+          changes
         };
       }
 
@@ -1052,6 +1078,124 @@ export function reduce(state: NormalizedState, action: Action): ActionResult {
         };
       }
 
+      // ================================================================
+      // Phase 5: Board Design Actions
+      // ================================================================
+
+      case 'CREATE_BOARD': {
+        const surfaceId = `${action.boardId}/surface`;
+        const paintingPageId = `${surfaceId}/items/painting`;
+        const supplementingPageId = `${surfaceId}/annotations/supplementing`;
+
+        // Create the board manifest
+        const boardManifest: IIIFManifest = {
+          id: action.boardId,
+          type: 'Manifest',
+          label: { en: [action.title] },
+          items: [],
+        };
+        if (action.behavior) {
+          (boardManifest as IIIFManifest & { behavior?: string[] }).behavior = action.behavior;
+        }
+
+        // Create the board surface canvas
+        const surfaceCanvas: IIIFCanvas = {
+          id: surfaceId,
+          type: 'Canvas',
+          label: { en: [`${action.title} — Board Surface`] },
+          width: 10000,
+          height: 10000,
+          items: [],
+        };
+
+        // Create painting annotation page (for board items)
+        const paintingPage: IIIFAnnotationPage = {
+          id: paintingPageId,
+          type: 'AnnotationPage',
+          items: [],
+        };
+
+        // Create supplementing annotation page (for connections/notes)
+        const supplementingPage: IIIFAnnotationPage = {
+          id: supplementingPageId,
+          type: 'AnnotationPage',
+          items: [],
+        };
+
+        // Add all entities to state
+        let boardState = state;
+
+        // Add manifest to root collection if one exists
+        const rootCollection = state.rootId ? getEntity(state, state.rootId) : null;
+        if (rootCollection && state.typeIndex[state.rootId!] === 'Collection') {
+          boardState = addEntity(boardState, boardManifest, state.rootId!);
+        } else {
+          // Add manifest without a parent — just insert into the store
+          const manifestStore = { ...boardState.entities.Manifest, [action.boardId]: boardManifest };
+          boardState = { ...boardState, entities: { ...boardState.entities, Manifest: manifestStore }, typeIndex: { ...boardState.typeIndex, [action.boardId]: 'Manifest' } };
+        }
+
+        // Add surface canvas to manifest
+        boardState = addEntity(boardState, surfaceCanvas, action.boardId);
+        // Add painting page to surface canvas
+        boardState = addEntity(boardState, paintingPage, surfaceId);
+        // Add supplementing page to surface canvas
+        boardState = addEntity(boardState, supplementingPage, surfaceId);
+
+        return {
+          success: true,
+          state: boardState,
+          changes: [{ property: 'board', oldValue: null, newValue: action.boardId }]
+        };
+      }
+
+      case 'UPDATE_BOARD_ITEM_POSITION': {
+        // Update the target of a painting annotation to change its xywh position
+        const annotation = getEntity(state, action.annotationId) as IIIFAnnotation | null;
+        if (!annotation) {
+          return { success: false, state, error: `Board item annotation not found: ${action.annotationId}` };
+        }
+
+        const xywh = `${Math.round(action.x)},${Math.round(action.y)},${Math.round(action.w)},${Math.round(action.h)}`;
+        const newTarget = `${action.surfaceCanvasId}#xywh=${xywh}`;
+
+        return {
+          success: true,
+          state: updateEntity(state, action.annotationId, { target: newTarget } as Partial<IIIFItem>),
+          changes: [{ property: 'target', oldValue: annotation.target, newValue: newTarget }]
+        };
+      }
+
+      case 'REMOVE_BOARD_ITEM': {
+        // Remove a board item annotation and any linking annotations that reference it
+        const itemAnnotation = getEntity(state, action.annotationId);
+        if (!itemAnnotation) {
+          return { success: false, state, error: `Board item not found: ${action.annotationId}` };
+        }
+
+        let removalState = removeEntity(state, action.annotationId);
+
+        // Find and remove linking annotations that reference this item
+        const supplementingPageId = `${action.surfaceCanvasId}/annotations/supplementing`;
+        const supplementingAnnoIds = removalState.references[supplementingPageId] || [];
+        for (const annoId of supplementingAnnoIds) {
+          const anno = getEntity(removalState, annoId) as IIIFAnnotation | null;
+          if (!anno) continue;
+          const body = Array.isArray(anno.body) ? anno.body[0] : anno.body;
+          const source = (body as { source?: string })?.source;
+          const target = typeof anno.target === 'string' ? anno.target : '';
+          if (source === action.annotationId || target === action.annotationId) {
+            removalState = removeEntity(removalState, annoId);
+          }
+        }
+
+        return {
+          success: true,
+          state: removalState,
+          changes: [{ property: 'board-item', oldValue: action.annotationId, newValue: null }]
+        };
+      }
+
       default:
         return { success: false, state, error: `Unknown action type` };
     }
@@ -1335,6 +1479,9 @@ export const actions = {
   removeAnnotation: (canvasId: string, annotationId: string): Action =>
     ({ type: 'REMOVE_ANNOTATION', canvasId, annotationId }),
 
+  updateAnnotation: (annotationId: string, updates: Partial<Pick<IIIFAnnotation, 'body' | 'motivation'>>): Action =>
+    ({ type: 'UPDATE_ANNOTATION', annotationId, updates }),
+
   updateCanvasDimensions: (canvasId: string, width: number, height: number): Action =>
     ({ type: 'UPDATE_CANVAS_DIMENSIONS', canvasId, width, height }),
 
@@ -1405,7 +1552,17 @@ export const actions = {
     ({ type: 'UPDATE_START', id, start }),
 
   updateRangeSupplementary: (rangeId: string, supplementary: { id: string; type: 'AnnotationCollection' } | undefined): Action =>
-    ({ type: 'UPDATE_RANGE_SUPPLEMENTARY', rangeId, supplementary })
+    ({ type: 'UPDATE_RANGE_SUPPLEMENTARY', rangeId, supplementary }),
+
+  // Phase 5: Board Design Action Creators
+  createBoard: (boardId: string, title: string, behavior?: string[]): Action =>
+    ({ type: 'CREATE_BOARD', boardId, title, behavior }),
+
+  updateBoardItemPosition: (annotationId: string, surfaceCanvasId: string, x: number, y: number, w: number, h: number): Action =>
+    ({ type: 'UPDATE_BOARD_ITEM_POSITION', annotationId, surfaceCanvasId, x, y, w, h }),
+
+  removeBoardItem: (annotationId: string, surfaceCanvasId: string): Action =>
+    ({ type: 'REMOVE_BOARD_ITEM', annotationId, surfaceCanvasId }),
 };
 
 // ============================================================================

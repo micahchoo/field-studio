@@ -38,6 +38,10 @@ export interface BoardNodeProps {
   onConnectStart: (id: string) => void;
   /** Callback when resize starts */
   onResizeStart?: (id: string, direction: string, startPos: { x: number; y: number }, startSize: { w: number; h: number }) => void;
+  /** Callback when node is double-clicked */
+  onDoubleClick?: (id: string) => void;
+  /** Callback when node is right-clicked */
+  onContextMenu?: (e: React.MouseEvent, id: string) => void;
   /** Contextual styles */
   cx: ContextualClassNames;
   /** Field mode flag */
@@ -55,6 +59,8 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
   onDragStart,
   onConnectStart,
   onResizeStart,
+  onDoubleClick,
+  onContextMenu,
   cx,
   fieldMode,
 }) => {
@@ -72,9 +78,11 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
     onDragStart(id, { x: offsetX, y: offsetY });
   };
 
-  // onConnectStart is passed but not used directly in this atom; keep for API consistency
-  // Prefix with underscore to satisfy ESLint unused var rule
-  const _onConnectStart = onConnectStart;
+  const handleAnchorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onConnectStart(id);
+  };
 
   const handleResizeMouseDown = (e: React.MouseEvent, direction: string) => {
     e.stopPropagation();
@@ -82,19 +90,21 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
     onResizeStart?.(id, direction, { x: e.clientX, y: e.clientY }, { w: size.width, h: size.height });
   };
 
-  const resizeHandleClass = `absolute w-2.5 h-2.5 rounded-sm ${
-    fieldMode ? 'bg-amber-400' : 'bg-iiif-blue'
+  const resizeHandleClass = `absolute w-2.5 h-2.5 ${
+    fieldMode ? 'bg-nb-orange' : 'bg-iiif-blue'
   }`;
 
   return (
     <div
       onMouseDown={handleMouseDown}
+      onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick?.(id); }}
+      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu?.(e, id); }}
       className={`
-        absolute rounded-lg shadow-lg cursor-move
+        absolute  shadow-brutal cursor-move
         transition-shadow
         ${selected ? 'ring-2 ring-offset-2' : ''}
-        ${connectingFrom ? 'ring-2 ring-yellow-400' : ''}
-        ${fieldMode ? 'bg-slate-800 ring-yellow-400 ring-offset-slate-900' : 'bg-white ring-iiif-blue ring-offset-white'}
+        ${connectingFrom ? 'ring-2 ring-nb-yellow' : ''}
+        ${fieldMode ? 'bg-nb-black ring-nb-yellow ring-offset-nb-black' : 'bg-nb-white ring-iiif-blue ring-offset-white'}
       `}
       style={{
         left: position.x,
@@ -106,7 +116,7 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
       {/* Thumbnail or placeholder */}
       <div className={`h-24 ${cx.placeholderBg} flex items-center justify-center overflow-hidden rounded-t-lg`}>
         {resource.blobUrl ? (
-          <img src={resource.blobUrl} alt={resource.label} className="w-full h-full object-cover" />
+          <img src={resource.blobUrl} alt={resource.label} loading="lazy" className="w-full h-full object-cover" />
         ) : (
           <Icon name="image" className={`text-2xl ${cx.placeholderIcon}`} />
         )}
@@ -114,7 +124,7 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
 
       {/* Label */}
       <div className="p-2">
-        <p className={`text-xs truncate ${fieldMode ? 'text-slate-200' : 'text-slate-700'}`}>
+        <p className={`text-xs truncate ${fieldMode ? 'text-nb-black/20' : 'text-nb-black/80'}`}>
           {resource.label}
         </p>
         {resource.isNote && (
@@ -124,13 +134,13 @@ export const BoardNode: React.FC<BoardNodeProps> = ({
         )}
       </div>
 
-      {/* Connection anchor points */}
+      {/* Connection anchor points — click to start a connection */}
       {selected && (
         <>
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-yellow-400" />
-          <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-yellow-400" />
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-yellow-400" />
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-yellow-400" />
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-nb-yellow cursor-crosshair" onMouseDown={handleAnchorClick} />
+          <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-nb-yellow cursor-crosshair" onMouseDown={handleAnchorClick} />
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-nb-yellow cursor-crosshair" onMouseDown={handleAnchorClick} />
+          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-nb-yellow cursor-crosshair" onMouseDown={handleAnchorClick} />
         </>
       )}
 

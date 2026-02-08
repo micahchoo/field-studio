@@ -227,17 +227,17 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-xl z-[600] flex items-center justify-center p-8 animate-in fade-in duration-300" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white w-full max-w-[1400px] h-[90vh] rounded-3xl shadow-2xl flex overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 bg-nb-black/70 backdrop-blur-xl z-[600] flex items-center justify-center p-8 animate-in fade-in " onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-nb-white w-full max-w-[1400px] h-[90vh] shadow-brutal-lg flex overflow-hidden border border-nb-black/20">
         
         {/* Left Sidebar: Categories */}
-        <div className="w-64 bg-slate-50 border-r flex flex-col shrink-0">
+        <div className="w-64 bg-nb-white border-r flex flex-col shrink-0">
             <div className="p-6 border-b">
-                <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shadow-lg mb-4 ${healthScore > 80 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <div className={`w-12 h-12 flex flex-col items-center justify-center shadow-brutal mb-4 ${healthScore > 80 ? 'bg-nb-green/20 text-nb-green' : 'bg-nb-red/20 text-nb-red'}`}>
                     <span className="text-lg font-black leading-none">{healthScore}%</span>
                     <span className="text-[7px] font-black uppercase tracking-widest">Health</span>
                 </div>
-                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Integrity Guard</h2>
+                <h2 className="text-sm font-black text-nb-black uppercase tracking-widest">Integrity Guard</h2>
             </div>
             <div className="flex-1 p-3 space-y-1">
                 {CATEGORIES.map(cat => {
@@ -247,42 +247,42 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                             key={cat.id} 
                             onClick={() => setActiveCategory(cat.id)}
                             variant="ghost"
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeCategory === cat.id ? 'bg-white shadow-md text-iiif-blue font-bold ring-1 ring-slate-200' : 'text-slate-500 hover:bg-slate-200/50'}`}
+                            className={`w-full flex items-center justify-between px-4 py-3 transition-nb ${activeCategory === cat.id ? 'bg-nb-white shadow-brutal-sm text-iiif-blue font-bold ring-1 ring-nb-black/10' : 'text-nb-black/50 hover:bg-nb-cream/50'}`}
                         >
                             <div className="flex items-center gap-3">
                                 <Icon name={cat.icon} className="text-sm" />
                                 <span className="text-xs uppercase tracking-wider">{cat.label}</span>
                             </div>
-                            {count > 0 && <span className={`text-[10px] px-1.5 rounded-full font-bold ${count > 5 ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-600'}`}>{count}</span>}
+                            {count > 0 && <span className={`text-[10px] px-1.5 font-bold ${count > 5 ? 'bg-nb-red/20 text-nb-red' : 'bg-nb-cream text-nb-black/60'}`}>{count}</span>}
                         </Button>
                     );
                 })}
             </div>
-            <div className="p-4 bg-slate-900 text-white flex flex-col gap-1">
+            <div className="p-4 bg-nb-black text-white flex flex-col gap-1">
                 <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Global Status</span>
-                <span className="text-[10px] font-bold text-green-400 flex items-center gap-1"><Icon name="verified" className="text-xs"/> {totalItems} Resources Monitored</span>
+                <span className="text-[10px] font-bold text-nb-green flex items-center gap-1"><Icon name="verified" className="text-xs"/> {totalItems} Resources Monitored</span>
             </div>
         </div>
 
         {/* Middle: Issues List */}
-        <div className="flex-1 flex flex-col bg-white overflow-hidden min-w-0 border-r border-slate-100">
-            <div className="p-6 border-b flex justify-between items-center bg-slate-50/50">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                    <Icon name="list" className="text-slate-400"/>
+        <div className="flex-1 flex flex-col bg-nb-white overflow-hidden min-w-0 border-r border-nb-black/10">
+            <div className="p-6 border-b flex justify-between items-center bg-nb-cream">
+                <h3 className="font-bold text-nb-black flex items-center gap-2">
+                    <Icon name="list" className="text-nb-black/40"/>
                     Detected Violations in {activeCategory}
                 </h3>
                 <Button
                     onClick={handleHealAllFixable}
                     variant="primary"
                     size="sm"
-                    className="text-[10px] font-black uppercase px-4 py-2 bg-iiif-blue text-white rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-95"
+                    className="text-[10px] font-black uppercase px-4 py-2 bg-iiif-blue text-white hover:bg-nb-blue shadow-brutal-sm transition-nb active:scale-95"
                 >
                     Heal All Fixable
                 </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {categoryIssues.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-300">
+                    <div className="h-full flex flex-col items-center justify-center text-nb-black/30">
                         <Icon name="task_alt" className="text-6xl mb-4 opacity-20" />
                         <p className="font-bold uppercase tracking-widest text-xs">No issues in this category</p>
                     </div>
@@ -291,16 +291,16 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                         <div 
                             key={issue.id} 
                             onClick={() => setSelectedIssueId(issue.id)}
-                            className={`p-4 rounded-2xl border transition-all cursor-pointer group flex items-center justify-between ${selectedIssueId === issue.id ? 'bg-blue-50 border-iiif-blue ring-2 ring-blue-100 shadow-lg' : 'bg-white border-slate-100 hover:border-slate-200'}`}
+                            className={`p-4 border transition-nb cursor-pointer group flex items-center justify-between ${selectedIssueId === issue.id ? 'bg-nb-blue/10 border-iiif-blue ring-2 ring-nb-blue/20 shadow-brutal' : 'bg-nb-white border-nb-black/10 hover:border-nb-black/20'}`}
                         >
                             <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${issue.level === 'error' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 ${issue.level === 'error' ? 'bg-nb-red/20 text-nb-red' : 'bg-nb-orange/20 text-nb-orange'}`}>
                                         {issue.level}
                                     </span>
-                                    <span className="text-[10px] font-bold text-slate-800 truncate">{issue.itemLabel}</span>
+                                    <span className="text-[10px] font-bold text-nb-black truncate">{issue.itemLabel}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 line-clamp-1">{issue.message}</p>
+                                <p className="text-xs text-nb-black/50 line-clamp-1">{issue.message}</p>
                             </div>
                             {issue.fixable && (
                                 <Button
@@ -308,7 +308,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                     title={getFixDescription(issue)}
                                     variant="success"
                                     size="sm"
-                                    className="px-5 py-1.5 bg-green-600 text-white text-[9px] font-black uppercase rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow hover:bg-green-700"
+                                    className="px-5 py-1.5 bg-nb-green text-white text-[9px] font-black uppercase opacity-0 group-hover:opacity-100 transition-nb shadow hover:bg-nb-green"
                                 >
                                     Fix It
                                 </Button>
@@ -320,36 +320,36 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
         </div>
 
         {/* Right: Contextual Preview & Interactive Fixes */}
-        <div className="w-[450px] bg-slate-50 flex flex-col shrink-0">
-            <div className="p-6 border-b flex justify-between items-center bg-white shadow-sm">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Archival Context & Tools</span>
-                <Button onClick={onClose} variant="ghost" size="sm" className="p-1 hover:bg-slate-100 rounded-full transition-colors"><Icon name="close" className="text-slate-400"/></Button>
+        <div className="w-[450px] bg-nb-white flex flex-col shrink-0">
+            <div className="p-6 border-b flex justify-between items-center bg-nb-white shadow-brutal-sm">
+                <span className="text-[10px] font-black text-nb-black/40 uppercase tracking-widest">Archival Context & Tools</span>
+                <Button onClick={onClose} variant="ghost" size="sm" className="p-1 hover:bg-nb-cream transition-nb"><Icon name="close" className="text-nb-black/40"/></Button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                 {selectedIssue && previewItem ? (
                     <div className="space-y-6 animate-in slide-in-from-right-2">
                         {/* Image Preview */}
-                        <div className="aspect-video bg-slate-900 rounded-2xl overflow-hidden border shadow-inner relative group ring-4 ring-white flex items-center justify-center">
+                        <div className="aspect-video bg-nb-black overflow-hidden border shadow-inner relative group ring-4 ring-white flex items-center justify-center">
                             <StackedThumbnail 
                               urls={resolveHierarchicalThumbs(previewItem, 600)} 
                               size="xl" 
                               className="w-full h-full"
                               icon="image_not_supported"
                             />
-                            <div className="absolute top-2 right-2 bg-black/50 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-black tracking-widest">
+                            <div className="absolute top-2 right-2 bg-nb-black/50 text-[8px] text-white px-1.5 py-0.5 uppercase font-black tracking-widest">
                                 {previewItem.type} Preview
                             </div>
                         </div>
 
                         {/* Interactive Hierarchy Tree */}
                         <div className="space-y-3">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Archive Hierarchy Trace</label>
-                            <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
+                            <label className="text-[9px] font-black text-nb-black/40 uppercase tracking-widest">Archive Hierarchy Trace</label>
+                            <div className="bg-nb-white border overflow-hidden shadow-brutal-sm">
                                 {previewPath.map((p, i) => (
-                                    <div key={i} style={{ paddingLeft: (i * 12) + 12 }} className={`flex items-center gap-2 p-2 border-b last:border-b-0 ${i === previewPath.length - 1 ? 'bg-blue-50 border-l-4 border-l-iiif-blue' : 'bg-white opacity-60'}`}>
-                                        <Icon name={p.type === 'Collection' ? 'folder' : p.type === 'Manifest' ? 'menu_book' : 'crop_original'} className={`text-xs ${i === previewPath.length - 1 ? 'text-iiif-blue' : 'text-slate-400'}`}/>
-                                        <span className={`text-[10px] truncate ${i === previewPath.length - 1 ? 'font-bold text-slate-800' : 'text-slate-500'}`}>{p.label}</span>
+                                    <div key={i} style={{ paddingLeft: (i * 12) + 12 }} className={`flex items-center gap-2 p-2 border-b last:border-b-0 ${i === previewPath.length - 1 ? 'bg-nb-blue/10 border-l-4 border-l-iiif-blue' : 'bg-nb-white opacity-60'}`}>
+                                        <Icon name={p.type === 'Collection' ? 'folder' : p.type === 'Manifest' ? 'menu_book' : 'crop_original'} className={`text-xs ${i === previewPath.length - 1 ? 'text-iiif-blue' : 'text-nb-black/40'}`}/>
+                                        <span className={`text-[10px] truncate ${i === previewPath.length - 1 ? 'font-bold text-nb-black' : 'text-nb-black/50'}`}>{p.label}</span>
                                     </div>
                                 ))}
                             </div>
@@ -358,47 +358,47 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                         {/* Direct Metadata & Label Editor */}
                         {(activeCategory === 'Metadata' || activeCategory === 'Identity') && (
                             <div className="space-y-4">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Interactive Workbench</label>
-                                <div className="bg-white border p-5 rounded-2xl space-y-4 shadow-sm">
+                                <label className="text-[9px] font-black text-nb-black/40 uppercase tracking-widest">Interactive Workbench</label>
+                                <div className="bg-nb-white border p-5 space-y-4 shadow-brutal-sm">
                                     <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">Resource Label</label>
+                                        <label className="text-[10px] font-black text-nb-black/40 uppercase mb-1.5 block">Resource Label</label>
                                         <input 
                                             value={getIIIFValue(previewItem.label)}
                                             onChange={(e) => handleUpdateItem(previewItem.id, { label: { none: [e.target.value] } })}
-                                            className="w-full text-xs p-2.5 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-iiif-blue outline-none font-bold"
+                                            className="w-full text-xs p-2.5 bg-nb-white border focus:ring-2 focus:ring-iiif-blue outline-none font-bold"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">Scientific Summary</label>
+                                        <label className="text-[10px] font-black text-nb-black/40 uppercase mb-1.5 block">Scientific Summary</label>
                                         <textarea 
                                             value={getIIIFValue(previewItem.summary)}
                                             onChange={(e) => handleUpdateItem(previewItem.id, { summary: { none: [e.target.value] } })}
-                                            className="w-full text-xs p-2.5 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-iiif-blue outline-none font-medium min-h-[60px]"
+                                            className="w-full text-xs p-2.5 bg-nb-white border focus:ring-2 focus:ring-iiif-blue outline-none font-medium min-h-[60px]"
                                             placeholder="Provide a descriptive summary..."
                                         />
                                     </div>
                                     
                                     <div className="pt-2 border-t">
                                         <div className="flex justify-between items-center mb-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase">Archive Metadata</label>
+                                            <label className="text-[10px] font-black text-nb-black/40 uppercase">Archive Metadata</label>
                                             <div className="relative">
                                                 <Button onClick={() => setShowAddMenu(!showAddMenu)} variant="ghost" size="sm" className="text-[9px] font-black uppercase text-iiif-blue hover:underline flex items-center gap-1">Add Field <Icon name="expand_more" className="text-[10px]"/></Button>
                                                 {showAddMenu && (
-                                                    <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-[700] min-w-[140px] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                                    <div className="absolute right-0 top-full mt-1 bg-nb-white border border-nb-black/20 shadow-brutal py-2 z-[700] min-w-[140px] max-h-[200px] overflow-y-auto custom-scrollbar">
                                                         {IIIF_PROPERTY_SUGGESTIONS.map(prop => (
                                                             <Button 
                                                                 key={prop} 
                                                                 onClick={() => handleAddMetadata(previewItem.id, prop)}
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="w-full px-4 py-1.5 text-left text-[10px] font-bold text-slate-600 hover:bg-blue-50 transition-colors justify-start"
+                                                                className="w-full px-4 py-1.5 text-left text-[10px] font-bold text-nb-black/60 hover:bg-nb-blue/10 transition-nb justify-start"
                                                             >
                                                                 {prop}
                                                             </Button>
                                                         ))}
                                                         <div className="border-t mt-1 pt-1">
-                                                            <Button onClick={() => handleAddMetadata(previewItem.id, "New Field")} variant="ghost" size="sm" className="w-full px-4 py-1.5 text-left text-[10px] font-black text-slate-400 hover:bg-slate-50 italic justify-start">Custom...</Button>
+                                                            <Button onClick={() => handleAddMetadata(previewItem.id, "New Field")} variant="ghost" size="sm" className="w-full px-4 py-1.5 text-left text-[10px] font-black text-nb-black/40 hover:bg-nb-white italic justify-start">Custom...</Button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -406,13 +406,13 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                         </div>
                                         <div className="space-y-2">
                                             {(previewItem.metadata || []).length === 0 ? (
-                                                <p className="text-[10px] text-slate-400 italic">No custom metadata tags.</p>
+                                                <p className="text-[10px] text-nb-black/40 italic">No custom metadata tags.</p>
                                             ) : (
                                                 previewItem.metadata!.map((md, idx) => (
                                                     <div key={idx} className="flex gap-2 group/meta">
                                                         <input 
                                                             value={getIIIFValue(md.label)}
-                                                            className="w-1/3 text-[9px] font-black uppercase text-slate-500 bg-slate-50 border-none rounded p-1.5"
+                                                            className="w-1/3 text-[9px] font-black uppercase text-nb-black/50 bg-nb-white border-none p-1.5"
                                                             onChange={(e) => {
                                                                 if (!previewItem.metadata) return;
                                                                 const newMeta = JSON.parse(JSON.stringify(previewItem.metadata));
@@ -422,7 +422,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                                         />
                                                         <input 
                                                             value={getIIIFValue(md.value)}
-                                                            className="flex-1 text-[10px] font-bold text-slate-700 bg-slate-50 border-none rounded p-1.5"
+                                                            className="flex-1 text-[10px] font-bold text-nb-black/80 bg-nb-white border-none p-1.5"
                                                             onChange={(e) => {
                                                                 if (!previewItem.metadata) return;
                                                                 const newMeta = JSON.parse(JSON.stringify(previewItem.metadata));
@@ -434,7 +434,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                                             onClick={() => handleRemoveMetadata(previewItem.id, idx)}
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-slate-300 hover:text-red-500 opacity-0 group-hover/meta:opacity-100 transition-all p-0 min-w-0"
+                                                            className="text-nb-black/30 hover:text-nb-red opacity-0 group-hover/meta:opacity-100 transition-nb p-0 min-w-0"
                                                         >
                                                             <Icon name="close" className="text-sm"/>
                                                         </Button>
@@ -448,11 +448,11 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                         )}
 
                         {/* Raw Resource DNA */}
-                        <div className="space-y-2 opacity-50 grayscale hover:grayscale-0 transition-all">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Technical Signature</label>
-                            <div className="bg-slate-900 p-4 rounded-2xl font-mono text-[9px] text-blue-300 leading-relaxed overflow-hidden border border-white/10 shadow-xl">
+                        <div className="space-y-2 opacity-50 grayscale hover:grayscale-0 transition-nb">
+                            <label className="text-[9px] font-black text-nb-black/40 uppercase tracking-widest">Technical Signature</label>
+                            <div className="bg-nb-black p-4 font-mono text-[9px] text-nb-blue/60 leading-relaxed overflow-hidden border border-white/10 shadow-brutal">
                                 <p className="text-white/40 mb-1">// {previewItem.type} ID</p>
-                                <p className="break-all text-green-400 mb-2">{previewItem.id}</p>
+                                <p className="break-all text-nb-green mb-2">{previewItem.id}</p>
                                 <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
                                     <span className="text-white/40">Children: {(previewItem.items || []).length}</span>
                                     <span className="text-white/40">Annotations: {(previewItem.annotations || []).length}</span>
@@ -464,26 +464,26 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                             onClick={() => { onSelect(selectedIssue.itemId); onClose(); }}
                             variant="primary"
                             size="lg"
-                            className="w-full bg-slate-800 text-white p-4 rounded-2xl text-xs font-black uppercase hover:bg-slate-700 transition-all flex items-center justify-center gap-2 shadow-xl"
+                            className="w-full bg-nb-black text-white p-4 text-xs font-black uppercase hover:bg-nb-black/80 transition-nb flex items-center justify-center gap-2 shadow-brutal"
                         >
                             <Icon name="location_searching" /> Reveal in Workbench
                         </Button>
                     </div>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-300 text-center p-8">
-                        <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-md border rotate-3">
+                    <div className="h-full flex flex-col items-center justify-center text-nb-black/30 text-center p-8">
+                        <div className="w-16 h-16 bg-nb-white flex items-center justify-center mb-6 shadow-brutal-sm border rotate-3">
                             <Icon name="biotech" className="text-3xl opacity-20 text-iiif-blue"/>
                         </div>
-                        <h4 className="text-sm font-black uppercase text-slate-400 tracking-tighter">Diagnostic Panel Ready</h4>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2 max-w-[200px]">Select an issue from the list to begin structural repair</p>
+                        <h4 className="text-sm font-black uppercase text-nb-black/40 tracking-tighter">Diagnostic Panel Ready</h4>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-nb-black/40 mt-2 max-w-[200px]">Select an issue from the list to begin structural repair</p>
                     </div>
                 )}
             </div>
             
-            <div className="p-4 bg-white border-t">
-                <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                    <Icon name="auto_fix_high" className="text-blue-500 text-sm mt-0.5" />
-                    <p className="text-[10px] text-blue-800 leading-tight italic">Direct healing allows you to patch standard violations without leaving the diagnostic dashboard.</p>
+            <div className="p-4 bg-nb-white border-t">
+                <div className="flex items-start gap-3 p-3 bg-nb-blue/10 border border-nb-blue/20">
+                    <Icon name="auto_fix_high" className="text-nb-blue text-sm mt-0.5" />
+                    <p className="text-[10px] text-nb-blue leading-tight italic">Direct healing allows you to patch standard violations without leaving the diagnostic dashboard.</p>
                 </div>
             </div>
         </div>

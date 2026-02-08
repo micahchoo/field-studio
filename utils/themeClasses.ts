@@ -1,6 +1,10 @@
 /**
  * Theme Classes Utility
  *
+ * @deprecated Prefer useContextualStyles() or theme-* Tailwind aliases
+ * powered by the new ThemeRoot / theme-bus system. This utility is kept
+ * for backward compatibility with existing `utils/` consumers.
+ *
  * Centralizes fieldMode-based class generation to eliminate repeated ternary patterns.
  * Import and use: const theme = createThemeClasses(settings.fieldMode);
  *

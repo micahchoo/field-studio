@@ -43,22 +43,22 @@ export const LayerToggle: React.FC<LayerToggleProps> = ({
   return (
     <button
       onClick={() => onToggle(id)}
-      className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors ${
+      className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-nb ${
         visible
           ? fieldMode
-            ? 'bg-slate-800 text-white'
-            : 'bg-slate-50 text-slate-700'
+            ? 'bg-nb-black text-white'
+            : 'bg-nb-white text-nb-black/80'
           : fieldMode
-            ? 'bg-transparent text-slate-500'
-            : 'bg-transparent text-slate-400'
-      } hover:bg-slate-100 ${fieldMode ? 'hover:bg-slate-800' : ''}`}
+            ? 'bg-transparent text-nb-black/50'
+            : 'bg-transparent text-nb-black/40'
+      } hover:bg-nb-cream ${fieldMode ? 'hover:bg-nb-black' : ''}`}
       role="checkbox"
       aria-checked={visible}
       aria-label={`Toggle ${label} layer`}
     >
       {/* Color dot */}
       <span
-        className="w-2.5 h-2.5 rounded-full shrink-0"
+        className="w-2.5 h-2.5 shrink-0"
         style={{ backgroundColor: visible ? color : 'transparent', border: `2px solid ${color}` }}
       />
 
@@ -68,7 +68,7 @@ export const LayerToggle: React.FC<LayerToggleProps> = ({
       </span>
 
       {/* Count */}
-      <span className={`text-xs tabular-nums ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+      <span className={`text-xs tabular-nums ${fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'}`}>
         ({count})
       </span>
 
@@ -76,7 +76,7 @@ export const LayerToggle: React.FC<LayerToggleProps> = ({
       {hidden && (
         <Icon
           name="visibility_off"
-          className={`text-xs ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}
+          className={`text-xs ${fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'}`}
           title="Hidden by default (behavior: hidden)"
         />
       )}
@@ -86,8 +86,8 @@ export const LayerToggle: React.FC<LayerToggleProps> = ({
         name={visible ? 'visibility' : 'visibility_off'}
         className={`text-sm ${
           visible
-            ? fieldMode ? 'text-slate-300' : 'text-slate-500'
-            : fieldMode ? 'text-slate-700' : 'text-slate-300'
+            ? fieldMode ? 'text-nb-black/30' : 'text-nb-black/50'
+            : fieldMode ? 'text-nb-black/80' : 'text-nb-black/30'
         }`}
       />
     </button>

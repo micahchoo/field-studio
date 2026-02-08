@@ -82,7 +82,7 @@ export const AnnotationToolPanel: React.FC<AnnotationToolPanelProps> = ({
   }, [canvas, updateScale]);
 
   return (
-    <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col">
+    <div className="absolute inset-0 z-50 bg-nb-black flex flex-col">
       <AnnotationToolbar
         currentMode={mode}
         existingCount={existingSvgAnnotations.length}

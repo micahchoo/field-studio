@@ -16,7 +16,7 @@
  * <TimelineTick
  *   timestamp="2023-01-15"
  *   label="Jan 15"
- *   items={[{ id: '1', title: 'Photo 1', type: 'Canvas' }]}
+ *   items={[{ id:'1', title:'Photo 1', type:'Canvas' }]}
  *   position={0.5}
  *   onSelectItem={(id) => openItem(id)}
  * />
@@ -39,7 +39,7 @@ export interface TimelineItem {
 export interface TimelineTickProps {
   /** ISO timestamp for this tick */
   timestamp: string;
-  /** Display label (e.g., "Jan 15" or "2023") */
+  /** Display label (e.g.,"Jan 15" or"2023") */
   label: string;
   /** Items at this time point */
   items: TimelineItem[];
@@ -50,7 +50,7 @@ export interface TimelineTickProps {
   /** Whether this tick is currently selected */
   selected?: boolean;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?:'sm' |'md' |'lg';
   /** Disabled state */
   disabled?: boolean;
   /** Contextual styles from template (required for theming) */
@@ -70,7 +70,7 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
   position,
   onSelectItem,
   selected = false,
-  size = 'md',
+  size ='md',
   disabled = false,
   cx,
 }) => {
@@ -81,9 +81,9 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
 
   // Size configurations
   const sizeConfig = {
-    sm: { dot: 'w-2 h-2', label: 'text-[10px]', badge: 'text-[8px]' },
-    md: { dot: 'w-3 h-3', label: 'text-xs', badge: 'text-[10px]' },
-    lg: { dot: 'w-4 h-4', label: 'text-sm', badge: 'text-xs' },
+    sm: { dot:'w-2 h-2', label:'text-[10px]', badge:'text-[8px]' },
+    md: { dot:'w-3 h-3', label:'text-xs', badge:'text-[10px]' },
+    lg: { dot:'w-4 h-4', label:'text-sm', badge:'text-xs' },
   };
 
   const config = sizeConfig[size];
@@ -97,7 +97,7 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
   return (
     <div
       className="absolute flex flex-col items-center"
-      style={{ left: `${position * 100}%` }}
+      style={{ left:`${position * 100}%` }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -105,8 +105,8 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
       <span
         className={`
           ${config.label} ${cx.textMuted} whitespace-nowrap mb-1
-          transition-opacity ${isHovered || selected ? 'opacity-100' : 'opacity-60'}
-        `}
+          transition-nb ${isHovered || selected ?'opacity-100' :'opacity-60'}
+`}
       >
         {label}
       </span>
@@ -124,12 +124,12 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
         variant="ghost"
         size="sm"
         className={`
-          ${config.dot} rounded-full transition-all duration-200 p-0
+          ${config.dot}  transition-nb  p-0
           ${getIntensity()}
-          ${selected ? 'ring-2 ring-offset-2 ring-current scale-150' : 'hover:scale-125'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          ${isHovered ? 'shadow-lg' : ''}
-        `}
+          ${selected ?'ring-2 ring-offset-2 ring-current scale-150' :'hover:scale-125'}
+          ${disabled ?'opacity-50 cursor-not-allowed' :'cursor-pointer'}
+          ${isHovered ?'shadow-brutal' :''}
+`}
         aria-label={`${label}: ${count} items`}
         aria-expanded={isExpanded}
       >
@@ -138,11 +138,11 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
           <span
             className={`
               absolute -top-2 -right-2 min-w-[14px] h-3.5 px-1
-              rounded-full bg-current text-white font-bold
+               bg-current text-white font-bold
               flex items-center justify-center ${config.badge}
-            `}
+`}
           >
-            {count > 9 ? '9+' : count}
+            {count > 9 ?'9+' : count}
           </span>
         )}
       </Button>
@@ -152,16 +152,16 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
         <div
           className={`
             absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56
-            rounded-lg shadow-xl border ${cx.border} ${cx.surface}
+             shadow-brutal border ${cx.border} ${cx.surface}
             z-50 overflow-hidden
-          `}
+`}
         >
           {/* Header */}
           <div
             className={`
               px-3 py-2 border-b ${cx.border} ${cx.headerBg}
               flex justify-between items-center
-            `}
+`}
           >
             <span className={`text-sm font-medium ${cx.text}`}>
               {label} ({count} items)
@@ -190,22 +190,22 @@ export const TimelineTick: React.FC<TimelineTickProps> = ({
                 size="sm"
                 className={`
                   w-full flex items-center gap-2 p-2 rounded
-                  text-left transition-colors hover:${cx.headerBg}
+                  text-left transition-nb hover:${cx.headerBg}
                   justify-start
-                `}
+`}
               >
                 {item.thumbnail ? (
                   <img
                     src={item.thumbnail}
                     alt=""
-                    className="w-8 h-8 rounded object-cover"
+                    className="w-8 h-8 object-cover"
                   />
                 ) : (
                   <div
                     className={`
-                      w-8 h-8 rounded flex items-center justify-center
+                      w-8 h-8 flex items-center justify-center
                       ${cx.headerBg}
-                    `}
+`}
                   >
                     <span className={`material-icons text-sm ${cx.textMuted}`}>
                       image

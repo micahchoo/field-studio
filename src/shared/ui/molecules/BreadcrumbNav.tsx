@@ -49,10 +49,10 @@ export interface BreadcrumbNavProps {
  * @example
  * <BreadcrumbNav
  *   items={[
- *     { id: 'root', label: 'My Archive', type: 'root', icon: 'home' },
- *     { id: 'bidri', label: 'BIDRI', type: 'collection' },
+ *     { id:'root', label:'My Archive', type:'root', icon:'home' },
+ *     { id:'bidri', label:'BIDRI', type:'collection' },
  *   ]}
- *   currentItem={{ id: 'laxmi', label: 'LAXMIBAI (BAI)', type: 'manifest' }}
+ *   currentItem={{ id:'laxmi', label:'LAXMIBAI (BAI)', type:'manifest' }}
  *   cx={cx}
  *   t={t}
  * />
@@ -77,7 +77,7 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
   const visibleItems = shouldTruncate
     ? [
         allItems[0], // Always show root
-        { id: 'ellipsis', label: '...', type: 'folder' } as BreadcrumbItem,
+        { id:'ellipsis', label:'...', type:'folder' } as BreadcrumbItem,
         ...allItems.slice(-(maxItems - 2)), // Show last N items
       ]
     : allItems;
@@ -86,44 +86,44 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
     separator || (
       <Icon
         name="chevron_right"
-        className={`text-xs mx-1 ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}
+        className={`text-xs mx-1 ${fieldMode ?'text-nb-black/60' :'text-nb-black/40'}`}
         aria-hidden="true"
       />
     );
 
   const getItemStyles = (type?: string, isCurrent = false) => {
-    const baseStyles = 'flex items-center gap-1.5 px-2 py-1 rounded-md text-sm transition-colors';
+    const baseStyles ='flex items-center gap-1.5 px-2 py-1 text-sm transition-nb';
 
     if (isCurrent) {
-      return `${baseStyles} font-medium ${fieldMode ? 'text-white bg-slate-800' : 'text-slate-900 bg-slate-100'}`;
+      return`${baseStyles} font-medium ${fieldMode ?'text-white bg-nb-black' :'text-nb-black bg-nb-cream'}`;
     }
 
     switch (type) {
-      case 'root':
-        return `${baseStyles} ${fieldMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`;
-      case 'collection':
-        return `${baseStyles} ${fieldMode ? 'text-blue-400 hover:text-blue-300 hover:bg-slate-800' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`;
-      case 'manifest':
-        return `${baseStyles} ${fieldMode ? 'text-green-400 hover:text-green-300 hover:bg-slate-800' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`;
+      case'root':
+        return`${baseStyles} ${fieldMode ?'text-nb-black/40 hover:text-white hover:bg-nb-black' :'text-nb-black/50 hover:text-nb-black hover:bg-nb-cream'}`;
+      case'collection':
+        return`${baseStyles} ${fieldMode ?'text-nb-blue hover:text-nb-blue/60 hover:bg-nb-black' :'text-nb-blue hover:text-nb-blue hover:bg-nb-blue/10'}`;
+      case'manifest':
+        return`${baseStyles} ${fieldMode ?'text-nb-green hover:text-nb-green/60 hover:bg-nb-black' :'text-nb-green hover:text-nb-green hover:bg-nb-green/10'}`;
       default:
-        return `${baseStyles} ${fieldMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`;
+        return`${baseStyles} ${fieldMode ?'text-nb-black/40 hover:text-white hover:bg-nb-black' :'text-nb-black/50 hover:text-nb-black hover:bg-nb-cream'}`;
     }
   };
 
   const getIconForType = (type?: string) => {
     switch (type) {
-      case 'root':
-        return 'home';
-      case 'collection':
-        return 'folder';
-      case 'manifest':
-        return 'photo_album';
-      case 'canvas':
-        return 'image';
-      case 'folder':
-        return 'folder_open';
+      case'root':
+        return'home';
+      case'collection':
+        return'folder';
+      case'manifest':
+        return'photo_album';
+      case'canvas':
+        return'image';
+      case'folder':
+        return'folder_open';
       default:
-        return 'label';
+        return'label';
     }
   };
 
@@ -131,8 +131,8 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
     <nav
       className={`
         flex items-center flex-wrap gap-1 py-2 px-4
-        ${fieldMode ? 'border-b border-slate-800' : 'border-b border-slate-200'}
-      `}
+        ${fieldMode ?'border-b border-nb-black' :'border-b border-nb-black/20'}
+`}
       aria-label="Breadcrumb"
     >
       {/* Home button */}
@@ -153,14 +153,14 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
       {/* Breadcrumb items */}
       {visibleItems.map((item, index) => {
         const isCurrent = index === visibleItems.length - 1;
-        const isEllipsis = item.id === 'ellipsis';
+        const isEllipsis = item.id ==='ellipsis';
         const hasSiblings = item.siblings && item.siblings.length > 0;
         const isExpanded = expandedItem === item.id;
 
         if (isEllipsis) {
           return (
             <React.Fragment key={item.id}>
-              <span className={`px-2 ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>...</span>
+              <span className={`px-2 ${fieldMode ?'text-nb-black/60' :'text-nb-black/40'}`}>...</span>
               {renderSeparator()}
             </React.Fragment>
           );
@@ -176,20 +176,20 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
                     className={getItemStyles(item.type, isCurrent)}
                     aria-expanded={isExpanded}
                     aria-haspopup="menu"
-                    aria-current={isCurrent ? 'page' : undefined}
+                    aria-current={isCurrent ?'page' : undefined}
                   >
                     {item.icon && <Icon name={item.icon} className="text-sm" />}
                     <span className="max-w-[150px] truncate">{item.label}</span>
                     <Icon
-                      name={isExpanded ? 'expand_less' : 'expand_more'}
+                      name={isExpanded ?'expand_less' :'expand_more'}
                       className="text-xs opacity-60"
                     />
                     {item.childCount !== undefined && item.childCount > 0 && (
                       <span
                         className={`
-                          ml-1 px-1.5 py-0.5 text-xs rounded-full
-                          ${fieldMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-600'}
-                        `}
+                          ml-1 px-1.5 py-0.5 text-xs 
+                          ${fieldMode ?'bg-nb-black/80 text-nb-black/40' :'bg-nb-cream text-nb-black/60'}
+`}
                       >
                         {item.childCount}
                       </span>
@@ -215,16 +215,16 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
                   onClick={item.onClick}
                   disabled={isCurrent || !item.onClick}
                   className={getItemStyles(item.type, isCurrent)}
-                  aria-current={isCurrent ? 'page' : undefined}
+                  aria-current={isCurrent ?'page' : undefined}
                 >
                   {item.icon && <Icon name={item.icon} className="text-sm" />}
                   <span className="max-w-[200px] truncate">{item.label}</span>
                   {item.childCount !== undefined && item.childCount > 0 && (
                     <span
                       className={`
-                        ml-1 px-1.5 py-0.5 text-xs rounded-full
-                        ${fieldMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-600'}
-                      `}
+                        ml-1 px-1.5 py-0.5 text-xs 
+                        ${fieldMode ?'bg-nb-black/80 text-nb-black/40' :'bg-nb-cream text-nb-black/60'}
+`}
                     >
                       {item.childCount}
                     </span>
@@ -240,9 +240,9 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
 
       {/* View indicator */}
       {currentItem && (
-        <div className={`ml-auto flex items-center gap-2 text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+        <div className={`ml-auto flex items-center gap-2 text-xs ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}>
           <Icon name={getIconForType(currentItem.type)} className="text-sm" />
-          <span className="capitalize">{currentItem.type || 'item'}</span>
+          <span className="capitalize">{currentItem.type ||'item'}</span>
         </div>
       )}
     </nav>

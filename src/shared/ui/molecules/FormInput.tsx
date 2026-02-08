@@ -15,7 +15,7 @@
 
 import React, { ReactNode } from 'react';
 
-export type FormInputType = 'text' | 'textarea' | 'number' | 'datetime-local' | 'date' | 'time' | 'email' | 'url' | 'password';
+export type FormInputType ='text' |'textarea' |'number' |'datetime-local' |'date' |'time' |'email' |'url' |'password';
 
 export interface FormInputProps {
   /** Current input value */
@@ -57,9 +57,9 @@ export interface FormInputProps {
 export const FormInput: React.FC<FormInputProps> = ({
   value,
   onChange,
-  type = 'text',
+  type ='text',
   label,
-  placeholder = '',
+  placeholder ='',
   hint,
   error,
   disabled = false,
@@ -67,27 +67,27 @@ export const FormInput: React.FC<FormInputProps> = ({
   fieldMode = false,
   actionButton,
   rows = 3,
-  className = '',
+  className ='',
   id,
   min,
   max,
   step,
 }) => {
-  const inputClass = `w-full text-xs rounded px-2 py-1 border focus:outline-none focus:ring-2 transition-colors ${
+  const inputClass =`w-full text-xs px-2 py-1 border focus:outline-none focus:ring-2 transition-nb ${
     error
       ? fieldMode
-        ? 'border-red-700 bg-red-900/20 text-red-300 focus:border-red-600 focus:ring-red-500/50'
-        : 'border-red-300 bg-red-50 text-red-900 focus:border-red-400 focus:ring-red-200'
+        ?'border-nb-red bg-nb-red/20 text-nb-red/60 focus:border-nb-red focus:ring-red-500/50'
+        :'border-nb-red/40 bg-nb-red/10 text-nb-red focus:border-nb-red focus:ring-red-200'
       : fieldMode
-        ? 'bg-slate-800 text-slate-200 border-slate-700 focus:border-blue-500 focus:ring-blue-500/50'
-        : 'bg-white text-slate-800 border-slate-200 focus:border-blue-400 focus:ring-blue-200'
-  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`;
+        ?'bg-nb-black text-nb-black/20 border-nb-black/80 focus:border-nb-blue focus:ring-nb-blue/50'
+        :'bg-nb-white text-nb-black border-nb-black/20 focus:border-nb-blue focus:ring-nb-blue/30'
+  } ${disabled ?'opacity-50 cursor-not-allowed' :''} ${className}`;
 
-  const labelClass = `block text-xs font-bold mb-1 ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`;
-  const hintClass = `text-[10px] mt-1 ${error ? (fieldMode ? 'text-red-400' : 'text-red-600') : (fieldMode ? 'text-slate-400' : 'text-slate-500')}`;
+  const labelClass =`block text-xs font-bold mb-1 ${fieldMode ?'text-nb-black/30' :'text-nb-black/80'}`;
+  const hintClass =`text-[10px] mt-1 ${error ? (fieldMode ?'text-nb-red' :'text-nb-red') : (fieldMode ?'text-nb-black/40' :'text-nb-black/50')}`;
 
   const renderInput = () => {
-    if (type === 'textarea') {
+    if (type ==='textarea') {
       return (
         <textarea
           id={id}
@@ -99,7 +99,7 @@ export const FormInput: React.FC<FormInputProps> = ({
           className={`${inputClass} resize-none`}
           rows={rows}
           aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+          aria-describedby={error ?`${id}-error` : hint ?`${id}-hint` : undefined}
         />
       );
     }
@@ -118,7 +118,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         step={step}
         className={inputClass}
         aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+        aria-describedby={error ?`${id}-error` : hint ?`${id}-hint` : undefined}
       />
     );
 
@@ -140,12 +140,12 @@ export const FormInput: React.FC<FormInputProps> = ({
       {label && (
         <label htmlFor={id} className={labelClass}>
           {label}
-          {required && <span className={fieldMode ? 'text-red-400' : 'text-red-600'}> *</span>}
+          {required && <span className={fieldMode ?'text-nb-red' :'text-nb-red'}> *</span>}
         </label>
       )}
       {renderInput()}
       {(error || hint) && (
-        <div id={error ? `${id}-error` : `${id}-hint`} className={hintClass} role={error ? 'alert' : undefined}>
+        <div id={error ?`${id}-error` :`${id}-hint`} className={hintClass} role={error ?'alert' : undefined}>
           {error || hint}
         </div>
       )}

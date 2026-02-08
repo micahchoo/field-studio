@@ -263,8 +263,8 @@ export const MetadataEditorPanel: React.FC<MetadataEditorPanelProps> = ({
 
   return (
     <div
-      className={`${widthClass} border-l flex flex-col h-full shadow-xl z-30 ${
-        fieldMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+      className={`${widthClass} border-l flex flex-col h-full shadow-brutal z-30 ${
+        fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white border-nb-black/20'
       }`}
     >
       {/* ARIA live region for validation updates */}

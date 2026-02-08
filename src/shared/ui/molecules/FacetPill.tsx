@@ -39,7 +39,7 @@ export interface FacetPillProps {
   /** Disabled state */
   disabled?: boolean;
   /** Size variant */
-  size?: 'sm' | 'md';
+  size?:'sm' |'md';
   /** Contextual styles from template (required for theming) */
   cx: ContextualClassNames;
   fieldMode?: boolean;
@@ -58,13 +58,13 @@ export const FacetPill: React.FC<FacetPillProps> = ({
   onToggle,
   icon,
   disabled = false,
-  size = 'md',
+  size ='md',
   cx,
 }) => {
   // Size padding styles
   const sizePadding = {
-    sm: { padding: '4px 8px', fontSize: '12px' },
-    md: { padding: '6px 12px', fontSize: '14px' },
+    sm: { padding:'4px 8px', fontSize:'12px' },
+    md: { padding:'6px 12px', fontSize:'14px' },
   };
 
   const padding = sizePadding[size];
@@ -73,18 +73,18 @@ export const FacetPill: React.FC<FacetPillProps> = ({
   const content = (
     <>
       {icon && (
-        <span className="material-icons" style={{ fontSize: '1em' }}>{icon}</span>
+        <span className="material-icons" style={{ fontSize:'1em' }}>{icon}</span>
       )}
       <span>{label}</span>
       {count !== undefined && (
         <span
           style={{
-            padding: '2px 6px',
-            borderRadius: '9999px',
-            fontSize: '12px',
+            padding:'2px 6px',
+            borderRadius:'9999px',
+            fontSize:'12px',
             fontWeight: 600,
-            backgroundColor: active ? 'rgba(255,255,255,0.2)' : cx.headerBg,
-            color: active ? '#ffffff' : cx.textMuted,
+            backgroundColor: active ?'rgba(255,255,255,0.2)' : cx.headerBg,
+            color: active ?'#ffffff' : cx.textMuted,
           }}
         >
           {count}
@@ -97,17 +97,17 @@ export const FacetPill: React.FC<FacetPillProps> = ({
     <Button
       onClick={onToggle}
       disabled={disabled}
-      variant={active ? 'primary' : 'secondary'}
+      variant={active ?'primary' :'secondary'}
       size="sm"
       style={{
         padding: padding.padding,
         fontSize: padding.fontSize,
-        borderRadius: '9999px',
-        gap: '8px',
-        minWidth: 'auto',
+        borderRadius:'9999px',
+        gap:'8px',
+        minWidth:'auto',
         backgroundColor: active ? undefined : cx.surface,
         borderColor: active ? undefined : cx.border,
-        color: active ? '#ffffff' : cx.text,
+        color: active ?'#ffffff' : cx.text,
       }}
       aria-pressed={active}
       // @ts-ignore

@@ -87,10 +87,6 @@ export interface ResourceContextActions {
   setCollaborationLock: (isLocked: boolean, lockedBy?: string[], version?: number) => void;
   /** Update accessibility features */
   updateAccessibility: (features: Partial<AccessibilitySettings>) => void;
-  /** Check if resource is of a specific type */
-  isType: (type: IIIFResourceType) => boolean;
-  /** Get contextual styling tokens for current resource type */
-  getResourceStyles: () => React.CSSProperties;
 }
 
 // ============================================================================
@@ -236,21 +232,6 @@ export const ResourceContextProvider: React.FC<ResourceContextProviderProps> = (
     }));
   }, []);
 
-  const isType = useCallback((type: IIIFResourceType) => {
-    return state.type === type;
-  }, [state.type]);
-
-  const getResourceStyles = useCallback((): React.CSSProperties => {
-    if (!state.type) return {};
-    const config = HIERARCHY.iiifTypes[state.type as keyof typeof HIERARCHY.iiifTypes];
-    if (!config) return {};
-    return {
-      color: config.color,
-      borderLeft: `3px solid ${config.color}`,
-      paddingLeft: '8px'
-    };
-  }, [state.type]);
-
   const actions = useMemo<ResourceContextActions>(() => ({
     setResource,
     clearResource,
@@ -258,8 +239,6 @@ export const ResourceContextProvider: React.FC<ResourceContextProviderProps> = (
     recordEdit,
     setCollaborationLock,
     updateAccessibility,
-    isType,
-    getResourceStyles
   }), [
     setResource,
     clearResource,
@@ -267,8 +246,6 @@ export const ResourceContextProvider: React.FC<ResourceContextProviderProps> = (
     recordEdit,
     setCollaborationLock,
     updateAccessibility,
-    isType,
-    getResourceStyles
   ]);
 
   const stateValue = useMemo(() => state, [state]);
@@ -308,23 +285,41 @@ export function useResourceContextDispatch(): ResourceContextActions {
   return context;
 }
 
+/** Derived helpers that depend on state (not in dispatch to keep dispatch stable) */
+interface ResourceDerivedHelpers {
+  isType: (type: IIIFResourceType) => boolean;
+  getResourceStyles: () => React.CSSProperties;
+}
+
+function makeDerivedHelpers(stateType: IIIFResourceType | null): ResourceDerivedHelpers {
+  return {
+    isType: (type: IIIFResourceType) => stateType === type,
+    getResourceStyles: () => {
+      if (!stateType) return {};
+      const config = HIERARCHY.iiifTypes[stateType as keyof typeof HIERARCHY.iiifTypes];
+      if (!config) return {};
+      return { color: config.color, borderLeft: `3px solid ${config.color}`, paddingLeft: '8px' };
+    },
+  };
+}
+
 /**
  * Combined hook for convenience (triggers re‑renders on state changes)
  */
-export function useResourceContext(): ResourceContextState & ResourceContextActions {
+export function useResourceContext(): ResourceContextState & ResourceContextActions & ResourceDerivedHelpers {
   const state = useResourceContextState();
   const actions = useResourceContextDispatch();
-  return { ...state, ...actions };
+  return { ...state, ...actions, ...makeDerivedHelpers(state.type) };
 }
 
 /**
  * Optional access (returns null if not in provider)
  */
-export function useResourceContextOptional(): (ResourceContextState & ResourceContextActions) | null {
+export function useResourceContextOptional(): (ResourceContextState & ResourceContextActions & ResourceDerivedHelpers) | null {
   const state = useContext(ResourceStateContext);
   const actions = useContext(ResourceDispatchContext);
   if (!state || !actions) return null;
-  return { ...state, ...actions };
+  return { ...state, ...actions, ...makeDerivedHelpers(state.type) };
 }
 
 // ============================================================================

@@ -115,11 +115,13 @@ export function traverse<T = void>(
       results.push(result as T);
     }
 
-    // Recurse into children
+    // Recurse into children (push/pop avoids O(n^2) array copies)
     const children = getChildren(item);
+    path.push(item.id);
     for (const child of children) {
-      visit(child, item, depth + 1, [...path, item.id]);
+      visit(child, item, depth + 1, path);
     }
+    path.pop();
   }
 
   visit(root, null, 0, []);
@@ -200,11 +202,13 @@ export function getPathToNode(root: IIIFItem, targetId: string): IIIFItem[] {
     }
 
     const children = getChildren(node);
+    currentPath.push(node);
     for (const child of children) {
-      if (findPath(child, [...currentPath, node])) {
+      if (findPath(child, currentPath)) {
         return true;
       }
     }
+    currentPath.pop();
 
     return false;
   };
@@ -273,11 +277,11 @@ export function buildTreeIndex(root: IIIFItem): TreeIndex {
       nodeMap.set(item.id, item);
       parentMap.set(item.id, context.parent);
       depthMap.set(item.id, context.depth);
-      pathMap.set(item.id, context.path);
+      pathMap.set(item.id, [...context.path]);
 
-      // Add to type map
-      const existing = typeMap.get(item.type) || [];
-      typeMap.set(item.type, [...existing, item]);
+      // Add to type map (push into existing array to avoid O(n^2) copies)
+      if (!typeMap.has(item.type)) typeMap.set(item.type, []);
+      typeMap.get(item.type)!.push(item);
     }
   });
 

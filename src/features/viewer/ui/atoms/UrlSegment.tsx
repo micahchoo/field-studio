@@ -26,12 +26,12 @@ export interface UrlSegmentProps {
 }
 
 const colorClasses: Record<SegmentColor, string> = {
-  green: 'text-green-400 bg-green-400/10',
-  blue: 'text-blue-400 bg-blue-400/10',
+  green: 'text-nb-green bg-nb-green/10',
+  blue: 'text-nb-blue bg-nb-blue/10',
   orange: 'text-orange-400 bg-orange-400/10',
-  purple: 'text-purple-400 bg-purple-400/10',
-  yellow: 'text-yellow-400 bg-yellow-400/10',
-  default: 'text-slate-400 bg-slate-400/10',
+  purple: 'text-nb-purple/60 bg-nb-purple/60',
+  yellow: 'text-nb-yellow bg-nb-yellow/10',
+  default: 'text-nb-black/40 bg-nb-black/30',
 };
 
 export const UrlSegment: React.FC<UrlSegmentProps> = ({
@@ -41,7 +41,7 @@ export const UrlSegment: React.FC<UrlSegmentProps> = ({
 }) => {
   return (
     <span
-      className={`font-bold px-1 rounded ${colorClasses[color]}`}
+      className={`font-bold px-1 ${colorClasses[color]}`}
       title={label}
     >
       {value}

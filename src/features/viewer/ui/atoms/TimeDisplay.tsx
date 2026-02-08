@@ -59,7 +59,7 @@ export const TimeDisplay: React.FC<TimeDisplayProps> = ({
   className = '',
   fieldMode = false,
 }) => {
-  const textColor = fieldMode ? 'text-yellow-400' : 'text-white';
+  const textColor = fieldMode ? 'text-nb-yellow' : 'text-white';
 
   return (
     <span className={`text-sm font-mono whitespace-nowrap ${textColor} ${className}`}>

@@ -64,9 +64,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   maxHistoryEntries = 10
 }) => {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const queryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (queryTimerRef.current) clearTimeout(queryTimerRef.current);
+    queryTimerRef.current = setTimeout(() => setDebouncedQuery(value), 80);
+  }, []);
 
   // Use the command history hook
   const {
@@ -81,14 +89,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     return commands.filter(cmd => !cmd.isAvailable || cmd.isAvailable());
   }, [commands]);
 
-  // Calculate matches with proper ordering
+  // Calculate matches with proper ordering (uses debouncedQuery for fuzzy work)
   const matches = useMemo<CommandMatch[]>(() => {
     const recentEntries = getRecentCommands(RECENT_THRESHOLD_HOURS);
     const frequentEntries = getFrequentCommands(5);
     const recentIds = new Set(recentEntries.map(e => e.commandId));
     const frequentIds = new Set(frequentEntries.map(e => e.commandId));
 
-    if (!query.trim()) {
+    if (!debouncedQuery.trim()) {
       // Show recent and frequent commands when no query
       const results: CommandMatch[] = [];
 
@@ -142,14 +150,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     for (const command of availableCommands) {
       // Match against label (primary)
-      const labelMatch = fuzzyMatch(command.label, query);
-      
+      const labelMatch = fuzzyMatch(command.label, debouncedQuery);
+
       // Match against section (secondary, lower weight)
-      const sectionMatch = fuzzyMatch(command.section, query);
-      
+      const sectionMatch = fuzzyMatch(command.section, debouncedQuery);
+
       // Match against description (tertiary, lowest weight)
-      const descMatch = command.description 
-        ? fuzzyMatch(command.description, query)
+      const descMatch = command.description
+        ? fuzzyMatch(command.description, debouncedQuery)
         : null;
 
       // Determine best match
@@ -215,18 +223,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     results.sort((a, b) => b.score - a.score);
 
     return results;
-  }, [query, availableCommands, history, getRecentCommands, getFrequentCommands]);
+  }, [debouncedQuery, availableCommands, history, getRecentCommands, getFrequentCommands]);
 
   // Reset selection when matches change
   useEffect(() => {
     setSelectedIndex(0);
-  }, [matches.length, query]);
+  }, [matches.length, debouncedQuery]);
 
   // Focus input when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 0);
       setQuery('');
+      setDebouncedQuery('');
     }
   }, [isOpen]);
 
@@ -302,7 +311,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       
       // Add highlighted match
       parts.push(
-        <mark key={i} className="bg-yellow-200 text-slate-900 font-semibold rounded px-0.5">
+        <mark key={i} className="bg-nb-yellow/60 text-nb-black font-semibold px-0.5">
           {text.slice(start, end)}
         </mark>
       );
@@ -320,7 +329,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   // Group matches by section when no query
   const groupedMatches = useMemo(() => {
-    if (query.trim()) {
+    if (debouncedQuery.trim()) {
       return { searchResults: matches };
     }
 
@@ -349,7 +358,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     });
 
     return groups;
-  }, [matches, query]);
+  }, [matches, debouncedQuery]);
 
   if (!isOpen) return null;
 
@@ -357,33 +366,33 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000] flex items-start justify-center pt-[20vh]"
+      className="fixed inset-0 bg-nb-black/50 backdrop-blur-sm z-[1000] flex items-start justify-center pt-[20vh]"
       onClick={onClose}
       aria-modal="true"
       role="dialog"
       aria-label="Command palette"
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-nb-white shadow-brutal-lg w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 "
         onClick={e => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="border-b border-slate-200 p-4 flex items-center gap-3">
-          <Icon name="search" className="text-slate-400 text-xl" />
+        <div className="border-b border-nb-black/20 p-4 flex items-center gap-3">
+          <Icon name="search" className="text-nb-black/40 text-xl" />
           <input
             ref={inputRef}
             type="text"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => handleQueryChange(e.target.value)}
             placeholder="Type a command or search..."
-            className="flex-1 text-lg outline-none placeholder:text-slate-400 bg-transparent"
+            className="flex-1 text-lg outline-none placeholder:text-nb-black/40 bg-transparent"
             aria-label="Search commands"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
           />
-          <kbd className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono">
+          <kbd className="px-2 py-1 bg-nb-cream text-xs text-nb-black/50 font-mono">
             ESC
           </kbd>
         </div>
@@ -396,14 +405,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           aria-label="Command results"
         >
           {matches.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
+            <div className="p-8 text-center text-nb-black/40">
               <Icon name="search_off" className="text-4xl mb-2 mx-auto" />
               <p>No commands found</p>
             </div>
           ) : (
             Object.entries(groupedMatches).map(([section, sectionMatches]) => (
               <div key={section} role="group" aria-label={section}>
-                <div className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-4 py-2 text-xs font-bold text-nb-black/40 uppercase tracking-wider">
                   {section}
                 </div>
                 {sectionMatches.map((match) => {
@@ -432,16 +441,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         {match.command.icon && (
                           <Icon 
                             name={match.command.icon} 
-                            className={`text-lg ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}
+                            className={`text-lg ${isSelected ? 'text-nb-blue' : 'text-nb-black/40'}`}
                           />
                         )}
 
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-slate-800 truncate">
+                          <div className="font-medium text-nb-black truncate">
                             {highlightText(match.command.label, match.highlightRanges)}
                           </div>
                           {match.command.description && (
-                            <div className="text-xs text-slate-400 truncate">
+                            <div className="text-xs text-nb-black/40 truncate">
                               {match.command.description}
                             </div>
                           )}
@@ -449,12 +458,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
                         <div className="flex items-center gap-2 shrink-0">
                           {match.isRecent && (
-                            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+                            <span className="text-[10px] bg-nb-blue/20 text-nb-blue px-1.5 py-0.5 font-medium">
                               recent
                             </span>
                           )}
                           {match.command.shortcut && (
-                            <kbd className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono">
+                            <kbd className="px-2 py-1 bg-nb-cream text-xs text-nb-black/50 font-mono">
                               {match.command.shortcut}
                             </kbd>
                           )}
@@ -469,13 +478,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-4 py-2 flex items-center gap-4 text-xs text-slate-400">
+        <div className="border-t border-nb-black/20 px-4 py-2 flex items-center gap-4 text-xs text-nb-black/40">
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-slate-100 rounded font-mono">↑↓</kbd>
+            <kbd className="px-1.5 py-0.5 bg-nb-cream font-mono">↑↓</kbd>
             <span>Navigate</span>
           </div>
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-slate-100 rounded font-mono">Enter</kbd>
+            <kbd className="px-1.5 py-0.5 bg-nb-cream font-mono">Enter</kbd>
             <span>Select</span>
           </div>
           <div className="flex-1" />

@@ -21,7 +21,6 @@
 import React from 'react';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { MediaPlayer } from './MediaPlayer';
-import { AnnotationOverlay } from './AnnotationOverlay';
 import { ChoiceSelector } from '../atoms/ChoiceSelector';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
@@ -36,16 +35,10 @@ export interface ViewerContentProps {
   resolvedUrl: string | null;
   /** Ref for OSD container */
   osdContainerRef?: React.RefObject<HTMLDivElement>;
-  /** Annotations for overlay */
+  /** OSD viewer ref for annotation viewport tracking */
+  viewerRef?: React.MutableRefObject<any>;
+  /** Annotations (passed to AV players for time annotation display) */
   annotations?: IIIFAnnotation[];
-  /** Selected annotation ID */
-  selectedAnnotationId?: string | null;
-  /** Canvas dimensions for annotation overlay */
-  canvasWidth?: number;
-  /** Canvas height for annotation overlay */
-  canvasHeight?: number;
-  /** Called when annotation is clicked */
-  onAnnotationClick?: (annotation: IIIFAnnotation) => void;
   /** Called when a new annotation is created */
   onCreateAnnotation?: (annotation: IIIFAnnotation) => void;
   /** Whether annotation mode is active (for AV content) */
@@ -91,11 +84,8 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   mediaType,
   resolvedUrl,
   osdContainerRef,
+  viewerRef,
   annotations = [],
-  selectedAnnotationId,
-  canvasWidth = 1000,
-  canvasHeight = 1500,
-  onAnnotationClick,
   onCreateAnnotation,
   annotationModeActive,
   onAnnotationModeToggle,
@@ -111,7 +101,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
 }) => {
   // Image content with OpenSeadragon
   if (mediaType === 'image' && resolvedUrl) {
-    const bgClass = fieldMode ? 'bg-black' : 'bg-slate-100 dark:bg-slate-900';
+    const bgClass = fieldMode ? 'bg-nb-black' : 'bg-nb-cream';
     return (
       <div className={`flex-1 relative overflow-hidden flex ${bgClass}`} style={{ height: '100%' }}>
         <div
@@ -119,17 +109,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
           className="absolute inset-0 w-full h-full"
           style={{ background: fieldMode ? '#000' : undefined }}
         />
-        {/* Annotation Overlay */}
-        {annotations.length > 0 && (
-          <AnnotationOverlay
-            annotations={annotations as any}
-            canvasWidth={canvasWidth}
-            canvasHeight={canvasHeight}
-            selectedId={selectedAnnotationId}
-            onAnnotationClick={onAnnotationClick as any}
-            fieldMode={fieldMode}
-          />
-        )}
+        {/* Annotation display is handled by Annotorious via AnnotationDrawingOverlay */}
         {/* Choice Selector */}
         {hasChoice && choiceItems && choiceItems.length > 1 && onChoiceSelect && (
           <ChoiceSelector
@@ -189,7 +169,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
 
   // Unsupported or no content
   return (
-    <div className="flex-1 flex items-center justify-center text-slate-500">
+    <div className="flex-1 flex items-center justify-center text-nb-black/50">
       <EmptyState
         icon="broken_image"
         title="Unsupported Media"

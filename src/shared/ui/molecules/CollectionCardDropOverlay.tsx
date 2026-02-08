@@ -2,7 +2,7 @@
  * CollectionCardDropOverlay Molecule
  *
  * Visual feedback overlays for drag-drop operations on collection cards.
- * Shows "Drop to add" or "Cannot drop" states.
+ * Shows"Drop to add" or"Cannot drop" states.
  *
  * ATOMIC DESIGN COMPLIANCE:
  * - Zero context hooks - all data via props
@@ -41,20 +41,20 @@ export const CollectionCardDropOverlay: React.FC<CollectionCardDropOverlayProps>
 
   if (canDrop) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-blue-100/80 rounded-xl z-10 pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center bg-nb-blue/20 z-10 pointer-events-none">
         <div className="text-center">
-          <Icon name="add_circle" className="text-4xl text-blue-500 mb-2" />
-          <div className="text-sm font-bold text-blue-700">Drop to add</div>
+          <Icon name="add_circle" className="text-4xl text-nb-blue mb-2" />
+          <div className="text-sm font-bold text-nb-blue">Drop to add</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-red-100/80 rounded-xl z-10 pointer-events-none">
+    <div className="absolute inset-0 flex items-center justify-center bg-nb-red/20 z-10 pointer-events-none">
       <div className="text-center">
-        <Icon name="block" className="text-4xl text-red-500 mb-2" />
-        <div className="text-sm font-bold text-red-700">Cannot drop here</div>
+        <Icon name="block" className="text-4xl text-nb-red mb-2" />
+        <div className="text-sm font-bold text-nb-red">Cannot drop here</div>
       </div>
     </div>
   );

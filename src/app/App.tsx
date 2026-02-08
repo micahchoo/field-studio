@@ -38,7 +38,7 @@ import { useBulkOperations, useUndoRedoShortcuts, useVault, VaultProvider } from
 import { actions } from '@/src/entities/manifest/model/actions';
 import { UserIntentProvider } from '@/src/app/providers/UserIntentProvider';
 import { ResourceContextProvider } from '@/src/app/providers/ResourceContextProvider';
-import { useAppMode } from '@/src/app/providers';
+import { useAppMode, useAppModeState } from '@/src/app/providers';
 
 // Custom hooks for cleaner state management
 import { useResponsive } from '@/src/shared/lib/hooks/useResponsive';
@@ -89,6 +89,7 @@ const MainApp: React.FC = () => {
 
   // ---- Navigation State ----
   const [currentMode, setCurrentMode] = useAppMode();
+  const appModeState = useAppModeState();
   const [viewType, setViewType] = useState<ViewType>('iiif');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -103,6 +104,8 @@ const MainApp: React.FC = () => {
   const [showQuickRef, setShowQuickRef] = useState(false);
 
   // ---- Refs for effect guards ----
+  const rootRef = useRef(root);
+  rootRef.current = root;
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
   const initRef = useRef(false);
@@ -290,7 +293,7 @@ const MainApp: React.FC = () => {
     return () => clearInterval(interval);
   }, [loadRoot, onboardingModal]);
 
-  // Auto-save interval
+  // Auto-save interval — uses rootRef to avoid resetting interval on every state change
   useEffect(() => {
     let consecutiveFailures = 0;
     const maxFailures = 3;
@@ -298,24 +301,21 @@ const MainApp: React.FC = () => {
     const interval = setInterval(async () => {
       if (rootId && saveStatus === 'saved') {
         try {
-          // Check storage quota before attempting save
           const quotaCheck = await storage.isStorageCriticallyFull();
           if (quotaCheck.full) {
-            // Skip auto-save if storage is critically full
             console.warn('[App] Auto-save skipped: Storage critically full', quotaCheck.usagePercent);
             return;
           }
 
-          const currentRoot = exportRoot();
+          const currentRoot = rootRef.current;
           if (currentRoot) {
             await storage.saveProject(currentRoot);
-            consecutiveFailures = 0; // Reset on success
+            consecutiveFailures = 0;
           }
         } catch (error) {
           consecutiveFailures++;
           console.warn(`[App] Auto-save failed (${consecutiveFailures}/${maxFailures}):`, error);
 
-          // Stop auto-save after too many failures to prevent spam
           if (consecutiveFailures >= maxFailures) {
             console.error('[App] Auto-save disabled after repeated failures');
           }
@@ -324,11 +324,17 @@ const MainApp: React.FC = () => {
     }, settings.autoSaveInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [rootId, exportRoot, settings.autoSaveInterval, saveStatus]);
+  }, [rootId, settings.autoSaveInterval, saveStatus]);
 
-  // Validation
+  // Validation — debounced to avoid running on every keystroke/state change
+  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (root) setValidationIssuesMap(validator.validateTree(root));
+    if (!root) return;
+    if (validationTimerRef.current) clearTimeout(validationTimerRef.current);
+    validationTimerRef.current = setTimeout(() => {
+      setValidationIssuesMap(validator.validateTree(root));
+    }, 800);
+    return () => { if (validationTimerRef.current) clearTimeout(validationTimerRef.current); };
   }, [root]);
 
   // ============================================================================
@@ -354,16 +360,24 @@ const MainApp: React.FC = () => {
       });
   }, [loadRoot, showToast]);
 
+  // Build a flat lookup index from the denormalized tree — O(n) once per root change, O(1) per lookup
+  const itemIndex = useMemo(() => {
+    const index = new Map<string, IIIFItem>();
+    if (!root) return index;
+    const walk = (node: IIIFItem) => {
+      index.set(node.id, node);
+      const children = (node as any).items || [];
+      for (const child of children) walk(child);
+      const annos = (node as any).annotations || [];
+      for (const anno of annos) walk(anno);
+    };
+    walk(root);
+    return index;
+  }, [root]);
+
   const findItem = useCallback((node: IIIFItem | null, id: string): IIIFItem | null => {
-    if (!node) return null;
-    if (node.id === id) return node;
-    const children = (node as any).items || (node as any).annotations || [];
-    for (const child of children) {
-      const found = findItem(child, id);
-      if (found) return found;
-    }
-    return null;
-  }, []);
+    return itemIndex.get(id) ?? null;
+  }, [itemIndex]);
 
   const handleItemUpdate = useCallback((updates: Partial<IIIFItem>) => {
     if (!selectedId) return;
@@ -509,11 +523,6 @@ const MainApp: React.FC = () => {
       .catch(() => { setSaveStatus('error'); showToast("Failed to save rollback!", 'error'); });
   }, [loadRoot, showToast]);
 
-  // Debug logging for currentMode mismatch
-  useEffect(() => {
-    console.log('currentMode updated:', currentMode);
-  }, [currentMode]);
-
   // Close sidebar on mobile when mode changes
   useEffect(() => {
     if (isMobile) {
@@ -527,12 +536,23 @@ const MainApp: React.FC = () => {
 
   const selectedItem = selectedId ? findItem(root, selectedId) : null;
 
+  // Memoize flattened validation issues for StatusBar
+  const flatValidationIssues = useMemo(
+    () => Object.values(validationIssuesMap).flat(),
+    [validationIssuesMap]
+  );
+
   // ============================================================================
   // Render
   // ============================================================================
 
   return (
-    <div className={`flex flex-col h-dvh w-screen overflow-hidden font-sans transition-colors duration-300 ${settings.fieldMode ? 'bg-black text-white' : settings.theme === 'dark' ? 'dark text-slate-100 bg-slate-950' : 'text-slate-900 bg-slate-50'}`}>
+    <div
+      data-mode={currentMode}
+      data-field-mode={settings.fieldMode ? 'true' : 'false'}
+      data-annotation-mode={appModeState.annotationModeActive ? 'true' : 'false'}
+      className={`flex flex-col h-dvh w-screen overflow-hidden font-sans ${settings.fieldMode ? 'bg-nb-black text-nb-yellow' : 'text-nb-black bg-nb-cream'}`}
+    >
       {/* Skip Links for Accessibility - screen reader only, visible on focus */}
       <SkipLink targetId="main-content" label="Skip to main content" />
       <SkipLink targetId="sidebar" label="Skip to sidebar" />
@@ -555,23 +575,23 @@ const MainApp: React.FC = () => {
         }}
       />
 
-      {/* Saving Indicator */}
-      <div className={`fixed top-4 right-4 z-[2000] pointer-events-none transition-all duration-300 ${saveStatus === 'saving' ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
-        <div className="bg-white/90 backdrop-blur shadow-lg border border-slate-200 rounded-full px-3 py-1.5 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-iiif-blue animate-pulse" />
-          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Saving...</span>
+      {/* Saving Indicator - Neobrutalist */}
+      <div className={`fixed top-4 right-4 z-[2000] pointer-events-none transition-nb duration-100 ${saveStatus === 'saving' ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
+        <div className="bg-nb-yellow text-nb-black border-2 border-nb-black shadow-brutal-sm px-3 py-1.5 flex items-center gap-2">
+          <div className="w-3 h-3 bg-nb-black" style={{ animation: 'savePulse 0.5s linear infinite' }} />
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider">SAVING...</span>
         </div>
       </div>
 
-      <div className="flex-1 flex min-h-0 relative">
+      <div className="flex-1 flex min-h-0 min-w-0 relative overflow-hidden">
         {/* Mobile Header */}
         {isMobile && (
-          <header className="absolute top-0 left-0 right-0 h-header-compact bg-slate-900 z-[100] flex items-center px-4 justify-between shadow-lg">
-            <Button variant="ghost" size="bare" onClick={() => setShowSidebar(true)} aria-label="Open sidebar" className="text-white p-2">
+          <header className={`absolute top-0 left-0 right-0 h-header-compact z-[100] flex items-center px-4 justify-between border-b-4 ${settings.fieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-cream border-nb-black'}`}>
+            <Button variant="ghost" size="bare" onClick={() => setShowSidebar(true)} aria-label="Open sidebar" className={`p-2 ${settings.fieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>
               <Icon name="menu" />
             </Button>
-            <div className="text-yellow-400 font-black tracking-tighter uppercase text-xs">Field Studio</div>
-            <Button variant="ghost" size="bare" onClick={() => selectedItem && setShowInspector(true)} aria-label="Open inspector" className={`text-white p-2 ${!selectedItem ? 'opacity-20' : ''}`}>
+            <div className={`font-mono font-black tracking-tighter uppercase text-sm ${settings.fieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>FIELD STUDIO</div>
+            <Button variant="ghost" size="bare" onClick={() => selectedItem && setShowInspector(true)} aria-label="Open inspector" className={`p-2 ${settings.fieldMode ? 'text-nb-yellow' : 'text-nb-black'} ${!selectedItem ? 'opacity-20' : ''}`}>
               <Icon name="info" />
             </Button>
           </header>
@@ -594,6 +614,7 @@ const MainApp: React.FC = () => {
           onImport={(e) => e.target.files && setStagingTree(buildTree(Array.from(e.target.files)))}
           onExportTrigger={exportDialog.open}
           onToggleFieldMode={toggleFieldMode}
+          fieldMode={settings.fieldMode}
           onOpenExternalImport={externalImport.open}
           onStructureUpdate={handleUpdateRoot}
           onOpenSettings={personaSettings.open}
@@ -601,7 +622,7 @@ const MainApp: React.FC = () => {
           onAbstractionLevelChange={handleAbstractionLevelChange}
         />
 
-        <main id="main-content" className={`flex-1 flex flex-col min-w-0 relative shadow-xl z-0 ${settings.fieldMode ? 'bg-black' : 'bg-white'} ${isMobile ? 'pt-header-compact' : ''} transition-colors duration-300`}>
+        <main id="main-content" className={`flex-1 flex flex-col min-w-0 min-h-0 relative z-0 panel-fixed ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-white'} ${isMobile ? 'pt-header-compact' : ''}`}>
           {/* View content */}
           <ViewRouter
             root={root}
@@ -625,7 +646,7 @@ const MainApp: React.FC = () => {
             as part of the filmstrip/viewer/inspector flex row. In all other views,
             Inspector mounts here as a sibling of <main>. This is intentional — archive
             needs the inspector within its split-view layout for proper flex sizing. */}
-        {currentMode !== 'archive' && (
+        {currentMode !== 'archive' && currentMode !== 'boards' && (
           <Inspector
             key={selectedId || 'none'}
             resource={selectedItem}
@@ -645,7 +666,7 @@ const MainApp: React.FC = () => {
         <StatusBar
           totalItems={root?.items?.length || 0}
           selectedItem={selectedItem}
-          validationIssues={Object.values(validationIssuesMap).flat()}
+          validationIssues={flatValidationIssues}
           storageUsage={storageUsage}
           onOpenQC={qcDashboard.open}
           saveStatus={saveStatus}

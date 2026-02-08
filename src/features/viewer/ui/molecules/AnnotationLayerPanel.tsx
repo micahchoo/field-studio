@@ -49,17 +49,17 @@ export const AnnotationLayerPanel: React.FC<AnnotationLayerPanelProps> = ({
   const noneVisible = layers.every(l => !l.visible);
 
   return (
-    <div className={`absolute top-3 left-3 z-20 w-64 rounded-xl shadow-lg backdrop-blur-sm border ${
+    <div className={`absolute top-3 left-3 z-20 w-64 shadow-brutal backdrop-blur-sm border ${
       fieldMode
-        ? 'bg-slate-900/95 border-slate-700'
-        : 'bg-white/95 border-slate-200'
+        ? 'bg-nb-black/95 border-nb-black/80'
+        : 'bg-nb-white border-nb-black/20'
     }`}>
       {/* Header */}
       <div className={`flex items-center justify-between px-3 py-2 border-b ${
-        fieldMode ? 'border-slate-700' : 'border-slate-200'
+        fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'
       }`}>
         <span className={`text-xs font-semibold uppercase tracking-wider ${
-          fieldMode ? 'text-slate-400' : 'text-slate-500'
+          fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
         }`}>
           <Icon name="layers" className="text-sm mr-1 align-text-bottom" />
           Layers
@@ -72,7 +72,7 @@ export const AnnotationLayerPanel: React.FC<AnnotationLayerPanelProps> = ({
             title={allVisible ? 'Hide all' : 'Show all'}
             aria-label={allVisible ? 'Hide all layers' : 'Show all layers'}
           >
-            <span className={`text-[10px] ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className={`text-[10px] ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}>
               {allVisible ? 'Hide All' : 'Show All'}
             </span>
           </Button>
@@ -103,7 +103,7 @@ export const AnnotationLayerPanel: React.FC<AnnotationLayerPanelProps> = ({
       <div className="py-1 max-h-60 overflow-y-auto">
         {layers.length === 0 ? (
           <div className={`text-center py-4 text-xs ${
-            fieldMode ? 'text-slate-600' : 'text-slate-400'
+            fieldMode ? 'text-nb-black/60' : 'text-nb-black/40'
           }`}>
             No annotation layers
           </div>

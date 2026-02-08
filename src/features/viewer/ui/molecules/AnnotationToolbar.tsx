@@ -37,14 +37,14 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
   onClose,
 }) => {
   return (
-    <div className="h-12 bg-slate-900 border-b border-white/10 flex items-center justify-between px-4 shrink-0">
+    <div className="h-12 bg-nb-black border-b border-white/10 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-4">
         <h2 className="text-white font-bold flex items-center gap-2 text-sm">
-          <Icon name="pentagon" className="text-green-400" />
+          <Icon name="pentagon" className="text-nb-green" />
           Annotation Tool
         </h2>
 
-        <div className="flex bg-white/5 border border-white/10 rounded p-0.5">
+        <div className="flex bg-nb-white/5 border border-white/10 p-0.5">
           {MODES.map((m) => (
             <Button
               key={m.mode}

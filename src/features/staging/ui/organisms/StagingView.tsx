@@ -251,7 +251,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
       <div className="flex h-full gap-4">
         {/* Source Pane (Left) */}
         <div
-          className={`flex-1 ${cx.headerBg} rounded-lg border ${cx.border} overflow-hidden flex flex-col`}
+          className={`flex-1 ${cx.headerBg}  border ${cx.border} overflow-hidden flex flex-col`}
         >
           <div
             className={`px-4 py-3 border-b ${cx.border} ${cx.headerBg} flex justify-between items-center`}
@@ -273,7 +273,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
                   <div
                     key={manifest.id}
                     onClick={() => toggleSelection(manifest.id)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`p-3 border cursor-pointer transition-nb ${
                       selectedSourceIds.includes(manifest.id)
                         ? `${cx.active} border-current`
                         : `${cx.headerBg} ${cx.border} hover:${cx.surface}`
@@ -282,7 +282,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
                     <div className="flex items-center gap-3">
                       {/* Selection checkbox */}
                       <div
-                        className={`w-4 h-4 rounded border ${
+                        className={`w-4 h-4 border ${
                           selectedSourceIds.includes(manifest.id)
                             ? cx.accent
                             : cx.border
@@ -331,7 +331,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
 
         {/* Target Pane (Right) */}
         <div
-          className={`w-80 ${cx.headerBg} rounded-lg border ${cx.border} overflow-hidden flex flex-col`}
+          className={`w-80 ${cx.headerBg}  border ${cx.border} overflow-hidden flex flex-col`}
         >
           <div
             className={`px-4 py-3 border-b ${cx.border} ${cx.headerBg} flex justify-between items-center`}
@@ -357,7 +357,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
                   <div
                     key={collection.id}
                     onClick={() => setActiveCollectionId(collection.id)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`p-3 border cursor-pointer transition-nb ${
                       activeCollectionId === collection.id
                         ? `${cx.active} border-current`
                         : `${cx.headerBg} ${cx.border} hover:${cx.surface}`
@@ -399,9 +399,9 @@ export const StagingView: React.FC<StagingViewProps> = ({
 
       {/* Create Collection Modal */}
       {isCreatingCollection && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-nb-black/50 flex items-center justify-center z-50">
           <div
-            className={`${cx.surface} rounded-lg shadow-xl p-6 w-96 max-w-[90vw]`}
+            className={`${cx.surface}  shadow-brutal p-6 w-96 max-w-[90vw]`}
           >
             <h3 className={`text-lg font-medium mb-4 ${cx.text}`}>
               Create Collection
@@ -415,7 +415,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}
               placeholder="Collection name..."
-              className={`w-full px-3 py-2 rounded border ${cx.input} ${cx.border} mb-4`}
+              className={`w-full px-3 py-2 border ${cx.input} ${cx.border} mb-4`}
               autoFocus
             />
             <div className="flex justify-end gap-2">

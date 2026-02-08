@@ -182,6 +182,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
     toggleKeyboardHelp,
     canDownload,
     hasSearchService,
+    osdReady,
   } = useViewer(item, manifest);
 
   // Handle screenshot with download
@@ -246,7 +247,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`flex-1 flex flex-col overflow-hidden relative ${fieldMode ? 'bg-black' : 'bg-slate-100 dark:bg-slate-900'}`}
+      className={`flex-1 flex flex-col overflow-hidden relative ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}
     >
       <ViewerToolbar
         label={label}
@@ -296,7 +297,8 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
           mediaType={mediaType}
           resolvedUrl={resolvedImageUrl}
           osdContainerRef={osdContainerRef}
-          annotations={annotations as any}
+          viewerRef={viewerRef}
+          annotations={annotations}
           onCreateAnnotation={handleCreateAnnotation}
           annotationModeActive={showAnnotationTool && (mediaType === 'audio' || mediaType === 'video')}
           onAnnotationModeToggle={(active) => setShowAnnotationTool(active)}
@@ -330,6 +332,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
             onDrawingStateChange={onAnnotationDrawingStateChange}
             annotationText={annotationText}
             annotationMotivation={annotationMotivation}
+            osdReady={osdReady}
             cx={cx}
             fieldMode={fieldMode}
           />

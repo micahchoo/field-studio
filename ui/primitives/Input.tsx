@@ -1,44 +1,26 @@
 /**
- * Input - Atomic UI Primitive
+ * Input - Atomic UI Primitive (Neobrutalist)
  *
- * Pure presentational text input with label, help text, and error state.
- * Zero business logic — all state and validation lives in calling hooks.
- * Sized and styled entirely via design tokens.
+ * Sharp corners, thick black border, monospace values, UPPERCASE labels.
  */
 
 import React from 'react';
-import { COLORS, INTERACTION, LAYOUT, PATTERNS, SPACING, TOUCH_TARGETS, TYPOGRAPHY } from '../../src/shared/config/design-tokens';
 
 export type InputSize = 'sm' | 'base' | 'lg';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
-  /** Label text displayed above the input */
   label?: string;
-  /** Size preset */
   size?: InputSize;
-  /** Helper text displayed below the input */
   helpText?: string;
-  /** Validation error message — also sets error styling */
   error?: string;
-  /** Whether the field is required */
   required?: boolean;
-  /** Auto-focus on mount */
   autoFocusOnMount?: boolean;
 }
 
 const sizeStyles: Record<InputSize, React.CSSProperties> = {
-  sm: {
-    height: TOUCH_TARGETS.input.height.sm,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-  },
-  base: {
-    height: TOUCH_TARGETS.input.height.base,
-    fontSize: TYPOGRAPHY.fontSize.base,
-  },
-  lg: {
-    height: TOUCH_TARGETS.input.height.lg,
-    fontSize: TYPOGRAPHY.fontSize.lg,
-  },
+  sm: { height: '32px', fontSize: '0.875rem' },
+  base: { height: '40px', fontSize: '1rem' },
+  lg: { height: '48px', fontSize: '1.125rem' },
 };
 
 export const Input: React.FC<InputProps> = ({
@@ -56,35 +38,27 @@ export const Input: React.FC<InputProps> = ({
   const inputStyle: React.CSSProperties = {
     display: 'block',
     width: '100%',
-    padding: TOUCH_TARGETS.input.padding,
-    border: `1px solid ${error ? COLORS.border.error : COLORS.border.default}`,
-    borderRadius: LAYOUT.borderRadius.md,
-    color: disabled ? COLORS.text.disabled : COLORS.text.primary,
-    backgroundColor: disabled ? COLORS.background.tertiary : COLORS.background.primary,
-    transition: `border-color ${INTERACTION.duration.base} ${INTERACTION.easing.default}`,
-    // Note: outline removed to allow global :focus-visible rule to work (WCAG 2.1 2.4.7)
-    boxSizing: 'border-box',
+    padding: '0 12px',
+    border: `var(--theme-border-width-thick, 2px) solid ${error ? 'var(--theme-error-color, #FF3333)' : 'var(--theme-input-border, var(--theme-border-default, #000000))'}`,
+    borderRadius: 0,
+    color: disabled ? 'var(--theme-text-muted, #999)' : 'var(--theme-text-primary, #000000)',
+    backgroundColor: disabled ? 'var(--theme-surface-secondary, #FFF8E7)' : 'var(--theme-input-bg, var(--theme-surface-primary, #FFFFFF))',
+    fontFamily: 'var(--theme-font-family-mono, "JetBrains Mono", ui-monospace, monospace)',
+    transition: 'all 0.1s linear',
+    boxSizing: 'border-box' as const,
     ...sizeStyles[size],
     ...style,
   };
 
   const labelStyle: React.CSSProperties = {
-    ...PATTERNS.form.label,
     display: 'block',
-  };
-
-  const hintStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.text.tertiary,
-    marginTop: SPACING[1],
-  };
-
-  const errorStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.semantic.error,
-    marginTop: SPACING[1],
+    fontFamily: 'var(--theme-font-family-mono, "JetBrains Mono", ui-monospace, monospace)',
+    fontSize: '0.6875rem',
+    fontWeight: 700,
+    color: 'var(--theme-text-primary, #000000)',
+    marginBottom: '6px',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
   };
 
   return (
@@ -92,7 +66,7 @@ export const Input: React.FC<InputProps> = ({
       {label && (
         <label htmlFor={id} style={labelStyle}>
           {label}
-          {required && <span aria-hidden="true" style={{ color: COLORS.semantic.error }}> *</span>}
+          {required && <span aria-hidden="true" style={{ color: 'var(--theme-error-color, #FF3333)' }}> *</span>}
         </label>
       )}
       <input
@@ -106,9 +80,9 @@ export const Input: React.FC<InputProps> = ({
         {...props}
       />
       {error ? (
-        <span id={`${id}-error`} role="alert" style={errorStyle}>{error}</span>
+        <span id={`${id}-error`} role="alert" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--theme-error-color, #FF3333)', marginTop: '4px', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace' }}>{error}</span>
       ) : helpText ? (
-        <span id={`${id}-help`} style={hintStyle}>{helpText}</span>
+        <span id={`${id}-help`} style={{ display: 'block', fontSize: '0.75rem', color: 'var(--theme-text-muted, #666)', marginTop: '4px', fontFamily: '"JetBrains Mono", monospace' }}>{helpText}</span>
       ) : null}
     </div>
   );

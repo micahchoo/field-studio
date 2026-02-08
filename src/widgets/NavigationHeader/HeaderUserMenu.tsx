@@ -39,7 +39,7 @@ export interface HeaderUserMenuProps {
  *   fieldMode={false}
  *   userName="Jane Doe"
  *   organizationName="Example Museum"
- *   textMutedColor="text-slate-500"
+ *   textMutedColor="text-nb-black/50"
  *   onHelp={handleHelp}
  *   onSettings={handleSettings}
  *   onUserMenu={handleUserMenu}

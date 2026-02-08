@@ -114,7 +114,7 @@ export const PlaybackRateSelect: React.FC<PlaybackRateSelectProps> = ({
 
       {isOpen && (
         <div
-          className="absolute bottom-full left-0 mb-1 rounded-md shadow-lg z-50 py-1 min-w-[5rem]"
+          className="absolute bottom-full left-0 mb-1 shadow-brutal z-50 py-1 min-w-[5rem]"
           style={{
             backgroundColor: dropdownBg,
             border: `1px solid ${dropdownBorder}`,

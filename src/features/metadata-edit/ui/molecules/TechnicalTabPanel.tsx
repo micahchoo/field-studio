@@ -82,9 +82,9 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
     }
   }, [showAdvanced]);
 
-  const inputClass = `w-full text-sm p-2.5 border rounded bg-white text-slate-900 focus:ring-2 focus:ring-${
+  const inputClass = `w-full text-sm p-2.5 border bg-nb-white text-nb-black focus:ring-2 focus:ring-${
     cx.accent
-  } focus:border-${cx.accent} outline-none transition-all`;
+  } focus:border-${cx.accent} outline-none transition-nb`;
 
   const isCollection = resource.type === 'Collection';
   const isManifest = resource.type === 'Manifest';
@@ -114,7 +114,7 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
           fieldMode={fieldMode}
           className={inputClass}
         />
-        <p className={`text-[10px] mt-1 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+        <p className={`text-[10px] mt-1 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
           Used for Timeline views.
         </p>
       </div>
@@ -175,8 +175,8 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
 
         {/* Active Behaviors Summary */}
         {(resource.behavior || []).length > 0 && (
-          <div className={`mt-3 p-2 rounded border ${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
-            <div className={`text-[10px] uppercase font-bold mb-1 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+          <div className={`mt-3 p-2 border ${fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white border-nb-black/10'}`}>
+            <div className={`text-[10px] uppercase font-bold mb-1 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
               Active Behaviors
             </div>
             <div className="flex flex-wrap gap-1">
@@ -195,13 +195,13 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
       </div>
 
       {/* === ADVANCED PROPERTIES TOGGLE === */}
-      <div className={`pt-4 border-t ${fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
+      <div className={`pt-4 border-t ${fieldMode ? 'border-nb-black' : 'border-nb-black/20'}`}>
         <Button variant="ghost" size="bare"
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={`flex items-center gap-2 text-sm font-medium w-full ${
             fieldMode
-              ? 'text-slate-300 hover:text-slate-100'
-              : 'text-slate-600 hover:text-slate-800'
+              ? 'text-nb-black/30 hover:text-nb-black/10'
+              : 'text-nb-black/60 hover:text-nb-black'
           }`}
           aria-expanded={showAdvanced}
           aria-controls="advanced-properties"
@@ -212,7 +212,7 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
       </div>
 
       {/* === LINKING PROPERTIES (Standard+ level) === */}
-      <div className={`space-y-6 pt-4 border-t ${fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
+      <div className={`space-y-6 pt-4 border-t ${fieldMode ? 'border-nb-black' : 'border-nb-black/20'}`}>
         {/* Provider */}
         <AgentEditor
           value={(resource.provider || []) as AgentItem[]}
@@ -297,13 +297,13 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
       </div>
 
       {/* === ADVANCED PROPERTIES TOGGLE === */}
-      <div className={`pt-4 border-t ${fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
+      <div className={`pt-4 border-t ${fieldMode ? 'border-nb-black' : 'border-nb-black/20'}`}>
         <Button variant="ghost" size="bare"
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={`flex items-center gap-2 text-sm font-medium w-full ${
             fieldMode
-              ? 'text-slate-300 hover:text-slate-100'
-              : 'text-slate-600 hover:text-slate-800'
+              ? 'text-nb-black/30 hover:text-nb-black/10'
+              : 'text-nb-black/60 hover:text-nb-black'
           }`}
           aria-expanded={showAdvanced}
           aria-controls="advanced-properties"
@@ -317,7 +317,7 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
       {showAdvanced && (
         <div
           id="advanced-properties"
-          className={`space-y-6 pt-2 pb-4 ${fieldMode ? 'border-b border-slate-800' : 'border-b border-slate-200'}`}
+          className={`space-y-6 pt-2 pb-4 ${fieldMode ? 'border-b border-nb-black' : 'border-b border-nb-black/20'}`}
         >
           {/* Part Of */}
           <div>
@@ -376,7 +376,7 @@ export const TechnicalTabPanel: React.FC<TechnicalTabPanelProps> = ({
                 <img
                   src={resource.thumbnail[0].id}
                   alt="Thumbnail preview"
-                  className="h-16 rounded border border-slate-200 object-cover"
+                  className="h-16 border border-nb-black/20 object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               </div>

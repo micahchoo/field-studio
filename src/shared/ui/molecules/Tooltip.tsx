@@ -49,7 +49,7 @@ interface TooltipProps {
   /** Element to attach to */
   children: React.ReactNode;
   /** Position relative to trigger */
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  position?:'top' |'bottom' |'left' |'right';
   /** Show a help indicator (?) on the element */
   showIndicator?: boolean;
   /** Delay before showing (ms) */
@@ -70,7 +70,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   id,
   content,
   children,
-  position = 'top',
+  position ='top',
   showIndicator = false,
   delay = 400,
   persist = false,
@@ -100,17 +100,17 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   // Position classes
   const positionClasses = {
-    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
-    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 -translate-y-1/2 ml-2'
+    top:'bottom-full left-1/2 -translate-x-1/2 mb-2',
+    bottom:'top-full left-1/2 -translate-x-1/2 mt-2',
+    left:'right-full top-1/2 -translate-y-1/2 mr-2',
+    right:'left-full top-1/2 -translate-y-1/2 ml-2'
   };
 
   const arrowClasses = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-t-slate-800 border-x-transparent border-b-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-800 border-x-transparent border-t-transparent',
-    left: 'left-full top-1/2 -translate-y-1/2 border-l-slate-800 border-y-transparent border-r-transparent',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-slate-800 border-y-transparent border-l-transparent'
+    top:'top-full left-1/2 -translate-x-1/2 border-t-nb-black border-x-transparent border-b-transparent',
+    bottom:'bottom-full left-1/2 -translate-x-1/2 border-b-nb-black border-x-transparent border-t-transparent',
+    left:'left-full top-1/2 -translate-y-1/2 border-l-nb-black border-y-transparent border-r-transparent',
+    right:'right-full top-1/2 -translate-y-1/2 border-r-nb-black border-y-transparent border-l-transparent'
   };
 
   return (
@@ -125,24 +125,24 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {children}
 
       {showIndicator && !isDismissed && (
-        <span className="ml-1 w-3.5 h-3.5 rounded-full bg-blue-100 text-blue-600 text-[9px] font-bold flex items-center justify-center cursor-help">
+        <span className="ml-1 w-3.5 h-3.5 bg-nb-blue/20 text-nb-blue text-[9px] font-bold flex items-center justify-center cursor-help">
           ?
         </span>
       )}
 
       {isVisible && (
         <div
-          className={`absolute ${positionClasses[position]} z-[300] animate-in fade-in zoom-in-95 duration-150`}
+          className={`absolute ${positionClasses[position]} z-[300] animate-in fade-in zoom-in-95`}
           role="tooltip"
         >
-          <div className="bg-slate-800 text-white rounded-lg shadow-xl max-w-xs min-w-[200px] overflow-hidden">
+          <div className="bg-nb-black text-white shadow-brutal max-w-xs min-w-[200px] overflow-hidden">
             {/* Header */}
-            <div className="px-3 py-2 border-b border-slate-700 flex items-center justify-between gap-2">
+            <div className="px-3 py-2 border-b border-nb-black/80 flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-white">{content.title}</span>
               {!persist && (
                 <Button variant="ghost" size="bare"
                   onClick={(e) => { e.stopPropagation(); dismiss(); }}
-                  className="text-slate-400 hover:text-white text-xs"
+                  className="text-nb-black/40 hover:text-white text-xs"
                   title="Don't show again"
                 >
                   <Icon name="close" className="text-xs" />
@@ -152,10 +152,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
             {/* Body */}
             <div className="px-3 py-2 space-y-2">
-              <p className="text-[11px] text-slate-300 leading-relaxed">{content.body}</p>
+              <p className="text-[11px] text-nb-black/30 leading-relaxed">{content.body}</p>
 
               {content.action && (
-                <p className="text-[10px] text-blue-300 flex items-center gap-1">
+                <p className="text-[10px] text-nb-blue/60 flex items-center gap-1">
                   <Icon name="touch_app" className="text-[10px]" />
                   {content.action}
                 </p>
@@ -163,7 +163,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
               {content.shortcut && (
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded text-[9px] font-mono text-slate-300">
+                  <kbd className="px-1.5 py-0.5 bg-nb-black/80 text-[9px] font-mono text-nb-black/30">
                     {content.shortcut}
                   </kbd>
                 </div>

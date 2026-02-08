@@ -17,12 +17,12 @@ export const EmptyStructure: React.FC<EmptyStructureProps> = ({
     <div
       className={`
         flex flex-col items-center justify-center
-        p-8 text-center text-slate-500 dark:text-slate-400
+        p-8 text-center text-nb-black/50
         ${className}
       `}
     >
       <svg
-        className="w-12 h-12 mb-3 text-slate-300 dark:text-slate-600"
+        className="w-12 h-12 mb-3 text-nb-black/30"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

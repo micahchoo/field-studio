@@ -17,7 +17,7 @@ import React, { ReactNode, useEffect, useId } from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
 
-export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+export type ModalSize ='sm' |'md' |'lg' |'xl' |'full';
 
 export interface ModalDialogProps {
   /** Whether the modal is open */
@@ -38,13 +38,13 @@ export interface ModalDialogProps {
   footer?: ReactNode;
   /** Modal size preset */
   size?: ModalSize;
-  /** Maximum height (e.g., "90vh", "600px") */
+  /** Maximum height (e.g.,"90vh","600px") */
   maxHeight?: string;
-  /** Fixed height (e.g., "500px") */
+  /** Fixed height (e.g.,"500px") */
   height?: string;
   /** Z-index value (default 1000) */
   zIndex?: number;
-  /** Field mode for dark theme */
+  /** Field mode for dark theme (auto-detected from DOM if not provided) */
   fieldMode?: boolean;
   /** Whether to prevent closing on backdrop click */
   preventBackdropClose?: boolean;
@@ -53,11 +53,11 @@ export interface ModalDialogProps {
 }
 
 const SIZE_CLASSES: Record<ModalSize, string> = {
-  sm: 'max-w-md',
-  md: 'max-w-2xl',
-  lg: 'max-w-4xl',
-  xl: 'max-w-6xl',
-  full: 'max-w-[95vw]',
+  sm:'max-w-md',
+  md:'max-w-2xl',
+  lg:'max-w-4xl',
+  xl:'max-w-6xl',
+  full:'max-w-[95vw]',
 };
 
 export const ModalDialog: React.FC<ModalDialogProps> = ({
@@ -66,25 +66,29 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
   title,
   subtitle,
   icon,
-  iconColor = 'bg-blue-100 text-blue-600',
+  iconColor,
   children,
   footer,
-  size = 'lg',
-  maxHeight = '90vh',
+  size ='lg',
+  maxHeight ='90vh',
   height,
   zIndex = 1000,
-  fieldMode = false,
+  fieldMode: fieldModeProp,
   preventBackdropClose = false,
-  className = '',
+  className ='',
 }) => {
   const titleId = useId();
+
+  // Auto-detect field mode from DOM attribute if not explicitly provided
+  const fieldMode = fieldModeProp ?? (typeof document !== 'undefined' &&
+    document.querySelector('[data-field-mode="true"]') !== null);
 
   // Handle ESC key
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key ==='Escape') {
         onClose();
       }
     };
@@ -101,10 +105,9 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
     }
   };
 
-  const backdropClass = `fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4`;
-  const modalClass = `${SIZE_CLASSES[size]} w-full ${fieldMode ? 'bg-slate-950 border border-slate-800' : 'bg-white'} rounded-2xl shadow-2xl overflow-hidden flex flex-col ${className}`;
-  const headerClass = `flex items-center justify-between p-4 border-b ${fieldMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`;
-  const headerBgClass = fieldMode ? 'bg-slate-900' : 'bg-slate-50';
+  const resolvedIconColor = iconColor || (fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-blue/20 text-nb-blue');
+  const modalClass =`${SIZE_CLASSES[size]} w-full bg-theme-surface border-2 border-theme-border shadow-brutal-lg overflow-hidden flex flex-col ${className}`;
+  const headerClass ='flex items-center justify-between p-4 border-b border-theme-border-subtle bg-theme-surface';
 
   const heightStyle: React.CSSProperties = height
     ? { height }
@@ -112,7 +115,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
 
   return (
     <div
-      className={backdropClass}
+      className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       style={{ zIndex }}
       onClick={handleBackdropClick}
     >
@@ -128,19 +131,19 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
         <div className={headerClass}>
           <div className="flex items-center gap-3">
             {icon && (
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconColor}`}>
+              <div className={`w-10 h-10 flex items-center justify-center ${resolvedIconColor}`}>
                 <Icon name={icon} />
               </div>
             )}
             <div>
               <h2
                 id={titleId}
-                className={`text-lg font-bold ${fieldMode ? 'text-slate-200' : 'text-slate-800'}`}
+                className="text-lg font-bold text-theme-text"
               >
                 {title}
               </h2>
               {subtitle && (
-                <p className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className="text-sm text-theme-text-muted">
                   {subtitle}
                 </p>
               )}
@@ -148,11 +151,7 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
           </div>
           <Button variant="ghost" size="bare"
             onClick={onClose}
-            className={`p-2 rounded-lg ${
-              fieldMode
-                ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-            }`}
+            className="p-2 text-theme-text-muted hover:text-theme-text hover:bg-theme-accent-subtle"
             aria-label="Close modal"
           >
             <Icon name="close" />
@@ -160,13 +159,13 @@ export const ModalDialog: React.FC<ModalDialogProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-theme-surface">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className={`p-4 border-t ${fieldMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+          <div className="p-4 border-t border-theme-border-subtle bg-theme-surface">
             {footer}
           </div>
         )}

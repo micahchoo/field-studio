@@ -514,30 +514,25 @@ export class SearchService {
    * Calculate Levenshtein distance between two strings
    */
   private levenshteinDistance(a: string, b: string): number {
-    const matrix: number[][] = [];
+    const m = a.length, n = b.length;
+    // Single-row DP — O(min(m,n)) memory instead of O(m*n)
+    let prev = new Array(m + 1);
+    let curr = new Array(m + 1);
+    for (let j = 0; j <= m; j++) prev[j] = j;
 
-    for (let i = 0; i <= b.length; i++) {
-      matrix[i] = [i];
-    }
-    for (let j = 0; j <= a.length; j++) {
-      matrix[0][j] = j;
-    }
-
-    for (let i = 1; i <= b.length; i++) {
-      for (let j = 1; j <= a.length; j++) {
-        if (b.charAt(i - 1) === a.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
+    for (let i = 1; i <= n; i++) {
+      curr[0] = i;
+      for (let j = 1; j <= m; j++) {
+        if (b.charCodeAt(i - 1) === a.charCodeAt(j - 1)) {
+          curr[j] = prev[j - 1];
         } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1, // substitution
-            matrix[i][j - 1] + 1,     // insertion
-            matrix[i - 1][j] + 1      // deletion
-          );
+          curr[j] = 1 + Math.min(prev[j - 1], curr[j - 1], prev[j]);
         }
       }
+      [prev, curr] = [curr, prev];
     }
 
-    return matrix[b.length][a.length];
+    return prev[m];
   }
 
   /**

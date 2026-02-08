@@ -33,3 +33,11 @@ export type {
 } from './ui/organisms/BoardCanvas';
 
 export * from './model';
+export { useBoardVault } from './hooks/useBoardVault';
+export type { UseBoardVaultOptions, UseBoardVaultReturn } from './hooks/useBoardVault';
+export {
+  boardStateToManifest,
+  manifestToBoardState,
+  generateBoardId,
+  isBoardManifest,
+} from './model/iiif-bridge';

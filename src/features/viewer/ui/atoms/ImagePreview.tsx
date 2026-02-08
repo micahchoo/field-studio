@@ -50,7 +50,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-6 relative group bg-slate-950">
+    <div className="flex-1 flex items-center justify-center p-6 relative group bg-nb-black">
       {/* Grid background pattern */}
       <div
         className="absolute inset-0 opacity-5"
@@ -64,8 +64,8 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
       {isLoading && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="animate-pulse flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin" />
-            <span className="text-slate-500 text-xs">Loading...</span>
+            <div className="w-8 h-8 border-2 border-nb-black/60 border-t-nb-blue animate-spin" />
+            <span className="text-nb-black/50 text-xs">Loading...</span>
           </div>
         </div>
       )}
@@ -74,7 +74,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
       {src && (
         <img
           src={hasError ? ERROR_SVG : src}
-          className="max-w-[90%] max-h-[90%] object-contain shadow-2xl ring-1 ring-white/20 transition-all duration-300 bg-slate-800"
+          className="max-w-[90%] max-h-[90%] object-contain shadow-brutal-lg ring-1 ring-white/20 transition-nb bg-nb-black"
           style={transformStyle}
           onError={handleError}
           onLoad={handleLoad}

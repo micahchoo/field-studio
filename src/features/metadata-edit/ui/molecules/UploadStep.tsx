@@ -34,13 +34,13 @@ export const UploadStep: React.FC<UploadStepProps> = ({
 }) => {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6">
-      <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 shadow-sm">
-        <span className="text-4xl text-blue-500">📄</span>
+      <div className="w-24 h-24 bg-nb-blue/10 flex items-center justify-center mb-6 shadow-brutal-sm">
+        <span className="text-4xl text-nb-blue">📄</span>
       </div>
-      <h3 className="text-lg font-semibold text-slate-800 mb-2">
+      <h3 className="text-lg font-semibold text-nb-black mb-2">
         Upload CSV File
       </h3>
-      <p className="text-sm text-slate-500 text-center max-w-md mb-6">
+      <p className="text-sm text-nb-black/50 text-center max-w-md mb-6">
         Select a CSV file containing metadata to import. The first row should
         contain column headers.
       </p>
@@ -50,7 +50,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({
         buttonLabel="Choose CSV File"
         loadingLabel="Processing CSV..."
       />
-      <div className="mt-8 text-xs text-slate-400 max-w-md">
+      <div className="mt-8 text-xs text-nb-black/40 max-w-md">
         <p className="mb-1">• Supports .csv files with UTF-8 encoding</p>
         <p className="mb-1">• First row must contain column headers</p>
         <p>• Maximum file size: 10MB</p>

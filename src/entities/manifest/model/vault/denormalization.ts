@@ -84,9 +84,9 @@ function denormalizeManifest(state: NormalizedState, id: string): IIIFManifest {
     .filter(childId => state.typeIndex[childId] === 'Canvas')
     .map(childId => denormalizeCanvas(state, childId));
 
-  // Reconstruct structures (ranges)
-  const rangeIds = Object.keys(state.entities.Range)
-    .filter(rid => state.reverseRefs[rid] === id);
+  // Reconstruct structures (ranges) — use references index instead of scanning all ranges
+  const rangeIds = (state.references[id] || [])
+    .filter(childId => state.typeIndex[childId] === 'Range');
 
   if (rangeIds.length > 0) {
     manifest.structures = rangeIds.map(rid => {
@@ -103,22 +103,18 @@ function denormalizeManifest(state: NormalizedState, id: string): IIIFManifest {
 }
 
 /**
- * Check if an annotation page contains painting annotations
+ * Check if an annotation page contains painting annotations.
+ * Per IIIF spec, all annotations in a page share the same motivation,
+ * so checking only the first annotation is sufficient — O(1) instead of O(n).
  */
 function isPaintingAnnotationPage(state: NormalizedState, pageId: string): boolean {
   const annoIds = state.references[pageId] || [];
+  if (annoIds.length === 0) return false;
 
-  for (const annoId of annoIds) {
-    const anno = state.entities.Annotation[annoId];
-    if (anno) {
-      const motivation = (anno as unknown as Record<string, unknown>).motivation;
-      if (motivation === 'painting') {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  // Check first annotation only — spec guarantees homogeneous motivation per page
+  const firstAnno = state.entities.Annotation[annoIds[0]];
+  if (!firstAnno) return false;
+  return (firstAnno as unknown as Record<string, unknown>).motivation === 'painting';
 }
 
 /**

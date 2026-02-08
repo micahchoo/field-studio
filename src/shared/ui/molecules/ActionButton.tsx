@@ -23,9 +23,9 @@ export interface ActionButtonProps {
   /** Click handler */
   onClick: () => void;
   /** Visual variant */
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
+  variant?:'primary' |'secondary' |'danger' |'success' |'ghost';
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?:'sm' |'md' |'lg';
   /** Loading state */
   loading?: boolean;
   /** Disabled state */
@@ -35,7 +35,7 @@ export interface ActionButtonProps {
   /** Additional CSS classes */
   className?: string;
   /** Type attribute */
-  type?: 'button' | 'submit' | 'reset';
+  type?:'button' |'submit' |'reset';
   /** Contextual styles from template */
   cx?: ContextualClassNames;
   /** Current field mode */
@@ -43,10 +43,10 @@ export interface ActionButtonProps {
 }
 
 // Map size to Button atom size
-const sizeMap: Record<string, 'sm' | 'base' | 'lg' | 'xl'> = {
-  sm: 'sm',
-  md: 'base',
-  lg: 'lg',
+const sizeMap: Record<string,'sm' |'base' |'lg' |'xl'> = {
+  sm:'sm',
+  md:'base',
+  lg:'lg',
 };
 
 /**
@@ -73,37 +73,37 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   label,
   icon,
   onClick,
-  variant = 'primary',
-  size = 'md',
+  variant ='primary',
+  size ='md',
   loading = false,
   disabled = false,
   fullWidth = false,
-  className = '',
-  type = 'button',
+  className ='',
+  type ='button',
   cx: _cx = {},
   fieldMode = false,
 }) => {
   // Map variant to Button atom variant
-  const variantMap: Record<string, 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'> = {
-    primary: 'primary',
-    secondary: 'secondary',
-    danger: 'danger',
-    success: 'success',
-    ghost: 'ghost',
+  const variantMap: Record<string,'primary' |'secondary' |'ghost' |'danger' |'success'> = {
+    primary:'primary',
+    secondary:'secondary',
+    danger:'danger',
+    success:'success',
+    ghost:'ghost',
   };
 
   // Field mode variant classes (dark-UI overrides for Button atom)
   const fieldModeClasses = fieldMode
-    ? variant === 'primary'
-      ? 'bg-yellow-400 text-black border-yellow-500'
-      : variant === 'secondary'
-        ? 'bg-slate-700 text-slate-100 border-slate-600'
-        : variant === 'danger'
-          ? 'bg-red-500/20 text-red-400 border-red-500/50'
-          : variant === 'success'
-            ? 'bg-green-500/20 text-green-400 border-green-500/50'
-            : 'bg-transparent text-slate-200 border-transparent'
-    : '';
+    ? variant ==='primary'
+      ?'bg-nb-yellow text-black border-nb-yellow'
+      : variant ==='secondary'
+        ?'bg-nb-black/80 text-nb-black/10 border-nb-black/60'
+        : variant ==='danger'
+          ?'bg-nb-red/20 text-nb-red border-nb-red/50'
+          : variant ==='success'
+            ?'bg-nb-green/20 text-nb-green border-nb-green/50'
+            :'bg-transparent text-nb-black/20 border-transparent'
+    :'';
 
   // Create icon element for Button atom
   const iconElement = loading ? (
@@ -120,7 +120,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       variant={variantMap[variant]}
       size={sizeMap[size]}
       fullWidth={fullWidth}
-      minimal={variant === 'ghost'}
+      minimal={variant ==='ghost'}
       className={`${fieldModeClasses} ${className}`}
       icon={iconElement}
       // @ts-ignore - Button atom supports type prop via spread

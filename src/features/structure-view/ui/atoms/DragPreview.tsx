@@ -54,15 +54,15 @@ function getTypeIcon(type: string): string {
 function getTypeColor(type: string): string {
   switch (type) {
     case 'Collection':
-      return 'text-blue-500';
+      return 'text-nb-blue';
     case 'Manifest':
-      return 'text-green-500';
+      return 'text-nb-green';
     case 'Canvas':
-      return 'text-purple-500';
+      return 'text-nb-purple';
     case 'Range':
-      return 'text-orange-500';
+      return 'text-nb-orange';
     default:
-      return 'text-slate-500';
+      return 'text-nb-black/50';
   }
 }
 
@@ -82,9 +82,9 @@ export const DragPreview: React.FC<DragPreviewProps> = ({
     <div
       className={`
         flex items-center gap-2 px-3 py-2 
-        bg-white dark:bg-slate-800 
-        border border-slate-200 dark:border-slate-700 
-        rounded-lg shadow-lg
+        bg-nb-white 
+        border border-nb-black/20 
+         shadow-brutal
         min-w-[200px]
         ${className}
       `}
@@ -93,11 +93,11 @@ export const DragPreview: React.FC<DragPreviewProps> = ({
         name={getTypeIcon(type)}
         className={`text-lg ${getTypeColor(type)}`}
       />
-      <span className="flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+      <span className="flex-1 truncate text-sm font-medium text-nb-black/80">
         {label}
       </span>
       {count > 1 && (
-        <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-full">
+        <span className="text-xs bg-nb-cream/80 text-nb-black/50 px-1.5 py-0.5 ">
           {count}
         </span>
       )}

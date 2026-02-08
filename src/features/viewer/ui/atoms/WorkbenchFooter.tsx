@@ -39,7 +39,7 @@ export const WorkbenchFooter: React.FC<WorkbenchFooterProps> = ({
   cx: _cx,
   fieldMode = false,
 }) => {
-  const panelBgClass = fieldMode ? 'bg-slate-900' : 'bg-slate-50';
+  const panelBgClass = fieldMode ? 'bg-nb-black' : 'bg-nb-white';
 
   return (
     <div className={`p-4 ${panelBgClass} border-t space-y-2`}>

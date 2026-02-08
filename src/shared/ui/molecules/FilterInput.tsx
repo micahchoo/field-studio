@@ -4,7 +4,7 @@
  * Composes: Icon + Input atoms + debounce logic
  *
  * A search/filter input with built-in debounce, clear button, and fieldMode theming.
- * Receives `cx` and `fieldMode` as optional props from organism.
+ * Receives`cx` and`fieldMode` as optional props from organism.
  * NOTE: Does NOT call useContextualStyles — receives cx via props.
  *
  * IDEAL OUTCOME: User types, onChange is called once after debounce period
@@ -57,8 +57,8 @@ export interface FilterInputProps {
 export const FilterInput: React.FC<FilterInputProps> = ({
   value,
   onChange,
-  placeholder = 'Filter...',
-  className = '',
+  placeholder ='Filter...',
+  className ='',
   width = INPUT_CONSTRAINTS.width.filter,
   autoFocus = false,
   showClear = true,
@@ -127,7 +127,7 @@ export const FilterInput: React.FC<FilterInputProps> = ({
     };
   }, [debounceTimer]);
 
-  const inputId = id || 'filter-input';
+  const inputId = id ||'filter-input';
   return (
     <div className={`relative ${width} ${className}`}>
       {/* Search Icon */}
@@ -136,7 +136,7 @@ export const FilterInput: React.FC<FilterInputProps> = ({
         className={`
           absolute left-3 top-2.5 text-lg
           ${cx.label}
-        `}
+`}
         aria-hidden="true"
       />
 
@@ -150,11 +150,11 @@ export const FilterInput: React.FC<FilterInputProps> = ({
         autoFocus={autoFocus}
         aria-label={ariaLabel || placeholder}
         className={`
-          pl-10 pr-8 py-2 border rounded-md text-sm
-          outline-none transition-all
+          pl-10 pr-8 py-2 border  text-sm
+          outline-none transition-nb
           focus:ring-2 focus:ring-offset-2
           ${cx.searchInput}
-        `}
+`}
       />
 
       {/* Clear Button */}

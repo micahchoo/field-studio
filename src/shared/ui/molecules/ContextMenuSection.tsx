@@ -22,7 +22,7 @@ export interface ContextMenuSectionProps {
   /** Section title (optional) */
   title?: string;
   /** Items in this section */
-  items: Omit<ContextMenuItemProps, 'cx'>[];
+  items: Omit<ContextMenuItemProps,'cx'>[];
   /** Whether to show divider before this section */
   showDivider?: boolean;
   /** Contextual styles */
@@ -38,8 +38,8 @@ export interface ContextMenuSectionProps {
  * <ContextMenuSection
  *   title="Actions"
  *   items={[
- *     { id: 'edit', label: 'Edit', icon: 'edit', onClick: () => {} },
- *     { id: 'delete', label: 'Delete', icon: 'delete', variant: 'danger', onClick: () => {} },
+ *     { id:'edit', label:'Edit', icon:'edit', onClick: () => {} },
+ *     { id:'delete', label:'Delete', icon:'delete', variant:'danger', onClick: () => {} },
  *   ]}
  *   showDivider={true}
  * />
@@ -59,12 +59,12 @@ export const ContextMenuSection: React.FC<ContextMenuSectionProps> = ({
   return (
     <>
       {/* Section divider */}
-      {showDivider && <div className={`h-px my-1.5 mx-3 ${cx?.subtleBg ?? 'bg-slate-100'}`} />}
+      {showDivider && <div className={`h-px my-1.5 mx-3 ${cx?.subtleBg ??'bg-nb-cream'}`} />}
 
       {/* Section title */}
       {title && (
         <div
-          className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest ${cx?.label ?? 'text-slate-400'}`}
+          className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest ${cx?.label ??'text-nb-black/40'}`}
         >
           {title}
         </div>

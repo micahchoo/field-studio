@@ -49,7 +49,7 @@ export interface MapMarkerProps {
   /** Number of items at this location (for clustering) */
   count?: number;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?:'sm' |'md' |'lg';
   /** Disabled state */
   disabled?: boolean;
   /** Contextual styles from template (required for theming) */
@@ -72,7 +72,7 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
   selected = false,
   onSelect,
   count = 1,
-  size = 'md',
+  size ='md',
   disabled = false,
   cx,
 }) => {
@@ -81,9 +81,9 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
 
   // Size configurations
   const sizeConfig = {
-    sm: { marker: 'w-6 h-6', icon: 'text-xs', badge: 'text-[8px]' },
-    md: { marker: 'w-8 h-8', icon: 'text-sm', badge: 'text-xs' },
-    lg: { marker: 'w-10 h-10', icon: 'text-base', badge: 'text-xs' },
+    sm: { marker:'w-6 h-6', icon:'text-xs', badge:'text-[8px]' },
+    md: { marker:'w-8 h-8', icon:'text-sm', badge:'text-xs' },
+    lg: { marker:'w-10 h-10', icon:'text-base', badge:'text-xs' },
   };
 
   const config = sizeConfig[size];
@@ -96,8 +96,8 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        position: 'absolute',
-        transform: 'translate(-50%, -50%)',
+        position:'absolute',
+        transform:'translate(-50%, -50%)',
       }}
     >
       {/* Tooltip on hover */}
@@ -105,16 +105,16 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
         <div
           className={`
             absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1
-            rounded shadow-lg whitespace-nowrap z-50
+            shadow-brutal whitespace-nowrap z-50
             ${cx.surface} ${cx.text} text-xs
-          `}
+`}
         >
           {title}
           <div
             className={`
               absolute top-full left-1/2 -translate-x-1/2
               border-4 border-transparent border-t-current
-            `}
+`}
           />
         </div>
       )}
@@ -126,24 +126,24 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
         variant="ghost"
         size="sm"
         className={`
-          ${config.marker} rounded-full flex items-center justify-center
-          transition-all duration-200 cursor-pointer p-0
-          ${selected ? 'ring-2 ring-offset-2 ring-current scale-110' : 'hover:scale-105'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-          ${markerColor} text-white shadow-lg
-        `}
+          ${config.marker}  flex items-center justify-center
+          transition-nb  cursor-pointer p-0
+          ${selected ?'ring-2 ring-offset-2 ring-current scale-110' :'hover:scale-105'}
+          ${disabled ?'opacity-50 cursor-not-allowed' :''}
+          ${markerColor} text-white shadow-brutal
+`}
         aria-label={`${title} (${type})`}
       >
         {thumbnail && !imageError && count === 1 ? (
           <img
             src={thumbnail}
             alt=""
-            className="w-full h-full rounded-full object-cover"
+            className="w-full h-full object-cover"
             onError={() => setImageError(true)}
           />
         ) : (
           <span className={`material-icons ${config.icon}`}>
-            {count > 1 ? 'layers' : 'place'}
+            {count > 1 ?'layers' :'place'}
           </span>
         )}
 
@@ -152,9 +152,9 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
           <span
             className={`
               absolute -top-1 -right-1 min-w-[16px] h-4 px-1
-              rounded-full bg-red-500 text-white font-bold
+               bg-nb-red text-white font-bold
               flex items-center justify-center ${config.badge}
-            `}
+`}
           >
             {count}
           </span>
@@ -165,9 +165,9 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
       {selected && (
         <span
           className={`
-            absolute inset-0 rounded-full
+            absolute inset-0 
             animate-ping opacity-75 ${markerColor}
-          `}
+`}
         />
       )}
     </div>

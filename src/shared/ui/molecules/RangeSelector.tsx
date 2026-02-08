@@ -18,8 +18,8 @@
  *   end="2023-12-31"
  *   onChange={({ start, end }) => setRange({ start, end })}
  *   presets={[
- *     { label: 'Last 30 days', start: '2023-11-01', end: '2023-12-01' },
- *     { label: 'This year', start: '2023-01-01', end: '2023-12-31' },
+ *     { label:'Last 30 days', start:'2023-11-01', end:'2023-12-01' },
+ *     { label:'This year', start:'2023-01-01', end:'2023-12-31' },
  *   ]}
  * />
  */
@@ -131,7 +131,7 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
   const handleClear = useCallback(() => {
     setStartInput('');
     setEndInput('');
-    onChange({ start: '', end: '' });
+    onChange({ start:'', end:'' });
   }, [onChange]);
 
   return (
@@ -148,11 +148,11 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
             max={maxDate}
             disabled={disabled}
             className={`
-              w-full px-3 py-2 rounded border text-sm
+              w-full px-3 py-2 border text-sm
               ${cx.input} ${cx.border}
               focus:ring-2 focus:ring-inset focus:${cx.accent}
-              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
+              ${disabled ?'opacity-50 cursor-not-allowed' :''}
+`}
           />
         </div>
 
@@ -168,18 +168,18 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
             max={maxDate}
             disabled={disabled}
             className={`
-              w-full px-3 py-2 rounded border text-sm
+              w-full px-3 py-2 border text-sm
               ${cx.input} ${cx.border}
               focus:ring-2 focus:ring-inset focus:${cx.accent}
-              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
+              ${disabled ?'opacity-50 cursor-not-allowed' :''}
+`}
           />
         </div>
       </div>
 
       {/* Validation message */}
       {!isValid && startInput && endInput && (
-        <p className="text-xs text-red-500">
+        <p className="text-xs text-nb-red">
           Invalid range: Start date must be before end date
         </p>
       )}
@@ -217,7 +217,7 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
             >
               Presets
               <span className="material-icons text-sm ml-1">
-                {showPresetMenu ? 'expand_less' : 'expand_more'}
+                {showPresetMenu ?'expand_less' :'expand_more'}
               </span>
             </Button>
 
@@ -225,9 +225,9 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
               <div
                 className={`
                   absolute right-0 top-full mt-1 w-48
-                  rounded-lg shadow-xl border ${cx.border} ${cx.surface}
+                   shadow-brutal border ${cx.border} ${cx.surface}
                   z-50 overflow-hidden
-                `}
+`}
               >
                 {presets.map((preset) => (
                   <Button
@@ -239,7 +239,7 @@ export const RangeSelector: React.FC<RangeSelectorProps> = ({
                       w-full px-3 py-2 text-left text-sm
                       hover:${cx.headerBg} ${cx.text}
                       justify-start
-                    `}
+`}
                   >
                     {preset.label}
                   </Button>

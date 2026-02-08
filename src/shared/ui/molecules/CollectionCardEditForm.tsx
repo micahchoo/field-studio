@@ -60,9 +60,9 @@ export const CollectionCardEditForm: React.FC<CollectionCardEditFormProps> = ({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
+      if (e.key ==='Enter') {
         handleSave();
-      } else if (e.key === 'Escape') {
+      } else if (e.key ==='Escape') {
         setEditName(name);
         onCancel();
       }
@@ -78,7 +78,7 @@ export const CollectionCardEditForm: React.FC<CollectionCardEditFormProps> = ({
       onBlur={handleSave}
       onKeyDown={handleKeyDown}
       autoFocus
-      className="w-full px-2 py-1 text-sm font-medium border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+      className="w-full px-2 py-1 text-sm font-medium border border-nb-blue/40 focus:outline-none focus:ring-2 focus:ring-nb-blue"
       aria-label="Edit collection name"
     />
   );

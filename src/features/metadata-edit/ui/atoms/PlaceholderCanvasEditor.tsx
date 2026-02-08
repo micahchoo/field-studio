@@ -51,23 +51,23 @@ export const PlaceholderCanvasEditor: React.FC<PlaceholderCanvasEditorProps> = (
       <div className="flex items-center gap-1.5">
         <Icon
           name="image"
-          className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
+          className={`text-sm ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}
         />
         <span className={`text-xs font-semibold uppercase tracking-wider ${
-          fieldMode ? 'text-slate-400' : 'text-slate-500'
+          fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
         }`}>
           Poster Image
         </span>
       </div>
 
-      <div className={`flex items-start gap-3 p-3 rounded-lg border ${
+      <div className={`flex items-start gap-3 p-3 border ${
         fieldMode
-          ? 'border-slate-700 bg-slate-800/50'
-          : 'border-slate-200 bg-slate-50'
+          ? 'border-nb-black/80 bg-nb-black/50'
+          : 'border-nb-black/20 bg-nb-white'
       }`}>
         {/* Preview */}
-        <div className={`shrink-0 w-24 h-16 rounded overflow-hidden flex items-center justify-center ${
-          fieldMode ? 'bg-slate-900' : 'bg-slate-200'
+        <div className={`shrink-0 w-24 h-16 overflow-hidden flex items-center justify-center ${
+          fieldMode ? 'bg-nb-black' : 'bg-nb-cream'
         }`}>
           {posterUrl ? (
             <img
@@ -78,7 +78,7 @@ export const PlaceholderCanvasEditor: React.FC<PlaceholderCanvasEditorProps> = (
           ) : (
             <Icon
               name="wallpaper"
-              className={`text-2xl ${fieldMode ? 'text-slate-700' : 'text-slate-300'}`}
+              className={`text-2xl ${fieldMode ? 'text-nb-black/80' : 'text-nb-black/30'}`}
             />
           )}
         </div>
@@ -86,13 +86,13 @@ export const PlaceholderCanvasEditor: React.FC<PlaceholderCanvasEditorProps> = (
         {/* Info + Actions */}
         <div className="flex-1 min-w-0">
           {posterUrl ? (
-            <div className={`text-xs truncate mb-2 ${fieldMode ? 'text-slate-300' : 'text-slate-600'}`}>
+            <div className={`text-xs truncate mb-2 ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/60'}`}>
               {canvasWidth && canvasHeight
                 ? `${canvasWidth} × ${canvasHeight}`
                 : 'Custom poster'}
             </div>
           ) : (
-            <div className={`text-xs mb-2 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <div className={`text-xs mb-2 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
               No poster image set
             </div>
           )}
@@ -113,7 +113,7 @@ export const PlaceholderCanvasEditor: React.FC<PlaceholderCanvasEditorProps> = (
                   size="sm"
                   onClick={onRemove}
                 >
-                  <Icon name="delete" className="text-sm mr-1 text-red-400" />
+                  <Icon name="delete" className="text-sm mr-1 text-nb-red" />
                   Remove
                 </Button>
               )}

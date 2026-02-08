@@ -110,13 +110,15 @@ export const KeyboardShortcutsOverlay: React.FC<KeyboardShortcutsOverlayProps> =
     const platformName = isMac ? 'macOS' : 'Windows/Linux';
     const keyHint = isMac ? '⌘?' : 'Ctrl+?';
 
+    const esc = (str: string) => str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
     let categoriesHtml = '';
     data.categories.forEach(cat => {
       let shortcutsHtml = '';
       cat.shortcuts.forEach(s => {
-        shortcutsHtml += `<div class="shortcut"><span class="description">${s.description}</span><span class="keys">${s.keys}</span></div>`;
+        shortcutsHtml += `<div class="shortcut"><span class="description">${esc(s.description)}</span><span class="keys">${esc(s.keys)}</span></div>`;
       });
-      categoriesHtml += `<h2>${cat.name}</h2><div class="shortcuts-grid">${shortcutsHtml}</div>`;
+      categoriesHtml += `<h2>${esc(cat.name)}</h2><div class="shortcuts-grid">${shortcutsHtml}</div>`;
     });
 
     const content = `<!DOCTYPE html>
@@ -149,7 +151,7 @@ h2 { font-size: 16px; color: #0f172a; margin: 25px 0 12px 0; padding-bottom: 8px
 <body>
 <header>
 <h1>Field Studio Keyboard Shortcuts</h1>
-<p class="subtitle">Context: ${data.context} - Generated on ${data.generatedAt}</p>
+<p class="subtitle">Context: ${esc(data.context)} - Generated on ${esc(data.generatedAt)}</p>
 <span class="platform">${platformName} shortcuts shown</span>
 </header>
 <div class="tip"><strong>Tip:</strong> Press <strong>${keyHint}</strong> anytime to open this overlay from anywhere in the app.</div>
@@ -182,53 +184,53 @@ ${categoriesHtml}
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4"
       onClick={onClose}
       role="presentation"
     >
       <div 
         ref={containerRef}
-        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-nb-white shadow-brutal-lg w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 "
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
         aria-labelledby="shortcuts-title"
       >
-        <div className="border-b border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="border-b border-nb-black/20 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-iiif-blue/10 flex items-center justify-center">
+            <div className="w-10 h-10 bg-iiif-blue/10 flex items-center justify-center">
               <Icon name="keyboard" className="text-iiif-blue text-xl" />
             </div>
             <div>
-              <h2 id="shortcuts-title" className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              <h2 id="shortcuts-title" className="text-xl font-bold text-nb-black/10">
                 Keyboard Shortcuts
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Press <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-mono text-[10px]">?</kbd> to toggle - <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-mono text-[10px]">Esc</kbd> to close
+              <p className="text-xs text-nb-black/50">
+                Press <kbd className="px-1 py-0.5 bg-nb-cream font-mono text-[10px]">?</kbd> to toggle - <kbd className="px-1 py-0.5 bg-nb-cream font-mono text-[10px]">Esc</kbd> to close
               </p>
             </div>
           </div>
           
           <div className="flex-1 w-full sm:w-auto flex items-center gap-3">
             <div className="relative flex-1 max-w-md">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-nb-black/40" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search shortcuts..."
-                className="w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none placeholder:text-slate-400 transition-all"
+                className="w-full pl-10 pr-10 py-2.5 border border-nb-black/20 bg-nb-white text-nb-black/10 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none placeholder:text-nb-black/40 transition-nb"
                 aria-label="Search keyboard shortcuts"
               />
               {searchQuery && (
                 <Button variant="ghost" size="bare"
                   onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-nb-cream "
                   aria-label="Clear search"
                 >
-                  <Icon name="close" className="text-slate-400 text-sm" />
+                  <Icon name="close" className="text-nb-black/40 text-sm" />
                 </Button>
               )}
             </div>
@@ -237,7 +239,7 @@ ${categoriesHtml}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="bare"
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-nb-black/60 hover:text-nb-black hover:bg-nb-cream transition-nb"
               aria-label="Print cheat sheet"
               title="Print cheat sheet"
             >
@@ -246,7 +248,7 @@ ${categoriesHtml}
             </Button>
             <Button variant="ghost" size="bare"
               onClick={onClose}
-              className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="p-2.5 hover:bg-nb-cream text-nb-black/40 hover:text-nb-black/60 transition-nb"
               aria-label="Close shortcuts overlay"
             >
               <Icon name="close" />
@@ -254,13 +256,13 @@ ${categoriesHtml}
           </div>
         </div>
 
-        <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div className="border-b border-nb-black/20 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Context:</span>
+            <span className="text-xs font-medium text-nb-black/50 uppercase tracking-wider">Context:</span>
             <select
               value={selectedContext}
               onChange={(e) => setSelectedContext(e.target.value as ShortcutContext | 'all')}
-              className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none"
+              className="px-3 py-1.5 text-sm border border-nb-black/20 bg-nb-white text-nb-black/80 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none"
               aria-label="Filter by context"
             >
               <option value="all">All Contexts ({contextCounts.all})</option>
@@ -271,14 +273,14 @@ ${categoriesHtml}
               ))}
             </select>
           </div>
-          <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+          <div className="w-px h-6 bg-nb-cream/80 hidden sm:block" />
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:inline">Category:</span>
+            <span className="text-xs font-medium text-nb-black/50 uppercase tracking-wider hidden sm:inline">Category:</span>
             {sortedCategories.slice(0, 4).map((cat, idx) => (
               <Button variant="ghost" size="bare"
                 key={cat}
                 onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 ${selectedCategory === cat ? 'bg-iiif-blue text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                className={`px-3 py-1.5 text-xs font-medium transition-nb flex items-center gap-1.5 ${selectedCategory === cat ? 'bg-iiif-blue text-white' : 'bg-nb-cream text-nb-black/50 hover:bg-nb-cream'}`}
                 title={`Press ${idx + 1} to toggle`}
               >
                 <Icon name={getCategoryIcon(cat)} className="text-sm" />
@@ -288,7 +290,7 @@ ${categoriesHtml}
             {selectedCategory && !sortedCategories.slice(0, 4).includes(selectedCategory) && (
               <Button variant="ghost" size="bare"
                 onClick={() => setSelectedCategory(null)}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-iiif-blue text-white transition-all"
+                className="px-3 py-1.5 text-xs font-medium bg-iiif-blue text-white transition-nb"
               >
                 {getCategoryLabel(selectedCategory)}
               </Button>
@@ -296,7 +298,7 @@ ${categoriesHtml}
             {selectedCategory && (
               <Button variant="ghost" size="bare"
                 onClick={() => setSelectedCategory(null)}
-                className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                className="px-2 py-1.5 text-xs text-nb-black/50 hover:text-nb-black/80"
                 aria-label="Clear category filter"
               >
                 Clear
@@ -308,9 +310,9 @@ ${categoriesHtml}
         <div className="overflow-y-auto max-h-[60vh] p-4">
           {filteredShortcuts.length === 0 ? (
             <div className="text-center py-16">
-              <Icon name="search_off" className="text-5xl mb-4 mx-auto text-slate-300 dark:text-slate-600" />
-              <p className="text-slate-500 dark:text-slate-400 mb-2">No shortcuts found</p>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Try adjusting your search or filters</p>
+              <Icon name="search_off" className="text-5xl mb-4 mx-auto text-nb-black/30" />
+              <p className="text-nb-black/50 mb-2">No shortcuts found</p>
+              <p className="text-sm text-nb-black/40">Try adjusting your search or filters</p>
               <Button variant="ghost" size="bare"
                 onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSelectedContext('all'); }}
                 className="mt-4 px-4 py-2 text-sm text-iiif-blue hover:underline"
@@ -324,26 +326,26 @@ ${categoriesHtml}
                 const shortcuts = groupedShortcuts[category];
                 if (!shortcuts?.length) return null;
                 return (
-                  <section key={category} className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5" aria-labelledby={`category-${category}`}>
+                  <section key={category} className="bg-nb-cream p-5" aria-labelledby={`category-${category}`}>
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center">
+                      <div className="w-8 h-8 bg-nb-white/80 shadow-brutal-sm flex items-center justify-center">
                         <Icon name={getCategoryIcon(category)} className="text-iiif-blue" />
                       </div>
-                      <h3 id={`category-${category}`} className="font-bold text-slate-800 dark:text-slate-200 text-lg">{getCategoryLabel(category)}</h3>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">{shortcuts.length}</span>
+                      <h3 id={`category-${category}`} className="font-bold text-nb-black/20 text-lg">{getCategoryLabel(category)}</h3>
+                      <span className="text-xs text-nb-black/40 bg-nb-cream/80 px-2 py-0.5 ">{shortcuts.length}</span>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                       {shortcuts.map((shortcut) => (
-                        <div key={shortcut.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-iiif-blue/30 dark:hover:border-iiif-blue/30 hover:shadow-sm transition-all group">
+                        <div key={shortcut.id} className="flex items-center justify-between p-3 bg-nb-white border border-nb-black/10 hover:border-iiif-blue/30:border-iiif-blue/30 hover:shadow-brutal-sm transition-nb group">
                           <div className="flex items-center gap-3 min-w-0">
-                            {shortcut.icon && <Icon name={shortcut.icon} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />}
-                            <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{shortcut.description}</span>
+                            {shortcut.icon && <Icon name={shortcut.icon} className="text-nb-black/40 group-hover:text-nb-black/60 transition-nb" />}
+                            <span className="text-sm text-nb-black/70 truncate">{shortcut.description}</span>
                           </div>
                           <div className="flex items-center gap-2 ml-3">
                             {shortcut.context !== 'global' && (
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{getContextLabel(shortcut.context)}</span>
+                              <span className="text-[10px] text-nb-black/40 bg-nb-cream/80 px-1.5 py-0.5 rounded">{getContextLabel(shortcut.context)}</span>
                             )}
-                            <kbd className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-mono font-medium text-slate-700 dark:text-slate-300 shadow-sm whitespace-nowrap">
+                            <kbd className="px-2.5 py-1.5 bg-nb-cream/80 border border-nb-black/20 text-xs font-mono font-medium text-nb-black/70 shadow-brutal-sm whitespace-nowrap">
                               {formatShortcut(shortcut.keys)}
                             </kbd>
                           </div>
@@ -357,15 +359,15 @@ ${categoriesHtml}
           )}
         </div>
 
-        <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50">
+        <div className="border-t border-nb-black/20 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-nb-black/50 bg-nb-cream">
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded font-mono text-[10px]">?</kbd><span>toggle overlay</span></span>
-            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded font-mono text-[10px]">Esc</kbd><span>close</span></span>
-            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded font-mono text-[10px]">1-6</kbd><span>filter category</span></span>
+            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-nb-white/80 border border-nb-black/20 font-mono text-[10px]">?</kbd><span>toggle overlay</span></span>
+            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-nb-white/80 border border-nb-black/20 font-mono text-[10px]">Esc</kbd><span>close</span></span>
+            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-nb-white/80 border border-nb-black/20 font-mono text-[10px]">1-6</kbd><span>filter category</span></span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 dark:text-slate-500">{filteredShortcuts.length} shortcut{filteredShortcuts.length !== 1 ? 's' : ''}</span>
-            <span className="text-slate-300 dark:text-slate-600">-</span>
+            <span className="text-nb-black/40">{filteredShortcuts.length} shortcut{filteredShortcuts.length !== 1 ? 's' : ''}</span>
+            <span className="text-nb-black/30">-</span>
             <span>{isMac ? 'macOS' : 'Windows/Linux'} shortcuts</span>
           </div>
         </div>

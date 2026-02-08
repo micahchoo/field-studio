@@ -34,6 +34,8 @@ export interface AnnotationsTabPanelProps {
   onSelectAnnotation?: (annotation: IIIFAnnotation) => void;
   /** Called when delete button is clicked on an annotation */
   onDeleteAnnotation?: (annotation: IIIFAnnotation) => void;
+  /** Called when an annotation's text is edited */
+  onEditAnnotation?: (annotation: IIIFAnnotation, newText: string) => void;
   /** Called when "Add Annotation" button is clicked */
   onAddAnnotation?: () => void;
 }
@@ -46,6 +48,7 @@ export const AnnotationsTabPanel: React.FC<AnnotationsTabPanelProps> = ({
   fieldMode,
   onSelectAnnotation,
   onDeleteAnnotation,
+  onEditAnnotation,
   onAddAnnotation,
 }) => {
   return (
@@ -68,7 +71,9 @@ export const AnnotationsTabPanel: React.FC<AnnotationsTabPanelProps> = ({
           language={language}
           selected={selectedAnnotationId === annotation.id}
           onClick={() => onSelectAnnotation?.(annotation)}
-          onDelete={() => onDeleteAnnotation?.(annotation)}
+          onDelete={onDeleteAnnotation ? () => onDeleteAnnotation(annotation) : undefined}
+          onEdit={onEditAnnotation ? (text) => onEditAnnotation(annotation, text) : undefined}
+          expanded={selectedAnnotationId === annotation.id}
           cx={cx}
           fieldMode={fieldMode}
         />

@@ -61,28 +61,28 @@ export interface IngestProgressPanelProps {
 // ============================================================================
 
 const STAGE_CONFIG: Record<IngestStage, { icon: string; label: string; color: string }> = {
-  scanning: { icon: 'search', label: 'Scanning files...', color: 'text-blue-500' },
-  processing: { icon: 'memory', label: 'Processing files...', color: 'text-blue-500' },
-  saving: { icon: 'save', label: 'Saving to storage...', color: 'text-amber-500' },
-  derivatives: { icon: 'image', label: 'Generating derivatives...', color: 'text-purple-500' },
-  complete: { icon: 'check_circle', label: 'Complete!', color: 'text-green-500' },
-  cancelled: { icon: 'cancel', label: 'Cancelled', color: 'text-slate-500' },
-  error: { icon: 'error', label: 'Error occurred', color: 'text-red-500' }
+  scanning: { icon: 'search', label: 'Scanning files...', color: 'text-nb-blue' },
+  processing: { icon: 'memory', label: 'Processing files...', color: 'text-nb-blue' },
+  saving: { icon: 'save', label: 'Saving to storage...', color: 'text-nb-orange' },
+  derivatives: { icon: 'image', label: 'Generating derivatives...', color: 'text-nb-purple' },
+  complete: { icon: 'check_circle', label: 'Complete!', color: 'text-nb-green' },
+  cancelled: { icon: 'cancel', label: 'Cancelled', color: 'text-nb-black/50' },
+  error: { icon: 'error', label: 'Error occurred', color: 'text-nb-red' }
 };
 
 const FILE_STATUS_CONFIG: Record<FileStatus, { icon: string; color: string; label: string }> = {
-  pending: { icon: 'hourglass_empty', color: 'text-slate-400', label: 'Pending' },
-  processing: { icon: 'sync', color: 'text-blue-500', label: 'Processing' },
-  completed: { icon: 'check_circle', color: 'text-green-500', label: 'Completed' },
-  error: { icon: 'error', color: 'text-red-500', label: 'Error' },
-  skipped: { icon: 'skip_next', color: 'text-amber-500', label: 'Skipped' }
+  pending: { icon: 'hourglass_empty', color: 'text-nb-black/40', label: 'Pending' },
+  processing: { icon: 'sync', color: 'text-nb-blue', label: 'Processing' },
+  completed: { icon: 'check_circle', color: 'text-nb-green', label: 'Completed' },
+  error: { icon: 'error', color: 'text-nb-red', label: 'Error' },
+  skipped: { icon: 'skip_next', color: 'text-nb-orange', label: 'Skipped' }
 };
 
 const LOG_LEVEL_CONFIG: Record<IngestActivityLogEntry['level'], { icon: string; color: string }> = {
-  info: { icon: 'info', color: 'text-blue-400' },
-  warning: { icon: 'warning', color: 'text-amber-400' },
-  error: { icon: 'error', color: 'text-red-400' },
-  success: { icon: 'check_circle', color: 'text-green-400' }
+  info: { icon: 'info', color: 'text-nb-blue' },
+  warning: { icon: 'warning', color: 'text-nb-orange' },
+  error: { icon: 'error', color: 'text-nb-red' },
+  success: { icon: 'check_circle', color: 'text-nb-green' }
 };
 
 // ============================================================================
@@ -93,9 +93,9 @@ const LOG_LEVEL_CONFIG: Record<IngestActivityLogEntry['level'], { icon: string; 
  * Progress bar component with animated fill
  */
 const ProgressBar: React.FC<{ progress: number; className?: string }> = ({ progress, className = '' }) => (
-  <div className={`relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden ${className}`}>
+  <div className={`relative h-2 bg-nb-cream/80 overflow-hidden ${className}`}>
     <div
-      className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-300 ease-out"
+      className="absolute top-0 left-0 h-full bg-gradient-to-r from-nb-blue/100 to-blue-400 transition-nb ease-out"
       style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
     />
   </div>
@@ -135,11 +135,11 @@ const LogEntry: React.FC<{ entry: IngestActivityLogEntry }> = ({ entry }) => {
   const time = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
-    <div className="flex items-start gap-2 py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded transition-colors">
+    <div className="flex items-start gap-2 py-1.5 px-2 hover:bg-nb-cream/50 transition-nb">
       <Icon name={config.icon} className={`text-sm mt-0.5 shrink-0 ${config.color}`} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{entry.message}</p>
-        <p className="text-xs text-slate-400">{time}</p>
+        <p className="text-sm text-nb-black/70 truncate">{entry.message}</p>
+        <p className="text-xs text-nb-black/40">{time}</p>
       </div>
     </div>
   );
@@ -152,15 +152,15 @@ const FileListItem: React.FC<{
   file: IngestFileInfo;
   onRetry?: () => void;
 }> = ({ file, onRetry }) => (
-  <div className="flex items-center justify-between py-2 px-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded transition-colors">
+  <div className="flex items-center justify-between py-2 px-3 hover:bg-nb-cream/50 transition-nb">
     <div className="flex items-center gap-3 min-w-0 flex-1">
       <FileStatusBadge status={file.status} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-slate-700 dark:text-slate-300 truncate" title={file.name}>
+        <p className="text-sm text-nb-black/70 truncate" title={file.name}>
           {file.name}
         </p>
         {file.error && (
-          <p className="text-xs text-red-500 truncate" title={file.error}>
+          <p className="text-xs text-nb-red truncate" title={file.error}>
             {file.error}
           </p>
         )}
@@ -168,9 +168,9 @@ const FileListItem: React.FC<{
     </div>
     <div className="flex items-center gap-2 shrink-0">
       {file.status === 'processing' && (
-        <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
+        <div className="w-16 h-1 bg-nb-cream overflow-hidden">
           <div
-            className="h-full bg-blue-500 rounded-full transition-all duration-200"
+            className="h-full bg-nb-blue transition-nb "
             style={{ width: `${file.progress}%` }}
           />
         </div>
@@ -178,10 +178,10 @@ const FileListItem: React.FC<{
       {file.status === 'error' && onRetry && (
         <Button variant="ghost" size="bare"
           onClick={onRetry}
-          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+          className="p-1 hover:bg-nb-cream transition-nb"
           title="Retry"
         >
-          <Icon name="refresh" className="text-sm text-slate-500" />
+          <Icon name="refresh" className="text-sm text-nb-black/50" />
         </Button>
       )}
     </div>
@@ -228,10 +228,10 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
   if (variant === 'minimal') {
     if (!progress) return null;
     return (
-      <div className={`bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm border border-slate-200 dark:border-slate-700 ${className}`}>
+      <div className={`bg-nb-white p-3 shadow-brutal-sm border border-nb-black/20 ${className}`}>
         <div className="flex items-center justify-between mb-2">
           <StageIndicator stage={progress.stage} />
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+          <span className="text-sm font-medium text-nb-black/50">
             {progress.overallProgress}%
           </span>
         </div>
@@ -244,35 +244,35 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
   if (variant === 'compact') {
     if (!progress) return null;
     return (
-      <div className={`bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700 ${className}`}>
+      <div className={`bg-nb-white p-4 shadow-brutal-sm border border-nb-black/20 ${className}`}>
         <div className="flex items-center justify-between mb-3">
           <StageIndicator stage={progress.stage} />
           <div className="flex items-center gap-2">
             {!progress.isPaused && progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
               <Button variant="ghost" size="bare"
                 onClick={() => controls.pause()}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                className="p-1.5 hover:bg-nb-cream transition-nb"
                 title="Pause"
               >
-                <Icon name="pause" className="text-sm text-slate-500" />
+                <Icon name="pause" className="text-sm text-nb-black/50" />
               </Button>
             )}
             {progress.isPaused && (
               <Button variant="ghost" size="bare"
                 onClick={() => controls.resume()}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                className="p-1.5 hover:bg-nb-cream transition-nb"
                 title="Resume"
               >
-                <Icon name="play_arrow" className="text-sm text-green-500" />
+                <Icon name="play_arrow" className="text-sm text-nb-green" />
               </Button>
             )}
             {progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
               <Button variant="ghost" size="bare"
                 onClick={handleCancel}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                className="p-1.5 hover:bg-nb-cream transition-nb"
                 title="Cancel"
               >
-                <Icon name="cancel" className="text-sm text-red-500" />
+                <Icon name="cancel" className="text-sm text-nb-red" />
               </Button>
             )}
           </div>
@@ -282,30 +282,30 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
 
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+            <p className="text-2xl font-bold text-nb-black/70">
               {progress.filesCompleted}
-              <span className="text-sm font-normal text-slate-400"> / {progress.filesTotal}</span>
+              <span className="text-sm font-normal text-nb-black/40"> / {progress.filesTotal}</span>
             </p>
-            <p className="text-xs text-slate-500">Files</p>
+            <p className="text-xs text-nb-black/50">Files</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+            <p className="text-2xl font-bold text-nb-black/70">
               {formatSpeed(progress.speed)}
             </p>
-            <p className="text-xs text-slate-500">Speed</p>
+            <p className="text-xs text-nb-black/50">Speed</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+            <p className="text-2xl font-bold text-nb-black/70">
               {formatETA(progress.etaSeconds)}
             </p>
-            <p className="text-xs text-slate-500">ETA</p>
+            <p className="text-xs text-nb-black/50">ETA</p>
           </div>
         </div>
 
         {progress.filesError > 0 && (
-          <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded flex items-center gap-2">
-            <Icon name="error" className="text-red-500" />
-            <span className="text-sm text-red-600 dark:text-red-400">
+          <div className="mt-3 p-2 bg-nb-red/10 flex items-center gap-2">
+            <Icon name="error" className="text-nb-red" />
+            <span className="text-sm text-nb-red">
               {progress.filesError} file(s) failed
             </span>
           </div>
@@ -332,37 +332,37 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
   const errorFiles = progress.files.filter(f => f.status === 'error');
 
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden ${className}`}>
+    <div className={`bg-nb-white shadow-brutal-sm border border-nb-black/20 overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+      <div className="p-4 border-b border-nb-black/20">
         <div className="flex items-center justify-between mb-3">
           <StageIndicator stage={progress.stage} />
           <div className="flex items-center gap-1">
             {!progress.isPaused && progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
               <Button variant="ghost" size="bare"
                 onClick={() => controls.pause()}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-nb-cream transition-nb"
                 title="Pause"
               >
-                <Icon name="pause" className="text-slate-500" />
+                <Icon name="pause" className="text-nb-black/50" />
               </Button>
             )}
             {progress.isPaused && (
               <Button variant="ghost" size="bare"
                 onClick={() => controls.resume()}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-nb-cream transition-nb"
                 title="Resume"
               >
-                <Icon name="play_arrow" className="text-green-500" />
+                <Icon name="play_arrow" className="text-nb-green" />
               </Button>
             )}
             {progress.stage !== 'complete' && progress.stage !== 'cancelled' && progress.stage !== 'error' && (
               <Button variant="ghost" size="bare"
                 onClick={handleCancel}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-nb-cream transition-nb"
                 title="Cancel"
               >
-                <Icon name="cancel" className="text-red-500" />
+                <Icon name="cancel" className="text-nb-red" />
               </Button>
             )}
           </div>
@@ -373,56 +373,56 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
           <div className="flex-1">
             <ProgressBar progress={progress.overallProgress} />
           </div>
-          <span className="text-lg font-bold text-slate-700 dark:text-slate-300 w-12 text-right">
+          <span className="text-lg font-bold text-nb-black/70 w-12 text-right">
             {progress.overallProgress}%
           </span>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border-b border-nb-black/20 bg-nb-cream">
         <div className="text-center">
-          <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+          <p className="text-2xl font-bold text-nb-black/70">
             {progress.filesCompleted}
-            <span className="text-sm font-normal text-slate-400">/{progress.filesTotal}</span>
+            <span className="text-sm font-normal text-nb-black/40">/{progress.filesTotal}</span>
           </p>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Files</p>
+          <p className="text-xs text-nb-black/50 uppercase tracking-wide">Files</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+          <p className="text-2xl font-bold text-nb-black/70">
             {formatSpeed(progress.speed)}
           </p>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Speed</p>
+          <p className="text-xs text-nb-black/50 uppercase tracking-wide">Speed</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+          <p className="text-2xl font-bold text-nb-black/70">
             {formatETA(progress.etaSeconds)}
           </p>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">ETA</p>
+          <p className="text-xs text-nb-black/50 uppercase tracking-wide">ETA</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+          <p className="text-2xl font-bold text-nb-black/70">
             {progress.filesError > 0 ? (
-              <span className="text-red-500">{progress.filesError}</span>
+              <span className="text-nb-red">{progress.filesError}</span>
             ) : (
               '0'
             )}
           </p>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Errors</p>
+          <p className="text-xs text-nb-black/50 uppercase tracking-wide">Errors</p>
         </div>
       </div>
 
       {/* Current File */}
       {progress.currentFile && progress.stage === 'processing' && (
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-          <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Current File</p>
+        <div className="px-4 py-3 border-b border-nb-black/20">
+          <p className="text-xs text-nb-black/50 uppercase tracking-wide mb-1">Current File</p>
           <div className="flex items-center gap-3">
-            <Icon name="image" className="text-slate-400" />
+            <Icon name="image" className="text-nb-black/40" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+              <p className="text-sm font-medium text-nb-black/70 truncate">
                 {progress.currentFile.name}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-nb-black/50">
                 {(progress.currentFile.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
@@ -434,26 +434,26 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
       )}
 
       {/* Activity Log */}
-      <div className="border-b border-slate-200 dark:border-slate-700">
+      <div className="border-b border-nb-black/20">
         <Button variant="ghost" size="bare"
           onClick={() => setShowLog(!showLog)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-nb-cream/50 transition-nb"
         >
           <div className="flex items-center gap-2">
-            <Icon name="history" className="text-slate-400" />
-            <span className="font-medium text-slate-700 dark:text-slate-300">Activity Log</span>
-            <span className="text-xs text-slate-400">({progress.activityLog.length} entries)</span>
+            <Icon name="history" className="text-nb-black/40" />
+            <span className="font-medium text-nb-black/70">Activity Log</span>
+            <span className="text-xs text-nb-black/40">({progress.activityLog.length} entries)</span>
           </div>
           <Icon
             name={showLog ? 'expand_less' : 'expand_more'}
-            className="text-slate-400 transition-transform"
+            className="text-nb-black/40 transition-transform"
           />
         </Button>
 
         {showLog && (
           <div className="max-h-48 overflow-y-auto">
             {progress.activityLog.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-slate-400 italic">No activity yet</p>
+              <p className="px-4 py-3 text-sm text-nb-black/40 italic">No activity yet</p>
             ) : (
               progress.activityLog.slice().reverse().map((entry, idx) => (
                 <LogEntry key={`${entry.timestamp}-${idx}`} entry={entry} />
@@ -467,29 +467,29 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
       <div>
         <Button variant="ghost" size="bare"
           onClick={() => setShowFiles(!showFiles)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-nb-cream/50 transition-nb"
         >
           <div className="flex items-center gap-2">
-            <Icon name="folder_open" className="text-slate-400" />
-            <span className="font-medium text-slate-700 dark:text-slate-300">Files</span>
+            <Icon name="folder_open" className="text-nb-black/40" />
+            <span className="font-medium text-nb-black/70">Files</span>
             <div className="flex items-center gap-1 text-xs">
               {completedFiles.length > 0 && (
-                <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">
+                <span className="px-1.5 py-0.5 bg-nb-green/20 text-nb-green rounded">
                   {completedFiles.length}
                 </span>
               )}
               {processingFiles.length > 0 && (
-                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
+                <span className="px-1.5 py-0.5 bg-nb-blue/20 text-nb-blue rounded">
                   {processingFiles.length}
                 </span>
               )}
               {errorFiles.length > 0 && (
-                <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded">
+                <span className="px-1.5 py-0.5 bg-nb-red/20 text-nb-red rounded">
                   {errorFiles.length}
                 </span>
               )}
               {pendingFiles.length > 0 && (
-                <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+                <span className="px-1.5 py-0.5 bg-nb-cream text-nb-black/60 rounded">
                   {pendingFiles.length}
                 </span>
               )}
@@ -497,16 +497,16 @@ export const IngestProgressPanel: React.FC<IngestProgressPanelProps> = ({
           </div>
           <Icon
             name={showFiles ? 'expand_less' : 'expand_more'}
-            className="text-slate-400 transition-transform"
+            className="text-nb-black/40 transition-transform"
           />
         </Button>
 
         {showFiles && (
           <div className="max-h-64 overflow-y-auto">
             {progress.files.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-slate-400 italic">No files to process</p>
+              <p className="px-4 py-3 text-sm text-nb-black/40 italic">No files to process</p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+              <div className="divide-y divide-nb-black/10">
                 {/* Show error files first */}
                 {errorFiles.map(file => (
                   <FileListItem

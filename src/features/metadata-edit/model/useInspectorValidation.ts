@@ -14,6 +14,9 @@
 
 import { useCallback, useMemo } from 'react';
 import type { IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
+import { isValidNavDate, formatNavDate, isValidRightsUri, isValidHttpUri } from '@/utils/iiifTypes';
+import { isBehaviorValidForType, findBehaviorConflicts, getDisjointSetForBehavior } from '@/utils/iiifBehaviors';
+import { containsDangerousContent, sanitizeHTML } from '@/utils/sanitization';
 
 export type ValidationSeverity = 'error' | 'warning' | 'info';
 
@@ -150,8 +153,8 @@ const validationRules = [
       if (item.type !== 'Manifest') return false;
       return !(item as IIIFManifest).viewingDirection;
     },
-    autoFix: (item: IIIFItem) => ({
-      viewingDirection: 'left-to-right',
+    autoFix: (_item: IIIFItem): Partial<IIIFItem> => ({
+      viewingDirection: 'left-to-right' as const,
     }),
   },
 
@@ -227,6 +230,166 @@ const validationRules = [
     autoFix: (item: IIIFItem) => ({
       id: item.id.replace(/^http:\/\//, 'https://'),
     }),
+  },
+
+  // Check for invalid navDate format (must be ISO 8601 with timezone)
+  {
+    id: 'invalid-navdate-format',
+    field: 'navDate',
+    severity: 'error' as const,
+    title: 'Invalid navDate Format',
+    description: 'navDate must be ISO 8601 with timezone (e.g. 2024-01-15T00:00:00Z).',
+    check: (item: IIIFItem) => {
+      if (!item.navDate) return false;
+      return !isValidNavDate(item.navDate);
+    },
+    autoFix: (item: IIIFItem) => {
+      const d = new Date(item.navDate!);
+      if (isNaN(d.getTime())) return { navDate: undefined };
+      return { navDate: formatNavDate(d) };
+    },
+  },
+
+  // Check for behaviors invalid for the resource type
+  {
+    id: 'invalid-behavior-for-type',
+    field: 'behavior',
+    severity: 'warning' as const,
+    title: 'Invalid Behavior for Resource Type',
+    description: 'Some behaviors are not valid for this resource type per IIIF spec.',
+    check: (item: IIIFItem) => {
+      if (!item.behavior?.length) return false;
+      return item.behavior.some(b => !isBehaviorValidForType(b, item.type));
+    },
+    autoFix: (item: IIIFItem) => ({
+      behavior: item.behavior?.filter(b => isBehaviorValidForType(b, item.type)),
+    }),
+  },
+
+  // Check for conflicting behaviors from the same disjoint set
+  {
+    id: 'conflicting-behaviors',
+    field: 'behavior',
+    severity: 'warning' as const,
+    title: 'Conflicting Behaviors',
+    description: 'Behaviors from the same disjoint set are active. Only the first will be kept.',
+    check: (item: IIIFItem) => {
+      if (!item.behavior?.length) return false;
+      return findBehaviorConflicts(item.behavior).length > 0;
+    },
+    autoFix: (item: IIIFItem) => {
+      const seen = new Set<string>();
+      const kept = (item.behavior || []).filter(b => {
+        const set = getDisjointSetForBehavior(b);
+        if (!set) return true;
+        if (seen.has(set.name)) return false;
+        seen.add(set.name);
+        return true;
+      });
+      return { behavior: kept.length ? kept : undefined };
+    },
+  },
+
+  // Check for behaviors that need dimensions or duration on Canvas
+  {
+    id: 'behavior-missing-precondition',
+    field: 'behavior',
+    severity: 'info' as const,
+    title: 'Behavior May Need Additional Properties',
+    description: 'Some behaviors expect dimensions or duration on canvases.',
+    check: (item: IIIFItem) => {
+      if (!item.behavior?.length) return false;
+      if (item.type !== 'Canvas') return false;
+      const needsDimensions = ['continuous', 'paged', 'facing-pages', 'non-paged'];
+      const needsDuration = ['auto-advance', 'no-auto-advance', 'repeat', 'no-repeat'];
+      const rec = item as unknown as Record<string, unknown>;
+      const hasDims = !!(rec.width && rec.height);
+      const hasDur = !!rec.duration;
+      for (const b of item.behavior) {
+        if (needsDimensions.includes(b) && !hasDims) return true;
+        if (needsDuration.includes(b) && !hasDur) return true;
+      }
+      return false;
+    },
+    autoFix: null,
+  },
+
+  // Check for invalid rights URI (must be HTTP/HTTPS)
+  {
+    id: 'invalid-rights-uri',
+    field: 'rights',
+    severity: 'error' as const,
+    title: 'Invalid Rights URI',
+    description: 'Rights must be an HTTP(S) URI, preferably from Creative Commons or RightsStatements.org.',
+    check: (item: IIIFItem) => {
+      if (!item.rights) return false;
+      return !isValidHttpUri(item.rights);
+    },
+    autoFix: null,
+  },
+
+  // Check for non-standard (but valid) rights URI
+  {
+    id: 'unknown-rights-uri',
+    field: 'rights',
+    severity: 'info' as const,
+    title: 'Non-Standard Rights URI',
+    description: 'Rights URI is valid but not from Creative Commons or RightsStatements.org.',
+    check: (item: IIIFItem) => {
+      if (!item.rights || !isValidHttpUri(item.rights)) return false;
+      const result = isValidRightsUri(item.rights);
+      return result.valid && !!result.warning;
+    },
+    autoFix: null,
+  },
+
+  // Check for unsafe HTML in metadata/requiredStatement values
+  {
+    id: 'unsafe-html-content',
+    field: 'metadata',
+    severity: 'warning' as const,
+    title: 'Unsafe HTML in Content',
+    description: 'Metadata values or requiredStatement contains potentially dangerous HTML.',
+    check: (item: IIIFItem) => {
+      if (item.metadata?.some(m =>
+        Object.values(m.value).flat().some(v => containsDangerousContent(v))
+      )) return true;
+      if (item.requiredStatement) {
+        const vals = Object.values(item.requiredStatement.value).flat();
+        if (vals.some(v => containsDangerousContent(v))) return true;
+      }
+      return false;
+    },
+    autoFix: (item: IIIFItem) => {
+      const fixes: Partial<IIIFItem> = {};
+      if (item.metadata?.some(m =>
+        Object.values(m.value).flat().some(v => containsDangerousContent(v))
+      )) {
+        fixes.metadata = item.metadata.map(m => ({
+          label: m.label,
+          value: Object.fromEntries(
+            Object.entries(m.value).map(([lang, vals]) => [
+              lang, vals.map(v => containsDangerousContent(v) ? sanitizeHTML(v) : v)
+            ])
+          ),
+        }));
+      }
+      if (item.requiredStatement) {
+        const rs = item.requiredStatement;
+        const hasUnsafe = Object.values(rs.value).flat().some(v => containsDangerousContent(v));
+        if (hasUnsafe) {
+          fixes.requiredStatement = {
+            label: rs.label,
+            value: Object.fromEntries(
+              Object.entries(rs.value).map(([lang, vals]) => [
+                lang, vals.map(v => containsDangerousContent(v) ? sanitizeHTML(v) : v)
+              ])
+            ),
+          };
+        }
+      }
+      return fixes;
+    },
   },
 ];
 

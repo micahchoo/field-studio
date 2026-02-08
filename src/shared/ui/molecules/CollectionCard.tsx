@@ -71,12 +71,12 @@ export interface CollectionCardProps {
  *   id="coll-1"
  *   name="My Collection"
  *   manifestCount={5}
- *   isDragOver={activeDropTarget === 'coll-1'}
+ *   isDragOver={activeDropTarget ==='coll-1'}
  *   onDrop={handleDrop}
  *   onRename={handleRename}
  * />
  */
-export const CollectionCard: React.FC<CollectionCardProps> = ({
+export const CollectionCard: React.FC<CollectionCardProps> = React.memo(({
   id,
   name,
   manifestCount,
@@ -85,7 +85,7 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({
   isDragOver = false,
   canDrop = true,
   isEditing: controlledIsEditing,
-  className = '',
+  className ='',
   onRename,
   onDelete,
   onAddSubCollection,
@@ -103,7 +103,7 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    e.dataTransfer.dropEffect ='copy';
   }, []);
 
   const handleDrop = useCallback(
@@ -141,17 +141,17 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({
       onDrop={handleDrop}
       onClick={onClick}
       className={`
-        relative border-2 rounded-xl p-4 transition-all duration-200
+        relative border-2  p-4 transition-nb 
         ${isDragOver && canDrop
-          ? 'border-blue-400 bg-blue-50 shadow-lg scale-[1.02]'
+          ?'border-nb-blue bg-nb-blue/10 shadow-brutal scale-[1.02]'
           : isDragOver && !canDrop
-          ? 'border-red-300 bg-red-50'
+          ?'border-nb-red/40 bg-nb-red/10'
           : isRoot
-          ? 'border-amber-300 bg-amber-50/50'
-          : `${cx?.surface ?? 'bg-white border-slate-200'} hover:shadow-sm`
+          ?'border-nb-orange bg-nb-orange/10'
+          :`${cx?.surface ??'bg-nb-white border-nb-black/20'} hover:shadow-brutal-sm`
         }
         ${className}
-      `}
+`}
     >
       {/* Drop indicator overlay */}
       <CollectionCardDropOverlay isDragOver={isDragOver} canDrop={canDrop} />
@@ -175,6 +175,8 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({
       {children}
     </div>
   );
-};
+});
+
+CollectionCard.displayName = 'CollectionCard';
 
 export default CollectionCard;

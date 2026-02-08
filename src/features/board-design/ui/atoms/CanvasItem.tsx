@@ -60,11 +60,11 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({
     <div
       onMouseDown={handleMouseDown}
       className={`
-        absolute rounded-lg shadow-lg overflow-hidden cursor-move
+        absolute  shadow-brutal overflow-hidden cursor-move
         transition-shadow
         ${selected ? 'ring-2 ring-offset-2' : ''}
         ${dragging ? 'ring-4 ring-offset-1 opacity-90' : ''}
-        ${fieldMode ? 'ring-yellow-400 ring-offset-slate-900' : 'ring-iiif-blue ring-offset-white'}
+        ${fieldMode ? 'ring-nb-yellow ring-offset-nb-black' : 'ring-iiif-blue ring-offset-white'}
       `}
       style={{
         left: position.x,

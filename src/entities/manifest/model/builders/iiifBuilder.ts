@@ -658,10 +658,14 @@ const processNodeWithProgress = async (
   await checkPaused(progress);
 
   // Determine IIIF type using this priority:
+  const isRangeIntent = node.iiifIntent === 'Range';
   let type: 'Collection' | 'Manifest' = 'Manifest';
 
   if (node.iiifIntent && (node.iiifIntent === 'Collection' || node.iiifIntent === 'Manifest')) {
     type = node.iiifIntent;
+  } else if (isRangeIntent) {
+    // Range intent: build canvases as a Manifest, then add a Range in structures
+    type = 'Manifest';
   } else {
     const hasSubdirs = node.directories.size > 0;
     const isExplicitCollection = node.name === IIIF_CONFIG.INGEST.ROOT_NAME || node.name.startsWith(IIIF_CONFIG.INGEST.COLLECTION_PREFIX);
@@ -1008,6 +1012,43 @@ const processNodeWithProgress = async (
         label: { en: ["Content Search"] }
       }]
     };
+
+    // Add rights from node metadata
+    if (node.rights) {
+      manifest.rights = node.rights;
+    }
+
+    // Add navDate from node metadata
+    if (node.navDate) {
+      manifest.navDate = node.navDate;
+    }
+
+    // Range intent: wrap canvases in a Range within structures[]
+    if (isRangeIntent && items.length > 0) {
+      const rangeId = `${id}/range/main`;
+      manifest.structures = [createRange({
+        id: rangeId,
+        label,
+        items: items.map(c => ({ id: c.id, type: 'Canvas' as const })),
+      })];
+      progress = addLogEntry(progress, `Created Range "${cleanName}" with ${items.length} canvases`, 'info');
+      reportProgress(progress);
+    }
+
+    // Set start canvas from staging annotation
+    if (node.startCanvasName && items.length > 0) {
+      const startCanvas = items.find(c => {
+        const canvasLabel = c.label ? Object.values(c.label).flat()[0] : '';
+        return canvasLabel === node.startCanvasName;
+      });
+      if (startCanvas) {
+        (manifest as IIIFManifest & { start?: { id: string; type: string } }).start = {
+          id: startCanvas.id,
+          type: 'Canvas',
+        };
+      }
+    }
+
     return manifest;
   } else {
     // This is a Collection
@@ -1064,11 +1105,15 @@ const processNode = async (
     // 5. Root or underscore prefix → Collection
     // 6. Default: Manifest if has media, Collection otherwise
 
+    const isRangeIntent = node.iiifIntent === 'Range';
     let type: 'Collection' | 'Manifest' = 'Manifest';
 
     if (node.iiifIntent && (node.iiifIntent === 'Collection' || node.iiifIntent === 'Manifest')) {
       // User-confirmed type from ingest preview
       type = node.iiifIntent;
+    } else if (isRangeIntent) {
+      // Range intent: build canvases as a Manifest, then add a Range in structures
+      type = 'Manifest';
     } else {
       // Auto-detection fallback
       const hasSubdirs = node.directories.size > 0;
@@ -1351,6 +1396,42 @@ const processNode = async (
                 label: { en: ["Content Search"] }
             }]
         };
+
+        // Add rights from node metadata
+        if (node.rights) {
+          manifest.rights = node.rights;
+        }
+
+        // Add navDate from node metadata
+        if (node.navDate) {
+          manifest.navDate = node.navDate;
+        }
+
+        // Range intent: wrap canvases in a Range within structures[]
+        if (isRangeIntent && items.length > 0) {
+          const rangeId = `${id}/range/main`;
+          manifest.structures = [createRange({
+            id: rangeId,
+            label,
+            items: items.map(c => ({ id: c.id, type: 'Canvas' as const })),
+          })];
+          report.warnings.push(`Created Range "${cleanName}" with ${items.length} canvases in structures`);
+        }
+
+        // Set start canvas from staging annotation
+        if (node.startCanvasName && items.length > 0) {
+          const startCanvas = items.find(c => {
+            const canvasLabel = c.label ? Object.values(c.label).flat()[0] : '';
+            return canvasLabel === node.startCanvasName;
+          });
+          if (startCanvas) {
+            (manifest as IIIFManifest & { start?: { id: string; type: string } }).start = {
+              id: startCanvas.id,
+              type: 'Canvas',
+            };
+          }
+        }
+
         return manifest;
     } else {
         // This is a Collection - process subdirectories

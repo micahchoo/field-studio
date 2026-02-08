@@ -196,10 +196,12 @@ class IIIFAuthService {
     }
 
     try {
+      // Only send credentials to same-origin probe services
+      const isSameOrigin = new URL(probeService.id, window.location.href).origin === window.location.origin;
       const response = await fetch(probeService.id, {
         method: 'GET',
         headers,
-        credentials: 'include' // Send cookies for session-based auth
+        credentials: isSameOrigin ? 'include' : 'same-origin'
       });
 
       const data = await response.json();
@@ -252,7 +254,7 @@ class IIIFAuthService {
    */
   async requestToken(tokenService: AuthService): Promise<TokenResponse | TokenError> {
     return new Promise((resolve, reject) => {
-      const messageId = `auth-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const messageId = `auth-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
 
       // Create iframe for token request
       const iframe = document.createElement('iframe');
@@ -307,6 +309,12 @@ class IIIFAuthService {
 
     const pending = this.pendingMessages.get(messageId);
     if (!pending) return;
+
+    // Validate origin: only accept messages from HTTPS origins (IIIF Auth 2.0 spec)
+    if (!event.origin || (!event.origin.startsWith('https://') && event.origin !== window.location.origin)) {
+      console.warn('[AuthService] Rejected postMessage from untrusted origin:', event.origin);
+      return;
+    }
 
     this.pendingMessages.delete(messageId);
 

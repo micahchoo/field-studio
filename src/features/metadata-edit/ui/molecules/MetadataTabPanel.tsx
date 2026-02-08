@@ -12,7 +12,7 @@
  * - Warm stone palette with amber accents
  * - Generous whitespace and clear grouping
  * - Refined typography with visual hierarchy
- * - Subtle shadows and rounded corners
+ * - Subtle shadows and corners
  */
 
 import React, { useState } from 'react';
@@ -87,19 +87,19 @@ const FormSection: React.FC<FormSectionProps> = ({ title, icon, children, collap
   const toggle = onToggle || (() => setIsCollapsed(!isCollapsed));
 
   return (
-    <div className={`rounded-xl border ${fieldMode ? 'bg-stone-900/50 border-stone-800' : 'bg-white border-stone-200'} overflow-hidden`}>
+    <div className={` border ${fieldMode ? 'bg-nb-black/50 border-nb-black' : 'bg-nb-white border-nb-black/10'} overflow-hidden`}>
       <Button variant="ghost" size="bare"
         onClick={toggle}
-        className={`w-full px-4 py-3 flex items-center justify-between ${fieldMode ? 'hover:bg-stone-800' : 'hover:bg-stone-50'} transition-colors`}
+        className={`w-full px-4 py-3 flex items-center justify-between ${fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-cream'} transition-nb`}
       >
         <div className="flex items-center gap-2">
-          <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${fieldMode ? 'bg-stone-800 text-stone-400' : 'bg-stone-100 text-stone-600'}`}>
+          <span className={`w-8 h-8 flex items-center justify-center ${fieldMode ? 'bg-nb-black text-nb-black/40' : 'bg-nb-cream text-nb-black/60'}`}>
             <Icon name={icon} className="text-sm" />
           </span>
-          <span className={`font-medium ${fieldMode ? 'text-stone-200' : 'text-stone-800'}`}>{title}</span>
+          <span className={`font-medium ${fieldMode ? 'text-nb-black/10' : 'text-nb-black'}`}>{title}</span>
         </div>
         <svg
-          className={`w-5 h-5 ${fieldMode ? 'text-stone-500' : 'text-stone-400'} transition-transform ${collapsedState ? '-rotate-90' : ''}`}
+          className={`w-5 h-5 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'} transition-transform ${collapsedState ? '-rotate-90' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -128,12 +128,12 @@ const TextField: React.FC<TextFieldProps> = ({ label, value, onChange, placehold
   const [isHovered, setIsHovered] = useState(false);
 
   const baseClass = `
-    w-full px-3 py-2.5 rounded-lg border text-sm transition-all
+    w-full px-3 py-2.5  border text-sm transition-nb
     ${readOnly
-      ? `${fieldMode ? 'bg-stone-900/50 text-stone-500 border-transparent' : 'bg-stone-100 text-stone-500 border-transparent'}`
+      ? `${fieldMode ? 'bg-nb-black/50 text-nb-black/50 border-transparent' : 'bg-nb-cream text-nb-black/50 border-transparent'}`
       : `${fieldMode
-          ? 'bg-stone-800 text-stone-200 border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-          : 'bg-white text-stone-900 border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+          ? 'bg-nb-black text-nb-black/10 border-nb-black/70 focus:border-nb-orange focus:ring-2 focus:ring-nb-orange/20'
+          : 'bg-nb-white text-nb-black border-nb-black/20 focus:border-nb-orange focus:ring-2 focus:ring-nb-orange/20'
         }`
     }
   `;
@@ -145,16 +145,16 @@ const TextField: React.FC<TextFieldProps> = ({ label, value, onChange, placehold
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center justify-between mb-1.5">
-        <label className={`text-sm font-medium ${fieldMode ? 'text-stone-300' : 'text-stone-700'}`}>
+        <label className={`text-sm font-medium ${fieldMode ? 'text-nb-black/20' : 'text-nb-black/70'}`}>
           {label}
         </label>
         {readOnly && (
-          <span className={`text-xs px-2 py-0.5 rounded-full ${fieldMode ? 'bg-stone-800 text-stone-500' : 'bg-stone-100 text-stone-500'}`}>
+          <span className={`text-xs px-2 py-0.5 ${fieldMode ? 'bg-nb-black text-nb-black/50' : 'bg-nb-cream text-nb-black/50'}`}>
             Read-only
           </span>
         )}
         {!readOnly && (isHovered || isFocused) && (
-          <span className="text-xs text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-xs text-nb-orange opacity-0 group-hover:opacity-100 transition-nb">
             <Icon name="edit" className="text-xs inline mr-1" />
             Click to edit
           </span>
@@ -184,7 +184,7 @@ const TextField: React.FC<TextFieldProps> = ({ label, value, onChange, placehold
             className={`${baseClass} pr-10`}
           />
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <Icon name="calendar_today" className={`text-sm ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`} />
+            <Icon name="calendar_today" className={`text-sm ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`} />
           </div>
         </div>
       ) : (
@@ -199,7 +199,7 @@ const TextField: React.FC<TextFieldProps> = ({ label, value, onChange, placehold
           className={baseClass}
         />
       )}
-      {hint && <p className={`mt-1 text-xs ${fieldMode ? 'text-stone-500' : 'text-stone-500'}`}>{hint}</p>}
+      {hint && <p className={`mt-1 text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>{hint}</p>}
     </div>
   );
 };
@@ -418,10 +418,10 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
               return (
                 <div
                   key={actualIdx}
-                  className={`p-3 rounded-lg border group transition-all ${
+                  className={`p-3 border group transition-nb ${
                     fieldMode
-                      ? 'bg-stone-800/50 border-stone-700 hover:border-stone-600'
-                      : 'bg-stone-50 border-stone-200 hover:border-stone-300'
+                      ? 'bg-nb-black/50 border-nb-black/70 hover:border-nb-black/60'
+                      : 'bg-nb-cream border-nb-black/10 hover:border-nb-black/20'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -433,13 +433,13 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
                         newMeta[actualIdx].label = { [language]: [e.target.value] };
                         onUpdateResource({ metadata: newMeta });
                       }}
-                      className={`text-sm font-medium bg-transparent border-b border-transparent hover:border-stone-400 focus:border-amber-500 focus:outline-none flex-1 ${
-                        fieldMode ? 'text-stone-300' : 'text-stone-700'
+                      className={`text-sm font-medium bg-transparent border-b border-transparent hover:border-nb-black/40 focus:border-nb-orange focus:outline-none flex-1 ${
+                        fieldMode ? 'text-nb-black/20' : 'text-nb-black/70'
                       }`}
                       placeholder="Field name"
                     />
                     {dc && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${fieldMode ? 'bg-stone-700 text-stone-400' : 'bg-stone-200 text-stone-600'}`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 ${fieldMode ? 'bg-nb-black/70 text-nb-black/40' : 'bg-nb-black/10 text-nb-black/60'}`}>
                         {dc}
                       </span>
                     )}
@@ -448,7 +448,7 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
                         const newMeta = metadata.filter((_, i) => i !== actualIdx);
                         onUpdateResource({ metadata: newMeta });
                       }}
-                      className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-100 hover:text-red-600 ${fieldMode ? 'text-stone-500' : 'text-stone-400'}`}
+                      className={`opacity-0 group-hover:opacity-100 transition-nb p-1 hover:bg-nb-red/20 hover:text-nb-red ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}
                       title="Remove field"
                     >
                       <Icon name="close" className="text-xs" />
@@ -462,8 +462,8 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
                       newMeta[actualIdx].value = { [language]: [e.target.value] };
                       onUpdateResource({ metadata: newMeta });
                     }}
-                    className={`w-full text-sm bg-transparent border-b border-transparent hover:border-stone-300 focus:border-amber-500 focus:outline-none ${
-                      fieldMode ? 'text-stone-400' : 'text-stone-600'
+                    className={`w-full text-sm bg-transparent border-b border-transparent hover:border-nb-black/20 focus:border-nb-orange focus:outline-none ${
+                      fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'
                     }`}
                     placeholder="Enter value..."
                   />
@@ -484,10 +484,10 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
             ],
           });
         }}
-        className={`w-full py-3 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+        className={`w-full py-3 border-2 border-dashed flex items-center justify-center gap-2 text-sm font-medium transition-nb ${
           fieldMode
-            ? 'border-stone-700 text-stone-500 hover:border-stone-600 hover:text-stone-400 hover:bg-stone-800/50'
-            : 'border-stone-300 text-stone-500 hover:border-stone-400 hover:text-stone-600 hover:bg-stone-50'
+            ? 'border-nb-black/70 text-nb-black/50 hover:border-nb-black/60 hover:text-nb-black/40 hover:bg-nb-black/50'
+            : 'border-nb-black/20 text-nb-black/50 hover:border-nb-black/40 hover:text-nb-black/60 hover:bg-nb-cream'
         }`}
       >
         <Icon name="add" className="text-sm" />

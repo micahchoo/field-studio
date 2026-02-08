@@ -41,8 +41,8 @@ export const CoordinateInput: React.FC<CoordinateInputProps> = ({
   columns = 2,
   fieldMode = false,
 }) => {
-  const mutedTextClass = fieldMode ? 'text-slate-400' : 'text-slate-500';
-  const inputClass = fieldMode ? '!bg-slate-900 !border-slate-700 !text-white' : '';
+  const mutedTextClass = fieldMode ? 'text-nb-black/40' : 'text-nb-black/50';
+  const inputClass = fieldMode ? '!bg-nb-black !border-nb-black/80 !text-white' : '';
 
   const gridClass = columns === 1 ? 'grid-cols-1' : 'grid-cols-2';
 

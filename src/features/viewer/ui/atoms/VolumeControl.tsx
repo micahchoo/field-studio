@@ -71,7 +71,7 @@ export const VolumeControl: React.FC<VolumeControlProps> = ({
         onClick={onMuteToggle}
         variant="ghost"
         size="md"
-        className="!text-white hover:!text-blue-500"
+        className="!text-white hover:!text-nb-blue"
         fieldMode={fieldMode}
       />
       <input

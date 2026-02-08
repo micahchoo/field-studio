@@ -68,15 +68,15 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
   if (!hasAdminAccess) {
     return (
       <div className={`flex items-center justify-center h-full ${className}`}>
-        <div className="text-center p-8 bg-slate-100 dark:bg-slate-800 rounded-lg">
-          <span className="material-icons text-4xl text-slate-400 mb-4">lock</span>
-          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+        <div className="text-center p-8 bg-nb-cream ">
+          <span className="material-icons text-4xl text-nb-black/40 mb-4">lock</span>
+          <h2 className="text-xl font-semibold text-nb-black/70 mb-2">
             Admin Access Required
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-nb-black/50 mb-4">
             The Dependency Explorer is only accessible to administrators.
           </p>
-          <code className="text-sm bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+          <code className="text-sm bg-nb-cream/80 px-2 py-1 rounded">
             Add ?admin=true to URL
           </code>
         </div>
@@ -87,8 +87,8 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center h-full ${className}`}>
-        <div className="flex items-center gap-3 text-slate-500">
-          <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+        <div className="flex items-center gap-3 text-nb-black/50">
+          <div className="w-5 h-5 border-2 border-nb-black/20 border-t-nb-black/60 animate-spin" />
           <span>Loading dependency graph...</span>
         </div>
       </div>
@@ -98,15 +98,15 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
   if (error) {
     return (
       <div className={`flex items-center justify-center h-full ${className}`}>
-        <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 rounded-lg">
-          <span className="material-icons text-4xl text-red-500 mb-4">error</span>
-          <h2 className="text-xl font-semibold text-red-700 dark:text-red-400 mb-2">
+        <div className="text-center p-8 bg-nb-red/10 ">
+          <span className="material-icons text-4xl text-nb-red mb-4">error</span>
+          <h2 className="text-xl font-semibold text-nb-red mb-2">
             Failed to Load Data
           </h2>
-          <p className="text-red-600 dark:text-red-300 mb-4">{error.message}</p>
+          <p className="text-nb-red/60 mb-4">{error.message}</p>
           <Button variant="ghost" size="bare"
             onClick={refresh}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-nb-red text-white hover:bg-nb-red transition-nb"
           >
             Retry
           </Button>
@@ -118,13 +118,13 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
   if (!data) {
     return (
       <div className={`flex items-center justify-center h-full ${className}`}>
-        <div className="text-center p-8 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-          <span className="material-icons text-4xl text-yellow-500 mb-4">warning</span>
-          <h2 className="text-xl font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
+        <div className="text-center p-8 bg-yellow-50/20/20 ">
+          <span className="material-icons text-4xl text-nb-yellow mb-4">warning</span>
+          <h2 className="text-xl font-semibold text-nb-yellow mb-2">
             No Data Available
           </h2>
-          <p className="text-yellow-600 dark:text-yellow-300 mb-4">
-            Run <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">npm run analyze</code> to generate dependency data.
+          <p className="text-nb-yellow mb-4">
+            Run <code className="bg-nb-yellow/20 px-1 rounded">npm run analyze</code> to generate dependency data.
           </p>
         </div>
       </div>
@@ -132,15 +132,15 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
   }
 
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-slate-900 ${className}`}>
+    <div className={`flex flex-col h-full bg-nb-white ${className}`}>
       {/* Header */}
-      <header className="flex flex-wrap items-center gap-4 p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+      <header className="flex flex-wrap items-center gap-4 p-4 border-b border-nb-black/20 bg-nb-white">
         <div className="flex items-center gap-2">
-          <span className="material-icons text-slate-500">account_tree</span>
-          <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+          <span className="material-icons text-nb-black/50">account_tree</span>
+          <h1 className="text-lg font-semibold text-nb-black/20">
             Dependency Explorer
           </h1>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-nb-black/50">
             Generated: {new Date(data.generatedAt).toLocaleString()}
           </span>
         </div>
@@ -148,7 +148,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
         <div className="flex-1" />
 
         {/* View Mode Tabs */}
-        <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-700 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-nb-cream/80 p-1">
           {[
         { id: 'list', label: 'List', icon: 'list' },
           { id: 'graph', label: 'Graph', icon: 'hub' },
@@ -160,10 +160,10 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             <Button variant="ghost" size="bare"
               key={id}
               onClick={() => setViewMode(id as ViewMode)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium transition-nb ${
                 viewMode === id
-                  ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-200 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-nb-white/60 text-nb-black/20 shadow-brutal-sm'
+                  : 'text-nb-black/50 hover:text-nb-black'
               }`}
             >
               <span className="material-icons text-sm">{icon}</span>
@@ -174,7 +174,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
 
         <Button variant="ghost" size="bare"
           onClick={refresh}
-          className="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
+          className="p-2 text-nb-black/50 hover:text-nb-black/80 hover:bg-nb-cream"
           title="Refresh"
         >
           <span className="material-icons text-sm">refresh</span>
@@ -182,10 +182,10 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
       </header>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 p-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+      <div className="flex flex-wrap items-center gap-3 p-3 border-b border-nb-black/20 bg-nb-white">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px] max-w-md">
-          <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+          <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-nb-black/40 text-sm">
             search
           </span>
           <input
@@ -193,12 +193,12 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             placeholder="Search files, exports, imports..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-9 pr-3 py-1.5 text-sm border border-nb-black/20 bg-nb-white text-nb-black/20 focus:ring-2 focus:ring-nb-blue focus:border-transparent"
           />
           {searchQuery && (
             <Button variant="ghost" size="bare"
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-nb-black/40 hover:text-nb-black/60"
             >
               <span className="material-icons text-sm">close</span>
             </Button>
@@ -209,7 +209,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as FilterType)}
-          className="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+          className="px-3 py-1.5 text-sm border border-nb-black/20 bg-nb-white text-nb-black/20"
         >
           <option value="all">All Files</option>
           <option value="components">Components</option>
@@ -220,12 +220,12 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
         </select>
 
         {/* External Dependencies Toggle */}
-        <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+        <label className="flex items-center gap-2 text-sm text-nb-black/50 cursor-pointer">
           <input
             type="checkbox"
             checked={showExternalDeps}
             onChange={(e) => setShowExternalDeps(e.target.checked)}
-            className="rounded border-slate-300"
+            className="border-nb-black/20"
           />
           Show External
         </label>
@@ -233,7 +233,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
         <div className="flex-1" />
 
         {/* Results count */}
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-nb-black/50">
           {filteredFiles.length} of {data.totalFiles} files
         </span>
       </div>
@@ -245,10 +245,10 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
             {/* File List */}
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                <thead className="sticky top-0 bg-nb-white z-10">
+                  <tr className="border-b border-nb-black/20">
                     <th 
-                      className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                      className="px-4 py-2 text-left font-medium text-nb-black/50 cursor-pointer hover:bg-nb-cream"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center gap-1">
@@ -261,7 +261,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-2 text-center font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 w-20"
+                      className="px-4 py-2 text-center font-medium text-nb-black/50 cursor-pointer hover:bg-nb-cream w-20"
                       onClick={() => handleSort('imports')}
                     >
                       <div className="flex items-center justify-center gap-1">
@@ -274,7 +274,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-2 text-center font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 w-20"
+                      className="px-4 py-2 text-center font-medium text-nb-black/50 cursor-pointer hover:bg-nb-cream w-20"
                       onClick={() => handleSort('exports')}
                     >
                       <div className="flex items-center justify-center gap-1">
@@ -287,7 +287,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-2 text-center font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 w-24"
+                      className="px-4 py-2 text-center font-medium text-nb-black/50 cursor-pointer hover:bg-nb-cream w-24"
                       onClick={() => handleSort('dependents')}
                     >
                       <div className="flex items-center justify-center gap-1">
@@ -300,7 +300,7 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 w-24"
+                      className="px-4 py-2 text-right font-medium text-nb-black/50 cursor-pointer hover:bg-nb-cream w-24"
                       onClick={() => handleSort('size')}
                     >
                       <div className="flex items-center justify-end gap-1">
@@ -314,49 +314,49 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-nb-black/10">
                   {filteredFiles.map((file) => (
                     <tr
                       key={file.filePath}
                       onClick={() => setSelectedFile(file)}
-                      className={`cursor-pointer transition-colors ${
+                      className={`cursor-pointer transition-nb ${
                         selectedFile?.filePath === file.filePath
-                          ? 'bg-blue-50 dark:bg-blue-900/20'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                          ? 'bg-nb-blue/10'
+                          : 'hover:bg-nb-cream/50'
                       }`}
                     >
                       <td className="px-4 py-2">
                         <div className="flex flex-col">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                          <span className="font-mono text-xs text-nb-black/50">
                             {file.directory}/
                           </span>
-                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                          <span className="font-medium text-nb-black/20">
                             {file.fileName}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-2 text-center">
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs bg-nb-cream/80 text-nb-black/50">
                           {file.imports.length}
                         </span>
                       </td>
                       <td className="px-4 py-2 text-center">
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs bg-nb-green/20 text-nb-green">
                           {file.exports.length}
                         </span>
                       </td>
                       <td className="px-4 py-2 text-center">
-                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs ${
+                        <span className={`inline-flex items-center justify-center px-2 py-0.5 text-xs ${
                           file.dependents.length > 5
-                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                            ? 'bg-nb-orange/20 text-nb-orange'
                             : file.dependents.length > 0
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                            ? 'bg-nb-blue/20 text-nb-blue'
+                            : 'bg-nb-cream/80 text-nb-black/50'
                         }`}>
                           {file.dependents.length}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-400">
+                      <td className="px-4 py-2 text-right text-nb-black/50">
                         {formatBytes(file.size)}
                       </td>
                     </tr>

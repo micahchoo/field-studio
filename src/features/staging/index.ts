@@ -47,4 +47,10 @@ export type { StagingViewProps } from './ui/organisms/StagingView';
 export { SourcePane } from './ui/molecules/SourcePane';
 export type { SourcePaneProps } from './ui/molecules/SourcePane';
 
+export { SourceTreePane } from './ui/molecules/SourceTreePane';
+export type { SourceTreePaneProps } from './ui/molecules/SourceTreePane';
+
+export { FileTreeNode } from './ui/atoms/FileTreeNode';
+export type { FileTreeNodeProps } from './ui/atoms/FileTreeNode';
+
 export * from './model';

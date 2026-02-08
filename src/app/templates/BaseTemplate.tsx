@@ -52,10 +52,10 @@ export const BaseTemplate: React.FC<BaseTemplateProps> = ({
   sidebarContent
 }) => {
   return (
-    <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col h-screen bg-nb-black">
       {/* Header */}
       <header
-        className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+        className="flex items-center justify-between h-16 px-4 border-b border-nb-black bg-nb-black"
         role="banner"
       >
         {/* Sidebar toggle button */}
@@ -93,7 +93,7 @@ export const BaseTemplate: React.FC<BaseTemplateProps> = ({
         {/* Sidebar */}
         {showSidebar && (
           <aside
-            className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
+            className="w-64 border-r border-nb-black bg-nb-black overflow-y-auto"
             role="navigation"
           >
             {sidebarContent}

@@ -93,17 +93,17 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={`
-        transition-colors
-        ${isDragOver ? (fieldMode ? 'bg-yellow-500/20' : 'bg-blue-100') : ''}
+        transition-nb
+        ${isDragOver ? (fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-blue/20') : ''}
       `}
     >
       <div
         onClick={onSelect}
         className={`
-          flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
+          flex items-center gap-2 px-2 py-2  cursor-pointer transition-nb
           ${isSelected
-            ? (fieldMode ? 'bg-yellow-900/40' : 'bg-blue-100')
-            : (fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100')
+            ? (fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-blue/20')
+            : (fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-cream')
           }
         `}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -112,11 +112,11 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
         {hasChildren ? (
           <Button variant="ghost" size="bare"
             onClick={(e) => { e.stopPropagation(); onToggle(); }}
-            className={`p-0.5 rounded ${fieldMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`}
+            className={`p-0.5 ${fieldMode ? 'hover:bg-nb-black/80' : 'hover:bg-nb-cream'}`}
           >
             <Icon
               name={isExpanded ? 'expand_more' : 'chevron_right'}
-              className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
+              className={`text-sm ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}
             />
           </Button>
         ) : (
@@ -126,26 +126,26 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
         {/* Range Icon */}
         <Icon
           name="segment"
-          className={`text-sm ${fieldMode ? 'text-purple-400' : 'text-purple-600'}`}
+          className={`text-sm ${fieldMode ? 'text-nb-purple/60' : 'text-nb-purple'}`}
         />
 
         {/* Label */}
-        <span className={`flex-1 text-xs font-medium truncate ${fieldMode ? 'text-white' : 'text-slate-800'}`}>
+        <span className={`flex-1 text-xs font-medium truncate ${fieldMode ? 'text-white' : 'text-nb-black'}`}>
           {label}
         </span>
 
         {/* Item counts */}
         <div className="flex items-center gap-1.5">
           {canvasRefs.length > 0 && (
-            <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-              fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600'
+            <span className={`text-[9px] px-1.5 py-0.5 ${
+              fieldMode ? 'bg-nb-black text-nb-black/40' : 'bg-nb-cream text-nb-black/60'
             }`}>
               {canvasRefs.length} pages
             </span>
           )}
           {nestedRanges.length > 0 && (
-            <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-              fieldMode ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-600'
+            <span className={`text-[9px] px-1.5 py-0.5 ${
+              fieldMode ? 'bg-nb-purple/50 text-nb-purple/40' : 'bg-nb-purple/10 text-nb-purple'
             }`}>
               {nestedRanges.length} sub
             </span>
@@ -153,16 +153,16 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-nb">
           <Button variant="ghost" size="bare"
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className={`p-1 rounded ${fieldMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+            className={`p-1 ${fieldMode ? 'hover:bg-nb-black/80 text-nb-black/40' : 'hover:bg-nb-cream text-nb-black/50'}`}
           >
             <Icon name="edit" className="text-[10px]" />
           </Button>
           <Button variant="ghost" size="bare"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className={`p-1 rounded hover:bg-red-100 text-red-400 hover:text-red-600`}
+            className={`p-1 hover:bg-nb-red/20 text-nb-red hover:text-nb-red`}
           >
             <Icon name="delete" className="text-[10px]" />
           </Button>
@@ -172,14 +172,14 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
       {/* Supplementary AnnotationCollection link (shown when selected) */}
       {isSelected && onSupplementaryChange && (
         <div
-          className={`mx-2 mb-2 p-2 rounded-lg border text-xs ${
-            fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
+          className={`mx-2 mb-2 p-2 border text-xs ${
+            fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white border-nb-black/20'
           }`}
           style={{ marginLeft: `${depth * 16 + 28}px` }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className={`text-[9px] font-bold uppercase tracking-wider mb-1 ${
-            fieldMode ? 'text-slate-500' : 'text-slate-400'
+            fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'
           }`}>
             <Icon name="library_books" className="text-[10px] mr-1 inline" />
             Supplementary Annotations
@@ -196,16 +196,16 @@ const RangeTreeItem: React.FC<RangeTreeItemProps> = ({
                 );
               }}
               placeholder="AnnotationCollection URI"
-              className={`flex-1 text-xs px-2 py-1 rounded border outline-none ${
+              className={`flex-1 text-xs px-2 py-1 border outline-none ${
                 fieldMode
-                  ? 'bg-black border-slate-700 text-white placeholder-slate-600 focus:border-yellow-500'
-                  : 'bg-white border-slate-300 placeholder-slate-400 focus:border-blue-500'
+                  ? 'bg-nb-black border-nb-black/80 text-white placeholder-nb-black/60 focus:border-nb-yellow'
+                  : 'bg-nb-white border-nb-black/20 placeholder-nb-black/40 focus:border-nb-blue'
               }`}
             />
             {(range as any).supplementary?.id && (
               <Button variant="ghost" size="bare"
                 onClick={() => onSupplementaryChange(range.id, undefined)}
-                className="text-red-400 hover:text-red-600 p-0.5"
+                className="text-nb-red hover:text-nb-red p-0.5"
               >
                 <Icon name="close" className="text-xs" />
               </Button>
@@ -270,28 +270,28 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
     <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-nb-black/50"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className={`
-        relative w-full max-w-lg max-h-[80vh] overflow-hidden rounded-xl shadow-2xl
-        ${fieldMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}
+        relative w-full max-w-lg max-h-[80vh] overflow-hidden  shadow-brutal-lg
+        ${fieldMode ? 'bg-nb-black border border-nb-black/80' : 'bg-nb-white'}
       `}>
         {/* Header */}
         <div className={`
           flex items-center justify-between px-4 py-3 border-b
-          ${fieldMode ? 'border-slate-700' : 'border-slate-200'}
+          ${fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'}
         `}>
-          <h3 className={`font-bold ${fieldMode ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`font-bold ${fieldMode ? 'text-white' : 'text-nb-black'}`}>
             {isEditing ? 'Edit Range' : 'Create New Range'}
           </h3>
           <Button variant="ghost" size="bare"
             onClick={onClose}
-            className={`p-1 rounded ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
+            className={`p-1 ${fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-cream'}`}
           >
-            <Icon name="close" className={fieldMode ? 'text-slate-400' : 'text-slate-500'} />
+            <Icon name="close" className={fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'} />
           </Button>
         </div>
 
@@ -300,7 +300,7 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
           {/* Label input */}
           <div>
             <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${
-              fieldMode ? 'text-slate-400' : 'text-slate-500'
+              fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
             }`}>
               Range Label
             </label>
@@ -311,10 +311,10 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
               placeholder="e.g., Chapter 1, Introduction, etc."
               autoFocus
               className={`
-                w-full px-3 py-2 rounded-lg text-sm outline-none border
+                w-full px-3 py-2  text-sm outline-none border
                 ${fieldMode
-                  ? 'bg-slate-800 text-white border-slate-700 focus:border-yellow-500'
-                  : 'bg-white border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                  ? 'bg-nb-black text-white border-nb-black/80 focus:border-nb-yellow'
+                  : 'bg-nb-white border-nb-black/20 focus:border-nb-blue focus:ring-2 focus:ring-nb-blue/20'
                 }
               `}
             />
@@ -323,13 +323,13 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
           {/* Canvas selection */}
           <div>
             <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${
-              fieldMode ? 'text-slate-400' : 'text-slate-500'
+              fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
             }`}>
               Select Pages/Canvases ({selectedCanvasIds.size} selected)
             </label>
             <div className={`
-              border rounded-lg max-h-48 overflow-y-auto
-              ${fieldMode ? 'border-slate-700' : 'border-slate-200'}
+              border  max-h-48 overflow-y-auto
+              ${fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'}
             `}>
               {availableCanvases.map((canvas) => {
                 const canvasLabel = getIIIFValue(canvas.label, language) || 'Untitled';
@@ -339,10 +339,10 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
                     key={canvas.id}
                     onClick={() => toggleCanvas(canvas.id)}
                     className={`
-                      flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors border-b last:border-b-0
+                      flex items-center gap-2 px-3 py-2 cursor-pointer transition-nb border-b last:border-b-0
                       ${fieldMode
-                        ? `border-slate-800 ${isSelected ? 'bg-yellow-900/30' : 'hover:bg-slate-800'}`
-                        : `border-slate-100 ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`
+                        ? `border-nb-black ${isSelected ? 'bg-nb-yellow/20' : 'hover:bg-nb-black'}`
+                        : `border-nb-black/10 ${isSelected ? 'bg-nb-blue/10' : 'hover:bg-nb-white'}`
                       }
                     `}
                   >
@@ -350,19 +350,19 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
                       name={isSelected ? 'check_box' : 'check_box_outline_blank'}
                       className={`text-sm ${
                         isSelected
-                          ? (fieldMode ? 'text-yellow-400' : 'text-blue-600')
-                          : (fieldMode ? 'text-slate-600' : 'text-slate-400')
+                          ? (fieldMode ? 'text-nb-yellow' : 'text-nb-blue')
+                          : (fieldMode ? 'text-nb-black/60' : 'text-nb-black/40')
                       }`}
                     />
-                    <Icon name="image" className={`text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                    <span className={`text-xs truncate ${fieldMode ? 'text-white' : 'text-slate-700'}`}>
+                    <Icon name="image" className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`} />
+                    <span className={`text-xs truncate ${fieldMode ? 'text-white' : 'text-nb-black/80'}`}>
                       {canvasLabel}
                     </span>
                   </div>
                 );
               })}
               {availableCanvases.length === 0 && (
-                <div className={`p-4 text-center text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`p-4 text-center text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
                   No canvases available
                 </div>
               )}
@@ -373,15 +373,15 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
         {/* Footer */}
         <div className={`
           flex items-center justify-end gap-2 px-4 py-3 border-t
-          ${fieldMode ? 'border-slate-700' : 'border-slate-200'}
+          ${fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'}
         `}>
           <Button variant="ghost" size="bare"
             onClick={onClose}
             className={`
-              px-4 py-2 rounded-lg text-sm font-medium transition-colors
+              px-4 py-2  text-sm font-medium transition-nb
               ${fieldMode
-                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-nb-black text-nb-black/30 hover:bg-nb-black/80'
+                : 'bg-nb-cream text-nb-black/80 hover:bg-nb-cream'
               }
             `}
           >
@@ -391,10 +391,10 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
             onClick={handleSave}
             disabled={!label.trim()}
             className={`
-              px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50
+              px-4 py-2  text-sm font-medium transition-nb disabled:opacity-50
               ${fieldMode
-                ? 'bg-yellow-600 text-white hover:bg-yellow-500'
-                : 'bg-blue-600 text-white hover:bg-blue-500'
+                ? 'bg-nb-yellow text-white hover:bg-nb-yellow'
+                : 'bg-nb-blue text-white hover:bg-nb-blue'
               }
             `}
           >
@@ -427,7 +427,7 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
 
   // Generate unique ID for new ranges
   const generateRangeId = useCallback(() => {
-    return `${manifest.id}/range/${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${manifest.id}/range/${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
   }, [manifest.id]);
 
   // Toggle range expansion
@@ -663,11 +663,11 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
   return (
     <div className="space-y-4">
       {/* Info banner */}
-      <div className={`p-3 rounded-lg border ${cx.surface} ${cx.border}`}>
+      <div className={`p-3 border ${cx.surface} ${cx.border}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon name="account_tree" className={`text-sm ${settings.fieldMode ? 'text-purple-400' : 'text-purple-600'}`} />
-            <span className={`text-xs font-bold uppercase ${settings.fieldMode ? 'text-purple-400' : 'text-purple-600'}`}>
+            <Icon name="account_tree" className={`text-sm ${settings.fieldMode ? 'text-nb-purple/60' : 'text-nb-purple'}`} />
+            <span className={`text-xs font-bold uppercase ${settings.fieldMode ? 'text-nb-purple/60' : 'text-nb-purple'}`}>
               Table of Contents
             </span>
           </div>
@@ -684,11 +684,11 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
       <Button variant="ghost" size="bare"
         onClick={() => { setEditingRange(null); setModalOpen(true); }}
         className={`
-          w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed
-          text-xs font-bold uppercase transition-colors
+          w-full flex items-center justify-center gap-2 px-4 py-3  border-2 border-dashed
+          text-xs font-bold uppercase transition-nb
           ${settings.fieldMode
-            ? 'border-slate-700 text-slate-400 hover:border-yellow-600 hover:text-yellow-400 hover:bg-yellow-900/10'
-            : 'border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50'
+            ? 'border-nb-black/80 text-nb-black/40 hover:border-nb-yellow hover:text-nb-yellow hover:bg-nb-yellow/20'
+            : 'border-nb-black/20 text-nb-black/50 hover:border-nb-blue hover:text-nb-blue hover:bg-nb-blue/10'
           }
         `}
       >
@@ -699,8 +699,8 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
       {/* Range tree */}
       {structures.length > 0 ? (
         <div className={`
-          border rounded-lg overflow-hidden
-          ${settings.fieldMode ? 'border-slate-700 bg-black' : 'border-slate-200 bg-white'}
+          border  overflow-hidden
+          ${settings.fieldMode ? 'border-nb-black/80 bg-nb-black' : 'border-nb-black/20 bg-nb-white'}
         `}>
           <div onDragEnd={handleDragEnd}>
             {renderRanges(structures)}

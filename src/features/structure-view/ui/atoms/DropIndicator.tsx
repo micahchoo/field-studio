@@ -38,8 +38,8 @@ export const DropIndicator: React.FC<DropIndicatorProps> = ({
 }) => {
   const baseClasses = 'absolute left-0 right-0 h-0.5 z-10 pointer-events-none';
   const colorClasses = isValid
-    ? 'bg-blue-500 shadow-[0_0_4px_rgba(59,130,246,0.5)]'
-    : 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]';
+    ? 'bg-nb-blue shadow-[0_0_4px_rgba(59,130,246,0.5)]'
+    : 'bg-nb-red shadow-[0_0_4px_rgba(239,68,68,0.5)]';
 
   const positionClasses = {
     before: '-top-0.5',
@@ -56,7 +56,7 @@ export const DropIndicator: React.FC<DropIndicatorProps> = ({
       {/* Arrow indicator for before/after */}
       {(position === 'before' || position === 'after') && (
         <div
-          className={`absolute left-1 w-2 h-2 rounded-full ${isValid ? 'bg-blue-500' : 'bg-red-500'} ${
+          className={`absolute left-1 w-2 h-2 ${isValid ? 'bg-nb-blue' : 'bg-nb-red'} ${
             position === 'before' ? '-top-[3px]' : '-top-[3px]'
           }`}
         />

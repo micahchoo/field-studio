@@ -24,6 +24,8 @@ export interface CanvasItemProps {
   id: string;
   /** Display label */
   label: string;
+  /** Optional subtitle shown below label in muted text */
+  subtitle?: string;
   /** Thumbnail URL */
   thumbnailUrl?: string | null;
   /** Index for display */
@@ -68,7 +70,7 @@ export interface CanvasItemProps {
  *   label="Page 1"
  *   thumbnailUrl="https://example.com/thumb.jpg"
  *   index={0}
- *   isSelected={selectedId === 'canvas-1'}
+ *   isSelected={selectedId ==='canvas-1'}
  *   onSelect={handleSelect}
  *   onDragStart={handleDragStart}
  * />
@@ -76,12 +78,13 @@ export interface CanvasItemProps {
 export const CanvasItem: React.FC<CanvasItemProps> = ({
   id,
   label,
+  subtitle,
   thumbnailUrl,
   index,
   isSelected = false,
   isDragTarget = false,
   isDragging = false,
-  className = '',
+  className ='',
   onSelect,
   onDragStart,
   onDragEnd,
@@ -114,31 +117,31 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({
       onDrop={onDrop}
       tabIndex={tabIndex}
       className={`
-        group relative flex items-center gap-3 p-2 rounded-lg cursor-pointer
-        transition-all duration-150 ease-in-out
+        group relative flex items-center gap-3 p-2  cursor-pointer
+        transition-nb  
         ${isSelected
-          ? 'bg-blue-100 border-2 border-blue-500 shadow-sm'
-          : `border ${cx?.surface ?? 'bg-white border-slate-200'} hover:shadow-sm`
+          ?'bg-nb-blue/20 border-2 border-nb-blue shadow-brutal-sm'
+          :`border ${cx?.surface ??'bg-nb-white border-nb-black/20'} hover:shadow-brutal-sm`
         }
-        ${isDragTarget ? 'border-blue-500 border-dashed bg-blue-50' : ''}
-        ${isDragging ? 'opacity-50' : ''}
+        ${isDragTarget ?'border-nb-blue border-dashed bg-nb-blue/10' :''}
+        ${isDragging ?'opacity-50' :''}
         ${className}
-      `}
+`}
     >
       {/* Drag handle (visible on hover when draggable) */}
       {onDragStart && (
-        <div className={`flex-shrink-0 cursor-grab active:cursor-grabbing ${cx?.textMuted ?? 'text-slate-400'} hover:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity`}>
+        <div className={`flex-shrink-0 cursor-grab active:cursor-grabbing ${cx?.textMuted ??'text-nb-black/40'} hover:text-nb-black/50 opacity-0 group-hover:opacity-100 transition-nb`}>
           <Icon name="drag_indicator" className="text-lg" />
         </div>
       )}
 
       {/* Index badge */}
-      <span className={`flex-shrink-0 w-7 h-7 ${cx?.subtleBg ?? 'bg-slate-100'} rounded-md text-[11px] font-bold ${cx?.textMuted ?? 'text-slate-500'} flex items-center justify-center`}>
+      <span className={`flex-shrink-0 w-7 h-7 ${cx?.subtleBg ??'bg-nb-cream'} text-[11px] font-bold ${cx?.textMuted ??'text-nb-black/50'} flex items-center justify-center`}>
         {index + 1}
       </span>
 
       {/* Thumbnail */}
-      <div className={`flex-shrink-0 w-12 h-12 ${cx?.thumbnailBg ?? 'bg-slate-100'} rounded-md overflow-hidden flex items-center justify-center`}>
+      <div className={`flex-shrink-0 w-12 h-12 ${cx?.thumbnailBg ??'bg-nb-cream'} overflow-hidden flex items-center justify-center`}>
         {thumbnailUrl && !imageError ? (
           <img
             src={thumbnailUrl}
@@ -148,21 +151,24 @@ export const CanvasItem: React.FC<CanvasItemProps> = ({
             loading="lazy"
           />
         ) : (
-          <Icon name="image" className={`text-xl ${cx?.placeholderIcon ?? 'text-slate-400'}`} />
+          <Icon name="image" className={`text-xl ${cx?.placeholderIcon ??'text-nb-black/40'}`} />
         )}
       </div>
 
       {/* Label */}
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium ${cx?.subtleText ?? 'text-slate-700'} truncate`} title={label}>
+        <div className={`text-sm font-medium ${cx?.subtleText ??'text-nb-black/80'} truncate`} title={label}>
           {label}
         </div>
+        {subtitle && (
+          <div className="text-[11px] text-nb-black/40 truncate">{subtitle}</div>
+        )}
       </div>
 
       {/* Selection indicator */}
       {isSelected && (
         <div className="flex-shrink-0">
-          <Icon name="check_circle" className="text-blue-500 text-lg" />
+          <Icon name="check_circle" className="text-nb-blue text-lg" />
         </div>
       )}
     </div>

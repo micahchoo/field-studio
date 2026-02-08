@@ -86,7 +86,7 @@ export const RotationDial: React.FC<RotationDialProps> = ({
           color="orange"
           fieldMode={fieldMode}
         />
-        <div className={`text-center text-xs font-mono ${fieldMode ? 'text-orange-400' : 'text-orange-600'}`}>
+        <div className={`text-center text-xs font-mono ${fieldMode ? 'text-orange-400' : 'text-nb-orange'}`}>
           {value}°
         </div>
       </div>

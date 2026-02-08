@@ -40,15 +40,15 @@ export const PropertyLabel: React.FC<PropertyLabelProps> = ({
   className = '',
   showHint = true,
 }) => {
-  const baseClass = `block text-xs font-bold ${fieldMode ? 'text-slate-300' : 'text-slate-700'} ${className}`;
+  const baseClass = `block text-xs font-bold ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/80'} ${className}`;
 
   return (
     <div className="flex justify-between items-center">
       <span className={baseClass}>{label}</span>
       {showHint && dcHint && (
         <span
-          className={`text-[9px] font-mono px-1 rounded ${
-            fieldMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-50 text-slate-400'
+          className={`text-[9px] font-mono px-1 ${
+            fieldMode ? 'bg-nb-black text-nb-black/50' : 'bg-nb-white text-nb-black/40'
           }`}
           title="Dublin Core Mapping"
         >

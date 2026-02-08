@@ -76,17 +76,17 @@ export const ViewerPanels: React.FC<ViewerPanelsProps> = ({
 
   return (
     <div
-      className={`fixed inset-y-0 right-0 w-96 shadow-xl z-50 flex flex-col ${
-        fieldMode ? 'bg-slate-950' : 'bg-white'
+      className={`fixed inset-y-0 right-0 w-96 shadow-brutal z-50 flex flex-col ${
+        fieldMode ? 'bg-nb-black' : 'bg-nb-white'
       }`}
     >
       {/* Panel Header */}
       <div
         className={`flex items-center justify-between p-4 border-b ${
-          fieldMode ? 'border-slate-800' : 'border-slate-200'
+          fieldMode ? 'border-nb-black' : 'border-nb-black/20'
         }`}
       >
-        <h3 className={`font-bold ${fieldMode ? 'text-white' : 'text-slate-800'}`}>
+        <h3 className={`font-bold ${fieldMode ? 'text-white' : 'text-nb-black'}`}>
           Search Manifest
         </h3>
         <IconButton

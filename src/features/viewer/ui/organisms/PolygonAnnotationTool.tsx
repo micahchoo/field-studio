@@ -1,3 +1,8 @@
+/**
+ * @deprecated Use AnnotationDrawingOverlay with Annotorious integration instead.
+ * This legacy full-screen annotation tool duplicates logic now handled by Annotorious.
+ * Retained temporarily for reference; will be removed in a follow-up.
+ */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
@@ -261,16 +266,16 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
   })();
 
   return (
-    <div className="absolute inset-0 z-30 bg-slate-950 flex flex-col">
+    <div className="absolute inset-0 z-30 bg-nb-black flex flex-col">
       {/* Header */}
-      <div className="h-12 bg-slate-900 border-b border-white/10 flex items-center justify-between px-4 shrink-0">
+      <div className="h-12 bg-nb-black border-b border-white/10 flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-4">
           <h2 className="text-white font-bold flex items-center gap-2 text-sm">
-            <Icon name="pentagon" className="text-green-400"/> 
+            <Icon name="pentagon" className="text-nb-green"/> 
             Annotation Tool
           </h2>
 
-          <div className="flex bg-white/5 border border-white/10 rounded p-0.5">
+          <div className="flex bg-nb-white/5 border border-white/10 p-0.5">
             {[
               { mode: 'polygon' as const, icon: 'pentagon', label: 'Polygon' },
               { mode: 'rectangle' as const, icon: 'crop_square', label: 'Rectangle' },
@@ -280,8 +285,8 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
               <Button variant="ghost" size="bare"
                 key={m.mode}
                 onClick={() => { setMode(m.mode); handleClear(); }}
-                className={`px-2 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 ${
-                  mode === m.mode ? 'bg-green-600 text-white' : 'text-slate-500 hover:text-white'
+                className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 ${
+                  mode === m.mode ? 'bg-nb-green text-white' : 'text-nb-black/50 hover:text-white'
                 }`}
               >
                 <Icon name={m.icon} className="text-xs"/> {m.label}
@@ -293,11 +298,11 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="bare"
             onClick={() => setShowExisting(!showExisting)}
-            className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${showExisting ? 'bg-blue-600 text-white' : 'bg-white/5 text-white/40'}`}
+            className={`px-2 py-1 text-[10px] font-bold uppercase ${showExisting ? 'bg-nb-blue text-white' : 'bg-nb-white/5 text-white/40'}`}
           >
             {existingSvgAnnotations.length} Existing
           </Button>
-          <Button variant="ghost" size="bare" onClick={onClose} className="px-3 py-1 text-white/40 hover:text-white font-bold text-sm hover:bg-white/10 rounded">
+          <Button variant="ghost" size="bare" onClick={onClose} className="px-3 py-1 text-white/40 hover:text-white font-bold text-sm hover:bg-nb-white/10 rounded">
             Done
           </Button>
         </div>
@@ -307,7 +312,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
         {/* Canvas Area */}
         <div
           ref={containerRef}
-          className="flex-1 relative overflow-hidden bg-slate-950 cursor-crosshair"
+          className="flex-1 relative overflow-hidden bg-nb-black cursor-crosshair"
           onMouseMove={handleMouseMove}
           onClick={handleClick}
           onMouseDown={handleMouseDown}
@@ -433,7 +438,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
         </div>
 
         {/* Sidebar */}
-        <div className="w-72 bg-slate-900 border-l border-white/10 flex flex-col">
+        <div className="w-72 bg-nb-black border-l border-white/10 flex flex-col">
           <div className="p-3 border-b border-white/5">
             <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Annotation Details</span>
           </div>
@@ -444,7 +449,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
               <select
                 value={motivation}
                 onChange={e => setMotivation(e.target.value as any)}
-                className="w-full bg-white/5 text-white text-xs border border-white/10 rounded-lg p-2 outline-none"
+                className="w-full bg-nb-white/5 text-white text-xs border border-white/10 p-2 outline-none"
               >
                 <option value="commenting">Commenting</option>
                 <option value="tagging">Tagging</option>
@@ -459,14 +464,14 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
                 onChange={e => setAnnotationText(e.target.value)}
                 placeholder="Enter your annotation..."
                 rows={4}
-                className="w-full bg-white/5 text-white text-xs border border-white/10 rounded-lg p-2.5 outline-none resize-none"
+                className="w-full bg-nb-white/5 text-white text-xs border border-white/10 p-2.5 outline-none resize-none"
               />
             </div>
 
-            <div className="bg-white/5 rounded-lg p-2.5 border border-white/10">
+            <div className="bg-nb-white/5 p-2.5 border border-white/10">
               <div className="flex justify-between items-center mb-1.5">
                 <span className="text-[10px] font-bold text-white/40 uppercase">Shape</span>
-                <span className="text-xs font-mono text-green-400">{points.length} points</span>
+                <span className="text-xs font-mono text-nb-green">{points.length} points</span>
               </div>
               {points.length >= 3 && (
                 <div className="text-[9px] text-white/30">
@@ -501,14 +506,14 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
               <Button variant="ghost" size="bare"
                 onClick={handleUndo}
                 disabled={points.length === 0}
-                className="flex-1 bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white/60 text-[10px] font-bold uppercase py-2 rounded-lg flex items-center justify-center gap-1"
+                className="flex-1 bg-nb-white/5 hover:bg-nb-white/10 disabled:opacity-30 text-white/60 text-[10px] font-bold uppercase py-2 flex items-center justify-center gap-1"
               >
                 <Icon name="undo" className="text-xs"/> Undo
               </Button>
               <Button variant="ghost" size="bare"
                 onClick={handleClear}
                 disabled={points.length === 0}
-                className="flex-1 bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white/60 text-[10px] font-bold uppercase py-2 rounded-lg flex items-center justify-center gap-1"
+                className="flex-1 bg-nb-white/5 hover:bg-nb-white/10 disabled:opacity-30 text-white/60 text-[10px] font-bold uppercase py-2 flex items-center justify-center gap-1"
               >
                 <Icon name="clear" className="text-xs"/> Clear
               </Button>
@@ -519,7 +524,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
             <Button variant="ghost" size="bare"
               onClick={handleSave}
               disabled={points.length < 3 || !annotationText.trim()}
-              className="w-full bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs transition-all"
+              className="w-full bg-nb-green hover:bg-nb-green disabled:bg-nb-black/80 disabled:text-nb-black/50 text-white px-4 py-2.5 font-bold uppercase tracking-wider text-xs transition-nb"
             >
               <Icon name="save" className="inline mr-1.5 text-xs"/> Create Annotation
             </Button>
@@ -527,7 +532,7 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
         </div>
       </div>
 
-      <div className="h-7 bg-slate-950 border-t border-white/5 flex items-center justify-between px-4 text-[9px] text-white/30 uppercase font-bold tracking-wider">
+      <div className="h-7 bg-nb-black border-t border-white/5 flex items-center justify-between px-4 text-[9px] text-white/30 uppercase font-bold tracking-wider">
         <span>
           {mode === 'polygon' ? 'Click to add points, click first point to close' : 
            mode === 'rectangle' ? 'Click two corners to draw rectangle' : 
@@ -535,9 +540,9 @@ export const PolygonAnnotationTool: React.FC<PolygonAnnotationToolProps> = ({
            'Pan mode - drag to move'}
         </span>
         <div className="flex gap-3">
-          <span><kbd className="bg-white/10 px-1 py-0.5 rounded text-[8px]">Esc</kbd> Cancel</span>
-          <span><kbd className="bg-white/10 px-1 py-0.5 rounded text-[8px]">Cmd+Z</kbd> Undo</span>
-          <span><kbd className="bg-white/10 px-1 py-0.5 rounded text-[8px]">Enter</kbd> Close</span>
+          <span><kbd className="bg-nb-white/10 px-1 py-0.5 text-[8px]">Esc</kbd> Cancel</span>
+          <span><kbd className="bg-nb-white/10 px-1 py-0.5 text-[8px]">Cmd+Z</kbd> Undo</span>
+          <span><kbd className="bg-nb-white/10 px-1 py-0.5 text-[8px]">Enter</kbd> Close</span>
         </div>
       </div>
     </div>

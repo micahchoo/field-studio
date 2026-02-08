@@ -44,13 +44,13 @@ export const ImportSummary: React.FC<ImportSummaryProps> = ({
 
   return (
     <div className="text-center py-8">
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-        <span className="text-4xl text-green-600">✓</span>
+      <div className="w-20 h-20 bg-nb-green/20 flex items-center justify-center mx-auto mb-6">
+        <span className="text-4xl text-nb-green">✓</span>
       </div>
-      <h3 className="text-lg font-semibold text-slate-800 mb-2">
+      <h3 className="text-lg font-semibold text-nb-black mb-2">
         Import Complete
       </h3>
-      <p className="text-sm text-slate-500 mb-6">
+      <p className="text-sm text-nb-black/50 mb-6">
         Successfully processed {totalRows} rows
       </p>
 
@@ -74,15 +74,15 @@ export const ImportSummary: React.FC<ImportSummaryProps> = ({
 
       {hasErrors && (
         <div className="mt-6 text-left">
-          <h4 className="text-sm font-medium text-slate-700 mb-2">Errors</h4>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-40 overflow-y-auto">
+          <h4 className="text-sm font-medium text-nb-black/80 mb-2">Errors</h4>
+          <div className="bg-nb-red/10 border border-nb-red/30 p-3 max-h-40 overflow-y-auto">
             {errors?.map((error, i) => (
-              <div key={i} className="text-xs text-red-700 py-1">
+              <div key={i} className="text-xs text-nb-red py-1">
                 Row {error.row}: {error.message}
               </div>
             ))}
             {!errors && errorCount > 0 && (
-              <div className="text-xs text-red-700 py-1">
+              <div className="text-xs text-nb-red py-1">
                 {errorCount} rows failed to import
               </div>
             )}

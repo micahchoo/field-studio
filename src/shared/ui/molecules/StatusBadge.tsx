@@ -14,7 +14,7 @@ import React from 'react';
 import { Icon } from '../atoms';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
-export type StatusVariant = 'default' | 'success' | 'warning' | 'error' | 'info' | 'accent';
+export type StatusVariant ='default' |'success' |'warning' |'error' |'info' |'accent';
 
 export interface StatusBadgeProps {
   /** Status text */
@@ -24,7 +24,7 @@ export interface StatusBadgeProps {
   /** Visual variant */
   variant?: StatusVariant;
   /** Size variant */
-  size?: 'sm' | 'md';
+  size?:'sm' |'md';
   /** Pulse animation for active states */
   pulse?: boolean;
   /** Additional CSS classes */
@@ -56,51 +56,51 @@ export interface StatusBadgeProps {
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   label,
   icon,
-  variant = 'default',
-  size = 'md',
+  variant ='default',
+  size ='md',
   pulse = false,
-  className = '',
+  className ='',
   cx = {},
   fieldMode = false,
 }) => {
   // Context is provided via props (no hook calls)
 
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs gap-1',
-    md: 'px-3 py-1 text-sm gap-1.5',
+    sm:'px-2 py-0.5 text-xs gap-1',
+    md:'px-3 py-1 text-sm gap-1.5',
   };
 
   const variantClasses: Record<StatusVariant, string> = {
-    default: `${cx.subtleBg} ${cx.subtleText}`,
+    default:`${cx.subtleBg} ${cx.subtleText}`,
     success: fieldMode
-      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-      : 'bg-green-50 text-green-700 border border-green-200',
+      ?'bg-nb-green/20 text-nb-green border border-nb-green/30'
+      :'bg-nb-green/10 text-nb-green border border-nb-green/30',
     warning: fieldMode
-      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-      : 'bg-amber-50 text-amber-700 border border-amber-200',
+      ?'bg-nb-orange/20 text-nb-orange border border-nb-orange/30'
+      :'bg-nb-orange/10 text-nb-orange border border-nb-orange/20',
     error: fieldMode
-      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-      : 'bg-red-50 text-red-700 border border-red-200',
+      ?'bg-nb-red/20 text-nb-red border border-nb-red/30'
+      :'bg-nb-red/10 text-nb-red border border-nb-red/30',
     info: fieldMode
-      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-      : 'bg-blue-50 text-blue-700 border border-blue-200',
+      ?'bg-nb-blue/20 text-nb-blue border border-nb-blue/30'
+      :'bg-nb-blue/10 text-nb-blue border border-nb-blue/30',
     accent: cx.accentBadge,
   };
 
   return (
     <span
       className={`
-        inline-flex items-center rounded-full font-medium
+        inline-flex items-center  font-medium
         ${sizeClasses[size]}
         ${variantClasses[variant]}
-        ${pulse ? 'animate-pulse' : ''}
+        ${pulse ?'animate-pulse' :''}
         ${className}
-      `}
+`}
     >
       {icon && (
         <Icon
           name={icon}
-          className={`${size === 'sm' ? 'text-xs' : 'text-sm'} ${pulse ? 'animate-spin' : ''}`}
+          className={`${size ==='sm' ?'text-xs' :'text-sm'} ${pulse ?'animate-spin' :''}`}
           aria-hidden="true"
         />
       )}

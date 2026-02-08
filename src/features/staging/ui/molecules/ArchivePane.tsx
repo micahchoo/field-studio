@@ -7,25 +7,26 @@
 
 import React, { useCallback, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
-import type { SourceManifest, SourceManifests } from '@/src/shared/types';
+import type { SourceManifests } from '@/src/shared/types';
 import type { ArchiveLayout, ArchiveNode } from '@/src/shared/lib/hooks/useStagingState';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { contentStateService } from '@/src/shared/services/contentState';
 
 export interface ArchivePaneProps {
   archiveLayout: ArchiveLayout;
   sourceManifests: SourceManifests;
   onAddToCollection: (collectionId: string, manifestIds: string[]) => void;
   onRemoveFromCollection: (collectionId: string, manifestIds: string[]) => void;
-  onCreateCollection: (name: string) => void;
+  onCreateCollection: (name: string) => string;
   onRenameCollection: (collectionId: string, newName: string) => void;
   onDeleteCollection: (collectionId: string) => void;
-  onOpenSendToModal: (manifestIds: string[]) => void;
   onFocus: () => void;
   isFocused: boolean;
+  onContextMenu?: (e: React.MouseEvent, collectionId: string) => void;
 }
 
 const ArchivePaneHeader: React.FC<{
-  onCreateCollection: (name: string) => void;
+  onCreateCollection: (name: string) => string;
   onFocus: () => void;
 }> = ({ onCreateCollection, onFocus }) => {
   const [showNewCollectionInput, setShowNewCollectionInput] = useState(false);
@@ -41,14 +42,14 @@ const ArchivePaneHeader: React.FC<{
 
   return (
     <div
-      className="p-3 border-b border-slate-200 bg-slate-50"
+      className="p-3 border-b border-nb-black/20 bg-nb-cream/40"
       onClick={onFocus}
     >
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-bold text-slate-700">Archive Layout</h3>
+        <h3 className="text-sm font-bold text-nb-black/80">Archive Layout</h3>
         <Button variant="ghost" size="bare"
           onClick={() => setShowNewCollectionInput(!showNewCollectionInput)}
-          className="p-1 hover:bg-slate-200 rounded text-slate-600 text-sm"
+          className="p-1 hover:bg-nb-cream text-nb-black/60 text-sm"
           title="Create new collection"
         >
           <Icon name="add" className="text-base" />
@@ -66,12 +67,12 @@ const ArchivePaneHeader: React.FC<{
               if (e.key === 'Escape') setShowNewCollectionInput(false);
             }}
             placeholder="Collection name..."
-            className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+            className="flex-1 px-2 py-1 text-sm border border-nb-black/20 rounded"
             autoFocus
           />
           <Button variant="ghost" size="bare"
             onClick={handleCreate}
-            className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-2 py-1 text-sm bg-nb-blue text-white hover:bg-nb-blue"
           >
             Create
           </Button>
@@ -87,11 +88,13 @@ const CollectionNode: React.FC<{
   onRemove: (manifestIds: string[]) => void;
   onRename: (newName: string) => void;
   onDelete: () => void;
-  onOpenSendTo: (manifestIds: string[]) => void;
+  onAddToCollection?: (manifestIds: string[]) => void;
   onFocus: () => void;
-}> = ({ node, sourceManifests, onRemove, onRename, onDelete, onOpenSendTo, onFocus }) => {
+  onContextMenu?: (e: React.MouseEvent, collectionId: string) => void;
+}> = ({ node, sourceManifests, onRemove, onRename, onDelete, onAddToCollection, onFocus, onContextMenu }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [newName, setNewName] = useState(node.name);
 
   const manifestCount = node.manifestIds?.length || 0;
@@ -103,13 +106,56 @@ const CollectionNode: React.FC<{
     }
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    const currentTarget = e.currentTarget as HTMLElement;
+    if (currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    // Try application/iiif-manifest-ids first (internal drag)
+    const raw = e.dataTransfer.getData('application/iiif-manifest-ids');
+    if (raw) {
+      try {
+        const ids = JSON.parse(raw) as string[];
+        if (ids.length > 0) { onAddToCollection?.(ids); return; }
+      } catch { /* ignore malformed data */ }
+    }
+
+    // Fallback: try IIIF Content State (external drag interop)
+    try {
+      const contentState = contentStateService.handleDrop(e.dataTransfer);
+      if (contentState?.manifestId) {
+        onAddToCollection?.([contentState.manifestId]);
+      }
+    } catch { /* ignore */ }
+  }, [onAddToCollection]);
+
   return (
-    <div className="border-b border-slate-100" onClick={onFocus}>
+    <div
+      className={`border-b ${isDragOver ? 'border-dashed border-nb-blue bg-nb-blue/5' : 'border-nb-black/10'}`}
+      onClick={onFocus}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Collection header */}
-      <div className="flex items-center gap-2 p-2 hover:bg-slate-100 cursor-pointer group">
+      <div
+        className="flex items-center gap-2 p-2 hover:bg-nb-cream cursor-pointer group"
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e, node.id); }}
+      >
         <Button variant="ghost" size="bare"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-0.5 hover:bg-slate-300 rounded"
+          className="p-0.5 hover:bg-nb-cream rounded"
         >
           <Icon
             name={isExpanded ? 'expand_more' : 'chevron_right'}
@@ -117,7 +163,7 @@ const CollectionNode: React.FC<{
           />
         </Button>
 
-        <Icon name="folder" className="text-base text-blue-500" />
+        <Icon name="folder" className="text-base text-nb-blue" />
 
         {isRenaming ? (
           <input
@@ -129,16 +175,16 @@ const CollectionNode: React.FC<{
               if (e.key === 'Enter') handleRename();
               if (e.key === 'Escape') setIsRenaming(false);
             }}
-            className="flex-1 px-1 py-0.5 text-sm border border-slate-300 rounded"
+            className="flex-1 px-1 py-0.5 text-sm border border-nb-black/20 rounded"
             autoFocus
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <>
-            <span className="flex-1 text-sm font-medium text-slate-700">
+            <span className="flex-1 text-sm font-medium text-nb-black/80">
               {node.name}
             </span>
-            <span className="text-xs text-slate-500 px-2 py-0.5 bg-slate-100 rounded">
+            <span className="text-xs text-nb-black/50 px-2 py-0.5 bg-nb-cream rounded">
               {manifestCount}
             </span>
           </>
@@ -151,7 +197,7 @@ const CollectionNode: React.FC<{
               e.stopPropagation();
               setIsRenaming(true);
             }}
-            className="p-0.5 hover:bg-slate-300 rounded text-slate-600 text-xs"
+            className="p-0.5 hover:bg-nb-cream text-nb-black/60 text-xs"
             title="Rename"
           >
             <Icon name="edit" className="text-sm" />
@@ -161,7 +207,7 @@ const CollectionNode: React.FC<{
               e.stopPropagation();
               onDelete();
             }}
-            className="p-0.5 hover:bg-red-300 rounded text-red-600 text-xs"
+            className="p-0.5 hover:bg-nb-red/40 text-nb-red text-xs"
             title="Delete"
           >
             <Icon name="delete" className="text-sm" />
@@ -171,7 +217,7 @@ const CollectionNode: React.FC<{
 
       {/* Manifests in collection */}
       {isExpanded && node.manifestIds && node.manifestIds.length > 0 && (
-        <div className="bg-slate-50 border-l border-slate-200 ml-4">
+        <div className="bg-nb-white border-l border-nb-black/20 ml-4">
           {node.manifestIds.map((manifestId) => {
             const manifest = sourceManifests.manifests.find(
               (m) => m.id === manifestId
@@ -181,16 +227,16 @@ const CollectionNode: React.FC<{
             return (
               <div
                 key={manifestId}
-                className="flex items-center gap-2 p-2 pl-6 hover:bg-slate-100 text-xs text-slate-700 group"
+                className="flex items-center gap-2 p-2 pl-6 hover:bg-nb-cream text-xs text-nb-black/80 group"
               >
-                <Icon name="description" className="text-sm text-slate-400" />
+                <Icon name="description" className="text-sm text-nb-black/40" />
                 <span className="flex-1 truncate">{manifest.name}</span>
                 <Button variant="ghost" size="bare"
                   onClick={(e) => {
                     e.stopPropagation();
                     onRemove([manifestId]);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-300 rounded text-red-600"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-nb-red/40 text-nb-red"
                   title="Remove from collection"
                 >
                   <Icon name="close" className="text-sm" />
@@ -203,8 +249,8 @@ const CollectionNode: React.FC<{
 
       {/* Empty state */}
       {isExpanded && (!node.manifestIds || node.manifestIds.length === 0) && (
-        <div className="p-3 pl-10 text-xs text-slate-400 italic">
-          No manifests. Drag from left pane to add.
+        <div className={`p-3 pl-10 text-xs italic ${isDragOver ? 'text-nb-blue font-medium' : 'text-nb-black/40'}`}>
+          {isDragOver ? 'Drop here to add' : 'No manifests. Drag from left pane to add.'}
         </div>
       )}
     </div>
@@ -219,14 +265,42 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
   onCreateCollection,
   onRenameCollection,
   onDeleteCollection,
-  onOpenSendToModal,
   onFocus,
   isFocused,
+  onContextMenu,
 }) => {
+  const [isNewCollectionDragOver, setIsNewCollectionDragOver] = useState(false);
+
+  const handleNewCollectionDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsNewCollectionDragOver(true);
+  }, []);
+
+  const handleNewCollectionDragLeave = useCallback((e: React.DragEvent) => {
+    const currentTarget = e.currentTarget as HTMLElement;
+    if (currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsNewCollectionDragOver(false);
+  }, []);
+
+  const handleNewCollectionDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsNewCollectionDragOver(false);
+    const raw = e.dataTransfer.getData('application/iiif-manifest-ids');
+    if (!raw) return;
+    try {
+      const ids = JSON.parse(raw) as string[];
+      if (ids.length > 0) {
+        const newId = onCreateCollection(`New Collection`);
+        onAddToCollection(newId, ids);
+      }
+    } catch { /* ignore malformed data */ }
+  }, [onCreateCollection, onAddToCollection]);
+
   return (
     <div
-      className={`h-full flex flex-col bg-white border border-slate-200 rounded-lg overflow-hidden ${
-        isFocused ? 'ring-2 ring-blue-500' : ''
+      className={`h-full flex flex-col bg-nb-cream/30 border border-nb-black/20 overflow-hidden ${
+        isFocused ? 'ring-2 ring-nb-blue' : ''
       }`}
     >
       <ArchivePaneHeader
@@ -237,10 +311,10 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
       {/* Collections list */}
       <div className="flex-1 overflow-y-auto">
         {archiveLayout.root.children.length === 0 ? (
-          <div className="p-6 text-center text-sm text-slate-500">
+          <div className="p-6 text-center text-sm text-nb-black/50">
             <Icon name="inbox" className="text-4xl mb-2 block opacity-50" />
             <p>No collections yet</p>
-            <p className="text-xs mt-1">Create one using the + button above</p>
+            <p className="text-xs mt-1">Create one using the + button above, or drag items here</p>
           </div>
         ) : (
           archiveLayout.root.children.map((collection) => (
@@ -251,15 +325,31 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
               onRemove={(ids) => onRemoveFromCollection(collection.id, ids)}
               onRename={(newName) => onRenameCollection(collection.id, newName)}
               onDelete={() => onDeleteCollection(collection.id)}
-              onOpenSendTo={onOpenSendToModal}
+              onAddToCollection={(ids) => onAddToCollection(collection.id, ids)}
               onFocus={onFocus}
+              onContextMenu={onContextMenu}
             />
           ))
         )}
+
+        {/* Drop zone for creating new collection */}
+        <div
+          className={`m-2 p-4 border-2 border-dashed text-center text-xs transition-nb ${
+            isNewCollectionDragOver
+              ? 'border-nb-blue bg-nb-blue/10 text-nb-blue font-medium'
+              : 'border-nb-black/15 text-nb-black/30'
+          }`}
+          onDragOver={handleNewCollectionDragOver}
+          onDragLeave={handleNewCollectionDragLeave}
+          onDrop={handleNewCollectionDrop}
+        >
+          <Icon name="add" className={`text-lg mb-1 block ${isNewCollectionDragOver ? 'text-nb-blue' : 'text-nb-black/20'}`} />
+          {isNewCollectionDragOver ? 'Drop to create new collection' : 'Drop here for new collection'}
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="p-2 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
+      <div className="p-2 border-t border-nb-black/20 bg-nb-cream/40 text-xs text-nb-black/50">
         <div className="flex justify-between">
           <span>
             {archiveLayout.root.children.length} collection

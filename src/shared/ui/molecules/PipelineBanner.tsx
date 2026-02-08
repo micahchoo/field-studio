@@ -2,7 +2,7 @@
  * PipelineBanner - Shows current pipeline context
  *
  * Displays a contextual banner when navigating through the pipeline:
- * "Editing 5 items from Archive" with a back button
+ *"Editing 5 items from Archive" with a back button
  *
  * @module shared/ui/molecules/PipelineBanner
  */
@@ -67,46 +67,46 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
   const getIntentColors = () => {
     if (fieldMode) {
       return {
-        bg: 'bg-yellow-900/30',
-        border: 'border-yellow-700/50',
-        text: 'text-yellow-200',
-        accent: 'text-yellow-400',
-        hoverBg: 'hover:bg-yellow-800/30',
+        bg:'bg-nb-yellow/20',
+        border:'border-nb-yellow/50',
+        text:'text-nb-yellow/60',
+        accent:'text-nb-yellow',
+        hoverBg:'hover:bg-nb-yellow/30',
       };
     }
 
     switch (pipeline.intent) {
-      case 'edit-metadata':
+      case'edit-metadata':
         return {
-          bg: 'bg-purple-50 dark:bg-purple-900/30',
-          border: 'border-purple-200 dark:border-purple-800',
-          text: 'text-purple-800 dark:text-purple-200',
-          accent: 'text-purple-600 dark:text-purple-400',
-          hoverBg: 'hover:bg-purple-100 dark:hover:bg-purple-800/30',
+          bg:'bg-nb-purple/10',
+          border:'border-nb-purple/20',
+          text:'text-nb-purple200',
+          accent:'text-nb-purple400',
+          hoverBg:'hover:bg-nb-purple/10',
         };
-      case 'compose':
+      case'compose':
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/30',
-          border: 'border-blue-200 dark:border-blue-800',
-          text: 'text-blue-800 dark:text-blue-200',
-          accent: 'text-blue-600 dark:text-blue-400',
-          hoverBg: 'hover:bg-blue-100 dark:hover:bg-blue-800/30',
+          bg:'bg-nb-blue/10',
+          border:'border-nb-blue/30',
+          text:'text-nb-blue/40',
+          accent:'text-nb-blue',
+          hoverBg:'hover:bg-nb-blue/20',
         };
-      case 'map':
+      case'map':
         return {
-          bg: 'bg-green-50 dark:bg-green-900/30',
-          border: 'border-green-200 dark:border-green-800',
-          text: 'text-green-800 dark:text-green-200',
-          accent: 'text-green-600 dark:text-green-400',
-          hoverBg: 'hover:bg-green-100 dark:hover:bg-green-800/30',
+          bg:'bg-nb-green/10',
+          border:'border-nb-green/30',
+          text:'text-nb-green/40',
+          accent:'text-nb-green',
+          hoverBg:'hover:bg-nb-green/20',
         };
       default:
         return {
-          bg: 'bg-slate-100 dark:bg-slate-800',
-          border: 'border-slate-200 dark:border-slate-700',
-          text: 'text-slate-700 dark:text-slate-300',
-          accent: 'text-slate-600 dark:text-slate-400',
-          hoverBg: 'hover:bg-slate-200 dark:hover:bg-slate-700',
+          bg:'bg-nb-cream',
+          border:'border-nb-black/20',
+          text:'text-nb-black/70',
+          accent:'text-nb-black/50',
+          hoverBg:'hover:bg-nb-cream',
         };
     }
   };
@@ -116,16 +116,16 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
   // Get intent icon
   const getIntentIcon = () => {
     switch (pipeline.intent) {
-      case 'edit-metadata':
-        return 'table_chart';
-      case 'compose':
-        return 'dashboard';
-      case 'map':
-        return 'map';
-      case 'view':
-        return 'visibility';
+      case'edit-metadata':
+        return'table_chart';
+      case'compose':
+        return'dashboard';
+      case'map':
+        return'map';
+      case'view':
+        return'visibility';
       default:
-        return 'arrow_forward';
+        return'arrow_forward';
     }
   };
 
@@ -134,8 +134,8 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
       className={`
         flex items-center justify-between px-4 py-2 border-b
         ${colors.bg} ${colors.border}
-        animate-in slide-in-from-top-2 duration-200
-      `}
+        animate-in slide-in-from-top-2 
+`}
     >
       {/* Left: Back button + Summary */}
       <div className="flex items-center gap-3">
@@ -143,15 +143,15 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
           <Button variant="ghost" size="bare"
             onClick={handleBack}
             className={`
-              flex items-center gap-1 px-2 py-1 rounded-md
+              flex items-center gap-1 px-2 py-1 
               ${colors.text} ${colors.hoverBg}
-              transition-colors
-            `}
+              transition-nb
+`}
             title="Go back"
           >
             <Icon name="arrow_back" className="text-lg" />
             <span className="text-sm font-medium">
-              {pipeline.breadcrumbs[pipeline.breadcrumbs.length - 1]?.label || 'Back'}
+              {pipeline.breadcrumbs[pipeline.breadcrumbs.length - 1]?.label ||'Back'}
             </span>
           </Button>
         )}
@@ -168,10 +168,10 @@ export const PipelineBanner: React.FC<PipelineBannerProps> = ({
       <Button variant="ghost" size="bare"
         onClick={handleClear}
         className={`
-          flex items-center gap-1 px-2 py-1 rounded-md
+          flex items-center gap-1 px-2 py-1 
           ${colors.text} ${colors.hoverBg}
-          opacity-60 hover:opacity-100 transition-all
-        `}
+          opacity-60 hover:opacity-100 transition-nb
+`}
         title="Clear pipeline"
       >
         <Icon name="close" className="text-lg" />

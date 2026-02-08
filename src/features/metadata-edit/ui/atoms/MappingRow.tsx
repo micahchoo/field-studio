@@ -71,10 +71,10 @@ export const MappingRow: React.FC<MappingRowProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+    <div className="flex items-center gap-3 p-3 bg-nb-white border border-nb-black/20 ">
       {/* CSV Column */}
       <div className="flex-1 min-w-0">
-        <label className="block text-xs font-medium text-slate-500 mb-1">
+        <label className="block text-xs font-medium text-nb-black/50 mb-1">
           CSV Column
         </label>
         <ColumnSelector
@@ -87,12 +87,12 @@ export const MappingRow: React.FC<MappingRowProps> = ({
 
       {/* Arrow */}
       <div className="flex-shrink-0 pt-5">
-        <Icon name="arrow_forward" className="text-slate-400" />
+        <Icon name="arrow_forward" className="text-nb-black/40" />
       </div>
 
       {/* IIIF Property */}
       <div className="flex-1 min-w-0">
-        <label className="block text-xs font-medium text-slate-500 mb-1">
+        <label className="block text-xs font-medium text-nb-black/50 mb-1">
           IIIF Property
         </label>
         <PropertySelector
@@ -105,7 +105,7 @@ export const MappingRow: React.FC<MappingRowProps> = ({
 
       {/* Language */}
       <div className="w-32 flex-shrink-0">
-        <label className="block text-xs font-medium text-slate-500 mb-1">
+        <label className="block text-xs font-medium text-nb-black/50 mb-1">
           Language
         </label>
         <LanguageTag

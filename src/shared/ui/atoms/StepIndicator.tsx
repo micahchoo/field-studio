@@ -26,7 +26,7 @@ export interface StepIndicatorProps {
   /** Whether this step has been completed */
   completed: boolean;
   /** Visual variant */
-  variant?: 'numbered' | 'simple';
+  variant?:'numbered' |'simple';
   /** Additional CSS class */
   className?: string;
 }
@@ -36,27 +36,27 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   label,
   active,
   completed,
-  variant = 'numbered',
-  className = '',
+  variant ='numbered',
+  className ='',
 }) => {
   const numberClasses = completed
-    ? 'bg-green-500 text-white'
+    ?'bg-nb-green text-white'
     : active
-      ? 'bg-blue-600 text-white'
-      : 'bg-slate-200 text-slate-500';
+      ?'bg-nb-blue text-white'
+      :'bg-nb-cream text-nb-black/50';
 
   const labelClasses = active
-    ? 'text-slate-800 dark:text-slate-200'
+    ?'text-nb-black/20'
     : completed
-      ? 'text-green-600 dark:text-green-400'
-      : 'text-slate-400 dark:text-slate-500';
+      ?'text-nb-green'
+      :'text-nb-black/40';
 
-  if (variant === 'simple') {
+  if (variant ==='simple') {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <div
-          className={`w-2 h-2 rounded-full ${
-            completed ? 'bg-green-500' : active ? 'bg-blue-600' : 'bg-slate-200'
+          className={`w-2 h-2 ${
+            completed ?'bg-nb-green' : active ?'bg-nb-blue' :'bg-nb-cream'
           }`}
         />
         <span className={`text-sm font-medium ${labelClasses}`}>{label}</span>
@@ -67,7 +67,7 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${numberClasses}`}
+        className={`w-8 h-8 flex items-center justify-center font-bold text-sm ${numberClasses}`}
       >
         {completed ? <Icon name="check" className="text-sm" /> : step}
       </div>

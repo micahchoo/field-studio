@@ -45,11 +45,11 @@ export const TabBar: React.FC<TabBarProps> = ({
   onTabChange,
   fieldMode = false,
   borderColor,
-  className = '',
+  className ='',
 }) => {
   return (
     <div
-      className={`flex ${borderColor || (fieldMode ? 'border-slate-800' : 'border-slate-200')} border-b ${className}`}
+      className={`flex ${borderColor || (fieldMode ?'border-nb-black' :'border-nb-black/20')} border-b ${className}`}
     >
       {tabs.map((tab) => (
         <TabButtonBase

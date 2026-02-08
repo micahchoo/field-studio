@@ -142,17 +142,17 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
     : 'Login';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+    <div className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <div className="bg-nb-white shadow-brutal-lg max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b bg-slate-50">
+        <div className="p-6 border-b bg-nb-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+            <div className="w-10 h-10 bg-nb-orange/20 flex items-center justify-center text-nb-orange">
               <Icon name="lock" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">{heading}</h2>
-              <p className="text-xs text-slate-500">IIIF Authorization Flow 2.0</p>
+              <h2 className="text-lg font-bold text-nb-black">{heading}</h2>
+              <p className="text-xs text-nb-black/50">IIIF Authorization Flow 2.0</p>
             </div>
           </div>
         </div>
@@ -161,20 +161,20 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
         <div className="p-6">
           {state.status === 'probing' && (
             <div className="flex flex-col items-center py-8">
-              <div className="w-12 h-12 border-4 border-slate-100 border-t-iiif-blue rounded-full animate-spin mb-4"></div>
-              <p className="text-sm text-slate-500">Checking access...</p>
+              <div className="w-12 h-12 border-4 border-nb-black/10 border-t-iiif-blue animate-spin mb-4"></div>
+              <p className="text-sm text-nb-black/50">Checking access...</p>
             </div>
           )}
 
           {state.status === 'unauthenticated' && (
             <>
-              <p className="text-slate-600 mb-6">{description}</p>
+              <p className="text-nb-black/60 mb-6">{description}</p>
 
               {accessService?.profile === 'active' && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
+                <div className="bg-nb-blue/10 border border-nb-blue/20 p-4 mb-4">
                   <div className="flex items-start gap-3">
-                    <Icon name="info" className="text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
+                    <Icon name="info" className="text-nb-blue mt-0.5" />
+                    <div className="text-sm text-nb-blue">
                       You will be redirected to a login page. After logging in, return here to continue.
                     </div>
                   </div>
@@ -182,10 +182,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
               )}
 
               {accessService?.profile === 'kiosk' && (
-                <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-4">
+                <div className="bg-nb-green/10 border border-nb-green/20 p-4 mb-4">
                   <div className="flex items-start gap-3">
-                    <Icon name="verified_user" className="text-green-600 mt-0.5" />
-                    <div className="text-sm text-green-800">
+                    <Icon name="verified_user" className="text-nb-green mt-0.5" />
+                    <div className="text-sm text-nb-green">
                       Access will be granted automatically based on your network location.
                     </div>
                   </div>
@@ -193,10 +193,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
               )}
 
               {accessService?.profile === 'external' && (
-                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-4">
+                <div className="bg-nb-purple/5 border border-nb-purple/10 p-4 mb-4">
                   <div className="flex items-start gap-3">
-                    <Icon name="open_in_new" className="text-purple-600 mt-0.5" />
-                    <div className="text-sm text-purple-800">
+                    <Icon name="open_in_new" className="text-nb-purple mt-0.5" />
+                    <div className="text-sm text-nb-purple">
                       Authentication is handled by an external service. You may need to log in separately.
                     </div>
                   </div>
@@ -207,16 +207,16 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
 
           {state.status === 'degraded' && (
             <>
-              <p className="text-slate-600 mb-4">{description}</p>
+              <p className="text-nb-black/60 mb-4">{description}</p>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <div className="bg-nb-orange/10 border border-nb-orange/20 p-4 mb-4">
                 <div className="flex items-start gap-3">
-                  <Icon name="warning" className="text-amber-600 mt-0.5" />
+                  <Icon name="warning" className="text-nb-orange mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-amber-900 mb-1">
+                    <p className="text-sm font-medium text-nb-orange mb-1">
                       Restricted Access
                     </p>
-                    <p className="text-xs text-amber-700">
+                    <p className="text-xs text-nb-orange">
                       Full access requires authentication. A lower-quality substitute is available.
                     </p>
                   </div>
@@ -224,13 +224,13 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
               </div>
 
               {state.substitute && (
-                <div className="border rounded-lg p-3 mb-4">
-                  <p className="text-xs font-medium text-slate-500 mb-1">Available substitute:</p>
-                  <p className="text-sm text-slate-700 font-mono truncate">
+                <div className="border p-3 mb-4">
+                  <p className="text-xs font-medium text-nb-black/50 mb-1">Available substitute:</p>
+                  <p className="text-sm text-nb-black/80 font-mono truncate">
                     {state.substitute.id}
                   </p>
                   {state.substitute.width && state.substitute.height && (
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-nb-black/50 mt-1">
                       {state.substitute.width} x {state.substitute.height}
                     </p>
                   )}
@@ -241,23 +241,23 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
 
           {state.status === 'authenticated' && (
             <div className="flex flex-col items-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
+              <div className="w-16 h-16 bg-nb-green/20 flex items-center justify-center text-nb-green mb-4">
                 <Icon name="check_circle" className="text-3xl" />
               </div>
-              <p className="text-lg font-semibold text-green-800">Access Granted</p>
-              <p className="text-sm text-slate-500 mt-1">You can now view this resource.</p>
+              <p className="text-lg font-semibold text-nb-green">Access Granted</p>
+              <p className="text-sm text-nb-black/50 mt-1">You can now view this resource.</p>
             </div>
           )}
 
           {state.status === 'error' && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="bg-nb-red/10 border border-nb-red/30 p-4">
               <div className="flex items-start gap-3">
-                <Icon name="error" className="text-red-600 mt-0.5" />
+                <Icon name="error" className="text-nb-red mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-red-900 mb-1">
+                  <p className="text-sm font-medium text-nb-red mb-1">
                     Authentication Error
                   </p>
-                  <p className="text-xs text-red-700">
+                  <p className="text-xs text-nb-red">
                     {state.errorMessage || 'An error occurred during authentication.'}
                   </p>
                 </div>
@@ -267,10 +267,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="p-4 border-t bg-slate-50 flex gap-3 justify-end">
+        <div className="p-4 border-t bg-nb-white flex gap-3 justify-end">
           <Button variant="ghost" size="bare"
             onClick={onClose}
-            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium text-sm"
+            className="px-4 py-2 text-nb-black/60 hover:text-nb-black font-medium text-sm"
           >
             Cancel
           </Button>
@@ -279,11 +279,11 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
             <Button variant="ghost" size="bare"
               onClick={handleLogin}
               disabled={isLoggingIn}
-              className="px-6 py-2 bg-iiif-blue text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2 bg-iiif-blue text-white font-semibold text-sm hover:bg-nb-blue disabled:opacity-50 flex items-center gap-2"
             >
               {isLoggingIn ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin"></div>
                   Logging in...
                 </>
               ) : (
@@ -299,7 +299,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
             <>
               <Button variant="ghost" size="bare"
                 onClick={handleUseDegraded}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-100"
+                className="px-4 py-2 border border-nb-black/20 text-nb-black/80 font-medium text-sm hover:bg-nb-cream"
               >
                 Use Substitute
               </Button>
@@ -307,11 +307,11 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
                 <Button variant="ghost" size="bare"
                   onClick={handleLogin}
                   disabled={isLoggingIn}
-                  className="px-6 py-2 bg-iiif-blue text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2 bg-iiif-blue text-white font-semibold text-sm hover:bg-nb-blue disabled:opacity-50 flex items-center gap-2"
                 >
                   {isLoggingIn ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin"></div>
                       Logging in...
                     </>
                   ) : (
@@ -328,7 +328,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
           {state.status === 'authenticated' && (
             <Button variant="ghost" size="bare"
               onClick={() => onComplete(state)}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700"
+              className="px-6 py-2 bg-nb-green text-white font-semibold text-sm hover:bg-nb-green"
             >
               Continue
             </Button>
@@ -337,7 +337,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
           {state.status === 'error' && (
             <Button variant="ghost" size="bare"
               onClick={probeForAccess}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-100"
+              className="px-4 py-2 border border-nb-black/20 text-nb-black/80 font-medium text-sm hover:bg-nb-cream"
             >
               Retry
             </Button>

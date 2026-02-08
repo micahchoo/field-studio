@@ -23,12 +23,12 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
   if (orphans.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center p-8 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <span className="material-icons text-4xl text-green-500 mb-4">check_circle</span>
-          <h2 className="text-xl font-semibold text-green-700 dark:text-green-400 mb-2">
+        <div className="text-center p-8 bg-nb-green/10 ">
+          <span className="material-icons text-4xl text-nb-green mb-4">check_circle</span>
+          <h2 className="text-xl font-semibold text-nb-green mb-2">
             No Unused Files
           </h2>
-          <p className="text-green-600 dark:text-green-300">
+          <p className="text-nb-green/60">
             All files in the codebase are being used.
           </p>
         </div>
@@ -51,32 +51,32 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
         <CopyableSection title={`Unused Files (Orphans) - ${orphans.length} found`} getMarkdown={() => markdown}>
         <div className="space-y-6">
           {Object.entries(grouped).map(([directory, dirFiles]) => (
-            <div key={directory} className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-mono text-sm text-slate-600 dark:text-slate-400">
+            <div key={directory} className="bg-nb-white border border-nb-black/20 overflow-hidden">
+              <div className="px-4 py-2 bg-nb-cream border-b border-nb-black/20">
+                <span className="font-mono text-sm text-nb-black/50">
                   {directory}/
                 </span>
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+              <div className="divide-y divide-nb-black/10">
                 {dirFiles.map((file) => (
                   <Button
                     variant="ghost"
                     key={file.filePath}
                     onClick={() => onSelectFile(file)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-nb-cream transition-nb text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="material-icons text-slate-400">description</span>
+                      <span className="material-icons text-nb-black/40">description</span>
                       <div>
-                        <div className="font-medium text-slate-800 dark:text-slate-200">
+                        <div className="font-medium text-nb-black/20">
                           {file.fileName}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-nb-black/50">
                           {file.exports.length} exports, {file.lines} lines
                         </div>
                       </div>
                     </div>
-                    <span className="material-icons text-slate-400">chevron_right</span>
+                    <span className="material-icons text-nb-black/40">chevron_right</span>
                   </Button>
                 ))}
               </div>
@@ -86,14 +86,14 @@ export const OrphansPanel: React.FC<OrphansPanelProps> = ({
         </CopyableSection>
 
         {/* Info Box */}
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="mt-6 p-4 bg-nb-blue/10 border border-nb-blue/30">
           <div className="flex items-start gap-3">
-            <span className="material-icons text-blue-500">info</span>
+            <span className="material-icons text-nb-blue">info</span>
             <div>
-              <h3 className="font-medium text-blue-700 dark:text-blue-400 mb-1">
+              <h3 className="font-medium text-nb-blue mb-1">
                 Note
               </h3>
-              <p className="text-sm text-blue-600 dark:text-blue-300">
+              <p className="text-sm text-nb-blue/60">
                 These files may be entry points (like main.tsx) or might be candidates for deletion.
                 Entry points and index files are typically excluded from this list.
               </p>

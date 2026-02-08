@@ -23,9 +23,9 @@ export interface IconButtonProps {
   /** Click handler */
   onClick: () => void;
   /** Visual variant */
-  variant?: 'default' | 'primary' | 'danger' | 'ghost' | 'secondary';
+  variant?:'default' |'primary' |'danger' |'ghost' |'secondary';
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?:'sm' |'md' |'lg';
   /** Disabled state */
   disabled?: boolean;
   /** Additional CSS classes */
@@ -38,22 +38,22 @@ export interface IconButtonProps {
   fieldMode?: boolean;
   /** Whether the button is in an active/selected state */
   isActive?: boolean;
-  /** Keyboard shortcut hint to display in tooltip (e.g., 'V', 'Ctrl+S') */
+  /** Keyboard shortcut hint to display in tooltip (e.g.,'V','Ctrl+S') */
   shortcut?: string;
   /** Optional ID for the button */
   id?: string;
 }
 
 const sizeClasses = {
-  sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-lg',
+  sm:'text-sm',
+  md:'text-base',
+  lg:'text-lg',
 };
 
 const sizePadding = {
-  sm: '4px',
-  md: '6px',
-  lg: '8px',
+  sm:'4px',
+  md:'6px',
+  lg:'8px',
 };
 
 /**
@@ -71,10 +71,10 @@ export const IconButton: React.FC<IconButtonProps> = ({
   icon,
   ariaLabel,
   onClick,
-  variant = 'default',
-  size = 'md',
+  variant ='default',
+  size ='md',
   disabled = false,
-  className = '',
+  className ='',
   title,
   cx = {},
   fieldMode = false,
@@ -83,42 +83,42 @@ export const IconButton: React.FC<IconButtonProps> = ({
   id,
 }) => {
   // Map variant to Button atom variant
-  // If isActive is true, use 'primary' variant
-  const variantMap: Record<string, 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'> = {
-    default: isActive ? 'primary' : 'secondary',
-    primary: 'primary',
-    secondary: 'secondary',
-    danger: 'danger',
-    ghost: isActive ? 'primary' : 'ghost',
+  // If isActive is true, use'primary' variant
+  const variantMap: Record<string,'primary' |'secondary' |'ghost' |'danger' |'success'> = {
+    default: isActive ?'primary' :'secondary',
+    primary:'primary',
+    secondary:'secondary',
+    danger:'danger',
+    ghost: isActive ?'primary' :'ghost',
   };
 
   // Build title with shortcut if provided
-  const fullTitle = shortcut ? `${title || ariaLabel} (${shortcut})` : (title || ariaLabel);
+  const fullTitle = shortcut ?`${title || ariaLabel} (${shortcut})` : (title || ariaLabel);
 
   // Map size to Button atom size
-  const sizeMap: Record<string, 'sm' | 'base' | 'lg' | 'xl'> = {
-    sm: 'sm',
-    md: 'base',
-    lg: 'lg',
+  const sizeMap: Record<string,'sm' |'base' |'lg' |'xl'> = {
+    sm:'sm',
+    md:'base',
+    lg:'lg',
   };
 
   // Custom style for circular icon button
   const customStyle: React.CSSProperties = {
     padding: sizePadding[size],
-    minWidth: 'auto',
-    borderRadius: '8px',
-    aspectRatio: '1',
+    minWidth:'auto',
+    borderRadius:'8px',
+    aspectRatio:'1',
   };
 
   // Determine icon color based on variant and fieldMode
   // Ghost variant on dark backgrounds needs light colors
   const getIconColor = () => {
-    if (isActive) return ''; // Primary variant handles color
-    if (variant === 'ghost') {
-      return fieldMode ? 'text-yellow-400' : 'text-slate-300';
+    if (isActive) return''; // Primary variant handles color
+    if (variant ==='ghost') {
+      return fieldMode ?'text-nb-yellow' :'text-nb-black/30';
     }
-    if (variant === 'danger') return 'text-white';
-    return ''; // Let Button handle color for other variants
+    if (variant ==='danger') return'text-white';
+    return''; // Let Button handle color for other variants
   };
 
   const iconColor = getIconColor();
@@ -133,7 +133,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       title={fullTitle}
       variant={variantMap[variant]}
       size={sizeMap[size]}
-      minimal={variant === 'ghost' && !isActive}
+      minimal={variant ==='ghost' && !isActive}
       style={customStyle}
       className={`${className} ${iconColor}`}
     >

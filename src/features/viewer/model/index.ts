@@ -53,12 +53,19 @@ export {
   type AnnotationLayer,
   type UseAnnotationLayersReturn,
 } from './useAnnotationLayers';
+export {
+  useAnnotorious,
+  type AnnotoriousDrawingTool,
+  type UseAnnotoriousOptions,
+  type UseAnnotoriousReturn,
+} from './useAnnotorious';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IIIFAnnotation, IIIFAnnotationBody, IIIFCanvas, IIIFExternalWebResource, IIIFManifest, IIIFTextualBody } from '@/src/shared/types';
 import { isChoice, getIIIFValue } from '@/src/shared/types';
 import { contentSearchService } from '@/src/entities/annotation/model/contentSearchService';
 import { resolveImageSource } from '@/src/entities/canvas/model/imageSourceResolver';
+import { getFile } from '@/src/shared/services/storage';
 
 declare const OpenSeadragon: any;
 
@@ -92,6 +99,7 @@ export interface ViewerState {
   showKeyboardHelp: boolean;
   selectedAnnotationId: string | null;
   isOcring: boolean;
+  osdReady: number;
 
   // Choice support
   hasChoice: boolean;
@@ -214,6 +222,7 @@ export const useViewer = (
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [isOcring, _setIsOcring] = useState(false);
   const [activeChoiceIndex, setActiveChoiceIndex] = useState(0);
+  const [osdReady, setOsdReady] = useState(0);
 
   // Detect Choice bodies on the painting annotation
   const { hasChoice, choiceItems } = useMemo(() => {
@@ -375,6 +384,7 @@ export const useViewer = (
     let isActive = true;
     let resizeObserver: ResizeObserver | null = null;
     let currentTileSource: any = null; // Store tileSource for retry on open-failed
+    let idbBlobUrl: string | null = null; // Track blob URLs created from IndexedDB for cleanup
 
     // Debug logging
     console.log('[useViewer] OSD effect triggered:', {
@@ -385,7 +395,7 @@ export const useViewer = (
       hasOpenSeadragon: typeof OpenSeadragon !== 'undefined'
     });
 
-    const initializeOSD = () => {
+    const initializeOSD = async () => {
       if (!isActive || !osdContainerRef.current || !resolvedImageUrl || mediaType !== 'image') {
         return false;
       }
@@ -412,15 +422,59 @@ export const useViewer = (
         const resolved = resolveImageSource(item);
         const paintingBody = item.items?.[0]?.items?.[0]?.body as any;
 
-        // Prefer IIIF Image Service if available and properly resolved
+        // Determine the info.json URL
+        let infoJsonUrl: string | null = null;
         if (resolved?.serviceId && resolved?.profile) {
-          // OpenSeadragon expects IIIF Image API endpoint
-          currentTileSource = `${resolved.serviceId}/info.json`;
-          console.log('[useViewer] Using IIIF Image Service:', currentTileSource);
+          infoJsonUrl = `${resolved.serviceId}/info.json`;
+          console.log('[useViewer] Using IIIF Image Service:', infoJsonUrl);
         } else if (paintingBody?.service?.[0]?.id) {
-          // Fallback: use service from body if resolver didn't extract it
-          currentTileSource = `${paintingBody.service[0].id}/info.json`;
-          console.log('[useViewer] Using painting body service:', currentTileSource);
+          infoJsonUrl = `${paintingBody.service[0].id}/info.json`;
+          console.log('[useViewer] Using painting body service:', infoJsonUrl);
+        }
+
+        if (infoJsonUrl) {
+          // Pre-fetch info.json via fetch() to avoid OSD's XHR XML parsing issues.
+          // The SW intercepts fetch() properly; OSD's own XHR can receive
+          // an XMLDocument instead of JSON when Content-Type isn't handled correctly.
+          try {
+            const resp = await fetch(infoJsonUrl);
+            if (resp.ok) {
+              const contentType = resp.headers.get('content-type') || '';
+              if (contentType.includes('json')) {
+                const infoJson = await resp.json();
+                currentTileSource = infoJson;
+                console.log('[useViewer] Pre-fetched info.json successfully');
+              } else {
+                // SW not active — response is likely HTML from Vite SPA fallback
+                throw new Error('Response is not JSON (SW likely not active)');
+              }
+            } else {
+              throw new Error(`info.json returned ${resp.status}`);
+            }
+          } catch (fetchErr) {
+            console.warn('[useViewer] IIIF service unavailable:', fetchErr);
+            // SW not running — load blob directly from IndexedDB as fallback
+            const serviceUrl = resolved?.serviceId || paintingBody?.service?.[0]?.id;
+            const assetIdMatch = serviceUrl?.match(/\/iiif\/image\/([^/]+)/);
+            if (assetIdMatch) {
+              try {
+                const file = await getFile(assetIdMatch[1]);
+                if (file?.blob) {
+                  const blobUrl = URL.createObjectURL(file.blob);
+                  idbBlobUrl = blobUrl;
+                  currentTileSource = { type: 'image', url: blobUrl };
+                  console.log('[useViewer] Loaded image blob from IndexedDB');
+                } else {
+                  currentTileSource = { type: 'image', url: resolvedImageUrl };
+                }
+              } catch (idbErr) {
+                console.warn('[useViewer] IndexedDB fallback failed:', idbErr);
+                currentTileSource = { type: 'image', url: resolvedImageUrl };
+              }
+            } else {
+              currentTileSource = { type: 'image', url: resolvedImageUrl };
+            }
+          }
         } else {
           // No IIIF service, use direct image URL
           currentTileSource = { type: 'image', url: resolvedImageUrl };
@@ -431,6 +485,8 @@ export const useViewer = (
         currentTileSource = { type: 'image', url: resolvedImageUrl };
         console.error('[useViewer] Error detecting IIIF service, using direct URL:', e);
       }
+
+      if (!isActive) return false;
 
       console.log('[useViewer] Initializing OSD with tileSource:', currentTileSource);
 
@@ -486,6 +542,7 @@ export const useViewer = (
         });
 
         console.log('[useViewer] OSD viewer initialized successfully');
+        setOsdReady(prev => prev + 1);
 
         // Track zoom level changes
         viewerRef.current.addHandler('zoom', () => {
@@ -500,36 +557,23 @@ export const useViewer = (
           console.log('[useViewer] OSD image opened successfully');
         });
 
+        let retryCount = 0;
+        const MAX_RETRIES = 2;
+
         viewerRef.current.addHandler('open-failed', async (e: { message?: string; source?: unknown }) => {
           console.error('[useViewer] OSD failed to open image:', e.message || e);
 
-          // If SW wasn't ready, wait and retry with direct blob URL
-          if (!navigator.serviceWorker?.controller && resolvedImageUrl) {
-            console.log('[useViewer] SW not ready, retrying with direct URL...');
+          if (retryCount >= MAX_RETRIES || !isActive) return;
+          retryCount++;
 
-            // Wait for SW to be ready (exposed from index.tsx)
-            const swReady = (window as any).__swReady;
-            if (swReady) {
-              await swReady;
-              console.log('[useViewer] SW now ready, retrying OSD...');
+          // Wait for SW to be ready, or just delay
+          const swReady = (window as any).__swReady;
+          if (swReady) await swReady;
+          await new Promise(r => setTimeout(r, 300 * retryCount));
 
-              // Retry with the IIIF service URL again
-              if (viewerRef.current && isActive) {
-                try {
-                  viewerRef.current.open(currentTileSource);
-                } catch (retryError) {
-                  console.warn('[useViewer] Retry failed, falling back to blob URL');
-                  // Final fallback: use direct blob URL
-                  viewerRef.current.open({ type: 'image', url: resolvedImageUrl });
-                }
-              }
-            } else if (resolvedImageUrl) {
-              // No SW promise available, fallback to direct URL immediately
-              console.log('[useViewer] Falling back to direct blob URL');
-              if (viewerRef.current && isActive) {
-                viewerRef.current.open({ type: 'image', url: resolvedImageUrl });
-              }
-            }
+          if (viewerRef.current && isActive) {
+            console.log(`[useViewer] Retry ${retryCount}/${MAX_RETRIES}...`);
+            viewerRef.current.open(currentTileSource);
           }
         });
 
@@ -541,24 +585,25 @@ export const useViewer = (
     };
 
     // Try to initialize immediately
-    const initialized = initializeOSD();
+    initializeOSD().then((initialized) => {
+      if (!isActive) return;
+      // If not initialized due to zero dimensions, watch for resize
+      if (!initialized && osdContainerRef.current && mediaType === 'image' && resolvedImageUrl) {
+        console.log('[useViewer] Setting up resize observer to retry initialization');
 
-    // If not initialized due to zero dimensions, watch for resize
-    if (!initialized && osdContainerRef.current && mediaType === 'image' && resolvedImageUrl) {
-      console.log('[useViewer] Setting up resize observer to retry initialization');
-      
-      resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          if (width > 0 && height > 0 && !viewerRef.current) {
-            console.log('[useViewer] Container resized, retrying OSD initialization');
-            initializeOSD();
+        resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const { width, height } = entry.contentRect;
+            if (width > 0 && height > 0 && !viewerRef.current) {
+              console.log('[useViewer] Container resized, retrying OSD initialization');
+              initializeOSD();
+            }
           }
-        }
-      });
-      
-      resizeObserver.observe(osdContainerRef.current);
-    }
+        });
+
+        resizeObserver.observe(osdContainerRef.current!);
+      }
+    });
 
     // Handle window resize for responsive viewer
     const handleResize = () => {
@@ -587,6 +632,9 @@ export const useViewer = (
           console.warn('[useViewer] Error during OSD cleanup:', e);
         }
         viewerRef.current = null;
+      }
+      if (idbBlobUrl) {
+        URL.revokeObjectURL(idbBlobUrl);
       }
     };
   }, [item?.id, mediaType, resolvedImageUrl]);
@@ -769,6 +817,7 @@ export const useViewer = (
     showKeyboardHelp,
     selectedAnnotationId,
     isOcring,
+    osdReady,
     hasChoice,
     choiceItems,
     activeChoiceIndex,

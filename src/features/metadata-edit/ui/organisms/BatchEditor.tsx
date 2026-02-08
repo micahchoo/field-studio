@@ -190,32 +190,32 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-8 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-8 animate-in fade-in ">
+      <div className="bg-nb-white w-full max-w-5xl h-[85vh] shadow-brutal-lg flex flex-col overflow-hidden border border-nb-black/20">
         
-        <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
+        <div className="p-6 border-b bg-nb-white flex justify-between items-center">
             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-iiif-blue rounded-xl flex items-center justify-center text-white shadow-lg"><Icon name="auto_fix_high" className="text-2xl" /></div>
+                <div className="w-12 h-12 bg-iiif-blue flex items-center justify-center text-white shadow-brutal"><Icon name="auto_fix_high" className="text-2xl" /></div>
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Batch Archive Toolkit</h2>
-                    <p className="text-sm text-slate-500">Editing {ids.length} items</p>
+                    <h2 className="text-xl font-bold text-nb-black">Batch Archive Toolkit</h2>
+                    <p className="text-sm text-nb-black/50">Editing {ids.length} items</p>
                 </div>
             </div>
-            <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"><Icon name="close" /></Button>
+            <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-nb-cream text-nb-black/50 transition-nb"><Icon name="close" /></Button>
         </div>
 
-        <div className="flex border-b bg-white shrink-0">
-            <Button variant="ghost" size="bare" onClick={() => setActiveTab('rename')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'rename' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Rename</Button>
-            <Button variant="ghost" size="bare" onClick={() => setActiveTab('metadata')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'metadata' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Metadata</Button>
-            <Button variant="ghost" size="bare" onClick={() => setActiveTab('patterns')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'patterns' ? 'border-iiif-blue text-iiif-blue bg-blue-50/20' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Pattern Detector</Button>
+        <div className="flex border-b bg-nb-white shrink-0">
+            <Button variant="ghost" size="bare" onClick={() => setActiveTab('rename')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-nb border-b-2 ${activeTab === 'rename' ? 'border-iiif-blue text-iiif-blue bg-nb-blue/10' : 'border-transparent text-nb-black/40 hover:text-nb-black/60'}`}>Rename</Button>
+            <Button variant="ghost" size="bare" onClick={() => setActiveTab('metadata')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-nb border-b-2 ${activeTab === 'metadata' ? 'border-iiif-blue text-iiif-blue bg-nb-blue/10' : 'border-transparent text-nb-black/40 hover:text-nb-black/60'}`}>Metadata</Button>
+            <Button variant="ghost" size="bare" onClick={() => setActiveTab('patterns')} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-nb border-b-2 ${activeTab === 'patterns' ? 'border-iiif-blue text-iiif-blue bg-nb-blue/10' : 'border-transparent text-nb-black/40 hover:text-nb-black/60'}`}>Pattern Detector</Button>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-            <div className="w-1/2 border-r border-slate-100 overflow-y-auto p-8 bg-white custom-scrollbar">
+            <div className="w-1/2 border-r border-nb-black/10 overflow-y-auto p-8 bg-nb-white custom-scrollbar">
                 {activeTab === 'rename' && (
                     <div className="space-y-8">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rename Pattern</label>
-                        <input type="text" value={renamePattern} onChange={e => setRenamePattern(e.target.value)} className="w-full text-lg font-bold p-4 bg-slate-50 border-2 border-transparent focus:border-iiif-blue rounded-xl outline-none" />
+                        <label className="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-2">Rename Pattern</label>
+                        <input type="text" value={renamePattern} onChange={e => setRenamePattern(e.target.value)} className="w-full text-lg font-bold p-4 bg-nb-white border-2 border-transparent focus:border-iiif-blue outline-none" />
                         <div className="mt-4 grid grid-cols-2 gap-2">
                             <PlaceholderBtn label="Original Name" tag="{orig}" onClick={setRenamePattern} current={renamePattern}/>
                             <PlaceholderBtn label="Index (001...)" tag="{nnn}" onClick={setRenamePattern} current={renamePattern}/>
@@ -224,29 +224,29 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                 )}
                 {activeTab === 'metadata' && (
                     <div className="space-y-6">
-                        <textarea value={sharedSummary} onChange={e => setSharedSummary(e.target.value)} className="w-full p-3 bg-slate-50 rounded-xl outline-none text-sm min-h-[100px]" placeholder="Common Summary..." />
+                        <textarea value={sharedSummary} onChange={e => setSharedSummary(e.target.value)} className="w-full p-3 bg-nb-white outline-none text-sm min-h-[100px]" placeholder="Common Summary..." />
                         {/* Custom fields would go here as in previous version */}
                     </div>
                 )}
                 {activeTab === 'patterns' && (
                     <div className="space-y-6">
-                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
-                            <h4 className="text-xs font-bold text-blue-800 flex items-center gap-2 mb-2"><Icon name="biotech"/> Regex Extractor</h4>
-                            <p className="text-[10px] text-blue-700 leading-relaxed">Extract metadata from filenames. Use capture groups like <code>(\d+)</code> to find values.</p>
+                        <div className="bg-nb-blue/10 p-4 border border-nb-blue/20 mb-6">
+                            <h4 className="text-xs font-bold text-nb-blue flex items-center gap-2 mb-2"><Icon name="biotech"/> Regex Extractor</h4>
+                            <p className="text-[10px] text-nb-blue leading-relaxed">Extract metadata from filenames. Use capture groups like <code>(\d+)</code> to find values.</p>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Regex Pattern</label>
-                            <input value={regexPattern} onChange={e => setRegexPattern(e.target.value)} className="w-full font-mono text-sm p-3 bg-slate-50 rounded-lg border border-slate-200 focus:border-iiif-blue outline-none" placeholder="e.g. (\d+)_(\w+).jpg" />
+                            <label className="block text-[10px] font-black text-nb-black/40 uppercase mb-2">Regex Pattern</label>
+                            <input value={regexPattern} onChange={e => setRegexPattern(e.target.value)} className="w-full font-mono text-sm p-3 bg-nb-white border border-nb-black/20 focus:border-iiif-blue outline-none" placeholder="e.g. (\d+)_(\w+).jpg" />
                         </div>
                         <div className="space-y-3">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase">Field Mappings</label>
+                            <label className="block text-[10px] font-black text-nb-black/40 uppercase">Field Mappings</label>
                             {fieldMappings.map((m, i) => (
                                 <div key={i} className="flex gap-2">
-                                    <input type="number" value={m.group} onChange={e => setFieldMappings(fieldMappings.map((x, idx) => idx === i ? {...x, group: parseInt(e.target.value)} : x))} className="w-16 p-2 border rounded text-xs" />
-                                    <select value={m.property} onChange={e => setFieldMappings(fieldMappings.map((x, idx) => idx === i ? {...x, property: e.target.value} : x))} className="flex-1 p-2 border rounded text-xs">
+                                    <input type="number" value={m.group} onChange={e => setFieldMappings(fieldMappings.map((x, idx) => idx === i ? {...x, group: parseInt(e.target.value)} : x))} className="w-16 p-2 border text-xs" />
+                                    <select value={m.property} onChange={e => setFieldMappings(fieldMappings.map((x, idx) => idx === i ? {...x, property: e.target.value} : x))} className="flex-1 p-2 border text-xs">
                                         {IIIF_PROPERTY_SUGGESTIONS.map(p => <option key={p} value={p}>{p}</option>)}
                                     </select>
-                                    <Button variant="ghost" size="bare" onClick={() => setFieldMappings(fieldMappings.filter((_, idx) => idx !== i))} className="text-red-400"><Icon name="delete" className="text-sm"/></Button>
+                                    <Button variant="ghost" size="bare" onClick={() => setFieldMappings(fieldMappings.filter((_, idx) => idx !== i))} className="text-nb-red"><Icon name="delete" className="text-sm"/></Button>
                                 </div>
                             ))}
                             <Button variant="ghost" size="bare" onClick={() => setFieldMappings([...fieldMappings, { group: fieldMappings.length + 1, property: 'Subject' }])} className="text-[10px] font-bold text-iiif-blue uppercase">+ Add Group Mapping</Button>
@@ -255,22 +255,22 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                 )}
             </div>
 
-            <div className="flex-1 bg-slate-50 overflow-y-auto p-8 custom-scrollbar">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Preview</h3>
+            <div className="flex-1 bg-nb-white overflow-y-auto p-8 custom-scrollbar">
+                <h3 className="text-xs font-black text-nb-black/40 uppercase tracking-widest mb-4">Preview</h3>
                 <div className="space-y-2">
                     {activeTab === 'patterns' ? patternResults.map((p, i) => (
-                        <div key={i} className={`p-3 rounded-lg border bg-white ${p.success ? 'border-green-200' : 'border-red-100 opacity-50'}`}>
-                            <div className="text-[10px] font-mono text-slate-400">{p.filename}</div>
+                        <div key={i} className={`p-3 border bg-nb-white ${p.success ? 'border-nb-green/30' : 'border-nb-red/20 opacity-50'}`}>
+                            <div className="text-[10px] font-mono text-nb-black/40">{p.filename}</div>
                             {p.success ? (
                                 <div className="mt-1 flex flex-wrap gap-2">
                                     {Object.entries(p.extracted).map(([k,v]) => (
-                                        <span key={k} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100"><b>{k}:</b> {v}</span>
+                                        <span key={k} className="text-[9px] bg-nb-blue/10 text-nb-blue px-1.5 py-0.5 border border-nb-blue/20"><b>{k}:</b> {v}</span>
                                     ))}
                                 </div>
-                            ) : <div className="text-[9px] text-red-400 mt-1 italic font-bold">No match found</div>}
+                            ) : <div className="text-[9px] text-nb-red mt-1 italic font-bold">No match found</div>}
                         </div>
                     )) : selectedItems.map((it, i) => (
-                        <div key={i} className="bg-white p-3 rounded-lg border border-slate-200 text-sm font-bold truncate">
+                        <div key={i} className="bg-nb-white p-3 border border-nb-black/20 text-sm font-bold truncate">
                             {getIIIFValue(it.label)}
                         </div>
                     ))}
@@ -278,46 +278,46 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
             </div>
         </div>
 
-        <div className="p-6 bg-slate-50 border-t flex justify-between items-center">
+        <div className="p-6 bg-nb-white border-t flex justify-between items-center">
             <div>
               {existingSnapshot && onRollback && (
                 <Button variant="ghost" size="bare"
                   onClick={() => setShowRollbackConfirm(true)}
-                  className="px-4 py-2 text-amber-700 bg-amber-50 border border-amber-200 font-bold hover:bg-amber-100 rounded-xl flex items-center gap-2 text-sm"
+                  className="px-4 py-2 text-nb-orange bg-nb-orange/10 border border-nb-orange/20 font-bold hover:bg-nb-orange/20 flex items-center gap-2 text-sm"
                 >
                   <Icon name="history" className="text-sm" />
                   Rollback Last Batch
-                  <span className="text-[10px] text-amber-500 ml-1">
+                  <span className="text-[10px] text-nb-orange ml-1">
                     ({existingSnapshot.itemCount} items, {formatTimestamp(existingSnapshot.timestamp)})
                   </span>
                 </Button>
               )}
             </div>
             <div className="flex gap-3">
-              <Button variant="ghost" size="bare" onClick={onClose} className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Cancel</Button>
-              <Button variant="ghost" size="bare" onClick={handleApply} className="px-10 py-2 bg-iiif-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 flex items-center gap-2">Apply Changes <Icon name="play_arrow"/></Button>
+              <Button variant="ghost" size="bare" onClick={onClose} className="px-6 py-2 text-nb-black/60 font-bold hover:bg-nb-cream ">Cancel</Button>
+              <Button variant="ghost" size="bare" onClick={handleApply} className="px-10 py-2 bg-iiif-blue text-white font-bold shadow-brutal hover:bg-nb-blue flex items-center gap-2">Apply Changes <Icon name="play_arrow"/></Button>
             </div>
         </div>
 
         {/* Rollback Confirmation Modal */}
         {showRollbackConfirm && existingSnapshot && (
-          <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full">
+          <div className="fixed inset-0 bg-nb-black/50 z-[200] flex items-center justify-center p-4">
+            <div className="bg-nb-white shadow-brutal-lg p-6 max-w-md w-full">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                <div className="w-12 h-12 bg-nb-orange/20 flex items-center justify-center text-nb-orange">
                   <Icon name="warning" className="text-2xl" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Confirm Rollback</h3>
-                  <p className="text-sm text-slate-500">This will restore the previous state</p>
+                  <h3 className="text-lg font-bold text-nb-black">Confirm Rollback</h3>
+                  <p className="text-sm text-nb-black/50">This will restore the previous state</p>
                 </div>
               </div>
-              <div className="bg-slate-50 rounded-xl p-4 mb-6 text-sm">
-                <p className="text-slate-600">
+              <div className="bg-nb-white p-4 mb-6 text-sm">
+                <p className="text-nb-black/60">
                   <strong>{existingSnapshot.itemCount} items</strong> were modified on{' '}
                   <strong>{formatTimestamp(existingSnapshot.timestamp)}</strong>.
                 </p>
-                <p className="text-slate-500 mt-2">
+                <p className="text-nb-black/50 mt-2">
                   Rolling back will restore the archive to its state before that batch operation.
                   This action cannot be undone.
                 </p>
@@ -325,13 +325,13 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
               <div className="flex gap-3 justify-end">
                 <Button variant="ghost" size="bare"
                   onClick={() => setShowRollbackConfirm(false)}
-                  className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl"
+                  className="px-6 py-2 text-nb-black/60 font-bold hover:bg-nb-cream "
                 >
                   Cancel
                 </Button>
                 <Button variant="ghost" size="bare"
                   onClick={handleRollback}
-                  className="px-6 py-2 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 flex items-center gap-2"
+                  className="px-6 py-2 bg-nb-orange text-white font-bold hover:bg-nb-orange flex items-center gap-2"
                 >
                   <Icon name="history" /> Rollback
                 </Button>
@@ -345,8 +345,8 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
 };
 
 const PlaceholderBtn: React.FC<{ label: string, tag: string, onClick: (s: string) => void, current: string }> = ({ label, tag, onClick, current }) => (
-    <Button variant="ghost" size="bare" onClick={() => onClick(current + tag)} className="flex flex-col items-start p-2 rounded-lg bg-white border border-slate-200 hover:border-iiif-blue transition-all text-left">
-        <span className="text-[8px] font-black text-slate-400 uppercase">{label}</span>
+    <Button variant="ghost" size="bare" onClick={() => onClick(current + tag)} className="flex flex-col items-start p-2 bg-nb-white border border-nb-black/20 hover:border-iiif-blue transition-nb text-left">
+        <span className="text-[8px] font-black text-nb-black/40 uppercase">{label}</span>
         <code className="text-xs font-mono font-bold text-iiif-blue">{tag}</code>
     </Button>
 );

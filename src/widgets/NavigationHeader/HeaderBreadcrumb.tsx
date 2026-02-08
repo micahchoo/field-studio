@@ -31,7 +31,7 @@ export interface HeaderBreadcrumbProps {
  *   rootItem={root}
  *   breadcrumbPath={path}
  *   onBreadcrumbClick={handleClick}
- *   textMutedColor="text-slate-500"
+ *   textMutedColor="text-nb-black/50"
  *   t={t}
  * />
  */

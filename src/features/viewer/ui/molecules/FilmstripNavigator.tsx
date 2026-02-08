@@ -73,7 +73,7 @@ export const FilmstripNavigator: React.FC<FilmstripNavigatorProps> = ({
   return (
     <div
       className={`h-12 border-t flex items-center justify-between px-4 ${
-        fieldMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'
+        fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-black border-nb-black/80'
       }`}
       style={directionStyle}
     >
@@ -84,10 +84,10 @@ export const FilmstripNavigator: React.FC<FilmstripNavigatorProps> = ({
         label={label}
         cx={cx}
       />
-      <div className="text-xs text-slate-500" style={{ direction: 'ltr' }}>
+      <div className="text-xs text-nb-black/50" style={{ direction: 'ltr' }}>
         {loadingStatus}
         {viewingDirection !== 'left-to-right' && (
-          <span className={`ml-2 text-[9px] font-bold uppercase ${fieldMode ? 'text-yellow-400/60' : 'text-slate-600'}`}>
+          <span className={`ml-2 text-[9px] font-bold uppercase ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/60'}`}>
             {isRTL ? '\u2190 RTL' : viewingDirection === 'top-to-bottom' ? '\u2193 TTB' : '\u2191 BTT'}
           </span>
         )}

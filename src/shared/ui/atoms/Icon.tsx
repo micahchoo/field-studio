@@ -11,7 +11,7 @@
 import React from 'react';
 
 export interface IconProps {
-  /** Material icon name (e.g., 'search', 'home', 'settings') */
+  /** Material icon name (e.g.,'search','home','settings') */
   name: string;
   /** Additional CSS classes */
   className?: string;
@@ -27,15 +27,15 @@ export interface IconProps {
  * Icon atom for rendering Material Icons
  *
  * @example
- * ```tsx
+ *```tsx
  * <Icon name="search" />
- * <Icon name="home" className="text-blue-500" onClick={handleClick} />
+ * <Icon name="home" className="text-nb-blue" onClick={handleClick} />
  * <Icon name="info" title="More information" />
- * ```
+ *```
  */
-export const Icon: React.FC<IconProps> = ({
+export const Icon: React.FC<IconProps> = React.memo(({
   name,
-  className = '',
+  className ='',
   onClick,
   title,
   label,
@@ -45,14 +45,16 @@ export const Icon: React.FC<IconProps> = ({
       className={`material-icons select-none ${className}`}
       onClick={onClick}
       title={title}
-      role={label ? 'img' : undefined}
+      role={label ?'img' : undefined}
       aria-label={label}
-      aria-hidden={label ? undefined : 'true'}
-      style={{ fontSize: 'inherit' }}
+      aria-hidden={label ? undefined :'true'}
+      style={{ fontSize:'inherit' }}
     >
       {name}
     </span>
   );
-};
+});
+
+Icon.displayName = 'Icon';
 
 export default Icon;

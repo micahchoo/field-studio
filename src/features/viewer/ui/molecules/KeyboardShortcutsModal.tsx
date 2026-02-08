@@ -73,8 +73,8 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   fieldMode,
 }) => {
   const footer = (
-    <div className={`text-center text-sm ${fieldMode ? 'text-stone-400' : 'text-slate-500'}`}>
-      Press <kbd className={`px-1.5 py-0.5 rounded text-xs font-mono ${fieldMode ? 'bg-stone-800' : 'bg-white border border-slate-300'}`}>Esc</kbd> or click outside to close
+    <div className={`text-center text-sm ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'}`}>
+      Press <kbd className={`px-1.5 py-0.5 text-xs font-mono ${fieldMode ? 'bg-nb-black' : 'bg-nb-white border border-nb-black/20'}`}>Esc</kbd> or click outside to close
     </div>
   );
 
@@ -84,7 +84,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       onClose={onClose}
       title="Keyboard Shortcuts"
       icon="keyboard"
-      iconColor={fieldMode ? 'bg-yellow-900/30 text-yellow-500' : 'bg-blue-100 text-blue-600'}
+      iconColor={fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-blue/20 text-nb-blue'}
       size="md"
       fieldMode={fieldMode}
       footer={footer}
@@ -95,7 +95,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             <h3
               className={`
                 text-sm font-semibold uppercase tracking-wide mb-3
-                ${fieldMode ? 'text-yellow-500' : 'text-slate-500'}
+                ${fieldMode ? 'text-nb-yellow' : 'text-nb-black/50'}
               `}
             >
               {group.title}
@@ -105,18 +105,18 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                 <div
                   key={idx}
                   className={`
-                    flex items-center justify-between py-2 px-3 rounded-lg
-                    ${fieldMode ? 'bg-stone-800' : 'bg-slate-50'}
+                    flex items-center justify-between py-2 px-3 
+                    ${fieldMode ? 'bg-nb-black' : 'bg-nb-white'}
                   `}
                 >
-                  <span className={fieldMode ? 'text-stone-300' : 'text-slate-700'}>
+                  <span className={fieldMode ? 'text-nb-black/20' : 'text-nb-black/80'}>
                     {shortcut.description}
                   </span>
                   <div className="flex items-center gap-1">
                     {shortcut.keys.map((key, keyIdx) => (
                       <React.Fragment key={keyIdx}>
                         {keyIdx > 0 && (
-                          <span className={`text-xs ${fieldMode ? 'text-stone-500' : 'text-slate-400'}`}>
+                          <span className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
                             /
                           </span>
                         )}
@@ -124,8 +124,8 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                           className={`
                             px-2 py-1 text-xs font-mono font-semibold rounded
                             ${fieldMode
-                              ? 'bg-yellow-900/30 text-yellow-300 border border-yellow-700'
-                              : 'bg-white text-slate-800 border border-slate-300 shadow-sm'
+                              ? 'bg-nb-yellow/20 text-nb-yellow border border-nb-yellow'
+                              : 'bg-nb-white text-nb-black border border-nb-black/20 shadow-brutal-sm'
                             }
                           `}
                         >

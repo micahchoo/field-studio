@@ -41,10 +41,10 @@ export interface FloatingSelectionToolbarProps {
   /** Current field mode */
   fieldMode?: boolean;
   /** Position relative to viewport (for floating behavior) */
-  position?: 'top' | 'bottom' | 'near-selection';
+  position?:'top' |'bottom' |'near-selection';
 }
 
-type ActionGroup = 'view' | 'organize' | 'create' | 'navigate';
+type ActionGroup ='view' |'organize' |'create' |'navigate';
 
 interface ActionItem {
   id: string;
@@ -52,7 +52,7 @@ interface ActionItem {
   icon: string;
   onClick: () => void;
   group: ActionGroup;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?:'primary' |'secondary' |'ghost';
   disabled?: boolean;
   description?: string;
 }
@@ -82,7 +82,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
   cx,
   t,
   fieldMode = false,
-  position = 'bottom',
+  position ='bottom',
 }) => {
   const [expandedGroup, setExpandedGroup] = useState<ActionGroup | null>(null);
   const [showThumbnails, setShowThumbnails] = useState(true);
@@ -94,77 +94,77 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
     return null;
   }
 
-  const itemLabel = count === 1 ? t('Canvas') : `${t('Canvas')}s`;
+  const itemLabel = count === 1 ? t('Canvas') :`${t('Canvas')}s`;
 
   // Build action groups
   const actions: ActionItem[] = [
     // View actions
     ...(onOpenViewer ? [{
-      id: 'view',
-      label: 'View',
-      icon: 'visibility',
+      id:'view',
+      label:'View',
+      icon:'visibility',
       onClick: onOpenViewer,
-      group: 'view' as ActionGroup,
-      variant: 'primary' as const,
-      description: 'Open in fullscreen viewer',
+      group:'view' as ActionGroup,
+      variant:'primary' as const,
+      description:'Open in fullscreen viewer',
     }] : []),
 
     // Organize actions
     ...(onGroupIntoManifest ? [{
-      id: 'group',
-      label: 'Group',
-      icon: 'folder_special',
+      id:'group',
+      label:'Group',
+      icon:'folder_special',
       onClick: onGroupIntoManifest,
-      group: 'organize' as ActionGroup,
-      variant: 'secondary' as const,
-      description: `Create ${t('Manifest')} from selection`,
+      group:'organize' as ActionGroup,
+      variant:'secondary' as const,
+      description:`Create ${t('Manifest')} from selection`,
     }] : []),
 
     // Create actions
     ...(onComposeOnBoard ? [{
-      id: 'board',
-      label: 'Board',
-      icon: 'dashboard',
+      id:'board',
+      label:'Board',
+      icon:'dashboard',
       onClick: onComposeOnBoard,
-      group: 'create' as ActionGroup,
-      variant: 'secondary' as const,
-      description: 'Add to composition board',
+      group:'create' as ActionGroup,
+      variant:'secondary' as const,
+      description:'Add to composition board',
     }] : []),
 
     // Navigate actions (conditional)
     ...(onViewOnMap && hasGPS ? [{
-      id: 'map',
-      label: 'Map',
-      icon: 'explore',
+      id:'map',
+      label:'Map',
+      icon:'explore',
       onClick: onViewOnMap,
-      group: 'navigate' as ActionGroup,
-      variant: 'ghost' as const,
-      description: 'View on geographic map',
+      group:'navigate' as ActionGroup,
+      variant:'ghost' as const,
+      description:'View on geographic map',
     }] : []),
 
     // Metadata editing
     ...(onEditMetadata ? [{
-      id: 'metadata',
-      label: 'Edit',
-      icon: 'edit',
+      id:'metadata',
+      label:'Edit',
+      icon:'edit',
       onClick: onEditMetadata,
-      group: 'organize' as ActionGroup,
-      variant: 'secondary' as const,
-      description: 'Edit metadata',
+      group:'organize' as ActionGroup,
+      variant:'secondary' as const,
+      description:'Edit metadata',
     }] : []),
   ];
 
   const groupLabels: Record<ActionGroup, string> = {
-    view: 'View',
-    organize: 'Organize',
-    create: 'Create',
-    navigate: 'Navigate',
+    view:'View',
+    organize:'Organize',
+    create:'Create',
+    navigate:'Navigate',
   };
 
   const positionClasses = {
-    top: 'top-4 left-1/2 -translate-x-1/2',
-    bottom: 'bottom-4 left-1/2 -translate-x-1/2',
-    'near-selection': 'sticky bottom-4 mx-auto',
+    top:'top-4 left-1/2 -translate-x-1/2',
+    bottom:'bottom-4 left-1/2 -translate-x-1/2',
+'near-selection':'sticky bottom-4 mx-auto',
   };
 
   return (
@@ -172,18 +172,18 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
       className={`
         fixed ${positionClasses[position]} z-50
         max-w-4xl w-[calc(100%-2rem)] mx-4
-        animate-in fade-in slide-in-from-bottom-4 duration-300
-      `}
+        animate-in fade-in slide-in-from-bottom-4 
+`}
       role="region"
       aria-label="Selection toolbar"
       aria-live="polite"
     >
       <div
         className={`
-          rounded-2xl shadow-2xl border
-          ${fieldMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}
+           shadow-brutal-lg border
+          ${fieldMode ?'bg-nb-black border-nb-black/80' :'bg-nb-white border-nb-black/20'}
           overflow-hidden
-        `}
+`}
       >
         {/* Thumbnail strip */}
         {showThumbnails && selectedItems.length > 0 && (
@@ -202,9 +202,9 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
             onClick={() => setShowThumbnails(true)}
             className={`
               w-full p-2 flex items-center justify-center gap-2 text-xs
-              border-b hover:bg-black/5 transition-colors
-              ${fieldMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-500'}
-            `}
+              border-b hover:bg-nb-black/5 transition-nb
+              ${fieldMode ?'border-nb-black/80 text-nb-black/40' :'border-nb-black/10 text-nb-black/50'}
+`}
           >
             <Icon name="expand_more" className="text-sm" />
             Show {count} selected
@@ -216,7 +216,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
           <div className="flex flex-col items-stretch gap-2">
             {/* Primary actions - always visible */}
             {actions
-              .filter(a => a.variant === 'primary')
+              .filter(a => a.variant ==='primary')
               .map(action => (
                 <Button
                   key={action.id}
@@ -231,8 +231,8 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
               ))}
 
             {/* Secondary actions - grouped */}
-            {(['organize', 'create', 'navigate'] as ActionGroup[]).map(group => {
-              const groupActions = actions.filter(a => a.group === group && a.variant !== 'primary');
+            {(['organize','create','navigate'] as ActionGroup[]).map(group => {
+              const groupActions = actions.filter(a => a.group === group && a.variant !=='primary');
               if (groupActions.length === 0) return null;
 
               const isExpanded = expandedGroup === group;
@@ -260,7 +260,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
                         aria-haspopup="menu"
                       >
                         {groupLabels[group]}
-                        <Icon name={isExpanded ? 'expand_less' : 'expand_more'} className="text-sm ml-1" />
+                        <Icon name={isExpanded ?'expand_less' :'expand_more'} className="text-sm ml-1" />
                       </Button>
 
                       {/* Dropdown for group actions */}
@@ -268,10 +268,10 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
                         <div
                           className={`
                             absolute bottom-full left-0 mb-2 min-w-[160px]
-                            rounded-xl shadow-xl border overflow-hidden
-                            ${fieldMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}
+                             shadow-brutal border overflow-hidden
+                            ${fieldMode ?'bg-nb-black border-nb-black/80' :'bg-nb-white border-nb-black/20'}
                             animate-in fade-in slide-in-from-bottom-2
-                          `}
+`}
                           role="menu"
                         >
                           {groupActions.map(action => (
@@ -284,12 +284,12 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
                               disabled={action.disabled}
                               className={`
                                 w-full flex items-center gap-3 px-4 py-3 text-left
-                                transition-colors
+                                transition-nb
                                 ${fieldMode
-                                  ? 'hover:bg-slate-700 text-slate-200 disabled:text-slate-600'
-                                  : 'hover:bg-slate-50 text-slate-700 disabled:text-slate-400'
+                                  ?'hover:bg-nb-black/80 text-nb-black/20 disabled:text-nb-black/60'
+                                  :'hover:bg-nb-white text-nb-black/80 disabled:text-nb-black/40'
                                 }
-                              `}
+`}
                               role="menuitem"
                             >
                               <Icon name={action.icon} className="text-sm opacity-70" />
@@ -305,7 +305,7 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
             })}
 
             {/* Clear selection - always at end */}
-            <div className={`h-px w-full my-1 ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+            <div className={`h-px w-full my-1 ${fieldMode ?'bg-nb-black/80' :'bg-nb-cream'}`} />
             <Button
               variant="ghost"
               size="sm"

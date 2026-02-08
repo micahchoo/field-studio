@@ -117,7 +117,7 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
 
       {/* Metadata Editor Panel from metadata-edit feature */}
       {resource && (
-        <div className="border-t border-slate-200 dark:border-slate-800 max-h-80 overflow-auto">
+        <div className="border-t border-nb-black/20 max-h-80 overflow-auto">
           <MetadataEditorPanel
             resource={resource}
             onUpdateResource={onUpdateResource}

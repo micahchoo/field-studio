@@ -25,7 +25,7 @@ const ToolbarGroup: React.FC<{
 }> = ({ label, children, fieldMode }) => (
   <div className="flex items-center gap-0.5">
     {label && (
-      <span className={`text-[9px] font-bold uppercase tracking-wider mr-1 ${fieldMode ? 'text-yellow-400/60' : 'text-slate-500'}`}>
+      <span className={`nb-label-sm mr-1 ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/50'}`}>
         {label}
       </span>
     )}
@@ -183,10 +183,10 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
   const isAV = mediaType === 'audio' || mediaType === 'video';
 
   return (
-    <div className={`h-12 border-b flex items-center justify-between px-3 shrink-0 z-20 ${cx.headerBg} ${cx.border}`}>
+    <div className={`h-12 border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode flex items-center justify-between px-3 shrink-0 z-20 viewer-chrome ${cx.border}`}>
       {/* Left: Title & Type */}
       <div className="flex items-center gap-2 min-w-0 flex-shrink">
-        <Icon name={iconName} className={`${cx.accent} shrink-0 text-sm`} />
+        <Icon name={iconName} className="text-mode-accent shrink-0 text-sm" />
         <h2 className={`text-sm font-medium truncate ${cx.text}`}>{label}</h2>
       </div>
 
@@ -223,7 +223,7 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
               />
             )}
             {rotation !== 0 && (
-              <span className={`text-[10px] font-mono px-1 ${fieldMode ? 'text-yellow-400' : 'text-blue-400'}`}>
+              <span className={`text-[10px] font-mono px-1 ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}>
                 {rotation}°
               </span>
             )}
@@ -260,8 +260,8 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
         {/* Annotation Count Badge - always visible */}
         {annotationCount > 0 && (
           <div
-            className={`px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 mr-1 ${
-              fieldMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-500'
+            className={`px-2 py-1 text-[10px] font-bold flex items-center gap-1 mr-1 ${
+              fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-green/20 text-nb-green'
             }`}
             title={`${annotationCount} annotation${annotationCount !== 1 ? 's' : ''}`}
           >
@@ -273,10 +273,10 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
         {/* Annotate Button - works for all media types */}
         <button
           onClick={onToggleAnnotationTool}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 transition-nb ${
             showAnnotationTool
-              ? fieldMode ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'
-              : fieldMode ? 'bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/50' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+              ? fieldMode ? 'bg-nb-yellow text-black' : 'bg-nb-green text-white'
+              : fieldMode ? 'bg-nb-yellow/20 text-nb-yellow hover:bg-nb-yellow/20' : 'bg-nb-black/80 text-nb-black/20 hover:bg-nb-black/60'
           }`}
         >
           <Icon name={isAV ? 'timer' : 'gesture'} className="text-base" />

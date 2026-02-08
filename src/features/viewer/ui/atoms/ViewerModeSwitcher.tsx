@@ -41,10 +41,10 @@ export const ViewerModeSwitcher: React.FC<ViewerModeSwitcherProps> = ({
 }) => {
   return (
     <div
-      className={`inline-flex rounded-lg border ${
+      className={`inline-flex border ${
         fieldMode
-          ? 'border-slate-700 bg-slate-800'
-          : 'border-slate-200 bg-slate-50'
+          ? 'border-nb-black/80 bg-nb-black'
+          : 'border-nb-black/20 bg-nb-white'
       }`}
       role="radiogroup"
       aria-label="Viewer mode"
@@ -60,21 +60,21 @@ export const ViewerModeSwitcher: React.FC<ViewerModeSwitcherProps> = ({
             aria-checked={isActive}
             title={`${opt.title}${isDefault ? ' (manifest default)' : ''}`}
             onClick={() => onModeChange(opt.value)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-nb first:rounded-l-lg last:rounded-r-lg ${
               isActive
                 ? fieldMode
-                  ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700'
-                  : 'bg-blue-50 text-blue-700'
+                  ? 'bg-nb-yellow/20 text-nb-yellow border-nb-yellow'
+                  : 'bg-nb-blue/10 text-nb-blue'
                 : fieldMode
-                  ? 'text-slate-400 hover:bg-slate-700'
-                  : 'text-slate-500 hover:bg-slate-100'
+                  ? 'text-nb-black/40 hover:bg-nb-black/80'
+                  : 'text-nb-black/50 hover:bg-nb-cream'
             }`}
           >
             <Icon name={opt.icon} className="text-sm" />
             <span>{opt.label}</span>
             {isDefault && !isActive && (
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                fieldMode ? 'bg-yellow-600' : 'bg-blue-300'
+              <span className={`w-1.5 h-1.5 ${
+                fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue/40'
               }`} title="Manifest default" />
             )}
           </button>

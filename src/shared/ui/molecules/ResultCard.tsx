@@ -18,7 +18,7 @@
  *   title="Sunset over Mountains"
  *   type="Canvas"
  *   thumbnail="https://example.com/thumb.jpg"
- *   metadata={{ Date: '2023-01-15', Location: 'Rockies' }}
+ *   metadata={{ Date:'2023-01-15', Location:'Rockies' }}
  *   selected={false}
  *   onSelect={() => openItem('item-123')}
  * />
@@ -77,7 +77,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   const highlightText = (text: string): React.ReactNode => {
     if (!highlightTerms.length) return text;
 
-    const parts = text.split(new RegExp(`(${highlightTerms.join('|')})`, 'gi'));
+    const parts = text.split(new RegExp(`(${highlightTerms.join('|')})`,'gi'));
     return parts.map((part, i) =>
       highlightTerms.some((t) => part.toLowerCase() === t.toLowerCase()) ? (
         <mark
@@ -96,13 +96,13 @@ export const ResultCard: React.FC<ResultCardProps> = ({
     return (
       <div
         className={`
-          rounded-lg border ${cx.border} ${cx.surface}
+           border ${cx.border} ${cx.surface}
           p-4 animate-pulse
-        `}
+`}
       >
-        <div className={`h-32 ${cx.headerBg} rounded mb-3`} />
-        <div className={`h-4 ${cx.headerBg} rounded w-3/4 mb-2`} />
-        <div className={`h-3 ${cx.headerBg} rounded w-1/2`} />
+        <div className={`h-32 ${cx.headerBg} mb-3`} />
+        <div className={`h-4 ${cx.headerBg} w-3/4 mb-2`} />
+        <div className={`h-3 ${cx.headerBg} w-1/2`} />
       </div>
     );
   }
@@ -111,18 +111,18 @@ export const ResultCard: React.FC<ResultCardProps> = ({
     <article
       onClick={() => onSelect(id)}
       className={`
-        group relative rounded-lg border overflow-hidden
-        transition-all duration-200 cursor-pointer
+        group relative  border overflow-hidden
+        transition-nb  cursor-pointer
         ${selected
-          ? `${cx.accent} border-current ring-2 ring-current ring-opacity-50`
-          : `${cx.surface} ${cx.border} hover:${cx.headerBg}`
+          ?`${cx.accent} border-current ring-2 ring-current ring-opacity-50`
+          :`${cx.surface} ${cx.border} hover:${cx.headerBg}`
         }
-      `}
+`}
       role="button"
       tabIndex={0}
       aria-selected={selected}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key ==='Enter' || e.key ==='') {
           e.preventDefault();
           onSelect(id);
         }
@@ -149,9 +149,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         {/* Type badge */}
         <span
           className={`
-            absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium
-            ${cx.surface} shadow-sm ${cx.textMuted}
-          `}
+            absolute top-2 left-2 px-2 py-1 text-xs font-medium
+            ${cx.surface} shadow-brutal-sm ${cx.textMuted}
+`}
         >
           {type}
         </span>
@@ -160,9 +160,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         {selected && (
           <div
             className={`
-              absolute top-2 right-2 w-6 h-6 rounded-full
+              absolute top-2 right-2 w-6 h-6 
               ${cx.accent} text-white flex items-center justify-center
-            `}
+`}
           >
             <span className="material-icons text-sm">check</span>
           </div>

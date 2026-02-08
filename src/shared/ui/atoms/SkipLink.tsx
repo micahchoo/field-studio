@@ -16,12 +16,12 @@ interface SkipLinkProps {
   targetId: string;
   /** Label text for the link */
   label?: string;
-  /** Optional shortcut hint (e.g., "⌘K") */
+  /** Optional shortcut hint (e.g.,"⌘K") */
   shortcut?: string;
   /** Additional CSS classes */
   className?: string;
   /** Position variant */
-  position?: 'top-left' | 'top-center' | 'top-right';
+  position?:'top-left' |'top-center' |'top-right';
 }
 
 /**
@@ -32,10 +32,10 @@ interface SkipLinkProps {
  */
 export const SkipLink: React.FC<SkipLinkProps> = ({
   targetId,
-  label = 'Skip to content',
+  label ='Skip to content',
   shortcut,
-  className = '',
-  position = 'top-left'
+  className ='',
+  position ='top-left'
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -43,17 +43,17 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
     if (target) {
       // Set tabindex if not focusable
       if (!target.hasAttribute('tabindex')) {
-        target.setAttribute('tabindex', '-1');
+        target.setAttribute('tabindex','-1');
       }
       target.focus();
-      target.scrollIntoView({ block: 'start' });
+      target.scrollIntoView({ block:'start' });
       
       // Remove tabindex after focus (for non-interactive elements)
-      if (target.tagName !== 'BUTTON' && 
-          target.tagName !== 'A' && 
-          target.tagName !== 'INPUT' &&
-          target.tagName !== 'TEXTAREA' &&
-          target.tagName !== 'SELECT') {
+      if (target.tagName !=='BUTTON' && 
+          target.tagName !=='A' && 
+          target.tagName !=='INPUT' &&
+          target.tagName !=='TEXTAREA' &&
+          target.tagName !=='SELECT') {
         setTimeout(() => {
           target.removeAttribute('tabindex');
         }, 1000);
@@ -62,9 +62,9 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
   };
 
   const positionClasses = {
-    'top-left': 'top-4 left-4',
-    'top-center': 'top-4 left-1/2 -translate-x-1/2',
-    'top-right': 'top-4 right-4'
+'top-left':'top-4 left-4',
+'top-center':'top-4 left-1/2 -translate-x-1/2',
+'top-right':'top-4 right-4'
   };
 
   // Use sr-only pattern: completely hidden until focused
@@ -79,15 +79,15 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
         focus:px-4 focus:py-2
         focus:bg-sky-600 focus:text-white
         focus:font-semibold focus:text-sm
-        focus:rounded-lg focus:shadow-lg
+        focus:shadow-brutal
         focus:outline-none focus:ring-4 focus:ring-sky-500/50
         focus:flex focus:items-center focus:gap-2
         ${className}
-      `}
+`}
     >
       <span>{label}</span>
       {shortcut && (
-        <kbd className="px-2 py-0.5 bg-sky-700 rounded text-xs font-mono">
+        <kbd className="px-2 py-0.5 bg-sky-700 text-xs font-mono">
           {shortcut}
         </kbd>
       )}

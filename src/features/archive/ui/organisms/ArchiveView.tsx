@@ -28,6 +28,11 @@ import { ArchiveGrid } from './ArchiveGrid';
 import { ArchiveList } from './ArchiveList';
 import { type ArchiveViewMode, filterByTerm, getSelectionDNA, loadViewMode, saveViewMode, sortCanvases, type SortMode } from '../../model';
 import { Button, Icon } from '@/src/shared/ui/atoms';
+import { contentStateService } from '@/src/shared/services/contentState';
+import { BehaviorSelector } from '@/src/features/metadata-edit/ui/atoms/BehaviorSelector';
+import { RightsSelector } from '@/src/features/metadata-edit/ui/atoms/RightsSelector';
+import { ModalDialog } from '@/src/shared/ui/molecules/ModalDialog';
+import { BEHAVIOR_OPTIONS, getConflictingBehaviors } from '@/src/shared/constants/iiif';
 
 /**
  * NavDate Bulk Set Modal
@@ -71,64 +76,64 @@ const NavDateBulkModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className={`relative w-full max-w-sm rounded-xl shadow-2xl ${
-        fieldMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'
+      <div className="absolute inset-0 bg-nb-black/50" onClick={onClose} />
+      <div className={`relative w-full max-w-sm shadow-brutal-lg ${
+        fieldMode ? 'bg-nb-black border border-nb-black/80' : 'bg-nb-white'
       }`}>
         <div className={`flex items-center justify-between px-4 py-3 border-b ${
-          fieldMode ? 'border-slate-700' : 'border-slate-200'
+          fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'
         }`}>
-          <h3 className={`font-bold text-sm ${fieldMode ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`font-bold text-sm ${fieldMode ? 'text-white' : 'text-nb-black'}`}>
             Set Navigation Dates
           </h3>
           <Button variant="ghost" size="bare"
             onClick={onClose}
-            className={`p-1 rounded ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
+            className={`p-1 ${fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-cream'}`}
           >
-            <Icon name="close" className={fieldMode ? 'text-slate-400' : 'text-slate-500'} />
+            <Icon name="close" className={fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'} />
           </Button>
         </div>
 
         <div className="p-4 space-y-4">
-          <div className={`text-xs ${fieldMode ? 'text-slate-400' : 'text-slate-600'}`}>
+          <div className={`text-xs ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
             Apply navDate to {selectedCount} selected item{selectedCount !== 1 ? 's' : ''}
           </div>
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className={`block text-[10px] font-bold uppercase mb-1 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              <label className={`block text-[10px] font-bold uppercase mb-1 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
                 Date
               </label>
               <input
                 type="date"
                 value={dateValue}
                 onChange={(e) => setDateValue(e.target.value)}
-                className={`w-full text-sm px-2 py-1.5 rounded border outline-none ${
+                className={`w-full text-sm px-2 py-1.5 border outline-none ${
                   fieldMode
-                    ? 'bg-slate-800 text-white border-slate-700 focus:border-yellow-500'
-                    : 'bg-white border-slate-300 focus:border-blue-500'
+                    ? 'bg-nb-black text-white border-nb-black/80 focus:border-nb-yellow'
+                    : 'bg-nb-white border-nb-black/20 focus:border-nb-blue'
                 }`}
               />
             </div>
             <div className="w-28">
-              <label className={`block text-[10px] font-bold uppercase mb-1 ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              <label className={`block text-[10px] font-bold uppercase mb-1 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
                 Time
               </label>
               <input
                 type="time"
                 value={timeValue}
                 onChange={(e) => setTimeValue(e.target.value)}
-                className={`w-full text-sm px-2 py-1.5 rounded border outline-none ${
+                className={`w-full text-sm px-2 py-1.5 border outline-none ${
                   fieldMode
-                    ? 'bg-slate-800 text-white border-slate-700 focus:border-yellow-500'
-                    : 'bg-white border-slate-300 focus:border-blue-500'
+                    ? 'bg-nb-black text-white border-nb-black/80 focus:border-nb-yellow'
+                    : 'bg-nb-white border-nb-black/20 focus:border-nb-blue'
                 }`}
               />
             </div>
           </div>
 
           {selectedCount > 1 && (
-            <div className={`p-3 rounded-lg border ${fieldMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-3 border ${fieldMode ? 'border-nb-black bg-nb-black/50' : 'border-nb-black/20 bg-nb-white'}`}>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -136,17 +141,17 @@ const NavDateBulkModal: React.FC<{
                   onChange={(e) => setAutoIncrement(e.target.checked)}
                   className="rounded"
                 />
-                <span className={`text-xs ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <span className={`text-xs ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/80'}`}>
                   Auto-increment by
                 </span>
                 <select
                   value={incrementUnit}
                   onChange={(e) => setIncrementUnit(e.target.value as 'minute' | 'hour' | 'day')}
                   disabled={!autoIncrement}
-                  className={`text-xs px-1.5 py-0.5 rounded border ${
+                  className={`text-xs px-1.5 py-0.5 border ${
                     fieldMode
-                      ? 'bg-slate-800 text-white border-slate-700'
-                      : 'bg-white border-slate-300'
+                      ? 'bg-nb-black text-white border-nb-black/80'
+                      : 'bg-nb-white border-nb-black/20'
                   } ${!autoIncrement ? 'opacity-50' : ''}`}
                 >
                   <option value="minute">1 minute</option>
@@ -159,12 +164,12 @@ const NavDateBulkModal: React.FC<{
         </div>
 
         <div className={`flex items-center justify-end gap-2 px-4 py-3 border-t ${
-          fieldMode ? 'border-slate-700' : 'border-slate-200'
+          fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'
         }`}>
           <Button variant="ghost" size="bare"
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              fieldMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            className={`px-4 py-2 text-sm font-medium ${
+              fieldMode ? 'bg-nb-black text-nb-black/30 hover:bg-nb-black/80' : 'bg-nb-cream text-nb-black/80 hover:bg-nb-cream'
             }`}
           >
             Cancel
@@ -172,8 +177,8 @@ const NavDateBulkModal: React.FC<{
           <Button variant="ghost" size="bare"
             onClick={handleApply}
             disabled={!dateValue}
-            className={`px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 ${
-              fieldMode ? 'bg-yellow-600 text-white hover:bg-yellow-500' : 'bg-blue-600 text-white hover:bg-blue-500'
+            className={`px-4 py-2 text-sm font-medium disabled:opacity-50 ${
+              fieldMode ? 'bg-nb-yellow text-white hover:bg-nb-yellow' : 'bg-nb-blue text-white hover:bg-nb-blue'
             }`}
           >
             Apply
@@ -334,6 +339,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; targetId: string; isMulti?: boolean } | null>(null);
   const [showNavDateModal, setShowNavDateModal] = useState(false);
+  const [showBehaviorModal, setShowBehaviorModal] = useState(false);
+  const [showRightsModal, setShowRightsModal] = useState(false);
 
   // Selection
   const { selectedIds, handleSelectWithModifier, select, toggle, clear: clearSelection, isSelected } = useSharedSelection();
@@ -472,6 +479,57 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
     onUpdate(newRoot);
     showToast(`Set navDate on ${updates.length} item${updates.length !== 1 ? 's' : ''}`, 'success');
   }, [root, onUpdate, showToast]);
+
+  // Handle setting behavior on the parent manifest of the context menu target
+  const handleSetBehavior = useCallback((behavior: string[]) => {
+    if (!root || !onUpdate || !contextMenu) return;
+    const newRoot = JSON.parse(JSON.stringify(root));
+    // Find the parent manifest of the target canvas and set behavior on it
+    const findAndSetBehavior = (parent: IIIFItem): boolean => {
+      if (!parent.items) return false;
+      for (const item of parent.items) {
+        if (item.type === 'Manifest') {
+          const hasTarget = (item as IIIFCollection).items?.some((c: IIIFItem) => c.id === contextMenu.targetId);
+          if (hasTarget) {
+            item.behavior = behavior;
+            return true;
+          }
+        }
+        if (findAndSetBehavior(item)) return true;
+      }
+      return false;
+    };
+    // If root is the manifest itself
+    if (newRoot.type === 'Manifest') {
+      newRoot.behavior = behavior;
+    } else {
+      findAndSetBehavior(newRoot);
+    }
+    onUpdate(newRoot);
+    showToast(`Behavior set to ${behavior.join(', ')}`, 'success');
+    setShowBehaviorModal(false);
+  }, [root, onUpdate, contextMenu, showToast]);
+
+  // Handle setting rights on the context menu target item
+  const handleSetRights = useCallback((rights: string) => {
+    if (!root || !onUpdate || !contextMenu) return;
+    const newRoot = JSON.parse(JSON.stringify(root));
+    const applyRights = (parent: IIIFItem): boolean => {
+      if (!parent.items) return false;
+      for (const item of parent.items) {
+        if (item.id === contextMenu.targetId) {
+          item.rights = rights;
+          return true;
+        }
+        if (applyRights(item)) return true;
+      }
+      return false;
+    };
+    applyRights(newRoot);
+    onUpdate(newRoot);
+    showToast('Rights updated', 'success');
+    setShowRightsModal(false);
+  }, [root, onUpdate, contextMenu, showToast]);
 
   // Pipeline: Archive -> Map with selected items
   const handleOpenMap = useCallback(() => {
@@ -616,7 +674,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   // Render filmstrip view for sidebar mode
   const renderFilmstripView = () => {
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col divide-y divide-nb-black/50">
         {filteredCanvases.map((canvas) => {
           const selected = isSelected(canvas.id);
           const active = activeItem?.id === canvas.id;
@@ -637,24 +695,18 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
               onDoubleClick={() => onOpen(canvas)}
               onContextMenu={(e) => handleContextMenu(e, canvas.id)}
               className={`
-                flex items-center gap-2 p-2 rounded-lg text-left w-full
-                transition-all duration-150
+                flex items-center gap-3 px-3 py-2.5 text-left w-full border-l-4
+                transition-nb 
                 ${active
-                  ? fieldMode
-                    ? 'bg-yellow-500/30 ring-2 ring-yellow-400'
-                    : 'bg-blue-500/30 ring-2 ring-blue-400'
+                  ? 'bg-mode-accent-bg-dark border-l-mode-accent-border pl-2'
                   : selected
-                    ? fieldMode
-                      ? 'bg-yellow-500/20'
-                      : 'bg-blue-500/20'
-                    : fieldMode
-                      ? 'hover:bg-white/10'
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-mode-accent-bg-subtle border-l-mode-accent-border'
+                    : 'border-l-transparent hover:bg-nb-white/5'
                 }
               `}
             >
               {/* Thumbnail */}
-              <div className="w-14 h-14 rounded overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
+              <div className="w-14 h-14 overflow-hidden bg-nb-cream/80 shrink-0">
                 {thumbnailUrl ? (
                   <img
                     src={thumbnailUrl}
@@ -683,7 +735,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
 
               {/* Selection indicator */}
               {selected && (
-                <div className={`shrink-0 ${fieldMode ? 'text-yellow-400' : 'text-blue-400'}`}>
+                <div className={`shrink-0 ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}>
                   <span className="material-icons text-lg">check_circle</span>
                 </div>
               )}
@@ -746,10 +798,10 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
 
       {/* Filmstrip mode: compact header with just count */}
       {filmstripMode && (
-        <div className={`px-3 py-2 border-b ${cx.border} ${cx.headerBg} shrink-0`}>
-          <div className={`text-xs font-medium ${cx.textMuted}`}>
+        <div className="px-3 py-2.5 border-b border-mode-accent-border bg-mode-accent-bg-subtle shrink-0">
+          <span className="text-[10px] font-bold text-mode-accent uppercase tracking-wider">
             {filteredCanvases.length} items
-          </div>
+          </span>
         </div>
       )}
 
@@ -760,7 +812,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             ? 'p-2'
             : view === 'map' || view === 'timeline'
               ? 'p-0'
-              : 'p-6 pb-24'
+              : 'p-6 pb-8'
         }`}
       >
         {filmstripMode ? renderFilmstripView() : renderContentView()}
@@ -774,13 +826,24 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             title: 'Actions',
             items: [
               { id: 'open', label: 'Open in Viewer', icon: 'visibility', onClick: () => { onOpen(targetItem as IIIFItem); setContextMenu(null); } },
-              { id: 'select', label: selectedIds.has(contextMenu.targetId) ? 'Deselect' : 'Select', icon: selectedIds.has(contextMenu.targetId) ? 'check_box' : 'check_box_outline_blank', onClick: () => { 
+              { id: 'select', label: selectedIds.has(contextMenu.targetId) ? 'Deselect' : 'Select', icon: selectedIds.has(contextMenu.targetId) ? 'check_box' : 'check_box_outline_blank', onClick: () => {
                 if (selectedIds.has(contextMenu.targetId)) {
                   // Deselect logic would go here
                 } else {
                   select(contextMenu.targetId);
                 }
-                setContextMenu(null); 
+                setContextMenu(null);
+              }},
+              { id: 'copy-share-link', label: 'Copy Share Link', icon: 'link', onClick: () => {
+                try {
+                  const baseUrl = window.location.origin + window.location.pathname;
+                  const link = contentStateService.generateCanvasLink(baseUrl, '', contextMenu.targetId);
+                  navigator.clipboard.writeText(link);
+                  showToast('Share link copied', 'success');
+                } catch {
+                  showToast('Failed to generate link', 'error');
+                }
+                setContextMenu(null);
               }},
             ]
           },
@@ -790,6 +853,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
               { id: 'group-into-manifest', label: 'Group into Manifest', icon: 'folder_special', onClick: () => { handleCreateManifestFromSelection([contextMenu.targetId]); setContextMenu(null); } },
               { id: 'set-navdate', label: 'Set Date', icon: 'event', onClick: () => { setShowNavDateModal(true); setContextMenu(null); } },
               { id: 'duplicate', label: 'Duplicate', icon: 'content_copy', onClick: () => { showToast('Duplicate feature coming soon', 'info'); setContextMenu(null); } },
+              { id: 'set-behavior', label: 'Set Behavior\u2026', icon: 'tune', onClick: () => { setShowBehaviorModal(true); setContextMenu(null); } },
+              { id: 'set-rights', label: 'Set Rights\u2026', icon: 'gavel', onClick: () => { setShowRightsModal(true); setContextMenu(null); } },
             ]
           },
           {
@@ -800,11 +865,10 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
                 handleEditMetadata();
                 setContextMenu(null); 
               }},
-              { id: 'compose-board', label: 'Compose on Board', icon: 'dashboard', variant: 'primary', onClick: () => { 
-                select(contextMenu.targetId);
+              ...(selectedIds.size >= 2 ? [{ id: 'compose-board', label: `Compose ${selectedIds.size} on Board`, icon: 'dashboard', variant: 'primary' as const, onClick: () => {
                 handleComposeOnBoard();
-                setContextMenu(null); 
-              }},
+                setContextMenu(null);
+              }}] : []),
               ...(selectionDNA.hasGPS ? [{ id: 'view-map', label: 'View on Map', icon: 'explore', onClick: () => { handleOpenMap(); setContextMenu(null); } }] : []),
             ]
           },
@@ -858,6 +922,46 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
         selectedIds={selectedIds}
         fieldMode={fieldMode}
       />
+
+      {/* Behavior Set Modal */}
+      {showBehaviorModal && (
+        <ModalDialog
+          title="Set Behavior"
+          isOpen={showBehaviorModal}
+          onClose={() => setShowBehaviorModal(false)}
+          size="md"
+          fieldMode={fieldMode}
+        >
+          <div className="p-4">
+            <BehaviorSelector
+              options={BEHAVIOR_OPTIONS['Manifest']}
+              selected={[]}
+              onChange={(behaviors) => handleSetBehavior(behaviors)}
+              getConflicts={getConflictingBehaviors}
+              fieldMode={fieldMode}
+            />
+          </div>
+        </ModalDialog>
+      )}
+
+      {/* Rights Set Modal */}
+      {showRightsModal && (
+        <ModalDialog
+          title="Set Rights"
+          isOpen={showRightsModal}
+          onClose={() => setShowRightsModal(false)}
+          size="sm"
+          fieldMode={fieldMode}
+        >
+          <div className="p-4">
+            <RightsSelector
+              value=""
+              onChange={(rights) => handleSetRights(rights)}
+              fieldMode={fieldMode}
+            />
+          </div>
+        </ModalDialog>
+      )}
     </div>
   );
 };

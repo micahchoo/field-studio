@@ -191,26 +191,7 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
       (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'));
 
     if (isNetworkError) {
-       console.warn(`[RemoteLoader] CORS restriction detected for ${url}. Attempting fallback via proxy.`);
-       try {
-           // Using allorigins.win as a public proxy to bypass CORS for client-side usage
-           const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-           const result = await fetchWithValidation(proxyUrl);
-
-           // If auth is required, return that result
-           if ('requiresAuth' in result) {
-             return result;
-           }
-
-           return {
-             item: result.data,
-             isVirtualManifest: result.isVirtual,
-             originalUrl: url
-           };
-       } catch (proxyError: any) {
-           console.error("[RemoteLoader] Proxy fetch also failed:", proxyError);
-           throw new Error("CORS Error: Unable to access resource directly or via proxy. The server likely blocks cross-origin requests.");
-       }
+       throw new Error("CORS Error: The remote server does not allow cross-origin requests. Ask the server administrator to enable CORS headers for this resource.");
     }
 
     throw error;

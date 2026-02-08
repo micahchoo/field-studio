@@ -42,20 +42,20 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
   const hasMoreRows = rows.length > maxRows;
 
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-lg">
+    <div className="overflow-x-auto border border-nb-black/20 ">
       <table className="min-w-full text-sm">
-        <thead className="bg-slate-50 border-b border-slate-200">
+        <thead className="bg-nb-white border-b border-nb-black/20">
           <tr>
             {displayHeaders.map((header) => (
               <th
                 key={header}
-                className="px-3 py-2 text-left font-medium text-slate-700"
+                className="px-3 py-2 text-left font-medium text-nb-black/80"
               >
                 {header}
               </th>
             ))}
             {hasMoreColumns && (
-              <th className="px-3 py-2 text-left font-medium text-slate-500">
+              <th className="px-3 py-2 text-left font-medium text-nb-black/50">
                 +{headers.length - maxColumns} more
               </th>
             )}
@@ -65,26 +65,26 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
           {displayRows.map((row, rowIndex) => (
             <tr
               key={rowIndex}
-              className="border-b border-slate-100 last:border-0"
+              className="border-b border-nb-black/10 last:border-0"
             >
               {displayHeaders.map((header) => (
                 <td
                   key={header}
-                  className="px-3 py-2 text-slate-600 truncate max-w-xs"
+                  className="px-3 py-2 text-nb-black/60 truncate max-w-xs"
                 >
                   {row[header] || '-'}
                 </td>
               ))}
               {hasMoreColumns && (
-                <td className="px-3 py-2 text-slate-400">...</td>
+                <td className="px-3 py-2 text-nb-black/40">...</td>
               )}
             </tr>
           ))}
           {hasMoreRows && (
-            <tr className="border-b border-slate-100 last:border-0">
+            <tr className="border-b border-nb-black/10 last:border-0">
               <td
                 colSpan={displayHeaders.length + (hasMoreColumns ? 1 : 0)}
-                className="px-3 py-2 text-slate-400 italic text-center"
+                className="px-3 py-2 text-nb-black/40 italic text-center"
               >
                 +{rows.length - maxRows} more rows
               </td>

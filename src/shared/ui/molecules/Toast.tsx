@@ -3,12 +3,12 @@ import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { CONSTANTS } from '@/src/shared/constants';
 
-type ToastType = 'success' | 'error' | 'info' | 'warning';
+type ToastType ='success' |'error' |'info' |'warning';
 
 interface ToastAction {
   label: string;
   onClick: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?:'primary' |'secondary';
 }
 
 interface Toast {
@@ -70,8 +70,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [toasts]);
 
-  const showToast = useCallback((message: string, type: ToastType = 'info', action?: ToastAction) => {
-    const id = Math.random().toString(36).substr(2, 9);
+  const showToast = useCallback((message: string, type: ToastType ='info', action?: ToastAction) => {
+    const id = crypto.randomUUID().slice(0, 9);
 
     setToasts(prev => {
       // Aggressive limit to prevent overflow - remove oldest first
@@ -90,7 +90,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const showPersistentToast = useCallback((message: string, type: ToastType, action?: ToastAction) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = crypto.randomUUID().slice(0, 9);
 
     setToasts(prev => {
       const newToasts = prev.length >= MAX_TOASTS
@@ -124,32 +124,32 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map((toast, index) => (
           <div
             key={toast.id}
-            role={toast.type === 'error' ? 'alert' : 'status'}
-            aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+            role={toast.type ==='error' ?'alert' :'status'}
+            aria-live={toast.type ==='error' ?'assertive' :'polite'}
             aria-atomic="true"
-            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-xl border flex flex-col gap-2 animate-fade-in ${
-              toast.type === 'success' ? 'bg-white border-green-200 text-green-800' :
-              toast.type === 'error' ? 'bg-white border-red-200 text-red-800' :
-              toast.type === 'warning' ? 'bg-white border-amber-200 text-amber-800' :
-              'bg-slate-800 border-slate-700 text-white'
-            } ${index === 0 ? 'opacity-100' : 'opacity-90'}`}
+            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 shadow-brutal border flex flex-col gap-2 animate-fade-in ${
+              toast.type ==='success' ?'bg-nb-white border-nb-green/30 text-nb-green' :
+              toast.type ==='error' ?'bg-nb-white border-nb-red/30 text-nb-red' :
+              toast.type ==='warning' ?'bg-nb-white border-nb-orange/20 text-nb-orange' :
+'bg-nb-black border-nb-black/80 text-white'
+            } ${index === 0 ?'opacity-100' :'opacity-90'}`}
             style={{
-              transform: `scale(${1 - index * 0.05})`,
-              marginBottom: index > 0 ? '-8px' : '0'
+              transform:`scale(${1 - index * 0.05})`,
+              marginBottom: index > 0 ?'-8px' :'0'
             }}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <Icon
-                  name={toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : 'info'}
-                  className={`shrink-0 ${toast.type === 'success' ? 'text-green-500' : toast.type === 'error' ? 'text-red-500' : toast.type === 'warning' ? 'text-amber-500' : 'text-blue-400'}`}
+                  name={toast.type ==='success' ?'check_circle' : toast.type ==='error' ?'error' : toast.type ==='warning' ?'warning' :'info'}
+                  className={`shrink-0 ${toast.type ==='success' ?'text-nb-green' : toast.type ==='error' ?'text-nb-red' : toast.type ==='warning' ?'text-nb-orange' :'text-nb-blue'}`}
                   aria-hidden="true"
                 />
                 <span className="text-sm font-medium truncate">{toast.message}</span>
               </div>
               <Button variant="ghost" size="bare"
                 onClick={() => dismissToast(toast.id)}
-                className="shrink-0 p-1 hover:bg-black/10 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-600"
+                className="shrink-0 p-1 hover:bg-nb-black/10 transition-nb focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-nb-blue"
                 aria-label="Dismiss notification"
                 type="button"
               >
@@ -163,13 +163,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     toast.action?.onClick();
                     dismissToast(toast.id);
                   }}
-                  className={`text-xs font-medium px-3 py-1.5 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                    toast.action.variant === 'primary'
-                      ? 'bg-iiif-blue text-white hover:bg-iiif-blue/90 focus:ring-blue-600'
-                      : toast.type === 'success' ? 'text-green-700 hover:bg-green-50 focus:ring-green-600' :
-                        toast.type === 'error' ? 'text-red-700 hover:bg-red-50 focus:ring-red-600' :
-                        toast.type === 'warning' ? 'text-amber-700 hover:bg-amber-50 focus:ring-amber-600' :
-                        'text-blue-300 hover:bg-white/10 focus:ring-blue-400'
+                  className={`text-xs font-medium px-3 py-1.5 transition-nb focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                    toast.action.variant ==='primary'
+                      ?'bg-iiif-blue text-white hover:bg-iiif-blue/90 focus:ring-nb-blue'
+                      : toast.type ==='success' ?'text-nb-green hover:bg-nb-green/10 focus:ring-green-600' :
+                        toast.type ==='error' ?'text-nb-red hover:bg-nb-red/10 focus:ring-red-600' :
+                        toast.type ==='warning' ?'text-nb-orange hover:bg-nb-orange/10 focus:ring-nb-orange' :
+'text-nb-blue/60 hover:bg-nb-white/10 focus:ring-nb-blue'
                   }`}
                   type="button"
                 >

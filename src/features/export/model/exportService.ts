@@ -1104,7 +1104,11 @@ ${featuredInfo}
 
         // 3. Compress
         const zip = new JSZip();
-        files.forEach(f => zip.file(f.path, f.content));
+        files.forEach(f => {
+            // Sanitize path: reject traversal sequences
+            const safePath = f.path.replace(/\.\.\//g, '').replace(/\.\.\\/g, '');
+            zip.file(safePath, f.content);
+        });
 
         const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
             onProgress({ status: 'Compressing archive...', percent: 30 + (metadata.percent * 0.7) });
@@ -1495,11 +1499,22 @@ ${featuredInfo}
                 createUV();
             } catch (error) {
                 console.error('Failed to initialize Universal Viewer:', error);
-                document.getElementById('viewer-container').innerHTML =
-                    '<div style="color: #ef4444; padding: 2rem; text-align: center;">' +
-                    '<p style="margin-bottom: 1rem;">⚠️ Failed to load viewer</p>' +
-                    '<p><a href="' + manifestUri + '" style="color: #3b82f6;">View manifest JSON</a></p>' +
-                    '</div>';
+                var container = document.getElementById('viewer-container');
+                container.textContent = '';
+                var errDiv = document.createElement('div');
+                errDiv.style.cssText = 'color: #ef4444; padding: 2rem; text-align: center;';
+                var msg = document.createElement('p');
+                msg.style.marginBottom = '1rem';
+                msg.textContent = 'Failed to load viewer';
+                var linkP = document.createElement('p');
+                var link = document.createElement('a');
+                link.href = manifestUri;
+                link.style.color = '#3b82f6';
+                link.textContent = 'View manifest JSON';
+                linkP.appendChild(link);
+                errDiv.appendChild(msg);
+                errDiv.appendChild(linkP);
+                container.appendChild(errDiv);
             }
         });
     </script>

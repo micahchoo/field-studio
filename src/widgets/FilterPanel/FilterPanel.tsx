@@ -132,7 +132,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* View Toggle */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800">
+      <div className="flex border-b border-nb-black/20">
         <Button
           onClick={() => setActiveView('archive')}
           variant={activeView === 'archive' ? 'primary' : 'ghost'}

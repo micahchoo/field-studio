@@ -106,10 +106,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   return (
     <div className={`flex flex-col h-full ${cx.surface}`}>
       {/* Header */}
-      <div className={`h-header ${cx.headerBg} border-b ${cx.border} flex items-center justify-between px-6 shadow-sm z-10 shrink-0`}>
+      <div className={`h-header border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode border-b ${cx.border} flex items-center justify-between px-6 shadow-brutal-sm z-10 shrink-0`}>
         <div className="flex items-center gap-4">
-          <h2 className={`font-bold text-lg ${cx.accent}`}>Timeline</h2>
-          <div className={`h-4 w-px ${fieldMode ? 'bg-yellow-700' : 'bg-slate-500'}`} />
+          <h2 className="font-bold text-lg text-mode-accent">Timeline</h2>
+          <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
           <span className={`text-[10px] font-black uppercase ${cx.textMuted}`}>
             {totalItems} dated item{totalItems !== 1 ? 's' : ''}
           </span>
@@ -135,7 +135,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       {minDate && maxDate && (
         <div className={`h-10 ${cx.surface} flex items-center px-6 text-xs ${cx.textMuted}`}>
           <span>{formatShortDate(minDate)}</span>
-          <div className={`flex-1 mx-4 h-1 ${cx.border} rounded relative`}>
+          <div className={`flex-1 mx-4 h-1 ${cx.border} relative`}>
             {groups.map((g) => {
               if (!g.items[0]?.navDate) return null;
               const percent = getTimelinePosition(
@@ -146,7 +146,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               return (
                 <div
                   key={g.date}
-                  className="absolute w-2 h-2 bg-purple-500 rounded-full -top-0.5 cursor-pointer hover:scale-150 transition-transform"
+                  className="absolute w-2 h-2 bg-nb-purple -top-0.5 cursor-pointer hover:scale-150 transition-transform"
                   style={{ left: `${percent}%` }}
                   title={`${g.displayDate}: ${g.items.length} items`}
                   onClick={() => toggleDate(g.date)}
@@ -165,19 +165,19 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             <div key={group.date} className="relative pl-8 pb-8">
               {/* Timeline connector line */}
               {groupIdx < groups.length - 1 && (
-                <div className={`absolute left-3 top-6 bottom-0 w-0.5 ${fieldMode ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                <div className={`absolute left-3 top-6 bottom-0 w-0.5 ${fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'}`} />
               )}
 
               {/* Timeline dot */}
               <div
-                className={`absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+                className={`absolute left-0 top-1 w-6 h-6 flex items-center justify-center cursor-pointer transition-nb ${
                   selectedDate === group.date
-                    ? 'bg-purple-500'
-                    : fieldMode ? 'bg-slate-600' : 'bg-slate-400'
+                    ? 'bg-nb-purple'
+                    : fieldMode ? 'bg-nb-black/60' : 'bg-nb-black/30'
                 }`}
                 onClick={() => toggleDate(group.date)}
               >
-                <div className="w-2 h-2 bg-white rounded-full" />
+                <div className="w-2 h-2 bg-nb-white " />
               </div>
 
               {/* Date header */}
@@ -206,14 +206,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 {group.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`rounded-lg shadow-sm border cursor-pointer transition-all group overflow-hidden ${
+                    className={` shadow-brutal-sm border cursor-pointer transition-nb group overflow-hidden ${
                       fieldMode
-                        ? 'bg-slate-800 border-slate-700 hover:border-purple-500'
-                        : 'bg-white border-slate-200 hover:shadow-md hover:border-purple-300'
+                        ? 'bg-nb-black border-nb-black/80 hover:border-nb-purple'
+                        : 'bg-nb-white border-nb-black/20 hover:shadow-brutal-sm hover:border-nb-purple/40'
                     }`}
                     onClick={() => onSelect(item)}
                   >
-                    <div className={`aspect-square relative overflow-hidden ${fieldMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                    <div className={`aspect-square relative overflow-hidden ${fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'}`}>
                       {item._blobUrl ? (
                         <img
                           src={item._blobUrl}
@@ -222,18 +222,18 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Icon name="image" className={`text-2xl ${fieldMode ? 'text-slate-500' : 'text-slate-300'}`} />
+                          <Icon name="image" className={`text-2xl ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/30'}`} />
                         </div>
                       )}
                       {zoomLevel !== 'day' && item.navDate && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] px-1 py-0.5 truncate">
+                        <div className="absolute bottom-0 left-0 right-0 bg-nb-black/60 text-white text-[8px] px-1 py-0.5 truncate">
                           {formatShortDate(new Date(item.navDate))}
                         </div>
                       )}
                     </div>
                     {zoomLevel === 'day' && (
                       <div className="p-1.5">
-                        <div className={`text-[10px] truncate ${fieldMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <div className={`text-[10px] truncate ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/60'}`}>
                           {getIIIFValue(item.label, 'none') || 'Untitled'}
                         </div>
                         {item.navDate && (

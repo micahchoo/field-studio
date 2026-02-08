@@ -57,18 +57,18 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
   highlighted = false,
   disabled = false,
   fullWidth = true,
-  role = 'menuitem',
-  className = '',
+  role ='menuitem',
+  className ='',
   cx,
   fieldMode: _fieldMode,
 }) => {
   // Icon element for Button atom
   const iconElement = icon ? (
     <div
-      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+      className={`w-8 h-8 flex items-center justify-center transition-nb ${
         highlighted
-          ? 'bg-blue-500 text-white'
-          : `${cx?.subtleBg ?? 'bg-slate-100'} ${cx?.textMuted ?? 'text-slate-500'}`
+          ?'bg-nb-blue text-white'
+          :`${cx?.subtleBg ??'bg-nb-cream'} ${cx?.textMuted ??'text-nb-black/50'}`
       }`}
     >
       <Icon name={icon} className="text-base" aria-hidden="true" />
@@ -78,13 +78,13 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
   // Content with label and optional description
   const content = description ? (
     <div className="flex flex-col min-w-0 flex-1">
-      <span className={`text-sm font-medium ${cx?.text ?? 'text-slate-800'}`}>{label}</span>
-      <span className={`text-[10px] ${cx?.textMuted ?? 'text-slate-500'} whitespace-nowrap overflow-hidden text-ellipsis`}>
+      <span className={`text-sm font-medium ${cx?.text ??'text-nb-black'}`}>{label}</span>
+      <span className={`text-[10px] ${cx?.textMuted ??'text-nb-black/50'} whitespace-nowrap overflow-hidden text-ellipsis`}>
         {description}
       </span>
     </div>
   ) : (
-    <span className={`text-sm font-medium ${cx?.text ?? 'text-slate-800'}`}>{label}</span>
+    <span className={`text-sm font-medium ${cx?.text ??'text-nb-black'}`}>{label}</span>
   );
 
   return (

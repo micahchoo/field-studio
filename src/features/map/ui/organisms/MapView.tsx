@@ -109,12 +109,12 @@ export const MapView: React.FC<MapViewProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full ${fieldMode ? 'bg-black' : 'bg-slate-200'}`}>
+    <div className={`flex flex-col h-full ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
       {/* Header */}
-      <div className={`h-header ${cx.headerBg} border-b ${cx.border} flex items-center justify-between px-6 shadow-sm z-10 shrink-0`}>
+      <div className={`h-header border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode border-b ${cx.border} flex items-center justify-between px-6 shadow-brutal-sm z-10 shrink-0`}>
         <div className="flex items-center gap-4">
-          <h2 className={`font-bold text-lg ${cx.accent}`}>Map</h2>
-          <div className={`h-4 w-px ${fieldMode ? 'bg-yellow-700' : 'bg-slate-500'}`} />
+          <h2 className="font-bold text-lg text-mode-accent">Map</h2>
+          <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
           <span className={`text-[10px] font-black uppercase ${cx.textMuted}`}>
             {geoItems.length} geotagged {t('Canvas').toLowerCase()}{geoItems.length !== 1 ? 'es' : ''}
           </span>
@@ -189,7 +189,7 @@ export const MapView: React.FC<MapViewProps> = ({
         {/* Hover Tooltip */}
         {hoveredItem && !selectedCluster && (
           <div
-            className={`absolute ${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-lg shadow-xl border p-2 z-30 pointer-events-none`}
+            className={`absolute ${fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white border-nb-black/20'}  shadow-brutal border p-2 z-30 pointer-events-none`}
             style={{
               left: geoToPixel(hoveredItem.lat, hoveredItem.lng).x + 20,
               top: geoToPixel(hoveredItem.lat, hoveredItem.lng).y - 20
@@ -197,14 +197,14 @@ export const MapView: React.FC<MapViewProps> = ({
           >
             <div className="flex gap-2 items-center">
               {hoveredItem.canvas._blobUrl && (
-                <img src={hoveredItem.canvas._blobUrl} className="w-12 h-12 rounded object-cover" />
+                <img src={hoveredItem.canvas._blobUrl} className="w-12 h-12 object-cover" />
               )}
               <div>
-                <div className={`font-bold text-sm ${fieldMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                <div className={`font-bold text-sm ${fieldMode ? 'text-nb-black/20' : 'text-nb-black'}`}>
                   {getIIIFValue(hoveredItem.canvas.label, 'none') || 'Untitled'}
                 </div>
                 {isAdvanced && (
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-nb-black/50">
                     {formatCoordinates(hoveredItem.lat, hoveredItem.lng)}
                   </div>
                 )}
@@ -215,15 +215,15 @@ export const MapView: React.FC<MapViewProps> = ({
 
         {/* Cluster Popup */}
         {selectedCluster && (
-          <div className="absolute inset-0 bg-black/30 z-40 flex items-center justify-center p-8">
-            <div className={`${fieldMode ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden`}>
-              <div className={`p-4 border-b flex justify-between items-center ${fieldMode ? 'border-slate-800' : 'border-slate-200'}`}>
+          <div className="absolute inset-0 bg-nb-black/30 z-40 flex items-center justify-center p-8">
+            <div className={`${fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white'}  shadow-brutal-lg max-w-2xl w-full max-h-[80vh] overflow-hidden`}>
+              <div className={`p-4 border-b flex justify-between items-center ${fieldMode ? 'border-nb-black' : 'border-nb-black/20'}`}>
                 <h3 className={`font-bold ${cx.text}`}>
                   {selectedCluster.length} items at this location
                 </h3>
                 <div
                   onClick={() => selectCluster(null)}
-                  className={`cursor-pointer ${fieldMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`cursor-pointer ${fieldMode ? 'text-nb-black/40 hover:text-nb-black/20' : 'text-nb-black/40 hover:text-nb-black/60'}`}
                 >
                   <Icon name="close" />
                 </div>
@@ -232,22 +232,22 @@ export const MapView: React.FC<MapViewProps> = ({
                 {selectedCluster.map(item => (
                   <div
                     key={item.canvas.id}
-                    className={`rounded-lg overflow-hidden cursor-pointer transition-all ${
-                      fieldMode ? 'bg-slate-800 hover:ring-2 ring-blue-500' : 'bg-slate-50 hover:ring-2 ring-blue-500'
+                    className={` overflow-hidden cursor-pointer transition-nb ${
+                      fieldMode ? 'bg-nb-black hover:ring-2 ring-nb-blue' : 'bg-nb-white hover:ring-2 ring-nb-blue'
                     }`}
                     onClick={() => { selectCluster(null); onSelect(item.canvas); }}
                   >
-                    <div className={`aspect-square ${fieldMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                    <div className={`aspect-square ${fieldMode ? 'bg-nb-black/80' : 'bg-nb-cream'}`}>
                       {item.canvas._blobUrl ? (
                         <img src={item.canvas._blobUrl} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Icon name="image" className={`text-3xl ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                          <Icon name="image" className={`text-3xl ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`} />
                         </div>
                       )}
                     </div>
                     <div className="p-2">
-                      <div className={`text-xs font-medium truncate ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                      <div className={`text-xs font-medium truncate ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/80'}`}>
                         {getIIIFValue(item.canvas.label, 'none') || 'Untitled'}
                       </div>
                     </div>
@@ -260,8 +260,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
         {/* Coordinates Display (Advanced Users Only) */}
         {bounds && isAdvanced && (
-          <div className={`absolute bottom-4 left-4 rounded px-3 py-1 text-xs ${
-            fieldMode ? 'bg-slate-900/90 text-slate-400' : 'bg-white/90 text-slate-600'
+          <div className={`absolute bottom-4 left-4 px-3 py-1 text-xs ${
+            fieldMode ? 'bg-nb-black/90 text-nb-black/40' : 'bg-nb-white/90 text-nb-black/60'
           }`}>
             Bounds: {formatBounds(bounds)}
           </div>

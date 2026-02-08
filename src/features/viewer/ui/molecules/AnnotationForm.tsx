@@ -40,7 +40,7 @@ export const AnnotationForm: React.FC<AnnotationFormProps> = ({
   onClear,
 }) => {
   return (
-    <div className="w-inspector bg-slate-900 border-l border-white/10 p-4 flex flex-col">
+    <div className="w-inspector bg-nb-black border-l border-white/10 p-4 flex flex-col">
       <h3 className="text-white font-bold text-sm mb-4">Annotation Details</h3>
 
       {/* Motivation */}
@@ -72,7 +72,7 @@ export const AnnotationForm: React.FC<AnnotationFormProps> = ({
           value={text}
           onChange={(e) => onTextChange(e.target.value)}
           placeholder="Enter annotation text..."
-          className="w-full h-32 bg-black/40 text-white text-sm border border-white/10 rounded p-3 outline-none resize-none"
+          className="w-full h-32 bg-nb-black/40 text-white text-sm border border-white/10 p-3 outline-none resize-none"
         />
       </div>
 
@@ -108,7 +108,7 @@ export const AnnotationForm: React.FC<AnnotationFormProps> = ({
             variant="ghost"
             size="sm"
             fullWidth
-            className="text-[10px] font-bold uppercase hover:text-red-400"
+            className="text-[10px] font-bold uppercase hover:text-nb-red"
           >
             Clear
           </Button>

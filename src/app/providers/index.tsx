@@ -53,6 +53,7 @@ import React, { ReactNode } from 'react';
 import { VaultProvider } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { ToastProvider } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
+import { ThemeRoot } from '@/src/shared/ui/providers/ThemeRoot';
 import { UserIntentProvider } from './UserIntentProvider';
 import { ResourceContextProvider } from './ResourceContextProvider';
 import { AppModeProvider } from './AppModeProvider';
@@ -71,13 +72,15 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => (
   <VaultProvider>
     <ToastProvider>
       <ErrorBoundary>
-        <UserIntentProvider>
-          <ResourceContextProvider>
-            <AppModeProvider>
-              {children}
-            </AppModeProvider>
-          </ResourceContextProvider>
-        </UserIntentProvider>
+        <ThemeRoot>
+          <UserIntentProvider>
+            <ResourceContextProvider>
+              <AppModeProvider>
+                {children}
+              </AppModeProvider>
+            </ResourceContextProvider>
+          </UserIntentProvider>
+        </ThemeRoot>
       </ErrorBoundary>
     </ToastProvider>
   </VaultProvider>

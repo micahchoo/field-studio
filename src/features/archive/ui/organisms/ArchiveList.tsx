@@ -189,7 +189,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
     <div className={`flex-1 overflow-auto ${cx.surface}`}>
       <table className="w-full border-collapse">
         {/* Header */}
-        <thead className={`sticky top-0 z-10 ${fieldMode ? 'bg-yellow-900/40' : 'bg-slate-100 dark:bg-slate-800'}`}>
+        <thead className={`sticky top-0 z-10 ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream'}`}>
           <tr>
             {/* Drag handle column (only when reorder enabled) */}
             {reorderEnabled && (
@@ -205,7 +205,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                 className={`
                   px-3 py-3 border-b ${cx.border} ${col.width}
                   text-left text-[10px] font-bold uppercase tracking-wider cursor-pointer
-                  hover:bg-black/5 dark:hover:bg-white/5 transition-colors
+                  hover:bg-nb-black/5 transition-nb
                   ${col.align === 'center' ? 'text-center' : ''}
                   ${col.align === 'right' ? 'text-right' : ''}
                   ${cx.textMuted}
@@ -254,26 +254,26 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                 onDoubleClick={() => onItemDoubleClick?.(canvas)}
                 onContextMenu={(e) => onContextMenu(e, canvas.id)}
                 className={`
-                  border-b ${cx.border} transition-colors
+                  border-b ${cx.border} transition-nb
                   ${reorderEnabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
                   ${isDragging ? 'opacity-50' : ''}
                   ${isDropTarget
                     ? fieldMode
-                      ? 'ring-2 ring-inset ring-yellow-400 bg-yellow-500/10'
-                      : 'ring-2 ring-inset ring-blue-500 bg-blue-500/10'
+                      ? 'ring-2 ring-inset ring-nb-yellow bg-nb-yellow/10'
+                      : 'ring-2 ring-inset ring-nb-blue bg-nb-blue/10'
                     : ''
                   }
                   ${active
                     ? fieldMode
-                      ? 'bg-yellow-500/30'
-                      : 'bg-blue-500/20 dark:bg-blue-500/30'
+                      ? 'bg-nb-yellow/30'
+                      : 'bg-nb-blue/20'
                     : selected
                       ? fieldMode
-                        ? 'bg-yellow-500/20'
-                        : 'bg-blue-500/10 dark:bg-blue-500/20'
+                        ? 'bg-nb-yellow/20'
+                        : 'bg-nb-blue/10'
                       : fieldMode
-                        ? 'hover:bg-yellow-900/20'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        ? 'hover:bg-nb-yellow/20'
+                        : 'hover:bg-nb-cream/50'
                   }
                 `}
               >
@@ -282,7 +282,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                   <td className="px-1 py-2">
                     <div className={`
                       flex items-center justify-center cursor-grab active:cursor-grabbing
-                      ${fieldMode ? 'text-yellow-400/60' : 'text-slate-400'}
+                      ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}
                     `}>
                       <Icon name="drag_indicator" className="text-lg" />
                     </div>
@@ -291,8 +291,8 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                 {/* Thumbnail */}
                 <td className="px-3 py-2">
                   <div className={`
-                    w-10 h-10 rounded overflow-hidden
-                    ${fieldMode ? 'bg-yellow-900/30' : 'bg-slate-200 dark:bg-slate-700'}
+                    w-10 h-10 overflow-hidden
+                    ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream/80'}
                   `}>
                     {thumbUrl ? (
                       <img
@@ -315,7 +315,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                     {selected && (
                       <Icon
                         name="check_circle"
-                        className={`text-sm ${fieldMode ? 'text-yellow-400' : 'text-blue-500'}`}
+                        className={`text-sm ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}
                       />
                     )}
                     <span className="font-medium truncate">{label}</span>
@@ -325,10 +325,10 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                 {/* Type */}
                 <td className={`px-3 py-2 text-center`}>
                   <span className={`
-                    inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase
+                    inline-flex items-center px-2 py-0.5 text-[10px] font-medium uppercase
                     ${fieldMode
-                      ? 'bg-yellow-900/50 text-yellow-300'
-                      : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      ? 'bg-nb-yellow/20 text-nb-yellow'
+                      : 'bg-nb-cream text-nb-black/60'
                     }
                   `}>
                     {canvas.type}
@@ -363,10 +363,10 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                       onContextMenu(e, canvas.id);
                     }}
                     className={`
-                      p-1 rounded transition-colors
+                      p-1 transition-nb
                       ${fieldMode
-                        ? 'hover:bg-yellow-500/20 text-yellow-400'
-                        : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400'
+                        ? 'hover:bg-nb-yellow/20 text-nb-yellow'
+                        : 'hover:bg-nb-cream text-nb-black/40'
                       }
                     `}
                   >
@@ -382,7 +382,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
       {/* Footer stats */}
       <div className={`
         sticky bottom-0 px-4 py-2 border-t ${cx.border}
-        ${fieldMode ? 'bg-yellow-900/30' : 'bg-slate-50 dark:bg-slate-800'}
+        ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-white'}
       `}>
         <span className={`text-xs ${cx.textMuted}`}>
           {items.length} {items.length === 1 ? 'item' : 'items'}

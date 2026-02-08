@@ -1,19 +1,30 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
-import { AbstractionLevel, FileTree, IIIFItem, IngestResult, SourceManifest, SourceManifests } from '@/src/shared/types';
+import { AbstractionLevel, FileTree, IIIFItem, IngestResult, SourceManifests } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { buildSourceManifests, findManifest, getAllCollections } from '@/src/entities/collection/model/stagingService';
+import { ModalDialog } from '@/src/shared/ui/molecules/ModalDialog';
+import { ContextMenu } from '@/src/shared/ui/molecules/ContextMenu';
+import { buildSourceManifests } from '@/src/entities/collection/model/stagingService';
 import { useStagingState } from '@/src/shared/lib/hooks/useStagingState';
 import { useKeyboardDragDrop } from '@/src/shared/lib/hooks/useKeyboardDragDrop';
 import { useIngestProgress } from '@/src/shared/lib/hooks/useIngestProgress';
 import { IngestProgressPanel } from '../molecules/IngestProgressPanel';
 import { FEATURE_FLAGS, USE_WORKER_INGEST } from '@/src/shared/constants';
+import { BEHAVIOR_OPTIONS, getConflictingBehaviors } from '@/src/shared/constants/iiif';
 import { ingestTreeWithWorkers } from '@/src/entities/manifest/model/ingest/ingestWorkerPool';
-import { SourcePane } from '../molecules/SourcePane';
+import { SourceTreePane } from '../molecules/SourceTreePane';
 import { ArchivePane } from '../molecules/ArchivePane';
-import { SendToCollectionModal } from '../molecules/SendToCollectionModal';
 import { MetadataTemplateExport } from '../molecules/MetadataTemplateExport';
+import { BehaviorSelector } from '@/src/features/metadata-edit/ui/atoms/BehaviorSelector';
+import { RightsSelector } from '@/src/features/metadata-edit/ui/atoms/RightsSelector';
+import type { NodeAnnotations } from '../../model';
+import {
+  applyAnnotationsToTree,
+  buildDirectoryMenuSections,
+  buildFileMenuSections,
+  buildCollectionMenuSections,
+} from '../../model';
 // TODO: [FSD] Proper fix is to receive `t` via props from FieldModeTemplate
 // eslint-disable-next-line no-restricted-imports
 import { useTerminology } from '@/src/app/providers/useTerminology';
@@ -61,7 +72,7 @@ export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
         };
 
         const files = flattenTree(initialTree);
-        
+
         // Validate files exist
         if (files.length === 0) {
           throw new Error('No files found in the selected directory');
@@ -92,32 +103,29 @@ export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
     build();
   }, [initialTree]);
 
-  // Escape key to close
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isProcessing) {
-        onCancel();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onCancel, isProcessing]);
-
   if (isProcessing || !sourceManifests) {
     return (
-      <div className="fixed inset-0 bg-slate-900 z-[500] flex flex-col items-center justify-center">
-        <div className="w-20 h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mb-6 animate-pulse">
-          <Icon name="folder_open" className="text-4xl" />
+      <ModalDialog
+        isOpen={true}
+        onClose={onCancel}
+        title="Analyzing Content..."
+        icon="folder_open"
+        size="md"
+        zIndex={500}
+      >
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-20 h-20 bg-nb-blue/20 text-nb-blue flex items-center justify-center mb-6 animate-pulse">
+            <Icon name="folder_open" className="text-4xl" />
+          </div>
+          <p className="text-sm text-nb-black/40 mb-4">{progress.message}</p>
+          <div className="w-64 bg-nb-black/10 h-2 overflow-hidden">
+            <div
+              className="bg-nb-blue h-full transition-nb"
+              style={{ width: `${progress.percent}%` }}
+            />
+          </div>
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Analyzing Content...</h3>
-        <p className="text-sm text-slate-400 mb-4">{progress.message}</p>
-        <div className="w-64 bg-slate-700 h-2 rounded-full overflow-hidden">
-          <div
-            className="bg-blue-500 h-full transition-all duration-300"
-            style={{ width: `${progress.percent}%` }}
-          />
-        </div>
-      </div>
+      </ModalDialog>
     );
   }
 
@@ -152,17 +160,16 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
 }) => {
   // Phase 3: Use terminology based on abstraction level
   const { t, formatCount } = useTerminology({ level: abstractionLevel });
-  
+
   // Phase 3: Enhanced progress tracking
   const { aggregate, progress, controls, startIngest, clearCompleted } = useIngestProgress();
-  
+
   const stagingState = useStagingState(initialSourceManifests);
   const {
     selectedIds,
     toggleSelection,
     selectRange,
     clearSelection,
-    selectAll,
     focusedPane,
     setFocusedPane,
     createNewCollection,
@@ -170,19 +177,25 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
     removeFromCollection,
     renameCollectionAction,
     deleteCollectionAction,
-    reorderCanvases,
     getAllCollectionsList,
-    getManifest,
     archiveLayout,
     sourceManifests,
-    hasUnassigned
   } = stagingState;
 
-  const [showSendToModal, setShowSendToModal] = useState(false);
-  const [sendToManifestIds, setSendToManifestIds] = useState<string[]>([]);
   const [showMetadataExport, setShowMetadataExport] = useState(false);
   const [merge, setMerge] = useState(!!existingRoot);
   const [splitPosition, setSplitPosition] = useState(50);
+  const [filterText, setFilterText] = useState('');
+
+  // --- New state for annotations, context menu, behavior modal ---
+  const [annotationsMap, setAnnotationsMap] = useState<Map<string, NodeAnnotations>>(() => new Map());
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number; y: number; targetPath: string; isDirectory: boolean; pane: 'source' | 'archive';
+  } | null>(null);
+  const [behaviorModal, setBehaviorModal] = useState<{ path: string; resourceType: string } | null>(null);
+  const [rightsModal, setRightsModal] = useState<string | null>(null); // path
+  const [navDateModal, setNavDateModal] = useState<string | null>(null); // path
 
   // Phase 5: Keyboard drag and drop for source manifests (when enabled)
   const keyboardDnd = useKeyboardDragDrop({
@@ -200,47 +213,104 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   // Combine keyboard DnD with feature flag
   const enableKeyboardDnd = FEATURE_FLAGS.USE_KEYBOARD_DND;
 
-  // Get all manifest IDs for select all
-  const allManifestIds = useMemo(() =>
-    sourceManifests.manifests.map(m => m.id),
-    [sourceManifests.manifests]
-  );
-
-  // Handle opening send to modal
-  const handleOpenSendToModal = useCallback((manifestIds: string[]) => {
-    setSendToManifestIds(manifestIds);
-    setShowSendToModal(true);
+  // Annotation change handler
+  const handleAnnotationChange = useCallback((path: string, ann: NodeAnnotations) => {
+    setAnnotationsMap(prev => {
+      const next = new Map(prev);
+      next.set(path, ann);
+      return next;
+    });
   }, []);
 
-  // Handle sending to collection
-  const handleSendToCollection = useCallback((collectionId: string) => {
-    addToCollection(collectionId, sendToManifestIds);
-    setShowSendToModal(false);
-    setSendToManifestIds([]);
-  }, [addToCollection, sendToManifestIds]);
+  // Source tree selection
+  const handleSourceSelect = useCallback((path: string, additive: boolean) => {
+    setSelectedPaths(prev => {
+      if (additive) {
+        return prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path];
+      }
+      return [path];
+    });
+    setFocusedPane('source');
+  }, [setFocusedPane]);
 
-  // Handle create and send
-  const handleCreateAndSend = useCallback((collectionName: string) => {
-    const newId = createNewCollection(collectionName);
-    addToCollection(newId, sendToManifestIds);
-    setShowSendToModal(false);
-    setSendToManifestIds([]);
-  }, [createNewCollection, addToCollection, sendToManifestIds]);
-
-  // Handle manifest drag start
-  const handleManifestDragStart = useCallback((e: React.DragEvent, manifestIds: string[]) => {
-    if (!e.dataTransfer) return;
-    e.dataTransfer.setData('application/iiif-manifest-ids', JSON.stringify(manifestIds));
-    e.dataTransfer.effectAllowed = 'copyMove';
+  // Context menu handlers
+  const handleSourceContextMenu = useCallback((e: React.MouseEvent, path: string, isDirectory: boolean) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, targetPath: path, isDirectory, pane: 'source' });
   }, []);
 
-  // Handle ingest with enhanced progress tracking
+  const handleArchiveContextMenu = useCallback((e: React.MouseEvent, collectionId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, targetPath: collectionId, isDirectory: true, pane: 'archive' });
+  }, []);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // Build context menu sections based on current state
+  const contextMenuSections = useMemo(() => {
+    if (!contextMenu) return [];
+
+    if (contextMenu.pane === 'source') {
+      const ann = annotationsMap.get(contextMenu.targetPath) || {};
+      if (contextMenu.isDirectory) {
+        return buildDirectoryMenuSections(
+          contextMenu.targetPath,
+          ann,
+          handleAnnotationChange,
+          (path, resourceType) => setBehaviorModal({ path, resourceType }),
+          closeContextMenu,
+          {
+            onRightsModal: (path) => setRightsModal(path),
+            onNavDateModal: (path) => setNavDateModal(path),
+          },
+        );
+      } else {
+        return buildFileMenuSections(
+          contextMenu.targetPath,
+          ann,
+          handleAnnotationChange,
+          closeContextMenu,
+          {
+            onRightsModal: (path) => setRightsModal(path),
+            onNavDateModal: (path) => setNavDateModal(path),
+            onSetStart: (path) => {
+              const existing = annotationsMap.get(path) || {};
+              handleAnnotationChange(path, { ...existing, start: !existing.start });
+            },
+          },
+        );
+      }
+    }
+
+    // Archive pane context menu
+    return buildCollectionMenuSections(
+      contextMenu.targetPath,
+      {
+        onRename: (id) => {
+          const name = prompt('New collection name:');
+          if (name) renameCollectionAction(id, name);
+        },
+        onDelete: deleteCollectionAction,
+        onCreateSub: (parentId) => {
+          const name = prompt('Sub-collection name:');
+          if (name) createNewCollection(name);
+        },
+        onBehaviorModal: (id, resourceType) => setBehaviorModal({ path: id, resourceType }),
+      },
+      closeContextMenu,
+    );
+  }, [contextMenu, annotationsMap, handleAnnotationChange, closeContextMenu, renameCollectionAction, deleteCollectionAction, createNewCollection]);
+
+  // Handle ingest with annotations applied
   const handleIngest = useCallback(async () => {
+    // Apply annotations to tree before ingesting
+    const annotatedTree = applyAnnotationsToTree(initialTree, annotationsMap);
+
     try {
       // Use worker-based ingest if feature flag is enabled
       if (USE_WORKER_INGEST) {
         const result = await startIngest(async (options) => {
-          return await ingestTreeWithWorkers(initialTree, {
+          return await ingestTreeWithWorkers(annotatedTree, {
             generateThumbnails: true,
             extractMetadata: true,
             calculateHashes: false,
@@ -248,28 +318,20 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
             signal: options.signal
           });
         });
-        
-        // Call the original onIngest callback with the result
-        // The legacy callback expects a different signature, so we adapt it
-        onIngest(initialTree, merge, (msg, pct) => {
+
+        onIngest(annotatedTree, merge, () => {
           // Legacy callback - progress is already tracked via startIngest
         });
-        
-        // Clear completed operation after a delay
+
         setTimeout(() => clearCompleted(), 3000);
-        
         return result;
       } else {
-        // Legacy ingest path with enhanced progress tracking
         return await startIngest(async (options) => {
           return new Promise<IngestResult>((resolve, reject) => {
-            // Call the original onIngest with a wrapper that reports progress
-            onIngest(initialTree, merge, (msg, pct) => {
-              // Calculate file counts safely with null checks
+            onIngest(annotatedTree, merge, (msg, pct) => {
               const totalFiles = sourceManifests?.manifests?.reduce((sum, m) => sum + m.files.length, 0) || 0;
               const completedFiles = Math.floor((pct / 100) * totalFiles);
 
-              // Report progress to the enhanced tracking system
               if (options.onProgress) {
                 options.onProgress({
                   operationId: 'legacy-ingest',
@@ -308,8 +370,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
                 });
               }
             });
-            
-            // Handle cancellation
+
             if (options.signal) {
               options.signal.addEventListener('abort', () => {
                 reject(new Error('Ingest cancelled'));
@@ -320,15 +381,8 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
       }
     } catch (error) {
       console.error('Ingest failed:', error);
-      // Error is already tracked by useIngestProgress
     }
-  }, [initialTree, merge, onIngest, startIngest, clearCompleted, sourceManifests.manifests, archiveLayout.root.children.length]);
-
-  // Get manifests for send to modal
-  const sendToManifests = useMemo(() =>
-    sendToManifestIds.map(id => getManifest(id)).filter((m): m is SourceManifest => m !== undefined),
-    [sendToManifestIds, getManifest]
-  );
+  }, [initialTree, annotationsMap, merge, onIngest, startIngest, clearCompleted, sourceManifests.manifests, archiveLayout.root.children.length]);
 
   // Stats with terminology
   const stats = useMemo(() => ({
@@ -344,7 +398,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
   // Show enhanced progress panel when ingesting
   if (aggregate.isActive) {
     return (
-      <div className="fixed inset-0 bg-slate-900/95 z-[500] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-nb-black/95 z-[500] flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
           <IngestProgressPanel
             progress={progress}
@@ -354,7 +408,6 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
             showFilesByDefault={false}
             onCancel={() => {
               controls.cancel();
-              // Call cancel callback after a short delay to allow cleanup
               setTimeout(() => onCancel(), 500);
             }}
           />
@@ -363,139 +416,87 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-slate-900 z-[500] flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 h-14 border-b border-slate-700 bg-slate-800 flex items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-            <Icon name="construction" className="text-white text-lg" />
-          </div>
-          <div>
-            <h2 className="font-bold text-white">Organize Your Files</h2>
-            <p className="text-[10px] text-slate-400">
-              {manifestLabel} | {stats.totalFiles} files | {collectionLabel}
-            </p>
-          </div>
-        </div>
+  // Footer actions for ModalDialog
+  const footerContent = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="bare"
+          onClick={() => setShowMetadataExport(true)}
+          className="px-3 py-2 text-sm text-nb-black/60 hover:bg-nb-cream flex items-center gap-2 transition-nb"
+        >
+          <Icon name="table_chart" className="text-nb-black/40" />
+          Export Template
+        </Button>
 
-        <div className="flex items-center gap-2">
-          {/* Metadata template export */}
-          <Button variant="ghost" size="bare"
-            onClick={() => setShowMetadataExport(true)}
-            className="px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <Icon name="table_chart" className="text-slate-400" />
-            Export Template
-          </Button>
-
-          {/* Merge toggle */}
-          {existingRoot && (
-            <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 cursor-pointer hover:bg-slate-700 rounded-lg transition-colors">
-              <input
-                type="checkbox"
-                checked={merge}
-                onChange={(e) => setMerge(e.target.checked)}
-                className="rounded border-slate-600"
-              />
-              Merge with existing
-            </label>
-          )}
-
-          {/* Ingest button */}
-          <Button variant="ghost" size="bare"
-            onClick={handleIngest}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 flex items-center gap-2 shadow-lg transition-colors"
-          >
-            <Icon name="publish" />
-            Import {t('Archive')}
-          </Button>
-
-          {/* Close */}
-          <Button variant="ghost" size="bare"
-            onClick={onCancel}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-          >
-            <Icon name="close" />
-          </Button>
-        </div>
+        {existingRoot && (
+          <label className="flex items-center gap-2 px-3 py-2 text-sm text-nb-black/60 cursor-pointer hover:bg-nb-cream transition-nb">
+            <input
+              type="checkbox"
+              checked={merge}
+              onChange={(e) => setMerge(e.target.checked)}
+              className="border-nb-black/20"
+            />
+            Merge with existing
+          </label>
+        )}
       </div>
 
-      {/* Validation warning - improved styling */}
-      {hasUnassigned && (
-        <div className="flex-shrink-0 px-4 py-3 bg-orange-50 border-b border-orange-200">
-          <div className="flex items-start gap-3 max-w-4xl mx-auto">
-            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg className="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-orange-900">
-                Some {t('Manifest').toLowerCase()}s are not organized
-              </p>
-              <p className="text-sm text-orange-700 mt-0.5">
-                Unorganized items will be imported but won't appear in your archive structure.
-              </p>
-            </div>
-            <Button variant="ghost" size="bare"
-              className="text-xs font-medium text-orange-700 hover:text-orange-900 underline"
-              onClick={() => {
-                // Auto-organize unassigned manifests
-                const unassigned = sourceManifests.manifests.filter(m =>
-                  !archiveLayout.root.children.some((c: any) => c.items?.includes(m.id))
-                );
-                if (unassigned.length > 0) {
-                  const newCollectionId = createNewCollection('Unorganized Items');
-                  addToCollection(newCollectionId, unassigned.map(m => m.id));
-                }
-              }}
-            >
-              Auto-organize
-            </Button>
-          </div>
-        </div>
-      )}
+      <Button variant="ghost" size="bare"
+        onClick={handleIngest}
+        className="px-6 py-2 bg-nb-blue text-white font-medium text-sm hover:bg-nb-blue flex items-center gap-2 shadow-brutal transition-nb"
+      >
+        <Icon name="publish" />
+        Import {t('Archive')}
+      </Button>
+    </div>
+  );
 
+  return (
+    <ModalDialog
+      isOpen={true}
+      onClose={onCancel}
+      title="Organize Your Files"
+      subtitle={`${manifestLabel} | ${stats.totalFiles} files | ${collectionLabel}`}
+      icon="construction"
+      size="full"
+      height="90vh"
+      zIndex={500}
+      preventBackdropClose={false}
+      footer={footerContent}
+    >
       {/* Keyboard DnD instructions (when enabled) */}
       {enableKeyboardDnd && (
         <div className="flex-shrink-0 px-4 py-2 bg-sky-50 border-b border-sky-200 text-sky-700 text-xs flex items-center gap-2">
           <Icon name="keyboard" className="text-sky-500" />
           <span className="font-medium">Keyboard:</span>
-          <span>Arrow keys to navigate • Space to select • Enter to drop • Escape to cancel</span>
+          <span>Arrow keys to navigate | Space to select | Enter to drop | Escape to cancel</span>
         </div>
       )}
 
       {/* Main content - two panes */}
-      <div className="flex-1 flex min-h-0">
-        {/* Left pane - Source */}
+      <div className="flex-1 flex min-h-0 h-full">
+        {/* Left pane - Source Tree */}
         <div style={{ width: `${splitPosition}%` }} className="min-w-[300px]">
-          <SourcePane
+          <SourceTreePane
+            fileTree={initialTree}
             sourceManifests={sourceManifests}
-            selectedIds={selectedIds}
-            onSelect={(id, metaKey, shiftKey) => {
-              if (shiftKey && selectedIds.length > 0) {
-                // Range selection
-                const lastSelected = selectedIds[selectedIds.length - 1];
-                selectRange(lastSelected, id);
-              } else {
-                toggleSelection(id);
-              }
-            }}
-            onClearSelection={clearSelection}
-            onReorder={undefined}
-            onDragStart={(manifestId) => {
-              // Adapter: SourcePane expects just manifestId, but we need to start drag
-              const ids = selectedIds.includes(manifestId) ? selectedIds : [manifestId];
-              // The actual drag is handled by SourcePane's internal handleDragStart
-            }}
+            annotationsMap={annotationsMap}
+            onAnnotationChange={handleAnnotationChange}
+            selectedPaths={selectedPaths}
+            onSelect={handleSourceSelect}
+            onClearSelection={() => setSelectedPaths([])}
+            filterText={filterText}
+            onFilterChange={setFilterText}
+            onContextMenu={handleSourceContextMenu}
+            onDragStart={() => {}}
             isFocused={focusedPane === 'source'}
+            onFocus={() => setFocusedPane('source')}
           />
         </div>
 
         {/* Resize handle */}
         <div
-          className="w-1 bg-slate-200 hover:bg-blue-400 cursor-col-resize transition-colors flex-shrink-0"
+          className="w-1 bg-nb-black/20 hover:bg-nb-blue cursor-col-resize transition-nb flex-shrink-0"
           onMouseDown={(e) => {
             e.preventDefault();
             const startX = e.clientX;
@@ -528,25 +529,102 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
             onCreateCollection={createNewCollection}
             onRenameCollection={renameCollectionAction}
             onDeleteCollection={deleteCollectionAction}
-            onOpenSendToModal={handleOpenSendToModal}
             onFocus={() => setFocusedPane('archive')}
             isFocused={focusedPane === 'archive'}
+            onContextMenu={handleArchiveContextMenu}
           />
         </div>
       </div>
 
-      {/* Modals */}
-      {showSendToModal && (
-        <SendToCollectionModal
-          manifests={sendToManifests}
-          collections={getAllCollectionsList()}
-          onSend={handleSendToCollection}
-          onCreateAndSend={handleCreateAndSend}
-          onClose={() => {
-            setShowSendToModal(false);
-            setSendToManifestIds([]);
-          }}
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          isOpen={true}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          sections={contextMenuSections}
+          onClose={closeContextMenu}
         />
+      )}
+
+      {/* Behavior Selector Modal */}
+      {behaviorModal && (
+        <ModalDialog
+          isOpen={true}
+          onClose={() => setBehaviorModal(null)}
+          title="Set Behaviors"
+          icon="tune"
+          size="md"
+          zIndex={600}
+        >
+          <div className="p-4">
+            <BehaviorSelector
+              options={BEHAVIOR_OPTIONS[behaviorModal.resourceType] || BEHAVIOR_OPTIONS['Manifest']}
+              selected={(annotationsMap.get(behaviorModal.path)?.iiifBehavior) || []}
+              onChange={(selected) => {
+                const existing = annotationsMap.get(behaviorModal.path) || {};
+                handleAnnotationChange(behaviorModal.path, { ...existing, iiifBehavior: selected });
+              }}
+              getConflicts={getConflictingBehaviors}
+            />
+          </div>
+        </ModalDialog>
+      )}
+
+      {/* Rights Selector Modal */}
+      {rightsModal && (
+        <ModalDialog
+          isOpen={true}
+          onClose={() => setRightsModal(null)}
+          title="Set Rights Statement"
+          icon="copyright"
+          size="md"
+          zIndex={600}
+        >
+          <div className="p-4">
+            <RightsSelector
+              value={(annotationsMap.get(rightsModal)?.rights) || ''}
+              onChange={(value) => {
+                const existing = annotationsMap.get(rightsModal) || {};
+                handleAnnotationChange(rightsModal, { ...existing, rights: value || undefined });
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <Button variant="ghost" onClick={() => setRightsModal(null)}>Done</Button>
+            </div>
+          </div>
+        </ModalDialog>
+      )}
+
+      {/* NavDate Modal */}
+      {navDateModal && (
+        <ModalDialog
+          isOpen={true}
+          onClose={() => setNavDateModal(null)}
+          title="Set Navigation Date"
+          icon="calendar_today"
+          size="md"
+          zIndex={600}
+        >
+          <div className="p-4">
+            <label className="block text-sm font-medium mb-2">
+              Date (ISO 8601)
+            </label>
+            <input
+              type="datetime-local"
+              className="w-full border rounded px-3 py-2 text-sm"
+              defaultValue={(annotationsMap.get(navDateModal)?.navDate || '').replace('Z', '').slice(0, 16)}
+              onChange={(e) => {
+                const existing = annotationsMap.get(navDateModal) || {};
+                const isoDate = e.target.value ? `${e.target.value}:00Z` : undefined;
+                handleAnnotationChange(navDateModal, { ...existing, navDate: isoDate });
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <Button variant="ghost" onClick={() => setNavDateModal(null)}>Done</Button>
+            </div>
+          </div>
+        </ModalDialog>
       )}
 
       {showMetadataExport && (
@@ -555,6 +633,6 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
           onClose={() => setShowMetadataExport(false)}
         />
       )}
-    </div>
+    </ModalDialog>
   );
 };

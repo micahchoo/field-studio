@@ -762,6 +762,9 @@ function extractExtensions(obj: any, knownKeys: string[]): Record<string, any> {
     // Skip v2 legacy keys (they'll be transformed)
     if (key.startsWith('@')) continue;
 
+    // Reject prototype pollution keys
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+
     // Preserve extension properties:
     // - Namespaced keys (contain ":")
     // - Keys starting with underscore (app internal)

@@ -1,7 +1,7 @@
 /**
  * AgentEditor Molecule
  *
- * Editor for IIIF `provider` Agent objects.
+ * Editor for IIIF`provider` Agent objects.
  * Supports name, URI, homepage, and logo with preview.
  *
  * ATOMIC DESIGN COMPLIANCE:
@@ -22,10 +22,10 @@ import { FormInput } from './FormInput';
 
 export interface AgentItem {
   id: string;
-  type: 'Agent';
+  type:'Agent';
   label: Record<string, string[]>;
-  homepage?: Array<{ id: string; type: 'Text'; label: Record<string, string[]>; format?: string }>;
-  logo?: Array<{ id: string; type: 'Image'; format?: string; width?: number; height?: number }>;
+  homepage?: Array<{ id: string; type:'Text'; label: Record<string, string[]>; format?: string }>;
+  logo?: Array<{ id: string; type:'Image'; format?: string; width?: number; height?: number }>;
 }
 
 export interface AgentEditorProps {
@@ -54,19 +54,19 @@ interface AgentRowProps {
 
 const AgentRow: React.FC<AgentRowProps> = ({ agent, index, onEdit, onRemove, fieldMode, disabled }) => {
   const name = agent.label?.none?.[0] || agent.label?.en?.[0] ||
-    Object.values(agent.label || {})[0]?.[0] || 'Unknown Provider';
+    Object.values(agent.label || {})[0]?.[0] ||'Unknown Provider';
   const logoUrl = agent.logo?.[0]?.id;
   const homepageUrl = agent.homepage?.[0]?.id;
 
   return (
-    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
+    <div className={`flex items-center gap-3 px-3 py-2.5 border ${
       fieldMode
-        ? 'border-slate-700 bg-slate-800/50'
-        : 'border-slate-200 bg-white'
+        ?'border-nb-black/80 bg-nb-black/50'
+        :'border-nb-black/20 bg-nb-white'
     }`}>
       {/* Logo or placeholder */}
-      <div className={`shrink-0 w-10 h-10 rounded-md flex items-center justify-center overflow-hidden ${
-        fieldMode ? 'bg-slate-700' : 'bg-slate-100'
+      <div className={`shrink-0 w-10 h-10 flex items-center justify-center overflow-hidden ${
+        fieldMode ?'bg-nb-black/80' :'bg-nb-cream'
       }`}>
         {logoUrl ? (
           <img
@@ -74,24 +74,24 @@ const AgentRow: React.FC<AgentRowProps> = ({ agent, index, onEdit, onRemove, fie
             alt={`${name} logo`}
             className="w-full h-full object-contain"
             onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).style.display ='none';
               (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
             }}
           />
         ) : (
           <Icon
             name="business"
-            className={`text-lg ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}
+            className={`text-lg ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}
           />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium truncate ${fieldMode ? 'text-white' : 'text-slate-700'}`}>
+        <div className={`text-sm font-medium truncate ${fieldMode ?'text-white' :'text-nb-black/80'}`}>
           {name}
         </div>
-        <div className={`text-xs truncate ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+        <div className={`text-xs truncate ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}>
           {homepageUrl || agent.id}
         </div>
       </div>
@@ -111,7 +111,7 @@ const AgentRow: React.FC<AgentRowProps> = ({ agent, index, onEdit, onRemove, fie
             variant="ghost"
             size="bare"
             onClick={() => onRemove(index)}
-            icon={<Icon name="close" className="text-sm text-red-400" />}
+            icon={<Icon name="close" className="text-sm text-nb-red" />}
             title="Remove provider"
             aria-label="Remove provider"
           />
@@ -131,36 +131,36 @@ interface AgentFormProps {
 const AgentForm: React.FC<AgentFormProps> = ({ initial, onSave, onCancel, fieldMode }) => {
   const [name, setName] = useState(
     initial?.label?.none?.[0] || initial?.label?.en?.[0] ||
-    Object.values(initial?.label || {})[0]?.[0] || ''
+    Object.values(initial?.label || {})[0]?.[0] ||''
   );
-  const [uri, setUri] = useState(initial?.id || '');
-  const [homepageUrl, setHomepageUrl] = useState(initial?.homepage?.[0]?.id || '');
-  const [logoUrl, setLogoUrl] = useState(initial?.logo?.[0]?.id || '');
+  const [uri, setUri] = useState(initial?.id ||'');
+  const [homepageUrl, setHomepageUrl] = useState(initial?.homepage?.[0]?.id ||'');
+  const [logoUrl, setLogoUrl] = useState(initial?.logo?.[0]?.id ||'');
   const [logoError, setLogoError] = useState(false);
 
   const handleSave = () => {
     if (!name.trim()) return;
 
     const agent: AgentItem = {
-      id: uri.trim() || `urn:uuid:${crypto.randomUUID()}`,
-      type: 'Agent',
+      id: uri.trim() ||`urn:uuid:${crypto.randomUUID()}`,
+      type:'Agent',
       label: { none: [name.trim()] },
     };
 
     if (homepageUrl.trim()) {
       agent.homepage = [{
         id: homepageUrl.trim(),
-        type: 'Text',
+        type:'Text',
         label: { none: [name.trim()] },
-        format: 'text/html',
+        format:'text/html',
       }];
     }
 
     if (logoUrl.trim()) {
       agent.logo = [{
         id: logoUrl.trim(),
-        type: 'Image',
-        format: 'image/png',
+        type:'Image',
+        format:'image/png',
       }];
     }
 
@@ -168,10 +168,10 @@ const AgentForm: React.FC<AgentFormProps> = ({ initial, onSave, onCancel, fieldM
   };
 
   return (
-    <div className={`p-3 rounded-lg border space-y-3 ${
+    <div className={`p-3 border space-y-3 ${
       fieldMode
-        ? 'border-slate-600 bg-slate-800'
-        : 'border-slate-300 bg-slate-50'
+        ?'border-nb-black/60 bg-nb-black'
+        :'border-nb-black/20 bg-nb-white'
     }`}>
       <FormInput
         value={name}
@@ -208,8 +208,8 @@ const AgentForm: React.FC<AgentFormProps> = ({ initial, onSave, onCancel, fieldM
         />
         {/* Logo preview */}
         {logoUrl.trim() && !logoError && (
-          <div className={`mt-2 inline-block p-2 rounded border ${
-            fieldMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'
+          <div className={`mt-2 inline-block p-2 border ${
+            fieldMode ?'border-nb-black/80 bg-nb-black' :'border-nb-black/20 bg-nb-white'
           }`}>
             <img
               src={logoUrl}
@@ -220,7 +220,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ initial, onSave, onCancel, fieldM
           </div>
         )}
         {logoError && (
-          <div className="mt-1 text-xs text-red-400">
+          <div className="mt-1 text-xs text-nb-red">
             Could not load logo preview
           </div>
         )}
@@ -235,7 +235,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ initial, onSave, onCancel, fieldM
           onClick={handleSave}
           disabled={!name.trim()}
         >
-          {initial ? 'Update' : 'Add'}
+          {initial ?'Update' :'Add'}
         </Button>
       </div>
     </div>
@@ -279,15 +279,15 @@ export const AgentEditor: React.FC<AgentEditorProps> = ({
         <div className="flex items-center gap-1.5">
           <Icon
             name="business"
-            className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
+            className={`text-sm ${fieldMode ?'text-nb-black/40' :'text-nb-black/50'}`}
           />
           <span className={`text-xs font-semibold uppercase tracking-wider ${
-            fieldMode ? 'text-slate-400' : 'text-slate-500'
+            fieldMode ?'text-nb-black/40' :'text-nb-black/50'
           }`}>
             Provider
           </span>
           {value.length > 0 && (
-            <span className={`text-xs ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+            <span className={`text-xs ${fieldMode ?'text-nb-black/60' :'text-nb-black/40'}`}>
               ({value.length})
             </span>
           )}
@@ -338,7 +338,7 @@ export const AgentEditor: React.FC<AgentEditorProps> = ({
 
       {/* Empty state */}
       {value.length === 0 && !isAdding && (
-        <div className={`text-center py-3 text-xs ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`}>
+        <div className={`text-center py-3 text-xs ${fieldMode ?'text-nb-black/60' :'text-nb-black/40'}`}>
           No provider set
         </div>
       )}

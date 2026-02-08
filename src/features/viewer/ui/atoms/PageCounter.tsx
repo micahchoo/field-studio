@@ -116,7 +116,7 @@ export const PageCounter: React.FC<PageCounterProps> = ({
     <div
       className={`
         inline-flex items-center gap-2
-        rounded-lg border ${cx.border} ${cx.surface} px-2 py-1
+         border ${cx.border} ${cx.surface} px-2 py-1
       `}
       role="navigation"
       aria-label="Page navigation"

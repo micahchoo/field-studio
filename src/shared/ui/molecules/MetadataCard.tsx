@@ -61,8 +61,8 @@ export interface MetadataCardProps {
  * <MetadataCard
  *   item={canvas}
  *   fields={[
- *     { id: 'label', label: 'Title', value: 'Photo 1', editable: true, group: 'basic' },
- *     { id: 'navDate', label: 'Date', value: '2024-01-15', type: 'date', group: 'basic' },
+ *     { id:'label', label:'Title', value:'Photo 1', editable: true, group:'basic' },
+ *     { id:'navDate', label:'Date', value:'2024-01-15', type:'date', group:'basic' },
  *   ]}
  *   thumbnailUrl="/thumb.jpg"
  *   cx={cx}
@@ -93,10 +93,10 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
   });
 
   const groupLabels: Record<string, { label: string; icon: string }> = {
-    basic: { label: 'Basic Information', icon: 'info' },
-    technical: { label: 'Technical Details', icon: 'settings' },
-    rights: { label: 'Rights & Licensing', icon: 'shield' },
-    relations: { label: 'Related Resources', icon: 'link' },
+    basic: { label:'Basic Information', icon:'info' },
+    technical: { label:'Technical Details', icon:'settings' },
+    rights: { label:'Rights & Licensing', icon:'shield' },
+    relations: { label:'Related Resources', icon:'link' },
   };
 
   const groupFields = (group: string) => fields.filter(f => f.group === group);
@@ -108,20 +108,20 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
   return (
     <div
       className={`
-        rounded-2xl overflow-hidden
-        ${fieldMode ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-200 shadow-lg'}
-      `}
+         overflow-hidden
+        ${fieldMode ?'bg-nb-black border border-nb-black' :'bg-nb-white border border-nb-black/20 shadow-brutal'}
+`}
     >
       {/* Header with thumbnail and actions */}
-      <div className={`p-6 border-b ${fieldMode ? 'border-slate-800' : 'border-slate-100'}`}>
+      <div className={`p-6 border-b ${fieldMode ?'border-nb-black' :'border-nb-black/10'}`}>
         <div className="flex gap-4">
           {/* Thumbnail */}
           <div
             className={`
-              w-24 h-24 rounded-xl overflow-hidden shrink-0
-              ${fieldMode ? 'bg-slate-800' : 'bg-slate-100'}
-              ${hasErrors ? 'ring-2 ring-red-500' : ''}
-            `}
+              w-24 h-24  overflow-hidden shrink-0
+              ${fieldMode ?'bg-nb-black' :'bg-nb-cream'}
+              ${hasErrors ?'ring-2 ring-red-500' :''}
+`}
           >
             {thumbnailUrl ? (
               <img
@@ -131,7 +131,7 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Icon name="image" className={`text-2xl ${fieldMode ? 'text-slate-600' : 'text-slate-400'}`} />
+                <Icon name="image" className={`text-2xl ${fieldMode ?'text-nb-black/60' :'text-nb-black/40'}`} />
               </div>
             )}
           </div>
@@ -140,10 +140,10 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h2 className={`text-lg font-semibold truncate ${fieldMode ? 'text-white' : 'text-slate-900'}`}>
-                  {formatFieldValue(fields.find(f => f.id === 'label')?.value) || 'Untitled'}
+                <h2 className={`text-lg font-semibold truncate ${fieldMode ?'text-white' :'text-nb-black'}`}>
+                  {formatFieldValue(fields.find(f => f.id ==='label')?.value) ||'Untitled'}
                 </h2>
-                <p className={`text-sm mt-1 ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`text-sm mt-1 ${fieldMode ?'text-nb-black/40' :'text-nb-black/50'}`}>
                   {t(item.type)}
                 </p>
               </div>
@@ -152,10 +152,10 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
               <div className="flex gap-2">
                 {hasErrors && (
                   <span className={`
-                    px-2 py-1 rounded-full text-xs font-medium
-                    ${fieldMode ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700'}
-                  `}>
-                    {errorCount} {errorCount === 1 ? 'error' : 'errors'}
+                    px-2 py-1  text-xs font-medium
+                    ${fieldMode ?'bg-nb-red/50 text-nb-red' :'bg-nb-red/20 text-nb-red'}
+`}>
+                    {errorCount} {errorCount === 1 ?'error' :'errors'}
                   </span>
                 )}
 
@@ -192,9 +192,9 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
             </div>
 
             {/* Summary/description */}
-            {fields.find(f => f.id === 'summary')?.value && (
-              <p className={`text-sm mt-2 line-clamp-2 ${fieldMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                {formatFieldValue(fields.find(f => f.id === 'summary')?.value)}
+            {fields.find(f => f.id ==='summary')?.value && (
+              <p className={`text-sm mt-2 line-clamp-2 ${fieldMode ?'text-nb-black/30' :'text-nb-black/60'}`}>
+                {formatFieldValue(fields.find(f => f.id ==='summary')?.value)}
               </p>
             )}
           </div>
@@ -214,35 +214,35 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
             <div
               key={group}
               className={`
-                rounded-xl border overflow-hidden
-                ${fieldMode ? 'border-slate-800' : 'border-slate-200'}
-              `}
+                 border overflow-hidden
+                ${fieldMode ?'border-nb-black' :'border-nb-black/20'}
+`}
             >
               {/* Group header */}
               <Button variant="ghost" size="bare"
                 onClick={() => toggleGroup(group)}
                 className={`
                   w-full flex items-center justify-between px-4 py-3
-                  transition-colors
-                  ${fieldMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}
-                  ${group === 'basic' ? (fieldMode ? 'bg-slate-800/50' : 'bg-slate-50') : ''}
-                `}
+                  transition-nb
+                  ${fieldMode ?'hover:bg-nb-black' :'hover:bg-nb-white'}
+                  ${group ==='basic' ? (fieldMode ?'bg-nb-black/50' :'bg-nb-white') :''}
+`}
               >
                 <div className="flex items-center gap-2">
                   <Icon
                     name={groupInfo.icon}
-                    className={`text-sm ${fieldMode ? 'text-slate-400' : 'text-slate-500'}`}
+                    className={`text-sm ${fieldMode ?'text-nb-black/40' :'text-nb-black/50'}`}
                   />
-                  <span className={`font-medium ${fieldMode ? 'text-white' : 'text-slate-900'}`}>
+                  <span className={`font-medium ${fieldMode ?'text-white' :'text-nb-black'}`}>
                     {groupInfo.label}
                   </span>
-                  <span className={`text-xs ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <span className={`text-xs ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}>
                     ({groupFs.length} fields)
                   </span>
                 </div>
                 <Icon
-                  name={isExpanded ? 'expand_less' : 'expand_more'}
-                  className={`text-sm ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}
+                  name={isExpanded ?'expand_less' :'expand_more'}
+                  className={`text-sm ${fieldMode ?'text-nb-black/50' :'text-nb-black/40'}`}
                 />
               </Button>
 
@@ -250,8 +250,8 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
               {isExpanded && (
                 <div className={`
                   p-4 space-y-4
-                  ${fieldMode ? 'bg-slate-900/30' : 'bg-slate-50/50'}
-                `}>
+                  ${fieldMode ?'bg-nb-black/30' :'bg-nb-cream'}
+`}>
                   {groupFs.map(field => (
                     <MetadataFieldRenderer
                       key={field.id}
@@ -271,8 +271,8 @@ export const MetadataCard: React.FC<MetadataCardProps> = ({
       {/* Footer with item ID (technical detail) */}
       <div className={`
         px-6 py-3 border-t text-xs font-mono
-        ${fieldMode ? 'border-slate-800 text-slate-600' : 'border-slate-100 text-slate-400'}
-      `}>
+        ${fieldMode ?'border-nb-black text-nb-black/60' :'border-nb-black/10 text-nb-black/40'}
+`}>
         ID: {item.id}
       </div>
     </div>

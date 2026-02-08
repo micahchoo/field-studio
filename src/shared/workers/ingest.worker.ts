@@ -19,6 +19,7 @@ import type {
   IIIFCollection,
   IIIFItem,
   IIIFManifest,
+  IIIFRange,
   IngestFileInfo,
   IngestProgress
 } from '@/src/shared/types';
@@ -253,7 +254,7 @@ const operations = new Map<string, OperationState>();
 
 function generateId(type: 'Manifest' | 'Collection' | 'Canvas', baseUrl: string): string {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 11);
+  const random = crypto.randomUUID().slice(0, 9);
   return `${baseUrl}/${type.toLowerCase()}-${timestamp}-${random}`;
 }
 
@@ -547,7 +548,8 @@ async function processNodeInternal(
 ): Promise<ProcessedNode> {
   checkCancellation(operationId);
 
-  // Determine type
+  // Determine type — respect iiifIntent from staging annotations
+  const isRangeIntent = node.iiifIntent === 'Range';
   const hasSubdirs = node.directories.size > 0;
   const mediaFiles = Array.from(node.files.keys()).filter(fn => {
     const ext = getExtension(fn);
@@ -555,7 +557,14 @@ async function processNodeInternal(
   });
   const isLeaf = !hasSubdirs && mediaFiles.length > 0;
 
-  const type = isLeaf ? 'Manifest' : 'Collection';
+  let type: 'Manifest' | 'Collection';
+  if (node.iiifIntent === 'Collection') {
+    type = 'Collection';
+  } else if (node.iiifIntent === 'Manifest' || isRangeIntent) {
+    type = 'Manifest';
+  } else {
+    type = isLeaf ? 'Manifest' : 'Collection';
+  }
   const id = generateId(type, baseUrl);
 
   // Parse metadata from info.yml if exists
@@ -684,9 +693,30 @@ async function processNodeInternal(
       type: "Manifest",
       label,
       items,
-      behavior: ["individuals"],
-      viewingDirection: "left-to-right"
-    };
+      behavior: node.iiifBehavior || ["individuals"],
+      viewingDirection: node.viewingDirection || "left-to-right"
+    } as IIIFManifest;
+
+    // Add rights from node metadata
+    if (node.rights) {
+      manifest.rights = node.rights;
+    }
+
+    // Add navDate from node metadata
+    if (node.navDate) {
+      manifest.navDate = node.navDate;
+    }
+
+    // Range intent: wrap canvases in a Range within structures[]
+    if (isRangeIntent && items.length > 0) {
+      const rangeId = `${id}/range/main`;
+      manifest.structures = [{
+        type: 'Range' as const,
+        id: rangeId,
+        label,
+        items: items.map(c => ({ id: c.id, type: 'Canvas' as const })),
+      } as IIIFRange];
+    }
 
     return { item: manifest, files };
   } else {

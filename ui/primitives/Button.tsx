@@ -1,59 +1,54 @@
 /**
- * Button - Atomic UI Primitive
- * 
- * Pure presentational button with zero business logic.
- * Accepts only primitive props (value, onChange, disabled) and design tokens.
- * Follows Atomic Design principles for maximum reusability.
+ * Button - Atomic UI Primitive (Neobrutalist)
+ *
+ * Sharp corners, thick borders, offset shadow, UPPERCASE text,
+ * press-translate effect on active. size="bare" preserves 650+ usages.
  */
 
 import React from 'react';
-import { COLORS, INTERACTION, LAYOUT, SPACING, TOUCH_TARGETS } from '../../src/shared/config/design-tokens';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 export type ButtonSize = 'bare' | 'sm' | 'base' | 'lg' | 'xl';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Visual variant */
   variant?: ButtonVariant;
-  /** Size preset */
   size?: ButtonSize;
-  /** Whether button is in loading state */
   loading?: boolean;
-  /** Icon to display before text */
   icon?: React.ReactNode;
-  /** Icon to display after text */
   iconAfter?: React.ReactNode;
-  /** Full width button */
   fullWidth?: boolean;
-  /** Minimal style (no background, border only) */
   minimal?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   primary: {
-    backgroundColor: COLORS.primary[500],
-    color: COLORS.text.inverse,
-    border: `1px solid ${COLORS.primary[600]}`,
+    backgroundColor: 'var(--theme-accent-primary, #0055FF)',
+    color: 'var(--theme-text-inverse, #FFFFFF)',
+    border: '2px solid var(--theme-border-default, #000000)',
+    boxShadow: 'var(--theme-shadow-base, 4px 4px 0 0 #000)',
   },
   secondary: {
-    backgroundColor: COLORS.background.secondary,
-    color: COLORS.text.primary,
-    border: `1px solid ${COLORS.border.default}`,
+    backgroundColor: 'var(--theme-surface-secondary, #FFF8E7)',
+    color: 'var(--theme-text-primary, #000000)',
+    border: '2px solid var(--theme-border-default, #000000)',
+    boxShadow: 'var(--theme-shadow-sm, 2px 2px 0 0 #000)',
   },
   ghost: {
     backgroundColor: 'transparent',
-    color: 'inherit', // Allow color to be set via className or parent
-    border: '1px solid transparent',
+    color: 'inherit',
+    border: '2px solid transparent',
   },
   danger: {
-    backgroundColor: COLORS.semantic.error,
-    color: COLORS.text.inverse,
-    border: `1px solid ${COLORS.semantic.error}`,
+    backgroundColor: 'var(--theme-error-color, #FF3333)',
+    color: 'var(--theme-text-inverse, #FFFFFF)',
+    border: '2px solid var(--theme-border-default, #000000)',
+    boxShadow: 'var(--theme-shadow-base, 4px 4px 0 0 #000)',
   },
   success: {
-    backgroundColor: COLORS.semantic.success,
-    color: COLORS.text.inverse,
-    border: `1px solid ${COLORS.semantic.success}`,
+    backgroundColor: 'var(--theme-success-color, #00CC66)',
+    color: 'var(--theme-text-primary, #000000)',
+    border: '2px solid var(--theme-border-default, #000000)',
+    boxShadow: 'var(--theme-shadow-base, 4px 4px 0 0 #000)',
   },
 };
 
@@ -62,28 +57,36 @@ const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
     // No sizing - allows Tailwind classes to control appearance
   },
   sm: {
-    height: TOUCH_TARGETS.button.sm.height,
-    padding: TOUCH_TARGETS.button.sm.padding,
-    fontSize: '0.875rem',
-    borderRadius: LAYOUT.borderRadius.sm,
+    height: '32px',
+    padding: '0 12px',
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.06em',
   },
   base: {
-    height: TOUCH_TARGETS.button.base.height,
-    padding: TOUCH_TARGETS.button.base.padding,
-    fontSize: '1rem',
-    borderRadius: LAYOUT.borderRadius.base,
+    height: '40px',
+    padding: '0 16px',
+    fontSize: '0.875rem',
+    fontWeight: 700,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
   },
   lg: {
-    height: TOUCH_TARGETS.button.lg.height,
-    padding: TOUCH_TARGETS.button.lg.padding,
-    fontSize: '1.125rem',
-    borderRadius: LAYOUT.borderRadius.md,
+    height: '48px',
+    padding: '0 24px',
+    fontSize: '1rem',
+    fontWeight: 800,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
   },
   xl: {
-    height: TOUCH_TARGETS.button.xl.height,
-    padding: TOUCH_TARGETS.button.xl.padding,
-    fontSize: '1.25rem',
-    borderRadius: LAYOUT.borderRadius.lg,
+    height: '56px',
+    padding: '0 32px',
+    fontSize: '1.125rem',
+    fontWeight: 800,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
   },
 };
 
@@ -104,18 +107,19 @@ export const Button: React.FC<ButtonProps> = ({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING[2],
-    fontWeight: 600,
+    gap: '0.5rem',
+    fontFamily: '"Space Grotesk", system-ui, sans-serif',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    transition: INTERACTION.duration.base,
-    // Note: outline removed to allow global :focus-visible rule to work (WCAG 2.1 2.4.7)
+    transition: 'all 0.1s linear',
     width: fullWidth ? '100%' : 'auto',
-    opacity: disabled ? 0.6 : 1,
+    opacity: disabled ? 0.5 : 1,
+    borderRadius: 0,
     ...variantStyles[variant],
     ...sizeStyles[size],
     ...(minimal && {
       backgroundColor: 'transparent',
       borderColor: 'transparent',
+      boxShadow: 'none',
     }),
     ...style,
   };
@@ -128,16 +132,15 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {loading && (
-        <span style={{ marginRight: SPACING[2] }} aria-hidden="true">
+        <span style={{ marginRight: '0.5rem' }} aria-hidden="true">
           <svg
             width="16"
             height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeWidth="3"
+            strokeLinecap="square"
             style={{ animation: 'spin 1s linear infinite' }}
           >
             <path d="M21 12a9 9 0 11-6.219-8.56" />

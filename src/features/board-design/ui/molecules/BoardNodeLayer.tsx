@@ -30,6 +30,12 @@ export interface BoardNodeLayerProps {
   onDragStart: (id: string, offset: { x: number; y: number }) => void;
   /** Callback when connection starts */
   onConnectStart: (id: string) => void;
+  /** Callback when resize starts */
+  onResizeStart?: (id: string, direction: string, startPos: { x: number; y: number }, startSize: { w: number; h: number }) => void;
+  /** Callback when item is double-clicked */
+  onDoubleClickItem?: (id: string) => void;
+  /** Callback when item is right-clicked */
+  onContextMenuItem?: (e: React.MouseEvent, id: string) => void;
   /** Contextual styles */
   cx: ContextualClassNames;
   /** Field mode flag */
@@ -43,6 +49,9 @@ export const BoardNodeLayer: React.FC<BoardNodeLayerProps> = ({
   onSelectItem,
   onDragStart,
   onConnectStart,
+  onResizeStart,
+  onDoubleClickItem,
+  onContextMenuItem,
   cx,
   fieldMode,
 }) => {
@@ -60,6 +69,9 @@ export const BoardNodeLayer: React.FC<BoardNodeLayerProps> = ({
           onSelect={onSelectItem}
           onDragStart={onDragStart}
           onConnectStart={onConnectStart}
+          onResizeStart={onResizeStart}
+          onDoubleClick={onDoubleClickItem}
+          onContextMenu={onContextMenuItem}
           cx={cx}
           fieldMode={fieldMode}
         />

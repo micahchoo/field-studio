@@ -97,8 +97,8 @@ export const ZoomControl: React.FC<ZoomControlProps> = ({
     <div
       className={`
         inline-flex items-center gap-1
-        rounded-lg border ${cx.border} ${cx.surface} p-1
-      `}
+         border ${cx.border} ${cx.surface} p-1
+`}
       role="group"
       aria-label="Zoom controls"
     >
@@ -119,7 +119,7 @@ export const ZoomControl: React.FC<ZoomControlProps> = ({
         className={`
           min-w-[60px] text-center text-sm font-medium
           ${cx.text} select-none
-        `}
+`}
         aria-live="polite"
         aria-atomic="true"
       >

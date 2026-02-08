@@ -18,7 +18,7 @@ export interface StackedThumbnailProps {
   /** URLs of images to display */
   urls: string[];
   /** Size preset */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size?:'xs' |'sm' |'md' |'lg' |'xl';
   /** Additional CSS classes */
   className?: string;
   /** Icon to show when no images */
@@ -32,18 +32,18 @@ export interface StackedThumbnailProps {
 }
 
 const containerSizes = {
-  xs: 'w-6 h-6 rounded',
-  sm: 'w-10 h-10 rounded-lg',
-  md: 'w-16 h-16 rounded-xl',
-  lg: 'w-full h-full rounded-lg',
-  xl: 'w-40 h-40 rounded-3xl',
+  xs:'w-6 h-6 rounded',
+  sm:'w-10 h-10',
+  md:'w-16 h-16',
+  lg:'w-full h-full',
+  xl:'w-40 h-40',
 };
 
 export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   urls,
-  size = 'md',
-  className = '',
-  icon = 'image',
+  size ='md',
+  className ='',
+  icon ='image',
   placeholderBg,
   cx,
   fieldMode: _fieldMode,
@@ -54,8 +54,8 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
     setFailedUrls((prev) => new Set([...prev, url]));
   }, []);
 
-  const bgClass = placeholderBg || cx?.subtleBg || 'bg-slate-100';
-  const iconColor = cx?.textMuted || 'text-slate-300';
+  const bgClass = placeholderBg || cx?.subtleBg ||'bg-nb-cream';
+  const iconColor = cx?.textMuted ||'text-nb-black/30';
 
   // Filter out failed URLs
   const validUrls = urls.filter((url) => url && !failedUrls.has(url));
@@ -65,7 +65,7 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   if (urlCount === 0) {
     return (
       <div
-        className={`${containerSizes[size]} ${bgClass} flex items-center justify-center shrink-0 overflow-hidden border ${cx?.border || 'border-slate-200/50'} ${className}`}
+        className={`${containerSizes[size]} ${bgClass} flex items-center justify-center shrink-0 overflow-hidden border ${cx?.border ||'border-nb-black/20'} ${className}`}
       >
         <Icon name={icon} className={iconColor} />
       </div>
@@ -76,7 +76,7 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   if (urlCount === 1) {
     return (
       <div
-        className={`${containerSizes[size]} bg-slate-900 shrink-0 overflow-hidden border ${cx?.border || 'border-slate-200/50'} ${className}`}
+        className={`${containerSizes[size]} bg-nb-black shrink-0 overflow-hidden border ${cx?.border ||'border-nb-black/20'} ${className}`}
       >
         <img
           src={validUrls[0]}
@@ -92,16 +92,16 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
   // Grid layout for 2-4 images
   return (
     <div
-      className={`${containerSizes[size]} ${cx?.separator || 'bg-slate-200'} shrink-0 overflow-hidden ${cx?.border || 'border-slate-200/50'} grid grid-cols-2 grid-rows-2 gap-0.5 ${className}`}
+      className={`${containerSizes[size]} ${cx?.separator ||'bg-nb-cream'} shrink-0 overflow-hidden ${cx?.border ||'border-nb-black/20'} grid grid-cols-2 grid-rows-2 gap-0.5 ${className}`}
     >
       {validUrls.slice(0, 4).map((url, i) => (
         <div
           key={i}
-          className={`bg-slate-900 ${
-            urlCount === 2 && i === 0 ? 'col-span-1 row-span-2' : ''
+          className={`bg-nb-black ${
+            urlCount === 2 && i === 0 ?'col-span-1 row-span-2' :''
           } ${
-            urlCount === 2 && i === 1 ? 'col-span-1 row-span-2' : ''
-          } ${urlCount === 3 && i === 0 ? 'col-span-2 row-span-1' : ''}`}
+            urlCount === 2 && i === 1 ?'col-span-1 row-span-2' :''
+          } ${urlCount === 3 && i === 0 ?'col-span-2 row-span-1' :''}`}
         >
           <img
             src={url}
@@ -114,8 +114,8 @@ export const StackedThumbnail: React.FC<StackedThumbnailProps> = ({
       ))}
       {/* Fill empty cells if we have 3 images */}
       {urlCount === 3 && (
-        <div className={`${cx?.subtleBg || 'bg-slate-800'} flex items-center justify-center`}>
-          <Icon name={icon} className={`text-[10px] ${cx?.textMuted || 'text-slate-500'}`} />
+        <div className={`${cx?.subtleBg ||'bg-nb-black'} flex items-center justify-center`}>
+          <Icon name={icon} className={`text-[10px] ${cx?.textMuted ||'text-nb-black/50'}`} />
         </div>
       )}
     </div>

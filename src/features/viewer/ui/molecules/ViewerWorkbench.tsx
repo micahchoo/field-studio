@@ -120,9 +120,9 @@ export const ViewerWorkbench: React.FC<ViewerWorkbenchProps> = ({
     setUpscale(false); setQuality('default'); setFormat('jpg');
   }, []);
 
-  const bgClass = fieldMode ? 'bg-slate-950' : 'bg-white';
-  const borderClass = fieldMode ? 'border-slate-800' : 'border-slate-200';
-  const textClass = fieldMode ? 'text-white' : 'text-slate-900';
+  const bgClass = fieldMode ? 'bg-nb-black' : 'bg-nb-white';
+  const borderClass = fieldMode ? 'border-nb-black' : 'border-nb-black/20';
+  const textClass = fieldMode ? 'text-white' : 'text-nb-black';
 
   const regionFields = [
     { key: 'x', label: 'X', value: regionCoords.x },
@@ -136,10 +136,10 @@ export const ViewerWorkbench: React.FC<ViewerWorkbenchProps> = ({
   if (sizeMode !== 'w' && sizeMode !== 'max' && sizeMode !== 'pct') sizeFields.push({ key: 'h', label: 'Height', value: sizeVal.h });
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm`} onClick={onClose}>
-      <div className={`${bgClass} w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl border ${borderClass} flex overflow-hidden`} onClick={e => e.stopPropagation()}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-nb-black/60 backdrop-blur-sm`} onClick={onClose}>
+      <div className={`${bgClass} w-full max-w-6xl h-[90vh]  shadow-brutal-lg border ${borderClass} flex overflow-hidden`} onClick={e => e.stopPropagation()}>
         {/* Left: Preview */}
-        <div className="flex-1 bg-slate-950 relative flex flex-col overflow-hidden">
+        <div className="flex-1 bg-nb-black relative flex flex-col overflow-hidden">
           <PreviewHeader fieldMode={fieldMode} />
           <ImagePreview src={url} rotation={rotationDeg} mirrored={mirrored} />
           <UrlBar imageId={imageId} {...params} fieldMode={fieldMode} />
@@ -169,7 +169,7 @@ export const ViewerWorkbench: React.FC<ViewerWorkbenchProps> = ({
                   {sizeMode !== 'max' && sizeMode !== 'pct' && <CoordinateInput fields={sizeFields} onChange={(k, v) => setSizeVal(p => ({ ...p, [k]: v }))} columns={sizeFields.length === 1 ? 1 : 2} fieldMode={fieldMode} />}
                 </ParameterSection>
 
-                <ParameterSection title="Rotation" icon="rotate_right" color="orange" control={<IconButton icon="flip" ariaLabel="Mirror horizontally" onClick={() => setMirrored(!mirrored)} variant={mirrored ? 'primary' : 'ghost'} size="sm" className={mirrored ? '' : fieldMode ? '!text-slate-400' : ''} />} fieldMode={fieldMode}>
+                <ParameterSection title="Rotation" icon="rotate_right" color="orange" control={<IconButton icon="flip" ariaLabel="Mirror horizontally" onClick={() => setMirrored(!mirrored)} variant={mirrored ? 'primary' : 'ghost'} size="sm" className={mirrored ? '' : fieldMode ? '!text-nb-black/40' : ''} />} fieldMode={fieldMode}>
                   <RotationDial value={rotationDeg} onChange={setRotationDeg} fieldMode={fieldMode} />
                 </ParameterSection>
 

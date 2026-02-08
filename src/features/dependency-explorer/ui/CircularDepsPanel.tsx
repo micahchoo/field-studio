@@ -20,12 +20,12 @@ export const CircularDepsPanel: React.FC<CircularDepsPanelProps> = ({
   if (circularDeps.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center p-8 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <span className="material-icons text-4xl text-green-500 mb-4">check_circle</span>
-          <h2 className="text-xl font-semibold text-green-700 dark:text-green-400 mb-2">
+        <div className="text-center p-8 bg-nb-green/10 ">
+          <span className="material-icons text-4xl text-nb-green mb-4">check_circle</span>
+          <h2 className="text-xl font-semibold text-nb-green mb-2">
             No Circular Dependencies
           </h2>
-          <p className="text-green-600 dark:text-green-300">
+          <p className="text-nb-green/60">
             Your codebase is free of circular dependency chains.
           </p>
         </div>
@@ -41,10 +41,10 @@ export const CircularDepsPanel: React.FC<CircularDepsPanelProps> = ({
           {circularDeps.map((cycle, idx) => (
             <div
               key={idx}
-              className="bg-white dark:bg-slate-800 rounded-lg border border-red-200 dark:border-red-800/50 overflow-hidden"
+              className="bg-nb-white border border-nb-red/30 overflow-hidden"
             >
-              <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800/50">
-                <span className="text-sm font-medium text-red-700 dark:text-red-400">
+              <div className="px-4 py-2 bg-nb-red/10 border-b border-nb-red/30">
+                <span className="text-sm font-medium text-nb-red">
                   Chain #{idx + 1} ({cycle.length - 1} files)
                 </span>
               </div>
@@ -56,21 +56,21 @@ export const CircularDepsPanel: React.FC<CircularDepsPanelProps> = ({
                     
                     return (
                       <React.Fragment key={fileIdx}>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 rounded">
-                          <span className="material-icons text-slate-400 text-sm">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-nb-cream/80 rounded">
+                          <span className="material-icons text-nb-black/40 text-sm">
                             description
                           </span>
                           <div>
-                            <div className="font-mono text-xs text-slate-800 dark:text-slate-200">
+                            <div className="font-mono text-xs text-nb-black/20">
                               {file?.fileName || filePath.split('/').pop()}
                             </div>
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-nb-black/50">
                               {file?.directory}
                             </div>
                           </div>
                         </div>
                         {!isLast && (
-                          <span className="material-icons text-slate-400">
+                          <span className="material-icons text-nb-black/40">
                             arrow_forward
                           </span>
                         )}

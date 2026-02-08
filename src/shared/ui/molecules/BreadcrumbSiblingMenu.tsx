@@ -40,13 +40,13 @@ export const BreadcrumbSiblingMenu: React.FC<BreadcrumbSiblingMenuProps> = ({
     <div
       className={`
         absolute top-full left-0 mt-1 min-w-[200px] max-h-[300px]
-        rounded-xl shadow-xl border overflow-y-auto
-        ${fieldMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}
+         shadow-brutal border overflow-y-auto
+        ${fieldMode ?'bg-nb-black border-nb-black/80' :'bg-nb-white border-nb-black/20'}
         animate-in fade-in slide-in-from-top-2 z-50
-      `}
+`}
       role="menu"
     >
-      <div className={`px-3 py-2 text-xs font-medium ${fieldMode ? 'text-slate-500' : 'text-slate-500'}`}>
+      <div className={`px-3 py-2 text-xs font-medium ${fieldMode ?'text-nb-black/50' :'text-nb-black/50'}`}>
         Siblings
       </div>
       {siblings.map(sibling => (
@@ -55,14 +55,14 @@ export const BreadcrumbSiblingMenu: React.FC<BreadcrumbSiblingMenuProps> = ({
           onClick={() => onSelect(sibling)}
           className={`
             w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm
-            transition-colors
+            transition-nb
             ${sibling.id === currentItemId
-              ? (fieldMode ? 'bg-slate-700 text-white' : 'bg-blue-50 text-blue-700')
-              : (fieldMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50')
+              ? (fieldMode ?'bg-nb-black/80 text-white' :'bg-nb-blue/10 text-nb-blue')
+              : (fieldMode ?'text-nb-black/30 hover:bg-nb-black/80' :'text-nb-black/80 hover:bg-nb-white')
             }
-          `}
+`}
           role="menuitem"
-          aria-current={sibling.id === currentItemId ? 'true' : undefined}
+          aria-current={sibling.id === currentItemId ?'true' : undefined}
         >
           <Icon
             name={sibling.icon || getIconForType(sibling.type)}
@@ -72,9 +72,9 @@ export const BreadcrumbSiblingMenu: React.FC<BreadcrumbSiblingMenuProps> = ({
           {sibling.childCount !== undefined && sibling.childCount > 0 && (
             <span
               className={`
-                px-1.5 py-0.5 text-xs rounded-full
-                ${fieldMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}
-              `}
+                px-1.5 py-0.5 text-xs 
+                ${fieldMode ?'bg-nb-black/80 text-nb-black/40' :'bg-nb-cream text-nb-black/50'}
+`}
             >
               {sibling.childCount}
             </span>

@@ -37,36 +37,36 @@ export const QuickReference: React.FC<QuickReferenceProps> = ({ title, items, is
   }
 
   return (
-    <div className="fixed bottom-10 right-4 z-50 animate-in slide-in-from-bottom-2 fade-in duration-200">
-      <div className="w-72 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">{title}</h3>
+    <div className="fixed bottom-10 right-4 z-50 animate-in slide-in-from-bottom-2 fade-in">
+      <div className="w-72 bg-nb-white shadow-brutal-lg border border-nb-black/20 overflow-hidden">
+        <div className="px-4 py-2.5 bg-nb-white border-b border-nb-black/10 flex items-center justify-between">
+          <h3 className="text-xs font-bold text-nb-black/80 uppercase tracking-wide">{title}</h3>
           <Button variant="ghost" size="bare"
             onClick={onToggle}
-            className="p-1 hover:bg-slate-200 rounded transition-colors"
+            className="p-1 hover:bg-nb-cream transition-nb"
             aria-label="Close quick help"
           >
-            <Icon name="close" className="text-slate-500 text-sm" />
+            <Icon name="close" className="text-nb-black/50 text-sm" />
           </Button>
         </div>
         <div className="p-2 max-h-80 overflow-y-auto">
           {items.map((item, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors"
+              className="flex items-start gap-3 p-2 hover:bg-nb-white transition-nb"
             >
-              <Icon name={item.icon} className="text-slate-400 text-sm mt-0.5" />
+              <Icon name={item.icon} className="text-nb-black/40 text-sm mt-0.5" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-700">{item.label}</span>
+                  <span className="text-xs font-medium text-nb-black/80">{item.label}</span>
                   {item.shortcut && (
-                    <kbd className="px-1 py-0.5 bg-slate-100 rounded text-[9px] font-mono text-slate-500">
+                    <kbd className="px-1 py-0.5 bg-nb-cream text-[9px] font-mono text-nb-black/50">
                       {item.shortcut}
                     </kbd>
                   )}
                 </div>
                 {item.description && (
-                  <p className="text-[10px] text-slate-400 mt-0.5">{item.description}</p>
+                  <p className="text-[10px] text-nb-black/40 mt-0.5">{item.description}</p>
                 )}
               </div>
             </div>

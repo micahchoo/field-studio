@@ -195,10 +195,10 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         onDragStart={handleDragStart}
         className="
           inline-flex items-center justify-center gap-2
-          rounded-lg border transition-all
-          bg-black text-yellow-400 border-yellow-400
-          hover:bg-yellow-400 hover:text-black
-          font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400
+           border transition-nb
+          bg-nb-black text-nb-yellow border-nb-yellow
+          hover:bg-nb-yellow hover:text-black
+          font-bold focus:outline-none focus:ring-2 focus:ring-nb-yellow
           cursor-grab active:cursor-grabbing
         "
         style={{
@@ -225,10 +225,10 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         className={`
           ${sizeClasses[size]}
           inline-flex items-center justify-center gap-2
-          rounded-lg border transition-all
-          bg-white text-slate-700 border-slate-300
-          hover:bg-slate-50 hover:border-blue-500
-          font-medium focus:outline-none focus:ring-2 focus:ring-blue-500
+           border transition-nb
+          bg-nb-white text-nb-black/80 border-nb-black/20
+          hover:bg-nb-white hover:border-nb-blue
+          font-medium focus:outline-none focus:ring-2 focus:ring-nb-blue
           cursor-grab active:cursor-grabbing
         `}
         style={{
@@ -249,13 +249,13 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 
       {showMenu && (
         <div
-          className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"
+          className="absolute top-full right-0 mt-2 w-72 bg-nb-white shadow-brutal border border-nb-black/20 z-50 overflow-hidden"
           style={{ animation: 'fadeIn 0.2s ease-out' }}
           role="menu"
         >
-          <div className="p-3 border-b border-slate-100 bg-slate-50">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Share This View</h3>
-            <p className="text-[10px] text-slate-500 mt-0.5">
+          <div className="p-3 border-b border-nb-black/10 bg-nb-white">
+            <h3 className="text-xs font-bold text-nb-black/80 uppercase tracking-wider">Share This View</h3>
+            <p className="text-[10px] text-nb-black/50 mt-0.5">
               {selectedRegion ? 'Includes current zoom region' : 'Links to this canvas'}
               {currentTime ? ` at ${currentTime.start}s` : ''}
             </p>
@@ -265,17 +265,17 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             {/* Copy View Link */}
             <Button variant="ghost" size="bare"
               onClick={handleCopyViewLink}
-              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-blue-50 text-left transition-colors group"
+              className="w-full flex items-center gap-3 p-2.5 hover:bg-nb-blue/10 text-left transition-nb group"
               role="menuitem"
             >
-              <div className="w-8 h-8 bg-iiif-blue/10 rounded-lg flex items-center justify-center text-iiif-blue group-hover:bg-iiif-blue group-hover:text-white transition-colors">
+              <div className="w-8 h-8 bg-iiif-blue/10 flex items-center justify-center text-iiif-blue group-hover:bg-iiif-blue group-hover:text-white transition-nb">
                 <Icon name={copied === 'view' ? 'check' : 'content_copy'} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-800">
+                <div className="text-sm font-medium text-nb-black">
                   {copied === 'view' ? 'Copied!' : 'Copy View Link'}
                 </div>
-                <div className="text-[10px] text-slate-500 truncate">
+                <div className="text-[10px] text-nb-black/50 truncate">
                   {selectedRegion ? 'Share exact zoom & position' : 'Share current canvas'}
                 </div>
               </div>
@@ -285,17 +285,17 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             {selectedRegion && (
               <Button variant="ghost" size="bare"
                 onClick={handleCopyCanvasLink}
-                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
+                className="w-full flex items-center gap-3 p-2.5 hover:bg-nb-cream text-left transition-nb group"
                 role="menuitem"
               >
-                <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors">
+                <div className="w-8 h-8 bg-nb-cream flex items-center justify-center text-nb-black/50 group-hover:bg-nb-cream transition-nb">
                   <Icon name={copied === 'canvas' ? 'check' : 'link'} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-800">
+                  <div className="text-sm font-medium text-nb-black">
                     {copied === 'canvas' ? 'Copied!' : 'Copy Canvas Link'}
                   </div>
-                  <div className="text-[10px] text-slate-500 truncate">
+                  <div className="text-[10px] text-nb-black/50 truncate">
                     Link to canvas (no zoom)
                   </div>
                 </div>
@@ -305,17 +305,17 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             {/* Embed Code */}
             <Button variant="ghost" size="bare"
               onClick={handleCopyEmbedCode}
-              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
+              className="w-full flex items-center gap-3 p-2.5 hover:bg-nb-cream text-left transition-nb group"
               role="menuitem"
             >
-              <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors">
+              <div className="w-8 h-8 bg-nb-cream flex items-center justify-center text-nb-black/50 group-hover:bg-nb-cream transition-nb">
                 <Icon name={copied === 'embed' ? 'check' : 'code'} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-800">
+                <div className="text-sm font-medium text-nb-black">
                   {copied === 'embed' ? 'Copied!' : 'Copy Embed Code'}
                 </div>
-                <div className="text-[10px] text-slate-500 truncate">
+                <div className="text-[10px] text-nb-black/50 truncate">
                   HTML iframe for websites
                 </div>
               </div>
@@ -324,17 +324,17 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             {/* Copy JSON */}
             <Button variant="ghost" size="bare"
               onClick={handleCopyJson}
-              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
+              className="w-full flex items-center gap-3 p-2.5 hover:bg-nb-cream text-left transition-nb group"
               role="menuitem"
             >
-              <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors">
+              <div className="w-8 h-8 bg-nb-cream flex items-center justify-center text-nb-black/50 group-hover:bg-nb-cream transition-nb">
                 <Icon name={copied === 'json' ? 'check' : 'data_object'} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-800">
+                <div className="text-sm font-medium text-nb-black">
                   {copied === 'json' ? 'Copied!' : 'Copy Content State JSON'}
                 </div>
-                <div className="text-[10px] text-slate-500 truncate">
+                <div className="text-[10px] text-nb-black/50 truncate">
                   IIIF Content State Annotation
                 </div>
               </div>
@@ -344,15 +344,15 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             {typeof navigator !== 'undefined' && navigator.share && (
               <Button variant="ghost" size="bare"
                 onClick={handleNativeShare}
-                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-100 text-left transition-colors group"
+                className="w-full flex items-center gap-3 p-2.5 hover:bg-nb-cream text-left transition-nb group"
                 role="menuitem"
               >
-                <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors">
+                <div className="w-8 h-8 bg-nb-cream flex items-center justify-center text-nb-black/50 group-hover:bg-nb-cream transition-nb">
                   <Icon name="ios_share" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-800">Share via...</div>
-                  <div className="text-[10px] text-slate-500 truncate">
+                  <div className="text-sm font-medium text-nb-black">Share via...</div>
+                  <div className="text-[10px] text-nb-black/50 truncate">
                     Open system share dialog
                   </div>
                 </div>
@@ -360,9 +360,9 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             )}
           </div>
 
-          <div className="p-3 border-t border-slate-100 bg-slate-50">
-            <div className="flex items-center gap-2 text-[10px] text-slate-500">
-              <Icon name="drag_indicator" className="text-slate-400" />
+          <div className="p-3 border-t border-nb-black/10 bg-nb-white">
+            <div className="flex items-center gap-2 text-[10px] text-nb-black/50">
+              <Icon name="drag_indicator" className="text-nb-black/40" />
               <span>Drag this button to share via drag-and-drop</span>
             </div>
           </div>

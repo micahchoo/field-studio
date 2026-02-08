@@ -32,14 +32,14 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
   cx: _cx,
   fieldMode = false,
 }) => {
-  const mutedTextClass = fieldMode ? 'text-slate-400' : 'text-slate-500';
+  const mutedTextClass = fieldMode ? 'text-nb-black/40' : 'text-nb-black/50';
 
   return (
-    <div className="h-12 border-b border-white/10 flex items-center px-4 justify-between bg-black/20 shrink-0">
+    <div className="h-12 border-b border-white/10 flex items-center px-4 justify-between bg-nb-black/20 shrink-0">
       <span className={`text-[10px] font-bold ${mutedTextClass} uppercase tracking-wider`}>{title}</span>
-      <div className={`flex items-center gap-1 ${isValid ? 'bg-green-500/20' : 'bg-red-500/20'} px-2 py-1 rounded`}>
-        <div className={`w-1.5 h-1.5 rounded-full ${isValid ? 'bg-green-500' : 'bg-red-500'}`} />
-        <span className={`text-[9px] ${isValid ? 'text-green-400' : 'text-red-400'} font-bold uppercase`}>
+      <div className={`flex items-center gap-1 ${isValid ? 'bg-nb-green/20' : 'bg-nb-red/20'} px-2 py-1 rounded`}>
+        <div className={`w-1.5 h-1.5 ${isValid ? 'bg-nb-green' : 'bg-nb-red'}`} />
+        <span className={`text-[9px] ${isValid ? 'text-nb-green' : 'text-nb-red'} font-bold uppercase`}>
           {isValid ? 'Valid' : 'Invalid'}
         </span>
       </div>

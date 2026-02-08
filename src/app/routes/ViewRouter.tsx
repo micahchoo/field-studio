@@ -13,7 +13,7 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import type { AppMode, AppSettings, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
 import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
-import { useAppMode } from '@/src/app/providers';
+import { useAppMode, useAppModeActions } from '@/src/app/providers';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { createTimeAnnotation } from '@/src/features/viewer/model/annotation';
 import { useVaultDispatch, useVaultState } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
@@ -23,6 +23,7 @@ import { storage } from '@/src/shared/services/storage';
 // Feature views
 import { ArchiveView } from '@/src/features/archive';
 import { BoardView } from '@/src/features/board-design';
+import { BoardDesignPanel } from '@/src/features/board-design/ui/molecules/BoardDesignPanel';
 import { Inspector, MetadataView } from '@/src/features/metadata-edit';
 import { SearchView } from '@/src/features/search';
 const ViewerView = React.lazy(() => import('@/src/features/viewer/ui/organisms/ViewerView').then(m => ({ default: m.ViewerView })));
@@ -30,6 +31,44 @@ import { MapView } from '@/src/features/map';
 import { TimelineView } from '@/src/features/timeline';
 import { StructureTreeView } from '@/src/features/structure-view';
 const DependencyExplorer = React.lazy(() => import('@/src/features/dependency-explorer/ui/DependencyExplorer').then(m => ({ default: m.DependencyExplorer })));
+
+import { RequiredStatementBar } from '@/src/widgets/RequiredStatementBar/ui/RequiredStatementBar';
+
+// ============================================================================
+// Shared cx (contextual styling) constants — field mode vs normal
+// ============================================================================
+
+const FIELD_CX = Object.freeze({
+  surface: 'bg-nb-black border-2 border-nb-yellow',
+  text: 'text-nb-yellow',
+  accent: 'text-nb-yellow',
+  border: 'border-nb-yellow',
+  divider: 'border-nb-yellow/30',
+  headerBg: 'bg-nb-black border-b-4 border-nb-yellow',
+  textMuted: 'text-nb-yellow/60',
+  input: 'bg-nb-black border-2 border-nb-yellow text-nb-yellow font-mono',
+  label: 'text-nb-yellow/80 nb-label',
+  active: 'text-nb-black bg-nb-yellow border-nb-yellow font-bold',
+  inactive: 'text-nb-yellow/60 hover:text-nb-yellow',
+  warningBg: 'bg-nb-orange/20 border-2 border-nb-orange',
+  pageBg: 'bg-nb-black',
+});
+
+const NORMAL_CX = Object.freeze({
+  surface: 'bg-nb-white border-2 border-nb-black',
+  text: 'text-nb-black',
+  accent: 'text-nb-blue',
+  border: 'border-nb-black',
+  divider: 'border-nb-black/20',
+  headerBg: 'bg-nb-cream border-b-4 border-nb-black',
+  textMuted: 'text-nb-black/50',
+  input: 'bg-nb-white border-2 border-nb-black font-mono',
+  label: 'text-nb-black/70 nb-label',
+  active: 'text-nb-white bg-nb-black border-nb-black font-bold',
+  inactive: 'text-nb-black/50 hover:text-nb-black',
+  warningBg: 'bg-nb-orange/10 border-2 border-nb-orange',
+  pageBg: 'bg-nb-cream',
+});
 
 export interface ViewRouterProps {
   selectedId: string | null;
@@ -49,16 +88,6 @@ export interface ViewRouterProps {
   onOpenExternalImport?: () => void;
 }
 
-const findItemById = (node: any, id: string): any => {
-  if (node.id === id) return node;
-  if (node.items && Array.isArray(node.items)) {
-    for (const item of node.items) {
-      const found = findItemById(item, id);
-      if (found) return found;
-    }
-  }
-  return null;
-};
 
 const findFirstCanvas = (node: any): { canvas: IIIFCanvas | null; manifest: IIIFManifest | null } => {
   if (node.type === 'Canvas') {
@@ -128,10 +157,35 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   onOpenExternalImport,
 }) => {
   const [currentMode, setCurrentMode] = useAppMode();
+  const appModeActions = useAppModeActions();
+
+  // O(1) lookup index for denormalized tree — built once per root change
+  const itemIndex = useMemo(() => {
+    const index = new Map<string, any>();
+    if (!root) return index;
+    const walk = (node: any) => {
+      if (node.id) index.set(node.id, node);
+      if (node.items && Array.isArray(node.items)) {
+        for (const item of node.items) walk(item);
+      }
+      if (node.annotations && Array.isArray(node.annotations)) {
+        for (const anno of node.annotations) walk(anno);
+      }
+    };
+    walk(root);
+    return index;
+  }, [root]);
 
   // Panel visibility state for archive split view
   const [showViewerPanel, setShowViewerPanel] = useState(true);
   const [showInspectorPanel, setShowInspectorPanel] = useState(false);
+
+  // Board inspector state
+  const [boardSelectedId, setBoardSelectedId] = useState<string | null>(null);
+  const boardStateRef = useRef<{
+    getBoardItemForResource: (resourceId: string) => import('@/src/features/board-design/model').BoardItem | null;
+    boardState: import('@/src/features/board-design/model').BoardState;
+  } | null>(null);
 
   // Annotation state for viewer/inspector integration
   const [showAnnotationTool, setShowAnnotationTool] = useState(false);
@@ -166,6 +220,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   // Handle annotation tool toggle - auto-open inspector
   const handleAnnotationToolToggle = useCallback((active: boolean) => {
     setShowAnnotationTool(active);
+    appModeActions.setAnnotationMode(active);
     if (active) {
       // Open inspector and switch to annotations tab
       setShowInspectorPanel(true);
@@ -176,7 +231,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       setAnnotationText('');
       setTimeRange(null);
     }
-  }, []);
+  }, [appModeActions]);
 
   // Vault dispatch for creating time annotations directly
   const { dispatch } = useVaultDispatch();
@@ -186,6 +241,22 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   const annotationSaveRef = useRef<(() => void) | null>(null);
   const annotationClearRef = useRef<(() => void) | null>(null);
 
+  // Parent manifest index — maps canvas IDs to their parent manifest
+  const parentManifestIndex = useMemo(() => {
+    const index = new Map<string, IIIFManifest>();
+    if (!root) return index;
+    const walkManifests = (node: any) => {
+      if (node.type === 'Manifest') {
+        for (const child of node.items || []) {
+          if (child.type === 'Canvas') index.set(child.id, node as IIIFManifest);
+        }
+      }
+      for (const child of node.items || []) walkManifests(child);
+    };
+    walkManifests(root);
+    return index;
+  }, [root]);
+
   const viewerData = useMemo(() => {
     if (!root) return { canvas: null, manifest: null };
 
@@ -193,21 +264,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     let parentManifest: IIIFManifest | null = null;
 
     if (selectedId) {
-      if (root.type === 'Manifest') {
-        parentManifest = root as IIIFManifest;
-        selectedCanvas = findItemById(parentManifest, selectedId);
-        if (selectedCanvas?.type !== 'Canvas') selectedCanvas = null;
-      } else if (root.type === 'Collection') {
-        for (const item of (root as IIIFCollection).items || []) {
-          if (item.type === 'Manifest') {
-            const found = findItemById(item, selectedId);
-            if (found?.type === 'Canvas') {
-              selectedCanvas = found as IIIFCanvas;
-              parentManifest = item as IIIFManifest;
-              break;
-            }
-          }
-        }
+      const found = itemIndex.get(selectedId);
+      if (found?.type === 'Canvas') {
+        selectedCanvas = found as IIIFCanvas;
+        parentManifest = parentManifestIndex.get(selectedId) || null;
       }
     }
 
@@ -218,7 +278,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     }
 
     return { canvas: selectedCanvas, manifest: parentManifest };
-  }, [root, selectedId]);
+  }, [root, selectedId, itemIndex, parentManifestIndex]);
 
   // Get annotations from selected canvas for Inspector
   const canvasAnnotations = useMemo(() => {
@@ -235,6 +295,13 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     }
     return 'other';
   }, [selectedItem]);
+
+  // Cascade requiredStatement: canvas → manifest → null
+  const activeRequiredStatement = useMemo(() => {
+    if (selectedItem?.requiredStatement) return selectedItem.requiredStatement;
+    if (viewerData.manifest?.requiredStatement) return viewerData.manifest.requiredStatement;
+    return undefined;
+  }, [selectedItem, viewerData.manifest]);
 
   // Handlers for annotation actions
   const handleSaveAnnotation = useCallback(() => {
@@ -266,6 +333,35 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     setTimeRange(null); // Clear time range
   }, []);
 
+  // Delete an annotation by ID
+  const handleDeleteAnnotation = useCallback((annotationId: string) => {
+    if (!selectedItem?.id) return;
+    const result = dispatch(actions.removeAnnotation(selectedItem.id, annotationId));
+    if (result) {
+      const updatedRoot = exportRoot();
+      if (updatedRoot) {
+        storage.saveProject(updatedRoot)
+          .then(() => console.log('[ViewRouter] Annotation deleted + saved'))
+          .catch((err) => console.error('[ViewRouter] Failed to save after delete:', err));
+      }
+    }
+  }, [selectedItem, dispatch, exportRoot]);
+
+  // Edit an annotation's body text
+  const handleEditAnnotation = useCallback((annotationId: string, newText: string) => {
+    const result = dispatch(actions.updateAnnotation(annotationId, {
+      body: { type: 'TextualBody', value: newText, format: 'text/plain' } as unknown as IIIFAnnotation['body'],
+    }));
+    if (result) {
+      const updatedRoot = exportRoot();
+      if (updatedRoot) {
+        storage.saveProject(updatedRoot)
+          .then(() => console.log('[ViewRouter] Annotation edited + saved'))
+          .catch((err) => console.error('[ViewRouter] Failed to save after edit:', err));
+      }
+    }
+  }, [dispatch, exportRoot]);
+
   // Archive view
   if (currentMode === 'archive') {
     const hasSelectedItem = !!selectedId && !!selectedItem;
@@ -275,110 +371,16 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     // Should show viewer panel? Only if canvas selected AND panel not closed
     const shouldShowViewer = hasSelectedItem && isCanvasSelected && showViewerPanel;
 
-    // Build contextual colors based on field mode
-    const filmstripCx = isFieldMode
-      ? {
-          surface: 'bg-black',
-          text: 'text-white',
-          accent: 'text-yellow-400',
-          border: 'border-yellow-900/50',
-          divider: 'border-yellow-900/30',
-          headerBg: 'bg-black',
-          textMuted: 'text-yellow-200/60',
-          input: 'bg-yellow-900/30 border-yellow-700',
-          label: 'text-yellow-200',
-          active: 'bg-yellow-500/30 text-yellow-200',
-          inactive: 'text-yellow-400/50',
-          warningBg: 'bg-orange-900/30',
-          pageBg: 'bg-black',
-        }
-      : {
-          surface: 'bg-slate-900',
-          text: 'text-slate-100',
-          accent: 'text-blue-400',
-          border: 'border-slate-700',
-          divider: 'border-slate-800',
-          headerBg: 'bg-slate-900',
-          textMuted: 'text-slate-400',
-          input: 'bg-slate-800 border-slate-600',
-          label: 'text-slate-300',
-          active: 'bg-blue-900/30 text-blue-300',
-          inactive: 'text-slate-400',
-          warningBg: 'bg-amber-900/30',
-          pageBg: 'bg-slate-950',
-        };
-
-    const viewerCx = isFieldMode
-      ? {
-          surface: 'bg-black',
-          text: 'text-white',
-          accent: 'text-yellow-400',
-          border: 'border-yellow-900/50',
-          divider: 'border-yellow-900/30',
-          headerBg: 'bg-black',
-          textMuted: 'text-yellow-200/60',
-          input: 'bg-yellow-900/30 border-yellow-700',
-          label: 'text-yellow-200',
-          active: 'bg-yellow-500/30 text-yellow-200',
-          inactive: 'text-yellow-400/50',
-          warningBg: 'bg-orange-900/30',
-          pageBg: 'bg-black',
-        }
-      : {
-          surface: 'bg-slate-900',
-          text: 'text-white',
-          accent: 'text-blue-400',
-          border: 'border-slate-700',
-          divider: 'border-slate-800',
-          headerBg: 'bg-slate-900',
-          textMuted: 'text-slate-400',
-          input: 'bg-slate-800 border-slate-600',
-          label: 'text-slate-300',
-          active: 'bg-blue-900/30 text-blue-300',
-          inactive: 'text-slate-400',
-          warningBg: 'bg-amber-900/30',
-          pageBg: 'bg-slate-950',
-        };
-
-    // Default grid cx for full archive view - respects field mode
-    const gridCx = isFieldMode
-      ? {
-          surface: 'bg-black',
-          text: 'text-white',
-          accent: 'text-yellow-400',
-          border: 'border-yellow-900/50',
-          divider: 'border-yellow-900/30',
-          headerBg: 'bg-black',
-          textMuted: 'text-yellow-200/60',
-          input: 'bg-yellow-900/30 border-yellow-700',
-          label: 'text-yellow-200',
-          active: 'bg-yellow-500/30 text-yellow-200',
-          inactive: 'text-yellow-400/50',
-          warningBg: 'bg-orange-900/30',
-          pageBg: 'bg-black',
-        }
-      : {
-          surface: 'bg-white dark:bg-slate-900',
-          text: 'text-slate-900 dark:text-slate-100',
-          accent: 'text-blue-600 dark:text-blue-400',
-          border: 'border-slate-200 dark:border-slate-700',
-          divider: 'border-slate-200 dark:border-slate-800',
-          headerBg: 'bg-white dark:bg-slate-900',
-          textMuted: 'text-slate-500 dark:text-slate-400',
-          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
-          label: 'text-slate-700 dark:text-slate-300',
-          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-          inactive: 'text-slate-600 dark:text-slate-400',
-          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
-          pageBg: 'bg-slate-50 dark:bg-slate-950',
-        };
+    const cx = isFieldMode ? FIELD_CX : NORMAL_CX;
 
     return (
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex flex-col min-h-0">
+        <RequiredStatementBar requiredStatement={activeRequiredStatement} cx={cx} fieldMode={isFieldMode} />
+        <div className="flex-1 flex min-h-0">
         {/* Left: Archive Filmstrip when viewer shown, full grid otherwise */}
-        <div className={`flex flex-col transition-all duration-300 ${
+        <div className={`flex flex-col transition-nb filmstrip-panel ${
           shouldShowViewer
-            ? `w-filmstrip shrink-0 ${isFieldMode ? 'bg-black border-r border-yellow-900/50' : 'bg-slate-900 border-r border-slate-700'}`
+            ? `w-filmstrip shrink-0 ${isFieldMode ? 'bg-nb-black border-r-2 border-nb-yellow' : 'bg-nb-cream border-r-2 border-nb-black'}`
             : 'flex-1'
         }`}>
           <ArchiveView
@@ -397,7 +399,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
             filmstripMode={shouldShowViewer}
             onOpenImport={onOpenImport}
             onOpenExternalImport={onOpenExternalImport}
-            cx={shouldShowViewer ? filmstripCx : gridCx}
+            cx={cx}
             fieldMode={isFieldMode}
             t={(key) => key}
             onSwitchView={setCurrentMode}
@@ -413,15 +415,15 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
 
         {/* Right: Viewer Panel when canvas selected AND panel not closed */}
         {shouldShowViewer && (
-          <div className={`flex-1 flex flex-col min-h-0 ${isFieldMode ? 'bg-black' : 'bg-slate-950'}`}>
+          <div className={`flex-1 flex flex-col min-h-0 ${isFieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
             {/* Viewer header with close + inspector buttons */}
-            <div className={`shrink-0 px-4 py-2 border-b flex items-center justify-end gap-2 ${isFieldMode ? 'bg-black border-yellow-900/50' : 'bg-slate-900 border-slate-700'}`}>
+            <div className={`shrink-0 px-4 py-2 border-b-2 flex items-center justify-end gap-2 ${isFieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-cream border-nb-black'}`}>
               <Button variant="ghost" size="bare"
                 onClick={() => setShowInspectorPanel(!showInspectorPanel)}
-                className={`p-1.5 rounded-lg transition-colors ${
+                className={`p-1.5 transition-nb ${
                   showInspectorPanel
-                    ? isFieldMode ? 'bg-yellow-500/30 text-yellow-400' : 'bg-blue-500/30 text-blue-400'
-                    : isFieldMode ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-slate-400 hover:bg-slate-800'
+                    ? isFieldMode ? 'bg-nb-yellow text-nb-black font-bold' : 'bg-nb-black text-nb-white font-bold'
+                    : isFieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/50 hover:bg-nb-black/10'
                 }`}
                 title={showInspectorPanel ? 'Hide Inspector' : 'Show Inspector'}
               >
@@ -429,7 +431,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               </Button>
               <Button variant="ghost" size="bare"
                 onClick={() => setShowViewerPanel(false)}
-                className={`p-1.5 rounded-lg transition-colors ${isFieldMode ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-slate-400 hover:bg-slate-800'}`}
+                className={`p-1.5 transition-nb ${isFieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/50 hover:bg-nb-black/10'}`}
                 title="Close Viewer"
               >
                 <Icon name="close" className="text-lg" />
@@ -442,7 +444,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                     item={selectedItem as IIIFCanvas}
                     manifest={viewerData.manifest}
                     onUpdate={(updates) => onUpdateItem?.(updates)}
-                    cx={viewerCx}
+                    cx={cx}
                     fieldMode={isFieldMode}
                     t={(key) => key}
                     isAdvanced={settings?.abstractionLevel === 'advanced'}
@@ -465,7 +467,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               {/* Inspector Panel — archive-specific mount point. Other views mount
                  Inspector at the App.tsx level instead. See App.tsx comment. */}
               {showInspectorPanel && settings && (
-                <div className="w-inspector shrink-0 min-h-0 overflow-hidden border-l border-slate-700">
+                <div className="w-inspector shrink-0 min-h-0 overflow-hidden">
                   <Inspector
                     resource={selectedItem}
                     onUpdateResource={(updates) => onUpdateItem?.(updates)}
@@ -491,85 +493,140 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                     currentPlaybackTime={currentPlaybackTime}
                     // Force annotations tab when annotation mode is active
                     forceTab={forceAnnotationsTab ? 'annotations' : undefined}
+                    // Annotation CRUD
+                    onDeleteAnnotation={handleDeleteAnnotation}
+                    onEditAnnotation={handleEditAnnotation}
+                    onStartAnnotation={() => handleAnnotationToolToggle(true)}
                   />
                 </div>
               )}
             </div>
           </div>
         )}
+        </div>
       </div>
     );
   }
 
   // Board view
   if (currentMode === 'boards') {
+    const boardFieldMode = settings?.fieldMode || false;
+    const boardCx = boardFieldMode ? FIELD_CX : NORMAL_CX;
+    const boardSelectedItem = boardSelectedId ? (itemIndex.get(boardSelectedId) ?? null) : null;
+    const boardItemData = boardSelectedId ? boardStateRef.current?.getBoardItemForResource(boardSelectedId) : null;
+    const boardStateData = boardStateRef.current?.boardState;
+
+    // Annotations for the board-selected item (derived, not a hook)
+    const boardAnnotations = boardSelectedItem?.type === 'Canvas'
+      ? getCanvasAnnotations(boardSelectedItem as IIIFCanvas)
+      : [];
+
+    // Canvases for structure tab when a manifest is selected on board
+    const boardCanvases = boardSelectedItem?.type === 'Manifest'
+      ? (boardSelectedItem as IIIFManifest).items || []
+      : [];
+
     return (
-      <BoardView
-        root={root}
-        cx={{
-          surface: 'bg-white dark:bg-slate-900',
-          text: 'text-slate-900 dark:text-slate-100',
-          accent: 'text-blue-600 dark:text-blue-400',
-          border: 'border-slate-200 dark:border-slate-700',
-          divider: 'border-slate-200 dark:border-slate-800',
-          headerBg: 'bg-white dark:bg-slate-900',
-          textMuted: 'text-slate-500 dark:text-slate-400',
-          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
-          label: 'text-slate-700 dark:text-slate-300',
-          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-          inactive: 'text-slate-600 dark:text-slate-400',
-          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
-          pageBg: 'bg-slate-50 dark:bg-slate-950',
-        }}
-        fieldMode={settings?.fieldMode || false}
-        t={(key) => key}
-        isAdvanced={settings?.abstractionLevel === 'advanced'}
-        onExport={() => {}}
-        onSwitchView={setCurrentMode}
-      />
+      <div className="flex h-full">
+        <BoardView
+          root={root}
+          cx={boardCx}
+          fieldMode={boardFieldMode}
+          t={(key) => key}
+          isAdvanced={settings?.abstractionLevel === 'advanced'}
+          onExport={() => {}}
+          onSaveBoard={(manifest) => {
+            // Persist board manifest into vault tree + IndexedDB
+            dispatch(actions.createBoard(manifest.id, manifest.label?.en?.[0] || 'Board', (manifest as IIIFManifest & { behavior?: string[] }).behavior));
+            const updatedRoot = exportRoot();
+            if (updatedRoot) {
+              storage.saveProject(updatedRoot)
+                .then(() => console.log('[ViewRouter] Board saved to IndexedDB'))
+                .catch((err: unknown) => console.error('[ViewRouter] Failed to save board:', err));
+            }
+          }}
+          onSwitchView={setCurrentMode}
+          onSelectId={(id) => {
+            setBoardSelectedId(id);
+            onSelectId?.(id);
+          }}
+          onSelect={onSelect}
+          settings={settings}
+          boardStateRef={boardStateRef}
+        />
+        {boardSelectedItem && settings && (
+          <div className="w-[320px] shrink-0 min-h-0 overflow-hidden">
+            <Inspector
+              resource={boardSelectedItem}
+              onUpdateResource={(updates) => onUpdateItem?.(updates)}
+              settings={settings}
+              visible={true}
+              onClose={() => {
+                setBoardSelectedId(null);
+                onSelectId?.(null);
+              }}
+              canvases={boardCanvases}
+              annotations={boardAnnotations}
+              onDeleteAnnotation={(annotationId: string) => {
+                if (!boardSelectedId) return;
+                const result = dispatch(actions.removeAnnotation(boardSelectedId, annotationId));
+                if (result) {
+                  const updatedRoot = exportRoot();
+                  if (updatedRoot) {
+                    storage.saveProject(updatedRoot)
+                      .catch((err: unknown) => console.error('[ViewRouter] Failed to save after board annotation delete:', err));
+                  }
+                }
+              }}
+              onEditAnnotation={(annotationId: string, newText: string) => {
+                const result = dispatch(actions.updateAnnotation(annotationId, {
+                  body: { type: 'TextualBody', value: newText, format: 'text/plain' } as unknown as IIIFAnnotation['body'],
+                }));
+                if (result) {
+                  const updatedRoot = exportRoot();
+                  if (updatedRoot) {
+                    storage.saveProject(updatedRoot)
+                      .catch((err: unknown) => console.error('[ViewRouter] Failed to save after board annotation edit:', err));
+                  }
+                }
+              }}
+              designTab={
+                <BoardDesignPanel
+                  boardItem={boardItemData || null}
+                  connections={boardStateData?.connections || []}
+                  items={boardStateData?.items || []}
+                  isAdvanced={settings.abstractionLevel === 'advanced'}
+                  onOpenViewer={() => {
+                    if (boardSelectedId) {
+                      onSelectId?.(boardSelectedId);
+                      setCurrentMode('viewer');
+                    }
+                  }}
+                  onRemove={() => {
+                    setBoardSelectedId(null);
+                    onSelectId?.(null);
+                  }}
+                  cx={boardCx}
+                  fieldMode={boardFieldMode}
+                />
+              }
+            />
+          </div>
+        )}
+      </div>
     );
   }
 
   // Metadata view
   if (currentMode === 'metadata') {
     const isFieldMode = settings?.fieldMode || false;
-    const metadataCx = isFieldMode
-      ? {
-          surface: 'bg-black',
-          text: 'text-white',
-          accent: 'text-yellow-400',
-          border: 'border-yellow-900/50',
-          divider: 'border-yellow-900/30',
-          headerBg: 'bg-black',
-          textMuted: 'text-yellow-200/60',
-          input: 'bg-yellow-900/30 border-yellow-700 text-white',
-          label: 'text-yellow-200',
-          active: 'bg-yellow-500/30 text-yellow-200',
-          inactive: 'text-yellow-400/50',
-          warningBg: 'bg-orange-900/30',
-          pageBg: 'bg-black',
-        }
-      : {
-          surface: 'bg-white dark:bg-slate-900',
-          text: 'text-slate-900 dark:text-slate-100',
-          accent: 'text-blue-600 dark:text-blue-400',
-          border: 'border-slate-200 dark:border-slate-700',
-          divider: 'border-slate-200 dark:border-slate-800',
-          headerBg: 'bg-white dark:bg-slate-900',
-          textMuted: 'text-slate-500 dark:text-slate-400',
-          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
-          label: 'text-slate-700 dark:text-slate-300',
-          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-          inactive: 'text-slate-600 dark:text-slate-400',
-          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
-          pageBg: 'bg-slate-50 dark:bg-slate-950',
-        };
     return (
       <MetadataView
         root={root}
-        cx={metadataCx}
+        cx={isFieldMode ? FIELD_CX : NORMAL_CX}
         fieldMode={isFieldMode}
         onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
+        abstractionLevel={settings?.abstractionLevel}
       />
     );
   }
@@ -604,21 +661,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           onSelectId?.(id);
           setCurrentMode('map');
         }}
-        cx={{
-          surface: 'bg-white dark:bg-slate-900',
-          text: 'text-slate-900 dark:text-slate-100',
-          accent: 'text-blue-600 dark:text-blue-400',
-          border: 'border-slate-200 dark:border-slate-700',
-          divider: 'border-slate-200 dark:border-slate-800',
-          headerBg: 'bg-white dark:bg-slate-900',
-          textMuted: 'text-slate-500 dark:text-slate-400',
-          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
-          label: 'text-slate-700 dark:text-slate-300',
-          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-          inactive: 'text-slate-600 dark:text-slate-400',
-          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
-          pageBg: 'bg-slate-50 dark:bg-slate-950',
-        }}
+        cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
         fieldMode={settings?.fieldMode || false}
         t={(key) => key}
       />
@@ -628,50 +671,23 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   // Viewer view
   if (currentMode === 'viewer') {
     const isFieldMode = settings?.fieldMode || false;
-    const viewerCx = isFieldMode
-      ? {
-          surface: 'bg-black',
-          text: 'text-white',
-          accent: 'text-yellow-400',
-          border: 'border-yellow-900/50',
-          divider: 'border-yellow-900/30',
-          headerBg: 'bg-black',
-          textMuted: 'text-yellow-200/60',
-          input: 'bg-yellow-900/30 border-yellow-700',
-          label: 'text-yellow-200',
-          active: 'bg-yellow-500/30 text-yellow-200',
-          inactive: 'text-yellow-400/50',
-          warningBg: 'bg-orange-900/30',
-          pageBg: 'bg-black',
-        }
-      : {
-          surface: 'bg-slate-900',
-          text: 'text-white',
-          accent: 'text-blue-400',
-          border: 'border-slate-700',
-          divider: 'border-slate-800',
-          headerBg: 'bg-slate-900',
-          textMuted: 'text-slate-400',
-          input: 'bg-slate-800 border-slate-600',
-          label: 'text-slate-300',
-          active: 'bg-blue-900/30 text-blue-300',
-          inactive: 'text-slate-400',
-          warningBg: 'bg-amber-900/30',
-          pageBg: 'bg-slate-950',
-        };
+    const viewerCx = isFieldMode ? FIELD_CX : NORMAL_CX;
 
     return (
-      <React.Suspense fallback={null}>
-        <ViewerView
-          item={viewerData.canvas}
-          manifest={viewerData.manifest}
-          onUpdate={(updates) => onUpdateItem?.(updates)}
-          cx={viewerCx}
-          fieldMode={isFieldMode}
-          t={(key) => key}
-          isAdvanced={settings?.abstractionLevel === 'advanced'}
-        />
-      </React.Suspense>
+      <div className="flex-1 flex flex-col min-h-0">
+        <RequiredStatementBar requiredStatement={activeRequiredStatement} cx={viewerCx} fieldMode={isFieldMode} />
+        <React.Suspense fallback={null}>
+          <ViewerView
+            item={viewerData.canvas}
+            manifest={viewerData.manifest}
+            onUpdate={(updates) => onUpdateItem?.(updates)}
+            cx={viewerCx}
+            fieldMode={isFieldMode}
+            t={(key) => key}
+            isAdvanced={settings?.abstractionLevel === 'advanced'}
+          />
+        </React.Suspense>
+      </div>
     );
   }
 
@@ -681,21 +697,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       <MapView
         root={root}
         onSelect={(item) => onSelectId?.(item.id)}
-        cx={{
-          surface: 'bg-white dark:bg-slate-900',
-          text: 'text-slate-900 dark:text-slate-100',
-          accent: 'text-blue-600 dark:text-blue-400',
-          border: 'border-slate-200 dark:border-slate-700',
-          divider: 'border-slate-200 dark:border-slate-800',
-          headerBg: 'bg-white dark:bg-slate-900',
-          textMuted: 'text-slate-500 dark:text-slate-400',
-          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
-          label: 'text-slate-700 dark:text-slate-300',
-          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-          inactive: 'text-slate-600 dark:text-slate-400',
-          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
-          pageBg: 'bg-slate-50 dark:bg-slate-950',
-        }}
+        cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
         fieldMode={settings?.fieldMode || false}
         t={(key) => key}
         isAdvanced={settings?.abstractionLevel === 'advanced'}
@@ -709,21 +711,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       <TimelineView
         root={root}
         onSelect={(item) => onSelectId?.(item.id)}
-        cx={{
-          surface: 'bg-white dark:bg-slate-900',
-          text: 'text-slate-900 dark:text-slate-100',
-          accent: 'text-blue-600 dark:text-blue-400',
-          border: 'border-slate-200 dark:border-slate-700',
-          divider: 'border-slate-200 dark:border-slate-800',
-          headerBg: 'bg-white dark:bg-slate-900',
-          textMuted: 'text-slate-500 dark:text-slate-400',
-          input: 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600',
-          label: 'text-slate-700 dark:text-slate-300',
-          active: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-          inactive: 'text-slate-600 dark:text-slate-400',
-          warningBg: 'bg-amber-50 dark:bg-amber-900/30',
-          pageBg: 'bg-slate-50 dark:bg-slate-950',
-        }}
+        cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
         fieldMode={settings?.fieldMode || false}
       />
     );
@@ -732,8 +720,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   // Admin dependency explorer
   if (currentMode === 'admin-deps') {
     return (
-      <React.Suspense fallback={<div className="h-full bg-slate-50 dark:bg-slate-950 p-6 flex items-center justify-center text-slate-400">Loading...</div>}>
-        <div className="h-full bg-slate-50 dark:bg-slate-950 p-6">
+      <React.Suspense fallback={<div className="h-full bg-nb-cream p-6 flex items-center justify-center text-nb-black/50">Loading...</div>}>
+        <div className="h-full bg-nb-cream p-6">
           <DependencyExplorer />
         </div>
       </React.Suspense>

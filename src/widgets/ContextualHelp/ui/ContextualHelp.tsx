@@ -50,20 +50,20 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
   if (!visible || !content) return null;
 
   return (
-    <div className="mx-4 mt-4 mb-2 animate-in slide-in-from-top-2 duration-300">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4">
+    <div className="mx-4 mt-4 mb-2 animate-in slide-in-from-top-2 ">
+      <div className="bg-gradient-to-r from-nb-blue/10 to-nb-blue/10 border border-nb-blue/20 p-4">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-            <Icon name="lightbulb" className="text-blue-600 text-sm" />
+          <div className="w-8 h-8 bg-nb-blue/20 flex items-center justify-center shrink-0">
+            <Icon name="lightbulb" className="text-nb-blue text-sm" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-slate-800 mb-1">{content.title}</h4>
-            <p className="text-xs text-slate-600 leading-relaxed mb-2">{content.body}</p>
+            <h4 className="text-sm font-semibold text-nb-black mb-1">{content.title}</h4>
+            <p className="text-xs text-nb-black/60 leading-relaxed mb-2">{content.body}</p>
             {content.tips && content.tips.length > 0 && (
               <ul className="space-y-1">
                 {content.tips.slice(0, 2).map((tip, i) => (
-                  <li key={i} className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                    <Icon name="check" className="text-green-500 text-[10px]" />
+                  <li key={i} className="flex items-center gap-1.5 text-[11px] text-nb-black/50">
+                    <Icon name="check" className="text-nb-green text-[10px]" />
                     {tip}
                   </li>
                 ))}
@@ -72,7 +72,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
           </div>
           <Button variant="ghost" size="bare"
             onClick={dismiss}
-            className="text-slate-400 hover:text-slate-600 p-1 shrink-0"
+            className="text-nb-black/40 hover:text-nb-black/60 p-1 shrink-0"
             title="Dismiss"
           >
             <Icon name="close" className="text-sm" />
@@ -99,10 +99,10 @@ export const ViewHelp: React.FC<{ mode: string }> = ({ mode }) => {
         onClick={() => setExpanded(!expanded)}
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
-        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-all ${
+        className={`flex items-center gap-1.5 px-2 py-1 text-xs transition-nb ${
           expanded
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            ? 'bg-nb-blue/20 text-nb-blue'
+            : 'text-nb-black/40 hover:text-nb-black/60 hover:bg-nb-cream'
         }`}
       >
         <Icon name="help_outline" className="text-sm" />
@@ -111,17 +111,17 @@ export const ViewHelp: React.FC<{ mode: string }> = ({ mode }) => {
 
       {expanded && (
         <div
-          className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in zoom-in-95 duration-150"
+          className="absolute top-full right-0 mt-1 w-64 bg-nb-white shadow-brutal border border-nb-black/20 p-3 z-50 animate-in fade-in zoom-in-95 "
           onMouseEnter={() => setExpanded(true)}
           onMouseLeave={() => setExpanded(false)}
         >
-          <h4 className="text-xs font-semibold text-slate-700 mb-1">{content.title}</h4>
-          <p className="text-[11px] text-slate-500 leading-relaxed mb-2">{content.body}</p>
+          <h4 className="text-xs font-semibold text-nb-black/80 mb-1">{content.title}</h4>
+          <p className="text-[11px] text-nb-black/50 leading-relaxed mb-2">{content.body}</p>
           {content.tips && (
             <ul className="space-y-1">
               {content.tips.map((tip, i) => (
-                <li key={i} className="flex items-start gap-1.5 text-[10px] text-slate-400">
-                  <Icon name="arrow_right" className="text-[10px] text-slate-300 mt-0.5" />
+                <li key={i} className="flex items-start gap-1.5 text-[10px] text-nb-black/40">
+                  <Icon name="arrow_right" className="text-[10px] text-nb-black/30 mt-0.5" />
                   {tip}
                 </li>
               ))}

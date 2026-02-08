@@ -47,7 +47,7 @@ export class ValidationService {
 
           if (seenIds.has(item.id)) {
               issues.push({
-                  id: Math.random().toString(36).substr(2, 9),
+                  id: crypto.randomUUID().slice(0, 9),
                   itemId: item.id,
                   itemLabel: getIIIFValue(item.label) || 'Unknown',
                   level: 'error',
@@ -99,7 +99,7 @@ export class ValidationService {
       }
 
       return {
-        id: Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID().slice(0, 9),
         itemId: item.id,
         itemLabel: getIIIFValue(item.label) || 'Untitled',
         level: 'error' as const,
@@ -114,7 +114,7 @@ export class ValidationService {
     const issues: ValidationIssue[] = [];
     const addIssue = (level: 'error' | 'warning', category: IssueCategory, message: string, fixable: boolean = false) => {
         issues.push({
-            id: Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID().slice(0, 9),
             itemId: item.id,
             itemLabel: getIIIFValue(item.label) || 'Untitled',
             level,

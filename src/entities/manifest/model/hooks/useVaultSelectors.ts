@@ -359,7 +359,7 @@ export function useValidationSummary(): ValidationSummary {
       // Check for required fields
       if (!entity.id) {
         issues.push({
-          id: `missing-id-${Math.random().toString(36).slice(2)}`,
+          id: `missing-id-${crypto.randomUUID().slice(0, 9)}`,
           itemId: id,
           itemLabel: 'Unknown',
           level: 'error',
@@ -371,7 +371,7 @@ export function useValidationSummary(): ValidationSummary {
 
       if (!entity.type) {
         issues.push({
-          id: `missing-type-${Math.random().toString(36).slice(2)}`,
+          id: `missing-type-${crypto.randomUUID().slice(0, 9)}`,
           itemId: id,
           itemLabel: getEntityLabelText(entity),
           level: 'error',
@@ -384,7 +384,7 @@ export function useValidationSummary(): ValidationSummary {
       // Check for valid HTTP URI ID
       if (entity.id && !entity.id.startsWith('http')) {
         issues.push({
-          id: `invalid-id-${Math.random().toString(36).slice(2)}`,
+          id: `invalid-id-${crypto.randomUUID().slice(0, 9)}`,
           itemId: id,
           itemLabel: getEntityLabelText(entity),
           level: 'warning',
@@ -399,7 +399,7 @@ export function useValidationSummary(): ValidationSummary {
         const canvas = entity as IIIFCanvas;
         if (!canvas.width || !canvas.height) {
           issues.push({
-            id: `missing-dims-${Math.random().toString(36).slice(2)}`,
+            id: `missing-dims-${crypto.randomUUID().slice(0, 9)}`,
             itemId: id,
             itemLabel: getEntityLabelText(entity),
             level: 'error',
@@ -419,7 +419,7 @@ export function useValidationSummary(): ValidationSummary {
 
         if (canvasCount === 0) {
           issues.push({
-            id: `no-canvases-${Math.random().toString(36).slice(2)}`,
+            id: `no-canvases-${crypto.randomUUID().slice(0, 9)}`,
             itemId: id,
             itemLabel: getEntityLabelText(entity),
             level: 'error',
@@ -433,7 +433,7 @@ export function useValidationSummary(): ValidationSummary {
       // Check for label
       if (!entity.label || Object.keys(entity.label).length === 0) {
         issues.push({
-          id: `missing-label-${Math.random().toString(36).slice(2)}`,
+          id: `missing-label-${crypto.randomUUID().slice(0, 9)}`,
           itemId: id,
           itemLabel: getEntityLabelText(entity),
           level: 'warning',

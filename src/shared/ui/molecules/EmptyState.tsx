@@ -4,7 +4,7 @@
  * Composes: Icon + text + optional action button
  *
  * Standardized placeholder for empty collections, zero results, etc.
- * Receives `cx` styling tokens via props from organism.
+ * Receives`cx` styling tokens via props from organism.
  * NOTE: Does NOT call useContextualStyles — receives cx via props.
  *
  * IDEAL OUTCOME: Shows meaningful message and CTA for empty state
@@ -46,7 +46,7 @@ export interface EmptyStateProps {
  *   icon="inbox"
  *   title="No items found"
  *   message="Try importing some files to get started"
- *   action={{ label: 'Import Files', onClick: onImport }}
+ *   action={{ label:'Import Files', onClick: onImport }}
  * />
  */
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -54,7 +54,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
   action,
-  className = '',
+  className ='',
   cx = {},
   fieldMode: _fieldMode = false,
 }) => {
@@ -66,14 +66,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         flex flex-col items-center justify-center
         py-12 px-6 min-h-[300px]
         ${className}
-      `}
+`}
     >
       {/* Icon */}
       <div
         className={`
-          mb-4 p-3 rounded-lg
+          mb-4 p-3 
           ${cx.subtleBg} ${cx.textMuted}
-        `}
+`}
       >
         <Icon name={icon} className="text-4xl" aria-hidden="true" />
       </div>
@@ -83,7 +83,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         className={`
           text-lg font-semibold mb-2
           ${cx.subtleText}
-        `}
+`}
       >
         {title}
       </h3>
@@ -94,7 +94,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           className={`
             text-sm mb-6 text-center max-w-sm
             ${cx.textMuted}
-          `}
+`}
         >
           {message}
         </p>

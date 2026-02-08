@@ -378,7 +378,7 @@ export class IngestWorkerPool {
     files: File[],
     options: IngestOptions = {}
   ): Promise<IngestResult> {
-    const operationId = `ingest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const operationId = `ingest-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
 
     // Initialize operation
     this.operationStats.set(operationId, {
@@ -458,7 +458,7 @@ export class IngestWorkerPool {
     tree: FileTree,
     options: IngestOptions = {}
   ): Promise<IngestResult> {
-    const operationId = `ingest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const operationId = `ingest-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
     const totalFiles = this.countMediaFiles(tree);
 
     // Initialize operation

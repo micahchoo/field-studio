@@ -34,6 +34,27 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
   const handleFetch = async () => {
     if (!url) return;
 
+    // Validate URL before fetching
+    try {
+      const parsed = new URL(url);
+      // Block dangerous protocols
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        setError('Only HTTP and HTTPS URLs are allowed.');
+        return;
+      }
+      // Block private/local IPs
+      const hostname = parsed.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' ||
+          hostname.startsWith('10.') || hostname.startsWith('192.168.') ||
+          /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) || hostname === '0.0.0.0') {
+        setError('Private/local network URLs are not allowed for external imports.');
+        return;
+      }
+    } catch {
+      setError('Please enter a valid URL.');
+      return;
+    }
+
     // Abort any previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -82,21 +103,21 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col">
-        <div className="p-4 border-b bg-slate-50 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+    <div className="fixed inset-0 bg-nb-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in ">
+      <div className="bg-nb-white shadow-brutal-lg max-w-lg w-full overflow-hidden flex flex-col">
+        <div className="p-4 border-b bg-nb-white flex justify-between items-center">
+          <h2 className="text-lg font-bold text-nb-black flex items-center gap-2">
             <Icon name="cloud_download" className="text-iiif-blue"/> 
             Import External IIIF
           </h2>
-          <Button variant="ghost" size="bare" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <Button variant="ghost" size="bare" onClick={onClose} className="text-nb-black/40 hover:text-nb-black/60">
             <Icon name="close"/>
           </Button>
         </div>
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Manifest or Collection URL</label>
+            <label className="block text-xs font-bold text-nb-black/50 uppercase mb-1">Manifest or Collection URL</label>
             <div className="flex gap-2">
               <input 
                 type="text" 
@@ -104,12 +125,12 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
                 placeholder="https://example.org/iiif/manifest.json"
-                className="flex-1 border border-slate-300 rounded px-3 py-2 text-sm focus:border-iiif-blue focus:ring-1 focus:ring-iiif-blue outline-none"
+                className="flex-1 border border-nb-black/20 px-3 py-2 text-sm focus:border-iiif-blue focus:ring-1 focus:ring-iiif-blue outline-none"
               />
               <Button variant="ghost" size="bare" 
                 onClick={handleFetch}
                 disabled={loading || !url}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded font-bold text-sm disabled:opacity-50"
+                className="bg-nb-cream hover:bg-nb-cream text-nb-black/80 px-4 py-2 font-bold text-sm disabled:opacity-50"
               >
                 {loading ? <Icon name="sync" className="animate-spin"/> : 'Fetch'}
               </Button>
@@ -117,7 +138,7 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 flex gap-2 items-start">
+            <div className="bg-nb-red/10 border border-nb-red/30 p-3 text-sm text-nb-red flex gap-2 items-start">
               <Icon name="error" className="mt-0.5 shrink-0"/>
               <div>
                 <p className="font-bold">Error loading resource</p>
@@ -127,23 +148,23 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
           )}
 
           {preview && (
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 animate-in slide-in-from-bottom-2">
+            <div className="bg-nb-white border border-nb-black/20 p-4 animate-in slide-in-from-bottom-2">
               <div className="flex items-start gap-3">
-                <div className="w-16 h-16 bg-white rounded border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-16 h-16 bg-nb-white border border-nb-black/20 flex items-center justify-center shrink-0 overflow-hidden">
                    {(preview as any).thumbnail?.[0]?.id ? (
                        <img src={(preview as any).thumbnail[0].id} className="w-full h-full object-cover" />
                    ) : (
-                       <Icon name={isCollection(preview) ? 'folder' : 'menu_book'} className="text-slate-300 text-3xl"/>
+                       <Icon name={isCollection(preview) ? 'folder' : 'menu_book'} className="text-nb-black/30 text-3xl"/>
                    )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${isCollection(preview) ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                    <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 ${isCollection(preview) ? 'bg-nb-orange/20 text-nb-orange' : 'bg-nb-green/20 text-nb-green'}`}>
                       {preview.type}
                     </span>
                   </div>
-                  <h3 className="font-bold text-slate-800 line-clamp-1">{getIIIFValue(preview.label, 'none') || getIIIFValue(preview.label, 'en') || 'Untitled'}</h3>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                  <h3 className="font-bold text-nb-black line-clamp-1">{getIIIFValue(preview.label, 'none') || getIIIFValue(preview.label, 'en') || 'Untitled'}</h3>
+                  <p className="text-xs text-nb-black/50 mt-1 line-clamp-2">
                     {getIIIFValue(preview.summary, 'none') || getIIIFValue(preview.summary, 'en') || 'No description available.'}
                   </p>
                 </div>
@@ -152,14 +173,14 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
           )}
         </div>
 
-        <div className="p-4 border-t bg-slate-50 flex justify-end gap-2">
-          <Button variant="ghost" size="bare" onClick={onClose} className="px-4 py-2 text-slate-600 font-bold text-sm hover:bg-slate-200 rounded">
+        <div className="p-4 border-t bg-nb-white flex justify-end gap-2">
+          <Button variant="ghost" size="bare" onClick={onClose} className="px-4 py-2 text-nb-black/60 font-bold text-sm hover:bg-nb-cream rounded">
             Cancel
           </Button>
           <Button variant="ghost" size="bare" 
             onClick={handleConfirm}
             disabled={!preview}
-            className="bg-iiif-blue text-white px-6 py-2 rounded font-bold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
+            className="bg-iiif-blue text-white px-6 py-2 font-bold text-sm hover:bg-nb-blue disabled:opacity-50 disabled:cursor-not-allowed shadow-brutal-sm flex items-center gap-2"
           >
             <Icon name="add" /> Add to Archive
           </Button>

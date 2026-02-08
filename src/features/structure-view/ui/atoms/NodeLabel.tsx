@@ -24,8 +24,8 @@ export const NodeLabel: React.FC<NodeLabelProps> = ({
 }) => {
   const baseClasses = 'truncate text-sm';
   const stateClasses = isSelected
-    ? 'font-semibold text-blue-600 dark:text-blue-400'
-    : 'text-slate-700 dark:text-slate-300';
+    ? 'font-semibold text-nb-blue'
+    : 'text-nb-black/70';
   const dragClasses = isDragging ? 'opacity-50' : '';
 
   return (

@@ -30,10 +30,10 @@ export interface ValidatedInputProps {
  * ValidatedInput - Field-level validation component for IIIF Inspector
  * 
  * Visual States:
- * - Pristine: border-slate-300 (default)
- * - Validating: border-amber-400 with spinner icon
- * - Valid: border-green-500 with checkmark (fades after 2s)
- * - Invalid: border-red-500 with exclamation, error message below, fix button if available
+ * - Pristine: border-nb-black/20 (default)
+ * - Validating: border-nb-orange with spinner icon
+ * - Valid: border-nb-green with checkmark (fades after 2s)
+ * - Invalid: border-nb-red with exclamation, error message below, fix button if available
  * 
  * Accessibility:
  * - Screen reader announcements via aria-live
@@ -122,22 +122,22 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
 
   // Determine border color based on validation state
   const getBorderColor = () => {
-    if (disabled) return fieldMode ? 'border-slate-700' : 'border-slate-200';
+    if (disabled) return fieldMode ? 'border-nb-black/80' : 'border-nb-black/20';
     
     switch (validation.status) {
       case 'invalid':
-        return 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200';
+        return 'border-nb-red focus:border-nb-red focus:ring-2 focus:ring-red-200';
       case 'valid':
         return showSuccess
-          ? 'border-green-500 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-          : (fieldMode ? 'border-slate-800 focus:border-yellow-400' : 'border-slate-300 focus:ring-2 focus:ring-blue-500');
+          ? 'border-nb-green focus:border-nb-green focus:ring-2 focus:ring-green-200'
+          : (fieldMode ? 'border-nb-black focus:border-nb-yellow' : 'border-nb-black/20 focus:ring-2 focus:ring-nb-blue');
       case 'validating':
-        return 'border-amber-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-200';
+        return 'border-nb-orange focus:border-nb-orange focus:ring-2 focus:ring-nb-orange/20';
       case 'pristine':
       default:
         return fieldMode
-          ? 'border-slate-800 focus:border-yellow-400'
-          : 'border-slate-300 focus:ring-2 focus:ring-blue-500';
+          ? 'border-nb-black focus:border-nb-yellow'
+          : 'border-nb-black/20 focus:ring-2 focus:ring-nb-blue';
     }
   };
 
@@ -145,13 +145,13 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
   const getStatusIcon = () => {
     switch (validation.status) {
       case 'invalid':
-        return <Icon name="error" className="text-red-500 text-sm" />;
+        return <Icon name="error" className="text-nb-red text-sm" />;
       case 'valid':
-        return showSuccess ? <Icon name="check_circle" className="text-green-500 text-sm" /> : null;
+        return showSuccess ? <Icon name="check_circle" className="text-nb-green text-sm" /> : null;
       case 'validating':
         return (
           <span className="inline-block animate-spin">
-            <Icon name="sync" className="text-amber-400 text-sm" />
+            <Icon name="sync" className="text-nb-orange text-sm" />
           </span>
         );
       case 'pristine':
@@ -176,8 +176,8 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
     return attrs;
   };
 
-  const baseInputClass = `w-full text-sm p-3 rounded-lg outline-none border transition-colors duration-200 ${getBorderColor()} ${
-    fieldMode ? 'bg-slate-900 text-white placeholder-slate-600' : 'bg-white placeholder-slate-400'
+  const baseInputClass = `w-full text-sm p-3 outline-none border transition-nb ${getBorderColor()} ${
+    fieldMode ? 'bg-theme-input-bg text-white placeholder-theme-input-placeholder' : 'bg-theme-input-bg placeholder-theme-input-placeholder'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
 
   const InputComponent = type === 'textarea' ? 'textarea' : 'input';
@@ -189,7 +189,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
       <label 
         htmlFor={id}
         className={`block text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-          fieldMode ? 'text-slate-500' : 'text-slate-400'
+          fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/60'
         }`}
       >
         {label}
@@ -237,7 +237,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
         {validation.status === 'invalid' && validation.message && (
           <div 
             id={`${id}-error`}
-            className="flex items-start gap-1.5 text-[10px] text-red-500"
+            className="flex items-start gap-1.5 text-[10px] text-nb-red"
             role="alert"
           >
             <Icon name="error" className="text-[10px] mt-0.5 shrink-0" />
@@ -245,7 +245,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
             {validation.fix && (
               <Button variant="ghost" size="bare"
                 onClick={validation.fix}
-                className="shrink-0 ml-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-[9px] font-bold uppercase hover:bg-green-200 transition-colors"
+                className="shrink-0 ml-1 px-2 py-0.5 bg-nb-green/20 text-nb-green text-[9px] font-bold uppercase hover:bg-nb-green/30 transition-nb"
                 aria-label={`Fix: ${validation.fixDescription || 'Auto-fix this issue'}`}
                 title={validation.fixDescription || 'Auto-fix this issue'}
               >
@@ -256,7 +256,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
         )}
 
         {validation.status === 'validating' && (
-          <div className="flex items-center gap-1.5 text-[10px] text-amber-600">
+          <div className="flex items-center gap-1.5 text-[10px] text-nb-orange">
             <span className="inline-block animate-spin">
               <Icon name="sync" className="text-[10px]" />
             </span>
@@ -265,7 +265,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
         )}
 
         {validation.status === 'valid' && showSuccess && (
-          <div className="flex items-center gap-1.5 text-[10px] text-green-600">
+          <div className="flex items-center gap-1.5 text-[10px] text-nb-green">
             <Icon name="check_circle" className="text-[10px]" />
             <span>Valid</span>
           </div>

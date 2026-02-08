@@ -36,6 +36,12 @@ export interface MultiSelectFilmstripProps {
   resolveThumbs: (item: IIIFCanvas, size: number) => string[];
   /** Contextual styles from template */
   cx: ContextualClassNames;
+  /** Validation issues per canvas ID */
+  validationIssues?: Record<string, { errors: number; warnings: number }>;
+  /** Annotation counts per canvas ID */
+  annotationCounts?: Record<string, number>;
+  /** Set of geotagged canvas IDs */
+  geotagged?: Set<string>;
 }
 
 export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
@@ -47,6 +53,9 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
   orientation = 'horizontal',
   resolveThumbs,
   cx,
+  validationIssues,
+  annotationCounts,
+  geotagged,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const focusedRef = useRef<HTMLDivElement>(null);
@@ -65,15 +74,15 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`${isHorizontal ? 'h-full flex flex-row' : 'h-full flex flex-col'} ${fieldMode ? 'bg-slate-950' : 'bg-slate-50'}`}
+      className={`${isHorizontal ? 'h-full flex flex-row' : 'h-full flex flex-col'} ${fieldMode ? 'bg-nb-black' : 'bg-nb-white'}`}
     >
       {/* Header with count */}
-      <div className={`shrink-0 flex items-center justify-between ${isHorizontal ? 'px-3 py-2 border-r flex-col h-full' : 'px-3 py-2 border-b flex-row'} ${fieldMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+      <div className={`shrink-0 flex items-center justify-between ${isHorizontal ? 'px-3 py-2 border-r flex-col h-full' : 'px-3 py-2 border-b flex-row'} ${fieldMode ? 'border-nb-black bg-nb-black' : 'border-nb-black/20 bg-nb-white'}`}>
         <div className={`flex items-center ${isHorizontal ? 'flex-col gap-1' : 'flex-row gap-2'}`}>
-          <span className={`text-xs font-bold ${fieldMode ? 'text-yellow-400' : 'text-slate-700'}`}>
+          <span className={`text-xs font-bold ${fieldMode ? 'text-nb-yellow' : 'text-nb-black/80'}`}>
             {items.length}
           </span>
-          <span className={`text-[10px] ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+          <span className={`text-[10px] ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
             selected
           </span>
         </div>
@@ -99,32 +108,47 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
               key={item.id}
               ref={isFocused ? focusedRef : undefined}
               onClick={() => onFocus(item)}
-              className={`shrink-0 flex items-center transition-all rounded-lg overflow-hidden cursor-pointer ${
+              className={`shrink-0 flex items-center transition-nb overflow-hidden cursor-pointer border-l-[3px] ${
                 isFocused
-                  ? (fieldMode ? 'bg-yellow-400/10 ring-2 ring-yellow-400' : 'bg-iiif-blue/10 ring-2 ring-iiif-blue')
-                  : 'hover:bg-black/5'
+                  ? 'border-l-mode-accent bg-mode-accent-bg-dark'
+                  : 'border-l-transparent hover:bg-nb-black/5'
               } ${isHorizontal ? 'flex-col p-2 gap-1' : 'flex-row px-2 py-1.5 gap-2 w-full'}`}
             >
               {/* Thumbnail */}
-              <div className={`shrink-0 ${isFocused ? (isHorizontal ? 'w-16 h-16' : 'w-12 h-12') : (isHorizontal ? 'w-14 h-14' : 'w-10 h-10')} transition-all`}>
+              <div className={`shrink-0 ${isFocused ? (isHorizontal ? 'w-16 h-16' : 'w-12 h-12') : (isHorizontal ? 'w-14 h-14' : 'w-10 h-10')} transition-nb`}>
                 <StackedThumbnail
                   urls={thumbUrls}
                   size={isFocused ? 'sm' : 'xs'}
                   icon={config.icon}
-                  className="w-full h-full rounded-md"
+                  className="w-full h-full "
                   cx={cx}
                   fieldMode={fieldMode}
                 />
               </div>
 
+              {/* Status dots */}
+              <div className="flex gap-0.5 mt-0.5">
+                {validationIssues?.[item.id]?.errors ? (
+                  <div className="w-1.5 h-1.5 bg-nb-red" title={`${validationIssues[item.id].errors} errors`} />
+                ) : validationIssues?.[item.id]?.warnings ? (
+                  <div className="w-1.5 h-1.5 bg-nb-orange" title="Warnings" />
+                ) : null}
+                {(annotationCounts?.[item.id] || 0) > 0 && (
+                  <div className="w-1.5 h-1.5 bg-teal-400" title={`${annotationCounts![item.id]} annotations`} />
+                )}
+                {geotagged?.has(item.id) && (
+                  <div className="w-1.5 h-1.5 bg-emerald-400" title="Geotagged" />
+                )}
+              </div>
+
               {/* Label - only show in vertical mode or if focused in horizontal */}
               {(!isHorizontal || isFocused) && (
                 <div className={`text-left min-w-0 ${isFocused ? 'opacity-100' : 'opacity-70'} ${isHorizontal ? 'text-center' : 'flex-1'}`}>
-                  <div className={`text-xs font-medium truncate max-w-[80px] ${fieldMode ? 'text-white' : 'text-slate-700'}`}>
+                  <div className={`text-xs font-medium truncate max-w-[140px] ${fieldMode ? 'text-white' : 'text-nb-black/80'}`}>
                     {getIIIFValue(item.label, 'none') || getIIIFValue(item.label, 'en') || 'Untitled'}
                   </div>
                   {!isHorizontal && (
-                    <div className={`text-[10px] ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <div className={`text-[10px] ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
                       #{index + 1}
                     </div>
                   )}
@@ -135,7 +159,7 @@ export const MultiSelectFilmstrip: React.FC<MultiSelectFilmstripProps> = ({
               {isFocused && isHorizontal && (
                 <Icon
                   name="visibility"
-                  className={`text-xs shrink-0 ${fieldMode ? 'text-yellow-400' : 'text-iiif-blue'}`}
+                  className={`text-xs shrink-0 ${fieldMode ? 'text-nb-yellow' : 'text-iiif-blue'}`}
                 />
               )}
             </div>

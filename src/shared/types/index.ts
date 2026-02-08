@@ -48,7 +48,7 @@ export interface ViewModeConfig {
 export interface AppSettings {
   defaultBaseUrl: string;
   language: string;
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'field' | 'custom';
   fieldMode: boolean;
   abstractionLevel: AbstractionLevel;
   mapConfig: typeof import('@/src/shared/constants').DEFAULT_MAP_CONFIG;
@@ -226,6 +226,10 @@ export interface FileTree {
   iiifBehavior?: string[];
   viewingDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
   iiifBaseUrl?: string;
+  rights?: string;
+  navDate?: string;
+  /** File name within this directory that should be the start canvas */
+  startCanvasName?: string;
 }
 
 export interface IIIFItem {

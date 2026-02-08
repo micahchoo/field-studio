@@ -43,9 +43,9 @@ export interface ValidationTabPanelProps {
  * />
  */
 const defaultCx: ContextualClassNames = {
-  surface: 'bg-white dark:bg-slate-900',
-  text: 'text-slate-900 dark:text-slate-100',
-  accent: 'text-blue-600 dark:text-blue-400',
+  surface: 'bg-nb-white',
+  text: 'text-nb-black/10',
+  accent: 'text-nb-blue',
 };
 
 export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
@@ -91,19 +91,19 @@ export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
       {/* Header with fix all button */}
       {autoFixableCount > 0 && (
         <div
-          className={`flex items-center justify-between p-3 rounded-lg ${
-            fieldMode ? 'bg-slate-900' : 'bg-slate-50'
+          className={`flex items-center justify-between p-3 ${
+            fieldMode ? 'bg-nb-black' : 'bg-nb-white'
           }`}
         >
-          <span className={`text-sm ${fieldMode ? 'text-slate-300' : 'text-slate-600'}`}>
+          <span className={`text-sm ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/60'}`}>
             {autoFixableCount} issue{autoFixableCount !== 1 ? 's' : ''} can be auto-fixed
           </span>
           <Button variant="ghost" size="bare"
             onClick={onFixAll}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 text-sm font-medium flex items-center gap-1.5 ${
               fieldMode
-                ? 'bg-blue-900/50 text-blue-300 hover:bg-blue-900/70'
-                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                ? 'bg-nb-blue/50 text-nb-blue/60 hover:bg-nb-blue/70'
+                : 'bg-nb-blue/20 text-nb-blue hover:bg-nb-blue/30'
             }`}
           >
             <Icon name="auto_fix" className="text-sm" />
@@ -117,7 +117,7 @@ export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
         <section>
           <h3
             className={`text-xs font-bold uppercase tracking-wide mb-2 flex items-center gap-1.5 ${
-              fieldMode ? 'text-red-400' : 'text-red-600'
+              fieldMode ? 'text-nb-red' : 'text-nb-red'
             }`}
           >
             <Icon name="error" className="text-sm" />
@@ -142,7 +142,7 @@ export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
         <section>
           <h3
             className={`text-xs font-bold uppercase tracking-wide mb-2 flex items-center gap-1.5 ${
-              fieldMode ? 'text-amber-400' : 'text-amber-600'
+              fieldMode ? 'text-nb-orange' : 'text-nb-orange'
             }`}
           >
             <Icon name="warning" className="text-sm" />
@@ -167,7 +167,7 @@ export const ValidationTabPanel: React.FC<ValidationTabPanelProps> = ({
         <section>
           <h3
             className={`text-xs font-bold uppercase tracking-wide mb-2 flex items-center gap-1.5 ${
-              fieldMode ? 'text-blue-400' : 'text-blue-600'
+              fieldMode ? 'text-nb-blue' : 'text-nb-blue'
             }`}
           >
             <Icon name="info" className="text-sm" />

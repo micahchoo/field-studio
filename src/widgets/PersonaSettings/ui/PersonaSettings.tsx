@@ -53,44 +53,44 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
   const visibleFieldCount = getVisibleFields(settings.metadataComplexity).length;
 
   return (
-    <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
-        <div className="p-6 border-b flex justify-between items-center bg-slate-50">
+    <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-nb-black/60 backdrop-blur-md">
+      <div className="bg-nb-white w-full max-w-xl shadow-brutal-lg overflow-hidden border border-nb-black/20 animate-in zoom-in-95 ">
+        <div className="p-6 border-b flex justify-between items-center bg-nb-white">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-xl"><Icon name="psychology"/></div>
+             <div className="w-10 h-10 bg-nb-black flex items-center justify-center text-white shadow-brutal"><Icon name="psychology"/></div>
              <div>
-                <h2 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Studio Persona</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Workbench Configuration</p>
+                <h2 className="text-lg font-black text-nb-black uppercase tracking-tighter">Studio Persona</h2>
+                <p className="text-[10px] font-bold text-nb-black/40 uppercase tracking-widest">Global Workbench Configuration</p>
              </div>
           </div>
-          <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400"><Icon name="close"/></Button>
+          <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-nb-cream text-nb-black/40"><Icon name="close"/></Button>
         </div>
 
         <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
             <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Affordance Overrides</label>
+                <label className="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Affordance Overrides</label>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase">Auto-Save Frequency</span>
-                        <select value={settings.autoSaveInterval} onChange={e => onUpdate({ autoSaveInterval: parseInt(e.target.value) })} className="w-full text-xs font-bold p-2 bg-slate-50 border rounded-lg">
+                        <span className="text-[9px] font-bold text-nb-black/50 uppercase">Auto-Save Frequency</span>
+                        <select value={settings.autoSaveInterval} onChange={e => onUpdate({ autoSaveInterval: parseInt(e.target.value) })} className="w-full text-xs font-bold p-2 bg-nb-white border ">
                             <option value={30}>Every 30 seconds</option>
                             <option value={60}>Every minute</option>
                             <option value={300}>Every 5 minutes</option>
                         </select>
                     </div>
                     <div className="space-y-1">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase">Base Hosting URL</span>
-                        <input value={settings.defaultBaseUrl} onChange={e => onUpdate({ defaultBaseUrl: e.target.value })} className="w-full text-xs font-bold p-2 bg-slate-50 border rounded-lg font-mono" placeholder="http://localhost" />
+                        <span className="text-[9px] font-bold text-nb-black/50 uppercase">Base Hosting URL</span>
+                        <input value={settings.defaultBaseUrl} onChange={e => onUpdate({ defaultBaseUrl: e.target.value })} className="w-full text-xs font-bold p-2 bg-nb-white border font-mono" placeholder="http://localhost" />
                     </div>
                 </div>
             </section>
 
-            <section className="pt-6 border-t border-slate-100">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Metadata Complexity</label>
-                <div className="bg-slate-50 rounded-xl border p-4 space-y-4">
+            <section className="pt-6 border-t border-nb-black/10">
+                <label className="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Metadata Complexity</label>
+                <div className="bg-nb-white border p-4 space-y-4">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Field Visibility Level</span>
-                        <span className="text-[9px] font-mono bg-iiif-blue/10 text-iiif-blue px-2 py-0.5 rounded-full">{visibleFieldCount} fields</span>
+                        <span className="text-xs font-bold text-nb-black/80">Field Visibility Level</span>
+                        <span className="text-[9px] font-mono bg-iiif-blue/10 text-iiif-blue px-2 py-0.5 ">{visibleFieldCount} fields</span>
                     </div>
 
                     {/* Slider Track */}
@@ -100,10 +100,10 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                                 <Button variant="ghost" size="bare"
                                     key={c.level}
                                     onClick={() => onUpdate({ metadataComplexity: c.level })}
-                                    className={`text-[9px] font-black uppercase tracking-tight transition-colors ${
+                                    className={`text-[9px] font-black uppercase tracking-tight transition-nb ${
                                         settings.metadataComplexity === c.level
                                             ? 'text-iiif-blue'
-                                            : 'text-slate-400 hover:text-slate-600'
+                                            : 'text-nb-black/40 hover:text-nb-black/60'
                                     }`}
                                 >
                                     {c.label}
@@ -112,9 +112,9 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                         </div>
 
                         {/* Custom Slider */}
-                        <div className="relative h-2 bg-slate-200 rounded-full">
+                        <div className="relative h-2 bg-nb-cream ">
                             <div
-                                className="absolute h-2 bg-gradient-to-r from-iiif-blue to-blue-400 rounded-full transition-all"
+                                className="absolute h-2 bg-gradient-to-r from-iiif-blue to-blue-400 transition-nb"
                                 style={{ width: `${((currentComplexityIndex + 1) / complexityLevels.length) * 100}%` }}
                             />
                             <input
@@ -128,76 +128,76 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
                             />
                             {/* Slider Thumb */}
                             <div
-                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-iiif-blue rounded-full shadow-md transition-all pointer-events-none"
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-nb-white border-2 border-iiif-blue shadow-brutal-sm transition-nb pointer-events-none"
                                 style={{ left: `calc(${(currentComplexityIndex / 2) * 100}% - 8px)` }}
                             />
                         </div>
 
                         {/* Current Level Description */}
-                        <p className="text-[10px] text-slate-500 mt-3 text-center">
+                        <p className="text-[10px] text-nb-black/50 mt-3 text-center">
                             {complexityLevels[currentComplexityIndex]?.desc}
                         </p>
                     </div>
 
                     {/* Field Preview */}
-                    <div className="pt-3 border-t border-slate-200">
-                        <span className="text-[9px] font-black text-slate-400 uppercase block mb-2">Visible Fields Preview</span>
+                    <div className="pt-3 border-t border-nb-black/20">
+                        <span className="text-[9px] font-black text-nb-black/40 uppercase block mb-2">Visible Fields Preview</span>
                         <div className="flex flex-wrap gap-1">
                             {getVisibleFields(settings.metadataComplexity).slice(0, 8).map(field => (
-                                <span key={field.key} className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-600">
+                                <span key={field.key} className="text-[8px] font-bold bg-nb-white border px-1.5 py-0.5 text-nb-black/60">
                                     {field.label}
                                 </span>
                             ))}
                             {visibleFieldCount > 8 && (
-                                <span className="text-[8px] font-bold text-slate-400">+{visibleFieldCount - 8} more</span>
+                                <span className="text-[8px] font-bold text-nb-black/40">+{visibleFieldCount - 8} more</span>
                             )}
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="pt-6 border-t border-slate-100 space-y-3">
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+            <section className="pt-6 border-t border-nb-black/10 space-y-3">
+                <div className="flex items-center justify-between p-3 bg-nb-white border">
                     <div>
-                        <span className="text-xs font-bold text-slate-700 block">Technical Transparency</span>
-                        <span className="text-[9px] text-slate-400 uppercase font-black">IDs & JSON-LD Visible</span>
+                        <span className="text-xs font-bold text-nb-black/80 block">Technical Transparency</span>
+                        <span className="text-[9px] text-nb-black/40 uppercase font-black">IDs & JSON-LD Visible</span>
                     </div>
-                    <input type="checkbox" checked={settings.showTechnicalIds} onChange={e => onUpdate({ showTechnicalIds: e.target.checked })} className="rounded text-iiif-blue w-5 h-5"/>
+                    <input type="checkbox" checked={settings.showTechnicalIds} onChange={e => onUpdate({ showTechnicalIds: e.target.checked })} className="text-iiif-blue w-5 h-5"/>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+                <div className="flex items-center justify-between p-3 bg-nb-white border">
                     <div>
-                        <span className="text-xs font-bold text-slate-700 block">Field Contrast Mode</span>
-                        <span className="text-[9px] text-slate-400 uppercase font-black">Optimized for outdoor use</span>
+                        <span className="text-xs font-bold text-nb-black/80 block">Field Contrast Mode</span>
+                        <span className="text-[9px] text-nb-black/40 uppercase font-black">Optimized for outdoor use</span>
                     </div>
-                    <input type="checkbox" checked={settings.fieldMode} onChange={e => onUpdate({ fieldMode: e.target.checked })} className="rounded text-iiif-blue w-5 h-5"/>
+                    <input type="checkbox" checked={settings.fieldMode} onChange={e => onUpdate({ fieldMode: e.target.checked })} className="text-iiif-blue w-5 h-5"/>
                 </div>
             </section>
 
-            <section className="pt-6 border-t border-slate-100 space-y-3">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Developer Tools</label>
-                <div className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${adminMode ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
+            <section className="pt-6 border-t border-nb-black/10 space-y-3">
+                <label className="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Developer Tools</label>
+                <div className={`flex items-center justify-between p-3 border transition-nb ${adminMode ? 'bg-nb-purple/5 border-nb-purple/20' : 'bg-nb-white border-nb-black/20'}`}>
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${adminMode ? 'bg-purple-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                        <div className={`p-2 ${adminMode ? 'bg-nb-purple text-white' : 'bg-nb-cream text-nb-black/50'}`}>
                             <Icon name="admin_panel_settings"/>
                         </div>
                         <div>
-                            <span className={`text-xs font-bold block ${adminMode ? 'text-purple-700' : 'text-slate-700'}`}>Admin Mode</span>
-                            <span className="text-[9px] text-slate-400 uppercase font-black">Access dependency explorer & tools</span>
+                            <span className={`text-xs font-bold block ${adminMode ? 'text-nb-purple' : 'text-nb-black/80'}`}>Admin Mode</span>
+                            <span className="text-[9px] text-nb-black/40 uppercase font-black">Access dependency explorer & tools</span>
                         </div>
                     </div>
                     <input 
                         type="checkbox" 
                         checked={adminMode} 
                         onChange={toggleAdminMode} 
-                        className="rounded text-purple-500 w-5 h-5"
+                        className="text-nb-purple w-5 h-5"
                     />
                 </div>
                 {adminMode && (
-                    <div className="p-3 bg-purple-50/50 rounded-lg border border-purple-100">
-                        <p className="text-[10px] text-purple-600 mb-2">
+                    <div className="p-3 bg-nb-purple/5 border border-nb-purple/10">
+                        <p className="text-[10px] text-nb-purple mb-2">
                             Admin mode is enabled. You can now access:
                         </p>
-                        <ul className="text-[10px] text-purple-600 space-y-1">
+                        <ul className="text-[10px] text-nb-purple space-y-1">
                             <li className="flex items-center gap-1">
                                 <Icon name="account_tree" className="text-xs"/> 
                                 Dependency Explorer (Cmd+K → "Dependency Explorer")
@@ -210,8 +210,8 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
             <HelpResetSection />
         </div>
 
-        <div className="p-6 bg-slate-50 border-t flex justify-end">
-            <Button variant="ghost" size="bare" onClick={onClose} className="bg-slate-800 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl">Commit Environment Profile</Button>
+        <div className="p-6 bg-nb-white border-t flex justify-end">
+            <Button variant="ghost" size="bare" onClick={onClose} className="bg-nb-black text-white px-10 py-3 font-black uppercase tracking-widest text-xs hover:bg-nb-black transition-nb shadow-brutal">Commit Environment Profile</Button>
         </div>
       </div>
     </div>
@@ -239,34 +239,34 @@ const HelpResetSection: React.FC = () => {
     };
 
     return (
-        <section className="pt-6 border-t border-slate-100">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Help & Tooltips</label>
-            <div className="bg-slate-50 rounded-xl border p-4 space-y-4">
+        <section className="pt-6 border-t border-nb-black/10">
+            <label className="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Help & Tooltips</label>
+            <div className="bg-nb-white border p-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <span className="text-xs font-bold text-slate-700 block">Contextual Help</span>
-                        <span className="text-[9px] text-slate-400">{tipCount} tips dismissed</span>
+                        <span className="text-xs font-bold text-nb-black/80 block">Contextual Help</span>
+                        <span className="text-[9px] text-nb-black/40">{tipCount} tips dismissed</span>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="ghost" size="bare"
                             onClick={handleResetTooltips}
-                            className="text-[10px] font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            className="text-[10px] font-bold text-nb-black/50 hover:text-nb-black/80 px-3 py-1.5 hover:bg-nb-cream transition-nb"
                         >
                             Reset Tooltips
                         </Button>
                         <Button variant="ghost" size="bare"
                             onClick={handleReset}
-                            className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
+                            className={`text-[10px] font-bold px-3 py-1.5 transition-nb ${
                                 resetConfirm
-                                    ? 'bg-red-500 text-white'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-nb-red text-white'
+                                    : 'text-nb-black/50 hover:text-nb-black/80 hover:bg-nb-cream'
                             }`}
                         >
                             {resetConfirm ? 'Click to Confirm' : 'Reset All Help'}
                         </Button>
                     </div>
                 </div>
-                <p className="text-[10px] text-slate-400 leading-relaxed">
+                <p className="text-[10px] text-nb-black/40 leading-relaxed">
                     Show all help tooltips and welcome messages again. Useful if you want a refresher on features.
                 </p>
             </div>

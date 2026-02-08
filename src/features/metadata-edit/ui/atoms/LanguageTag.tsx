@@ -40,8 +40,8 @@ export const LanguageTag: React.FC<LanguageTagProps> = ({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className={`w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-slate-700 ${
-        disabled ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''
+      className={`w-full px-2 py-1.5 text-sm border border-nb-black/20 focus:ring-2 focus:ring-nb-blue focus:border-nb-blue outline-none bg-nb-white text-nb-black/80 ${
+        disabled ? 'opacity-50 cursor-not-allowed bg-nb-cream' : ''
       }`}
     >
       {languages.map((lang) => (

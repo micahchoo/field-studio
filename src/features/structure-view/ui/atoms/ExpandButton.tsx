@@ -29,7 +29,7 @@ export const ExpandButton: React.FC<ExpandButtonProps> = ({
     <Button variant="ghost" size="bare"
       type="button"
       onClick={onClick}
-      className={`w-5 h-5 inline-flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${className}`}
+      className={`w-5 h-5 inline-flex items-center justify-center hover:bg-nb-cream transition-nb ${className}`}
       aria-label={isExpanded ? 'Collapse' : 'Expand'}
     >
       <svg

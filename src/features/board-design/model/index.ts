@@ -9,6 +9,7 @@
 
 import { getIIIFValue, type IIIFItem, type IIIFManifest } from '@/src/shared/types';
 import { canvas, manifest } from '@/src/entities';
+import { resolveHierarchicalThumb } from '@/utils/imageSourceResolver';
 
 // Re-export entity models for convenience
 export { manifest, canvas };
@@ -54,9 +55,17 @@ export interface Connection {
   color?: string;
 }
 
+export interface BoardGroup {
+  id: string;
+  label: string;
+  itemIds: string[];
+  color?: string;
+}
+
 export interface BoardState {
   items: BoardItem[];
   connections: Connection[];
+  groups: BoardGroup[];
   viewport: {
     x: number;
     y: number;
@@ -132,7 +141,7 @@ export const createBoardItem = (
   position: { x: number; y: number },
   size: { w: number; h: number } = { w: 200, h: 150 }
 ): BoardItem => ({
-  id: `board-item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  id: `board-item-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`,
   resourceId: resource.id,
   x: position.x,
   y: position.y,
@@ -140,6 +149,7 @@ export const createBoardItem = (
   h: size.h,
   resourceType: resource.type,
   label: getIIIFValue(resource.label) || resource.id,
+  blobUrl: resolveHierarchicalThumb(resource, 200) || undefined,
 });
 
 /**
@@ -151,7 +161,7 @@ export const createConnection = (
   type: ConnectionType = 'associated',
   options: Partial<Omit<Connection, 'id' | 'fromId' | 'toId' | 'type'>> = {}
 ): Connection => ({
-  id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  id: `conn-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`,
   fromId,
   toId,
   type,
@@ -421,7 +431,7 @@ export const exportToManifest = (
   // Add structures (Ranges) from grouped items
   if (options?.groups && options.groups.length > 0) {
     (resultManifest as any).structures = options.groups.map((group, gi) => ({
-      id: `${title}-range-${gi}`,
+      id: `urn:field-studio:range:${crypto.randomUUID().slice(0, 8)}-${gi}`,
       type: 'Range',
       label: { en: [group.label] },
       items: group.itemIds
@@ -431,19 +441,40 @@ export const exportToManifest = (
     }));
   }
 
-  // Add linking annotations for connections
+  // Helper: resolve internal board item ID to IIIF resource ID
+  const resolveToResource = (boardItemId: string) =>
+    state.items.find(i => i.id === boardItemId)?.resourceId || boardItemId;
+
+  // Add linking annotations for connections (using resource IDs, not internal IDs)
   if (state.connections.length > 0) {
-    const annotations = state.connections.map((conn) => ({
-      type: 'Annotation' as const,
-      id: conn.id,
-      motivation: connectionTypeToMotivation(conn.type),
-      body: {
-        type: 'SpecificResource',
-        source: conn.toId,
-      },
-      target: conn.fromId,
-      label: conn.label ? { en: [conn.label] } : undefined,
-    }));
+    const annotations = state.connections.map((conn) => {
+      const annotation: Record<string, unknown> = {
+        type: 'Annotation' as const,
+        id: conn.id,
+        motivation: connectionTypeToMotivation(conn.type),
+        body: {
+          type: 'SpecificResource',
+          source: resolveToResource(conn.toId),
+        },
+        target: resolveToResource(conn.fromId),
+        label: conn.label ? { en: [conn.label] } : undefined,
+      };
+
+      // Serialize anchor/style/color metadata
+      const hasMetadata = conn.fromAnchor || conn.toAnchor || conn.style || conn.color;
+      if (hasMetadata) {
+        annotation.service = [{
+          id: `${conn.id}/connection-meta`,
+          type: 'ConnectionMetadata',
+          ...(conn.fromAnchor && { fromAnchor: conn.fromAnchor }),
+          ...(conn.toAnchor && { toAnchor: conn.toAnchor }),
+          ...(conn.style && { style: conn.style }),
+          ...(conn.color && { color: conn.color }),
+        }];
+      }
+
+      return annotation;
+    });
 
     (resultManifest as any).annotations = [
       {
@@ -479,6 +510,7 @@ const connectionTypeToMotivation = (type: ConnectionType): string => {
 export const createInitialBoardState = (): BoardState => ({
   items: [],
   connections: [],
+  groups: [],
   viewport: {
     x: 0,
     y: 0,

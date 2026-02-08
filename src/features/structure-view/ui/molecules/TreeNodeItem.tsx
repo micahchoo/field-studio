@@ -123,14 +123,14 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       style={style}
       className={`
         relative flex items-center gap-1 px-2 py-1.5 cursor-pointer
-        border-b border-slate-100 dark:border-slate-800
-        hover:bg-slate-50 dark:hover:bg-slate-800
-        ${node.isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
+        border-b border-nb-black/10
+        hover:bg-nb-cream
+        ${node.isSelected ? 'bg-nb-blue/10' : ''}
         ${node.relationship === 'reference' ? 'italic' : ''}
         ${node.isDragging ? 'opacity-40' : ''}
-        ${effectiveIsDropOver && canDrop ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}
-        transition-colors duration-150
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset
+        ${effectiveIsDropOver && canDrop ? 'bg-nb-blue/10' : ''}
+        transition-nb 
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nb-blue focus-visible:ring-inset
       `}
       onClick={handleClick}
       draggable
@@ -156,10 +156,10 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         type={node.type}
         className={`
           flex-shrink-0 ml-1
-          ${node.type === 'Collection' ? 'text-blue-500' : ''}
-          ${node.type === 'Manifest' ? 'text-green-500' : ''}
-          ${node.type === 'Canvas' ? 'text-purple-500' : ''}
-          ${node.type === 'Range' ? 'text-orange-500' : ''}
+          ${node.type === 'Collection' ? 'text-nb-blue' : ''}
+          ${node.type === 'Manifest' ? 'text-nb-green' : ''}
+          ${node.type === 'Canvas' ? 'text-nb-purple' : ''}
+          ${node.type === 'Range' ? 'text-nb-orange' : ''}
         `}
       />
 
@@ -172,14 +172,14 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       />
 
       {node.childCount > 0 && (
-        <span className="text-xs text-slate-400 dark:text-slate-500 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">
+        <span className="text-xs text-nb-black/40 px-1.5 py-0.5 bg-nb-cream ">
           {node.childCount}
         </span>
       )}
 
       {node.relationship === 'reference' && (
         <span
-          className="text-xs text-slate-400 dark:text-slate-500 ml-1"
+          className="text-xs text-nb-black/40 ml-1"
           title="Reference (not owned)"
         >
           ↗

@@ -44,14 +44,14 @@ export interface ViewToggleProps {
  * ViewToggle Molecule
  *
  * @example
- * const [mode, setMode] = useState<'grid' | 'list'>('grid');
+ * const [mode, setMode] = useState<'grid' |'list'>('grid');
  * <ViewToggle
  *   value={mode}
  *   onChange={setMode}
  *   options={[
- *     { value: 'grid', icon: 'grid_view', label: 'Grid' },
- *     { value: 'list', icon: 'list', label: 'List' },
- *     { value: 'map', icon: 'map', label: 'Map' },
+ *     { value:'grid', icon:'grid_view', label:'Grid' },
+ *     { value:'list', icon:'list', label:'List' },
+ *     { value:'map', icon:'map', label:'Map' },
  *   ]}
  * />
  */
@@ -59,8 +59,8 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
   value,
   onChange,
   options,
-  className = '',
-  ariaLabel = 'View toggle',
+  className ='',
+  ariaLabel ='View toggle',
   cx = {},
   fieldMode = false,
 }) => {
@@ -77,7 +77,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
 
   return (
     <div
-      className={`flex p-1 rounded-md gap-1 ${cx.subtleBg} ${className}`}
+      className={`flex p-1 gap-1 ${cx.subtleBg} ${className}`}
       role="group"
       aria-label={ariaLabel}
     >
@@ -94,14 +94,14 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
             variant="ghost"
             size="sm"
             className={`
-              p-2 rounded transition-all flex items-center justify-center
+              p-2 transition-nb flex items-center justify-center
               focus:outline-none focus:ring-2 focus:ring-offset-1
               ${isSelected
-                // TODO(tokens): add cx.selectedChip = bg-yellow-400 text-black / bg-white text-iiif-blue
-                ? (fieldMode ? 'bg-yellow-400 text-black font-bold shadow-sm' : 'bg-white text-iiif-blue shadow-sm')
+                // TODO(tokens): add cx.selectedChip = bg-nb-yellow text-black / bg-nb-white text-iiif-blue
+                ? (fieldMode ?'bg-nb-yellow text-black font-bold shadow-brutal-sm' :'bg-nb-white text-iiif-blue shadow-brutal-sm')
                 : cx.iconButton
               }
-            `}
+`}
           >
             <Icon name={option.icon} className="text-base" aria-hidden="true" />
           </Button>

@@ -190,15 +190,15 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
     <div
       className={`
         flex flex-col h-full
-        bg-white dark:bg-stone-900
-        border border-stone-200 dark:border-stone-700 rounded-xl overflow-hidden
-        shadow-sm
+        bg-nb-black
+        border border-nb-black/20  overflow-hidden
+        shadow-brutal-sm
         ${className}
       `}
     >
       {/* Search Bar - refined with archival aesthetic */}
       {FEATURES.TREE_SEARCH && (
-        <div className="p-4 border-b border-stone-200 dark:border-stone-700 bg-stone-50/30 dark:bg-stone-900/30">
+        <div className="p-4 border-b border-nb-black/20 bg-nb-black/30">
           <TreeSearchBar
             query={filterQuery}
             onQueryChange={setFilterQuery}
@@ -246,7 +246,7 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
 
       {/* Status bar - abstraction-aware, reduced visual noise */}
       {treeStats && (
-        <div className="px-4 py-2.5 border-t border-stone-200 dark:border-stone-700 bg-stone-50/80 dark:bg-stone-900/80 text-sm text-stone-500 dark:text-stone-400 flex items-center justify-between">
+        <div className="px-4 py-2.5 border-t border-nb-black/20 bg-nb-black/80 text-sm text-nb-black/50 flex items-center justify-between">
           <span className="font-serif">
             {(() => {
               // Convert technical types to friendly counts
@@ -264,7 +264,7 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
             })()}
           </span>
           {filterQuery && (
-            <span className="text-amber-700 dark:text-amber-400 font-medium">
+            <span className="text-nb-orange font-medium">
               Showing {matchCount} of {flattenedNodes.length}
             </span>
           )}

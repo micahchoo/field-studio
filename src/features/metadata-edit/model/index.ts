@@ -61,7 +61,7 @@ export interface FlatItem {
 /**
  * Resource type tabs for filtering
  */
-export type ResourceTab = 'All' | 'Collection' | 'Manifest' | 'Canvas';
+export type ResourceTab = 'All' | 'All Entities' | 'Collection' | 'Manifest' | 'Canvas';
 
 /**
  * Suggested Dublin Core properties for metadata editing
@@ -102,8 +102,11 @@ export const flattenIIIFItem = (
 ): FlatItem[] => {
   const results: FlatItem[] = [];
 
+  const INTERNAL_TYPES = new Set(['AnnotationPage', 'Annotation', 'ContentResource']);
+
   const shouldInclude = (type: string) => {
-    if (typeFilter === 'All') return true;
+    if (typeFilter === 'All Entities') return true;
+    if (typeFilter === 'All') return !INTERNAL_TYPES.has(type);
     return type === typeFilter;
   };
 

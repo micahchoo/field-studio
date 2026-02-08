@@ -41,12 +41,12 @@ export const TechnicalProperty: React.FC<TechnicalPropertyProps> = ({
   if (badge) {
     return (
       <div className={`flex justify-between items-center ${className}`}>
-        <span className={`text-[10px] font-bold uppercase ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+        <span className={`text-[10px] font-bold uppercase ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
           {label}
         </span>
         <span
-          className={`text-xs font-mono px-2 py-0.5 rounded ${
-            fieldMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'
+          className={`text-xs font-mono px-2 py-0.5 ${
+            fieldMode ? 'bg-nb-black text-nb-black/40' : 'bg-nb-cream text-nb-black/60'
           }`}
         >
           {value}
@@ -57,11 +57,11 @@ export const TechnicalProperty: React.FC<TechnicalPropertyProps> = ({
 
   return (
     <div className={`space-y-1 ${className}`}>
-      <div className={`text-[10px] font-bold uppercase ${fieldMode ? 'text-slate-500' : 'text-slate-400'}`}>
+      <div className={`text-[10px] font-bold uppercase ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
         {label}
       </div>
       <div
-        className={`text-xs font-mono break-all ${fieldMode ? 'text-slate-300' : 'text-slate-700'}`}
+        className={`text-xs font-mono break-all ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/80'}`}
         title={value}
       >
         {value}
