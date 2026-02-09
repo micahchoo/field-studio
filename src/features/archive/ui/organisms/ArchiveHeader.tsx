@@ -16,7 +16,7 @@ import { SearchField } from '@/src/shared/ui/molecules/SearchField';
 import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
-import { type ArchiveViewMode, VIEW_MODE_OPTIONS } from '../../model';
+import { type ArchiveViewMode, type SortDirection, type SortMode, SORT_OPTIONS, VIEW_MODE_OPTIONS } from '../../model';
 
 export interface ArchiveHeaderProps {
   /** Current search/filter value */
@@ -66,6 +66,18 @@ export interface ArchiveHeaderProps {
   onToggleInspectorPanel?: () => void;
   /** Whether a canvas is currently selected */
   hasCanvasSelected?: boolean;
+  /** Current sort field */
+  sortBy?: SortMode;
+  /** Current sort direction */
+  sortDirection?: SortDirection;
+  /** Called when sort field changes */
+  onSortChange?: (sort: SortMode) => void;
+  /** Called when sort direction changes */
+  onSortDirectionChange?: (dir: SortDirection) => void;
+  /** Whether group-by-manifest is active */
+  groupByManifest?: boolean;
+  /** Toggle group-by-manifest */
+  onToggleGroupByManifest?: () => void;
 }
 
 /**
@@ -110,6 +122,12 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
   onToggleViewerPanel,
   onToggleInspectorPanel,
   hasCanvasSelected = false,
+  sortBy = 'name',
+  sortDirection = 'asc',
+  onSortChange,
+  onSortDirectionChange,
+  groupByManifest = false,
+  onToggleGroupByManifest,
 }) => {
   const hasSelection = selectedCount > 0;
   // Show reorder mode indicator when viewer is closed but canvas is selected
@@ -220,6 +238,55 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
               cx={cx}
               fieldMode={fieldMode}
             />
+          )}
+          {/* Sort controls */}
+          {!isMobile && (
+            <div className="flex items-center gap-1">
+              {SORT_OPTIONS.map((opt) => (
+                <Button
+                  key={opt.value}
+                  variant="ghost"
+                  size="bare"
+                  onClick={() => {
+                    if (sortBy === opt.value) {
+                      onSortDirectionChange?.(sortDirection === 'asc' ? 'desc' : 'asc');
+                    } else {
+                      onSortChange?.(opt.value);
+                      onSortDirectionChange?.('asc');
+                    }
+                  }}
+                  className={`px-2 py-1 text-xs font-medium flex items-center gap-0.5 transition-nb ${
+                    sortBy === opt.value
+                      ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/20 text-nb-blue'
+                      : fieldMode ? 'text-nb-yellow/60 hover:text-nb-yellow' : 'text-nb-black/40 hover:text-nb-black/70'
+                  }`}
+                  title={`Sort by ${opt.label}`}
+                >
+                  {opt.label}
+                  {sortBy === opt.value && (
+                    <Icon
+                      name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                      className="text-xs"
+                    />
+                  )}
+                </Button>
+              ))}
+              {onToggleGroupByManifest && (
+                <Button
+                  variant="ghost"
+                  size="bare"
+                  onClick={onToggleGroupByManifest}
+                  className={`px-2 py-1 text-xs font-medium flex items-center gap-0.5 transition-nb ${
+                    groupByManifest
+                      ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/20 text-nb-blue'
+                      : fieldMode ? 'text-nb-yellow/60 hover:text-nb-yellow' : 'text-nb-black/40 hover:text-nb-black/70'
+                  }`}
+                  title={groupByManifest ? 'Ungroup' : 'Group by Manifest'}
+                >
+                  <Icon name="auto_stories" className="text-sm" />
+                </Button>
+              )}
+            </div>
           )}
           <ViewToggle
             value={view}

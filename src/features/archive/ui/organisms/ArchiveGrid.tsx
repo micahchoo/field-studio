@@ -16,14 +16,19 @@
  * - Refined typography
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getIIIFValue, type IIIFCanvas } from '@/src/shared/types';
+import { type ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 import { StackedThumbnail } from '@/src/shared/ui/molecules/StackedThumbnail';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
 import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 import { getFileDNA } from '../../model';
+import { BlurUpThumbnail } from '../molecules/BlurUpThumbnail';
+import { useKeyboardNav } from '@/src/shared/lib/hooks/useKeyboardNav';
+import { HoverPreviewCard } from '../molecules/HoverPreviewCard';
+import { useGridLassoSelect } from '../../hooks/useGridLassoSelect';
 
 export type GridDensity = 'compact' | 'comfortable' | 'spacious';
 
@@ -82,6 +87,12 @@ export interface ArchiveGridProps {
   onReorder?: (fromIndex: number, toIndex: number) => void;
   /** IIIF viewingDirection from manifest */
   viewingDirection?: ViewingDirection;
+  /** Validation issues keyed by item ID */
+  validationIssues?: Record<string, ValidationIssue[]>;
+  /** Open/activate handler (Enter key) */
+  onOpen?: (id: string) => void;
+  /** Lasso selection handler (multiple IDs selected) */
+  onLassoSelect?: (ids: string[]) => void;
 }
 
 /**
@@ -124,6 +135,9 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
   reorderEnabled = false,
   onReorder,
   viewingDirection = 'left-to-right',
+  validationIssues,
+  onOpen,
+  onLassoSelect,
 }) => {
   // Resolve CSS direction from IIIF viewingDirection
   const isRTL = viewingDirection === 'right-to-left';
@@ -154,6 +168,75 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [badgeTooltip, setBadgeTooltip] = useState<{text: string; x: number; y: number} | null>(null);
+
+  // Hover preview state
+  const [hoverPreview, setHoverPreview] = useState<{ canvas: IIIFCanvas; rect: DOMRect } | null>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleHoverEnter = useCallback((asset: IIIFCanvas, e: React.MouseEvent) => {
+    setHoveredId(asset.id);
+    const target = (e.currentTarget as HTMLElement);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      setHoverPreview({ canvas: asset, rect: target.getBoundingClientRect() });
+    }, 300);
+  }, []);
+
+  const handleHoverLeave = useCallback(() => {
+    setHoveredId(null);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = null;
+    setHoverPreview(null);
+  }, []);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
+
+  // Lasso selection
+  const { isLassoing, lassoRect, lassoHandlers } = useGridLassoSelect({
+    disabled: reorderEnabled,
+    onSelect: onLassoSelect,
+  });
+
+  // Keyboard navigation
+  const itemIds = items.map(i => i.id);
+  const handleKbSelect = useCallback((id: string) => {
+    onToggleSelect?.(id);
+  }, [onToggleSelect]);
+
+  const handleKbActivate = useCallback((id: string) => {
+    onOpen?.(id);
+  }, [onOpen]);
+
+  const customKeyHandler = useCallback((e: KeyboardEvent, currentId: string | null) => {
+    if (e.key === ' ' && currentId) {
+      handleKbSelect(currentId);
+      return true;
+    }
+    return false;
+  }, [handleKbSelect]);
+
+  const { getItemProps: getNavItemProps, registerItem, focusedId } = useKeyboardNav(
+    itemIds,
+    {
+      mode: 'grid',
+      columns,
+      wrap: false,
+      onActivate: handleKbActivate,
+      onKeyDown: customKeyHandler,
+    }
+  );
+
+  // Scroll focused item into view
+  useEffect(() => {
+    if (!focusedId) return;
+    const el = document.querySelector(`[data-nav-id="${focusedId}"]`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [focusedId]);
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -224,10 +307,16 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
     const isDragging = draggedIndex === itemIndex;
     const isDropTarget = dropTargetIndex === itemIndex && draggedIndex !== null && draggedIndex !== itemIndex;
 
+    const navProps = getNavItemProps(asset.id, itemIndex);
+    const isFocused = focusedId === asset.id;
+
     return (
       <div
         key={asset.id}
         data-grid-item
+        data-item-id={asset.id}
+        ref={(el) => registerItem(asset.id, el)}
+        {...navProps}
         draggable={reorderEnabled && !!onReorder}
         onDragStart={(e) => handleDragStart(e, itemIndex)}
         onDragOver={(e) => handleDragOver(e, itemIndex)}
@@ -236,7 +325,7 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
         onDragEnd={handleDragEnd}
         onContextMenu={(e) => onContextMenu(e, asset.id)}
         className={`
-          group relative  transition-nb 
+          group relative  transition-nb outline-none
           ${reorderEnabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
           ${paddingClasses[density || 'comfortable']}
           ${isDragging ? 'opacity-50 scale-95' : ''}
@@ -246,19 +335,33 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
               : 'ring-2 ring-nb-blue ring-offset-2'
             : ''
           }
+          ${isFocused && !isDropTarget
+            ? fieldMode
+              ? 'ring-2 ring-offset-1 ring-nb-yellow'
+              : 'ring-2 ring-offset-1 ring-nb-blue'
+            : ''
+          }
           ${selected
             ? 'bg-nb-orange/20 border-2 border-nb-orange shadow-brutal-sm'
             : 'bg-nb-black border border-nb-black/20 hover:shadow-brutal hover:border-nb-black/20'
           }
         `}
         onClick={(e) => onItemClick(e, asset)}
-        onMouseEnter={() => setHoveredId(asset.id)}
-        onMouseLeave={() => setHoveredId(null)}
+        onMouseEnter={(e) => handleHoverEnter(asset, e)}
+        onMouseLeave={handleHoverLeave}
       >
         <div className="aspect-square overflow-hidden flex items-center justify-center mb-2 relative bg-nb-black">
           {/* Selection checkmark overlay */}
           {selected && (
             <div className="absolute inset-0 bg-nb-orange/10 z-10 pointer-events-none" />
+          )}
+          {/* Validation status dot */}
+          {validationIssues?.[asset.id] && (
+            <div className="absolute top-2 left-2 z-20" title={`${validationIssues[asset.id].length} issue(s)`}>
+              <div className={`w-2.5 h-2.5 rounded-full shadow-brutal-sm ${
+                validationIssues[asset.id].some(i => i.level === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
+              }`} />
+            </div>
           )}
           {/* Checkmark button - clicking this toggles multiselect */}
           <Button variant="ghost" size="bare"
@@ -286,14 +389,24 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
             </svg>
           </Button>
 
-          <StackedThumbnail
-            urls={thumbUrls}
-            size="lg"
-            className="w-full h-full"
-            icon={config.icon}
-            cx={cx as any}
-            fieldMode={fieldMode}
-          />
+          {thumbUrls.length <= 1 ? (
+            <BlurUpThumbnail
+              lowResUrl={resolveHierarchicalThumbs(asset, 50)[0] || ''}
+              highResUrl={thumbUrls[0] || ''}
+              fallbackIcon={config.icon}
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          ) : (
+            <StackedThumbnail
+              urls={thumbUrls}
+              size="lg"
+              className="w-full h-full"
+              icon={config.icon}
+              cx={cx as any}
+              fieldMode={fieldMode}
+            />
+          )}
 
           {/* Metadata badges with tooltips */}
           <div className="absolute bottom-2 right-2 flex gap-1">
@@ -360,7 +473,22 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" {...lassoHandlers}>
+      {/* Lasso selection overlay */}
+      {isLassoing && lassoRect && (
+        <svg className="fixed inset-0 z-40 pointer-events-none" style={{ width: '100vw', height: '100vh' }}>
+          <rect
+            x={lassoRect.x}
+            y={lassoRect.y}
+            width={lassoRect.width}
+            height={lassoRect.height}
+            fill={fieldMode ? 'rgba(234,179,8,0.15)' : 'rgba(59,130,246,0.15)'}
+            stroke={fieldMode ? '#eab308' : '#3b82f6'}
+            strokeDasharray="4 2"
+            strokeWidth={1.5}
+          />
+        </svg>
+      )}
       {/* Density controls toolbar */}
       <div className="flex items-center justify-end gap-2 mb-4">
         {directionLabel && (
@@ -437,6 +565,16 @@ export const ArchiveGrid: React.FC<ArchiveGridProps> = ({
           {badgeTooltip.text}
         </div>
       )}
+
+      {/* Hover preview card */}
+      <HoverPreviewCard
+        canvas={hoverPreview?.canvas || null}
+        visible={!!hoverPreview}
+        anchorRect={hoverPreview?.rect || null}
+        validationIssues={hoverPreview?.canvas ? validationIssues?.[hoverPreview.canvas.id] : undefined}
+        cx={cx}
+        fieldMode={fieldMode}
+      />
     </div>
   );
 };

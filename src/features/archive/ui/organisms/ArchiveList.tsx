@@ -14,6 +14,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { getIIIFValue, type IIIFCanvas } from '@/src/shared/types';
+import { type ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { EMPTY_STATES } from '@/src/shared/constants/ui';
@@ -57,6 +58,8 @@ export interface ArchiveListProps {
   reorderEnabled?: boolean;
   /** Callback when items are reordered */
   onReorder?: (fromIndex: number, toIndex: number) => void;
+  /** Validation issues keyed by item ID */
+  validationIssues?: Record<string, ValidationIssue[]>;
 }
 
 // Column configuration
@@ -98,6 +101,7 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
   activeItem,
   reorderEnabled = false,
   onReorder,
+  validationIssues,
 }) => {
   const [sortColumn, setSortColumn] = useState<SortColumn>('label');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -320,6 +324,14 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
                       <Icon
                         name="check_circle"
                         className={`text-sm ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}
+                      />
+                    )}
+                    {validationIssues?.[canvas.id] && (
+                      <div
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          validationIssues[canvas.id].some(i => i.level === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
+                        }`}
+                        title={`${validationIssues[canvas.id].length} issue(s)`}
                       />
                     )}
                     <span className="font-medium truncate">{label}</span>

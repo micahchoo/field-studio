@@ -51,19 +51,24 @@ export const filterByTerm = (canvases: IIIFCanvas[], term: string): IIIFCanvas[]
   });
 };
 
+export type SortDirection = 'asc' | 'desc';
+
 /**
- * Sort canvases by name or date
+ * Sort canvases by name or date with direction control
  */
 export const sortCanvases = (
   canvases: IIIFCanvas[],
-  sortBy: 'name' | 'date'
+  sortBy: 'name' | 'date',
+  direction: SortDirection = 'asc'
 ): IIIFCanvas[] => {
   return [...canvases].sort((a, b) => {
+    let result: number;
     if (sortBy === 'name') {
-      return getIIIFValue(a.label).localeCompare(getIIIFValue(b.label));
+      result = getIIIFValue(a.label).localeCompare(getIIIFValue(b.label));
+    } else {
+      result = (a.navDate || '').localeCompare(b.navDate || '');
     }
-    // Sort by navDate (descending - newest first)
-    return (b.navDate || '').localeCompare(a.navDate || '');
+    return direction === 'desc' ? -result : result;
   });
 };
 
@@ -129,6 +134,83 @@ export const getSelectionDNA = (items: IIIFItem[]): SelectionDNA => {
   }
 
   return dna;
+};
+
+// ============================================================================
+// Manifest Grouping
+// ============================================================================
+
+export interface ManifestGroup {
+  manifestId: string;
+  manifestLabel: string;
+  canvases: IIIFCanvas[];
+}
+
+/**
+ * Group canvases by their parent manifest.
+ * Traverses the tree to build manifestId -> label lookup,
+ * then groups canvases by _parentId.
+ */
+export const groupByManifestFn = (root: IIIFItem): ManifestGroup[] => {
+  if (!root) return [];
+
+  const manifestLabels = new Map<string, string>();
+  const manifestCanvases = new Map<string, IIIFCanvas[]>();
+
+  const traverse = (item: IIIFItem, parentManifestId: string | null) => {
+    if (item.type === 'Manifest') {
+      const label = getIIIFValue(item.label) || 'Untitled Manifest';
+      manifestLabels.set(item.id, label);
+      parentManifestId = item.id;
+    }
+
+    if (item.type === 'Canvas' && parentManifestId) {
+      const list = manifestCanvases.get(parentManifestId) || [];
+      list.push(item as IIIFCanvas);
+      manifestCanvases.set(parentManifestId, list);
+    }
+
+    if ('items' in item && Array.isArray(item.items)) {
+      item.items.forEach(child => traverse(child, parentManifestId));
+    }
+  };
+
+  // If root is a Manifest itself, use it as parent
+  if (root.type === 'Manifest') {
+    traverse(root, root.id);
+  } else {
+    traverse(root, null);
+  }
+
+  // Collect ungrouped canvases (direct children of root Collection with no manifest parent)
+  const ungrouped: IIIFCanvas[] = [];
+  if (root.type === 'Collection' && 'items' in root && Array.isArray(root.items)) {
+    for (const item of root.items) {
+      if (item.type === 'Canvas') {
+        ungrouped.push(item as IIIFCanvas);
+      }
+    }
+  }
+
+  const groups: ManifestGroup[] = [];
+
+  for (const [manifestId, canvases] of manifestCanvases) {
+    groups.push({
+      manifestId,
+      manifestLabel: manifestLabels.get(manifestId) || 'Untitled Manifest',
+      canvases,
+    });
+  }
+
+  if (ungrouped.length > 0) {
+    groups.push({
+      manifestId: '__ungrouped__',
+      manifestLabel: 'Ungrouped',
+      canvases: ungrouped,
+    });
+  }
+
+  return groups;
 };
 
 // ============================================================================

@@ -26,7 +26,8 @@ import { createLanguageMap, generateUUID } from '@/utils/iiifTypes';
 import { ArchiveHeader } from './ArchiveHeader';
 import { ArchiveGrid } from './ArchiveGrid';
 import { ArchiveList } from './ArchiveList';
-import { type ArchiveViewMode, filterByTerm, getSelectionDNA, loadViewMode, saveViewMode, sortCanvases, type SortMode } from '../../model';
+import { type ArchiveViewMode, filterByTerm, getSelectionDNA, groupByManifestFn, loadViewMode, saveViewMode, sortCanvases, type SortDirection, type SortMode } from '../../model';
+import { GroupedArchiveGrid } from '../molecules/GroupedArchiveGrid';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { contentStateService } from '@/src/shared/services/contentState';
 import { uiLog } from '@/src/shared/services/logger';
@@ -307,7 +308,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   onOpen,
   onBatchEdit,
   onUpdate,
-  validationIssues: _validationIssues = {},
+  validationIssues = {},
   onReveal: _onReveal,
   onCatalogSelection,
   onSwitchView,
@@ -334,8 +335,10 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
 
   // State
   const [filter, setFilter] = useState('');
-  const [sortBy] = useState<SortMode>('name');
+  const [sortBy, setSortBy] = useState<SortMode>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable');
+  const [groupByManifest, setGroupByManifest] = useState(false);
   useEffect(() => { uiLog.debug('[ArchiveView] Density changed to:', density); }, [density]);
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; targetId: string; isMulti?: boolean } | null>(null);
@@ -351,9 +354,10 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   // Filtered canvases
   const filteredCanvases = useMemo(() => {
     const filtered = filterByTerm(allCanvases, filter);
-    return sortCanvases(filtered, sortBy);
-  }, [allCanvases, filter, sortBy]);
+    return sortCanvases(filtered, sortBy, sortDirection);
+  }, [allCanvases, filter, sortBy, sortDirection]);
 
+  const manifestGroups = useMemo(() => groupByManifest && root ? groupByManifestFn(root) : [], [root, groupByManifest]);
   const selectedCanvases = useMemo(() => allCanvases.filter(c => isSelected(c.id)), [allCanvases, isSelected]);
   const selectionDNA = useMemo(() => getSelectionDNA(selectedCanvases), [selectedCanvases]);
 
@@ -627,6 +631,21 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   const renderContentView = () => {
     switch (view) {
       case 'grid':
+        if (groupByManifest && manifestGroups.length > 0) {
+          return (
+            <GroupedArchiveGrid
+              groups={manifestGroups}
+              isSelected={isSelected}
+              onItemClick={handleItemClick}
+              onToggleSelect={toggle}
+              onContextMenu={handleContextMenu}
+              validationIssues={validationIssues}
+              cx={cx}
+              fieldMode={fieldMode}
+              density={density}
+            />
+          );
+        }
         return (
           <ArchiveGrid
             items={filteredCanvases}
@@ -647,6 +666,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             onDensityChange={setDensity}
             reorderEnabled={reorderEnabled}
             onReorder={handleReorder}
+            validationIssues={validationIssues}
+            onOpen={(id) => {
+              const canvas = filteredCanvases.find(c => c.id === id);
+              if (canvas) onOpen(canvas);
+            }}
+            onLassoSelect={(ids) => select(ids)}
           />
         );
       case 'list':
@@ -662,6 +687,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
             activeItem={activeItem}
             reorderEnabled={reorderEnabled}
             onReorder={handleReorder}
+            validationIssues={validationIssues}
           />
         );
       case 'map':
@@ -787,6 +813,12 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
           onEditMetadata={handleEditMetadata}
           onBatchEdit={handleBatchEdit}
           onComposeOnBoard={handleComposeOnBoard}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={setSortBy}
+          onSortDirectionChange={setSortDirection}
+          groupByManifest={groupByManifest}
+          onToggleGroupByManifest={() => setGroupByManifest(prev => !prev)}
           showViewerPanel={showViewerPanel}
           showInspectorPanel={showInspectorPanel}
           onToggleViewerPanel={onToggleViewerPanel}
