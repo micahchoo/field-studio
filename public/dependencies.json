@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-09T07:32:12.337Z",
-  "totalFiles": 466,
+  "generatedAt": "2026-02-09T08:07:08.905Z",
+  "totalFiles": 470,
   "files": {
     "src/app/App.tsx": {
       "filePath": "src/app/App.tsx",
@@ -7672,6 +7672,60 @@
       "size": 401,
       "lines": 13
     },
+    "src/features/archive/hooks/useGridLassoSelect.ts": {
+      "filePath": "src/features/archive/hooks/useGridLassoSelect.ts",
+      "fileName": "useGridLassoSelect.ts",
+      "directory": "src/features/archive/hooks",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useCallback",
+            "useRef",
+            "useState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "LassoRect",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "UseGridLassoSelectOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "UseGridLassoSelectReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useGridLassoSelect",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useGridLassoSelect",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/archive/ui/organisms/ArchiveGrid.tsx"
+      ],
+      "size": 3713,
+      "lines": 131
+    },
     "src/features/archive/index.ts": {
       "filePath": "src/features/archive/index.ts",
       "fileName": "index.ts",
@@ -7888,6 +7942,11 @@
           "isTypeExport": false
         },
         {
+          "name": "SortDirection",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "sortCanvases",
           "type": "named",
           "isTypeExport": false
@@ -7909,6 +7968,16 @@
         },
         {
           "name": "getSelectionDNA",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ManifestGroup",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "groupByManifestFn",
           "type": "named",
           "isTypeExport": false
         },
@@ -7950,8 +8019,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 5201,
-      "lines": 182
+      "size": 7539,
+      "lines": 264
     },
     "src/features/archive/model/useViewingDirection.ts": {
       "filePath": "src/features/archive/model/useViewingDirection.ts",
@@ -7997,6 +8066,282 @@
       "dependents": [],
       "size": 2403,
       "lines": 86
+    },
+    "src/features/archive/ui/molecules/BlurUpThumbnail.tsx": {
+      "filePath": "src/features/archive/ui/molecules/BlurUpThumbnail.tsx",
+      "fileName": "BlurUpThumbnail.tsx",
+      "directory": "src/features/archive/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "BlurUpThumbnailProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "BlurUpThumbnail",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "BlurUpThumbnail",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx",
+        "src/features/archive/ui/organisms/ArchiveGrid.tsx"
+      ],
+      "size": 2475,
+      "lines": 82
+    },
+    "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx": {
+      "filePath": "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx",
+      "fileName": "GroupedArchiveGrid.tsx",
+      "directory": "src/features/archive/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "getIIIFValue",
+            "type IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/validation/validator",
+          "specifiers": [
+            "type ValidationIssue"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/ui/primitives/Button",
+          "specifiers": [
+            "Button"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/constants",
+          "specifiers": [
+            "RESOURCE_TYPE_CONFIG"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/utils/imageSourceResolver",
+          "specifiers": [
+            "resolveHierarchicalThumbs"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model",
+          "specifiers": [
+            "type ManifestGroup",
+            "getFileDNA"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BlurUpThumbnail",
+          "specifiers": [
+            "BlurUpThumbnail"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../organisms/ArchiveGrid",
+          "specifiers": [
+            "GridDensity"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "GroupedArchiveGridProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GroupedArchiveGrid",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "GroupedArchiveGrid",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/archive/ui/molecules/BlurUpThumbnail.tsx",
+        "src/features/archive/ui/organisms/ArchiveGrid.tsx"
+      ],
+      "dependents": [
+        "src/features/archive/ui/organisms/ArchiveView.tsx"
+      ],
+      "size": 8475,
+      "lines": 213
+    },
+    "src/features/archive/ui/molecules/HoverPreviewCard.tsx": {
+      "filePath": "src/features/archive/ui/molecules/HoverPreviewCard.tsx",
+      "fileName": "HoverPreviewCard.tsx",
+      "directory": "src/features/archive/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "react-dom",
+          "specifiers": [
+            "createPortal"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "getIIIFValue",
+            "type IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/validation/validator",
+          "specifiers": [
+            "type ValidationIssue"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/utils/imageSourceResolver",
+          "specifiers": [
+            "resolveHierarchicalThumbs"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model",
+          "specifiers": [
+            "getFileDNA"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "HoverPreviewCardProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "HoverPreviewCard",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "HoverPreviewCard",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/archive/ui/organisms/ArchiveGrid.tsx"
+      ],
+      "size": 5519,
+      "lines": 162
     },
     "src/features/archive/ui/molecules/MultiSelectFilmstrip.tsx": {
       "filePath": "src/features/archive/ui/molecules/MultiSelectFilmstrip.tsx",
@@ -8116,6 +8461,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/entities/manifest/model/validation/validator",
+          "specifiers": [
+            "type ValidationIssue"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/molecules/StackedThumbnail",
           "specifiers": [
             "StackedThumbnail"
@@ -8180,6 +8536,50 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "../molecules/BlurUpThumbnail",
+          "specifiers": [
+            "BlurUpThumbnail"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useKeyboardNav",
+          "specifiers": [
+            "useKeyboardNav"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../molecules/HoverPreviewCard",
+          "specifiers": [
+            "HoverPreviewCard"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../../hooks/useGridLassoSelect",
+          "specifiers": [
+            "useGridLassoSelect"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -8209,14 +8609,19 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [],
+      "dependencies": [
+        "src/features/archive/ui/molecules/BlurUpThumbnail.tsx",
+        "src/features/archive/ui/molecules/HoverPreviewCard.tsx",
+        "src/features/archive/hooks/useGridLassoSelect.ts"
+      ],
       "dependents": [
         "src/features/archive/index.ts",
         "src/features/archive/index.ts",
+        "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx",
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 18196,
-      "lines": 444
+      "size": 23124,
+      "lines": 582
     },
     "src/features/archive/ui/organisms/ArchiveHeader.tsx": {
       "filePath": "src/features/archive/ui/organisms/ArchiveHeader.tsx",
@@ -8283,6 +8688,9 @@
           "source": "../../model",
           "specifiers": [
             "type ArchiveViewMode",
+            "type SortDirection",
+            "type SortMode",
+            "SORT_OPTIONS",
             "VIEW_MODE_OPTIONS"
           ],
           "isTypeImport": true,
@@ -8315,8 +8723,8 @@
         "src/features/archive/index.ts",
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 12005,
-      "lines": 330
+      "size": 14838,
+      "lines": 397
     },
     "src/features/archive/ui/organisms/ArchiveList.tsx": {
       "filePath": "src/features/archive/ui/organisms/ArchiveList.tsx",
@@ -8329,6 +8737,17 @@
           "specifiers": [
             "getIIIFValue",
             "type IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/validation/validator",
+          "specifiers": [
+            "type ValidationIssue"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -8414,8 +8833,8 @@
       "dependents": [
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 13804,
-      "lines": 400
+      "size": 14440,
+      "lines": 412
     },
     "src/features/archive/ui/organisms/ArchiveView.tsx": {
       "filePath": "src/features/archive/ui/organisms/ArchiveView.tsx",
@@ -8605,12 +9024,25 @@
             "type ArchiveViewMode",
             "filterByTerm",
             "getSelectionDNA",
+            "groupByManifestFn",
             "loadViewMode",
             "saveViewMode",
             "sortCanvases",
+            "type SortDirection",
             "type SortMode"
           ],
           "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../molecules/GroupedArchiveGrid",
+          "specifiers": [
+            "GroupedArchiveGrid"
+          ],
+          "isTypeImport": false,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -8716,14 +9148,15 @@
       "dependencies": [
         "src/features/archive/ui/organisms/ArchiveHeader.tsx",
         "src/features/archive/ui/organisms/ArchiveGrid.tsx",
-        "src/features/archive/ui/organisms/ArchiveList.tsx"
+        "src/features/archive/ui/organisms/ArchiveList.tsx",
+        "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx"
       ],
       "dependents": [
         "src/features/archive/index.ts",
         "src/features/archive/index.ts"
       ],
-      "size": 36814,
-      "lines": 971
+      "size": 38276,
+      "lines": 1003
     },
     "src/features/board-design/hooks/useAlignmentGuides.ts": {
       "filePath": "src/features/board-design/hooks/useAlignmentGuides.ts",
@@ -44554,6 +44987,7 @@
     "js-yaml",
     "jszip",
     "react",
+    "react-dom",
     "tailwindcss"
   ],
   "internalAliases": [
@@ -44643,6 +45077,7 @@
     "@/src/shared/lib/hooks/useHistory",
     "@/src/shared/lib/hooks/useIngestProgress",
     "@/src/shared/lib/hooks/useKeyboardDragDrop",
+    "@/src/shared/lib/hooks/useKeyboardNav",
     "@/src/shared/lib/hooks/useLayerHistory",
     "@/src/shared/lib/hooks/useMetadataEditor",
     "@/src/shared/lib/hooks/usePanZoomGestures",
@@ -44853,9 +45288,9 @@
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx"
   ],
   "stats": {
-    "totalImports": 1996,
-    "totalExports": 2599,
-    "avgImportsPerFile": 4.283261802575107,
+    "totalImports": 2020,
+    "totalExports": 2616,
+    "avgImportsPerFile": 4.297872340425532,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",
