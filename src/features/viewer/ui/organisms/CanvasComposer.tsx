@@ -4,6 +4,8 @@ import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFCanvas, IIIFItem } from '@/src/shared/types';
 import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { usePanZoomGestures } from '@/src/shared/lib/hooks/usePanZoomGestures';
 import { useViewport } from '@/src/shared/lib/hooks/useViewport';
@@ -159,7 +161,7 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
             {sidebarTab === 'layers' ? (
             <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar" role="list" aria-label="Resource Layers">
                 {layers.length === 0 ? (
-                    <div className="text-center py-20 text-nb-black/60 italic text-sm">No items on canvas.</div>
+                    <EmptyState icon={EMPTY_STATES.EMPTY_CANVAS.icon} title={EMPTY_STATES.EMPTY_CANVAS.title} message={EMPTY_STATES.EMPTY_CANVAS.message} compact />
                 ) : layers.map((l, i) => (
                     <div 
                       key={l.id} 

@@ -3,12 +3,6 @@
  *
  * Renders all connections between nodes as an SVG layer.
  *
- * ATOMIC DESIGN COMPLIANCE:
- * - Composes ConnectionLine atoms
- * - No native HTML elements
- * - No domain logic
- * - Props-only API
- *
  * @module features/board-design/ui/molecules/ConnectionLayer
  */
 
@@ -26,6 +20,8 @@ export interface ConnectionLayerProps {
   selectedConnectionId: string | null;
   /** Callback when connection is selected */
   onSelectConnection: (id: string) => void;
+  /** Callback when connection is double-clicked */
+  onDoubleClickConnection?: (id: string) => void;
   /** Contextual styles */
   cx: ContextualClassNames;
   /** Field mode flag */
@@ -56,6 +52,7 @@ export const ConnectionLayer: React.FC<ConnectionLayerProps> = ({
   items,
   selectedConnectionId,
   onSelectConnection,
+  onDoubleClickConnection,
   cx,
   fieldMode,
 }) => {
@@ -71,8 +68,6 @@ export const ConnectionLayer: React.FC<ConnectionLayerProps> = ({
         .map((conn) => {
           const fromItem = items.find((i) => i.id === conn.fromId);
           const toItem = items.find((i) => i.id === conn.toId);
-
-          // Should never happen because validConnections already filtered, but guard
           if (!fromItem || !toItem) return null;
 
           const from = getAnchorPoint(fromItem, conn.fromAnchor);
@@ -87,7 +82,11 @@ export const ConnectionLayer: React.FC<ConnectionLayerProps> = ({
               type={conn.type}
               label={conn.label}
               selected={selectedConnectionId === conn.id}
+              style={conn.style}
+              color={conn.color}
+              showArrow={conn.type === 'sequence' || conn.type === 'requires' || conn.type === 'partOf'}
               onSelect={onSelectConnection}
+              onDoubleClick={onDoubleClickConnection}
               cx={cx}
               fieldMode={fieldMode}
             />

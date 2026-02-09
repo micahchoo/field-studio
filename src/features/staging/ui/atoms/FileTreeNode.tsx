@@ -2,7 +2,8 @@
  * FileTreeNode Atom
  *
  * Single row in the staging file tree.
- * Shows expand/collapse, icon, name, size/count badge, and IIIF indicators.
+ * Shows expand/collapse, icon, name, size/count badge, IIIF indicators,
+ * confidence badges for analyzer results, and unsupported file warnings.
  */
 
 import React from 'react';
@@ -10,6 +11,7 @@ import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { ExpandButton } from '@/src/features/structure-view/ui/atoms/ExpandButton';
 import { MIME_TYPE_MAP } from '@/src/shared/constants/image';
 import type { FlatFileTreeNode } from '../../model';
+import type { IngestPreviewNode } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
 
 export interface FileTreeNodeProps {
   node: FlatFileTreeNode;
@@ -18,6 +20,10 @@ export interface FileTreeNodeProps {
   onSelect: (path: string, additive: boolean) => void;
   onContextMenu: (e: React.MouseEvent, path: string, isDirectory: boolean) => void;
   onDragStart: (e: React.DragEvent, path: string) => void;
+  /** Analysis result for this directory (directories only) */
+  analysisNode?: IngestPreviewNode;
+  /** Whether this file has an unsupported format */
+  isUnsupported?: boolean;
 }
 
 function getFileIcon(name: string): string {
@@ -52,6 +58,12 @@ function formatSize(bytes: number): string {
   return `${val < 10 ? val.toFixed(1) : Math.round(val)} ${units[i]}`;
 }
 
+function getConfidenceColor(confidence: number): string {
+  if (confidence > 0.8) return 'bg-nb-green';
+  if (confidence > 0.5) return 'bg-nb-orange';
+  return 'bg-nb-red';
+}
+
 export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   node,
   isSelected,
@@ -59,6 +71,8 @@ export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   onSelect,
   onContextMenu,
   onDragStart,
+  analysisNode,
+  isUnsupported,
 }) => {
   const { annotations } = node;
   const isExcluded = !!annotations.excluded;
@@ -71,17 +85,17 @@ export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
 
   const icon = node.isDirectory
     ? getDirIcon(annotations.iiifIntent)
-    : getFileIcon(node.name);
+    : isUnsupported ? 'block' : getFileIcon(node.name);
 
   const iconColor = node.isDirectory
     ? annotations.iiifIntent ? 'text-nb-purple' : 'text-nb-blue'
-    : 'text-nb-black/50';
+    : isUnsupported ? 'text-nb-orange/60' : 'text-nb-black/50';
 
   return (
     <div
       className={`flex items-center gap-1.5 py-1 px-2 cursor-pointer group text-sm select-none ${
         isSelected ? 'bg-nb-blue/15 text-nb-black' : 'hover:bg-nb-cream/60 text-nb-black/80'
-      } ${isExcluded ? 'opacity-40 line-through' : ''}`}
+      } ${isExcluded ? 'opacity-40 line-through' : ''} ${isUnsupported && !isExcluded ? 'opacity-50' : ''}`}
       style={{ paddingLeft: `${node.depth * 20 + 4}px` }}
       onClick={(e) => onSelect(node.path, e.metaKey || e.ctrlKey)}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu(e, node.path, node.isDirectory); }}
@@ -99,7 +113,22 @@ export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
       <Icon name={icon} className={`text-base ${iconColor}`} />
 
       {/* Name */}
-      <span className="flex-1 truncate text-xs">{node.name}</span>
+      <span className={`flex-1 truncate text-xs ${isUnsupported ? 'line-through text-nb-black/40' : ''}`}>
+        {node.name}
+      </span>
+
+      {/* Confidence badge for directories with analysis */}
+      {analysisNode && node.isDirectory && !isExcluded && (
+        <span
+          className={`w-2 h-2 rounded-full ${getConfidenceColor(analysisNode.confidence)} flex-shrink-0`}
+          title={`${analysisNode.proposedType} (${Math.round(analysisNode.confidence * 100)}%): ${analysisNode.detectionReasons.map(r => r.details).join('; ')}`}
+        />
+      )}
+
+      {/* Unsupported file warning */}
+      {isUnsupported && !isExcluded && (
+        <Icon name="warning" className="text-[10px] text-nb-orange flex-shrink-0" title="Unsupported format — will be skipped" />
+      )}
 
       {/* IIIF indicators */}
       {hasIIIFMeta && !isExcluded && (

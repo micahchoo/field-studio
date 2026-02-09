@@ -15,6 +15,8 @@
 import React, { useMemo, useState } from 'react';
 import { getIIIFValue, type IIIFCanvas } from '@/src/shared/types';
 import { Button, Icon } from '@/src/shared/ui/atoms';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 import { getFileDNA } from '../../model';
 
@@ -176,12 +178,14 @@ export const ArchiveList: React.FC<ArchiveListProps> = ({
   // Empty state
   if (items.length === 0) {
     return (
-      <div className={`flex-1 flex items-center justify-center ${cx.surface}`}>
-        <div className="text-center">
-          <Icon name="list" className={`text-4xl mb-2 ${cx.textMuted}`} />
-          <p className={`text-sm ${cx.textMuted}`}>No items to display</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={EMPTY_STATES.NO_ITEMS.icon}
+        title={EMPTY_STATES.NO_ITEMS.title}
+        message={EMPTY_STATES.NO_ITEMS.message}
+        compact
+        cx={cx}
+        fieldMode={fieldMode}
+      />
     );
   }
 

@@ -26,6 +26,8 @@ const defaultCx: ContextualClassNames = {
   accent:'text-nb-blue',
 };
 
+export type SkeletonVariant = 'block' | 'grid' | 'list' | 'card' | 'detail' | 'tree';
+
 export interface LoadingStateProps {
   /** Optional status message */
   message?: string;
@@ -35,6 +37,8 @@ export interface LoadingStateProps {
   fullHeight?: boolean;
   /** Show skeleton placeholder instead of spinner */
   skeleton?: boolean;
+  /** Skeleton layout variant */
+  variant?: SkeletonVariant;
   /** Additional CSS classes */
   className?: string;
   /** Contextual styles from template */
@@ -110,11 +114,71 @@ const ProgressBar: React.FC<{
  *   fullHeight 
  * />
  */
+/**
+ * Renders skeleton bars with field-mode aware color
+ */
+const SkeletonBar: React.FC<{ className?: string; bg?: string }> = ({ className = '', bg }) => (
+  <div className={`${bg || 'bg-nb-black/10'} motion-reduce:animate-none ${className}`} />
+);
+
+const SkeletonGrid: React.FC<{ bg?: string }> = ({ bg }) => (
+  <div className="grid grid-cols-3 gap-3 w-full p-4">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <SkeletonBar key={i} bg={bg} className="aspect-square" />
+    ))}
+  </div>
+);
+
+const SkeletonList: React.FC<{ bg?: string }> = ({ bg }) => (
+  <div className="flex flex-col gap-3 w-full p-4">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className="flex items-center gap-3">
+        <SkeletonBar bg={bg} className="w-10 h-10 shrink-0" />
+        <div className="flex-1 flex flex-col gap-1.5">
+          <SkeletonBar bg={bg} className="h-3 w-3/4" />
+          <SkeletonBar bg={bg} className="h-2.5 w-1/2" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const SkeletonCard: React.FC<{ bg?: string }> = ({ bg }) => (
+  <div className="w-full max-w-xs p-4">
+    <SkeletonBar bg={bg} className="w-full aspect-video mb-3" />
+    <SkeletonBar bg={bg} className="h-4 w-3/4 mb-2" />
+    <SkeletonBar bg={bg} className="h-3 w-1/2" />
+  </div>
+);
+
+const SkeletonDetail: React.FC<{ bg?: string }> = ({ bg }) => (
+  <div className="flex flex-col gap-4 w-full p-4">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div key={i} className="flex flex-col gap-1.5">
+        <SkeletonBar bg={bg} className="h-2.5 w-20" />
+        <SkeletonBar bg={bg} className="h-3.5 w-full" />
+      </div>
+    ))}
+  </div>
+);
+
+const SkeletonTree: React.FC<{ bg?: string }> = ({ bg }) => (
+  <div className="flex flex-col gap-2 w-full p-4">
+    {[0, 0, 1, 1, 2, 2, 1, 0].map((indent, i) => (
+      <div key={i} className="flex items-center gap-2" style={{ paddingLeft: `${indent * 16}px` }}>
+        <SkeletonBar bg={bg} className="w-4 h-4 shrink-0" />
+        <SkeletonBar bg={bg} className="h-3 flex-1" />
+      </div>
+    ))}
+  </div>
+);
+
 export const LoadingState: React.FC<LoadingStateProps> = ({
   message ='Loading...',
   size ='md',
   fullHeight = false,
   skeleton = false,
+  variant = 'block',
   className ='',
   cx = defaultCx,
   fieldMode: _fieldMode = false,
@@ -124,19 +188,19 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
 }) => {
   const sizeClass = sizeClasses[size];
   const hasProgress = progress !== undefined && progress >= 0;
+  const barBg = cx.subtleBg || (_fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-black/10');
 
   if (skeleton) {
+    const wrapClass = `animate-pulse motion-reduce:animate-none ${fullHeight ? 'h-full flex items-center justify-center' : ''} ${className}`;
+
     return (
-      <div
-        className={`
-          animate-pulse
-          ${fullHeight ?'h-full flex items-center justify-center' :''}
-          ${className}
-`}
-        role="status"
-        aria-label={message}
-      >
-        <div className={`${cx.subtleBg} w-full h-24`} />
+      <div className={wrapClass} role="status" aria-label={message}>
+        {variant === 'grid' && <SkeletonGrid bg={barBg} />}
+        {variant === 'list' && <SkeletonList bg={barBg} />}
+        {variant === 'card' && <SkeletonCard bg={barBg} />}
+        {variant === 'detail' && <SkeletonDetail bg={barBg} />}
+        {variant === 'tree' && <SkeletonTree bg={barBg} />}
+        {variant === 'block' && <div className={`${barBg} w-full h-24`} />}
       </div>
     );
   }

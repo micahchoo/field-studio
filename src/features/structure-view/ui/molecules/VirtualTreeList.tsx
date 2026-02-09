@@ -15,6 +15,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { StructureNode } from '../../model/useStructureTree';
 import { TreeNodeItem } from './TreeNodeItem';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import type { DropPosition } from '../atoms/DropIndicator';
 
 export interface VirtualTreeListProps {
@@ -271,9 +273,12 @@ export const VirtualTreeList: React.FC<VirtualTreeListProps> = ({
 
       {/* Empty state */}
       {nodes.length === 0 && (
-        <div className="flex items-center justify-center h-full text-nb-black/40 text-sm">
-          No items to display
-        </div>
+        <EmptyState
+          icon={EMPTY_STATES.NO_ITEMS.icon}
+          title={EMPTY_STATES.NO_ITEMS.title}
+          message={EMPTY_STATES.NO_ITEMS.message}
+          compact
+        />
       )}
     </div>
   );

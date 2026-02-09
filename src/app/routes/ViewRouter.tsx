@@ -39,6 +39,16 @@ const DependencyExplorer = React.lazy(() => import('@/src/features/dependency-ex
 import { RequiredStatementBar } from '@/src/widgets/RequiredStatementBar/ui/RequiredStatementBar';
 
 // ============================================================================
+// View transition wrapper — 150ms fade-in, respects prefers-reduced-motion via CSS
+// ============================================================================
+
+const ViewTransition: React.FC<{ mode: string; children: React.ReactNode }> = ({ mode, children }) => (
+  <div key={mode} className="view-enter flex-1 flex flex-col min-h-0">
+    {children}
+  </div>
+);
+
+// ============================================================================
 // Shared cx (contextual styling) constants — field mode vs normal
 // ============================================================================
 
@@ -369,7 +379,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     const cx = isFieldMode ? FIELD_CX : NORMAL_CX;
 
     return (
-      <div className="flex-1 flex flex-col min-h-0">
+      <ViewTransition mode="archive">
         <RequiredStatementBar requiredStatement={activeRequiredStatement} cx={cx} fieldMode={isFieldMode} />
         <div className="flex-1 flex min-h-0">
         {/* Left: Archive Filmstrip when viewer shown, full grid otherwise */}
@@ -499,7 +509,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           </div>
         )}
         </div>
-      </div>
+      </ViewTransition>
     );
   }
 
@@ -522,7 +532,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       : [];
 
     return (
-      <div className="flex h-full">
+      <ViewTransition mode="boards">
         <BoardView
           root={root}
           cx={boardCx}
@@ -608,7 +618,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
             />
           </div>
         )}
-      </div>
+      </ViewTransition>
     );
   }
 
@@ -616,13 +626,15 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   if (currentMode === 'metadata') {
     const isFieldMode = settings?.fieldMode || false;
     return (
-      <MetadataView
-        root={root}
-        cx={isFieldMode ? FIELD_CX : NORMAL_CX}
-        fieldMode={isFieldMode}
-        onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
-        abstractionLevel={settings?.abstractionLevel}
-      />
+      <ViewTransition mode="metadata">
+        <MetadataView
+          root={root}
+          cx={isFieldMode ? FIELD_CX : NORMAL_CX}
+          fieldMode={isFieldMode}
+          onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
+          abstractionLevel={settings?.abstractionLevel}
+        />
+      </ViewTransition>
     );
   }
 
@@ -635,20 +647,22 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   // Search view
   if (currentMode === 'search') {
     return (
-      <SearchView
-        root={root}
-        onSelect={(id) => {
-          onSelectId?.(id);
-          setCurrentMode('archive');
-        }}
-        onRevealMap={(id) => {
-          onSelectId?.(id);
-          setCurrentMode('map');
-        }}
-        cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
-        fieldMode={settings?.fieldMode || false}
-        t={(key) => key}
-      />
+      <ViewTransition mode="search">
+        <SearchView
+          root={root}
+          onSelect={(id) => {
+            onSelectId?.(id);
+            setCurrentMode('archive');
+          }}
+          onRevealMap={(id) => {
+            onSelectId?.(id);
+            setCurrentMode('map');
+          }}
+          cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
+          fieldMode={settings?.fieldMode || false}
+          t={(key) => key}
+        />
+      </ViewTransition>
     );
   }
 
@@ -658,7 +672,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     const viewerCx = isFieldMode ? FIELD_CX : NORMAL_CX;
 
     return (
-      <div className="flex-1 flex flex-col min-h-0">
+      <ViewTransition mode="viewer">
         <RequiredStatementBar requiredStatement={activeRequiredStatement} cx={viewerCx} fieldMode={isFieldMode} />
         <React.Suspense fallback={null}>
           <ViewerView
@@ -671,44 +685,50 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
             isAdvanced={settings?.abstractionLevel === 'advanced'}
           />
         </React.Suspense>
-      </div>
+      </ViewTransition>
     );
   }
 
   // Map view
   if (currentMode === 'map') {
     return (
-      <MapView
-        root={root}
-        onSelect={(item) => onSelectId?.(item.id)}
-        cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
-        fieldMode={settings?.fieldMode || false}
-        t={(key) => key}
-        isAdvanced={settings?.abstractionLevel === 'advanced'}
-      />
+      <ViewTransition mode="map">
+        <MapView
+          root={root}
+          onSelect={(item) => onSelectId?.(item.id)}
+          cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
+          fieldMode={settings?.fieldMode || false}
+          t={(key) => key}
+          isAdvanced={settings?.abstractionLevel === 'advanced'}
+        />
+      </ViewTransition>
     );
   }
 
   // Timeline view
   if (currentMode === 'timeline') {
     return (
-      <TimelineView
-        root={root}
-        onSelect={(item) => onSelectId?.(item.id)}
-        cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
-        fieldMode={settings?.fieldMode || false}
-      />
+      <ViewTransition mode="timeline">
+        <TimelineView
+          root={root}
+          onSelect={(item) => onSelectId?.(item.id)}
+          cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
+          fieldMode={settings?.fieldMode || false}
+        />
+      </ViewTransition>
     );
   }
 
   // Admin dependency explorer
   if (currentMode === 'admin-deps') {
     return (
-      <React.Suspense fallback={<div className="h-full bg-nb-cream p-6 flex items-center justify-center text-nb-black/50">Loading...</div>}>
-        <div className="h-full bg-nb-cream p-6">
-          <DependencyExplorer />
-        </div>
-      </React.Suspense>
+      <ViewTransition mode="admin-deps">
+        <React.Suspense fallback={<div className="h-full bg-nb-cream p-6 flex items-center justify-center text-nb-black/50">Loading...</div>}>
+          <div className="h-full bg-nb-cream p-6">
+            <DependencyExplorer />
+          </div>
+        </React.Suspense>
+      </ViewTransition>
     );
   }
 

@@ -30,6 +30,10 @@ export interface EmptyStateProps {
   message?: string;
   /** Optional action button */
   action?: EmptyStateAction;
+  /** Optional secondary action button */
+  secondaryAction?: EmptyStateAction;
+  /** Compact mode for panel contexts (less padding/height) */
+  compact?: boolean;
   /** Additional CSS classes */
   className?: string;
   /** Contextual styles from template */
@@ -54,6 +58,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
   action,
+  secondaryAction,
+  compact = false,
   className ='',
   cx = {},
   fieldMode: _fieldMode = false,
@@ -64,7 +70,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div
       className={`
         flex flex-col items-center justify-center
-        py-12 px-6 min-h-[300px]
+        ${compact ? 'py-6 px-4 min-h-[120px]' : 'py-12 px-6 min-h-[300px]'}
         ${className}
 `}
     >
@@ -100,15 +106,28 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         </p>
       )}
 
-      {/* Action Button */}
-      {action && (
-        <Button
-          variant="primary"
-          onClick={action.onClick}
-          icon={action.icon ? <Icon name={action.icon} /> : undefined}
-        >
-          {action.label}
-        </Button>
+      {/* Action Buttons */}
+      {(action || secondaryAction) && (
+        <div className="flex items-center gap-3">
+          {action && (
+            <Button
+              variant="primary"
+              onClick={action.onClick}
+              icon={action.icon ? <Icon name={action.icon} /> : undefined}
+            >
+              {action.label}
+            </Button>
+          )}
+          {secondaryAction && (
+            <Button
+              variant="secondary"
+              onClick={secondaryAction.onClick}
+              icon={secondaryAction.icon ? <Icon name={secondaryAction.icon} /> : undefined}
+            >
+              {secondaryAction.label}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

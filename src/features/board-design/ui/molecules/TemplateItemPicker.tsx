@@ -10,6 +10,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Icon } from '@/src/shared/ui/atoms';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { ModalDialog } from '@/src/shared/ui/molecules/ModalDialog';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
 import { resolveHierarchicalThumb } from '@/utils/imageSourceResolver';
@@ -243,10 +245,14 @@ export const TemplateItemPicker: React.FC<TemplateItemPickerProps> = ({
           </div>
 
           {availableItems.length === 0 && (
-            <div className={`text-center py-12 ${cx.textMuted}`}>
-              <Icon name="photo_library" className="text-4xl mb-2" />
-              <p>No items in archive yet. Import some files first.</p>
-            </div>
+            <EmptyState
+              icon={EMPTY_STATES.NO_DATA.icon}
+              title={EMPTY_STATES.NO_DATA.title}
+              message={EMPTY_STATES.NO_DATA.message}
+              compact
+              cx={cx}
+              fieldMode={fieldMode}
+            />
           )}
         </div>
 

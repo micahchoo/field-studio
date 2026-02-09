@@ -23,14 +23,25 @@ import {
   type BoardItem,
   type BoardGroup,
   type BoardState,
+  type Connection,
   type ConnectionType,
   type LayoutArrangement,
   selectIsEmpty,
 } from '../../model';
+import {
+  exportBoardAsPNG,
+  exportBoardAsSVG,
+  generateContentStateURL,
+} from '../../model/exporters';
+import { generateBoardId } from '../../model/iiif-bridge';
 import { useBoardVault } from '../../hooks/useBoardVault';
+import { useMultiSelect } from '../../hooks/useMultiSelect';
+import { usePresentationMode } from '../../hooks/usePresentationMode';
 import { BoardHeader } from './BoardHeader';
 import { BoardCanvas } from './BoardCanvas';
 import { BoardOnboarding, type BoardTemplate } from './BoardOnboarding';
+import { PresentationOverlay } from './PresentationOverlay';
+import { ConnectionEditPanel } from '../molecules/ConnectionEditPanel';
 
 export interface BoardViewProps {
   root: IIIFItem | null;
@@ -92,6 +103,9 @@ export const BoardView: React.FC<BoardViewProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; itemId: string } | null>(null);
 
+  // Connection editing state
+  const [editingConnection, setEditingConnection] = useState<{ conn: Connection; position: { x: number; y: number } } | null>(null);
+
   // Vault-backed board state
   const board = useBoardVault({
     root,
@@ -105,6 +119,14 @@ export const BoardView: React.FC<BoardViewProps> = ({
   const { boardState, canUndo, canRedo, undo, redo } = board;
   const { items, connections } = boardState;
   const isEmpty = selectIsEmpty(boardState);
+
+  // Multi-select
+  const multiSelect = useMultiSelect();
+  const hasMultiSelection = multiSelect.selectedIds.size > 1;
+  const hasAnySelection = !!selectedItemId || multiSelect.selectedIds.size > 0;
+
+  // Presentation mode
+  const presentation = usePresentationMode(boardState);
 
   // Expose board state to parent (ViewRouter) for design tab
   useEffect(() => {
@@ -132,6 +154,14 @@ export const BoardView: React.FC<BoardViewProps> = ({
     setSelectedItemId(id);
     setConnectingFrom(null);
     setContextMenu(null);
+    setEditingConnection(null);
+
+    // Sync multi-select: single-click clears multi and selects one
+    if (id) {
+      multiSelect.selectItems([id]);
+    } else {
+      multiSelect.clearSelection();
+    }
 
     if (id && root) {
       const boardItem = items.find(i => i.id === id);
@@ -144,7 +174,22 @@ export const BoardView: React.FC<BoardViewProps> = ({
     } else {
       onSelectId?.(null);
     }
-  }, [root, items, onSelectId, onSelect]);
+  }, [root, items, onSelectId, onSelect, multiSelect]);
+
+  // Handle shift-click multi-select toggle
+  const handleToggleSelectItem = useCallback((id: string, shiftKey: boolean) => {
+    multiSelect.toggleItem(id, shiftKey);
+    // Set selectedItemId to the last toggled item for Inspector
+    setSelectedItemId(id);
+  }, [multiSelect]);
+
+  // Handle rubber-band selection complete
+  const handleSelectItems = useCallback((ids: string[]) => {
+    if (ids.length > 0) {
+      multiSelect.selectItems(ids);
+      setSelectedItemId(ids[0]);
+    }
+  }, [multiSelect]);
 
   // Handle starting a connection
   const handleStartConnection = useCallback((fromId: string) => {
@@ -194,14 +239,19 @@ export const BoardView: React.FC<BoardViewProps> = ({
     [items, board, showToast]
   );
 
-  // Handle delete selected
+  // Handle delete selected (single or multi)
   const handleDeleteSelected = useCallback(() => {
-    if (selectedItemId) {
+    if (hasMultiSelection) {
+      multiSelect.deleteSelected(board.removeItem);
+      setSelectedItemId(null);
+      showToast(`Removed ${multiSelect.selectedIds.size} items`, 'info');
+    } else if (selectedItemId) {
       board.removeItem(selectedItemId);
       setSelectedItemId(null);
+      multiSelect.clearSelection();
       showToast('Item removed', 'info');
     }
-  }, [selectedItemId, board, showToast]);
+  }, [selectedItemId, hasMultiSelection, multiSelect, board, showToast]);
 
   // Handle double-click — navigate to viewer
   const handleDoubleClickItem = useCallback((id: string) => {
@@ -211,6 +261,36 @@ export const BoardView: React.FC<BoardViewProps> = ({
       onSwitchView?.('viewer');
     }
   }, [items, onSelectId, onSwitchView]);
+
+  // Handle double-click on connection — open edit panel
+  const handleDoubleClickConnection = useCallback((connId: string) => {
+    const conn = connections.find(c => c.id === connId);
+    if (!conn) return;
+    // Position panel at midpoint of connection
+    const fromItem = items.find(i => i.id === conn.fromId);
+    const toItem = items.find(i => i.id === conn.toId);
+    if (!fromItem || !toItem) return;
+    const midX = (fromItem.x + fromItem.w / 2 + toItem.x + toItem.w / 2) / 2;
+    const midY = (fromItem.y + fromItem.h / 2 + toItem.y + toItem.h / 2) / 2;
+    setEditingConnection({ conn, position: { x: midX, y: midY + 20 } });
+  }, [connections, items]);
+
+  // Handle connection update from edit panel
+  const handleUpdateConnection = useCallback((connId: string, updates: Partial<Connection>) => {
+    board.updateConnection(connId, updates);
+    // Keep panel open with updated connection
+    const updated = { ...editingConnection?.conn, ...updates, id: connId } as Connection;
+    if (editingConnection) {
+      setEditingConnection({ ...editingConnection, conn: updated });
+    }
+  }, [board, editingConnection]);
+
+  // Handle connection delete from edit panel
+  const handleDeleteConnection = useCallback((connId: string) => {
+    board.removeConnection(connId);
+    setEditingConnection(null);
+    showToast('Connection removed', 'info');
+  }, [board, showToast]);
 
   // Handle context menu
   const handleContextMenu = useCallback((e: React.MouseEvent, id: string) => {
@@ -263,12 +343,15 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
   // Group management
   const handleCreateGroup = useCallback(() => {
-    if (!selectedItemId) return;
+    const groupItemIds = hasMultiSelection
+      ? Array.from(multiSelect.selectedIds)
+      : selectedItemId ? [selectedItemId] : [];
+    if (groupItemIds.length === 0) return;
     const label = prompt('Group name:');
     if (!label) return;
-    board.createGroup(label, [selectedItemId]);
-    showToast(`Created group "${label}"`, 'success');
-  }, [selectedItemId, board, showToast]);
+    board.createGroup(label, groupItemIds);
+    showToast(`Created group "${label}" with ${groupItemIds.length} items`, 'success');
+  }, [selectedItemId, hasMultiSelection, multiSelect.selectedIds, board, showToast]);
 
   // Get groups containing a specific item
   const getGroupsForItem = useCallback((itemId: string): BoardGroup[] => {
@@ -329,6 +412,44 @@ export const BoardView: React.FC<BoardViewProps> = ({
       showToast('Board exported as IIIF Manifest', 'success');
     }
   }, [board, onExport, showToast]);
+
+  // Handle export as PNG
+  const handleExportPNG = useCallback(async () => {
+    try {
+      const blob = await exportBoardAsPNG(boardState, 'Board Design');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'board.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Board exported as PNG', 'success');
+    } catch {
+      showToast('Failed to export PNG', 'error');
+    }
+  }, [boardState, showToast]);
+
+  // Handle export as SVG
+  const handleExportSVG = useCallback(() => {
+    const svgString = exportBoardAsSVG(boardState, 'Board Design');
+    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'board.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Board exported as SVG', 'success');
+  }, [boardState, showToast]);
+
+  // Handle copy Content State link
+  const handleCopyContentState = useCallback(() => {
+    const id = board.boardId || generateBoardId();
+    const baseUrl = window.location.origin + window.location.pathname;
+    const url = generateContentStateURL(id, baseUrl);
+    navigator.clipboard.writeText(url);
+    showToast('Content State link copied', 'success');
+  }, [board.boardId, showToast]);
 
   // Handle save — persist board as a separate manifest in the vault
   const handleSave = useCallback(() => {
@@ -397,14 +518,20 @@ export const BoardView: React.FC<BoardViewProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) return;
+      // Don't handle shortcuts during presentation mode (it has its own)
+      if (presentation.isActive) return;
 
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedItemId) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && hasAnySelection) {
         e.preventDefault();
         handleDeleteSelected();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         if (e.shiftKey) { redo(); } else { undo(); }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        multiSelect.selectAll(items);
       }
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
         switch (e.key.toLowerCase()) {
@@ -414,18 +541,24 @@ export const BoardView: React.FC<BoardViewProps> = ({
           case 'n': setActiveTool('note'); break;
           case 'l': handleAutoArrange('grid'); break;
           case 'g': setSnapEnabled(s => !s); break;
+          case 'p': presentation.enter(); break;
           case 'i':
             if (selectedItemId) {
               const boardItem = items.find(i => i.id === selectedItemId);
               if (boardItem?.resourceId) onSelectId?.(boardItem.resourceId);
             }
             break;
+          case 'escape':
+            setEditingConnection(null);
+            multiSelect.clearSelection();
+            setSelectedItemId(null);
+            break;
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedItemId, handleDeleteSelected, undo, redo, handleToolChange, handleAutoArrange, items, onSelectId]);
+  }, [selectedItemId, hasAnySelection, handleDeleteSelected, undo, redo, handleToolChange, handleAutoArrange, items, onSelectId, multiSelect, presentation]);
 
   // Pipeline: Load selected items from Archive on mount
   const pipelineLoadedRef = useRef(false);
@@ -661,8 +794,13 @@ export const BoardView: React.FC<BoardViewProps> = ({
         onSave={onSaveBoard ? handleSave : undefined}
         isDirty={board.isDirty}
         onExport={handleExport}
+        onExportPNG={handleExportPNG}
+        onExportSVG={handleExportSVG}
+        onCopyContentState={handleCopyContentState}
+        onPresent={items.length > 0 ? () => presentation.enter() : undefined}
         onDelete={handleDeleteSelected}
-        hasSelection={!!selectedItemId}
+        hasSelection={hasAnySelection}
+        selectionCount={multiSelect.selectedIds.size}
         itemCount={items.length}
         connectionCount={connections.length}
         bgMode={bgMode}
@@ -683,7 +821,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
       />
 
       <div
-        className="flex-1 flex overflow-hidden"
+        className="flex-1 flex overflow-hidden relative"
         onDragOver={handleBoardDragOver}
         onDrop={handleBoardDrop}
       >
@@ -692,11 +830,14 @@ export const BoardView: React.FC<BoardViewProps> = ({
           items={items}
           connections={connections}
           selectedItemId={selectedItemId}
+          selectedIds={multiSelect.selectedIds}
           connectingFrom={connectingFrom}
           activeTool={activeTool}
           viewport={viewport}
           onViewportChange={setViewport}
           onSelectItem={handleSelectItem}
+          onToggleSelectItem={handleToggleSelectItem}
+          onSelectItems={handleSelectItems}
           onMoveItem={handleMoveItem}
           onResizeItem={handleResizeItem}
           onStartConnection={handleStartConnection}
@@ -704,6 +845,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
           onAddItem={handleAddItem}
           onAddNote={handleAddNote}
           onDoubleClickItem={handleDoubleClickItem}
+          onDoubleClickConnection={handleDoubleClickConnection}
           onContextMenuItem={handleContextMenu}
           root={root}
           bgMode={bgMode}
@@ -735,6 +877,23 @@ export const BoardView: React.FC<BoardViewProps> = ({
                 </span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Connection edit panel */}
+        {editingConnection && (
+          <div className="absolute inset-0 pointer-events-none" style={{ transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`, transformOrigin: '0 0' }}>
+            <div className="pointer-events-auto">
+              <ConnectionEditPanel
+                connection={editingConnection.conn}
+                position={editingConnection.position}
+                onUpdate={handleUpdateConnection}
+                onDelete={handleDeleteConnection}
+                onClose={() => setEditingConnection(null)}
+                cx={cx}
+                fieldMode={fieldMode}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -884,6 +1043,21 @@ export const BoardView: React.FC<BoardViewProps> = ({
           },
         ]}
       />
+
+      {/* Presentation mode overlay */}
+      {presentation.isActive && (
+        <PresentationOverlay
+          currentItem={presentation.currentItem}
+          currentIndex={presentation.currentIndex}
+          totalSlides={presentation.totalSlides}
+          isAutoAdvancing={presentation.isAutoAdvancing}
+          onNext={presentation.next}
+          onPrev={presentation.prev}
+          onExit={presentation.exit}
+          onToggleAutoAdvance={presentation.toggleAutoAdvance}
+          onGoTo={presentation.goTo}
+        />
+      )}
     </div>
   );
 };

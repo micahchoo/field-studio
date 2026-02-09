@@ -28,6 +28,20 @@ export type ConnectionType =
   | 'requires'
   | 'sequence';
 
+export type IIIFContentType = 'Image' | 'Video' | 'Audio' | 'Text' | 'Dataset' | 'Model' | 'Unknown';
+
+export interface BoardItemMeta {
+  contentType?: IIIFContentType;
+  duration?: number;
+  canvasCount?: number;
+  itemCount?: number;
+  summary?: string;
+  metadataPreview?: Array<{ key: string; value: string }>;
+  navDate?: string;
+  rangeChildIds?: string[];
+  rangeCollapsed?: boolean;
+}
+
 export interface BoardItem {
   id: string;
   resourceId: string;
@@ -41,6 +55,7 @@ export interface BoardItem {
   annotation?: string;
   isNote?: boolean;
   isMetadataNode?: boolean;
+  meta?: BoardItemMeta;
 }
 
 export interface Connection {
@@ -134,6 +149,77 @@ export const selectBoardBounds = (
 // ============================================================================
 
 /**
+ * Detect the content type of a IIIF resource by inspecting painting annotation bodies
+ */
+export const detectContentType = (resource: IIIFItem): IIIFContentType => {
+  const items = (resource as IIIFItem & { items?: Array<{ items?: Array<{ body?: { type?: string } | Array<{ type?: string }> }> }> }).items;
+  if (!items) return 'Unknown';
+  for (const page of items) {
+    for (const anno of page.items || []) {
+      const body = Array.isArray(anno.body) ? anno.body[0] : anno.body;
+      const bodyType = (body as { type?: string })?.type || '';
+      if (bodyType === 'Image') return 'Image';
+      if (bodyType === 'Video') return 'Video';
+      if (bodyType === 'Sound' || bodyType === 'Audio') return 'Audio';
+      if (bodyType === 'Text') return 'Text';
+      if (bodyType === 'Dataset') return 'Dataset';
+      if (bodyType === 'Model') return 'Model';
+    }
+  }
+  return 'Unknown';
+};
+
+/**
+ * Format a duration in seconds to M:SS display
+ */
+export const formatDuration = (seconds: number): string => {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Enrich a BoardItem with IIIF metadata
+ */
+export const enrichBoardItemMeta = (resource: IIIFItem): BoardItemMeta => {
+  const meta: BoardItemMeta = {};
+
+  if (resource.type === 'Canvas') {
+    meta.contentType = detectContentType(resource);
+    const duration = (resource as IIIFItem & { duration?: number }).duration;
+    if (duration) meta.duration = duration;
+  } else if (resource.type === 'Manifest') {
+    const manifestItems = (resource as IIIFItem & { items?: IIIFItem[] }).items;
+    meta.canvasCount = manifestItems?.length || 0;
+  } else if (resource.type === 'Collection') {
+    const collectionItems = (resource as IIIFItem & { items?: IIIFItem[] }).items;
+    meta.itemCount = collectionItems?.length || 0;
+  } else if (resource.type === 'Range') {
+    const rangeItems = (resource as IIIFItem & { items?: Array<{ id: string }> }).items;
+    meta.rangeChildIds = rangeItems?.map(i => i.id) || [];
+    meta.rangeCollapsed = true;
+  }
+
+  const summary = (resource as IIIFItem & { summary?: Record<string, string[]> }).summary;
+  if (summary) {
+    meta.summary = getIIIFValue(summary) || undefined;
+  }
+
+  const navDate = (resource as IIIFItem & { navDate?: string }).navDate;
+  if (navDate) meta.navDate = navDate;
+
+  const metadata = (resource as IIIFItem & { metadata?: Array<{ label?: Record<string, string[]>; value?: Record<string, string[]> }> }).metadata;
+  if (metadata && metadata.length > 0) {
+    meta.metadataPreview = metadata.slice(0, 3).map(m => ({
+      key: getIIIFValue(m.label) || '',
+      value: getIIIFValue(m.value) || '',
+    }));
+  }
+
+  return meta;
+};
+
+/**
  * Create a new board item from a IIIF resource
  */
 export const createBoardItem = (
@@ -150,6 +236,7 @@ export const createBoardItem = (
   resourceType: resource.type,
   label: getIIIFValue(resource.label) || resource.id,
   blobUrl: resolveHierarchicalThumb(resource, 200) || undefined,
+  meta: enrichBoardItemMeta(resource),
 });
 
 /**

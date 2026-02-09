@@ -142,7 +142,7 @@ const CollectionNode: React.FC<{
 
   return (
     <div
-      className={`border-b ${isDragOver ? 'border-dashed border-nb-blue bg-nb-blue/5' : 'border-nb-black/10'}`}
+      className={`border-b transition-all duration-150 ${isDragOver ? 'border-2 border-dashed border-nb-blue bg-nb-blue/5' : 'border-nb-black/10'}`}
       onClick={onFocus}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -334,16 +334,16 @@ export const ArchivePane: React.FC<ArchivePaneProps> = ({
 
         {/* Drop zone for creating new collection */}
         <div
-          className={`m-2 p-4 border-2 border-dashed text-center text-xs transition-nb ${
+          className={`m-2 p-4 border-2 border-dashed text-center text-xs transition-all duration-150 ${
             isNewCollectionDragOver
-              ? 'border-nb-blue bg-nb-blue/10 text-nb-blue font-medium'
+              ? 'border-nb-blue bg-nb-blue/10 text-nb-blue font-medium scale-[1.02]'
               : 'border-nb-black/15 text-nb-black/30'
           }`}
           onDragOver={handleNewCollectionDragOver}
           onDragLeave={handleNewCollectionDragLeave}
           onDrop={handleNewCollectionDrop}
         >
-          <Icon name="add" className={`text-lg mb-1 block ${isNewCollectionDragOver ? 'text-nb-blue' : 'text-nb-black/20'}`} />
+          <Icon name="add" className={`text-lg mb-1 block transition-colors ${isNewCollectionDragOver ? 'text-nb-blue' : 'text-nb-black/20'}`} />
           {isNewCollectionDragOver ? 'Drop to create new collection' : 'Drop here for new collection'}
         </div>
       </div>

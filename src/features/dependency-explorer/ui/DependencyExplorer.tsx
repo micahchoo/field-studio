@@ -7,6 +7,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { useDependencyData } from '../model/useDependencyData';
 import { DependencyGraphView } from './DependencyGraphView';
 import { FileDetailPanel } from './FileDetailPanel';
@@ -117,17 +119,12 @@ export const DependencyExplorer: React.FC<DependencyExplorerProps> = ({ classNam
 
   if (!data) {
     return (
-      <div className={`flex items-center justify-center h-full ${className}`}>
-        <div className="text-center p-8 bg-yellow-50/20/20 ">
-          <span className="material-icons text-4xl text-nb-yellow mb-4">warning</span>
-          <h2 className="text-xl font-semibold text-nb-yellow mb-2">
-            No Data Available
-          </h2>
-          <p className="text-nb-yellow mb-4">
-            Run <code className="bg-nb-yellow/20 px-1 rounded">npm run analyze</code> to generate dependency data.
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        icon={EMPTY_STATES.NO_DATA.icon}
+        title="No Data Available"
+        message="Run `npm run analyze` to generate dependency data."
+        className={className}
+      />
     );
   }
 

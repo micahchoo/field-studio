@@ -1,27 +1,29 @@
 /**
  * BoardNodeLayer Molecule
  *
- * Renders all board nodes as a layer.
+ * Renders all board nodes as a layer with hover tooltip.
  *
  * ATOMIC DESIGN COMPLIANCE:
- * - Composes BoardNode atoms
- * - No native HTML elements
- * - No domain logic
+ * - Composes BoardNode atoms + MetadataTooltip
+ * - Local hover state only
  * - Props-only API
  *
  * @module features/board-design/ui/molecules/BoardNodeLayer
  */
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { BoardItem } from '../../model';
 import { BoardNode } from '../atoms/BoardNode';
+import { MetadataTooltip } from '../atoms/MetadataTooltip';
 
 export interface BoardNodeLayerProps {
   /** Array of board items to render */
   items: BoardItem[];
   /** Currently selected item ID */
   selectedItemId: string | null;
+  /** Multi-select IDs */
+  selectedIds?: Set<string>;
   /** ID of item being connected from */
   connectingFrom: string | null;
   /** Callback when item is selected */
@@ -45,6 +47,7 @@ export interface BoardNodeLayerProps {
 export const BoardNodeLayer: React.FC<BoardNodeLayerProps> = ({
   items,
   selectedItemId,
+  selectedIds,
   connectingFrom,
   onSelectItem,
   onDragStart,
@@ -55,6 +58,14 @@ export const BoardNodeLayer: React.FC<BoardNodeLayerProps> = ({
   cx,
   fieldMode,
 }) => {
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
+
+  const handleHover = useCallback((id: string | null) => {
+    setHoveredItemId(id);
+  }, []);
+
+  const hoveredItem = hoveredItemId ? items.find(i => i.id === hoveredItemId) : null;
+
   return (
     <>
       {items.map((item) => (
@@ -64,7 +75,7 @@ export const BoardNodeLayer: React.FC<BoardNodeLayerProps> = ({
           position={{ x: item.x, y: item.y }}
           size={{ width: item.w, height: item.h }}
           resource={item}
-          selected={selectedItemId === item.id}
+          selected={selectedItemId === item.id || (selectedIds?.has(item.id) ?? false)}
           connectingFrom={connectingFrom === item.id}
           onSelect={onSelectItem}
           onDragStart={onDragStart}
@@ -72,10 +83,22 @@ export const BoardNodeLayer: React.FC<BoardNodeLayerProps> = ({
           onResizeStart={onResizeStart}
           onDoubleClick={onDoubleClickItem}
           onContextMenu={onContextMenuItem}
+          onHover={handleHover}
           cx={cx}
           fieldMode={fieldMode}
         />
       ))}
+
+      {/* Single tooltip for hovered item */}
+      {hoveredItem && (
+        <MetadataTooltip
+          meta={hoveredItem.meta}
+          visible={!!hoveredItemId && hoveredItemId !== selectedItemId}
+          position={{ x: hoveredItem.x + hoveredItem.w, y: hoveredItem.y }}
+          cx={cx}
+          fieldMode={fieldMode}
+        />
+      )}
     </>
   );
 };

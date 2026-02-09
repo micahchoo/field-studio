@@ -64,6 +64,7 @@ export interface UseBoardVaultReturn {
   resizeItem: (itemId: string, size: { w: number; h: number }) => void;
   removeItem: (itemId: string) => void;
   addConnection: (fromId: string, toId: string, type: ConnectionType) => Connection | null;
+  updateConnection: (connId: string, updates: Partial<Connection>) => void;
   removeConnection: (connId: string) => void;
   addNote: (text: string, position: { x: number; y: number }) => BoardItem;
   updateNote: (noteId: string, text: string) => void;
@@ -254,6 +255,17 @@ export function useBoardVault({
     return newConn;
   }, [isAdvanced, updateBoard, scheduleSave]);
 
+  // Update a connection
+  const updateConnection = useCallback((connId: string, updates: Partial<Connection>) => {
+    updateBoard((current) => ({
+      ...current,
+      connections: current.connections.map(conn =>
+        conn.id === connId ? { ...conn, ...updates, id: connId } : conn
+      ),
+    }));
+    scheduleSave();
+  }, [updateBoard, scheduleSave]);
+
   // Remove a connection
   const removeConnection = useCallback((connId: string) => {
     updateBoard((current) => ({
@@ -389,6 +401,7 @@ export function useBoardVault({
     resizeItem,
     removeItem,
     addConnection,
+    updateConnection,
     removeConnection,
     addNote,
     updateNote,

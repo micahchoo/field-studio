@@ -242,15 +242,27 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
 function boardItemToAnnotation(item: BoardItem, surfaceCanvasId: string): IIIFAnnotation {
   const xywh = `${Math.round(item.x)},${Math.round(item.y)},${Math.round(item.w)},${Math.round(item.h)}`;
 
+  const body: Record<string, unknown> = {
+    type: 'SpecificResource',
+    source: item.resourceId,
+    label: item.label ? { en: [item.label] } : undefined,
+  };
+
+  // Store non-Canvas resource types for round-tripping
+  if (item.resourceType && item.resourceType !== 'Canvas') {
+    body._resourceType = item.resourceType;
+  }
+
+  // Store meta for round-tripping
+  if (item.meta) {
+    body._meta = item.meta;
+  }
+
   return {
     id: item.id,
     type: 'Annotation',
     motivation: 'painting',
-    body: {
-      type: 'SpecificResource',
-      source: item.resourceId,
-      label: item.label ? { en: [item.label] } : undefined,
-    } as unknown as IIIFAnnotation['body'],
+    body: body as unknown as IIIFAnnotation['body'],
     target: `${surfaceCanvasId}#xywh=${xywh}`,
   };
 }
@@ -286,6 +298,8 @@ function annotationToBoardItem(annotation: IIIFAnnotation): BoardItem | null {
   const source = (body as { source?: string })?.source || '';
   const bodyLabel = (body as { label?: Record<string, string[]> })?.label;
   const label = bodyLabel?.en?.[0] || source;
+  const resourceType = (body as { _resourceType?: string })?._resourceType || 'Canvas';
+  const meta = (body as { _meta?: BoardItem['meta'] })?._meta;
 
   return {
     id: annotation.id,
@@ -294,8 +308,9 @@ function annotationToBoardItem(annotation: IIIFAnnotation): BoardItem | null {
     y: xywh.y,
     w: xywh.w,
     h: xywh.h,
-    resourceType: 'Canvas',
+    resourceType,
     label,
+    ...(meta && { meta }),
   };
 }
 

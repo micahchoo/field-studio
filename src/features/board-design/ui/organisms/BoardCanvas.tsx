@@ -20,29 +20,37 @@ import {
 } from '../../model';
 import { CanvasGrid } from '../atoms/CanvasGrid';
 import { MiniMap } from '../atoms/MiniMap';
+import { AlignmentGuideLine } from '../atoms/AlignmentGuideLine';
 import { BoardNodeLayer } from '../molecules/BoardNodeLayer';
 import { ConnectionLayer } from '../molecules/ConnectionLayer';
 import { BoardControls } from '../molecules/BoardControls';
 import { useCanvasDrag } from '../../hooks/useCanvasDrag';
+import { useRubberBandSelect } from '../../hooks/useRubberBandSelect';
+import { useAlignmentGuides } from '../../hooks/useAlignmentGuides';
 
 export interface BoardCanvasProps {
   items: BoardItem[];
   connections: Connection[];
   selectedItemId: string | null;
+  selectedIds?: Set<string>;
   connectingFrom: string | null;
   activeTool: 'select' | 'connect' | 'note' | 'text';
   viewport: { x: number; y: number; zoom: number };
   onViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
   onSelectItem: (id: string | null) => void;
+  onToggleSelectItem?: (id: string, shiftKey: boolean) => void;
+  onSelectItems?: (ids: string[]) => void;
   onMoveItem: (id: string, position: { x: number; y: number }) => void;
+  onMoveSelected?: (dx: number, dy: number) => void;
   onResizeItem?: (id: string, size: { w: number; h: number }) => void;
   onStartConnection: (fromId: string) => void;
   onCompleteConnection: (toId: string, type?: ConnectionType) => void;
   onAddItem: (resource: IIIFItem, position: { x: number; y: number }) => void;
   onAddNote?: (position: { x: number; y: number }) => void;
-  root: IIIFItem | null;
   onDoubleClickItem?: (id: string) => void;
+  onDoubleClickConnection?: (id: string) => void;
   onContextMenuItem?: (e: React.MouseEvent, id: string) => void;
+  root: IIIFItem | null;
   bgMode?: 'grid' | 'dark' | 'light';
   cx: ContextualClassNames;
   fieldMode: boolean;
@@ -54,17 +62,21 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       items,
       connections,
       selectedItemId,
+      selectedIds,
       connectingFrom,
       activeTool,
       viewport,
       onViewportChange,
       onSelectItem,
+      onToggleSelectItem,
+      onSelectItems,
       onMoveItem,
       onResizeItem,
       onStartConnection,
       onCompleteConnection,
       onAddNote,
       onDoubleClickItem,
+      onDoubleClickConnection,
       onContextMenuItem,
       bgMode = 'grid',
       cx,
@@ -85,8 +97,16 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
     } | null>(null);
     const [isResizing, setIsResizing] = useState(false);
 
+    // Rubber-band selection
+    const rubberBand = useRubberBandSelect();
+
+    // Alignment guides
+    const { guides, computeGuides, clearGuides } = useAlignmentGuides();
+
     const {
       setRefs,
+      isDragging,
+      draggingItemId,
       selectedConnectionId,
       screenToCanvas,
       handleCanvasClick: basCanvasClick,
@@ -110,7 +130,7 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       }
     };
 
-    // Handle canvas click — also handles note tool clicks
+    // Handle canvas click — also handles note tool clicks and rubber-band start
     const handleCanvasClick = useCallback((e: React.MouseEvent) => {
       if (activeTool === 'note' && onAddNote) {
         const pos = screenToCanvas(e.clientX, e.clientY);
@@ -119,6 +139,18 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       }
       basCanvasClick(e);
     }, [activeTool, onAddNote, screenToCanvas, basCanvasClick]);
+
+    // Handle mouse down — start rubber-band if clicking empty canvas area
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+      if (activeTool !== 'select') return;
+      // Only start rubber-band if clicking directly on the canvas container
+      const target = e.target as HTMLElement;
+      const isCanvasBackground = target.classList.contains('board-canvas-content') || target === e.currentTarget;
+      if (isCanvasBackground && !e.shiftKey) {
+        const pos = screenToCanvas(e.clientX, e.clientY);
+        rubberBand.startSelection(pos.x, pos.y);
+      }
+    }, [activeTool, screenToCanvas, rubberBand]);
 
     // Handle resize start from BoardNode
     const handleResizeStart = useCallback((
@@ -141,7 +173,7 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       setIsResizing(true);
     }, [items]);
 
-    // Handle mouse move — resize or drag
+    // Handle mouse move — resize, rubber-band, alignment guides, or drag
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
       if (isResizing && resizeRef.current && onResizeItem) {
         const r = resizeRef.current;
@@ -167,18 +199,48 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
         }
         return;
       }
-      basMouseMove(e);
-    }, [isResizing, viewport.zoom, onResizeItem, onMoveItem, basMouseMove]);
 
-    // Handle mouse up — end resize or drag
+      // Rubber-band selection update
+      if (rubberBand.isSelecting) {
+        const pos = screenToCanvas(e.clientX, e.clientY);
+        rubberBand.updateSelection(pos.x, pos.y);
+        return;
+      }
+
+      // Alignment guides during drag
+      if (isDragging && draggingItemId) {
+        const item = items.find(i => i.id === draggingItemId);
+        if (item) {
+          const pos = screenToCanvas(e.clientX, e.clientY);
+          computeGuides(draggingItemId, pos, { w: item.w, h: item.h }, items);
+        }
+      }
+
+      basMouseMove(e);
+    }, [isResizing, viewport.zoom, onResizeItem, onMoveItem, rubberBand, isDragging, draggingItemId, items, screenToCanvas, computeGuides, basMouseMove]);
+
+    // Handle mouse up — end resize, rubber-band, or drag
     const handleMouseUp = useCallback(() => {
       if (isResizing) {
         resizeRef.current = null;
         setIsResizing(false);
         return;
       }
+
+      // End rubber-band selection
+      if (rubberBand.isSelecting) {
+        const selectedItemIds = rubberBand.endSelection(items);
+        if (selectedItemIds.length > 0 && onSelectItems) {
+          onSelectItems(selectedItemIds);
+        }
+        return;
+      }
+
+      // Clear alignment guides on drag end
+      clearGuides();
+
       basMouseUp();
-    }, [isResizing, basMouseUp]);
+    }, [isResizing, rubberBand, items, onSelectItems, clearGuides, basMouseUp]);
 
     // Handle node click in connect mode — complete connection
     const handleNodeSelect = useCallback((id: string) => {
@@ -188,6 +250,15 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
       }
       onSelectItem(id);
     }, [activeTool, connectingFrom, onCompleteConnection, onSelectItem]);
+
+    // Handle node click with shift for multi-select
+    const handleNodeClick = useCallback((id: string, e?: React.MouseEvent) => {
+      if (e?.shiftKey && onToggleSelectItem) {
+        onToggleSelectItem(id, true);
+        return;
+      }
+      handleNodeSelect(id);
+    }, [handleNodeSelect, onToggleSelectItem]);
 
     // Handle node connect start (anchor click)
     const handleConnectStart = useCallback((id: string) => {
@@ -232,17 +303,18 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
         `}
         style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair' }}
         onClick={handleCanvasClick}
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
         {/* Canvas content with transforms */}
         <div
+          className="absolute inset-0 board-canvas-content"
           style={{
             transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
             transformOrigin: '0 0',
           }}
-          className="absolute inset-0"
         >
           {bgMode === 'grid' && <CanvasGrid cx={cx} />}
 
@@ -251,6 +323,7 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
             items={items}
             selectedConnectionId={selectedConnectionId}
             onSelectConnection={handleSelectConnection}
+            onDoubleClickConnection={onDoubleClickConnection}
             cx={cx}
             fieldMode={fieldMode}
           />
@@ -258,8 +331,9 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
           <BoardNodeLayer
             items={items}
             selectedItemId={selectedItemId}
+            selectedIds={selectedIds}
             connectingFrom={connectingFrom}
-            onSelectItem={handleNodeSelect}
+            onSelectItem={handleNodeClick}
             onDragStart={handleDragStart}
             onConnectStart={handleConnectStart}
             onResizeStart={onResizeItem ? handleResizeStart : undefined}
@@ -268,6 +342,27 @@ export const BoardCanvas = forwardRef<HTMLDivElement, BoardCanvasProps>(
             cx={cx}
             fieldMode={fieldMode}
           />
+
+          {/* Alignment guides */}
+          <AlignmentGuideLine
+            guides={guides}
+            canvasSize={{ width: 10000, height: 10000 }}
+          />
+
+          {/* Rubber-band selection box */}
+          {rubberBand.isSelecting && rubberBand.selectionRect && (
+            <div
+              className="absolute border-2 border-dashed pointer-events-none"
+              style={{
+                left: rubberBand.selectionRect.x,
+                top: rubberBand.selectionRect.y,
+                width: rubberBand.selectionRect.width,
+                height: rubberBand.selectionRect.height,
+                borderColor: fieldMode ? '#facc15' : '#3b82f6',
+                backgroundColor: fieldMode ? 'rgba(250, 204, 21, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+              }}
+            />
+          )}
         </div>
 
         <MiniMap

@@ -12,6 +12,8 @@
 import React from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
 import type { PlacedResource } from '@/src/shared/lib/hooks/useLayerHistory';
 
@@ -113,9 +115,7 @@ export const ComposerSidebar: React.FC<ComposerSidebarProps> = ({
           aria-label="Resource Layers"
         >
           {layers.length === 0 ? (
-            <div className="text-center py-20 text-nb-black/60 italic text-sm">
-              No items on canvas.
-            </div>
+            <EmptyState icon={EMPTY_STATES.EMPTY_CANVAS.icon} title={EMPTY_STATES.EMPTY_CANVAS.title} message={EMPTY_STATES.EMPTY_CANVAS.message} compact />
           ) : (
             layers.map((layer, idx) => (
               <div

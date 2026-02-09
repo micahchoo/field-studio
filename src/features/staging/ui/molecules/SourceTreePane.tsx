@@ -12,8 +12,9 @@ import type { FileTree, SourceManifests } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { Button } from '@/ui/primitives/Button';
 import { FileTreeNode } from '../atoms/FileTreeNode';
-import type { NodeAnnotations } from '../../model';
+import type { NodeAnnotations, FlatFileTreeNode } from '../../model';
 import { flattenFileTree } from '../../model';
+import type { IngestPreviewNode } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
 
 export interface SourceTreePaneProps {
   fileTree: FileTree;
@@ -22,6 +23,7 @@ export interface SourceTreePaneProps {
   onAnnotationChange: (path: string, ann: NodeAnnotations) => void;
   selectedPaths: string[];
   onSelect: (path: string, additive: boolean) => void;
+  onPreviewSelect?: (node: FlatFileTreeNode) => void;
   onClearSelection: () => void;
   filterText: string;
   onFilterChange: (text: string) => void;
@@ -29,6 +31,8 @@ export interface SourceTreePaneProps {
   onDragStart: (e: React.DragEvent, paths: string[]) => void;
   isFocused: boolean;
   onFocus: () => void;
+  analysisRoot?: IngestPreviewNode;
+  unsupportedPaths?: Set<string>;
 }
 
 /** Collect all directory paths at depth 0 (root-level dirs) */
@@ -85,12 +89,24 @@ function collectMatchingPaths(tree: FileTree, filterLower: string, parentPath: s
   return matches;
 }
 
+/** Find an IngestPreviewNode by path */
+function findAnalysisNode(root: IngestPreviewNode | undefined, path: string): IngestPreviewNode | undefined {
+  if (!root) return undefined;
+  if (root.path === path) return root;
+  for (const child of root.children) {
+    const found = findAnalysisNode(child, path);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
   fileTree,
   sourceManifests,
   annotationsMap,
   selectedPaths,
   onSelect,
+  onPreviewSelect,
   onClearSelection,
   filterText,
   onFilterChange,
@@ -98,6 +114,8 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
   onDragStart,
   isFocused,
   onFocus,
+  analysisRoot,
+  unsupportedPaths,
 }) => {
   // Expanded paths — init with root-level directories
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
@@ -195,8 +213,25 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
     const manifestIds = [...manifestIdSet];
     e.dataTransfer.setData('application/iiif-manifest-ids', JSON.stringify(manifestIds));
     e.dataTransfer.effectAllowed = 'copyMove';
+
+    // Custom drag ghost for multi-select
+    if (paths.length > 1) {
+      const ghost = document.createElement('div');
+      ghost.className = 'fixed pointer-events-none bg-nb-blue text-white text-xs px-2 py-1 rounded shadow-lg z-[9999]';
+      ghost.textContent = `${paths.length} files`;
+      ghost.style.position = 'absolute';
+      ghost.style.top = '-1000px';
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 0, 0);
+      requestAnimationFrame(() => document.body.removeChild(ghost));
+    }
+
     onDragStart(e, paths);
   }, [selectedPaths, onDragStart, pathToManifestIds]);
+
+  const handleNodeClick = useCallback((node: FlatFileTreeNode) => {
+    onPreviewSelect?.(node);
+  }, [onPreviewSelect]);
 
   return (
     <div
@@ -266,9 +301,14 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
               node={node}
               isSelected={selectedPaths.includes(node.path)}
               onToggleExpand={handleToggleExpand}
-              onSelect={onSelect}
+              onSelect={(path, additive) => {
+                onSelect(path, additive);
+                handleNodeClick(node);
+              }}
               onContextMenu={onContextMenu}
               onDragStart={handleDragStart}
+              analysisNode={node.isDirectory ? findAnalysisNode(analysisRoot, node.path) : undefined}
+              isUnsupported={!node.isDirectory && unsupportedPaths?.has(node.path)}
             />
           ))
         )}

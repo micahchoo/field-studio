@@ -63,6 +63,7 @@ const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
     fontWeight: 700,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
+    position: 'relative' as const,
   },
   base: {
     height: '40px',
@@ -101,6 +102,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   children,
   style,
+  className,
   ...props
 }) => {
   const baseStyle: React.CSSProperties = {
@@ -124,11 +126,15 @@ export const Button: React.FC<ButtonProps> = ({
     ...style,
   };
 
+  const touchClass = size === 'sm' ? 'touch-target-sm' : '';
+  const combinedClassName = [touchClass, className].filter(Boolean).join(' ') || undefined;
+
   return (
     <button
       style={baseStyle}
       disabled={disabled || loading}
       aria-disabled={disabled || loading}
+      className={combinedClassName}
       {...props}
     >
       {loading && (

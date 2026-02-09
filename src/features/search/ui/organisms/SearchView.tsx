@@ -22,9 +22,11 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import type { IIIFItem } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import { Button, Icon } from '@/src/shared/ui/atoms';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { FacetPill } from '@/src/shared/ui/molecules/FacetPill';
 import { ResultCard } from '@/src/shared/ui/molecules/ResultCard';
 import { SearchField } from '@/src/shared/ui/molecules/SearchField';
+import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { usePipeline } from '@/src/shared/lib/hooks';
 import {
   getResultCountText,
@@ -166,7 +168,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   return (
     <div className={`flex flex-col h-full ${surfaceBg} ${cx.text}`}>
       {/* Search Header */}
-      <div className={`border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode ${headerBorder} p-6 shadow-brutal-sm z-10`}>
+      <div className={`border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode ${headerBorder} p-4 sm:p-6 shadow-brutal-sm z-10`}>
         <div className="max-w-3xl mx-auto w-full">
           <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${cx.text}`}>
             <Icon name="search" className="text-mode-accent" />
@@ -175,7 +177,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
           {/* Search Tips */}
           {!query && !indexing && (
-            <div className={`mb-4 flex flex-wrap gap-2 text-sm ${cx.textMuted}`}>
+            <div className={`mb-4 flex flex-nowrap sm:flex-wrap gap-2 text-sm overflow-x-auto [&>*]:shrink-0 ${cx.textMuted}`}>
               <span>Try:</span>
               {['sunset', 'archaeological site', '2017', 'portrait'].map((tip) => (
                 <Button variant="ghost" size="bare"
@@ -264,7 +266,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-4 overflow-x-auto [&>*]:shrink-0">
             {FILTER_OPTIONS.map((f) => (
               <FacetPill
                 key={f}
@@ -280,7 +282,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
       </div>
 
       {/* Results Area */}
-      <div className={`flex-1 overflow-y-auto p-6 custom-scrollbar ${cx.surface}`}>
+      <div className={`flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar ${cx.surface}`}>
         <div className="max-w-3xl mx-auto w-full space-y-4">
           {indexing ? (
             <div className={`text-center py-12 ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
@@ -313,40 +315,15 @@ export const SearchView: React.FC<SearchViewProps> = ({
               ))}
             </>
           ) : shouldSearch(query) ? (
-            <div className={`text-center py-12 ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
-              <div className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
-              <p className="text-sm mb-2">No results for "{query}"</p>
-              <div className="flex flex-wrap justify-center gap-2 mt-4">
-                <Button variant="ghost" size="bare"
-                  onClick={clearQuery}
-                  className={`px-4 py-2 text-sm font-medium transition-nb ${
-                    fieldMode
-                      ? 'bg-nb-black text-nb-black/20 hover:bg-nb-black/70'
-                      : 'bg-nb-cream text-nb-black/70 hover:bg-nb-black/10'
-                  }`}
-                >
-                  Clear Search
-                </Button>
-                <Button variant="ghost" size="bare"
-                  onClick={() => setFilter('All')}
-                  className={`px-4 py-2 text-sm font-medium transition-nb ${
-                    fieldMode
-                      ? 'bg-nb-black text-nb-black/20 hover:bg-nb-black/70'
-                      : 'bg-nb-cream text-nb-black/70 hover:bg-nb-black/10'
-                  }`}
-                >
-                  Reset Filters
-                </Button>
-              </div>
-              <p className={`text-xs mt-4 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
-                Try different keywords or check your spelling
-              </p>
-            </div>
+            <EmptyState
+              icon={EMPTY_STATES.NO_RESULTS.icon}
+              title={EMPTY_STATES.NO_RESULTS.title}
+              message={`No results for "${query}". ${EMPTY_STATES.NO_RESULTS.message}`}
+              action={{ label: 'Clear Search', icon: 'close', onClick: clearQuery }}
+              secondaryAction={{ label: 'Reset Filters', icon: 'filter_list_off', onClick: () => setFilter('All') }}
+              cx={cx}
+              fieldMode={fieldMode}
+            />
           ) : (
             <div className={`text-center py-12 ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
               <div className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>

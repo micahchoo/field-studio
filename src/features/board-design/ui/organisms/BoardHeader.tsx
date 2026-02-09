@@ -4,14 +4,13 @@
  * Header for the board-design feature.
  * Composes: Toolbar, ViewToggle molecules
  *
- * IDEAL OUTCOME: Provides tool selection, undo/redo, and export actions
+ * IDEAL OUTCOME: Provides tool selection, undo/redo, export dropdown, and present mode
  * FAILURE PREVENTED: Lost work (no undo), unclear tool state
  */
 
 import React, { useState } from 'react';
 import type { IIIFItem } from '@/src/shared/types';
 import { Button, Icon } from '@/src/shared/ui/atoms';
-import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { IconButton } from '@/src/shared/ui/molecules/IconButton';
 import { ActionButton } from '@/src/shared/ui/molecules/ActionButton';
@@ -39,12 +38,22 @@ export interface BoardHeaderProps {
   onSave?: () => void;
   /** Whether the board has unsaved changes */
   isDirty?: boolean;
-  /** Export callback */
+  /** Export as IIIF Manifest callback */
   onExport: () => void;
+  /** Export as PNG callback */
+  onExportPNG?: () => void;
+  /** Export as SVG callback */
+  onExportSVG?: () => void;
+  /** Copy Content State link callback */
+  onCopyContentState?: () => void;
+  /** Enter presentation mode */
+  onPresent?: () => void;
   /** Delete callback (optional - shows delete button when provided) */
   onDelete?: () => void;
   /** Whether an item is selected (for delete button state) */
   hasSelection?: boolean;
+  /** Number of selected items (for multi-select) */
+  selectionCount?: number;
   /** Number of items on board */
   itemCount?: number;
   /** Number of connections */
@@ -89,8 +98,13 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   onSave,
   isDirty,
   onExport,
+  onExportPNG,
+  onExportSVG,
+  onCopyContentState,
+  onPresent,
   onDelete,
   hasSelection,
+  selectionCount,
   itemCount,
   connectionCount,
   bgMode = 'grid',
@@ -105,6 +119,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   fieldMode,
 }) => {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const layoutOptions: { value: LayoutArrangement; icon: string; label: string }[] = [
     { value: 'grid', icon: 'grid_view', label: 'Grid' },
@@ -134,6 +149,13 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
     { type: 'bottom' as const, icon: 'align_vertical_bottom', label: 'Align Bottom' },
   ];
 
+  const exportOptions = [
+    { id: 'iiif', icon: 'data_object', label: 'IIIF Manifest', onClick: onExport },
+    ...(onExportPNG ? [{ id: 'png', icon: 'image', label: 'Export as PNG', onClick: onExportPNG }] : []),
+    ...(onExportSVG ? [{ id: 'svg', icon: 'draw', label: 'Export as SVG', onClick: onExportSVG }] : []),
+    ...(onCopyContentState ? [{ id: 'content-state', icon: 'link', label: 'Copy Content State', onClick: onCopyContentState }] : []),
+  ];
+
   return (
     <div
       className={`
@@ -145,7 +167,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
       <div className="flex items-center gap-4">
         <div
           className={`
-            p-2 
+            p-2
             ${fieldMode ? 'bg-nb-orange/20 text-nb-orange' : 'bg-nb-orange/20 text-nb-orange'}
           `}
         >
@@ -155,13 +177,12 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           <h2 className="font-bold text-mode-accent">
             {title}
           </h2>
-          {(itemCount !== undefined || connectionCount !== undefined) && (
-            <p className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
-              {itemCount !== undefined && `${itemCount} items`}
-              {itemCount !== undefined && connectionCount !== undefined && ' · '}
-              {connectionCount !== undefined && `${connectionCount} connections`}
-            </p>
-          )}
+          <p className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
+            {itemCount !== undefined && `${itemCount} items`}
+            {itemCount !== undefined && connectionCount !== undefined && ' · '}
+            {connectionCount !== undefined && `${connectionCount} connections`}
+            {selectionCount != null && selectionCount > 1 && ` · ${selectionCount} selected`}
+          </p>
         </div>
       </div>
 
@@ -373,15 +394,62 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           />
         )}
 
-        <ActionButton
-          label="Export"
-          icon="download"
-          onClick={onExport}
-          variant="primary"
-          size="sm"
-          cx={cx}
-          fieldMode={fieldMode}
-        />
+        {/* Present button */}
+        {onPresent && (
+          <IconButton
+            icon="slideshow"
+            ariaLabel="Present"
+            title="Present (P)"
+            onClick={onPresent}
+            variant="ghost"
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+        )}
+
+        {/* Export dropdown */}
+        <div className="relative">
+          <ActionButton
+            label="Export"
+            icon="download"
+            onClick={() => {
+              if (exportOptions.length <= 1) {
+                onExport();
+              } else {
+                setShowExportMenu(s => !s);
+              }
+            }}
+            variant="primary"
+            size="sm"
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+          {showExportMenu && exportOptions.length > 1 && (
+            <div className={`absolute top-full right-0 mt-1 z-50 shadow-brutal border py-1 min-w-[180px] ${
+              fieldMode ? 'bg-nb-black border-nb-black/70' : 'bg-nb-white border-nb-black/10'
+            }`}>
+              {exportOptions.map((opt) => (
+                <Button variant="ghost" size="bare"
+                  key={opt.id}
+                  onClick={() => {
+                    opt.onClick();
+                    setShowExportMenu(false);
+                  }}
+                  className={`
+                    w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb
+                    ${fieldMode
+                      ? 'text-nb-black/20 hover:bg-nb-black/70'
+                      : 'text-nb-black/70 hover:bg-nb-cream'
+                    }
+                  `}
+                >
+                  <Icon name={opt.icon} className="text-sm" />
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {onToggleInspector && (
           <>

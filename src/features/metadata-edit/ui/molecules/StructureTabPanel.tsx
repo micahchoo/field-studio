@@ -12,6 +12,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
+import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import {
   AppSettings,
   getIIIFValue,
@@ -362,9 +363,13 @@ const RangeEditModal: React.FC<RangeEditModalProps> = ({
                 );
               })}
               {availableCanvases.length === 0 && (
-                <div className={`p-4 text-center text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
-                  No canvases available
-                </div>
+                <EmptyState
+                  icon="photo_library"
+                  title="No Canvases"
+                  message="No canvases are available in this manifest."
+                  compact
+                  fieldMode={fieldMode}
+                />
               )}
             </div>
           </div>
