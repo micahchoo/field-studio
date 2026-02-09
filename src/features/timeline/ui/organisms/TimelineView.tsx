@@ -27,10 +27,14 @@
 import React from 'react';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
+import type { AppMode } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
+import { ViewHeader, ViewHeaderTitle, ViewHeaderActions } from '@/src/shared/ui/molecules/ViewHeader';
 import { TimelineTick } from '@/src/shared/ui/molecules/TimelineTick';
+import { VIEW_MODE_OPTIONS, saveViewMode, type ArchiveViewMode } from '@/src/features/archive/model';
 import {
   formatShortDate,
   formatTime,
@@ -49,6 +53,8 @@ export interface TimelineViewProps {
   cx: ContextualClassNames;
   /** Current field mode */
   fieldMode: boolean;
+  /** Called when view mode changes (grid/list/map/timeline) */
+  onSwitchView?: (mode: AppMode) => void;
 }
 
 const ZOOM_OPTIONS: { level: ZoomLevel; label: string }[] = [
@@ -77,6 +83,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onSelect,
   cx,
   fieldMode,
+  onSwitchView,
 }) => {
   const {
     groups,
@@ -106,30 +113,46 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   return (
     <div className={`flex flex-col h-full ${cx.surface}`}>
       {/* Header */}
-      <div className={`min-h-[var(--header-h)] border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode border-b ${cx.border} flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-2 sm:py-0 shadow-brutal-sm z-10 shrink-0 gap-2`}>
-        <div className="flex items-center gap-4">
-          <h2 className="font-bold text-lg text-mode-accent">Timeline</h2>
-          <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
-          <span className={`text-[10px] font-black uppercase ${cx.textMuted}`}>
-            {totalItems} dated item{totalItems !== 1 ? 's' : ''}
-          </span>
-        </div>
-
-        {/* Zoom Controls */}
-        <div className={`flex items-center gap-2 ${cx.surface} p-1 rounded`}>
-          {ZOOM_OPTIONS.map(({ level, label }) => (
-            <Button
-              key={level}
-              onClick={() => setZoomLevel(level)}
-              variant={zoomLevel === level ? 'primary' : 'ghost'}
-              size="sm"
-              className="text-xs font-bold"
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <ViewHeader cx={cx} fieldMode={fieldMode} height="fluid" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 min-h-[var(--header-h)] sm:py-0">
+        <ViewHeaderTitle
+          title="Timeline"
+          badge={`${totalItems} dated item${totalItems !== 1 ? 's' : ''}`}
+        />
+        <ViewHeaderActions>
+          {/* Zoom Controls */}
+          <div className={`flex items-center gap-2 ${cx.surface} p-1 rounded`}>
+            {ZOOM_OPTIONS.map(({ level, label }) => (
+              <Button
+                key={level}
+                onClick={() => setZoomLevel(level)}
+                variant={zoomLevel === level ? 'primary' : 'ghost'}
+                size="sm"
+                className="text-xs font-bold"
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+          {onSwitchView && (
+            <ViewToggle
+              value="timeline"
+              onChange={(v) => {
+                const mode = v as ArchiveViewMode;
+                if (mode === 'grid' || mode === 'list') {
+                  saveViewMode(mode);
+                  onSwitchView('archive');
+                } else {
+                  onSwitchView(mode as AppMode);
+                }
+              }}
+              options={VIEW_MODE_OPTIONS}
+              ariaLabel="View mode toggle"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          )}
+        </ViewHeaderActions>
+      </ViewHeader>
 
       {/* Date Range Minimap — hidden on mobile (dots too small for touch) */}
       {minDate && maxDate && (

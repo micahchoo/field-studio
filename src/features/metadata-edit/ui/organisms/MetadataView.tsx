@@ -28,6 +28,7 @@ import { FilterInput } from '@/src/shared/ui/molecules/FilterInput';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { PipelineBanner } from '@/src/shared/ui/molecules/PipelineBanner';
+import { ViewHeader, ViewHeaderBody } from '@/src/shared/ui/molecules/ViewHeader';
 import { Button } from '@/ui/primitives/Button';
 import { Icon } from '@/src/shared/ui/atoms';
 import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
@@ -291,76 +292,80 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
         cx={cx}
         fieldMode={fieldMode}
         header={
-          <div className="flex items-center gap-4 flex-wrap border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode px-4 py-3 border-b border-nb-black/20">
-          {/* Resource type tabs */}
-          <div className={`flex ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream'} p-1`}>
-            {tabs.map((tab) => (
-              <Button
-                key={tab.value}
-                onClick={() => setActiveTab(tab.value)}
-                variant={activeTab === tab.value ? 'primary' : 'ghost'}
-                size="sm"
-                className={`text-xs font-medium ${activeTab === tab.value ? '' : fieldMode ? 'text-nb-black/40 hover:text-nb-black/20' : 'text-nb-black/60'}`}
-              >
-                {tab.label}
-              </Button>
-            ))}
-          </div>
+          <ViewHeader cx={cx} fieldMode={fieldMode} height="fluid" shadow={false} className="flex items-center gap-4 flex-wrap">
+            <ViewHeaderBody>
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Resource type tabs */}
+                <div className={`flex ${fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-cream'} p-1`}>
+                  {tabs.map((tab) => (
+                    <Button
+                      key={tab.value}
+                      onClick={() => setActiveTab(tab.value)}
+                      variant={activeTab === tab.value ? 'primary' : 'ghost'}
+                      size="sm"
+                      className={`text-xs font-medium ${activeTab === tab.value ? '' : fieldMode ? 'text-nb-black/40 hover:text-nb-black/20' : 'text-nb-black/60'}`}
+                    >
+                      {tab.label}
+                    </Button>
+                  ))}
+                </div>
 
-          {/* Filter input */}
-          <FilterInput
-            value={filter}
-            onChange={setFilter}
-            placeholder="Filter metadata..."
-            cx={cx}
-            fieldMode={fieldMode}
-          />
+                {/* Filter input */}
+                <FilterInput
+                  value={filter}
+                  onChange={setFilter}
+                  placeholder="Filter metadata..."
+                  cx={cx}
+                  fieldMode={fieldMode}
+                />
 
-          {/* ID filter indicator */}
-          {filterIds && filterIds.length > 0 && onClearFilter && (
-            <div className={`flex items-center gap-2 px-3 py-1.5 text-xs ${fieldMode ? 'bg-nb-blue/30 text-nb-blue/60' : 'bg-nb-blue/10 text-nb-blue'}`}>
-              <span>{filterIds.length} selected</span>
-              <Button variant="ghost" size="bare"
-                onClick={onClearFilter}
-                className="hover:underline font-medium"
-              >
-                Clear
-              </Button>
-            </div>
-          )}
+                {/* ID filter indicator */}
+                {filterIds && filterIds.length > 0 && onClearFilter && (
+                  <div className={`flex items-center gap-2 px-3 py-1.5 text-xs ${fieldMode ? 'bg-nb-blue/30 text-nb-blue/60' : 'bg-nb-blue/10 text-nb-blue'}`}>
+                    <span>{filterIds.length} selected</span>
+                    <Button variant="ghost" size="bare"
+                      onClick={onClearFilter}
+                      className="hover:underline font-medium"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
 
-          {/* Actions toolbar */}
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExportCSV}
-              icon={<Icon name="download" className="text-sm" />}
-            >
-              Export CSV
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleImportClick}
-              icon={<Icon name="upload" className="text-sm" />}
-            >
-              Import CSV
-            </Button>
-          </div>
+                {/* Actions toolbar */}
+                <div className="ml-auto flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    icon={<Icon name="download" className="text-sm" />}
+                  >
+                    Export CSV
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleImportClick}
+                    icon={<Icon name="upload" className="text-sm" />}
+                  >
+                    Import CSV
+                  </Button>
+                </div>
 
-          {/* Hidden file input for import */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => {
-              // TODO: Implement CSV import
-              uiLog.debug('Import file:', e.target.files?.[0]);
-            }}
-          />
-        </div>
+                {/* Hidden file input for import */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    // TODO: Implement CSV import
+                    uiLog.debug('Import file:', e.target.files?.[0]);
+                  }}
+                />
+              </div>
+            </ViewHeaderBody>
+          </ViewHeader>
       }
     >
       {/* Spreadsheet table with improved readability */}

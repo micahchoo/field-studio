@@ -45,9 +45,12 @@ export function updateEntity(
   const existing = store[id];
   if (!existing) return state;
 
-  // Special handling: if ID itself is being updated, we need a more complex update
+  // Strip `id` from updates — changing an entity's ID via updateEntity creates
+  // inconsistent state (store keyed by old ID but entity.id is new).
+  // Use renameEntity logic for ID changes instead.
   if (updates.id && updates.id !== id) {
-    vaultLog.warn('Direct ID update through updateEntity is discouraged. Use renameEntity logic.');
+    const { id: _stripId, ...safeUpdates } = updates;
+    updates = safeUpdates;
   }
 
   // Create new entity with updates

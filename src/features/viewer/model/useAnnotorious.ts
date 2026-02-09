@@ -16,6 +16,7 @@ import '@pixi/unsafe-eval';
 import {
   createOSDAnnotator,
   W3CImageFormat,
+  UserSelectAction,
   type DrawingStyle,
   type ImageAnnotation,
   type W3CImageAnnotation,
@@ -29,18 +30,32 @@ import '@annotorious/openseadragon/annotorious-openseadragon.css';
 // Types
 // ---------------------------------------------------------------------------
 
+export { UserSelectAction };
+
 export type AnnotoriousDrawingTool = 'rectangle' | 'polygon';
+
+export interface AnnotationStyleOptions {
+  color?: string;
+  strokeWidth?: number;
+  fillOpacity?: number;
+}
 
 export interface UseAnnotoriousOptions {
   drawingEnabled?: boolean;
   drawingTool?: AnnotoriousDrawingTool;
   fieldMode?: boolean;
+  /** Custom annotation style overrides */
+  style?: AnnotationStyleOptions;
   /** State counter that increments when OSD viewer is ready. Triggers initialization. */
   osdReady?: number;
+  /** Controls click behavior: EDIT (drag handles), SELECT (highlight only), NONE (ignore) */
+  userSelectAction?: UserSelectAction;
   onCreated?: (annotation: IIIFAnnotation) => void;
   onUpdated?: (annotation: IIIFAnnotation) => void;
   onDeleted?: (annotation: IIIFAnnotation) => void;
   onSelectionChanged?: (annotations: IIIFAnnotation[]) => void;
+  onMouseEnter?: (annotation: IIIFAnnotation) => void;
+  onMouseLeave?: (annotation: IIIFAnnotation) => void;
 }
 
 export interface UseAnnotoriousReturn {
@@ -134,14 +149,20 @@ function w3cToIIIF(w3c: W3CImageAnnotation, canvasId: string): IIIFAnnotation {
 // Style helpers
 // ---------------------------------------------------------------------------
 
-function makeStyle(fieldMode: boolean) {
+function makeStyle(fieldMode: boolean, styleOpts?: AnnotationStyleOptions) {
+  const baseColor = styleOpts?.color || (fieldMode ? '#eab308' : '#22c55e');
+  const baseStroke = styleOpts?.strokeWidth ?? 2;
+  const baseFill = styleOpts?.fillOpacity ?? 0.1;
+
   return (_annotation: ImageAnnotation, state?: { selected?: boolean; hovered?: boolean }): DrawingStyle => ({
-    fill: fieldMode ? '#eab308' : '#22c55e',
-    fillOpacity: state?.selected ? 0.3 : state?.hovered ? 0.15 : 0.1,
-    stroke: state?.selected
+    fill: baseColor as `#${string}`,
+    fillOpacity: state?.selected ? Math.min(baseFill + 0.2, 0.5) : state?.hovered ? Math.min(baseFill + 0.15, 0.35) : baseFill,
+    stroke: (state?.selected
       ? (fieldMode ? '#fbbf24' : '#f59e0b')
-      : (fieldMode ? '#eab308' : '#22c55e'),
-    strokeWidth: state?.selected ? 3 : 2,
+      : state?.hovered
+        ? (fieldMode ? '#fbbf24' : '#4ade80')
+        : baseColor) as `#${string}`,
+    strokeWidth: state?.selected ? baseStroke + 1 : state?.hovered ? baseStroke + 0.5 : baseStroke,
     strokeOpacity: 1,
   });
 }
@@ -158,11 +179,15 @@ export function useAnnotorious(
 ): UseAnnotoriousReturn {
   const {
     fieldMode = false,
+    style: styleOpts,
     osdReady = 0,
+    userSelectAction,
     onCreated,
     onUpdated,
     onDeleted,
     onSelectionChanged,
+    onMouseEnter,
+    onMouseLeave,
   } = options;
 
   const annoRef = useRef<OpenSeadragonAnnotator<ImageAnnotation, W3CImageAnnotation> | null>(null);
@@ -178,10 +203,14 @@ export function useAnnotorious(
   const onUpdatedRef = useRef(onUpdated);
   const onDeletedRef = useRef(onDeleted);
   const onSelectionChangedRef = useRef(onSelectionChanged);
+  const onMouseEnterRef = useRef(onMouseEnter);
+  const onMouseLeaveRef = useRef(onMouseLeave);
   onCreatedRef.current = onCreated;
   onUpdatedRef.current = onUpdated;
   onDeletedRef.current = onDeleted;
   onSelectionChangedRef.current = onSelectionChanged;
+  onMouseEnterRef.current = onMouseEnter;
+  onMouseLeaveRef.current = onMouseLeave;
 
   const canvasId = canvas?.id ?? '';
 
@@ -198,12 +227,13 @@ export function useAnnotorious(
       anno = createOSDAnnotator<ImageAnnotation, W3CImageAnnotation>(viewer, {
         drawingEnabled: false,
         adapter: W3CImageFormat(canvasId),
+        userSelectAction: userSelectAction ?? UserSelectAction.EDIT,
       });
 
       annoRef.current = anno;
 
       // Style
-      anno.setStyle(makeStyle(fieldMode));
+      anno.setStyle(makeStyle(fieldMode, styleOpts));
 
       // Events
       anno.on('createAnnotation', (w3cAnnotation: W3CImageAnnotation) => {
@@ -225,6 +255,14 @@ export function useAnnotorious(
         const iiifSelected = selected.map(a => w3cToIIIF(a, canvasId));
         setSelectedAnnotation(iiifSelected[0] ?? null);
         onSelectionChangedRef.current?.(iiifSelected);
+      });
+
+      anno.on('mouseEnterAnnotation', (w3cAnnotation: W3CImageAnnotation) => {
+        onMouseEnterRef.current?.(w3cToIIIF(w3cAnnotation, canvasId));
+      });
+
+      anno.on('mouseLeaveAnnotation', (w3cAnnotation: W3CImageAnnotation) => {
+        onMouseLeaveRef.current?.(w3cToIIIF(w3cAnnotation, canvasId));
       });
 
       // Load existing spatial annotations (skip time-based)
@@ -268,10 +306,17 @@ export function useAnnotorious(
     // Re-initialize when canvas changes or OSD viewer becomes ready
   }, [osdReady, canvasId]);
 
-  // Sync fieldMode style changes
+  // Sync fieldMode and custom style changes
   useEffect(() => {
-    annoRef.current?.setStyle(makeStyle(fieldMode));
-  }, [fieldMode]);
+    annoRef.current?.setStyle(makeStyle(fieldMode, styleOpts));
+  }, [fieldMode, styleOpts?.color, styleOpts?.strokeWidth, styleOpts?.fillOpacity]);
+
+  // Sync userSelectAction changes at runtime
+  useEffect(() => {
+    if (annoRef.current && userSelectAction !== undefined) {
+      annoRef.current.setUserSelectAction(userSelectAction);
+    }
+  }, [userSelectAction]);
 
   // Sync external annotation changes (e.g. after save persists)
   useEffect(() => {

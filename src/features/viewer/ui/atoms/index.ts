@@ -98,3 +98,12 @@ export type { MediaErrorOverlayProps, MediaErrorType } from './MediaErrorOverlay
 
 export { MediaLoadingOverlay } from './MediaLoadingOverlay';
 export type { MediaLoadingOverlayProps } from './MediaLoadingOverlay';
+
+export { ScreenshotMenu } from './ScreenshotMenu';
+export type { ScreenshotMenuProps } from './ScreenshotMenu';
+
+export { AnnotationColorPicker } from './AnnotationColorPicker';
+export type { AnnotationColorPickerProps } from './AnnotationColorPicker';
+
+export { StrokeWidthSelect } from './StrokeWidthSelect';
+export type { StrokeWidthSelectProps } from './StrokeWidthSelect';

@@ -16,10 +16,11 @@
  * @module features/viewer/ui/organisms/ViewerView
  */
 
-import React, { useCallback, useRef, useState } from 'react';
-import { getIIIFValue, type IIIFAnnotation, type IIIFCanvas, type IIIFManifest } from '@/src/shared/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getIIIFValue, type IIIFAnnotation, type IIIFCanvas, type IIIFManifest, type IIIFRange, type IIIFRangeReference } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import { storage } from '@/src/shared/services/storage';
+import { contentStateService } from '@/src/shared/services/contentState';
 import {
   type AnnotationDrawingMode,
   AnnotationDrawingOverlay,
@@ -32,7 +33,8 @@ import {
   ViewerToolbar,
   ViewerWorkbench,
 } from '../molecules';
-import { type SpatialDrawingMode, useViewer } from '../../model';
+import { type AnnotationStyleOptions, type ScreenshotFormat, type SpatialDrawingMode, useViewer, useImageFilters, useMeasurement, useComparison, useAnnotationLayers } from '../../model';
+import { ImageFilterPanel, MeasurementOverlay, ComparisonViewer, AnnotationLayerPanel } from '../molecules';
 import { useVaultDispatch, useVaultState } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { actions } from '@/src/entities/manifest/model/actions';
 import { uiLog } from '@/src/shared/services/logger';
@@ -80,6 +82,8 @@ export interface ViewerViewProps {
   onPlaybackTimeChange?: (time: number) => void;
   /** Ref callback to expose time annotation create function */
   onTimeAnnotationCreateRef?: (fn: (text: string, motivation: 'commenting' | 'tagging' | 'describing') => void) => void;
+  /** Callback when user selects/deselects an annotation in the viewer */
+  onAnnotationSelected?: (annotationId: string | null) => void;
 }
 
 export const ViewerView: React.FC<ViewerViewProps> = ({
@@ -108,6 +112,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   currentPlaybackTime: currentPlaybackTimeProp,
   onPlaybackTimeChange,
   onTimeAnnotationCreateRef: _onTimeAnnotationCreateRef,
+  onAnnotationSelected,
 }) => {
   const [showWorkbench, setShowWorkbench] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
@@ -129,7 +134,13 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   // Annotation drawing state - controlled from toolbar, used by overlay
   // Note: Uses SpatialDrawingMode because time-based annotation is handled separately in MediaPlayer
   const [annotationDrawingMode, setAnnotationDrawingMode] = useState<SpatialDrawingMode>('polygon');
+  const [annotationStyle, setAnnotationStyle] = useState<AnnotationStyleOptions>({
+    color: '#22c55e',
+    strokeWidth: 2,
+    fillOpacity: 0.1,
+  });
   const annotationUndoRef = useRef<(() => void) | null>(null);
+  const annotationRedoRef = useRef<(() => void) | null>(null);
   const annotationClearRef = useRef<(() => void) | null>(null);
   const annotationSaveRef = useRef<(() => void) | null>(null);
 
@@ -184,16 +195,52 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
     canDownload,
     hasSearchService,
     osdReady,
+    handleImageKeyDown,
   } = useViewer(item, manifest);
 
-  // Handle screenshot with download
-  const handleScreenshot = useCallback(async () => {
-    const blob = await takeScreenshot();
-    if (blob) {
+  // Image filters
+  const imageFilters = useImageFilters(viewerRef, osdContainerRef);
+
+  // Measurement tool
+  const measurement = useMeasurement();
+
+  // Comparison mode
+  const comparison = useComparison();
+
+  // Annotation layers (non-painting annotation pages)
+  const [showLayerPanel, setShowLayerPanel] = useState(false);
+  const annotationLayers = useAnnotationLayers(item);
+
+  // When layers exist, filter annotations by layer visibility; otherwise show all
+  const effectiveAnnotations = annotationLayers.layers.length > 0
+    ? annotationLayers.visibleAnnotations
+    : annotations;
+
+  // Handle screenshot with format choice and clipboard/download
+  const handleScreenshot = useCallback(async (format: ScreenshotFormat = 'image/png', action: 'download' | 'clipboard' = 'download') => {
+    const quality = format === 'image/jpeg' ? 0.92 : format === 'image/webp' ? 0.9 : undefined;
+    const blob = await takeScreenshot(format, quality);
+    if (!blob) return;
+
+    if (action === 'clipboard') {
+      try {
+        // Clipboard API requires PNG; convert if needed
+        const clipBlob = format === 'image/png' ? blob : await takeScreenshot('image/png');
+        if (clipBlob) {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': clipBlob })]);
+        }
+      } catch {
+        // Fallback to download if clipboard fails
+        action = 'download';
+      }
+    }
+
+    if (action === 'download') {
+      const ext = format === 'image/jpeg' ? 'jpg' : format === 'image/webp' ? 'webp' : 'png';
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `screenshot-${Date.now()}.png`;
+      a.download = `screenshot-${Date.now()}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -225,12 +272,114 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
     // Keep annotation tool open so user can add more annotations
   }, [item, dispatch, exportRoot]);
 
+  // Extract IIIF Range structures as chapter markers for audio/video timeline
+  const CHAPTER_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4'];
+  const chapters = useMemo(() => {
+    if (!manifest?.structures || !item?.id) return [];
+    const markers: { label: string; start: number; end: number; color: string }[] = [];
+
+    const extractFromRange = (range: IIIFRange, colorIdx: number) => {
+      for (const ref of range.items) {
+        // Canvas reference with time fragment: "canvasId#t=start,end"
+        const refId = (ref as IIIFRangeReference).id || '';
+        if (!refId.includes(item.id)) continue;
+        const hashIdx = refId.indexOf('#t=');
+        if (hashIdx === -1) continue;
+        const fragment = refId.substring(hashIdx + 3);
+        const parts = fragment.split(',');
+        const start = parseFloat(parts[0]);
+        const end = parts.length > 1 ? parseFloat(parts[1]) : start;
+        if (isNaN(start)) continue;
+        markers.push({
+          label: getIIIFValue(range.label) || `Chapter ${markers.length + 1}`,
+          start,
+          end: isNaN(end) ? start : end,
+          color: CHAPTER_COLORS[colorIdx % CHAPTER_COLORS.length],
+        });
+      }
+    };
+
+    manifest.structures.forEach((range, idx) => extractFromRange(range, idx));
+    return markers.sort((a, b) => a.start - b.start);
+  }, [manifest?.structures, item?.id]);
+
+  // Handle spatial annotation on video — combine spatial rect with current time range
+  const handleSpatialAnnotation = useCallback((region: { x: number; y: number; w: number; h: number }) => {
+    if (!item?.id) return;
+
+    // Create SVG selector for the spatial region (normalized 0-1 coords → pixel coords)
+    const canvasW = item.width || 1920;
+    const canvasH = item.height || 1080;
+    const x = Math.round(region.x * canvasW);
+    const y = Math.round(region.y * canvasH);
+    const w = Math.round(region.w * canvasW);
+    const h = Math.round(region.h * canvasH);
+    const svgValue = `<svg xmlns="http://www.w3.org/2000/svg"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></svg>`;
+
+    // Build the annotation target with both spatial and temporal selectors
+    const svgSelector = { type: 'SvgSelector' as const, value: svgValue };
+    let targetSelector: IIIFAnnotation['target'];
+
+    if (timeRange) {
+      const tFrag = timeRange.end != null
+        ? `t=${timeRange.start},${timeRange.end}`
+        : `t=${timeRange.start}`;
+      const fragSelector = {
+        type: 'FragmentSelector' as const,
+        value: tFrag,
+        conformsTo: 'http://www.w3.org/TR/media-frags/',
+      };
+      targetSelector = {
+        type: 'SpecificResource' as const,
+        source: item.id,
+        selector: [svgSelector, fragSelector],
+      };
+    } else {
+      targetSelector = {
+        type: 'SpecificResource' as const,
+        source: item.id,
+        selector: svgSelector,
+      };
+    }
+
+    const annotation: IIIFAnnotation = {
+      id: `anno-spatial-${Date.now()}`,
+      type: 'Annotation',
+      motivation: 'commenting',
+      body: { type: 'TextualBody', value: '', format: 'text/plain' } as unknown as IIIFAnnotation['body'],
+      target: targetSelector,
+    };
+
+    handleCreateAnnotation(annotation);
+  }, [item, timeRange, handleCreateAnnotation]);
+
+  // Handle annotation selection in viewer → forward as ID to parent
+  const handleAnnotationSelected = useCallback((annotation: import('@/src/shared/types').IIIFAnnotation | null) => {
+    onAnnotationSelected?.(annotation?.id ?? null);
+  }, [onAnnotationSelected]);
+
   // Handle adding current canvas to Board
   const handleAddToBoard = () => {
     if (item && onAddToBoard) {
       onAddToBoard(item.id);
     }
   };
+
+  // Handle toggling comparison - picks the next canvas as comparison target
+  const handleToggleComparison = useCallback(() => {
+    if (comparison.mode !== 'off') {
+      comparison.stopComparison();
+    } else if (manifestItems && manifestItems.length > 1 && item) {
+      const currentIdx = manifestItems.findIndex(c => c.id === item.id);
+      const nextIdx = (currentIdx + 1) % manifestItems.length;
+      comparison.startComparison(manifestItems[nextIdx].id);
+    }
+  }, [comparison, manifestItems, item]);
+
+  // Find the second canvas for comparison
+  const secondComparisonCanvas = comparison.secondCanvasId
+    ? manifestItems?.find(c => c.id === comparison.secondCanvasId) ?? null
+    : null;
 
   const currentSearchService = manifest?.service?.find(
     (s: { type?: string; profile?: string | string[] }) =>
@@ -245,10 +394,29 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   const currentIndex = manifestItems?.findIndex((c) => c.id === item.id) ?? -1;
   const totalItems = manifestItems?.length ?? 1;
 
+  // Share link handler — copies IIIF Content State link to clipboard
+  const handleShareLink = useCallback(() => {
+    if (!item?.id || !manifest?.id) return;
+    contentStateService.copyLink({ manifestId: manifest.id, canvasId: item.id });
+  }, [item?.id, manifest?.id]);
+
+  // Wire image keyboard shortcuts to container
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (mediaType === 'image') {
+      handleImageKeyDown(e.nativeEvent, {
+        annotationToolActive: showAnnotationTool,
+        onAnnotationToolToggle: setShowAnnotationTool,
+        onMeasurementToggle: measurement.toggleActive,
+      });
+    }
+  }, [mediaType, handleImageKeyDown, showAnnotationTool, setShowAnnotationTool, measurement.toggleActive]);
+
   return (
     <div
       ref={containerRef}
       className={`flex-1 flex flex-col overflow-hidden relative ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
     >
       <ViewerToolbar
         label={label}
@@ -284,10 +452,24 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         onToggleAnnotationTool={() => setShowAnnotationTool(!showAnnotationTool)}
         onAnnotationModeChange={setAnnotationDrawingMode}
         onAnnotationUndo={() => annotationUndoRef.current?.()}
+        onAnnotationRedo={() => annotationRedoRef.current?.()}
         onAnnotationClear={() => annotationClearRef.current?.()}
+        annotationStyle={annotationStyle}
+        onAnnotationStyleChange={setAnnotationStyle}
         onToggleMetadata={() => {}}
         onToggleFullscreen={toggleFullscreen}
         onToggleFilmstrip={toggleFilmstrip}
+        showFilterPanel={imageFilters.showPanel}
+        filtersActive={imageFilters.isActive}
+        onToggleFilterPanel={imageFilters.togglePanel}
+        showMeasurement={measurement.active}
+        onToggleMeasurement={measurement.toggleActive}
+        showComparison={comparison.mode !== 'off'}
+        onToggleComparison={handleToggleComparison}
+        showLayers={showLayerPanel}
+        onToggleLayers={() => setShowLayerPanel(prev => !prev)}
+        layerCount={annotationLayers.layers.length}
+        onShareLink={manifest ? handleShareLink : undefined}
         cx={cx}
         fieldMode={fieldMode}
       />
@@ -299,16 +481,56 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
           resolvedUrl={resolvedImageUrl}
           osdContainerRef={osdContainerRef}
           viewerRef={viewerRef}
-          annotations={annotations}
+          annotations={effectiveAnnotations}
           onCreateAnnotation={handleCreateAnnotation}
           annotationModeActive={showAnnotationTool && (mediaType === 'audio' || mediaType === 'video')}
           onAnnotationModeToggle={(active) => setShowAnnotationTool(active)}
           timeRange={timeRange}
           onTimeRangeChange={setTimeRange}
           onPlaybackTimeUpdate={handlePlaybackTimeUpdate}
+          chapters={chapters}
+          spatialAnnotationMode={showAnnotationTool && mediaType === 'video'}
+          onSpatialAnnotation={handleSpatialAnnotation}
           cx={cx}
           fieldMode={fieldMode}
         />
+
+        {/* Image filter panel */}
+        {mediaType === 'image' && imageFilters.showPanel && (
+          <ImageFilterPanel
+            filters={imageFilters.filters}
+            isActive={imageFilters.isActive}
+            onBrightnessChange={imageFilters.setBrightness}
+            onContrastChange={imageFilters.setContrast}
+            onToggleInvert={imageFilters.toggleInvert}
+            onToggleGrayscale={imageFilters.toggleGrayscale}
+            onReset={imageFilters.resetFilters}
+            onClose={imageFilters.togglePanel}
+            fieldMode={fieldMode}
+          />
+        )}
+
+        {/* Comparison viewer overlay - only for images */}
+        {mediaType === 'image' && comparison.mode !== 'off' && secondComparisonCanvas && (
+          <ComparisonViewer
+            comparison={comparison}
+            primaryCanvas={item}
+            secondCanvas={secondComparisonCanvas}
+            primaryViewerRef={viewerRef}
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+        )}
+
+        {/* Measurement overlay - only for images */}
+        {mediaType === 'image' && measurement.active && (
+          <MeasurementOverlay
+            measurement={measurement}
+            viewerRef={viewerRef}
+            osdContainerRef={osdContainerRef}
+            fieldMode={fieldMode}
+          />
+        )}
 
         {/* Integrated Annotation Drawing Overlay - only for images */}
         {mediaType === 'image' && (
@@ -320,8 +542,9 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
             onDrawingModeChange={setAnnotationDrawingMode}
             onCreateAnnotation={handleCreateAnnotation}
             onClose={() => setShowAnnotationTool(false)}
-            existingAnnotations={annotations}
+            existingAnnotations={effectiveAnnotations}
             onUndoRef={(fn) => { annotationUndoRef.current = fn; }}
+            onRedoRef={(fn) => { annotationRedoRef.current = fn; }}
             onClearRef={(fn) => {
               annotationClearRef.current = fn;
               onAnnotationClearRef?.(fn);
@@ -333,9 +556,24 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
             onDrawingStateChange={onAnnotationDrawingStateChange}
             annotationText={annotationText}
             annotationMotivation={annotationMotivation}
+            annotationStyle={annotationStyle}
             osdReady={osdReady}
+            onAnnotationSelected={handleAnnotationSelected}
             cx={cx}
             fieldMode={fieldMode}
+          />
+        )}
+
+        {/* Annotation layer panel */}
+        {annotationLayers.layers.length > 0 && (
+          <AnnotationLayerPanel
+            layers={annotationLayers.layers}
+            onToggleLayer={annotationLayers.toggleLayer}
+            onSetAllVisible={annotationLayers.setAllVisible}
+            onLayerOpacityChange={annotationLayers.setLayerOpacity}
+            fieldMode={fieldMode}
+            visible={showLayerPanel}
+            onClose={() => setShowLayerPanel(false)}
           />
         )}
       </div>

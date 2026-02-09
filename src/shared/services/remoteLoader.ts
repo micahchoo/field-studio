@@ -170,8 +170,8 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
   };
 
   try {
-    // Try with stored token if available
-    const storedToken = authService.getStoredToken(url);
+    // Try with stored token if available, falling back to same-origin token
+    const storedToken = authService.getStoredToken(url) || authService.getValidTokenForOrigin(url);
     const result = await fetchWithValidation(url, storedToken || undefined);
 
     // If auth is required, return that result

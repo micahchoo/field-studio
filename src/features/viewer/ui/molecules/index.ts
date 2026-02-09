@@ -62,3 +62,18 @@ export type { AnnotationDrawingOverlayProps } from './AnnotationDrawingOverlay';
 
 export { TimeAnnotationOverlay } from './TimeAnnotationOverlay';
 export type { TimeAnnotationOverlayProps } from './TimeAnnotationOverlay';
+
+export { AudioWaveform } from './AudioWaveform';
+export type { AudioWaveformProps } from './AudioWaveform';
+
+export { ImageFilterPanel } from './ImageFilterPanel';
+export type { ImageFilterPanelProps } from './ImageFilterPanel';
+
+export { MeasurementOverlay } from './MeasurementOverlay';
+export type { MeasurementOverlayProps } from './MeasurementOverlay';
+
+export { ComparisonViewer } from './ComparisonViewer';
+export type { ComparisonViewerProps } from './ComparisonViewer';
+
+export { AnnotationLayerPanel } from './AnnotationLayerPanel';
+export type { AnnotationLayerPanelProps } from './AnnotationLayerPanel';

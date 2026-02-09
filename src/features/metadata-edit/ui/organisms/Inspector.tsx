@@ -1,12 +1,10 @@
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppSettings, getIIIFValue, IIIFAnnotation, IIIFItem, IIIFManifest, isManifest } from '@/src/shared/types';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { MuseumLabel } from '@/src/shared/ui/molecules/MuseumLabel';
 import { ShareButton } from '../atoms/ShareButton';
-import { GeoEditor } from '../molecules/GeoEditor';
-import { ValidatedInput } from '../atoms/ValidatedInput';
-import { DebouncedField } from '../atoms/DebouncedField';
+import { MetadataFieldsPanel } from '../molecules/MetadataFieldsPanel';
 import { AnnotationCreateForm } from '../atoms/AnnotationCreateForm';
 import { AnnotationsTabPanel } from '../molecules/AnnotationsTabPanel';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
@@ -15,44 +13,17 @@ import { IIIF_SPECS } from '@/src/shared/constants/iiifSpecs';
 // TODO: [FSD] Proper fix is to receive `t` via props from FieldModeTemplate
 // eslint-disable-next-line no-restricted-imports
 import { useTerminology } from '@/src/app/providers/useTerminology';
-import { isPropertyAllowed } from '@/utils/iiifSchema';
-import { suggestBehaviors } from '@/utils/iiifBehaviors';
 import { resolvePreviewUrl } from '@/utils/imageSourceResolver';
 import { usePersistedTab } from '@/src/shared/lib/hooks/usePersistedTab';
 import { useInspectorValidation } from '../../model/useInspectorValidation';
 import { useMetadataEditor } from '@/src/shared/lib/hooks/useMetadataEditor';
 import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
 import { StructureTabPanel } from '../molecules/StructureTabPanel';
-import { RightsSelector } from '../atoms/RightsSelector';
-import { BehaviorSelector } from '../atoms/BehaviorSelector';
-import { PropertyInput } from '../atoms/PropertyInput';
-import { PropertyLabel } from '../atoms/PropertyLabel';
-import { ViewingDirectionSelector } from '../atoms/ViewingDirectionSelector';
-import { LocationPickerModal } from '../molecules/LocationPickerModal';
-import { SelectField } from '@/src/shared/ui/molecules/SelectField';
-import { BEHAVIOR_OPTIONS, getConflictingBehaviors, SUPPORTED_LANGUAGES } from '@/src/shared/constants/iiif';
 
 /** Time range for audio/video annotations */
 interface TimeRange {
   start: number;
   end?: number;
-}
-
-/** Map SUPPORTED_LANGUAGES to SelectField options format */
-const LANGUAGE_SELECT_OPTIONS = SUPPORTED_LANGUAGES.map(l => ({
-  value: l.code,
-  label: l.nativeName ? `${l.label} (${l.nativeName})` : l.label,
-}));
-
-/** Detect appropriate input type for a metadata key */
-function getMetadataInputType(key: string): 'date' | 'location' | 'language' | 'url' | 'rights' | 'text' {
-  const k = key.toLowerCase().trim();
-  if (['date', 'created', 'modified', 'issued', 'navdate'].includes(k)) return 'date';
-  if (['location', 'gps', 'place', 'coverage', 'coordinates'].includes(k)) return 'location';
-  if (['language', 'lang'].includes(k)) return 'language';
-  if (['url', 'uri', 'link', 'homepage', 'source', 'identifier'].includes(k) || k.startsWith('http')) return 'url';
-  if (['rights', 'license'].includes(k)) return 'rights';
-  return 'text';
 }
 
 interface InspectorProps {
@@ -102,6 +73,8 @@ interface InspectorProps {
   onEditAnnotation?: (annotationId: string, newText: string) => void;
   /** Callback to start annotation mode */
   onStartAnnotation?: () => void;
+  /** External annotation selection (e.g., from viewer click) — syncs to internal selectedAnnotationId */
+  selectedAnnotationId?: string | null;
 }
 
 const InspectorComponent: React.FC<InspectorProps> = ({
@@ -129,6 +102,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   onDeleteAnnotation,
   onEditAnnotation,
   onStartAnnotation,
+  selectedAnnotationId: selectedAnnotationIdProp,
 }) => {
   // Use resourceProp directly — the React.memo boundary already prevents
   // unnecessary re-renders. The old useMemo([id, type]) was too aggressive
@@ -165,22 +139,14 @@ const InspectorComponent: React.FC<InspectorProps> = ({
     }
   }, [forceTab, setTab]);
 
-  const [showAddMenu, setShowAddMenu] = useState(false);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
-  const [locationPickerIndex, setLocationPickerIndex] = useState<number | null>(null);
 
-  // Click-outside handler for Add Metadata dropdown
-  const addMenuRef = useRef<HTMLDivElement>(null);
+  // Sync external annotation selection (from viewer click) to internal state
   useEffect(() => {
-    if (!showAddMenu) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
-        setShowAddMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [showAddMenu]);
+    if (selectedAnnotationIdProp !== undefined) {
+      setSelectedAnnotationId(selectedAnnotationIdProp);
+    }
+  }, [selectedAnnotationIdProp]);
 
   // Validation lifecycle (run + fix + fixAll)
   const { issues: validationIssues, fixIssue, fixAll } = useInspectorValidation(resource);
@@ -213,21 +179,6 @@ const InspectorComponent: React.FC<InspectorProps> = ({
 
   const config = RESOURCE_TYPE_CONFIG[resource.type] || RESOURCE_TYPE_CONFIG['Content'];
   const spec = IIIF_SPECS[resource.type];
-  const isAllowed = (field: string) => isPropertyAllowed(resource.type, field);
-
-  const handleSuggestBehaviors = () => {
-    if (!resource) return;
-    const characteristics = {
-      hasDuration: !!(resource as unknown as Record<string, unknown>).duration,
-      hasPageSequence: isManifest(resource) && (resource as IIIFManifest).items?.length > 1,
-      hasWidth: !!(resource as unknown as Record<string, unknown>).width,
-      hasHeight: !!(resource as unknown as Record<string, unknown>).height,
-    };
-    const suggestions = suggestBehaviors(resource.type, characteristics);
-    if (suggestions.length > 0) {
-      onUpdateResource({ behavior: Array.from(new Set([...(resource.behavior || []), ...suggestions])) });
-    }
-  };
 
   const label = getIIIFValue(resource.label, settings.language) || '';
   const summary = getIIIFValue(resource.summary, settings.language) || '';
@@ -238,6 +189,28 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   if (resource && isManifest(resource)) availableTabs.push('structure');
   availableTabs.push('learn');
   if (designTab) availableTabs.push('design');
+
+  // Tab badge computation
+  const getTabBadge = (tabName: string): { count?: number; dotColor?: string } => {
+    switch (tabName) {
+      case 'metadata': {
+        const errorCount = validationIssues.filter(i => i.severity === 'error').length;
+        if (errorCount > 0) return { count: errorCount, dotColor: 'bg-nb-red' };
+        if (validationIssues.length > 0) return { count: validationIssues.length };
+        return {};
+      }
+      case 'annotations':
+        return annotations.length > 0 ? { count: annotations.length } : {};
+      case 'structure': {
+        const rangeCount = isManifest(resource)
+          ? (resource as IIIFManifest).structures?.length || 0
+          : 0;
+        return rangeCount > 0 ? { count: rangeCount } : {};
+      }
+      default:
+        return {};
+    }
+  };
 
   const inspectorStyles = isMobile
     ? `fixed inset-0 z-[1100] bg-nb-white flex flex-col animate-slide-in-right`
@@ -285,336 +258,61 @@ const InspectorComponent: React.FC<InspectorProps> = ({
 
       {/* Tabs */}
       <div role="tablist" aria-label="Inspector tabs" className={`flex px-2 gap-1 border-b shrink-0 ${settings.fieldMode ? `bg-nb-black ${cx.border}` : 'bg-nb-white'}`}>
-        {availableTabs.map(t => (
-          <Button variant="ghost" size="bare"
-            key={t}
-            className={`py-3 px-3 text-nb-caption font-bold uppercase tracking-wider font-mono transition-nb border-b-2 ${
-              tab === t ? cx.active : cx.inactive
-            }`}
-            onClick={() => setTab(t as typeof ALLOWED_TABS[number])}
-            aria-selected={tab === t}
-            role="tab"
-          >
-            {t === 'annotations' ? (
+        {availableTabs.map(tabName => {
+          const badge = getTabBadge(tabName);
+          return (
+            <Button variant="ghost" size="bare"
+              key={tabName}
+              className={`py-3 px-3 text-nb-caption font-bold uppercase tracking-wider font-mono transition-nb border-b-2 ${
+                tab === tabName ? cx.active : cx.inactive
+              }`}
+              onClick={() => setTab(tabName as typeof ALLOWED_TABS[number])}
+              aria-selected={tab === tabName}
+              role="tab"
+            >
               <span className="flex items-center justify-center gap-1">
-                {t}
-                {annotations.length > 0 && (
+                {tabName}
+                {badge.count !== undefined && badge.count > 0 && (
                   <span className={`text-[8px] px-1.5 py-0.5 ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
-                    {annotations.length}
+                    {badge.count}
                   </span>
                 )}
-                {annotationModeActive && (
+                {badge.dotColor && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${badge.dotColor} shrink-0`} />
+                )}
+                {tabName === 'annotations' && annotationModeActive && (
                   <span className="w-1.5 h-1.5 bg-mode-accent animate-pulse ml-1" />
                 )}
               </span>
-            ) : t}
-          </Button>
-        ))}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Content */}
       <div className={`flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar min-h-0 ${cx.pageBg}`}>
         {tab === 'metadata' && (
-          <div role="tabpanel" className="space-y-4">
-            {/* Validation Status */}
-            {validationIssues.length > 0 && (
-              <div className={`p-3 border text-[10px] space-y-2 ${cx.warningBg}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-nb-orange">
-                    <Icon name="report_problem" className="text-sm" />
-                    <span>Issues ({validationIssues.length})</span>
-                  </div>
-                  {validationIssues.some(i => i.autoFixable) && (
-                    <Button variant="ghost" size="bare"
-                      onClick={() => { const fixed = fixAll(); if (fixed) onUpdateResource(fixed); }}
-                      className={`text-[8px] font-bold uppercase px-2 py-1 ${settings.fieldMode ? 'bg-nb-green text-nb-green' : 'bg-nb-green/20 text-nb-green'}`}
-                    >
-                      Fix All
-                    </Button>
-                  )}
-                </div>
-                {validationIssues.map((issue) => (
-                  <div key={issue.id} className={`flex items-start gap-2 text-[10px] ${issue.severity === 'error' ? 'text-nb-red' : (settings.fieldMode ? 'text-nb-yellow/40' : 'text-nb-orange')}`}>
-                    <span className="shrink-0">{issue.title}</span>
-                    {issue.autoFixable && (
-                      <Button variant="ghost" size="bare" onClick={() => { const fixed = fixIssue(issue.id); if (fixed) onUpdateResource(fixed); }} className="text-[8px] text-nb-green hover:underline">Fix</Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {imageUrl && (
-              <div className={`aspect-video overflow-hidden border ${settings.fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-cream border-nb-black/20'}`}>
-                <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
-              </div>
-            )}
-
-            {/* Label & Summary */}
-            <div className="space-y-3">
-              <ValidatedInput
-                id="inspector-label"
-                label={t('Label')}
-                value={label}
-                onChange={(val: string) => onUpdateResource({ label: { [settings.language]: [val] } })}
-                validation={labelValidation}
-                type="text"
-                fieldMode={settings.fieldMode}
-              />
-              <ValidatedInput
-                id="inspector-summary"
-                label={t('Summary')}
-                value={summary}
-                onChange={(val: string) => onUpdateResource({ summary: { [settings.language]: [val] } })}
-                validation={summaryValidation}
-                type="textarea"
-                rows={3}
-                fieldMode={settings.fieldMode}
-              />
-            </div>
-
-            {/* Metadata Fields */}
-            <div className={`pt-4 border-t ${cx.divider}`}>
-              <div className="flex justify-between items-center mb-3">
-                <label className={`text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>{t('Metadata')}</label>
-                <div className="relative" ref={addMenuRef}>
-                  <Button variant="ghost" size="bare"
-                    onClick={() => setShowAddMenu(!showAddMenu)}
-                    className={`text-[10px] font-bold uppercase flex items-center gap-1 ${cx.accent}`}
-                  >
-                    Add <Icon name="add" className="text-[10px]"/>
-                  </Button>
-                  {showAddMenu && (
-                    <div className={`absolute right-0 top-full mt-1 border shadow-brutal py-2 z-50 min-w-[160px] max-h-[250px] overflow-y-auto ${
-                      settings.fieldMode
-                        ? 'bg-nb-black border-2 border-nb-yellow'
-                        : 'bg-nb-white border border-nb-black/20'
-                    }`}>
-                      {availableProperties.map(p => (
-                        <Button variant="ghost" size="bare"
-                          key={p}
-                          onClick={() => { addField(p); setShowAddMenu(false); }}
-                          className={`w-full px-3 py-1.5 text-left text-[10px] font-bold ${
-                            settings.fieldMode
-                              ? 'text-nb-yellow/80 hover:bg-nb-yellow/20'
-                              : 'text-nb-black/60 hover:bg-nb-blue/10'
-                          }`}
-                        >
-                          {p}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                {(resource.metadata || []).map((md, idx) => {
-                  const mKey = getIIIFValue(md.label, settings.language);
-                  const mVal = getIIIFValue(md.value, settings.language);
-                  const inputType = getMetadataInputType(mKey);
-                  return (
-                    <div key={idx} className={`group relative p-3 border ${settings.fieldMode ? 'bg-nb-black border-nb-black' : 'bg-nb-white border-nb-black/20'}`}>
-                      <DebouncedField
-                        className={`w-full text-[10px] font-bold uppercase bg-transparent outline-none mb-1 border-b ${
-                          settings.fieldMode ? 'text-nb-yellow/60 border-nb-yellow/30' : 'text-nb-black/50 border-transparent'
-                        }`}
-                        value={mKey}
-                        onChange={(val: string) => updateField(idx, val, mVal)}
-                      />
-                      {inputType === 'date' ? (
-                        <PropertyInput
-                          type="datetime-local"
-                          value={mVal ? mVal.slice(0, 16) : ''}
-                          onChange={(val: string) => updateField(idx, mKey, val ? new Date(val).toISOString() : '')}
-                          fieldMode={settings.fieldMode}
-                          cx={cx}
-                        />
-                      ) : inputType === 'location' ? (
-                        <PropertyInput
-                          type="text"
-                          value={mVal}
-                          onChange={(val: string) => updateField(idx, mKey, val)}
-                          isLocationField
-                          onLocationPick={() => setLocationPickerIndex(idx)}
-                          fieldMode={settings.fieldMode}
-                          cx={cx}
-                          placeholder="lat, lng or place name"
-                        />
-                      ) : inputType === 'language' ? (
-                        <SelectField
-                          value={mVal}
-                          onChange={(val: string) => updateField(idx, mKey, val)}
-                          options={LANGUAGE_SELECT_OPTIONS}
-                          placeholder="Select language..."
-                          fieldMode={settings.fieldMode}
-                        />
-                      ) : inputType === 'url' ? (
-                        <PropertyInput
-                          type="url"
-                          value={mVal}
-                          onChange={(val: string) => updateField(idx, mKey, val)}
-                          fieldMode={settings.fieldMode}
-                          cx={cx}
-                          placeholder="https://..."
-                        />
-                      ) : inputType === 'rights' ? (
-                        <RightsSelector
-                          value={mVal}
-                          onChange={(val: string) => updateField(idx, mKey, val)}
-                          fieldMode={settings.fieldMode}
-                          showLabel={false}
-                        />
-                      ) : (
-                        <DebouncedField
-                          className={`w-full text-xs bg-transparent outline-none ${settings.fieldMode ? 'text-white' : 'text-nb-black'}`}
-                          value={mVal}
-                          onChange={(val: string) => updateField(idx, mKey, val)}
-                        />
-                      )}
-                      <Button variant="ghost" size="bare"
-                        onClick={() => removeField(idx)}
-                        className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 ${
-                          settings.fieldMode ? 'text-nb-yellow/40 hover:text-nb-red' : 'text-nb-black/30 hover:text-nb-red'
-                        }`}
-                      >
-                        <Icon name="close" className="text-xs"/>
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Location Picker Modal for metadata fields */}
-              {locationPickerIndex !== null && (
-                <LocationPickerModal
-                  isOpen={true}
-                  initialValue={getIIIFValue((resource.metadata || [])[locationPickerIndex]?.value, settings.language) || ''}
-                  onSave={(val) => {
-                    const mKey = getIIIFValue((resource.metadata || [])[locationPickerIndex]?.label, settings.language);
-                    updateField(locationPickerIndex, mKey, val);
-                    setLocationPickerIndex(null);
-                  }}
-                  onClose={() => setLocationPickerIndex(null)}
-                />
-              )}
-            </div>
-
-            {/* Rights */}
-            {isAllowed('rights') && (
-              <div className={`pt-4 border-t ${cx.divider}`}>
-                <RightsSelector
-                  value={resource.rights || ''}
-                  onChange={(val) => onUpdateResource({ rights: val || undefined })}
-                  fieldMode={settings.fieldMode}
-                />
-              </div>
-            )}
-
-            {/* Geo Location */}
-            {(resource as unknown as Record<string, unknown>).navPlace && (
-              <div className={`pt-4 border-t ${cx.divider}`}>
-                <div className="flex justify-between items-center mb-2">
-                  <label className={`text-[10px] font-bold uppercase tracking-wider ${cx.label}`}>Location</label>
-                  <Button variant="ghost" size="bare"
-                    onClick={() => onUpdateResource({ navPlace: undefined } as Partial<IIIFItem>)}
-                    className="text-[10px] text-nb-red hover:text-nb-red font-bold uppercase"
-                  >
-                    Remove
-                  </Button>
-                </div>
-                <div className={`border overflow-hidden ${settings.fieldMode ? 'border-nb-yellow/30' : 'border-nb-black/20'}`}>
-                  <GeoEditor
-                    item={resource}
-                    onChange={(navPlace) => onUpdateResource({ navPlace } as Partial<IIIFItem>)}
-                    height={150}
-                    editable={true}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Behaviors */}
-            {isAllowed('behavior') && (
-              <div className={`pt-4 border-t ${cx.divider}`}>
-                <div className="flex justify-end mb-2">
-                  <Button variant="ghost" size="bare"
-                    onClick={handleSuggestBehaviors}
-                    className={`text-[9px] font-bold uppercase px-2 py-1 border ${settings.fieldMode ? 'border-nb-yellow/30 text-nb-yellow' : 'border-nb-black/20 text-nb-blue'}`}
-                  >
-                    Auto-Suggest
-                  </Button>
-                </div>
-                <BehaviorSelector
-                  options={BEHAVIOR_OPTIONS[resource.type] || []}
-                  selected={resource.behavior || []}
-                  onChange={(selected) => onUpdateResource({ behavior: selected.length ? selected : undefined })}
-                  getConflicts={getConflictingBehaviors}
-                  fieldMode={settings.fieldMode}
-                />
-              </div>
-            )}
-
-            {/* Navigation Date */}
-            {isAllowed('navDate') && resource.navDate !== undefined && (
-              <div className={`pt-4 border-t ${cx.divider}`}>
-                <PropertyLabel label="Navigation Date" dcHint="navDate" fieldMode={settings.fieldMode} cx={cx} />
-                <PropertyInput
-                  type="datetime-local"
-                  value={resource.navDate ? resource.navDate.slice(0, 16) : ''}
-                  onChange={(val) => onUpdateResource({ navDate: val ? new Date(val).toISOString() : undefined })}
-                  fieldMode={settings.fieldMode}
-                  cx={cx}
-                />
-              </div>
-            )}
-
-            {/* Viewing Direction */}
-            {isAllowed('viewingDirection') && resource.viewingDirection !== undefined && (
-              <div className={`pt-4 border-t ${cx.divider}`}>
-                <ViewingDirectionSelector
-                  value={resource.viewingDirection || 'left-to-right'}
-                  onChange={(val) => onUpdateResource({ viewingDirection: val as typeof resource.viewingDirection })}
-                  fieldMode={settings.fieldMode}
-                />
-              </div>
-            )}
-
-            {/* Required Statement */}
-            {isAllowed('requiredStatement') && resource.requiredStatement !== undefined && (
-              <div className={`pt-4 border-t ${cx.divider}`}>
-                <PropertyLabel
-                  label="Required Statement"
-                  dcHint="requiredStatement"
-                  fieldMode={settings.fieldMode}
-                  cx={cx}
-                />
-                <div className="space-y-2 mt-1">
-                  <PropertyInput
-                    type="text"
-                    placeholder="Label (e.g., Attribution)"
-                    value={getIIIFValue(resource.requiredStatement?.label) || ''}
-                    onChange={(val) => {
-                      const current = resource.requiredStatement || { label: { none: [''] }, value: { none: [''] } };
-                      onUpdateResource({ requiredStatement: { ...current, label: { none: [val] } } });
-                    }}
-                    fieldMode={settings.fieldMode}
-                    cx={cx}
-                  />
-                  <PropertyInput
-                    type="text"
-                    placeholder="Value (e.g., Provided by Example Museum)"
-                    value={getIIIFValue(resource.requiredStatement?.value) || ''}
-                    onChange={(val) => {
-                      const current = resource.requiredStatement || { label: { none: ['Attribution'] }, value: { none: [''] } };
-                      onUpdateResource({ requiredStatement: { ...current, value: { none: [val] } } });
-                    }}
-                    fieldMode={settings.fieldMode}
-                    cx={cx}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <MetadataFieldsPanel
+            resource={resource}
+            onUpdateResource={onUpdateResource}
+            language={settings.language}
+            fieldMode={settings.fieldMode}
+            cx={cx}
+            label={label}
+            summary={summary}
+            imageUrl={imageUrl}
+            validationIssues={validationIssues}
+            fixIssue={fixIssue}
+            fixAll={fixAll}
+            labelValidation={labelValidation}
+            summaryValidation={summaryValidation}
+            getFieldValidation={getFieldValidation}
+            updateField={updateField}
+            addField={addField}
+            removeField={removeField}
+            availableProperties={availableProperties}
+            t={t}
+          />
         )}
 
         {/* Annotations Tab - now uses extracted molecules */}
@@ -648,6 +346,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
               onDeleteAnnotation={onDeleteAnnotation ? (anno) => onDeleteAnnotation(anno.id) : undefined}
               onEditAnnotation={onEditAnnotation ? (anno, text) => onEditAnnotation(anno.id, text) : undefined}
               onAddAnnotation={onStartAnnotation}
+              onBulkDeleteAnnotations={onDeleteAnnotation ? (ids) => { ids.forEach(id => onDeleteAnnotation(id)); } : undefined}
             />
           </div>
         )}
@@ -730,5 +429,6 @@ export const Inspector = React.memo(InspectorComponent, (prev, next) => {
          prev.timeRange?.end === next.timeRange?.end &&
          prev.mediaType === next.mediaType &&
          prev.forceTab === next.forceTab &&
-         prev.annotations === next.annotations;
+         prev.annotations === next.annotations &&
+         prev.selectedAnnotationId === next.selectedAnnotationId;
 });

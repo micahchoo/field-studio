@@ -1384,6 +1384,11 @@ const processNode = async (
             report.filesProcessed++;
         }
 
+        // Signal 100% completion for this manifest's files
+        if (onProgress && bases.length > 0) {
+            onProgress(`Completed ${cleanName}`, 100);
+        }
+
         report.manifestsCreated++;
         const manifest: IIIFManifest = {
             "@context": IIIF_SPEC.PRESENTATION_3.CONTEXT,

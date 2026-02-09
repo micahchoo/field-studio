@@ -18,6 +18,7 @@
 import React, { useState } from 'react';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
 import { Button, Icon } from '@/src/shared/ui/atoms';
+import { FormSection } from '@/src/shared/ui/molecules/FormSection';
 import { LocationPicker } from '../atoms/LocationPicker';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
@@ -71,46 +72,6 @@ function parseDate(dateString: string): string {
     return dateString;
   }
 }
-
-interface FormSectionProps {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-  collapsed?: boolean;
-  onToggle?: () => void;
-  fieldMode?: boolean;
-}
-
-const FormSection: React.FC<FormSectionProps> = ({ title, icon, children, collapsed = false, onToggle, fieldMode }) => {
-  const [isCollapsed, setIsCollapsed] = useState(collapsed);
-  const collapsedState = onToggle ? collapsed : isCollapsed;
-  const toggle = onToggle || (() => setIsCollapsed(!isCollapsed));
-
-  return (
-    <div className={` border ${fieldMode ? 'bg-nb-black/50 border-nb-black' : 'bg-nb-white border-nb-black/10'} overflow-hidden`}>
-      <Button variant="ghost" size="bare"
-        onClick={toggle}
-        className={`w-full px-4 py-3 flex items-center justify-between ${fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-cream'} transition-nb`}
-      >
-        <div className="flex items-center gap-2">
-          <span className={`w-8 h-8 flex items-center justify-center ${fieldMode ? 'bg-nb-black text-nb-black/40' : 'bg-nb-cream text-nb-black/60'}`}>
-            <Icon name={icon} className="text-sm" />
-          </span>
-          <span className={`font-medium ${fieldMode ? 'text-nb-black/10' : 'text-nb-black'}`}>{title}</span>
-        </div>
-        <svg
-          className={`w-5 h-5 ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'} transition-transform ${collapsedState ? '-rotate-90' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </Button>
-      {!collapsedState && <div className="px-4 pb-4 space-y-4">{children}</div>}
-    </div>
-  );
-};
 
 interface TextFieldProps {
   label: string;
@@ -407,7 +368,7 @@ export const MetadataTabPanel: React.FC<MetadataTabPanelProps> = ({
 
       {/* Additional Metadata */}
       {otherMetadata.length > 0 && (
-        <FormSection title="Additional Metadata" icon="more_horiz" collapsed fieldMode={fieldMode}>
+        <FormSection title="Additional Metadata" icon="more_horiz" defaultCollapsed fieldMode={fieldMode}>
           <div className="space-y-3">
             {otherMetadata.map((md, idx) => {
               const lbl = getIIIFValue(md.label, language);

@@ -190,6 +190,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   const [showViewerPanel, setShowViewerPanel] = useState(true);
   const [showInspectorPanel, setShowInspectorPanel] = useState(false);
 
+  // Annotation selected in viewer — drives Inspector highlight
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+
   // Board inspector state
   const [boardSelectedId, setBoardSelectedId] = useState<string | null>(null);
   const boardStateRef = useRef<{
@@ -215,6 +218,19 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     annotationSaveRef,
     annotationClearRef,
   } = useAnnotationState();
+
+  // Handle annotation selection from viewer — open inspector + highlight
+  const handleAnnotationSelected = useCallback((annotationId: string | null) => {
+    setSelectedAnnotationId(annotationId);
+    if (annotationId) {
+      setShowInspectorPanel(true);
+    }
+  }, []);
+
+  // Clear annotation selection when canvas changes
+  useEffect(() => {
+    setSelectedAnnotationId(null);
+  }, [selectedId]);
 
   // Extend annotation toggle to also open inspector panel
   const handleAnnotationToolToggle = useCallback((active: boolean) => {
@@ -466,6 +482,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                     onTimeRangeChange={setTimeRange}
                     currentPlaybackTime={currentPlaybackTime}
                     onPlaybackTimeChange={handlePlaybackTimeChange}
+                    // Annotation selection → Inspector
+                    onAnnotationSelected={handleAnnotationSelected}
                   />
                 </React.Suspense>
               </div>
@@ -496,8 +514,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                     mediaType={selectedMediaType}
                     timeRange={timeRange}
                     currentPlaybackTime={currentPlaybackTime}
-                    // Force annotations tab when annotation mode is active
-                    forceTab={forceAnnotationsTab ? 'annotations' : undefined}
+                    // Force annotations tab when annotation mode is active or annotation selected in viewer
+                    forceTab={forceAnnotationsTab || selectedAnnotationId ? 'annotations' : undefined}
+                    // Annotation selected in viewer → highlight in Inspector
+                    selectedAnnotationId={selectedAnnotationId}
                     // Annotation CRUD
                     onDeleteAnnotation={handleDeleteAnnotation}
                     onEditAnnotation={handleEditAnnotation}
@@ -700,6 +720,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           fieldMode={settings?.fieldMode || false}
           t={(key) => key}
           isAdvanced={settings?.abstractionLevel === 'advanced'}
+          onSwitchView={setCurrentMode}
         />
       </ViewTransition>
     );
@@ -714,6 +735,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           onSelect={(item) => onSelectId?.(item.id)}
           cx={settings?.fieldMode ? FIELD_CX : NORMAL_CX}
           fieldMode={settings?.fieldMode || false}
+          onSwitchView={setCurrentMode}
         />
       </ViewTransition>
     );

@@ -11,7 +11,7 @@
  * @module features/viewer/ui/molecules/MediaPlayer
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   FullscreenButton,
   MediaControlGroup,
@@ -29,6 +29,14 @@ import { avService, type AVCanvas, type SyncPoint } from '@/src/entities/canvas/
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
 import { getIIIFValue } from '@/src/shared/types';
+
+/** Chapter/range marker extracted from IIIF structures */
+export interface ChapterMarker {
+  label: string;
+  start: number;
+  end: number;
+  color: string;
+}
 
 export interface MediaPlayerProps {
   canvas: IIIFCanvas;
@@ -51,6 +59,12 @@ export interface MediaPlayerProps {
   onTimeRangeChange?: (range: TimeRange | null) => void;
   /** Callback to report current playback time to parent */
   onTimeUpdate?: (time: number) => void;
+  /** IIIF Range structures for chapter markers */
+  chapters?: ChapterMarker[];
+  /** Whether spatial annotation overlay is enabled on video */
+  spatialAnnotationMode?: boolean;
+  /** Callback when a spatial+temporal annotation region is drawn */
+  onSpatialAnnotation?: (region: { x: number; y: number; w: number; h: number }) => void;
   onEnded?: () => void;
   className?: string;
   cx?: ContextualClassNames | Record<string, string>;
@@ -71,6 +85,9 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
   timeRange,
   onTimeRangeChange,
   onTimeUpdate,
+  chapters = [],
+  spatialAnnotationMode = false,
+  onSpatialAnnotation,
   onEnded,
   className = '',
   cx,
@@ -209,6 +226,27 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
     setHoveredTime(null);
   }, []);
 
+  // Chapter navigation
+  const seekToNextChapter = useCallback(() => {
+    if (chapters.length === 0) return;
+    const next = chapters.find(c => c.start > state.currentTime + 0.5);
+    if (next) seek(next.start);
+  }, [chapters, state.currentTime, seek]);
+
+  const seekToPrevChapter = useCallback(() => {
+    if (chapters.length === 0) return;
+    // If we're more than 2s into current chapter, restart it
+    const current = [...chapters].reverse().find(c => c.start <= state.currentTime);
+    if (current && state.currentTime - current.start > 2) {
+      seek(current.start);
+    } else {
+      // Go to previous chapter
+      const idx = chapters.findIndex(c => c.start <= state.currentTime);
+      if (idx > 0) seek(chapters[idx - 1].start);
+      else seek(0);
+    }
+  }, [chapters, state.currentTime, seek]);
+
   // Use current time for annotation
   const handleUseCurrentTime = useCallback(() => {
     if (!onTimeRangeChange) return;
@@ -223,6 +261,50 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
       onTimeRangeChange({ start, end });
     }
   }, [timeRange, state.currentTime, onTimeRangeChange]);
+
+  // Spatial annotation on video - drag-to-draw rectangle
+  const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
+  const [drawEnd, setDrawEnd] = useState<{ x: number; y: number } | null>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+
+  const getSpatialCoords = useCallback((e: ReactMouseEvent) => {
+    const video = mediaRef.current as HTMLVideoElement | null;
+    if (!video || !videoContainerRef.current) return null;
+    const rect = video.getBoundingClientRect();
+    // Normalize to 0-1 relative to video dimensions
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+    return { x, y };
+  }, []);
+
+  const handleSpatialMouseDown = useCallback((e: ReactMouseEvent) => {
+    if (!spatialAnnotationMode) return;
+    const coords = getSpatialCoords(e);
+    if (coords) {
+      setDrawStart(coords);
+      setDrawEnd(coords);
+    }
+  }, [spatialAnnotationMode, getSpatialCoords]);
+
+  const handleSpatialMouseMove = useCallback((e: ReactMouseEvent) => {
+    if (!drawStart) return;
+    const coords = getSpatialCoords(e);
+    if (coords) setDrawEnd(coords);
+  }, [drawStart, getSpatialCoords]);
+
+  const handleSpatialMouseUp = useCallback(() => {
+    if (drawStart && drawEnd && onSpatialAnnotation) {
+      const x = Math.min(drawStart.x, drawEnd.x);
+      const y = Math.min(drawStart.y, drawEnd.y);
+      const w = Math.abs(drawEnd.x - drawStart.x);
+      const h = Math.abs(drawEnd.y - drawStart.y);
+      if (w > 0.01 && h > 0.01) {
+        onSpatialAnnotation({ x, y, w, h });
+      }
+    }
+    setDrawStart(null);
+    setDrawEnd(null);
+  }, [drawStart, drawEnd, onSpatialAnnotation]);
 
   const bgClass = fieldMode ? 'bg-nb-black' : 'bg-nb-black';
   const controlBgClass = fieldMode ? 'from-black/90' : 'from-nb-black/90';
@@ -253,7 +335,11 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
       ref={containerRef}
       className={`flex ${showTranscript && hasAccompanyingContent ? 'flex-row' : 'flex-col'} ${bgClass} ${className} w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-nb-blue focus-visible:ring-inset`}
       tabIndex={0}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => {
+        if (e.key === '[') { e.preventDefault(); seekToPrevChapter(); return; }
+        if (e.key === ']') { e.preventDefault(); seekToNextChapter(); return; }
+        handleKeyDown(e);
+      }}
       role="application"
       aria-label={`${mediaType === 'video' ? 'Video' : 'Audio'} player. Press Space to play/pause, arrow keys to seek, Up/Down for volume.`}
     >
@@ -278,14 +364,38 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
         {error && <MediaErrorOverlay message={error} onRetry={clearError} fieldMode={fieldMode} />}
 
         {/* Media element - fills available space */}
-        <div className="flex-1 flex items-center justify-center relative">
+        <div ref={videoContainerRef} className="flex-1 flex items-center justify-center relative">
           {mediaType === 'video' ? (
-            <video
-              ref={mediaRef as React.RefObject<HTMLVideoElement>}
-              {...mediaProps}
-              className="max-w-full max-h-full w-auto h-auto bg-nb-black"
-              playsInline
-            />
+            <>
+              <video
+                ref={mediaRef as React.RefObject<HTMLVideoElement>}
+                {...mediaProps}
+                className="max-w-full max-h-full w-auto h-auto bg-nb-black"
+                playsInline
+              />
+              {/* Spatial annotation overlay for video */}
+              {spatialAnnotationMode && (
+                <svg
+                  className="absolute inset-0 w-full h-full cursor-crosshair"
+                  style={{ pointerEvents: 'all' }}
+                  onMouseDown={handleSpatialMouseDown}
+                  onMouseMove={handleSpatialMouseMove}
+                  onMouseUp={handleSpatialMouseUp}
+                >
+                  {drawStart && drawEnd && (
+                    <rect
+                      x={`${Math.min(drawStart.x, drawEnd.x) * 100}%`}
+                      y={`${Math.min(drawStart.y, drawEnd.y) * 100}%`}
+                      width={`${Math.abs(drawEnd.x - drawStart.x) * 100}%`}
+                      height={`${Math.abs(drawEnd.y - drawStart.y) * 100}%`}
+                      fill={fieldMode ? 'rgba(234,179,8,0.2)' : 'rgba(34,197,94,0.2)'}
+                      stroke={fieldMode ? '#eab308' : '#22c55e'}
+                      strokeWidth={2}
+                    />
+                  )}
+                </svg>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center text-white text-center p-8">
               <Icon name="audiotrack" className="text-8xl opacity-40 mb-6" />
@@ -324,6 +434,31 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
             onMouseMove={handleProgressHover}
             onMouseLeave={handleProgressLeave}
           >
+            {/* Chapter markers from IIIF Ranges */}
+            {chapters.map((ch, idx) => {
+              if (state.duration === 0) return null;
+              const startPct = (ch.start / state.duration) * 100;
+              const endPct = (ch.end / state.duration) * 100;
+              return (
+                <div
+                  key={`ch-${idx}`}
+                  className="absolute top-0 bottom-0 cursor-pointer group/ch"
+                  style={{
+                    left: `${startPct}%`,
+                    width: `${Math.max(0.5, endPct - startPct)}%`,
+                    backgroundColor: ch.color + '30',
+                    borderLeft: `1px solid ${ch.color}80`,
+                  }}
+                  onClick={(e) => { e.stopPropagation(); seek(ch.start); }}
+                  title={ch.label}
+                >
+                  <div className="absolute -top-6 left-0 hidden group-hover/ch:block px-1 py-0.5 text-[9px] text-white bg-nb-black/90 whitespace-nowrap z-10">
+                    {ch.label}
+                  </div>
+                </div>
+              );
+            })}
+
             {/* Existing time annotations */}
             {timeAnnotations.map((anno) => {
               const range = getAnnotationTimeRange(anno);
@@ -399,6 +534,12 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
               <PlayPauseButton isPlaying={state.isPlaying} onToggle={togglePlayPause} fieldMode={fieldMode} />
               <IconButton icon="replay_10" ariaLabel="Rewind 10s" onClick={() => seekRelative(-10)} variant="ghost" size="sm" className="!text-white hover:!text-nb-blue" fieldMode={fieldMode} />
               <IconButton icon="forward_10" ariaLabel="Forward 10s" onClick={() => seekRelative(10)} variant="ghost" size="sm" className="!text-white hover:!text-nb-blue" fieldMode={fieldMode} />
+              {chapters.length > 0 && (
+                <>
+                  <IconButton icon="skip_previous" ariaLabel="Previous chapter" title="Previous chapter ([)" onClick={seekToPrevChapter} variant="ghost" size="sm" className="!text-white hover:!text-nb-blue" fieldMode={fieldMode} />
+                  <IconButton icon="skip_next" ariaLabel="Next chapter" title="Next chapter (])" onClick={seekToNextChapter} variant="ghost" size="sm" className="!text-white hover:!text-nb-blue" fieldMode={fieldMode} />
+                </>
+              )}
               <TimeDisplay currentTime={state.currentTime} duration={state.duration} fieldMode={fieldMode} />
             </MediaControlGroup>
 

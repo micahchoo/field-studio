@@ -15,11 +15,11 @@
  * @module features/viewer/ui/molecules/AnnotationDrawingOverlay
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
 import type { SpatialDrawingMode } from '../../model/annotation';
-import { useAnnotorious, type AnnotoriousDrawingTool } from '../../model/useAnnotorious';
+import { useAnnotorious, UserSelectAction, type AnnotoriousDrawingTool, type AnnotationStyleOptions } from '../../model/useAnnotorious';
 
 export interface AnnotationDrawingOverlayProps {
   canvas: IIIFCanvas;
@@ -31,12 +31,17 @@ export interface AnnotationDrawingOverlayProps {
   onClose: () => void;
   existingAnnotations: IIIFAnnotation[];
   onUndoRef?: (fn: () => void) => void;
+  onRedoRef?: (fn: () => void) => void;
   onClearRef?: (fn: () => void) => void;
   onSaveRef?: (fn: () => void) => void;
   onDrawingStateChange?: (state: { pointCount: number; isDrawing: boolean; canSave: boolean }) => void;
   annotationText?: string;
   annotationMotivation?: 'commenting' | 'tagging' | 'describing';
+  /** Custom annotation style (color, stroke width, fill opacity) */
+  annotationStyle?: AnnotationStyleOptions;
   osdReady?: number;
+  /** Callback when user clicks/selects an existing annotation (null = deselected) */
+  onAnnotationSelected?: (annotation: IIIFAnnotation | null) => void;
   cx: ContextualClassNames;
   fieldMode: boolean;
 }
@@ -58,22 +63,37 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
   onClose,
   existingAnnotations,
   onUndoRef,
+  onRedoRef,
   onClearRef,
   onSaveRef,
   onDrawingStateChange,
   annotationText: annotationTextProp = '',
   annotationMotivation: motivationProp = 'commenting',
+  annotationStyle,
   osdReady = 0,
+  onAnnotationSelected,
   fieldMode,
 }) => {
   // Ref to store the pending annotation geometry from Annotorious
   const pendingAnnotationRef = useRef<IIIFAnnotation | null>(null);
+
+  // Hover tooltip state
+  const [hoveredAnnotation, setHoveredAnnotation] = useState<IIIFAnnotation | null>(null);
+
+  // Stable ref for onAnnotationSelected to avoid re-init
+  const onAnnotationSelectedRef = useRef(onAnnotationSelected);
+  onAnnotationSelectedRef.current = onAnnotationSelected;
 
   // Called when Annotorious completes a shape — store it; don't persist yet
   const handleAnnotoriousCreate = useCallback((annotation: IIIFAnnotation) => {
     pendingAnnotationRef.current = annotation;
     onDrawingStateChange?.({ pointCount: 3, isDrawing: false, canSave: true });
   }, [onDrawingStateChange]);
+
+  // Selection fires onAnnotationSelected so Inspector can highlight the annotation
+  const handleSelectionChanged = useCallback((annotations: IIIFAnnotation[]) => {
+    onAnnotationSelectedRef.current?.(annotations[0] ?? null);
+  }, []);
 
   const {
     annoRef,
@@ -83,8 +103,13 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
     clearSelection,
   } = useAnnotorious(viewerRef, canvas, existingAnnotations, {
     fieldMode,
+    style: annotationStyle,
     osdReady,
+    userSelectAction: isActive ? UserSelectAction.EDIT : UserSelectAction.SELECT,
     onCreated: handleAnnotoriousCreate,
+    onSelectionChanged: handleSelectionChanged,
+    onMouseEnter: setHoveredAnnotation,
+    onMouseLeave: () => setHoveredAnnotation(null),
   });
 
   // Sync isActive → drawingEnabled
@@ -110,6 +135,13 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
       annoRef.current?.undo();
     });
   }, [onUndoRef, annoRef]);
+
+  // Expose redo ref (Annotorious has internal redo via undoStack)
+  useEffect(() => {
+    onRedoRef?.(() => {
+      (annoRef.current as any)?.redo?.();
+    });
+  }, [onRedoRef, annoRef]);
 
   // Expose clear ref
   useEffect(() => {
@@ -168,6 +200,12 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
         } else {
           onClose();
         }
+      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        (annoRef.current as any)?.redo?.();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+        e.preventDefault();
+        (annoRef.current as any)?.redo?.();
       } else if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault();
         annoRef.current?.undo();
@@ -178,26 +216,54 @@ export const AnnotationDrawingOverlay: React.FC<AnnotationDrawingOverlayProps> =
     return () => window.removeEventListener('keydown', handleKey);
   }, [isActive, onClose, cancelDrawing, clearSelection, onDrawingStateChange, annoRef]);
 
-  if (!isActive) return null;
+  // Extract text from annotation body for tooltip
+  const getAnnotationText = (anno: IIIFAnnotation): string => {
+    const body = Array.isArray(anno.body) ? anno.body[0] : anno.body;
+    if (body && typeof body === 'object' && 'value' in body) {
+      return (body as { value: string }).value || '';
+    }
+    return '';
+  };
+
+  const tooltipText = hoveredAnnotation ? getAnnotationText(hoveredAnnotation) : '';
 
   return (
-    <div
-      className={`
-        absolute bottom-4 left-4 z-20 px-3 py-2 text-xs font-medium
-        ${fieldMode ? 'bg-nb-black/95 text-nb-black/20' : 'bg-nb-white text-nb-black/60'}
-        border ${fieldMode ? 'border-nb-yellow/50' : 'border-nb-black/20'}
-        backdrop-blur-sm shadow-brutal
-      `}
-    >
-      {pendingAnnotationRef.current
-        ? 'Shape ready — enter text in Inspector and save'
-        : drawingMode === 'polygon'
-          ? 'Click to add points, close shape to finish'
-          : drawingMode === 'rectangle'
-            ? 'Click and drag to draw a rectangle'
-            : 'Select a drawing tool'
-      }
-    </div>
+    <>
+      {/* Hover tooltip — shown when hovering any annotation, regardless of mode */}
+      {hoveredAnnotation && tooltipText && (
+        <div
+          className={`
+            absolute top-3 left-3 z-30 px-3 py-2 text-xs font-medium
+            max-w-[280px] truncate pointer-events-none
+            ${fieldMode ? 'bg-nb-black/95 text-nb-yellow border-nb-yellow/50' : 'bg-nb-white text-nb-black/80 border-nb-black/20'}
+            border backdrop-blur-sm shadow-brutal
+          `}
+        >
+          {tooltipText}
+        </div>
+      )}
+
+      {/* Drawing status bar — only shown when annotation tool is active */}
+      {isActive && (
+        <div
+          className={`
+            absolute bottom-4 left-4 z-20 px-3 py-2 text-xs font-medium
+            ${fieldMode ? 'bg-nb-black/95 text-nb-black/20' : 'bg-nb-white text-nb-black/60'}
+            border ${fieldMode ? 'border-nb-yellow/50' : 'border-nb-black/20'}
+            backdrop-blur-sm shadow-brutal
+          `}
+        >
+          {pendingAnnotationRef.current
+            ? 'Shape ready — enter text in Inspector and save'
+            : drawingMode === 'polygon'
+              ? 'Click to add points, close shape to finish'
+              : drawingMode === 'rectangle'
+                ? 'Click and drag to draw a rectangle'
+                : 'Select a drawing tool'
+          }
+        </div>
+      )}
+    </>
   );
 };
 

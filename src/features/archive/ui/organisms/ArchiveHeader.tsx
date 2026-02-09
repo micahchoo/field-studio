@@ -1,7 +1,7 @@
 /**
  * ArchiveHeader Organism
  *
- * Composes: SearchField, ViewToggle, SelectionToolbar molecules
+ * Composes: ViewHeader, SearchField, ViewToggle, SelectionBar molecules
  *
  * Header section for the archive feature, containing filter input, view mode toggle,
  * and selection toolbar when items are selected.
@@ -14,6 +14,13 @@
 import React from 'react';
 import { SearchField } from '@/src/shared/ui/molecules/SearchField';
 import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
+import {
+  ViewHeader,
+  ViewHeaderTitle,
+  ViewHeaderActions,
+  ViewHeaderDivider,
+  ViewHeaderSelectionBar,
+} from '@/src/shared/ui/molecules/ViewHeader';
 import { Icon } from '@/src/shared/ui/atoms';
 import { Button } from '@/ui/primitives/Button';
 import { type ArchiveViewMode, type SortDirection, type SortMode, SORT_OPTIONS, VIEW_MODE_OPTIONS } from '../../model';
@@ -80,27 +87,6 @@ export interface ArchiveHeaderProps {
   onToggleGroupByManifest?: () => void;
 }
 
-/**
- * ArchiveHeader Organism
- *
- * @example
- * <ArchiveHeader
- *   filter={filter}
- *   onFilterChange={setFilter}
- *   view={view}
- *   onViewChange={setView}
- *   isMobile={isMobile}
- *   selectedCount={selectedIds.size}
- *   selectionHasGPS={selectionDNA.hasGPS}
- *   onClearSelection={clearSelection}
- *   onGroupIntoManifest={handleCreateManifestFromSelection}
- *   onOpenMap={() => setView('map')}
- *   onEditMetadata={() => onCatalogSelection?.(Array.from(selectedIds))}
- *   onBatchEdit={() => onBatchEdit(Array.from(selectedIds))}
- *   cx={cx}
- *   fieldMode={fieldMode}
- * />
- */
 export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
   filter,
   onFilterChange,
@@ -130,104 +116,63 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
   onToggleGroupByManifest,
 }) => {
   const hasSelection = selectedCount > 0;
-  // Show reorder mode indicator when viewer is closed but canvas is selected
   const showReorderMode = hasCanvasSelected && !showViewerPanel;
 
-  // Desktop selection toolbar actions - Pipeline flow
   // Use explicit color classes (not dynamic) so Tailwind includes them
   const selectionActions = [
     {
-      label: 'Group into Manifest',
+      label: isMobile ? 'Group' : 'Group into Manifest',
       icon: 'auto_stories' as const,
       iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-green',
       onClick: onGroupIntoManifest,
     },
     ...(selectionHasGPS
-      ? [
-          {
-            label: 'View on Map',
-            icon: 'explore' as const,
-            iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-blue',
-            onClick: onOpenMap,
-          },
-        ]
+      ? [{
+          label: isMobile ? 'Map' : 'View on Map',
+          icon: 'explore' as const,
+          iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-blue',
+          onClick: onOpenMap,
+        }]
       : []),
     {
-      label: 'Edit in Catalog',
+      label: isMobile ? 'Catalog' : 'Edit in Catalog',
       icon: 'table_chart' as const,
       iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-orange',
       onClick: onEditMetadata,
     },
     {
-      label: 'Compose on Board',
+      label: isMobile ? 'Board' : 'Compose on Board',
       icon: 'dashboard' as const,
       iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-pink',
       onClick: onComposeOnBoard,
     },
   ];
 
-  // Mobile floating bar actions (simplified)
-  const mobileActions = [
-    {
-      label: 'Group',
-      icon: 'auto_stories' as const,
-      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-green',
-      onClick: onGroupIntoManifest,
-    },
-    ...(selectionHasGPS
-      ? [
-          {
-            label: 'Map',
-            icon: 'explore' as const,
-            iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-blue',
-            onClick: onOpenMap,
-          },
-        ]
-      : []),
-    {
-      label: 'Catalog',
-      icon: 'table_chart' as const,
-      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-orange',
-      onClick: onEditMetadata,
-    },
-    {
-      label: 'Board',
-      icon: 'dashboard' as const,
-      iconClass: fieldMode ? 'text-nb-yellow' : 'text-nb-pink',
-      onClick: onComposeOnBoard,
-    },
-  ];
-
-  // Selection bar colors based on field mode
-  const selectionBarBg = fieldMode ? 'bg-nb-yellow/20' : 'bg-nb-black';
-  const selectionBarBorder = fieldMode ? 'border-nb-yellow' : 'border-nb-black/80';
   const selectionTextColor = fieldMode ? 'text-nb-yellow/40' : 'text-white';
 
   return (
     <>
-      {/* Main header */}
-      <div className={`h-header border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode px-6 flex items-center justify-between shadow-brutal-sm z-10 shrink-0 ${cx.border || 'border-nb-black/20'}`}>
-        <div className="flex items-center gap-4">
-          <h2 className="text-nb-lg font-bold text-mode-accent">Archive</h2>
+      <ViewHeader cx={cx} fieldMode={fieldMode}>
+        <ViewHeaderTitle title="Archive">
           {!isMobile && !hasSelection && !showReorderMode && (
             <>
-              <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
+              <ViewHeaderDivider />
               <div className={`flex items-center gap-2 text-nb-caption font-bold uppercase tracking-wider font-mono ${cx.textMuted || 'text-nb-black/40'}`}>
                 Select items to begin synthesis pipeline
               </div>
             </>
           )}
-          {/* Reorder mode indicator - shown when viewer is closed but item selected */}
           {!isMobile && showReorderMode && (
             <>
-              <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
+              <ViewHeaderDivider />
               <span className={`text-xs font-medium ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
                 Viewer closed — reorder enabled
               </span>
             </>
           )}
-        </div>
-        <div className="flex items-center gap-3">
+        </ViewHeaderTitle>
+
+        <ViewHeaderActions>
           {!isMobile && (
             <SearchField
               value={filter}
@@ -239,7 +184,6 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
               fieldMode={fieldMode}
             />
           )}
-          {/* Sort controls */}
           {!isMobile && (
             <div className="flex items-center gap-1">
               {SORT_OPTIONS.map((opt) => (
@@ -296,10 +240,9 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
             cx={cx}
             fieldMode={fieldMode}
           />
-          {/* Viewer panel controls - shown when canvas selected */}
           {hasCanvasSelected && onToggleInspectorPanel && onToggleViewerPanel && (
             <>
-              <div className={`h-6 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/60'}`} />
+              <ViewHeaderDivider className={`h-6 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/60'}`} />
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="bare"
                   onClick={onToggleInspectorPanel}
@@ -326,70 +269,28 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
               </div>
             </>
           )}
-        </div>
-      </div>
+        </ViewHeaderActions>
+      </ViewHeader>
 
-      {/* Desktop selection bar */}
-      {!isMobile && hasSelection && (
-        <div className={`w-full px-6 py-2 ${selectionBarBg} border-b ${selectionBarBorder} ${selectionTextColor} z-10 animate-in slide-in-from-top-2 flex items-center gap-4`}>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-xs font-bold ${selectionTextColor}`}>{selectedCount} selected</span>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {selectionActions.map((action) => (
-              <Button
-                key={action.label}
-                onClick={action.onClick}
-                variant="ghost"
-                size="sm"
-                icon={<Icon name={action.icon} className={`${action.iconClass} text-sm`} />}
-                className={selectionTextColor}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </div>
-          <div className="flex-1" />
+      <ViewHeaderSelectionBar
+        count={selectedCount}
+        onClear={onClearSelection}
+        fieldMode={fieldMode}
+        isMobile={isMobile}
+      >
+        {selectionActions.map((action) => (
           <Button
-            onClick={onClearSelection}
+            key={action.label}
+            onClick={action.onClick}
             variant="ghost"
             size="sm"
-            icon={<Icon name="close" className={`text-sm ${selectionTextColor}`} />}
-            title="Clear selection"
-            aria-label="Clear selection"
-          />
-        </div>
-      )}
-
-      {/* Mobile floating selection bar */}
-      {isMobile && hasSelection && (
-        <div className="absolute z-[100] animate-in slide-in-from-bottom-4 bottom-8 left-4 right-4 translate-x-0">
-          <div className={`${fieldMode ? 'bg-nb-black/95 border-nb-yellow' : 'bg-nb-black/95 border-nb-black/80'} backdrop-blur-md border shadow-brutal-lg  p-1 flex items-center gap-1 ring-4 ring-black/10 overflow-x-auto no-scrollbar max-w-full`}>
-            <div className="flex p-1 gap-1 shrink-0">
-              {mobileActions.map((action) => (
-                <Button
-                  key={action.label}
-                  onClick={action.onClick}
-                  variant="ghost"
-                  size="sm"
-                  icon={<Icon name={action.icon} className={action.iconClass} />}
-                  className={selectionTextColor}
-                >
-                  {action.label}
-                </Button>
-              ))}
-              <div className={`w-px h-8 ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/80'} mx-1`} />
-              <Button
-                onClick={onClearSelection}
-                variant="ghost"
-                size="sm"
-                icon={<Icon name="close" className={selectionTextColor} />}
-                aria-label="Clear selection"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+            icon={<Icon name={action.icon} className={`${action.iconClass} text-sm`} />}
+            className={selectionTextColor}
+          >
+            {action.label}
+          </Button>
+        ))}
+      </ViewHeaderSelectionBar>
     </>
   );
 };

@@ -2,7 +2,7 @@
  * BoardHeader Organism
  *
  * Header for the board-design feature.
- * Composes: Toolbar, ViewToggle molecules
+ * Composes: ViewHeader, Toolbar, ViewToggle molecules
  *
  * IDEAL OUTCOME: Provides tool selection, undo/redo, export dropdown, and present mode
  * FAILURE PREVENTED: Lost work (no undo), unclear tool state
@@ -14,6 +14,13 @@ import { Button, Icon } from '@/src/shared/ui/atoms';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { IconButton } from '@/src/shared/ui/molecules/IconButton';
 import { ActionButton } from '@/src/shared/ui/molecules/ActionButton';
+import {
+  ViewHeader,
+  ViewHeaderTitle,
+  ViewHeaderCenter,
+  ViewHeaderActions,
+  ViewHeaderDivider,
+} from '@/src/shared/ui/molecules/ViewHeader';
 import { ShareButton } from '@/src/features/metadata-edit/ui/atoms/ShareButton';
 import type { LayoutArrangement } from '../../model';
 
@@ -84,9 +91,6 @@ export interface BoardHeaderProps {
   fieldMode: boolean;
 }
 
-/**
- * BoardHeader Organism
- */
 export const BoardHeader: React.FC<BoardHeaderProps> = ({
   title,
   activeTool,
@@ -157,37 +161,24 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   ];
 
   return (
-    <div
-      className={`
-        h-header border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode px-6 flex items-center justify-between
-        ${fieldMode ? 'border-nb-black' : 'border-nb-black/10'}
-      `}
+    <ViewHeader
+      cx={cx}
+      fieldMode={fieldMode}
+      shadow={false}
+      className={fieldMode ? 'border-nb-black' : 'border-nb-black/10'}
     >
       {/* Left: Title + Stats */}
-      <div className="flex items-center gap-4">
-        <div
-          className={`
-            p-2
-            ${fieldMode ? 'bg-nb-orange/20 text-nb-orange' : 'bg-nb-orange/20 text-nb-orange'}
-          `}
-        >
-          <Icon name="dashboard" className="text-xl" />
-        </div>
-        <div>
-          <h2 className="font-bold text-mode-accent">
-            {title}
-          </h2>
-          <p className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
-            {itemCount !== undefined && `${itemCount} items`}
-            {itemCount !== undefined && connectionCount !== undefined && ' · '}
-            {connectionCount !== undefined && `${connectionCount} connections`}
-            {selectionCount != null && selectionCount > 1 && ` · ${selectionCount} selected`}
-          </p>
-        </div>
-      </div>
+      <ViewHeaderTitle icon="dashboard" title={title}>
+        <p className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
+          {itemCount !== undefined && `${itemCount} items`}
+          {itemCount !== undefined && connectionCount !== undefined && ' · '}
+          {connectionCount !== undefined && `${connectionCount} connections`}
+          {selectionCount != null && selectionCount > 1 && ` · ${selectionCount} selected`}
+        </p>
+      </ViewHeaderTitle>
 
       {/* Center: Tools with shortcuts */}
-      <div className="flex items-center gap-3">
+      <ViewHeaderCenter>
         {/* Tool Selection */}
         <div className="flex items-center gap-1">
           {toolOptions.map((tool) => (
@@ -216,8 +207,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           ))}
         </div>
 
-        {/* Separator */}
-        <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+        <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
 
         {/* Background Mode Toggle */}
         {onBgModeChange && (
@@ -248,7 +238,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         {/* Alignment Tools (shown when item selected) */}
         {hasSelection && onAlign && (
           <>
-            <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+            <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
             <div className="flex items-center gap-0.5">
               {alignOptions.map((opt) => (
                 <Button variant="ghost" size="bare"
@@ -270,8 +260,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           </>
         )}
 
-        {/* Separator */}
-        <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+        <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
 
         {/* Snap-to-Grid Toggle */}
         {onSnapToggle && (
@@ -339,142 +328,143 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             )}
           </div>
         )}
-      </div>
+      </ViewHeaderCenter>
 
       {/* Right: Actions */}
-      <Toolbar>
-        <IconButton
-          icon="undo"
-          ariaLabel="Undo"
-          title="Undo (Ctrl+Z)"
-          onClick={onUndo}
-          disabled={!canUndo}
-          variant="ghost"
-          cx={cx}
-          fieldMode={fieldMode}
-        />
-        <IconButton
-          icon="redo"
-          ariaLabel="Redo"
-          title="Redo (Ctrl+Shift+Z)"
-          onClick={onRedo}
-          disabled={!canRedo}
-          variant="ghost"
-          cx={cx}
-          fieldMode={fieldMode}
-        />
-
-        {onDelete && (
-          <>
-            <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
-            <IconButton
-              icon="delete"
-              ariaLabel="Delete selected"
-              title="Delete (Delete key)"
-              onClick={onDelete}
-              disabled={!hasSelection}
-              variant="ghost"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          </>
-        )}
-
-        <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
-
-        {onSave && (
-          <ActionButton
-            label={isDirty ? 'Save' : 'Saved'}
-            icon="save"
-            onClick={onSave}
-            variant={isDirty ? 'primary' : 'ghost'}
-            size="sm"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-        )}
-
-        {/* Present button */}
-        {onPresent && (
+      <ViewHeaderActions>
+        <Toolbar>
           <IconButton
-            icon="slideshow"
-            ariaLabel="Present"
-            title="Present (P)"
-            onClick={onPresent}
+            icon="undo"
+            ariaLabel="Undo"
+            title="Undo (Ctrl+Z)"
+            onClick={onUndo}
+            disabled={!canUndo}
             variant="ghost"
             cx={cx}
             fieldMode={fieldMode}
           />
-        )}
-
-        {/* Export dropdown */}
-        <div className="relative">
-          <ActionButton
-            label="Export"
-            icon="download"
-            onClick={() => {
-              if (exportOptions.length <= 1) {
-                onExport();
-              } else {
-                setShowExportMenu(s => !s);
-              }
-            }}
-            variant="primary"
-            size="sm"
+          <IconButton
+            icon="redo"
+            ariaLabel="Redo"
+            title="Redo (Ctrl+Shift+Z)"
+            onClick={onRedo}
+            disabled={!canRedo}
+            variant="ghost"
             cx={cx}
             fieldMode={fieldMode}
           />
-          {showExportMenu && exportOptions.length > 1 && (
-            <div className={`absolute top-full right-0 mt-1 z-50 shadow-brutal border py-1 min-w-[180px] ${
-              fieldMode ? 'bg-nb-black border-nb-black/70' : 'bg-nb-white border-nb-black/10'
-            }`}>
-              {exportOptions.map((opt) => (
-                <Button variant="ghost" size="bare"
-                  key={opt.id}
-                  onClick={() => {
-                    opt.onClick();
-                    setShowExportMenu(false);
-                  }}
-                  className={`
-                    w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb
-                    ${fieldMode
-                      ? 'text-nb-black/20 hover:bg-nb-black/70'
-                      : 'text-nb-black/70 hover:bg-nb-cream'
-                    }
-                  `}
-                >
-                  <Icon name={opt.icon} className="text-sm" />
-                  {opt.label}
-                </Button>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {onToggleInspector && (
-          <>
-            <div className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+          {onDelete && (
+            <>
+              <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+              <IconButton
+                icon="delete"
+                ariaLabel="Delete selected"
+                title="Delete (Delete key)"
+                onClick={onDelete}
+                disabled={!hasSelection}
+                variant="ghost"
+                cx={cx}
+                fieldMode={fieldMode}
+              />
+            </>
+          )}
+
+          <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+
+          {onSave && (
+            <ActionButton
+              label={isDirty ? 'Save' : 'Saved'}
+              icon="save"
+              onClick={onSave}
+              variant={isDirty ? 'primary' : 'ghost'}
+              size="sm"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          )}
+
+          {onPresent && (
             <IconButton
-              icon="info"
-              ariaLabel="Toggle Inspector"
-              title="Inspector (I)"
-              onClick={onToggleInspector}
+              icon="slideshow"
+              ariaLabel="Present"
+              title="Present (P)"
+              onClick={onPresent}
               variant="ghost"
               cx={cx}
               fieldMode={fieldMode}
             />
-          </>
-        )}
+          )}
 
-        {selectedResource && (
-          <ShareButton
-            item={selectedResource}
-            fieldMode={fieldMode}
-            size="sm"
-          />
-        )}
-      </Toolbar>
-    </div>
+          {/* Export dropdown */}
+          <div className="relative">
+            <ActionButton
+              label="Export"
+              icon="download"
+              onClick={() => {
+                if (exportOptions.length <= 1) {
+                  onExport();
+                } else {
+                  setShowExportMenu(s => !s);
+                }
+              }}
+              variant="primary"
+              size="sm"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+            {showExportMenu && exportOptions.length > 1 && (
+              <div className={`absolute top-full right-0 mt-1 z-50 shadow-brutal border py-1 min-w-[180px] ${
+                fieldMode ? 'bg-nb-black border-nb-black/70' : 'bg-nb-white border-nb-black/10'
+              }`}>
+                {exportOptions.map((opt) => (
+                  <Button variant="ghost" size="bare"
+                    key={opt.id}
+                    onClick={() => {
+                      opt.onClick();
+                      setShowExportMenu(false);
+                    }}
+                    className={`
+                      w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb
+                      ${fieldMode
+                        ? 'text-nb-black/20 hover:bg-nb-black/70'
+                        : 'text-nb-black/70 hover:bg-nb-cream'
+                      }
+                    `}
+                  >
+                    <Icon name={opt.icon} className="text-sm" />
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {onToggleInspector && (
+            <>
+              <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+              <IconButton
+                icon="info"
+                ariaLabel="Toggle Inspector"
+                title="Inspector (I)"
+                onClick={onToggleInspector}
+                variant="ghost"
+                cx={cx}
+                fieldMode={fieldMode}
+              />
+            </>
+          )}
+
+          {selectedResource && (
+            <ShareButton
+              item={selectedResource}
+              fieldMode={fieldMode}
+              size="sm"
+            />
+          )}
+        </Toolbar>
+      </ViewHeaderActions>
+    </ViewHeader>
   );
 };
 

@@ -56,9 +56,32 @@ export {
 export {
   useAnnotorious,
   type AnnotoriousDrawingTool,
+  type AnnotationStyleOptions,
   type UseAnnotoriousOptions,
   type UseAnnotoriousReturn,
 } from './useAnnotorious';
+export {
+  useWaveform,
+  type UseWaveformOptions,
+  type UseWaveformReturn,
+} from './useWaveform';
+export {
+  useImageFilters,
+  type FilterState,
+  type UseImageFiltersReturn,
+} from './useImageFilters';
+export {
+  useMeasurement,
+  type MeasureUnit,
+  type MeasurementState,
+  type UseMeasurementReturn,
+} from './useMeasurement';
+export {
+  useComparison,
+  type ComparisonMode,
+  type ComparisonState,
+  type UseComparisonReturn,
+} from './useComparison';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IIIFAnnotation, IIIFAnnotationBody, IIIFCanvas, IIIFExternalWebResource, IIIFManifest, IIIFTextualBody } from '@/src/shared/types';
@@ -108,6 +131,8 @@ export interface ViewerState {
   activeChoiceIndex: number;
 }
 
+export type ScreenshotFormat = 'image/png' | 'image/jpeg' | 'image/webp';
+
 export interface UseViewerReturn extends ViewerState {
   // Refs
   viewerRef: React.MutableRefObject<any>;
@@ -122,7 +147,7 @@ export interface UseViewerReturn extends ViewerState {
   rotateCCW: () => void;
   setRotation: (degrees: number) => void;
   flipHorizontal: () => void;
-  takeScreenshot: () => Promise<Blob | null>;
+  takeScreenshot: (format?: ScreenshotFormat, quality?: number) => Promise<Blob | null>;
 
   // Panel Toggles
   toggleFullscreen: () => void;
@@ -143,6 +168,9 @@ export interface UseViewerReturn extends ViewerState {
 
   // Choice Actions
   setActiveChoiceIndex: (index: number) => void;
+
+  // Keyboard
+  handleImageKeyDown: (e: KeyboardEvent, opts?: { annotationToolActive?: boolean; onAnnotationToolToggle?: (active: boolean) => void; onMeasurementToggle?: () => void }) => void;
 
   // Utility
   hasSearchService: boolean;
@@ -608,12 +636,15 @@ export const useViewer = (
 
     // Handle window resize for responsive viewer
     const handleResize = () => {
-      if (viewerRef.current && viewerRef.current.viewport) {
-        try {
-          viewerRef.current.viewport.resize();
-        } catch (error) {
-          uiLog.warn('[useViewer] Error during viewport resize:', error);
-        }
+      if (!viewerRef.current?.viewport || !viewerRef.current?.element) return;
+      // Guard against resize when container is detached or has zero dimensions
+      // (e.g., after WebGL context loss or during unmount)
+      const el = viewerRef.current.element;
+      if (!el.offsetWidth || !el.offsetHeight) return;
+      try {
+        viewerRef.current.viewport.resize();
+      } catch {
+        // Silently ignore — OSD viewport may be in an invalid state
       }
     };
     window.addEventListener('resize', handleResize);
@@ -709,7 +740,7 @@ export const useViewer = (
     }
   }, []);
 
-  const takeScreenshot = useCallback(async (): Promise<Blob | null> => {
+  const takeScreenshot = useCallback(async (format: ScreenshotFormat = 'image/png', quality?: number): Promise<Blob | null> => {
     if (!viewerRef.current?.drawer?.canvas) {
       uiLog.warn('[useViewer] No canvas available for screenshot');
       return null;
@@ -720,12 +751,12 @@ export const useViewer = (
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {
           if (blob) {
-            uiLog.debug(`[useViewer] Screenshot captured: ${blob.size} bytes`);
+            uiLog.debug(`[useViewer] Screenshot captured: ${blob.size} bytes (${format})`);
             resolve(blob);
           } else {
             resolve(null);
           }
-        }, 'image/png');
+        }, format, quality);
       });
     } catch (e) {
       uiLog.error('[useViewer] Screenshot failed:', e instanceof Error ? e : undefined);
@@ -785,6 +816,76 @@ export const useViewer = (
   const toggleKeyboardHelp = useCallback(() => {
     setShowKeyboardHelp(prev => !prev);
   }, []);
+
+  // Keyboard handler for image viewer shortcuts
+  const handleImageKeyDown = useCallback((e: KeyboardEvent, opts?: { annotationToolActive?: boolean; onAnnotationToolToggle?: (active: boolean) => void; onMeasurementToggle?: () => void }) => {
+    // Don't handle when typing in inputs
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+
+    const key = e.key;
+    switch (key) {
+      case 'r':
+        if (e.shiftKey) {
+          e.preventDefault();
+          rotateCCW();
+        } else {
+          e.preventDefault();
+          rotateCW();
+        }
+        break;
+      case 'R':
+        e.preventDefault();
+        rotateCCW();
+        break;
+      case 'f':
+      case 'F':
+        e.preventDefault();
+        flipHorizontal();
+        break;
+      case 'n':
+      case 'N':
+        e.preventDefault();
+        toggleNavigator();
+        break;
+      case '?':
+        e.preventDefault();
+        toggleKeyboardHelp();
+        break;
+      case '+':
+      case '=':
+        e.preventDefault();
+        zoomIn();
+        break;
+      case '-':
+      case '_':
+        e.preventDefault();
+        zoomOut();
+        break;
+      case '0':
+        e.preventDefault();
+        resetView();
+        break;
+      case 'a':
+      case 'A':
+        if (!e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          opts?.onAnnotationToolToggle?.(!opts.annotationToolActive);
+        }
+        break;
+      case 'm':
+      case 'M':
+        if (!e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          opts?.onMeasurementToggle?.();
+        }
+        break;
+      case 'Escape':
+        if (isFullscreen) {
+          document.exitFullscreen();
+        }
+        break;
+    }
+  }, [rotateCW, rotateCCW, flipHorizontal, toggleNavigator, toggleKeyboardHelp, zoomIn, zoomOut, resetView, isFullscreen]);
 
   // Annotation Actions
   const selectAnnotation = useCallback((id: string | null) => {
@@ -857,6 +958,9 @@ export const useViewer = (
 
     // Choice
     setActiveChoiceIndex,
+
+    // Keyboard
+    handleImageKeyDown,
 
     // Computed
     hasSearchService,

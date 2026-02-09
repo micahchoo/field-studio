@@ -20,7 +20,8 @@
 
 import React from 'react';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
-import { MediaPlayer } from './MediaPlayer';
+import { MediaPlayer, type ChapterMarker } from './MediaPlayer';
+import { AudioWaveform } from './AudioWaveform';
 import { ChoiceSelector } from '../atoms/ChoiceSelector';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
@@ -51,6 +52,12 @@ export interface ViewerContentProps {
   onTimeRangeChange?: (range: { start: number; end?: number } | null) => void;
   /** Callback to report current playback time */
   onPlaybackTimeUpdate?: (time: number) => void;
+  /** IIIF Range chapter markers for media timeline */
+  chapters?: ChapterMarker[];
+  /** Whether spatial annotation overlay is enabled on video */
+  spatialAnnotationMode?: boolean;
+  /** Callback when a spatial region is drawn on video */
+  onSpatialAnnotation?: (region: { x: number; y: number; w: number; h: number }) => void;
   /** Whether this canvas has Choice bodies */
   hasChoice?: boolean;
   /** Choice items for selector */
@@ -92,6 +99,9 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   timeRange,
   onTimeRangeChange,
   onPlaybackTimeUpdate,
+  chapters,
+  spatialAnnotationMode,
+  onSpatialAnnotation,
   hasChoice,
   choiceItems,
   activeChoiceIndex,
@@ -137,6 +147,9 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
           timeRange={timeRange}
           onTimeRangeChange={onTimeRangeChange}
           onTimeUpdate={onPlaybackTimeUpdate}
+          chapters={chapters}
+          spatialAnnotationMode={spatialAnnotationMode}
+          onSpatialAnnotation={onSpatialAnnotation}
           cx={cx}
           fieldMode={fieldMode}
           className="absolute inset-0"
@@ -145,15 +158,14 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     );
   }
 
-  // Audio content - fills entire container like OSD
+  // Audio content - use AudioWaveform for visual waveform display
   if (mediaType === 'audio' && resolvedUrl) {
     return (
       <div className="flex-1 relative overflow-hidden" style={{ height: '100%' }}>
-        <MediaPlayer
+        <AudioWaveform
           canvas={canvas}
           src={resolvedUrl}
-          mediaType="audio"
-          annotations={annotations as any}
+          annotations={annotations}
           annotationModeActive={annotationModeActive}
           onAnnotationModeToggle={onAnnotationModeToggle}
           timeRange={timeRange}

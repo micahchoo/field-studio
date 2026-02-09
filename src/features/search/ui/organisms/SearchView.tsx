@@ -26,6 +26,7 @@ import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { FacetPill } from '@/src/shared/ui/molecules/FacetPill';
 import { ResultCard } from '@/src/shared/ui/molecules/ResultCard';
 import { SearchField } from '@/src/shared/ui/molecules/SearchField';
+import { ViewHeader, ViewHeaderBody } from '@/src/shared/ui/molecules/ViewHeader';
 import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { usePipeline } from '@/src/shared/lib/hooks';
 import {
@@ -162,14 +163,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
   // Determine surface background based on fieldMode
   const surfaceBg = fieldMode ? 'bg-nb-black' : 'bg-nb-white';
-  const headerBg = fieldMode ? 'bg-nb-black' : 'bg-nb-white';
-  const headerBorder = fieldMode ? 'border-nb-black' : 'border-nb-black/20';
 
   return (
     <div className={`flex flex-col h-full ${surfaceBg} ${cx.text}`}>
       {/* Search Header */}
-      <div className={`border-b border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode ${headerBorder} p-4 sm:p-6 shadow-brutal-sm z-10`}>
-        <div className="max-w-3xl mx-auto w-full">
+      <ViewHeader cx={cx} fieldMode={fieldMode} height="fluid">
+        <ViewHeaderBody maxWidth="max-w-3xl mx-auto w-full">
           <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${cx.text}`}>
             <Icon name="search" className="text-mode-accent" />
             Global Search
@@ -278,8 +277,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
               />
             ))}
           </div>
-        </div>
-      </div>
+        </ViewHeaderBody>
+      </ViewHeader>
 
       {/* Results Area */}
       <div className={`flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar ${cx.surface}`}>

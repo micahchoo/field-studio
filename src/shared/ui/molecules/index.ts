@@ -93,6 +93,29 @@ export type { ViewContainerProps } from './ViewContainer';
 export { ViewToggle } from './ViewToggle';
 export type { ViewToggleProps, ViewToggleOption } from './ViewToggle';
 
+// View Header (compound component)
+export {
+  ViewHeader,
+  ViewHeaderTitle,
+  ViewHeaderCenter,
+  ViewHeaderActions,
+  ViewHeaderSubBar,
+  ViewHeaderSelectionBar,
+  ViewHeaderBody,
+  ViewHeaderDivider,
+} from './ViewHeader';
+export type {
+  ViewHeaderHeight,
+  ViewHeaderProps,
+  ViewHeaderTitleProps,
+  ViewHeaderCenterProps,
+  ViewHeaderActionsProps,
+  ViewHeaderSubBarProps,
+  ViewHeaderSelectionBarProps,
+  ViewHeaderBodyProps,
+  ViewHeaderDividerProps,
+} from './ViewHeader';
+
 // Actions & Controls
 export { Toolbar } from './Toolbar';
 export type { ToolbarProps } from './Toolbar';
@@ -211,3 +234,7 @@ export type { LinkListEditorProps, LinkItem, LinkResourceType } from './LinkList
 
 export { AgentEditor } from './AgentEditor';
 export type { AgentEditorProps, AgentItem } from './AgentEditor';
+
+// Form Layout
+export { FormSection } from './FormSection';
+export type { FormSectionProps } from './FormSection';

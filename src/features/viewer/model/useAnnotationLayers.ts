@@ -39,6 +39,8 @@ export interface AnnotationLayer {
   color: string;
   /** Whether the page has behavior: ['hidden'] */
   hidden: boolean;
+  /** Layer opacity 0-1 (default 1) */
+  opacity: number;
 }
 
 export interface UseAnnotationLayersReturn {
@@ -48,10 +50,14 @@ export interface UseAnnotationLayersReturn {
   toggleLayer: (id: string) => void;
   /** Set all layers visible or hidden */
   setAllVisible: (visible: boolean) => void;
+  /** Set opacity for a specific layer */
+  setLayerOpacity: (id: string, opacity: number) => void;
   /** All annotations from currently visible layers */
   visibleAnnotations: IIIFAnnotation[];
   /** Color assigned to a specific annotation (by its layer) */
   getAnnotationColor: (annotationId: string) => string;
+  /** Opacity for a specific annotation (by its layer) */
+  getAnnotationOpacity: (annotationId: string) => number;
 }
 
 /**
@@ -77,6 +83,7 @@ function getPrimaryMotivation(items: IIIFAnnotation[]): string {
 
 export function useAnnotationLayers(canvas: IIIFCanvas | null): UseAnnotationLayersReturn {
   const [visibilityMap, setVisibilityMap] = useState<Record<string, boolean>>({});
+  const [opacityMap, setOpacityMap] = useState<Record<string, number>>({});
 
   // Build layer model from canvas annotation pages
   const { layers, annotationsByLayer } = useMemo(() => {
@@ -115,17 +122,22 @@ export function useAnnotationLayers(canvas: IIIFCanvas | null): UseAnnotationLay
           : !isHidden,
         color: LAYER_COLORS[index % LAYER_COLORS.length],
         hidden: isHidden,
+        opacity: opacityMap[page.id] ?? 1,
       });
     });
 
     return { layers: layerList, annotationsByLayer: annoMap };
-  }, [canvas?.id, canvas?.annotations, visibilityMap]);
+  }, [canvas?.id, canvas?.annotations, visibilityMap, opacityMap]);
 
   const toggleLayer = useCallback((id: string) => {
     setVisibilityMap(prev => ({
       ...prev,
       [id]: prev[id] !== undefined ? !prev[id] : false, // first toggle hides
     }));
+  }, []);
+
+  const setLayerOpacity = useCallback((id: string, opacity: number) => {
+    setOpacityMap(prev => ({ ...prev, [id]: Math.max(0, Math.min(1, opacity)) }));
   }, []);
 
   const setAllVisible = useCallback((visible: boolean) => {
@@ -166,11 +178,30 @@ export function useAnnotationLayers(canvas: IIIFCanvas | null): UseAnnotationLay
     [annotationColorMap]
   );
 
+  // Build annotation-to-opacity lookup
+  const annotationOpacityMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const layer of layers) {
+      const annos = annotationsByLayer[layer.id] || [];
+      for (const anno of annos) {
+        map[anno.id] = layer.opacity;
+      }
+    }
+    return map;
+  }, [layers, annotationsByLayer]);
+
+  const getAnnotationOpacity = useCallback(
+    (annotationId: string) => annotationOpacityMap[annotationId] ?? 1,
+    [annotationOpacityMap]
+  );
+
   return {
     layers,
     toggleLayer,
     setAllVisible,
+    setLayerOpacity,
     visibleAnnotations,
     getAnnotationColor,
+    getAnnotationOpacity,
   };
 }

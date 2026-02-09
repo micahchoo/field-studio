@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { ValidationDot } from './ValidationDot';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface PropertyLabelProps {
@@ -30,6 +31,8 @@ export interface PropertyLabelProps {
   showHint?: boolean;
   /** Optional help text (tooltip or inline) */
   helpText?: string;
+  /** Optional validation state for inline indicator */
+  validation?: { status: 'pristine' | 'invalid'; message?: string };
 }
 
 export const PropertyLabel: React.FC<PropertyLabelProps> = ({
@@ -39,12 +42,18 @@ export const PropertyLabel: React.FC<PropertyLabelProps> = ({
   cx,
   className = '',
   showHint = true,
+  validation,
 }) => {
   const baseClass = `block text-xs font-bold ${fieldMode ? 'text-nb-black/30' : 'text-nb-black/80'} ${className}`;
 
   return (
     <div className="flex justify-between items-center">
-      <span className={baseClass}>{label}</span>
+      <span className={`flex items-center gap-1 ${baseClass}`}>
+        {label}
+        {validation && (
+          <ValidationDot status={validation.status} message={validation.message} />
+        )}
+      </span>
       {showHint && dcHint && (
         <span
           className={`text-[9px] font-mono px-1 ${

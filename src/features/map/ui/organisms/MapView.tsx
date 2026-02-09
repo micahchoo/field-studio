@@ -26,10 +26,14 @@
 import React from 'react';
 import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
 import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
+import type { AppMode } from '@/src/shared/types';
 import { Icon, ZoomControl } from '@/src/shared/ui/atoms';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
+import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
+import { ViewHeader, ViewHeaderTitle, ViewHeaderActions } from '@/src/shared/ui/molecules/ViewHeader';
 import { MapMarker } from '@/src/shared/ui/molecules/MapMarker';
 import { ClusterBadge } from '@/src/shared/ui/molecules/ClusterBadge';
+import { VIEW_MODE_OPTIONS, saveViewMode, type ArchiveViewMode } from '@/src/features/archive/model';
 import {
   formatBounds,
   formatCoordinates,
@@ -49,6 +53,8 @@ export interface MapViewProps {
   t: (key: string) => string;
   /** Whether user is in advanced mode */
   isAdvanced: boolean;
+  /** Called when view mode changes (grid/list/map/timeline) */
+  onSwitchView?: (mode: AppMode) => void;
 }
 
 /**
@@ -75,6 +81,7 @@ export const MapView: React.FC<MapViewProps> = ({
   fieldMode,
   t,
   isAdvanced,
+  onSwitchView,
 }) => {
   const {
     geoItems,
@@ -111,25 +118,41 @@ export const MapView: React.FC<MapViewProps> = ({
   return (
     <div className={`flex flex-col h-full ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
       {/* Header */}
-      <div className={`h-header border-l-4 border-l-mode-accent-border bg-mode-accent-bg-subtle transition-mode border-b ${cx.border} flex items-center justify-between px-6 shadow-brutal-sm z-10 shrink-0`}>
-        <div className="flex items-center gap-4">
-          <h2 className="font-bold text-lg text-mode-accent">Map</h2>
-          <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/40'}`} />
-          <span className={`text-[10px] font-black uppercase ${cx.textMuted}`}>
-            {geoItems.length} geotagged {t('Canvas').toLowerCase()}{geoItems.length !== 1 ? 'es' : ''}
-          </span>
-        </div>
-
-        <ZoomControl
-          zoom={zoom}
-          onZoomChange={(z) => {
-            if (z > zoom) zoomIn();
-            else if (z < zoom) zoomOut();
-          }}
-          onReset={resetView}
-          cx={cx}
+      <ViewHeader cx={cx} fieldMode={fieldMode}>
+        <ViewHeaderTitle
+          title="Map"
+          badge={`${geoItems.length} geotagged ${t('Canvas').toLowerCase()}${geoItems.length !== 1 ? 'es' : ''}`}
         />
-      </div>
+        <ViewHeaderActions>
+          <ZoomControl
+            zoom={zoom}
+            onZoomChange={(z) => {
+              if (z > zoom) zoomIn();
+              else if (z < zoom) zoomOut();
+            }}
+            onReset={resetView}
+            cx={cx}
+          />
+          {onSwitchView && (
+            <ViewToggle
+              value="map"
+              onChange={(v) => {
+                const mode = v as ArchiveViewMode;
+                if (mode === 'grid' || mode === 'list') {
+                  saveViewMode(mode);
+                  onSwitchView('archive');
+                } else {
+                  onSwitchView(mode as AppMode);
+                }
+              }}
+              options={VIEW_MODE_OPTIONS}
+              ariaLabel="View mode toggle"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          )}
+        </ViewHeaderActions>
+      </ViewHeader>
 
       {/* Map Container */}
       <div

@@ -101,7 +101,7 @@ const AUTH_STORAGE_KEY = 'iiif-auth-tokens';
 
 class IIIFAuthService {
   private tokens: Map<string, { token: string; expiresAt: number }> = new Map();
-  private pendingMessages: Map<string, { resolve: Function; reject: Function }> = new Map();
+  private pendingMessages: Map<string, { resolve: Function; reject: Function; resourceId?: string }> = new Map();
 
   constructor() {
     // Listen for postMessage from auth windows
@@ -286,8 +286,10 @@ class IIIFAuthService {
 
   /**
    * Request access token via postMessage
+   * @param tokenService The auth token service to request from
+   * @param resourceId Optional resource ID to key the token under (defaults to token service origin)
    */
-  async requestToken(tokenService: AuthService): Promise<TokenResponse | TokenError> {
+  async requestToken(tokenService: AuthService, resourceId?: string): Promise<TokenResponse | TokenError> {
     return new Promise((resolve, reject) => {
       const messageId = `auth-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
 
@@ -299,8 +301,11 @@ class IIIFAuthService {
       url.searchParams.set('messageId', messageId);
       url.searchParams.set('origin', window.location.origin);
 
-      // Store pending promise
-      this.pendingMessages.set(messageId, { resolve, reject });
+      // Derive storage key: prefer explicit resourceId, then token service origin
+      const storageKey = resourceId || url.origin;
+
+      // Store pending promise with resourceId for token storage
+      this.pendingMessages.set(messageId, { resolve, reject, resourceId: storageKey });
 
       // Set timeout
       const timeout = setTimeout(() => {
@@ -320,7 +325,8 @@ class IIIFAuthService {
           clearTimeout(timeout);
           iframe.remove();
           reject(error);
-        }
+        },
+        resourceId: storageKey
       });
 
       iframe.src = url.toString();
@@ -354,12 +360,13 @@ class IIIFAuthService {
     this.pendingMessages.delete(messageId);
 
     if (data.type === 'AuthAccessToken2') {
-      // Store token
+      // Store token keyed by resourceId (not messageId) for later retrieval
       const expiresAt = data.expiresIn
         ? Date.now() + data.expiresIn * 1000
         : Date.now() + 3600000; // Default 1 hour
 
-      this.tokens.set(messageId, {
+      const tokenKey = pending.resourceId || messageId;
+      this.tokens.set(tokenKey, {
         token: data.accessToken,
         expiresAt
       });
@@ -404,6 +411,33 @@ class IIIFAuthService {
    */
   getStoredToken(resourceId: string): string | null {
     return this.getValidToken(resourceId);
+  }
+
+  /**
+   * Get a valid token for any resource from the same origin.
+   * Iterates all stored tokens and matches by URL origin.
+   * Used as a fallback when no exact resourceId match exists.
+   */
+  getValidTokenForOrigin(url: string): string | null {
+    let targetOrigin: string;
+    try {
+      targetOrigin = new URL(url).origin;
+    } catch {
+      return null;
+    }
+
+    const now = Date.now();
+    for (const [key, entry] of this.tokens) {
+      if (now >= entry.expiresAt) continue;
+      try {
+        if (new URL(key).origin === targetOrigin) {
+          return entry.token;
+        }
+      } catch {
+        // Key might not be a URL (e.g., old messageId-based keys); skip
+      }
+    }
+    return null;
   }
 
   /**

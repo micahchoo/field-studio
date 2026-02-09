@@ -207,25 +207,29 @@ class StorageService {
   }
 
   private _initDB() {
-      this._dbPromise = openDB<BiiifDB>(DB_NAME, 5, {
+      this._dbPromise = openDB<BiiifDB>(DB_NAME, 6, {
         upgrade(db, oldVersion) {
-            if (oldVersion < 1) {
+            // Ensure all required stores exist (handles both fresh installs
+            // and recovery from corrupted/partial databases)
+            if (!db.objectStoreNames.contains(FILES_STORE)) {
                 db.createObjectStore(FILES_STORE);
+            }
+            if (!db.objectStoreNames.contains(PROJECT_STORE)) {
                 db.createObjectStore(PROJECT_STORE);
             }
-            if (oldVersion < 2) {
+            if (!db.objectStoreNames.contains(DERIVATIVES_STORE)) {
                 db.createObjectStore(DERIVATIVES_STORE);
             }
-            if (oldVersion < 3) {
+            if (!db.objectStoreNames.contains(CHECKPOINTS_STORE)) {
                 db.createObjectStore(CHECKPOINTS_STORE);
             }
-            if (oldVersion < 4) {
-                // Add tile storage for image pyramid support
+            if (!db.objectStoreNames.contains(TILES_STORE)) {
                 db.createObjectStore(TILES_STORE);
+            }
+            if (!db.objectStoreNames.contains(TILE_MANIFESTS_STORE)) {
                 db.createObjectStore(TILE_MANIFESTS_STORE);
             }
-            if (oldVersion < 5) {
-                // Add search index persistence store
+            if (!db.objectStoreNames.contains(SEARCH_INDEX_STORE)) {
                 db.createObjectStore(SEARCH_INDEX_STORE);
             }
         },
@@ -234,7 +238,7 @@ class StorageService {
         },
         blocking: () => {
             storageLog.warn('IDB blocking: A new version is trying to open. Closing this connection.');
-            this._dbPromise = null; 
+            this._dbPromise = null;
         },
         terminated: () => {
             storageLog.error('IDB terminated: Browser closed the connection.');

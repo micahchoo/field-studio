@@ -1,7 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
-import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type IIIFItem, isCanvas, isCollection, type ViewType } from '@/src/shared/types';
+import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type IIIFAnnotation, type IIIFItem, isCanvas, isCollection, type ViewType } from '@/src/shared/types';
 import { ToastProvider, useToast } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
 import { METADATA_TEMPLATES } from '@/src/shared/constants';
@@ -33,11 +33,15 @@ import { AuthService, AuthState } from '@/src/shared/services/authService';
 import { storage } from '@/src/shared/services/storage';
 import { setGlobalQuotaErrorHandler } from '@/src/entities/manifest/model/ingest/ingestWorkerPool';
 import { contentStateService } from '@/src/shared/services/contentState';
-import { useBulkOperations, useUndoRedoShortcuts, useVault, useVaultState, VaultProvider } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
+import { useBulkOperations, useHistory, useUndoRedoShortcuts, useVault, useVaultState, VaultProvider } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { actions } from '@/src/entities/manifest/model/actions';
 import { getEntity as vaultGetEntity, getEntityType as vaultGetEntityType } from '@/src/entities/manifest/model/vault';
 import { denormalizeCanvas } from '@/src/entities/manifest/model/vault/denormalization';
 import { appLog } from '@/src/shared/services/logger';
+import { useNetworkStatus } from '@/src/shared/lib/hooks/useNetworkStatus';
+import { activityStream } from '@/src/shared/services/activityStream';
+import type { DetailedStorageEstimate } from '@/src/shared/services/storage';
+import { ActivityFeedPanel } from '@/src/widgets/StatusBar/ui/molecules/ActivityFeedPanel';
 import { UserIntentProvider } from '@/src/app/providers/UserIntentProvider';
 import { ResourceContextProvider } from '@/src/app/providers/ResourceContextProvider';
 import { useAppMode, useAppModeState } from '@/src/app/providers';
@@ -58,6 +62,38 @@ interface PipelineContext {
   focusCoordinate?: { lat: number; lng: number } | null;
   preloadedManifest?: string | null;
 }
+
+// ============================================================================
+// Action label map for StatusBar last-action indicator
+// ============================================================================
+
+const ACTION_LABELS: Record<string, string> = {
+  UPDATE_LABEL: 'Update label',
+  UPDATE_SUMMARY: 'Update summary',
+  UPDATE_METADATA: 'Update metadata',
+  UPDATE_RIGHTS: 'Update rights',
+  UPDATE_NAV_DATE: 'Update date',
+  UPDATE_BEHAVIOR: 'Update behavior',
+  UPDATE_VIEWING_DIRECTION: 'Update direction',
+  ADD_CANVAS: 'Add canvas',
+  REMOVE_CANVAS: 'Remove canvas',
+  REORDER_CANVASES: 'Reorder canvases',
+  ADD_ANNOTATION: 'Add annotation',
+  REMOVE_ANNOTATION: 'Remove annotation',
+  UPDATE_ANNOTATION: 'Update annotation',
+  UPDATE_CANVAS_DIMENSIONS: 'Resize canvas',
+  MOVE_ITEM: 'Move item',
+  BATCH_UPDATE: 'Batch update',
+  RELOAD_TREE: 'Reload tree',
+  MOVE_TO_TRASH: 'Move to trash',
+  RESTORE_FROM_TRASH: 'Restore',
+  EMPTY_TRASH: 'Empty trash',
+  ADD_RANGE: 'Add range',
+  REMOVE_RANGE: 'Remove range',
+  CREATE_BOARD: 'Create board',
+  UPDATE_BOARD_ITEM_POSITION: 'Move board item',
+  REMOVE_BOARD_ITEM: 'Remove board item',
+};
 
 // ============================================================================
 // Main App Component
@@ -102,7 +138,7 @@ const MainApp: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // ---- App State ----
-  const [pendingAuth, setPendingAuth] = useState<{ resourceId: string; authServices: AuthService[] } | null>(null);
+  const [pendingAuth, setPendingAuth] = useState<{ resourceId: string; authServices: AuthService[]; retryFn?: () => void } | null>(null);
   const [batchIds, setBatchIds] = useState<string[]>([]);
   const [stagingTree, setStagingTree] = useState<FileTree | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -110,6 +146,49 @@ const MainApp: React.FC = () => {
   const validationIssuesMap = useValidation(root);
   const [storageUsage, setStorageUsage] = useState<{ usage: number; quota: number } | null>(null);
   const [showQuickRef, setShowQuickRef] = useState(false);
+
+  // ---- Undo/Redo & History ----
+  const { undo, redo, canUndo, canRedo, lastActionType } = useHistory();
+
+  // ---- Network Status ----
+  const { isOnline } = useNetworkStatus();
+
+  // ---- Activity Feed ----
+  const [activityCount, setActivityCount] = useState(0);
+  const [showActivityFeed, setShowActivityFeed] = useState(false);
+
+  // ---- Storage Detail ----
+  const [storageDetail, setStorageDetail] = useState<DetailedStorageEstimate | null>(null);
+
+  // ---- Content State Drop Handler ----
+  const [isDragOver, setIsDragOver] = useState(false);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    // Accept text drops (IIIF Content State URIs)
+    if (e.dataTransfer.types.includes('text/plain') || e.dataTransfer.types.includes('text/uri-list')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'link';
+      setIsDragOver(true);
+    }
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear if actually leaving the container
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragOver(false);
+  }, []);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const text = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('text/uri-list');
+    if (!text) return;
+    // Try to parse as a URL with iiif-content parameter
+    const viewport = contentStateService.parseFromUrl(text);
+    if (viewport) {
+      setSelectedId(viewport.canvasId);
+      setCurrentMode('viewer');
+      setShowInspector(true);
+      showToast('Navigated to shared content', 'success');
+    }
+  }, [showToast]);
 
   // ---- Refs for effect guards ----
   const rootRef = useRef(root);
@@ -317,7 +396,17 @@ const MainApp: React.FC = () => {
   const checkStorage = async () => {
     const est = await storage.getEstimate();
     setStorageUsage(est);
+    // Also update detailed estimate for tooltip
+    storage.getDetailedEstimate().then(detail => setStorageDetail(detail)).catch(() => {});
   };
+
+  // Activity count poll (every 10s)
+  useEffect(() => {
+    const poll = () => { activityStream.getCount().then(setActivityCount).catch(() => {}); };
+    poll();
+    const id = setInterval(poll, 10000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleUpdateRoot = useCallback((newRoot: IIIFItem) => {
     loadRoot(newRoot);
@@ -351,6 +440,20 @@ const MainApp: React.FC = () => {
     }
   }, [selectedId, dispatch, markDirty]);
 
+  // Annotation CRUD for the App-level Inspector (non-archive/boards views)
+  const handleDeleteAnnotation = useCallback((annotationId: string) => {
+    if (!selectedId) return;
+    const result = dispatch(actions.removeAnnotation(selectedId, annotationId));
+    if (result) markDirty();
+  }, [selectedId, dispatch, markDirty]);
+
+  const handleEditAnnotation = useCallback((annotationId: string, newText: string) => {
+    const result = dispatch(actions.updateAnnotation(annotationId, {
+      body: { type: 'TextualBody', value: newText, format: 'text/plain' } as unknown as IIIFAnnotation['body'],
+    }));
+    if (result) markDirty();
+  }, [dispatch, markDirty]);
+
   const handleReveal = useCallback((id: string, mode: AppMode) => {
     setSelectedId(id);
     setCurrentMode(mode);
@@ -379,20 +482,24 @@ const MainApp: React.FC = () => {
     setCurrentMode('viewer');
   }, []);
 
-  const handleAuthRequired = useCallback((resourceId: string, authServices: AuthService[]) => {
-    setPendingAuth({ resourceId, authServices });
+  const handleAuthRequired = useCallback((resourceId: string, authServices: AuthService[], retryFn?: () => void) => {
+    setPendingAuth({ resourceId, authServices, retryFn });
     authDialog.open();
   }, [authDialog]);
 
   const handleAuthComplete = useCallback((state: AuthState) => {
     if (state.status === 'authenticated') {
-      showToast('Authentication successful. Please retry your request.', 'success');
+      showToast('Authentication successful.', 'success');
+      // Auto-retry the original request if a retry function was provided
+      if (pendingAuth?.retryFn) {
+        pendingAuth.retryFn();
+      }
     } else if (state.status === 'degraded') {
       showToast('Limited access granted. Some content may be unavailable.', 'info');
     }
     authDialog.close();
     setPendingAuth(null);
-  }, [showToast, authDialog]);
+  }, [showToast, authDialog, pendingAuth]);
 
   const handleAuthClose = useCallback(() => {
     authDialog.close();
@@ -563,7 +670,13 @@ const MainApp: React.FC = () => {
           badges={{ validationErrors: Object.keys(validationIssuesMap).length || undefined }}
         />
 
-        <main id="main-content" className={`flex-1 flex flex-col min-w-0 min-h-0 relative z-0 panel-fixed ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-white'} ${isMobile ? 'pt-header-compact' : ''}`}>
+        <main
+          id="main-content"
+          className={`flex-1 flex flex-col min-w-0 min-h-0 relative z-0 panel-fixed ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-white'} ${isMobile ? 'pt-header-compact' : ''} ${isDragOver ? 'ring-4 ring-nb-blue ring-inset' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           {/* View content */}
           <ViewRouter
             root={root}
@@ -599,22 +712,38 @@ const MainApp: React.FC = () => {
             annotations={selectedItem && isCanvas(selectedItem)
               ? selectedItem.annotations?.flatMap(page => page.items) || []
               : []}
+            onDeleteAnnotation={handleDeleteAnnotation}
+            onEditAnnotation={handleEditAnnotation}
           />
         )}
       </div>
 
       {!isMobile && (
-        <StatusBar
-          totalItems={root?.items?.length || 0}
-          selectedItem={selectedItem}
-          validationIssues={flatValidationIssues}
-          storageUsage={storageUsage}
-          onOpenQC={qcDashboard.open}
-          saveStatus={saveStatus}
-          quickHelpOpen={showQuickRef}
-          onToggleQuickHelp={() => setShowQuickRef(prev => !prev)}
-          onOpenKeyboardShortcuts={keyboardShortcuts.open}
-        />
+        <div className="relative">
+          {showActivityFeed && (
+            <ActivityFeedPanel onClose={() => setShowActivityFeed(false)} />
+          )}
+          <StatusBar
+            totalItems={root?.items?.length || 0}
+            selectedItem={selectedItem}
+            validationIssues={flatValidationIssues}
+            storageUsage={storageUsage}
+            onOpenQC={qcDashboard.open}
+            saveStatus={saveStatus}
+            quickHelpOpen={showQuickRef}
+            onToggleQuickHelp={() => setShowQuickRef(prev => !prev)}
+            onOpenKeyboardShortcuts={keyboardShortcuts.open}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={undo}
+            onRedo={redo}
+            lastActionLabel={lastActionType ? ACTION_LABELS[lastActionType] || null : null}
+            isOnline={isOnline}
+            activityCount={activityCount}
+            onOpenActivityFeed={() => setShowActivityFeed(prev => !prev)}
+            storageDetail={storageDetail}
+          />
+        </div>
       )}
 
       {/* Modals & Dialogs */}
@@ -625,7 +754,8 @@ const MainApp: React.FC = () => {
           onIngest={async (t, m, p) => {
             const { root: r } = await ingestTree(t, m ? root : null, p);
             handleUpdateRoot(r!);
-            setStagingTree(null);
+            // Don't call setStagingTree(null) here — the StagingWorkbench
+            // closes itself via onCancel after showing the completion summary.
           }}
           onCancel={() => setStagingTree(null)}
         />

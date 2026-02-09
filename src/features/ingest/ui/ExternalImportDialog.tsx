@@ -9,7 +9,7 @@ import { Icon } from '@/src/shared/ui/atoms/Icon';
 interface ExternalImportDialogProps {
   onImport: (item: IIIFItem) => void;
   onClose: () => void;
-  onAuthRequired?: (resourceId: string, authServices: AuthService[]) => void;
+  onAuthRequired?: (resourceId: string, authServices: AuthService[], retryFn?: () => void) => void;
 }
 
 // Fetch timeout in milliseconds (30 seconds)
@@ -75,7 +75,7 @@ export const ExternalImportDialog: React.FC<ExternalImportDialogProps> = ({ onIm
       // Check if authentication is required
       if (requiresAuth(result)) {
         if (onAuthRequired) {
-          onAuthRequired(result.resourceId, result.authServices);
+          onAuthRequired(result.resourceId, result.authServices, () => handleFetch());
         } else {
           setError('This resource requires authentication, but auth is not configured.');
         }

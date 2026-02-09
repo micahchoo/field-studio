@@ -72,3 +72,10 @@ export type { UseAppSettingsReturn } from './useAppSettings';
 // Terminology (moved from app/providers for FSD compliance)
 export { useTerminology, useTerminologyWithLevel } from './useTerminology';
 export type { UseTerminologyOptions, UseTerminologyReturn } from './useTerminology';
+
+// Network Status
+export { useNetworkStatus } from './useNetworkStatus';
+
+// Auth Status
+export { useAuthStatus } from './useAuthStatus';
+export type { AuthStatusResult } from './useAuthStatus';

@@ -131,6 +131,12 @@ export const VaultProvider: React.FC<VaultProviderProps> = ({
     initialRoot ? normalize(initialRoot) : createEmptyState()
   );
 
+  // Denormalization cache — avoids redundant full-tree reconstruction
+  const denormCacheRef = useRef<{ stateRef: NormalizedState; root: IIIFItem | null }>({
+    stateRef: null as unknown as NormalizedState,
+    root: null,
+  });
+
   // Create dispatcher (stable reference)
   const [dispatcher] = useState(() =>
     new ActionDispatcher(state, historySize)
@@ -188,7 +194,16 @@ export const VaultProvider: React.FC<VaultProviderProps> = ({
   const stateContextValue = useMemo<VaultStateContextValue>(() => ({
     state,
     getEntity: (id: string) => getEntity(state, id),
-    exportRoot: () => denormalize(dispatcher.getState()),
+    exportRoot: () => {
+      // Cache denormalized root — if state reference hasn't changed, return cached
+      const currentState = dispatcher.getState();
+      if (denormCacheRef.current.stateRef === currentState) {
+        return denormCacheRef.current.root;
+      }
+      const root = denormalize(currentState);
+      denormCacheRef.current = { stateRef: currentState, root };
+      return root;
+    },
     rootId: state.rootId
   }), [state, dispatcher]);
 
@@ -582,13 +597,20 @@ export function useHistory() {
     [dispatcher]
   );
 
+  // Get the most recent action type for UI display
+  const lastActionType = useMemo(() => {
+    const recent = dispatcher.getRecentActions(1);
+    return recent.length > 0 ? recent[0].action.type : null;
+  }, [dispatcher, status.position]);
+
   return {
     undo,
     redo,
     canUndo,
     canRedo,
     position: status.position,
-    total: status.total
+    total: status.total,
+    lastActionType
   };
 }
 

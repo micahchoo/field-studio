@@ -39,3 +39,5 @@ export { ValidationBadge, type ValidationStatus } from './ValidationBadge';
 export type { ValidationBadgeProps } from './ValidationBadge';
 export { ValidationFixAction } from './ValidationFixAction';
 export type { ValidationFixActionProps } from './ValidationFixAction';
+export { ValidationDot } from './ValidationDot';
+export type { ValidationDotProps } from './ValidationDot';

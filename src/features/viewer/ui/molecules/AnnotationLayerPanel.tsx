@@ -24,6 +24,8 @@ export interface AnnotationLayerPanelProps {
   onToggleLayer: (id: string) => void;
   /** Show/hide all layers */
   onSetAllVisible: (visible: boolean) => void;
+  /** Set opacity for a specific layer */
+  onLayerOpacityChange?: (id: string, opacity: number) => void;
   /** Callback to create a new layer */
   onCreateLayer?: () => void;
   /** Field mode styling */
@@ -38,6 +40,7 @@ export const AnnotationLayerPanel: React.FC<AnnotationLayerPanelProps> = ({
   layers,
   onToggleLayer,
   onSetAllVisible,
+  onLayerOpacityChange,
   onCreateLayer,
   fieldMode = false,
   visible = true,
@@ -117,7 +120,9 @@ export const AnnotationLayerPanel: React.FC<AnnotationLayerPanelProps> = ({
               color={layer.color}
               visible={layer.visible}
               hidden={layer.hidden}
+              opacity={layer.opacity}
               onToggle={onToggleLayer}
+              onOpacityChange={onLayerOpacityChange}
               fieldMode={fieldMode}
             />
           ))

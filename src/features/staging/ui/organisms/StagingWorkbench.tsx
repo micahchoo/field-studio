@@ -118,7 +118,7 @@ function buildAnnotationsFromAnalysis(node: IngestPreviewNode): Map<string, Node
 interface StagingWorkbenchProps {
   initialTree: FileTree;
   existingRoot: IIIFItem | null;
-  onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void;
+  onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void | Promise<void>;
   onCancel: () => void;
   /** Abstraction level for terminology (Phase 3) */
   abstractionLevel?: AbstractionLevel;
@@ -244,7 +244,7 @@ interface StagingWorkbenchInnerProps {
   sourceManifests: SourceManifests;
   initialTree: FileTree;
   existingRoot: IIIFItem | null;
-  onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void;
+  onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void | Promise<void>;
   onCancel: () => void;
   abstractionLevel: AbstractionLevel;
   analysisResult: IngestAnalysisResult | null;
@@ -562,10 +562,15 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
         setTimeout(() => clearCompleted(), 3000);
         return result;
       } else {
-        return await startIngest(async (options) => {
+        const totalFiles = sourceManifests?.manifests?.reduce((sum, m) => sum + m.files.length, 0) || 0;
+        const ingestStartTime = Date.now();
+
+        const result = await startIngest(async (options) => {
           return new Promise<IngestResult>((resolve, reject) => {
-            onIngest(annotatedTree, merge, (msg, pct) => {
-              const totalFiles = sourceManifests?.manifests?.reduce((sum, m) => sum + m.files.length, 0) || 0;
+            let resolved = false;
+
+            // Track the onIngest Promise to catch errors
+            const ingestPromise = onIngest(annotatedTree, merge, (msg, pct) => {
               const completedFiles = Math.floor((pct / 100) * totalFiles);
 
               if (options.onProgress) {
@@ -578,9 +583,11 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
                   filesProcessing: 0,
                   filesError: 0,
                   files: [],
-                  speed: 0,
+                  speed: totalFiles > 0 && completedFiles > 0
+                    ? completedFiles / ((Date.now() - ingestStartTime) / 1000)
+                    : 0,
                   etaSeconds: 0,
-                  startedAt: Date.now(),
+                  startedAt: ingestStartTime,
                   updatedAt: Date.now(),
                   isPaused: false,
                   isCancelled: false,
@@ -593,7 +600,8 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
                 });
               }
 
-              if (pct >= 100) {
+              if (pct >= 100 && !resolved) {
+                resolved = true;
                 const report = {
                   manifestsCreated: sourceManifests?.manifests?.length || 0,
                   collectionsCreated: archiveLayout.root.children.length + 1,
@@ -611,18 +619,58 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
               }
             });
 
+            // Handle the async onIngest completing or failing
+            if (ingestPromise && typeof (ingestPromise as Promise<void>).then === 'function') {
+              (ingestPromise as Promise<void>).then(() => {
+                // onIngest completed — resolve if callback never reached 100%
+                if (!resolved) {
+                  resolved = true;
+                  const report = {
+                    manifestsCreated: sourceManifests?.manifests?.length || 0,
+                    collectionsCreated: archiveLayout.root.children.length + 1,
+                    canvasesCreated: totalFiles,
+                    filesProcessed: totalFiles,
+                    warnings: []
+                  };
+                  setCompletionSummary({
+                    operationId: `ingest-${Date.now()}`,
+                    timestamp: Date.now(),
+                    createdEntityIds: [],
+                    ...report,
+                  });
+                  resolve({ root: null, report });
+                }
+              }).catch((err: unknown) => {
+                if (!resolved) {
+                  resolved = true;
+                  reject(err instanceof Error ? err : new Error(String(err)));
+                }
+              });
+            }
+
             if (options.signal) {
               options.signal.addEventListener('abort', () => {
-                reject(new Error('Ingest cancelled'));
+                if (!resolved) {
+                  resolved = true;
+                  reject(new Error('Ingest cancelled'));
+                }
               });
             }
           });
         });
+
+        // Auto-close staging after showing completion
+        setTimeout(() => {
+          clearCompleted();
+          onCancel();
+        }, 2000);
+
+        return result;
       }
     } catch (error) {
       uiLog.error('Ingest failed:', error instanceof Error ? error : undefined);
     }
-  }, [initialTree, annotationsMap, merge, onIngest, startIngest, clearCompleted, sourceManifests.manifests, archiveLayout.root.children.length]);
+  }, [initialTree, annotationsMap, merge, onIngest, onCancel, startIngest, clearCompleted, sourceManifests.manifests, archiveLayout.root.children.length]);
 
   // Stats
   const stats = useMemo(() => ({

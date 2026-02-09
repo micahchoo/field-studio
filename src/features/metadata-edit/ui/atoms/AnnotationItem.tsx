@@ -40,6 +40,12 @@ export interface AnnotationItemProps {
   fieldMode: boolean;
   /** Additional CSS class */
   className?: string;
+  /** Whether to show a selection checkbox */
+  showCheckbox?: boolean;
+  /** Whether the checkbox is checked */
+  checked?: boolean;
+  /** Callback when checkbox changes */
+  onCheckChange?: (checked: boolean) => void;
 }
 
 export const AnnotationItem: React.FC<AnnotationItemProps> = ({
@@ -53,6 +59,9 @@ export const AnnotationItem: React.FC<AnnotationItemProps> = ({
   cx,
   fieldMode = false,
   className = '',
+  showCheckbox = false,
+  checked = false,
+  onCheckChange,
 }) => {
   const body = annotation.body as unknown as Record<string, unknown> | undefined;
   const bodyText = (body?.value as string) || getIIIFValue(annotation.label, language) || 'Untitled';
@@ -87,6 +96,15 @@ export const AnnotationItem: React.FC<AnnotationItemProps> = ({
       className={className}
     >
       <div className="flex items-center gap-2 mb-1">
+        {showCheckbox && (
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => { e.stopPropagation(); onCheckChange?.(e.target.checked); }}
+            onClick={(e) => e.stopPropagation()}
+            className={`w-3 h-3 shrink-0 accent-nb-blue ${fieldMode ? 'accent-nb-yellow' : ''}`}
+          />
+        )}
         <span className={`text-xs font-bold truncate ${fieldMode ? cx.text : 'text-nb-black/80'}`}>
           {bodyText}
         </span>
