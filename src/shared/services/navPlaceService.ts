@@ -9,6 +9,7 @@
  */
 
 import { IIIFCanvas, IIIFItem, IIIFManifest, LanguageMap } from '@/src/shared/types';
+import { networkLog } from '@/src/shared/services/logger';
 
 // GeoJSON type declarations (subset needed for this service)
 declare namespace GeoJSON {
@@ -438,7 +439,7 @@ class NavPlaceService {
         type: r.type
       }));
     } catch (e) {
-      console.error('[NavPlace] Geocoding failed:', e);
+      networkLog.error('[NavPlace] Geocoding failed', e instanceof Error ? e : undefined);
       return [];
     }
   }
@@ -468,7 +469,7 @@ class NavPlaceService {
         type: result.type
       };
     } catch (e) {
-      console.error('[NavPlace] Reverse geocoding failed:', e);
+      networkLog.error('[NavPlace] Reverse geocoding failed', e instanceof Error ? e : undefined);
       return null;
     }
   }

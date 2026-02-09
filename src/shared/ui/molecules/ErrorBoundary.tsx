@@ -1,6 +1,7 @@
 
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { appLog } from '@/src/shared/services/logger';
 import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 
@@ -35,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    appLog.error("Uncaught error:", error);
     // Fix: setState is now correctly inherited from Component
     this.setState({ errorInfo });
     // Call onError callback if provided

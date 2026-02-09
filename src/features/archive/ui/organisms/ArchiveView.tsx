@@ -29,6 +29,7 @@ import { ArchiveList } from './ArchiveList';
 import { type ArchiveViewMode, filterByTerm, getSelectionDNA, loadViewMode, saveViewMode, sortCanvases, type SortMode } from '../../model';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { contentStateService } from '@/src/shared/services/contentState';
+import { uiLog } from '@/src/shared/services/logger';
 import { BehaviorSelector } from '@/src/features/metadata-edit/ui/atoms/BehaviorSelector';
 import { RightsSelector } from '@/src/features/metadata-edit/ui/atoms/RightsSelector';
 import { ModalDialog } from '@/src/shared/ui/molecules/ModalDialog';
@@ -335,7 +336,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   const [filter, setFilter] = useState('');
   const [sortBy] = useState<SortMode>('name');
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable');
-  useEffect(() => { console.log('[ArchiveView] Density changed to:', density); }, [density]);
+  useEffect(() => { uiLog.debug('[ArchiveView] Density changed to:', density); }, [density]);
   const [activeItem, setActiveItem] = useState<IIIFCanvas | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; targetId: string; isMulti?: boolean } | null>(null);
   const [showNavDateModal, setShowNavDateModal] = useState(false);
@@ -387,13 +388,13 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   // Handlers
   const handleFilterChange = useCallback((value: string) => setFilter(value), []);
   const handleViewChange = useCallback((newView: ArchiveViewMode) => {
-    console.log('[ArchiveView] View change requested:', newView);
+    uiLog.debug('[ArchiveView] View change requested:', newView);
     if (newView === 'map' || newView === 'timeline') {
-      console.log('[ArchiveView] Delegating to app mode:', newView);
+      uiLog.debug('[ArchiveView] Delegating to app mode:', newView);
       onSwitchView?.(newView);
       return;
     }
-    console.log('[ArchiveView] Setting view to:', newView);
+    uiLog.debug('[ArchiveView] Setting view to:', newView);
     setView(newView);
   }, [onSwitchView]);
 

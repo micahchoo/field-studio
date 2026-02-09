@@ -15,6 +15,7 @@
 
 import { IIIFAnnotation, IIIFCanvas, LanguageMap } from '@/src/shared/types';
 import { IIIF_SPEC } from '@/src/shared/constants';
+import { networkLog } from '@/src/shared/services/logger';
 
 // ============================================================================
 // Types
@@ -218,7 +219,7 @@ class ContentSearchService {
 
       return data;
     } catch (error) {
-      console.error('[ContentSearch] Search failed:', error);
+      networkLog.error('[ContentSearch] Search failed:', error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -270,7 +271,7 @@ class ContentSearchService {
 
       return data;
     } catch (error) {
-      console.error('[ContentSearch] Autocomplete failed:', error);
+      networkLog.error('[ContentSearch] Autocomplete failed:', error instanceof Error ? error : undefined);
       throw error;
     }
   }

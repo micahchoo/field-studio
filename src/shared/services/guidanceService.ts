@@ -6,6 +6,8 @@
  * Supports just-in-time contextual help that doesn't repeat.
  */
 
+import { storageLog } from '@/src/shared/services/logger';
+
 export type GuidanceTopic =
   // Legacy intro topics
   | 'intro-archive'
@@ -44,7 +46,7 @@ class GuidanceService {
         this.seenTopics = new Set(JSON.parse(stored));
       }
     } catch (e) {
-      console.warn("Failed to load guidance state");
+      storageLog.warn("Failed to load guidance state");
     }
   }
 

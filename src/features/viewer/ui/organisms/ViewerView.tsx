@@ -35,6 +35,7 @@ import {
 import { type SpatialDrawingMode, useViewer } from '../../model';
 import { useVaultDispatch, useVaultState } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { actions } from '@/src/entities/manifest/model/actions';
+import { uiLog } from '@/src/shared/services/logger';
 
 // Note: CanvasComposer has been phased out in favor of Board View
 // See: src/features/board-design/ui/organisms/BoardView.tsx
@@ -204,21 +205,21 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   // The vault now properly handles annotation page creation/lookup
   const handleCreateAnnotation = useCallback((annotation: IIIFAnnotation) => {
     if (!item?.id) {
-      console.warn('[ViewerView] Cannot create annotation: no canvas selected');
+      uiLog.warn('[ViewerView] Cannot create annotation: no canvas selected');
       return;
     }
 
     // Dispatch to vault - it handles AnnotationPage structure internally
     const result = dispatch(actions.addAnnotation(item.id, annotation));
     if (result) {
-      console.log('[ViewerView] Annotation persisted to canvas:', item.id, annotation.id);
+      uiLog.debug(`[ViewerView] Annotation persisted to canvas: ${item.id} ${annotation.id}`);
 
       // Save to IndexedDB - export the updated root and persist
       const updatedRoot = exportRoot();
       if (updatedRoot) {
         storage.saveProject(updatedRoot)
-          .then(() => console.log('[ViewerView] Saved to IndexedDB'))
-          .catch((err) => console.error('[ViewerView] Failed to save:', err));
+          .then(() => uiLog.debug('[ViewerView] Saved to IndexedDB'))
+          .catch((err) => uiLog.error('[ViewerView] Failed to save:', err instanceof Error ? err : undefined));
       }
     }
     // Keep annotation tool open so user can add more annotations
@@ -354,7 +355,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
           canvas={item}
           onClose={() => setShowWorkbench(false)}
           onApply={(url) => {
-            console.log('Applied IIIF URL:', url);
+            uiLog.debug('Applied IIIF URL:', url);
             setShowWorkbench(false);
           }}
           cx={cx}
@@ -370,9 +371,9 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         searchService={currentSearchService as { id: string; type: string; profile?: string } | null}
         showSearchPanel={showSearchPanel}
         onCloseSearchPanel={() => setShowSearchPanel(false)}
-        onSearchResultSelect={(result: SearchResult) => console.log('Selected:', result)}
+        onSearchResultSelect={(result: SearchResult) => uiLog.debug('Selected:', result)}
         onSearch={async (query: string) => {
-          console.log('Searching for:', query);
+          uiLog.debug('Searching for:', query);
           return [];
         }}
         cx={cx}

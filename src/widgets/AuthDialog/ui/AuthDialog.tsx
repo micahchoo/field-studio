@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { networkLog } from '@/src/shared/services/logger';
 import { Button } from '@/src/shared/ui/atoms';
 import { authService, AuthService, AuthState, ProbeResponse } from '@/src/shared/services/authService';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
@@ -100,7 +101,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
             // Re-probe to verify access
             await probeForAccess();
           } catch (error) {
-            console.error('Token request failed:', error);
+            networkLog.error('Token request failed:', error instanceof Error ? error : undefined);
             setState({
               status: 'error',
               errorMessage: 'Failed to retrieve access token'

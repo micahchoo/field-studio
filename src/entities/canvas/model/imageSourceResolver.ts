@@ -31,6 +31,7 @@
  */
 
 import { FEATURE_FLAGS } from '@/src/shared/constants';
+import { uiLog } from '@/src/shared/services/logger';
 
 import type {
   IIIFAnnotation,
@@ -319,7 +320,7 @@ export function resolveImageSource(
         needsCleanup: true // Caller must revoke
       };
     } catch (e) {
-      console.warn('Failed to create blob URL from fileRef:', e);
+      uiLog.warn('Failed to create blob URL from fileRef:', e);
       // Fall through to other options
     }
   }
@@ -541,7 +542,7 @@ export function cleanupImageSource(source: ResolvedImageSource | null): boolean 
   // Prevent double cleanup
   if (cleanedSources.has(source)) {
     if (isCleanupWarningEnabled()) {
-      console.warn('[imageSourceResolver] Source already cleaned up, skipping');
+      uiLog.warn('[imageSourceResolver] Source already cleaned up, skipping');
     }
     return false;
   }
@@ -552,14 +553,14 @@ export function cleanupImageSource(source: ResolvedImageSource | null): boolean 
       cleanedSources.add(source);
 
       if (isCleanupWarningEnabled()) {
-        console.log('[imageSourceResolver] Cleaned up blob URL:', `${source._blobRef.substring(0, 50)}...`);
+        uiLog.debug('[imageSourceResolver] Cleaned up blob URL:', `${source._blobRef.substring(0, 50)}...`);
       }
 
       return true;
     } catch (e) {
       // Ignore cleanup errors but log in dev
       if (isCleanupWarningEnabled()) {
-        console.warn('[imageSourceResolver] Failed to cleanup blob URL:', e);
+        uiLog.warn('[imageSourceResolver] Failed to cleanup blob URL:', e);
       }
     }
   }

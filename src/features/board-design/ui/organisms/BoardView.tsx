@@ -17,6 +17,7 @@ import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { PipelineBanner } from '@/src/shared/ui/molecules/PipelineBanner';
 import { ContextMenu } from '@/src/shared/ui/molecules/ContextMenu';
 import { contentStateService } from '@/src/shared/services/contentState';
+import { uiLog } from '@/src/shared/services/logger';
 import {
   autoArrangeItems,
   type BoardItem,
@@ -468,7 +469,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
         });
         if (itemsToAdd.length > 0) showToast(`Added ${itemsToAdd.length} items from Archive`, 'success');
       } catch (e) {
-        console.error('Failed to load pending selection:', e);
+        uiLog.error('Failed to load pending selection:', e instanceof Error ? e : undefined);
       }
     }
   }, [root, board, showToast, pipeline.intent, pipeline.selectedIds]);

@@ -4,6 +4,7 @@ import { virtualManifestFactory } from './virtualManifestFactory';
 import { specBridge } from './specBridge';
 import { authService, AuthService } from './authService';
 import { validateResource } from '@/utils/iiifSchema';
+import { networkLog } from '@/src/shared/services/logger';
 
 export interface RemoteResource {
   id: string;
@@ -58,7 +59,7 @@ export const fetchRemoteManifest = async (url: string, options?: FetchOptions): 
 export const fetchRemoteResource = async (url: string, options?: FetchOptions): Promise<ExtendedFetchResult> => {
   // Check if URL is a direct media file (image, audio, video)
   if (virtualManifestFactory.isMediaUrl(url)) {
-    console.log('[RemoteLoader] Detected media URL, creating virtual manifest:', url);
+    networkLog.debug(`[RemoteLoader] Detected media URL, creating virtual manifest: ${url}`);
     try {
       const manifest = await virtualManifestFactory.createManifest(url);
       return {
@@ -67,7 +68,7 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
         originalUrl: url
       };
     } catch (e) {
-      console.warn('[RemoteLoader] Virtual manifest creation failed, trying as IIIF:', e);
+      networkLog.warn('[RemoteLoader] Virtual manifest creation failed, trying as IIIF', e);
       // Fall through to try as IIIF
     }
   }
@@ -114,7 +115,7 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
     if (contentType.startsWith('image/') ||
         contentType.startsWith('audio/') ||
         contentType.startsWith('video/')) {
-      console.log('[RemoteLoader] Response is media type, creating virtual manifest');
+      networkLog.debug('[RemoteLoader] Response is media type, creating virtual manifest');
       const manifest = await virtualManifestFactory.createManifest(url);
       return { data: manifest, isVirtual: true };
     }
@@ -162,7 +163,7 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
     // Run schema validation (log warnings, don't fail on warnings)
     const validationErrors = validateResource(upgraded as IIIFItem);
     if (validationErrors.length > 0) {
-       console.warn('[RemoteLoader] IIIF validation issues:', validationErrors);
+       networkLog.warn('[RemoteLoader] IIIF validation issues', validationErrors);
     }
 
     return { data: upgraded as IIIFItem, isVirtual: false };
@@ -184,7 +185,7 @@ export const fetchRemoteResource = async (url: string, options?: FetchOptions): 
       originalUrl: url
     };
   } catch (error: any) {
-    console.error("Failed to fetch remote manifest directly:", error);
+    networkLog.error("Failed to fetch remote manifest directly", error instanceof Error ? error : undefined);
 
     // Check for common CORS/Network errors (Firefox: "NetworkError...", Chrome: "Failed to fetch")
     const isNetworkError = error.name === 'TypeError' &&

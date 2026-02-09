@@ -1,18 +1,40 @@
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
 import { AbstractionLevel, AppMode, getIIIFValue, IIIFItem, ViewType } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { Tag } from '@/src/shared/ui/atoms/Tag';
-import { CONSTANTS, RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
-import {
-  getRelationshipType,
-  getValidChildTypes,
-  isValidChildType
-} from '@/utils/iiifHierarchy';
+import { CONSTANTS } from '@/src/shared/constants';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
 import { useAppSettings } from '@/src/app/providers/useAppSettings';
-import { useAppMode, useAppModeState } from '@/src/app/providers';
+import { useAppMode } from '@/src/app/providers';
+
+// Structure tree imports — reuse, don't rewrite
+import { useStructureTree } from '@/src/features/structure-view/model/useStructureTree';
+import { VirtualTreeList } from '@/src/features/structure-view/ui/molecules/VirtualTreeList';
+import { TreeSearchBar } from '@/src/features/structure-view/ui/atoms/TreeSearchBar';
+import type { DropPosition } from '@/src/features/structure-view/ui/atoms/DropIndicator';
+
+// Context menu
+import { ContextMenu, type ContextMenuSectionType } from '@/src/shared/ui/molecules/ContextMenu';
+
+// Breadcrumb path
+import { getPathToNode } from '@/utils/iiifHierarchy';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const COLLAPSED_WIDTH = 48;
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface SidebarBadges {
+  validationErrors?: number;
+  unsavedChanges?: boolean;
+  newItems?: number;
+}
 
 interface SidebarProps {
   root: IIIFItem | null;
@@ -34,9 +56,20 @@ interface SidebarProps {
   onAbstractionLevelChange?: (level: AbstractionLevel) => void;
   /** Field mode flag — passed from parent to ensure reactivity */
   fieldMode?: boolean;
+  /** Badge indicators */
+  badges?: SidebarBadges;
+  /** Delete item callback */
+  onDeleteItem?: (id: string) => void;
+  /** Duplicate item callback */
+  onDuplicateItem?: (id: string) => void;
+  /** Rename item callback */
+  onRenameItem?: (id: string) => void;
 }
 
-// Neobrutalist nav item
+// ============================================================================
+// NavItem
+// ============================================================================
+
 const NavItem: React.FC<{
   icon: string;
   label: string;
@@ -45,15 +78,18 @@ const NavItem: React.FC<{
   fieldMode: boolean;
   disabled?: boolean;
   title?: string;
-}> = ({ icon, label, active, onClick, fieldMode, disabled, title }) => (
+  collapsed?: boolean;
+  badge?: number;
+}> = ({ icon, label, active, onClick, fieldMode, disabled, title, collapsed, badge }) => (
   <Button variant="ghost" size="bare"
     onClick={onClick}
     disabled={disabled}
-    title={title}
+    title={collapsed ? label : title}
     aria-current={active ? 'page' : undefined}
     className={`
-      w-full flex items-center gap-3 px-3 py-2.5 font-mono font-bold text-xs uppercase tracking-wider
-      border-l-4 transition-nb
+      w-full flex items-center gap-3 font-mono font-bold text-xs uppercase tracking-wider
+      border-l-4 transition-all duration-150
+      ${collapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5'}
       ${active
         ? (fieldMode
           ? 'bg-nb-yellow text-nb-black border-l-nb-yellow'
@@ -65,209 +101,97 @@ const NavItem: React.FC<{
       ${disabled ? 'opacity-30 cursor-not-allowed' : ''}
     `}
   >
-    <Icon name={icon} className="text-lg" />
-    <span>{label}</span>
+    <span className={`relative ${active ? 'animate-[nav-pulse_0.2s_ease-out]' : ''}`}>
+      <Icon name={icon} className="text-lg" />
+      {badge !== undefined && badge > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-nb-red text-nb-white text-[9px] font-bold flex items-center justify-center leading-none">
+          {badge > 99 ? '99' : badge}
+        </span>
+      )}
+    </span>
+    {!collapsed && <span>{label}</span>}
   </Button>
 );
 
-// Types that should show in sidebar
-const SIDEBAR_VISIBLE_TYPES = new Set(['Collection', 'Manifest', 'Canvas', 'Range']);
-const STOP_TRAVERSAL_TYPES = new Set(['AnnotationPage', 'Annotation', 'Choice', 'SpecificResource']);
+// ============================================================================
+// Breadcrumb Bar
+// ============================================================================
 
-// Map IIIF types to Tag colors
-const typeTagColor: Record<string, 'blue' | 'green' | 'purple' | 'orange'> = {
-  Collection: 'purple',
-  Manifest: 'blue',
-  Canvas: 'green',
-  Range: 'orange',
-};
+const BreadcrumbBar: React.FC<{
+  root: IIIFItem;
+  selectedId: string;
+  onNavigate: (id: string) => void;
+  fieldMode: boolean;
+}> = ({ root, selectedId, onNavigate, fieldMode }) => {
+  const path = useMemo(() => getPathToNode(root, selectedId), [root, selectedId]);
 
-const TreeItem: React.FC<{
-  item: IIIFItem; level: number; selectedId: string | null; onSelect: (id: string) => void;
-  viewType: ViewType; fieldMode: boolean; root: IIIFItem | null; onStructureUpdate?: any;
-  filterText: string;
-  manifestsExpanded?: boolean;
-}> = ({ item, level, selectedId, onSelect, viewType, fieldMode, root, onStructureUpdate, filterText, manifestsExpanded = false }) => {
-  const defaultExpanded = item.type === 'Collection' ? true : manifestsExpanded;
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
-  React.useEffect(() => {
-    if (item.type === 'Manifest') {
-      setExpanded(manifestsExpanded);
-    }
-  }, [manifestsExpanded, item.type]);
-
-  const isSelected = item.id === selectedId;
-  const config = RESOURCE_TYPE_CONFIG[item.type] || RESOURCE_TYPE_CONFIG['Content'];
-
-  const rawChildren = item.items || item.annotations || [];
-  const children = rawChildren.filter((child: IIIFItem) => !STOP_TRAVERSAL_TYPES.has(child.type));
-  const hasChildren = children.length > 0;
-
-  if (STOP_TRAVERSAL_TYPES.has(item.type)) return null;
-
-  const label = getIIIFValue(item.label) || 'Untitled';
-  const displayLabel = viewType === 'files' ? (item._filename || item.id.split('/').pop()) : label;
-
-  const matchesText = !filterText || displayLabel.toLowerCase().includes(filterText.toLowerCase());
-  const childMatches = hasChildren && children.some((child) => {
-    const childLabel = getIIIFValue(child.label) || child.id || '';
-    return childLabel.toLowerCase().includes(filterText.toLowerCase());
-  });
-  const isMatch = matchesText || childMatches;
-
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('application/iiif-item-id', item.id);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const draggedId = e.dataTransfer.getData('application/iiif-item-id');
-    if (draggedId === item.id || !onStructureUpdate || !root) return;
-
-    const newRoot = JSON.parse(JSON.stringify(root));
-    let draggedNode: any = null;
-
-    const findAndRemove = (parent: any) => {
-      const list = parent.items || parent.annotations || [];
-      const idx = list.findIndex((x: any) => x.id === draggedId);
-      if (idx > -1) {
-        draggedNode = list.splice(idx, 1)[0];
-        return true;
-      }
-      for (const child of list) if (findAndRemove(child)) return true;
-      return false;
-    };
-
-    const findAndInsert = (parent: any) => {
-      if (parent.id === item.id) {
-        if (!draggedNode) return false;
-        if (!isValidChildType(parent.type, draggedNode.type)) {
-          const validChildren = getValidChildTypes(parent.type);
-          console.warn(`Cannot drop ${draggedNode.type} into ${parent.type}. Valid children: ${validChildren.join(', ') || 'none'}`);
-          return false;
-        }
-        const relationship = getRelationshipType(parent.type, draggedNode.type);
-        console.log(`Creating ${relationship} relationship: ${parent.type} → ${draggedNode.type}`);
-        if (!parent.items) parent.items = [];
-        parent.items.push(draggedNode);
-        return true;
-      }
-      const list = parent.items || parent.annotations || [];
-      for (const child of list) if (findAndInsert(child)) return true;
-      return false;
-    };
-
-    findAndRemove(newRoot);
-    if (draggedNode) {
-      const success = findAndInsert(newRoot);
-      if (success) onStructureUpdate(newRoot);
-    }
-  };
-
-  if (!isMatch && !hasChildren) return null;
-
-  const isCanvas = item.type === 'Canvas';
-  const isManifest = item.type === 'Manifest';
+  if (path.length <= 1) return null;
 
   return (
-    <div className="select-none" role="none">
-      <div
-        draggable onDragStart={handleDragStart} onDragOver={e => e.preventDefault()} onDrop={handleDrop}
-        role="treeitem"
-        aria-selected={isSelected}
-        aria-expanded={hasChildren ? expanded : undefined}
-        tabIndex={0}
-        className={`
-          flex items-center gap-2 cursor-pointer outline-none transition-nb
-          border-l-4 py-1.5
-          ${isSelected
-            ? (fieldMode
-              ? 'bg-nb-yellow/20 text-nb-yellow border-l-nb-yellow font-bold'
-              : 'bg-nb-orange/15 text-nb-black border-l-nb-orange font-bold')
-            : (fieldMode
-              ? 'border-l-transparent text-nb-yellow hover:bg-nb-yellow/15'
-              : 'border-l-transparent text-nb-black hover:bg-nb-black/10')
-          }
-        `}
-        style={{ paddingLeft: 16 + level * 16 }}
-        onClick={() => onSelect(item.id)}
-      >
-        <Button variant="ghost" size="bare"
-          aria-label={expanded ? `Collapse ${displayLabel}` : `Expand ${displayLabel}`}
-          tabIndex={-1}
-          className={`p-1.5 -ml-1 min-w-[28px] min-h-[28px] flex items-center justify-center ${!hasChildren ? 'invisible' : ''}`}
-          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-        >
-          <Icon
-            name={expanded ? "expand_more" : "chevron_right"}
-            className="text-base"
-          />
-        </Button>
-
-        <Icon
-          name={viewType === 'files' ? 'folder' : config.icon}
-          className="text-base"
-        />
-        <span className={`truncate flex-1 font-mono text-nb-xs ${isManifest ? 'font-bold' : isCanvas ? 'font-medium' : 'font-normal'}`}>
-          {displayLabel}
-        </span>
-
-        {isManifest && hasChildren && (
-          <Tag color={typeTagColor[item.type] || 'black'}>{children.length}</Tag>
-        )}
-      </div>
-      {hasChildren && expanded && (
-        <div role="group">
-          {children.map((child) => (
-            <TreeItem key={child.id} item={child as IIIFItem} level={level + 1} selectedId={selectedId} onSelect={onSelect} viewType={viewType} fieldMode={fieldMode} root={root} onStructureUpdate={onStructureUpdate} filterText={filterText} manifestsExpanded={manifestsExpanded}/>
-          ))}
-        </div>
-      )}
+    <div className={`flex items-center gap-1 px-3 py-1.5 overflow-x-auto custom-scrollbar text-nb-caption font-mono ${
+      fieldMode ? 'bg-nb-black/80 text-nb-yellow/60' : 'bg-nb-cream text-nb-black/50'
+    }`}>
+      {path.map((item, i) => {
+        const label = getIIIFValue(item.label) || item.type;
+        const isLast = i === path.length - 1;
+        return (
+          <React.Fragment key={item.id}>
+            {i > 0 && <span className="opacity-40 shrink-0">&gt;</span>}
+            <button
+              type="button"
+              onClick={() => onNavigate(item.id)}
+              className={`shrink-0 max-w-[120px] truncate transition-colors ${
+                isLast
+                  ? (fieldMode ? 'text-nb-yellow font-bold' : 'text-nb-black font-bold')
+                  : 'hover:underline'
+              }`}
+              title={label}
+            >
+              {label}
+            </button>
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };
 
+// ============================================================================
+// Sidebar Component
+// ============================================================================
+
 export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
   root, selectedId, viewType, onSelect, onViewTypeChange,
   onImport, onExportTrigger, onToggleFieldMode, onStructureUpdate, visible, onOpenExternalImport,
-  onOpenSettings, onToggleQuickHelp, isMobile, onClose, onAbstractionLevelChange, fieldMode: fieldModeProp
+  onOpenSettings, onToggleQuickHelp, isMobile, onClose, onAbstractionLevelChange, fieldMode: fieldModeProp,
+  badges, onDeleteItem, onDuplicateItem, onRenameItem,
 }) {
   const { settings, updateSettings } = useAppSettings();
-  // Prefer prop over internal hook state for reactivity when toggled externally
   const isFieldMode = fieldModeProp ?? settings.fieldMode;
   const [currentMode, setCurrentMode] = useAppMode();
-  const { changedAt, previousMode } = useAppModeState();
-  const [filterText, setFilterText] = useState('');
-  const [debouncedFilter, setDebouncedFilter] = useState('');
-  const filterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [manifestsExpanded, setManifestsExpanded] = useState(false);
 
-  const handleFilterChange = useCallback((value: string) => {
-    setFilterText(value); // immediate input update
-    if (filterTimerRef.current) clearTimeout(filterTimerRef.current);
-    filterTimerRef.current = setTimeout(() => setDebouncedFilter(value), 150);
-  }, []);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+  const [treeContainerHeight, setTreeContainerHeight] = useState(300);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
+
+  // Mobile gesture state
+  const touchStartRef = useRef<{ x: number; time: number } | null>(null);
+  const [touchDeltaX, setTouchDeltaX] = useState(0);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
 
   const hasData = root && ((root as any).items?.length > 0 || (root as any).type);
 
-  const handleImportClick = () => {
-    if (fileInputRef.current) fileInputRef.current.click();
-  };
-
-  const handleFieldModeToggle = () => {
-    const newFieldMode = !isFieldMode;
-    updateSettings({ fieldMode: newFieldMode });
-    onToggleFieldMode();
-  };
-
+  // ---- Resizable panel with collapse support ----
   const {
-    size: sidebarWidth,
     isResizing,
+    isCollapsed,
     handleProps,
     panelStyle,
+    toggleCollapse,
+    expand,
   } = useResizablePanel({
     id: 'sidebar',
     defaultSize: 280,
@@ -275,9 +199,172 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
     maxSize: 400,
     direction: 'horizontal',
     side: 'right',
-    collapseThreshold: 0,
+    collapseThreshold: 180,
     persist: true,
   });
+
+  // ---- Structure tree hook ----
+  const {
+    flattenedNodes,
+    filteredNodes,
+    selectedIds,
+    selectNode,
+    toggleExpanded,
+    expandAll,
+    collapseAll,
+    draggingId,
+    setDraggingId,
+    setDropTargetId,
+    canDrop,
+    findNode,
+    treeStats,
+    filterQuery,
+    setFilterQuery,
+    matchCount,
+    setScrollContainerRef,
+  } = useStructureTree({ root, onUpdate: onStructureUpdate });
+
+  // Sync external selectedId into tree selection
+  useEffect(() => {
+    if (selectedId && !selectedIds.has(selectedId)) {
+      selectNode(selectedId, false);
+    }
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ResizeObserver for tree container height
+  useEffect(() => {
+    const el = treeContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setTreeContainerHeight(Math.max(entry.contentRect.height, 100));
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // ---- Handlers ----
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFieldModeToggle = useCallback(() => {
+    const newFieldMode = !isFieldMode;
+    updateSettings({ fieldMode: newFieldMode });
+    onToggleFieldMode();
+  }, [isFieldMode, updateSettings, onToggleFieldMode]);
+
+  const handleTreeSelect = useCallback((id: string, _additive: boolean) => {
+    selectNode(id, false);
+    onSelect(id);
+  }, [selectNode, onSelect]);
+
+  const handleDragStart = useCallback((id: string) => {
+    setDraggingId(id);
+    document.body.style.cursor = 'grabbing';
+  }, [setDraggingId]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingId(null);
+    setDropTargetId(null);
+    document.body.style.cursor = '';
+  }, [setDraggingId, setDropTargetId]);
+
+  const handleDrop = useCallback((targetId: string, _position?: DropPosition) => {
+    if (!draggingId || !canDrop(draggingId, targetId)) {
+      handleDragEnd();
+      return;
+    }
+    // Delegate actual structure update to parent via onStructureUpdate
+    // (the useStructureTree hook validates but doesn't mutate directly)
+    handleDragEnd();
+  }, [draggingId, canDrop, handleDragEnd]);
+
+  const handleDoubleClick = useCallback((id: string) => {
+    const node = findNode(id);
+    if (node?.type === 'Canvas') {
+      onSelect(id);
+      setCurrentMode('archive');
+    }
+  }, [findNode, onSelect, setCurrentMode]);
+
+  // Context menu
+  const handleContextMenu = useCallback((e: React.MouseEvent, nodeId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, nodeId });
+  }, []);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  const contextMenuSections = useMemo((): ContextMenuSectionType[] => {
+    if (!contextMenu) return [];
+    const nodeId = contextMenu.nodeId;
+    return [
+      {
+        title: 'Navigation',
+        items: [
+          { id: 'open-viewer', label: 'Open in Viewer', icon: 'visibility', onClick: () => { onSelect(nodeId); setCurrentMode('archive'); } },
+          { id: 'open-catalog', label: 'Open in Catalog', icon: 'table_chart', onClick: () => { onSelect(nodeId); setCurrentMode('metadata'); } },
+        ],
+      },
+      {
+        title: 'Edit',
+        items: [
+          { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2', onClick: () => onRenameItem?.(nodeId), disabled: !onRenameItem },
+          { id: 'duplicate', label: 'Duplicate', icon: 'content_copy', shortcut: 'Ctrl+D', onClick: () => onDuplicateItem?.(nodeId), disabled: !onDuplicateItem },
+        ],
+      },
+      {
+        title: 'Danger',
+        items: [
+          { id: 'delete', label: 'Delete', icon: 'delete', variant: 'danger' as const, shortcut: 'Del', onClick: () => onDeleteItem?.(nodeId), disabled: !onDeleteItem },
+        ],
+      },
+    ];
+  }, [contextMenu, onSelect, setCurrentMode, onRenameItem, onDuplicateItem, onDeleteItem]);
+
+  // Nodes to render (filtered or full)
+  const nodesToRender = useMemo(() => {
+    return filterQuery ? filteredNodes : flattenedNodes;
+  }, [flattenedNodes, filteredNodes, filterQuery]);
+
+  // Mobile touch gestures
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isMobile) return;
+    touchStartRef.current = { x: e.touches[0].clientX, time: Date.now() };
+    setIsTouchDragging(false);
+  }, [isMobile]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || !touchStartRef.current) return;
+    const deltaX = e.touches[0].clientX - touchStartRef.current.x;
+    if (deltaX < 0) {
+      setTouchDeltaX(deltaX);
+      setIsTouchDragging(true);
+    }
+  }, [isMobile]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isMobile || !touchStartRef.current) return;
+    if (touchDeltaX < -80) {
+      onClose?.();
+    }
+    setTouchDeltaX(0);
+    setIsTouchDragging(false);
+    touchStartRef.current = null;
+  }, [isMobile, touchDeltaX, onClose]);
+
+  // Nav items with collapse handling
+  const handleNavClick = useCallback((mode: AppMode) => {
+    if (isCollapsed && !isMobile) {
+      expand();
+    }
+    setCurrentMode(mode);
+  }, [isCollapsed, isMobile, expand, setCurrentMode]);
+
+  // ---- Styles ----
 
   const sidebarStyles = isMobile
     ? `fixed inset-y-0 left-0 z-[1000] w-80 transition-transform duration-100 ${visible ? 'translate-x-0' : '-translate-x-full'}`
@@ -287,31 +374,63 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
     ? 'bg-nb-black border-nb-yellow'
     : 'bg-nb-cream border-nb-black';
 
+  const mobileTransform = isTouchDragging ? `translateX(${touchDeltaX}px)` : undefined;
+  const mobileTransition = isTouchDragging ? 'none' : 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+
+  // Override panelStyle for collapsed mode (icon rail)
+  const effectivePanelStyle = isMobile ? undefined : {
+    ...panelStyle,
+    width: isCollapsed ? COLLAPSED_WIDTH : panelStyle.width,
+  };
+
   return (
     <>
       {isMobile && visible && (
-        <div className="fixed inset-0 bg-nb-black/80 z-[950]" onClick={onClose}></div>
+        <div
+          className="fixed inset-0 bg-nb-black/80 z-[950]"
+          style={{ opacity: isTouchDragging ? 1 + touchDeltaX / 320 : 1, transition: isTouchDragging ? 'none' : 'opacity 0.25s' }}
+          onClick={onClose}
+        />
       )}
       <aside
         className={`${sidebarStyles} ${bgStyles} flex flex-col overflow-hidden sidebar-panel`}
-        style={isMobile ? undefined : panelStyle}
+        style={{
+          ...(effectivePanelStyle || {}),
+          ...(isMobile ? { transform: mobileTransform, transition: mobileTransition } : {}),
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Header - FIELD STUDIO wordmark */}
-        <div className={`flex items-center px-4 shrink-0 gap-3 h-14 border-b-4 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
-          <div className={`w-8 h-8 flex items-center justify-center font-mono font-black text-sm border-2 ${isFieldMode ? 'bg-nb-yellow text-nb-black border-nb-yellow' : 'bg-nb-blue text-nb-white border-nb-black'}`}>
+        {/* Header */}
+        <div className={`flex items-center px-3 shrink-0 gap-2 h-14 border-b-4 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
+          <div className={`w-8 h-8 flex items-center justify-center font-mono font-black text-sm border-2 shrink-0 ${isFieldMode ? 'bg-nb-yellow text-nb-black border-nb-yellow' : 'bg-nb-blue text-nb-white border-nb-black'}`}>
             <Icon name="photo_library" className="text-lg" />
           </div>
-          <div className="flex-1 overflow-hidden flex items-baseline gap-2">
-            <span className={`font-mono font-black text-xs uppercase tracking-widest ${isFieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>
-              {CONSTANTS.APP_NAME}
-            </span>
-            <span className={`font-mono text-nb-caption ${isFieldMode ? 'text-nb-yellow/60' : 'text-nb-black/60'}`}>
-              {root ? `${(root as any).items?.length || 0} ITEMS` : 'NO ARCHIVE'}
-            </span>
-          </div>
-          {isMobile && (
-            <Button variant="ghost" size="bare" onClick={onClose} aria-label="Close sidebar" className={`p-1.5 ${isFieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>
-              <Icon name="close" className="text-lg"/>
+          {!isCollapsed && (
+            <>
+              <div className="flex-1 overflow-hidden flex items-baseline gap-2">
+                <span className={`font-mono font-black text-xs uppercase tracking-widest ${isFieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>
+                  {CONSTANTS.APP_NAME}
+                </span>
+                <span className={`font-mono text-nb-caption ${isFieldMode ? 'text-nb-yellow/60' : 'text-nb-black/60'}`}>
+                  {root ? `${(root as any).items?.length || 0} ITEMS` : 'NO ARCHIVE'}
+                </span>
+              </div>
+              {isMobile && (
+                <Button variant="ghost" size="bare" onClick={onClose} aria-label="Close sidebar" className={`p-1.5 ${isFieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>
+                  <Icon name="close" className="text-lg"/>
+                </Button>
+              )}
+            </>
+          )}
+          {!isMobile && (
+            <Button variant="ghost" size="bare"
+              onClick={toggleCollapse}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className={`p-1 ml-auto shrink-0 ${isFieldMode ? 'text-nb-yellow/60 hover:text-nb-yellow' : 'text-nb-black/40 hover:text-nb-black'}`}
+            >
+              <Icon name={isCollapsed ? 'chevron_right' : 'chevron_left'} className="text-lg" />
             </Button>
           )}
         </div>
@@ -320,151 +439,172 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
 
           {/* Navigation */}
-          <nav className="px-4 py-3">
-            <div className={`nb-label mb-2 ${isFieldMode ? 'text-nb-yellow/60' : 'text-nb-black/50'}`}>NAVIGATION</div>
-            <div className="space-y-1">
-              <NavItem icon="inventory_2" label="ARCHIVE" active={currentMode === 'archive'} onClick={() => setCurrentMode('archive')} fieldMode={isFieldMode} />
-              <NavItem icon="table_chart" label="CATALOG" active={currentMode === 'metadata'} onClick={() => setCurrentMode('metadata')} fieldMode={isFieldMode} />
-              <NavItem icon="dashboard" label="BOARDS" active={currentMode === 'boards'} onClick={() => setCurrentMode('boards')} fieldMode={isFieldMode} />
-            </div>
-            <div className={`mt-2 pt-2 border-t-2 ${isFieldMode ? 'border-nb-yellow/20' : 'border-nb-black/10'}`}>
-              <NavItem
-                icon="account_tree"
-                label="STRUCTURE"
-                active={currentMode === 'structure'}
-                onClick={() => setCurrentMode('structure')}
-                fieldMode={isFieldMode}
-                title="Structure view"
-              />
+          <nav className={isCollapsed ? 'py-2' : 'px-4 py-3'}>
+            {!isCollapsed && (
+              <div className={`nb-label mb-2 ${isFieldMode ? 'text-nb-yellow/60' : 'text-nb-black/50'}`}>NAVIGATION</div>
+            )}
+            <div className={isCollapsed ? 'space-y-0' : 'space-y-1'}>
+              <NavItem icon="inventory_2" label="ARCHIVE" active={currentMode === 'archive'} onClick={() => handleNavClick('archive')} fieldMode={isFieldMode} collapsed={isCollapsed} badge={badges?.validationErrors} />
+              <NavItem icon="table_chart" label="CATALOG" active={currentMode === 'metadata'} onClick={() => handleNavClick('metadata')} fieldMode={isFieldMode} collapsed={isCollapsed} />
+              <NavItem icon="dashboard" label="BOARDS" active={currentMode === 'boards'} onClick={() => handleNavClick('boards')} fieldMode={isFieldMode} collapsed={isCollapsed} />
             </div>
           </nav>
 
-          {/* Import Section */}
-          <div className="px-4 pb-4">
-            <div className={`p-3 border-2 ${!hasData
-              ? (isFieldMode ? 'bg-nb-yellow/20 border-nb-yellow' : 'bg-nb-blue/10 border-nb-blue')
-              : (isFieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-cream border-nb-black/30')
-            }`}>
-              <div className={`nb-label mb-3 ${isFieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>IMPORT</div>
+          {/* Import Section — hidden when collapsed */}
+          {!isCollapsed && (
+            <div className="px-4 pb-4">
+              <div className={`p-3 border-2 ${!hasData
+                ? (isFieldMode ? 'bg-nb-yellow/20 border-nb-yellow' : 'bg-nb-blue/10 border-nb-blue')
+                : (isFieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-cream border-nb-black/30')
+              }`}>
+                <div className={`nb-label mb-3 ${isFieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>IMPORT</div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                {...({ webkitdirectory: "" } as any)}
-                className="hidden"
-                onChange={(e) => onImport(e)}
-              />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  {...({ webkitdirectory: "" } as any)}
+                  className="hidden"
+                  onChange={(e) => onImport(e)}
+                />
 
-              <div className="space-y-2">
-                <Button variant="ghost" size="bare"
-                  type="button"
-                  onClick={handleImportClick}
-                  className={`
-                    w-full flex items-center justify-center gap-2 px-4 py-2
-                    font-mono font-bold text-xs uppercase tracking-wider
-                    border-2 transition-nb nb-press
-                    ${hasData
-                      ? (isFieldMode
-                        ? 'bg-nb-black text-nb-yellow border-nb-yellow/30'
-                        : 'bg-nb-cream text-nb-black border-nb-black/30')
-                      : (isFieldMode
-                        ? 'bg-nb-yellow text-nb-black border-nb-yellow shadow-brutal-field-sm'
-                        : 'bg-nb-blue text-nb-white border-nb-black shadow-brutal-sm')
-                    }
-                  `}
-                >
-                  <Icon name="folder_open" className="text-base" />
-                  IMPORT FOLDER
-                </Button>
+                <div className="space-y-2">
+                  <Button variant="ghost" size="bare"
+                    type="button"
+                    onClick={handleImportClick}
+                    className={`
+                      w-full flex items-center justify-center gap-2 px-4 py-2
+                      font-mono font-bold text-xs uppercase tracking-wider
+                      border-2 transition-nb nb-press
+                      ${hasData
+                        ? (isFieldMode
+                          ? 'bg-nb-black text-nb-yellow border-nb-yellow/30'
+                          : 'bg-nb-cream text-nb-black border-nb-black/30')
+                        : (isFieldMode
+                          ? 'bg-nb-yellow text-nb-black border-nb-yellow shadow-brutal-field-sm'
+                          : 'bg-nb-blue text-nb-white border-nb-black shadow-brutal-sm')
+                      }
+                    `}
+                  >
+                    <Icon name="folder_open" className="text-base" />
+                    IMPORT FOLDER
+                  </Button>
 
-                <Button variant="ghost" size="bare"
-                  type="button"
-                  onClick={onOpenExternalImport}
-                  className={`
-                    w-full flex items-center justify-center gap-2 px-4 py-2
-                    border-2 font-mono font-bold text-xs uppercase tracking-wider transition-nb
-                    ${isFieldMode
-                      ? 'bg-nb-black border-nb-yellow/50 text-nb-yellow hover:bg-nb-yellow/10'
-                      : 'bg-nb-cream border-nb-black text-nb-black hover:bg-nb-black hover:text-nb-white'
-                    }
-                  `}
-                >
-                  <Icon name="cloud_download" className="text-base" />
-                  IMPORT FROM URL
-                </Button>
+                  <Button variant="ghost" size="bare"
+                    type="button"
+                    onClick={onOpenExternalImport}
+                    className={`
+                      w-full flex items-center justify-center gap-2 px-4 py-2
+                      border-2 font-mono font-bold text-xs uppercase tracking-wider transition-nb
+                      ${isFieldMode
+                        ? 'bg-nb-black border-nb-yellow/50 text-nb-yellow hover:bg-nb-yellow/10'
+                        : 'bg-nb-cream border-nb-black text-nb-black hover:bg-nb-black hover:text-nb-white'
+                      }
+                    `}
+                  >
+                    <Icon name="cloud_download" className="text-base" />
+                    IMPORT FROM URL
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Archive Tree */}
-          {root && (
-            <div className="px-4 pb-4">
+          {/* Archive Tree — virtual, with search and keyboard nav */}
+          {root && !isCollapsed && (
+            <div className="px-4 pb-4 flex-1 flex flex-col min-h-0">
+              {/* Tree header */}
               <div className="flex items-center justify-between mb-2">
                 <span className={`nb-label ${isFieldMode ? 'text-nb-yellow/60' : 'text-nb-black/50'}`}>
                   ARCHIVE
                 </span>
-                <Button variant="ghost" size="bare"
-                  onClick={() => setManifestsExpanded(!manifestsExpanded)}
-                  className={`
-                    flex items-center gap-1 px-2 py-0.5 font-mono text-nb-caption font-bold uppercase transition-nb
-                    ${isFieldMode
-                      ? 'text-nb-yellow/60 hover:text-nb-yellow'
-                      : 'text-nb-black/40 hover:text-nb-black'
-                    }
-                  `}
-                  title={manifestsExpanded ? 'Collapse all' : 'Expand all'}
-                >
-                  <Icon name={manifestsExpanded ? 'unfold_less' : 'unfold_more'} className="text-sm" />
-                  {manifestsExpanded ? 'COLLAPSE' : 'EXPAND'}
-                </Button>
-              </div>
-              {/* Tree filter — above tree for discoverability */}
-              <div className="relative mb-2">
-                <Icon name="search" className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${isFieldMode ? 'text-nb-yellow/40' : 'text-nb-black/30'}`} />
-                <input
-                  type="text"
-                  value={filterText}
-                  onChange={e => handleFilterChange(e.target.value)}
-                  placeholder="FILTER..."
-                  className={`w-full font-mono text-xs border-2 pl-9 pr-8 py-2 outline-none transition-nb uppercase bg-theme-input-bg border-theme-input-border text-theme-text placeholder:text-theme-input-placeholder ${
-                    isFieldMode
-                      ? 'focus:border-nb-yellow'
-                      : 'focus:shadow-brutal-sm'
-                  }`}
-                />
-                {filterText && (
+                <div className="flex items-center gap-1">
                   <Button variant="ghost" size="bare"
-                    onClick={() => { handleFilterChange(''); }}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 ${isFieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}
+                    onClick={expandAll}
+                    className={`p-1 ${isFieldMode ? 'text-nb-yellow/60 hover:text-nb-yellow' : 'text-nb-black/40 hover:text-nb-black'}`}
+                    title="Expand all"
                   >
-                    <Icon name="close" className="text-xs" />
+                    <Icon name="unfold_more" className="text-sm" />
                   </Button>
-                )}
-              </div>
-              <div className={`border-2 overflow-hidden ${isFieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-white border-nb-black'}`}>
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                  <TreeItem
-                    item={root}
-                    level={0}
-                    selectedId={selectedId}
-                    onSelect={onSelect}
-                    viewType={viewType}
-                    fieldMode={isFieldMode}
-                    root={root}
-                    onStructureUpdate={onStructureUpdate}
-                    filterText={debouncedFilter}
-                    manifestsExpanded={manifestsExpanded}
-                  />
+                  <Button variant="ghost" size="bare"
+                    onClick={collapseAll}
+                    className={`p-1 ${isFieldMode ? 'text-nb-yellow/60 hover:text-nb-yellow' : 'text-nb-black/40 hover:text-nb-black'}`}
+                    title="Collapse all"
+                  >
+                    <Icon name="unfold_less" className="text-sm" />
+                  </Button>
                 </div>
               </div>
+
+              {/* Search bar */}
+              <div className="mb-2">
+                <TreeSearchBar
+                  query={filterQuery}
+                  onQueryChange={setFilterQuery}
+                  matchCount={matchCount}
+                  totalCount={flattenedNodes.length}
+                />
+              </div>
+
+              {/* Breadcrumb */}
+              {selectedId && root && (
+                <BreadcrumbBar
+                  root={root}
+                  selectedId={selectedId}
+                  onNavigate={(id) => { selectNode(id, false); onSelect(id); }}
+                  fieldMode={isFieldMode}
+                />
+              )}
+
+              {/* Virtual tree */}
+              <div
+                className={`border-2 overflow-hidden flex-1 min-h-[150px] ${isFieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-white border-nb-black'}`}
+                ref={treeContainerRef}
+                onContextMenu={(e) => {
+                  // Calculate which node was right-clicked based on Y position
+                  const container = treeContainerRef.current;
+                  if (!container) return;
+                  const scrollEl = container.querySelector('[role="tree"]') as HTMLElement;
+                  if (!scrollEl) return;
+                  const rect = scrollEl.getBoundingClientRect();
+                  const scrollTop = scrollEl.scrollTop;
+                  const y = e.clientY - rect.top + scrollTop;
+                  const rowHeight = 36; // matches VirtualTreeList default
+                  const nodeIndex = Math.floor(y / rowHeight);
+                  const node = nodesToRender[nodeIndex];
+                  if (node) {
+                    handleContextMenu(e, node.id);
+                  }
+                }}
+              >
+                <VirtualTreeList
+                  nodes={nodesToRender}
+                  containerHeight={treeContainerHeight}
+                  onSelect={handleTreeSelect}
+                  onToggleExpand={toggleExpanded}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleDrop}
+                  onDoubleClick={handleDoubleClick}
+                  onScrollContainerRef={setScrollContainerRef}
+                  className="flex-1"
+                />
+              </div>
+
+              {/* Tree stats */}
+              {treeStats && (
+                <div className={`px-2 py-1 text-nb-caption font-mono ${isFieldMode ? 'text-nb-yellow/40' : 'text-nb-black/30'}`}>
+                  {treeStats.totalNodes} items
+                  {filterQuery && ` · ${matchCount} matches`}
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Bottom Actions */}
         <div className={`border-t-4 shrink-0 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
-          {hasData && (
+          {hasData && !isCollapsed && (
             <div className={`p-3 border-b-2 ${isFieldMode ? 'border-nb-yellow/20' : 'border-nb-black/20'}`}>
               <Button variant="ghost" size="bare"
                 onClick={onExportTrigger}
@@ -485,27 +625,28 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
           )}
 
           {/* Quick Actions */}
-          <div className="flex items-center p-3 gap-2">
+          <div className={`flex ${isCollapsed ? 'flex-col items-center p-1.5 gap-1' : 'items-center p-3 gap-2'}`}>
             <Button variant="ghost" size="bare"
               onClick={handleFieldModeToggle}
+              title={isFieldMode ? "Disable Field Mode" : "Enable Field Mode"}
               className={`
-                flex-1 flex items-center justify-center gap-2 px-3 py-2.5
+                ${isCollapsed ? 'p-2' : 'flex-1 flex items-center justify-center gap-2 px-3 py-2.5'}
                 font-mono text-nb-caption font-bold uppercase border-2 transition-nb
                 ${isFieldMode
                   ? 'text-nb-black bg-nb-yellow border-nb-yellow'
                   : 'text-nb-black border-nb-black/20 hover:bg-nb-black hover:text-nb-white hover:border-nb-black'
                 }
               `}
-              title={isFieldMode ? "Disable Field Mode" : "Enable Field Mode"}
             >
               <Icon name={isFieldMode ? "wb_sunny" : "nights_stay"} className="text-sm" />
-              <span>{isFieldMode ? 'FIELD' : 'FIELD'}</span>
+              {!isCollapsed && <span>FIELD</span>}
             </Button>
 
             <Button variant="ghost" size="bare"
-              onClick={() => setCurrentMode('search')}
+              onClick={() => handleNavClick('search')}
+              title="Search"
               className={`
-                flex-1 flex items-center justify-center gap-2 px-3 py-2.5
+                ${isCollapsed ? 'p-2' : 'flex-1 flex items-center justify-center gap-2 px-3 py-2.5'}
                 font-mono text-nb-caption font-bold uppercase border-2 transition-nb
                 ${currentMode === 'search'
                   ? (isFieldMode ? 'text-nb-black bg-nb-yellow border-nb-yellow' : 'text-nb-white bg-nb-black border-nb-black')
@@ -514,19 +655,20 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               `}
             >
               <Icon name="search" className="text-sm" />
-              <span>SEARCH</span>
+              {!isCollapsed && <span>SEARCH</span>}
             </Button>
 
             <Button variant="ghost" size="bare"
               onClick={onOpenSettings}
+              title="Settings"
               className={`
-                flex-1 flex items-center justify-center gap-2 px-3 py-2.5
+                ${isCollapsed ? 'p-2' : 'flex-1 flex items-center justify-center gap-2 px-3 py-2.5'}
                 font-mono text-nb-caption font-bold uppercase border-2 transition-nb
                 ${isFieldMode ? 'text-nb-yellow border-nb-yellow/30 hover:bg-nb-yellow/10' : 'text-nb-black border-nb-black/20 hover:bg-nb-black hover:text-nb-white hover:border-nb-black'}
               `}
             >
               <Icon name="settings" className="text-sm" />
-              <span>SETUP</span>
+              {!isCollapsed && <span>SETUP</span>}
             </Button>
           </div>
         </div>
@@ -544,12 +686,31 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
             `}
           />
         )}
+
+        {/* Context Menu */}
+        <ContextMenu
+          x={contextMenu?.x || 0}
+          y={contextMenu?.y || 0}
+          isOpen={!!contextMenu}
+          onClose={closeContextMenu}
+          sections={contextMenuSections}
+        />
       </aside>
+
+      {/* Global style for nav pulse animation */}
+      <style>{`
+        @keyframes nav-pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
     </>
   );
 }, (prev, next) => {
-  return prev.root?.id === next.root?.id &&
+  return prev.root === next.root &&
          prev.selectedId === next.selectedId &&
          prev.visible === next.visible &&
-         prev.fieldMode === next.fieldMode;
+         prev.fieldMode === next.fieldMode &&
+         prev.badges === next.badges;
 });

@@ -66,6 +66,7 @@ import { isChoice, getIIIFValue } from '@/src/shared/types';
 import { contentSearchService } from '@/src/entities/annotation/model/contentSearchService';
 import { resolveImageSource } from '@/src/entities/canvas/model/imageSourceResolver';
 import { getFile } from '@/src/shared/services/storage';
+import { uiLog } from '@/src/shared/services/logger';
 
 declare const OpenSeadragon: any;
 
@@ -304,7 +305,7 @@ export const useViewer = (
     }
 
     // Debug: Log canvas structure
-    console.log('[useViewer] Resolving media for canvas:', {
+    uiLog.debug('[useViewer] Resolving media for canvas:', {
       id: item.id,
       hasItems: !!item.items,
       itemsLength: item.items?.length,
@@ -322,7 +323,7 @@ export const useViewer = (
       // Check for blob URL first
       if (item._blobUrl) {
         setResolvedImageUrl(item._blobUrl);
-        console.log('[useViewer] Using blob URL for AV:', item._blobUrl);
+        uiLog.debug('[useViewer] Using blob URL for AV:', item._blobUrl);
         return;
       }
 
@@ -332,21 +333,21 @@ export const useViewer = (
           const blobUrl = URL.createObjectURL(item._fileRef);
           objectUrlRef.current = blobUrl;
           setResolvedImageUrl(blobUrl);
-          console.log('[useViewer] Created blob URL from fileRef for AV');
+          uiLog.debug('[useViewer] Created blob URL from fileRef for AV');
           return;
         } catch (e) {
-          console.warn('[useViewer] Failed to create blob URL for AV:', e);
+          uiLog.warn('[useViewer] Failed to create blob URL for AV:', e);
         }
       }
 
       // Fall back to direct URL
       if (paintingBody?.id) {
         setResolvedImageUrl(paintingBody.id);
-        console.log('[useViewer] Using direct URL for AV:', paintingBody.id);
+        uiLog.debug('[useViewer] Using direct URL for AV:', paintingBody.id);
         return;
       }
 
-      console.warn('[useViewer] No URL found for audio/video canvas:', item.id);
+      uiLog.warn('[useViewer] No URL found for audio/video canvas:', item.id);
       setResolvedImageUrl(null);
       return;
     }
@@ -364,17 +365,17 @@ export const useViewer = (
       setResolvedImageUrl(resolved?.url || null);
 
       if (resolved?.url) {
-        console.log('[useViewer] Image resolved:', {
+        uiLog.debug('[useViewer] Image resolved:', {
           type: resolved.type,
           url: resolved.url,
           hasService: !!resolved.serviceId,
           profile: resolved.profile
         });
       } else {
-        console.warn('[useViewer] Could not resolve image URL for canvas:', item.id);
+        uiLog.warn('[useViewer] Could not resolve image URL for canvas:', item.id);
       }
     } catch (e) {
-      console.error('[useViewer] Error resolving image source:', e);
+      uiLog.error('[useViewer] Error resolving image source:', e instanceof Error ? e : undefined);
       setResolvedImageUrl(null);
     }
   }, [item?.id]);
@@ -387,7 +388,7 @@ export const useViewer = (
     let idbBlobUrl: string | null = null; // Track blob URLs created from IndexedDB for cleanup
 
     // Debug logging
-    console.log('[useViewer] OSD effect triggered:', {
+    uiLog.debug('[useViewer] OSD effect triggered:', {
       mediaType,
       hasItem: !!item,
       hasContainer: !!osdContainerRef.current,
@@ -402,7 +403,7 @@ export const useViewer = (
 
       // Check if OpenSeadragon is available
       if (typeof OpenSeadragon === 'undefined') {
-        console.error('[useViewer] OpenSeadragon is not loaded!');
+        uiLog.error('[useViewer] OpenSeadragon is not loaded!');
         return false;
       }
 
@@ -410,9 +411,9 @@ export const useViewer = (
       if (viewerRef.current) {
         try {
           viewerRef.current.destroy();
-          console.log('[useViewer] Destroyed existing OSD viewer');
+          uiLog.debug('[useViewer] Destroyed existing OSD viewer');
         } catch (e) {
-          console.warn('[useViewer] Error destroying OSD viewer:', e);
+          uiLog.warn('[useViewer] Error destroying OSD viewer:', e);
         }
         viewerRef.current = null;
       }
@@ -426,10 +427,10 @@ export const useViewer = (
         let infoJsonUrl: string | null = null;
         if (resolved?.serviceId && resolved?.profile) {
           infoJsonUrl = `${resolved.serviceId}/info.json`;
-          console.log('[useViewer] Using IIIF Image Service:', infoJsonUrl);
+          uiLog.debug('[useViewer] Using IIIF Image Service:', infoJsonUrl);
         } else if (paintingBody?.service?.[0]?.id) {
           infoJsonUrl = `${paintingBody.service[0].id}/info.json`;
-          console.log('[useViewer] Using painting body service:', infoJsonUrl);
+          uiLog.debug('[useViewer] Using painting body service:', infoJsonUrl);
         }
 
         if (infoJsonUrl) {
@@ -443,7 +444,7 @@ export const useViewer = (
               if (contentType.includes('json')) {
                 const infoJson = await resp.json();
                 currentTileSource = infoJson;
-                console.log('[useViewer] Pre-fetched info.json successfully');
+                uiLog.debug('[useViewer] Pre-fetched info.json successfully');
               } else {
                 // SW not active — response is likely HTML from Vite SPA fallback
                 throw new Error('Response is not JSON (SW likely not active)');
@@ -452,7 +453,7 @@ export const useViewer = (
               throw new Error(`info.json returned ${resp.status}`);
             }
           } catch (fetchErr) {
-            console.warn('[useViewer] IIIF service unavailable:', fetchErr);
+            uiLog.warn('[useViewer] IIIF service unavailable:', fetchErr);
             // SW not running — load blob directly from IndexedDB as fallback
             const serviceUrl = resolved?.serviceId || paintingBody?.service?.[0]?.id;
             const assetIdMatch = serviceUrl?.match(/\/iiif\/image\/([^/]+)/);
@@ -463,12 +464,12 @@ export const useViewer = (
                   const blobUrl = URL.createObjectURL(file.blob);
                   idbBlobUrl = blobUrl;
                   currentTileSource = { type: 'image', url: blobUrl };
-                  console.log('[useViewer] Loaded image blob from IndexedDB');
+                  uiLog.debug('[useViewer] Loaded image blob from IndexedDB');
                 } else {
                   currentTileSource = { type: 'image', url: resolvedImageUrl };
                 }
               } catch (idbErr) {
-                console.warn('[useViewer] IndexedDB fallback failed:', idbErr);
+                uiLog.warn('[useViewer] IndexedDB fallback failed:', idbErr);
                 currentTileSource = { type: 'image', url: resolvedImageUrl };
               }
             } else {
@@ -478,24 +479,24 @@ export const useViewer = (
         } else {
           // No IIIF service, use direct image URL
           currentTileSource = { type: 'image', url: resolvedImageUrl };
-          console.log('[useViewer] Using direct image URL:', resolvedImageUrl);
+          uiLog.debug('[useViewer] Using direct image URL:', resolvedImageUrl);
         }
       } catch (e) {
         // Fallback if resolver fails
         currentTileSource = { type: 'image', url: resolvedImageUrl };
-        console.error('[useViewer] Error detecting IIIF service, using direct URL:', e);
+        uiLog.error('[useViewer] Error detecting IIIF service, using direct URL:', e instanceof Error ? e : undefined);
       }
 
       if (!isActive) return false;
 
-      console.log('[useViewer] Initializing OSD with tileSource:', currentTileSource);
+      uiLog.debug('[useViewer] Initializing OSD with tileSource:', currentTileSource);
 
       try {
         // Ensure container has dimensions
         const container = osdContainerRef.current;
         const rect = container.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) {
-          console.warn('[useViewer] OSD container has zero dimensions, will retry when resized');
+          uiLog.warn('[useViewer] OSD container has zero dimensions, will retry when resized');
           return false;
         }
 
@@ -541,7 +542,7 @@ export const useViewer = (
           crossOriginPolicy: 'Anonymous',
         });
 
-        console.log('[useViewer] OSD viewer initialized successfully');
+        uiLog.debug('[useViewer] OSD viewer initialized successfully');
         setOsdReady(prev => prev + 1);
 
         // Track zoom level changes
@@ -554,14 +555,14 @@ export const useViewer = (
 
         // Handle open events for debugging
         viewerRef.current.addHandler('open', () => {
-          console.log('[useViewer] OSD image opened successfully');
+          uiLog.debug('[useViewer] OSD image opened successfully');
         });
 
         let retryCount = 0;
         const MAX_RETRIES = 2;
 
         viewerRef.current.addHandler('open-failed', async (e: { message?: string; source?: unknown }) => {
-          console.error('[useViewer] OSD failed to open image:', e.message || e);
+          uiLog.error('[useViewer] OSD failed to open image:', e.message ? new Error(e.message) : undefined);
 
           if (retryCount >= MAX_RETRIES || !isActive) return;
           retryCount++;
@@ -572,14 +573,14 @@ export const useViewer = (
           await new Promise(r => setTimeout(r, 300 * retryCount));
 
           if (viewerRef.current && isActive) {
-            console.log(`[useViewer] Retry ${retryCount}/${MAX_RETRIES}...`);
+            uiLog.debug(`[useViewer] Retry ${retryCount}/${MAX_RETRIES}...`);
             viewerRef.current.open(currentTileSource);
           }
         });
 
         return true;
       } catch (e) {
-        console.error('[useViewer] Error initializing OSD viewer:', e);
+        uiLog.error('[useViewer] Error initializing OSD viewer:', e instanceof Error ? e : undefined);
         return false;
       }
     };
@@ -589,13 +590,13 @@ export const useViewer = (
       if (!isActive) return;
       // If not initialized due to zero dimensions, watch for resize
       if (!initialized && osdContainerRef.current && mediaType === 'image' && resolvedImageUrl) {
-        console.log('[useViewer] Setting up resize observer to retry initialization');
+        uiLog.debug('[useViewer] Setting up resize observer to retry initialization');
 
         resizeObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
             const { width, height } = entry.contentRect;
             if (width > 0 && height > 0 && !viewerRef.current) {
-              console.log('[useViewer] Container resized, retrying OSD initialization');
+              uiLog.debug('[useViewer] Container resized, retrying OSD initialization');
               initializeOSD();
             }
           }
@@ -611,7 +612,7 @@ export const useViewer = (
         try {
           viewerRef.current.viewport.resize();
         } catch (error) {
-          console.warn('[useViewer] Error during viewport resize:', error);
+          uiLog.warn('[useViewer] Error during viewport resize:', error);
         }
       }
     };
@@ -627,9 +628,9 @@ export const useViewer = (
         try {
           viewerRef.current.removeAllHandlers();
           viewerRef.current.destroy();
-          console.log('[useViewer] OSD viewer cleaned up');
+          uiLog.debug('[useViewer] OSD viewer cleaned up');
         } catch (e) {
-          console.warn('[useViewer] Error during OSD cleanup:', e);
+          uiLog.warn('[useViewer] Error during OSD cleanup:', e);
         }
         viewerRef.current = null;
       }
@@ -710,7 +711,7 @@ export const useViewer = (
 
   const takeScreenshot = useCallback(async (): Promise<Blob | null> => {
     if (!viewerRef.current?.drawer?.canvas) {
-      console.warn('[useViewer] No canvas available for screenshot');
+      uiLog.warn('[useViewer] No canvas available for screenshot');
       return null;
     }
 
@@ -719,7 +720,7 @@ export const useViewer = (
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {
           if (blob) {
-            console.log('[useViewer] Screenshot captured:', blob.size, 'bytes');
+            uiLog.debug(`[useViewer] Screenshot captured: ${blob.size} bytes`);
             resolve(blob);
           } else {
             resolve(null);
@@ -727,7 +728,7 @@ export const useViewer = (
         }, 'image/png');
       });
     } catch (e) {
-      console.error('[useViewer] Screenshot failed:', e);
+      uiLog.error('[useViewer] Screenshot failed:', e instanceof Error ? e : undefined);
       return null;
     }
   }, []);
@@ -760,7 +761,7 @@ export const useViewer = (
   // Note: Canvas Composer has been phased out in favor of Board View
   // This is kept as a no-op for backward compatibility
   const toggleComposer = useCallback(() => {
-    console.log('[useViewer] Canvas Composer phased out - use Board View instead');
+    uiLog.debug('[useViewer] Canvas Composer phased out - use Board View instead');
   }, []);
 
   const toggleAnnotationTool = useCallback(() => {

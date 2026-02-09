@@ -2,6 +2,7 @@
 import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { IIIFItem, IngestCheckpoint } from '@/src/shared/types';
 import { OPFSStorage } from './opfsStorage';
+import { storageLog } from '@/src/shared/services/logger';
 
 export const DB_NAME = 'biiif-archive-db';
 export const FILES_STORE = 'files';
@@ -10,6 +11,7 @@ export const DERIVATIVES_STORE = 'derivatives'; // New store for Level 0 images
 export const CHECKPOINTS_STORE = 'checkpoints'; // For resumable imports
 export const TILES_STORE = 'tiles'; // For tile pyramid images
 export const TILE_MANIFESTS_STORE = 'tileManifests'; // For tile pyramid metadata
+export const SEARCH_INDEX_STORE = 'searchIndex'; // For persisted search index
 
 // ============================================================================
 // Tile Storage Interfaces
@@ -79,6 +81,10 @@ interface BiiifDB extends DBSchema {
     key: string; // Format: {assetId}_manifest
     value: TileManifest;
   };
+  searchIndex: {
+    key: string;
+    value: unknown; // Serialized search index data
+  };
 }
 
 export interface StorageEstimate {
@@ -111,10 +117,28 @@ class StorageService {
   private _lastWarningTime = 0;
   private _warningCooldown = 60000; // Only warn once per minute
   private _opfs: OPFSStorage | null = null;
+  private _compressionWorker: Worker | null = null;
+  private _compressionMsgId = 0;
 
   constructor() {
     this._initDB();
     this._initOPFS();
+  }
+
+  /**
+   * Lazy-init compression worker
+   */
+  private _getCompressionWorker(): Worker | null {
+    if (this._compressionWorker) return this._compressionWorker;
+    try {
+      this._compressionWorker = new Worker(
+        new URL('@/src/shared/workers/compression.worker.ts', import.meta.url),
+        { type: 'module' }
+      );
+      return this._compressionWorker;
+    } catch {
+      return null;
+    }
   }
 
   private _initOPFS(): void {
@@ -133,11 +157,11 @@ class StorageService {
     if (!navigator.storage?.persist) return false;
     const isPersisted = await navigator.storage.persisted();
     if (isPersisted) {
-      console.log('[Storage] Persistent storage already granted');
+      storageLog.debug('[Storage] Persistent storage already granted');
       return true;
     }
     const granted = await navigator.storage.persist();
-    console.log(`[Storage] Persistent storage ${granted ? 'granted' : 'denied'}`);
+    storageLog.debug(`[Storage] Persistent storage ${granted ? 'granted' : 'denied'}`);
     return granted;
   }
 
@@ -183,7 +207,7 @@ class StorageService {
   }
 
   private _initDB() {
-      this._dbPromise = openDB<BiiifDB>(DB_NAME, 4, {
+      this._dbPromise = openDB<BiiifDB>(DB_NAME, 5, {
         upgrade(db, oldVersion) {
             if (oldVersion < 1) {
                 db.createObjectStore(FILES_STORE);
@@ -200,16 +224,20 @@ class StorageService {
                 db.createObjectStore(TILES_STORE);
                 db.createObjectStore(TILE_MANIFESTS_STORE);
             }
+            if (oldVersion < 5) {
+                // Add search index persistence store
+                db.createObjectStore(SEARCH_INDEX_STORE);
+            }
         },
         blocked: () => {
-            console.warn('IDB blocked: Another connection is open with an older version.');
+            storageLog.warn('IDB blocked: Another connection is open with an older version.');
         },
         blocking: () => {
-            console.warn('IDB blocking: A new version is trying to open. Closing this connection.');
+            storageLog.warn('IDB blocking: A new version is trying to open. Closing this connection.');
             this._dbPromise = null; 
         },
         terminated: () => {
-            console.error('IDB terminated: Browser closed the connection.');
+            storageLog.error('IDB terminated: Browser closed the connection.');
             this._dbPromise = null;
         }
       });
@@ -224,17 +252,64 @@ class StorageService {
 
   /**
    * Compress project JSON to a gzip Blob for efficient storage.
+   * Uses worker when available, falls back to main-thread streams.
    */
   private async _compressProject(root: IIIFItem): Promise<Blob> {
     const json = JSON.stringify(root);
+    const worker = this._getCompressionWorker();
+
+    if (worker) {
+      try {
+        const id = ++this._compressionMsgId;
+        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const handler = (e: MessageEvent) => {
+            if (e.data.id !== id) return;
+            worker.removeEventListener('message', handler);
+            if (e.data.type === 'error') reject(new Error(e.data.error));
+            else resolve(e.data.data as ArrayBuffer);
+          };
+          worker.addEventListener('message', handler);
+          worker.postMessage({ type: 'compress', data: json, id });
+        });
+        return new Blob([arrayBuffer], { type: 'application/gzip' });
+      } catch {
+        // Fall through to synchronous path
+      }
+    }
+
+    // Fallback: main-thread compression
     const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
     return new Response(stream).blob();
   }
 
   /**
    * Decompress a gzip Blob back to a project object.
+   * Uses worker when available, falls back to main-thread streams.
    */
   private async _decompressProject(blob: Blob): Promise<IIIFItem> {
+    const worker = this._getCompressionWorker();
+
+    if (worker) {
+      try {
+        const id = ++this._compressionMsgId;
+        const arrayBuffer = await blob.arrayBuffer();
+        const text = await new Promise<string>((resolve, reject) => {
+          const handler = (e: MessageEvent) => {
+            if (e.data.id !== id) return;
+            worker.removeEventListener('message', handler);
+            if (e.data.type === 'error') reject(new Error(e.data.error));
+            else resolve(e.data.data as string);
+          };
+          worker.addEventListener('message', handler);
+          worker.postMessage({ type: 'decompress', data: arrayBuffer, id }, [arrayBuffer]);
+        });
+        return JSON.parse(text);
+      } catch {
+        // Fall through to synchronous path — re-fetch blob since arrayBuffer consumed it
+      }
+    }
+
+    // Fallback: main-thread decompression
     const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
     const text = await new Response(stream).text();
     return JSON.parse(text);
@@ -327,6 +402,7 @@ class StorageService {
       const db = await this.getDB();
       try {
         // Compress project JSON with gzip for storage savings
+        // JSON.stringify happens on main thread (fast), compression happens in worker
         const compressed = await this._compressProject(root);
         await db.put(PROJECT_STORE, compressed, 'root');
       } catch (error) {
@@ -343,6 +419,43 @@ class StorageService {
     });
   }
 
+  /**
+   * Save project from a pre-stringified JSON (skips redundant stringify).
+   * Used by the optimistic save pipeline when the JSON string is already available.
+   */
+  async saveProjectFromJson(json: string): Promise<void> {
+    return this.saveWithQuotaCheck('save project', async () => {
+      const db = await this.getDB();
+      const worker = this._getCompressionWorker();
+
+      let compressed: Blob;
+      if (worker) {
+        try {
+          const id = ++this._compressionMsgId;
+          const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+            const handler = (e: MessageEvent) => {
+              if (e.data.id !== id) return;
+              worker.removeEventListener('message', handler);
+              if (e.data.type === 'error') reject(new Error(e.data.error));
+              else resolve(e.data.data as ArrayBuffer);
+            };
+            worker.addEventListener('message', handler);
+            worker.postMessage({ type: 'compress', data: json, id });
+          });
+          compressed = new Blob([arrayBuffer], { type: 'application/gzip' });
+        } catch {
+          const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
+          compressed = await new Response(stream).blob();
+        }
+      } else {
+        const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
+        compressed = await new Response(stream).blob();
+      }
+
+      await db.put(PROJECT_STORE, compressed, 'root');
+    });
+  }
+
   async loadProject(): Promise<IIIFItem | undefined> {
     const db = await this.getDB();
     try {
@@ -356,7 +469,7 @@ class StorageService {
         // Legacy uncompressed - return as-is
         return stored as IIIFItem;
     } catch (e) {
-        console.error("Failed to load project from IDB", e);
+        storageLog.error("Failed to load project from IDB", e instanceof Error ? e : undefined);
         return undefined;
     }
   }
@@ -432,7 +545,7 @@ class StorageService {
     }
 
     // Per-store key counts (lightweight - just counting keys, not reading blobs)
-    const storeNames = [FILES_STORE, DERIVATIVES_STORE, PROJECT_STORE, CHECKPOINTS_STORE, TILES_STORE, TILE_MANIFESTS_STORE] as const;
+    const storeNames = [FILES_STORE, DERIVATIVES_STORE, PROJECT_STORE, CHECKPOINTS_STORE, TILES_STORE, TILE_MANIFESTS_STORE, SEARCH_INDEX_STORE] as const;
     const stores: Record<string, { keys: number }> = {};
     for (const name of storeNames) {
       try {
@@ -577,6 +690,47 @@ class StorageService {
   async clearAllCheckpoints(): Promise<void> {
     const db = await this.getDB();
     await db.clear(CHECKPOINTS_STORE);
+  }
+
+  // ============================================================================
+  // Search Index Persistence
+  // ============================================================================
+
+  /**
+   * Save serialized search index data to IDB
+   */
+  async saveSearchIndex(data: { itemCount: number; serialized: unknown }): Promise<void> {
+    try {
+      const db = await this.getDB();
+      await db.put(SEARCH_INDEX_STORE, data, 'main');
+    } catch {
+      // Non-critical — search will rebuild from scratch
+    }
+  }
+
+  /**
+   * Load persisted search index data from IDB
+   */
+  async loadSearchIndex(): Promise<{ itemCount: number; serialized: unknown } | null> {
+    try {
+      const db = await this.getDB();
+      const data = await db.get(SEARCH_INDEX_STORE, 'main');
+      return (data as { itemCount: number; serialized: unknown }) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Clear persisted search index
+   */
+  async clearSearchIndex(): Promise<void> {
+    try {
+      const db = await this.getDB();
+      await db.delete(SEARCH_INDEX_STORE, 'main');
+    } catch {
+      // Non-critical
+    }
   }
 
   // ============================================================================

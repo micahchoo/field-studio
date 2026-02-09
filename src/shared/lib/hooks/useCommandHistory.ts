@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { storageLog } from '@/src/shared/services/logger';
 
 export interface CommandHistoryEntry {
   commandId: string;
@@ -40,7 +41,7 @@ export const useCommandHistory = (maxEntries: number = 10): UseCommandHistoryRet
         }
       }
     } catch (error) {
-      console.warn('Failed to load command history from localStorage:', error);
+      storageLog.warn('Failed to load command history from localStorage:', error);
     }
   }, []);
 
@@ -49,7 +50,7 @@ export const useCommandHistory = (maxEntries: number = 10): UseCommandHistoryRet
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
     } catch (error) {
-      console.warn('Failed to save command history to localStorage:', error);
+      storageLog.warn('Failed to save command history to localStorage:', error);
     }
   }, [history]);
 

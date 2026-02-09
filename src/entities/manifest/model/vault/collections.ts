@@ -7,6 +7,7 @@
  */
 
 import type { IIIFManifest, NormalizedState } from '@/src/shared/types';
+import { vaultLog } from '@/src/shared/services/logger';
 
 /**
  * Get all Collections that reference a given resource (Manifest or nested Collection)
@@ -52,7 +53,7 @@ export function addToCollection(
 ): NormalizedState {
   // Verify both entities exist
   if (!state.typeIndex[collectionId] || !state.typeIndex[resourceId]) {
-    console.warn('Cannot add to collection: entity not found');
+    vaultLog.warn('Cannot add to collection: entity not found');
     return state;
   }
 

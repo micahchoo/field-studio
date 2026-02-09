@@ -5,6 +5,7 @@ import { Button, Icon } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 import { StackedThumbnail } from '@/src/shared/ui/molecules/StackedThumbnail';
+import { vaultLog } from '@/src/shared/services/logger';
 
 interface QCDashboardProps {
   issuesMap: Record<string, ValidationIssue[]>;
@@ -143,7 +144,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
       try {
           const { item: targetItem } = findItemAndPath(issue.itemId);
           if (!targetItem) {
-              console.warn('[QCDashboard] Could not find item to heal:', issue.itemId);
+              vaultLog.warn('[QCDashboard] Could not find item to heal:', issue.itemId);
               return;
           }
 
@@ -153,13 +154,13 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
               if (newRoot) {
                   onUpdate(newRoot);
               } else {
-                  console.error('[QCDashboard] Failed to apply heal to tree');
+                  vaultLog.error('[QCDashboard] Failed to apply heal to tree');
               }
           } else if (result.error) {
-              console.error('[QCDashboard] Healing failed:', result.error);
+              vaultLog.error('[QCDashboard] Healing failed: ' + result.error);
           }
       } catch (error) {
-          console.error('[QCDashboard] Exception during healing:', error);
+          vaultLog.error('[QCDashboard] Exception during healing:', error instanceof Error ? error : undefined);
       }
   }, [root, findItemAndPath, onUpdate]);
 
@@ -196,19 +197,19 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
               } else {
                   failedCount++;
                   if (result.error) {
-                      console.error('[QCDashboard] Batch healing failed for issue:', issue.id, result.error);
+                      vaultLog.error('[QCDashboard] Batch healing failed for issue: ' + issue.id + ' - ' + result.error);
                   }
               }
           } catch (error) {
               failedCount++;
-              console.error('[QCDashboard] Exception during batch healing:', error);
+              vaultLog.error('[QCDashboard] Exception during batch healing:', error instanceof Error ? error : undefined);
           }
       }
 
       // Apply final state if any healing succeeded
       if (healedCount > 0) {
           onUpdate(currentRoot);
-          console.log(`[QCDashboard] Batch healing complete: ${healedCount} healed, ${failedCount} failed`);
+          vaultLog.debug(`[QCDashboard] Batch healing complete: ${healedCount} healed, ${failedCount} failed`);
       }
   }, [root, categoryIssues, findItemAndPath, onUpdate]);
 

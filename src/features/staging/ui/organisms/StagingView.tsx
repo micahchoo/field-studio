@@ -48,6 +48,7 @@ import { FilterInput } from '@/src/shared/ui/molecules/FilterInput';
 import { Toolbar } from '@/src/shared/ui/molecules/Toolbar';
 import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { Button } from '@/src/shared/ui/atoms';
+import { uiLog } from '@/src/shared/services/logger';
 import {
   selectAllSourceManifests,
   selectTotalCanvasCount,
@@ -182,7 +183,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
           label: 'Import Files',
           onClick: () => {
             // TODO: Trigger import dialog
-            console.log('Open import dialog');
+            uiLog.debug('Open import dialog');
           },
         }}
         cx={cx}

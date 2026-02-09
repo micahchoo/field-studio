@@ -17,6 +17,7 @@ import {
 } from '@/src/shared/services/navPlaceService';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { uiLog } from '@/src/shared/services/logger';
 
 // Leaflet type declaration for dynamic import
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -226,7 +227,7 @@ export const GeoEditor: React.FC<GeoEditorProps> = ({
       const results = await navPlaceService.geocode(searchQuery);
       setSearchResults(results);
     } catch (e) {
-      console.error('Search failed:', e);
+      uiLog.error('Search failed:', e instanceof Error ? e : undefined);
     } finally {
       setIsSearching(false);
     }

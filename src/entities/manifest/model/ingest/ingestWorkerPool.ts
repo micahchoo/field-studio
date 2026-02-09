@@ -20,6 +20,7 @@ import type {
   IngestWorkerRequest,
   IngestWorkerResponse
 } from '@/src/shared/workers';
+import { storageLog } from '@/src/shared/services/logger';
 import IngestWorker from '@/src/shared/workers/ingest.worker?worker';
 import {
   FileTree,
@@ -133,7 +134,7 @@ export class IngestWorkerPool {
     };
 
     worker.onerror = (error) => {
-      console.error('[IngestWorkerPool] Worker error:', error);
+      storageLog.error('[IngestWorkerPool] Worker error:', error instanceof Error ? error : undefined);
     };
 
     this.workers.push(worker);
@@ -311,14 +312,14 @@ export class IngestWorkerPool {
           // Check if this is a quota exceeded error
           if (error instanceof DOMException && 
               (error.name === 'QuotaExceededError' || error.message?.includes('quota'))) {
-            console.error('[IngestWorkerPool] Storage quota exceeded, pausing ingest');
+            storageLog.error('[IngestWorkerPool] Storage quota exceeded, pausing ingest');
             // Put the write back in the queue to retry later
             this.pendingWrites.unshift({ file, assetId, thumbnailBlob });
             // Trigger the quota error handler
             this.quotaErrorHandler?.();
             return;
           }
-          console.error('[IngestWorkerPool] Failed to save asset:', assetId, error);
+          storageLog.error('[IngestWorkerPool] Failed to save asset:', error instanceof Error ? error : undefined, assetId);
         }
       }));
     }

@@ -8,13 +8,15 @@
  * from git history or implement a new solution.
  */
 
+import { workerLog } from '@/src/shared/services/logger';
+
 /**
  * Mock tile worker pool that does nothing
  */
 export function getTileWorkerPool() {
   return {
     async generateDerivatives(assetId: string, file: File, sizes: number[]) {
-      console.warn('[TileWorker Stub] Tile generation is disabled. AssetId:', assetId);
+      workerLog.warn('[TileWorker Stub] Tile generation is disabled. AssetId:', assetId);
       return {
         derivatives: new Map<number, Blob>(), // Empty map - no tiles generated
         errors: []
@@ -34,6 +36,6 @@ export async function generateDerivativeAsync(
   file: File,
   size: number
 ): Promise<Blob | null> {
-  console.warn('[TileWorker Stub] Derivative generation is disabled');
+  workerLog.warn('[TileWorker Stub] Derivative generation is disabled');
   return null;
 }

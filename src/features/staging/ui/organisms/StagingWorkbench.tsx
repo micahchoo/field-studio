@@ -11,6 +11,7 @@ import { useKeyboardDragDrop } from '@/src/shared/lib/hooks/useKeyboardDragDrop'
 import { useIngestProgress } from '@/src/shared/lib/hooks/useIngestProgress';
 import { IngestProgressPanel } from '../molecules/IngestProgressPanel';
 import { FEATURE_FLAGS, USE_WORKER_INGEST } from '@/src/shared/constants';
+import { uiLog } from '@/src/shared/services/logger';
 import { BEHAVIOR_OPTIONS, getConflictingBehaviors } from '@/src/shared/constants/iiif';
 import { ingestTreeWithWorkers } from '@/src/entities/manifest/model/ingest/ingestWorkerPool';
 import { SourceTreePane } from '../molecules/SourceTreePane';
@@ -90,7 +91,7 @@ export const StagingWorkbench: React.FC<StagingWorkbenchProps> = ({
 
         setSourceManifests(manifests);
       } catch (error) {
-        console.error('Error building source manifests:', error);
+        uiLog.error('Error building source manifests:', error instanceof Error ? error : undefined);
         setProgress({
           message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           percent: 0
@@ -380,7 +381,7 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
         });
       }
     } catch (error) {
-      console.error('Ingest failed:', error);
+      uiLog.error('Ingest failed:', error instanceof Error ? error : undefined);
     }
   }, [initialTree, annotationsMap, merge, onIngest, startIngest, clearCompleted, sourceManifests.manifests, archiveLayout.root.children.length]);
 

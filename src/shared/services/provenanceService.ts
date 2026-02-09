@@ -10,6 +10,7 @@
  */
 
 import { IIIFItem } from '@/src/shared/types';
+import { logger } from '@/src/shared/services/logger';
 
 // ============================================================================
 // Types
@@ -168,7 +169,7 @@ export class ProvenanceService {
   ): ProvenanceEntry | null {
     const provenance = this.provenanceMap.get(resourceId);
     if (!provenance) {
-      console.warn(`No provenance record for ${resourceId}`);
+      logger.warn('general', `No provenance record for ${resourceId}`);
       return null;
     }
 
@@ -583,7 +584,7 @@ ${agentXml}
         this.provenanceMap.set(id, prov);
       }
     } catch (e) {
-      console.error('Failed to import provenance:', e);
+      logger.error('general', 'Failed to import provenance', e instanceof Error ? e : undefined);
     }
   }
 

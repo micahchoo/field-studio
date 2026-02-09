@@ -17,6 +17,7 @@
  */
 
 import { FileTree } from '@/src/shared/types';
+import { storageLog } from '@/src/shared/services/logger';
 import { MIME_TYPE_MAP } from '@/src/shared/constants';
 import { load } from 'js-yaml';
 import { traverse } from '@/utils';
@@ -368,7 +369,7 @@ async function parseMetadata(node: FileTree): Promise<{
           };
         }
       } catch (e) {
-        console.warn(`Failed to parse ${metaFile}:`, e);
+        storageLog.warn(`Failed to parse ${metaFile}:`, e);
       }
     }
   }
@@ -467,7 +468,7 @@ export async function analyzeForIngest(tree: FileTree): Promise<IngestAnalysisRe
           ? JSON.parse(text)
           : load(text) as IngestConfig;
       } catch (e) {
-        console.warn(`Failed to parse config ${configFile}:`, e);
+        storageLog.warn(`Failed to parse config ${configFile}:`, e);
       }
     }
   }

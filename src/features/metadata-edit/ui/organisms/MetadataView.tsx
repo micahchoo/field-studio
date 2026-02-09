@@ -32,6 +32,7 @@ import { Button } from '@/ui/primitives/Button';
 import { Icon } from '@/src/shared/ui/atoms';
 import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { usePipeline } from '@/src/shared/lib/hooks';
+import { uiLog } from '@/src/shared/services/logger';
 import {
   extractColumns,
   filterByTerm,
@@ -356,7 +357,7 @@ export const MetadataView: React.FC<MetadataViewProps> = ({
             className="hidden"
             onChange={(e) => {
               // TODO: Implement CSV import
-              console.log('Import file:', e.target.files?.[0]);
+              uiLog.debug('Import file:', e.target.files?.[0]);
             }}
           />
         </div>

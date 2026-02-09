@@ -30,6 +30,7 @@ import {
   isValidViewingDirection
 } from '@/utils';
 import { IIIF_SPEC } from '@/src/shared/constants';
+import { logger } from '@/src/shared/services/logger';
 
 // ============================================================================
 // Version Detection
@@ -89,7 +90,7 @@ export function upgradeToV3(input: any): IIIFItem {
   }
 
   if (version === 'unknown') {
-    console.warn('Unknown IIIF version, attempting upgrade anyway');
+    logger.warn('general', 'Unknown IIIF version, attempting upgrade anyway');
   }
 
   // Determine type
@@ -101,7 +102,7 @@ export function upgradeToV3(input: any): IIIFItem {
     case 'Manifest':
       return upgradeManifest(input);
     default:
-      console.warn(`Unknown resource type: ${type}, returning as-is`);
+      logger.warn('general', `Unknown resource type: ${type}, returning as-is`);
       return input;
   }
 }

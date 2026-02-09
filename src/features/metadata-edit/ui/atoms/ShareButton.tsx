@@ -19,6 +19,7 @@ import { contentStateService, ViewportState } from '@/src/shared/services/conten
 import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { COLORS, PATTERNS, SPACING, TOUCH_TARGETS } from '@/src/shared/config/design-tokens';
+import { uiLog } from '@/src/shared/services/logger';
 
 interface ShareButtonProps {
   item: IIIFItem | null;
@@ -80,7 +81,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         showToast('Could not copy link - try again', 'warning');
       }
     } catch (error) {
-      console.error('[ShareButton] Copy view link failed:', error);
+      uiLog.error('[ShareButton] Copy view link failed:', error instanceof Error ? error : undefined);
       showToast('Failed to copy link', 'error');
     }
   };
@@ -98,7 +99,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       showToast('Canvas URI copied to clipboard', 'success');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
-      console.error('[ShareButton] Copy canvas link failed:', error);
+      uiLog.error('[ShareButton] Copy canvas link failed:', error instanceof Error ? error : undefined);
       showToast('Failed to copy link', 'error');
     }
   };
@@ -118,7 +119,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       showToast('Embed code copied to clipboard', 'success');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
-      console.error('[ShareButton] Copy embed code failed:', error);
+      uiLog.error('[ShareButton] Copy embed code failed:', error instanceof Error ? error : undefined);
       showToast('Failed to copy embed code', 'error');
     }
   };
@@ -136,7 +137,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       showToast('Content State JSON copied', 'success');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
-      console.error('[ShareButton] Copy JSON failed:', error);
+      uiLog.error('[ShareButton] Copy JSON failed:', error instanceof Error ? error : undefined);
       showToast('Failed to copy JSON', 'error');
     }
   };

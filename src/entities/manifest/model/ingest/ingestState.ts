@@ -13,6 +13,7 @@
  */
 
 import { storage } from '@/src/shared/services/storage';
+import { storageLog } from '@/src/shared/services/logger';
 import type { CheckpointFile, IngestCheckpoint } from '@/src/shared/types';
 
 export type { CheckpointFile, IngestCheckpoint };
@@ -96,7 +97,7 @@ export async function saveCheckpoint(checkpoint: IngestCheckpoint): Promise<void
   try {
     await storage.saveCheckpoint(checkpoint.id, checkpoint);
   } catch (error) {
-    console.error('Failed to save checkpoint:', error);
+    storageLog.error('Failed to save checkpoint:', error instanceof Error ? error : undefined);
     throw new Error(`Failed to save checkpoint: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -108,7 +109,7 @@ export async function loadCheckpoint(id: string): Promise<IngestCheckpoint | nul
   try {
     return await storage.loadCheckpoint(id);
   } catch (error) {
-    console.error('Failed to load checkpoint:', error);
+    storageLog.error('Failed to load checkpoint:', error instanceof Error ? error : undefined);
     return null;
   }
 }
@@ -129,7 +130,7 @@ export async function listCheckpoints(): Promise<IngestCheckpoint[]> {
     // Sort by timestamp (newest first)
     return validCheckpoints.sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
-    console.error('Failed to list checkpoints:', error);
+    storageLog.error('Failed to list checkpoints:', error instanceof Error ? error : undefined);
     return [];
   }
 }
@@ -159,7 +160,7 @@ export async function deleteCheckpoint(id: string): Promise<void> {
   try {
     await storage.deleteCheckpoint(id);
   } catch (error) {
-    console.error('Failed to delete checkpoint:', error);
+    storageLog.error('Failed to delete checkpoint:', error instanceof Error ? error : undefined);
     throw new Error(`Failed to delete checkpoint: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -342,7 +343,7 @@ async function cleanupOldCheckpoints(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('Failed to cleanup old checkpoints:', error);
+    storageLog.error('Failed to cleanup old checkpoints:', error instanceof Error ? error : undefined);
   }
 }
 
@@ -357,7 +358,7 @@ export async function clearAllCheckpoints(): Promise<void> {
       await deleteCheckpoint(cp.id);
     }
   } catch (error) {
-    console.error('Failed to clear checkpoints:', error);
+    storageLog.error('Failed to clear checkpoints:', error instanceof Error ? error : undefined);
     throw new Error(`Failed to clear checkpoints: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

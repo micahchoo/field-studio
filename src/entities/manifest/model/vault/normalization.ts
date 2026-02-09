@@ -16,6 +16,7 @@ import type {
   IIIFRange,
   NormalizedState
 } from '@/src/shared/types';
+import { vaultLog } from '@/src/shared/services/logger';
 import { cloneAsRecord, hasType } from './cloning';
 import { extractExtensions, hasUnknownProperties } from './extensions';
 
@@ -106,7 +107,7 @@ function normalizeItem(
     }
 
     default:
-      console.warn(`Unknown entity type: ${type}`);
+      vaultLog.warn(`Unknown entity type: ${type}`);
   }
 }
 

@@ -10,15 +10,20 @@
  * - Views render content only, no headers/sidebars
  */
 
-import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import type { AppMode, AppSettings, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest } from '@/src/shared/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { AppMode, AppSettings, IIIFAnnotation, IIIFCanvas, IIIFItem, IIIFManifest } from '@/src/shared/types';
 import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
-import { useAppMode, useAppModeActions } from '@/src/app/providers';
+import { useAppMode } from '@/src/app/providers';
+import { useAnnotationState } from '@/src/app/providers/AnnotationStateProvider';
 import { Button, Icon } from '@/src/shared/ui/atoms';
 import { createTimeAnnotation } from '@/src/features/viewer/model/annotation';
 import { useVaultDispatch, useVaultState } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { actions } from '@/src/entities/manifest/model/actions';
+import { getEntity as vaultGetEntity, getParentId, getEntityType } from '@/src/entities/manifest/model/vault';
+import { denormalizeCanvas } from '@/src/entities/manifest/model/vault/denormalization';
 import { storage } from '@/src/shared/services/storage';
+import { contentStateService } from '@/src/shared/services/contentState';
+import { appLog } from '@/src/shared/services/logger';
 
 // Feature views
 import { ArchiveView } from '@/src/features/archive';
@@ -29,7 +34,6 @@ import { SearchView } from '@/src/features/search';
 const ViewerView = React.lazy(() => import('@/src/features/viewer/ui/organisms/ViewerView').then(m => ({ default: m.ViewerView })));
 import { MapView } from '@/src/features/map';
 import { TimelineView } from '@/src/features/timeline';
-import { StructureTreeView } from '@/src/features/structure-view';
 const DependencyExplorer = React.lazy(() => import('@/src/features/dependency-explorer/ui/DependencyExplorer').then(m => ({ default: m.DependencyExplorer })));
 
 import { RequiredStatementBar } from '@/src/widgets/RequiredStatementBar/ui/RequiredStatementBar';
@@ -157,24 +161,20 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   onOpenExternalImport,
 }) => {
   const [currentMode, setCurrentMode] = useAppMode();
-  const appModeActions = useAppModeActions();
 
-  // O(1) lookup index for denormalized tree — built once per root change
-  const itemIndex = useMemo(() => {
-    const index = new Map<string, any>();
-    if (!root) return index;
-    const walk = (node: any) => {
-      if (node.id) index.set(node.id, node);
-      if (node.items && Array.isArray(node.items)) {
-        for (const item of node.items) walk(item);
-      }
-      if (node.annotations && Array.isArray(node.annotations)) {
-        for (const anno of node.annotations) walk(anno);
-      }
-    };
-    walk(root);
-    return index;
-  }, [root]);
+  // Vault dispatch for creating time annotations directly
+  const { dispatch } = useVaultDispatch();
+  const { exportRoot, state: vaultState } = useVaultState();
+
+  // O(1) vault entity lookup — replaces O(n) tree walk
+  // Canvas entities must be denormalized to include annotation pages/annotations
+  const vaultLookup = useCallback((id: string) => {
+    const type = getEntityType(vaultState, id);
+    if (type === 'Canvas') {
+      return denormalizeCanvas(vaultState, id);
+    }
+    return vaultGetEntity(vaultState, id);
+  }, [vaultState]);
 
   // Panel visibility state for archive split view
   const [showViewerPanel, setShowViewerPanel] = useState(true);
@@ -187,75 +187,69 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     boardState: import('@/src/features/board-design/model').BoardState;
   } | null>(null);
 
-  // Annotation state for viewer/inspector integration
-  const [showAnnotationTool, setShowAnnotationTool] = useState(false);
-  const [annotationText, setAnnotationText] = useState('');
-  const [annotationMotivation, setAnnotationMotivation] = useState<'commenting' | 'tagging' | 'describing'>('commenting');
-  const [annotationDrawingState, setAnnotationDrawingState] = useState<{ pointCount: number; isDrawing: boolean; canSave: boolean }>({
-    pointCount: 0,
-    isDrawing: false,
-    canSave: false,
-  });
+  // Annotation state from context — shared with ViewerView and Inspector
+  const {
+    showAnnotationTool,
+    annotationText,
+    setAnnotationText,
+    annotationMotivation,
+    setAnnotationMotivation,
+    annotationDrawingState,
+    setAnnotationDrawingState,
+    forceAnnotationsTab,
+    timeRange,
+    setTimeRange,
+    currentPlaybackTime,
+    handlePlaybackTimeChange,
+    handleAnnotationToolToggle: baseAnnotationToggle,
+    annotationSaveRef,
+    annotationClearRef,
+  } = useAnnotationState();
 
-  // Time-based annotation state (for audio/video)
-  const [timeRange, setTimeRange] = useState<{ start: number; end?: number } | null>(null);
-  const [currentPlaybackTime, setCurrentPlaybackTime] = useState(0);
-
-  // Throttle playback time updates to prevent excessive re-renders
-  const lastPlaybackUpdateRef = useRef<number>(0);
-  const playbackTimeRef = useRef<number>(0);
-  const handlePlaybackTimeChange = useCallback((time: number) => {
-    playbackTimeRef.current = time;
-    const now = Date.now();
-    // Only update state every 500ms to prevent lag
-    if (now - lastPlaybackUpdateRef.current > 500) {
-      lastPlaybackUpdateRef.current = now;
-      setCurrentPlaybackTime(time);
-    }
-  }, []);
-
-  // Force annotations tab when annotation mode is active
-  const [forceAnnotationsTab, setForceAnnotationsTab] = useState(false);
-
-  // Handle annotation tool toggle - auto-open inspector
+  // Extend annotation toggle to also open inspector panel
   const handleAnnotationToolToggle = useCallback((active: boolean) => {
-    setShowAnnotationTool(active);
-    appModeActions.setAnnotationMode(active);
+    baseAnnotationToggle(active);
     if (active) {
-      // Open inspector and switch to annotations tab
       setShowInspectorPanel(true);
-      setForceAnnotationsTab(true);
-    } else {
-      setForceAnnotationsTab(false);
-      // Clear any in-progress annotation
-      setAnnotationText('');
-      setTimeRange(null);
     }
-  }, [appModeActions]);
+  }, [baseAnnotationToggle]);
 
-  // Vault dispatch for creating time annotations directly
-  const { dispatch } = useVaultDispatch();
-  const { exportRoot } = useVaultState();
-
-  // Refs for annotation controls exposed from AnnotationDrawingOverlay
-  const annotationSaveRef = useRef<(() => void) | null>(null);
-  const annotationClearRef = useRef<(() => void) | null>(null);
-
-  // Parent manifest index — maps canvas IDs to their parent manifest
-  const parentManifestIndex = useMemo(() => {
-    const index = new Map<string, IIIFManifest>();
-    if (!root) return index;
-    const walkManifests = (node: any) => {
-      if (node.type === 'Manifest') {
-        for (const child of node.items || []) {
-          if (child.type === 'Canvas') index.set(child.id, node as IIIFManifest);
-        }
+  // O(1) parent manifest lookup via vault reverseRefs
+  const getParentManifest = useCallback((canvasId: string): IIIFManifest | null => {
+    const parentId = getParentId(vaultState, canvasId);
+    if (!parentId) return null;
+    // Parent of a canvas might be an AnnotationPage — walk up to find Manifest
+    let currentId: string | null = parentId;
+    while (currentId) {
+      const type = getEntityType(vaultState, currentId);
+      if (type === 'Manifest') {
+        return vaultGetEntity(vaultState, currentId) as IIIFManifest | null;
       }
-      for (const child of node.items || []) walkManifests(child);
+      currentId = getParentId(vaultState, currentId);
+    }
+    return null;
+  }, [vaultState]);
+
+  // Content State URL sync — debounced 500ms to avoid thrashing during rapid navigation
+  const contentStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (contentStateTimerRef.current) clearTimeout(contentStateTimerRef.current);
+    if (!selectedId) return;
+
+    const entityType = getEntityType(vaultState, selectedId);
+    if (entityType !== 'Canvas') return;
+
+    contentStateTimerRef.current = setTimeout(() => {
+      const manifestId = getParentManifest(selectedId)?.id;
+      if (manifestId) {
+        contentStateService.updateUrl({ manifestId, canvasId: selectedId });
+      }
+    }, 500);
+
+    return () => {
+      if (contentStateTimerRef.current) clearTimeout(contentStateTimerRef.current);
     };
-    walkManifests(root);
-    return index;
-  }, [root]);
+  }, [selectedId, currentMode, vaultState, getParentManifest]);
 
   const viewerData = useMemo(() => {
     if (!root) return { canvas: null, manifest: null };
@@ -264,21 +258,22 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     let parentManifest: IIIFManifest | null = null;
 
     if (selectedId) {
-      const found = itemIndex.get(selectedId);
+      const found = vaultLookup(selectedId);
       if (found?.type === 'Canvas') {
         selectedCanvas = found as IIIFCanvas;
-        parentManifest = parentManifestIndex.get(selectedId) || null;
+        parentManifest = getParentManifest(selectedId);
       }
     }
 
     if (!selectedCanvas) {
+      // Fallback to denormalized root tree walk for first canvas
       const result = findFirstCanvas(root);
       selectedCanvas = result.canvas;
       parentManifest = result.manifest;
     }
 
     return { canvas: selectedCanvas, manifest: parentManifest };
-  }, [root, selectedId, itemIndex, parentManifestIndex]);
+  }, [root, selectedId, vaultLookup, getParentManifest]);
 
   // Get annotations from selected canvas for Inspector
   const canvasAnnotations = useMemo(() => {
@@ -314,8 +309,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           const updatedRoot = exportRoot();
           if (updatedRoot) {
             storage.saveProject(updatedRoot)
-              .then(() => console.log('[ViewRouter] Time annotation saved to IndexedDB'))
-              .catch((err) => console.error('[ViewRouter] Failed to save:', err));
+              .then(() => appLog.debug('[ViewRouter] Time annotation saved to IndexedDB'))
+              .catch((err: unknown) => appLog.error('[ViewRouter] Failed to save:', err instanceof Error ? err : undefined));
           }
         }
       }
@@ -341,8 +336,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       const updatedRoot = exportRoot();
       if (updatedRoot) {
         storage.saveProject(updatedRoot)
-          .then(() => console.log('[ViewRouter] Annotation deleted + saved'))
-          .catch((err) => console.error('[ViewRouter] Failed to save after delete:', err));
+          .then(() => appLog.debug('[ViewRouter] Annotation deleted + saved'))
+          .catch((err: unknown) => appLog.error('[ViewRouter] Failed to save after delete:', err instanceof Error ? err : undefined));
       }
     }
   }, [selectedItem, dispatch, exportRoot]);
@@ -356,8 +351,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
       const updatedRoot = exportRoot();
       if (updatedRoot) {
         storage.saveProject(updatedRoot)
-          .then(() => console.log('[ViewRouter] Annotation edited + saved'))
-          .catch((err) => console.error('[ViewRouter] Failed to save after edit:', err));
+          .then(() => appLog.debug('[ViewRouter] Annotation edited + saved'))
+          .catch((err: unknown) => appLog.error('[ViewRouter] Failed to save after edit:', err instanceof Error ? err : undefined));
       }
     }
   }, [dispatch, exportRoot]);
@@ -512,7 +507,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   if (currentMode === 'boards') {
     const boardFieldMode = settings?.fieldMode || false;
     const boardCx = boardFieldMode ? FIELD_CX : NORMAL_CX;
-    const boardSelectedItem = boardSelectedId ? (itemIndex.get(boardSelectedId) ?? null) : null;
+    const boardSelectedItem = boardSelectedId ? (vaultLookup(boardSelectedId) ?? null) : null;
     const boardItemData = boardSelectedId ? boardStateRef.current?.getBoardItemForResource(boardSelectedId) : null;
     const boardStateData = boardStateRef.current?.boardState;
 
@@ -541,8 +536,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
             const updatedRoot = exportRoot();
             if (updatedRoot) {
               storage.saveProject(updatedRoot)
-                .then(() => console.log('[ViewRouter] Board saved to IndexedDB'))
-                .catch((err: unknown) => console.error('[ViewRouter] Failed to save board:', err));
+                .then(() => appLog.debug('[ViewRouter] Board saved to IndexedDB'))
+                .catch((err: unknown) => appLog.error('[ViewRouter] Failed to save board:', err instanceof Error ? err : undefined));
             }
           }}
           onSwitchView={setCurrentMode}
@@ -574,7 +569,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                   const updatedRoot = exportRoot();
                   if (updatedRoot) {
                     storage.saveProject(updatedRoot)
-                      .catch((err: unknown) => console.error('[ViewRouter] Failed to save after board annotation delete:', err));
+                      .catch((err: unknown) => appLog.error('[ViewRouter] Failed to save after board annotation delete:', err instanceof Error ? err : undefined));
                   }
                 }
               }}
@@ -586,7 +581,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                   const updatedRoot = exportRoot();
                   if (updatedRoot) {
                     storage.saveProject(updatedRoot)
-                      .catch((err: unknown) => console.error('[ViewRouter] Failed to save after board annotation edit:', err));
+                      .catch((err: unknown) => appLog.error('[ViewRouter] Failed to save after board annotation edit:', err instanceof Error ? err : undefined));
                   }
                 }
               }}
@@ -631,21 +626,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     );
   }
 
-  // Structure view
+  // Structure view — deprecated, redirect to archive (tree now in sidebar)
   if (currentMode === 'structure') {
-    return (
-      <StructureTreeView
-        root={root}
-        selectedId={selectedId}
-        onSelect={(id) => onSelectId?.(id)}
-        onOpen={(item) => {
-          onSelectId?.(item.id);
-          setCurrentMode('viewer');
-        }}
-        onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
-        className="h-full"
-      />
-    );
+    setCurrentMode('archive');
+    return null;
   }
 
   // Search view

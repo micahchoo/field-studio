@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { storageLog } from '@/src/shared/services/logger';
 import { AppSettings } from '@/src/shared/types';
 import { DEFAULT_INGEST_PREFS, DEFAULT_MAP_CONFIG, DEFAULT_ZOOM_CONFIG, IIIF_CONFIG, METADATA_TEMPLATES } from '@/src/shared/constants';
 import type { ThemeName } from '@/src/shared/config/themes/types';
@@ -51,7 +52,7 @@ export function useAppSettings(): UseAppSettingsReturn {
         return { ...DEFAULT_SETTINGS, ...parsed };
       }
     } catch (e) {
-      console.warn('Failed to load settings from localStorage:', e);
+      storageLog.warn('Failed to load settings from localStorage:', e);
     }
     return DEFAULT_SETTINGS;
   });
@@ -61,7 +62,7 @@ export function useAppSettings(): UseAppSettingsReturn {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch (e) {
-      console.warn('Failed to save settings to localStorage:', e);
+      storageLog.warn('Failed to save settings to localStorage:', e);
     }
   }, [settings]);
 

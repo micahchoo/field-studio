@@ -16,6 +16,7 @@ import {
   getExtension,
   getMimeType
 } from '@/utils';
+import { networkLog } from '@/src/shared/services/logger';
 
 // Extension arrays - keep local to avoid conflicts with centralized utils naming
 const LOCAL_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'tif', 'bmp', 'svg'];
@@ -175,7 +176,7 @@ class VirtualManifestFactory {
         info.duration = audioInfo.duration;
       }
     } catch (e) {
-      console.warn('[VirtualManifestFactory] Media probe failed:', e);
+      networkLog.warn('[VirtualManifestFactory] Media probe failed', e);
       // Use defaults
       if (type === 'image') {
         info.width = 1000;
@@ -484,7 +485,7 @@ class VirtualManifestFactory {
         mediaInfo.duration = info.duration;
       }
     } catch (e) {
-      console.warn('[VirtualManifestFactory] File probe failed:', e);
+      networkLog.warn('[VirtualManifestFactory] File probe failed', e);
       if (type === 'image') {
         mediaInfo.width = 1000;
         mediaInfo.height = 1000;

@@ -1,4 +1,5 @@
 import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
+import { vaultLog } from '@/src/shared/services/logger';
 import { ValidationIssue } from './validator';
 import { createLanguageMap, findNodeById, generateUUID, generateValidUri, normalizeUri } from '@/utils';
 import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants/core';
@@ -66,7 +67,7 @@ function safeClone<T>(obj: T): T | null {
     return JSON.parse(JSON.stringify(obj));
   } catch (e) {
     // JSON serialization failed (circular references, undefined values, etc.)
-    console.error('[ValidationHealer] Failed to clone item:', e);
+    vaultLog.error('[ValidationHealer] Failed to clone item:', e instanceof Error ? e : undefined);
     return null;
   }
 }
@@ -285,7 +286,7 @@ export function healIssue(item: IIIFItem, issue: ValidationIssue): HealResult {
       const result = performHealing(manualClone, issue);
       // Only restore ID if original was valid (preserves vault references)
       if (result.success && result.updatedItem && shouldPreserveId && result.updatedItem.id !== originalId) {
-        console.warn(`[ValidationHealer] ID changed during healing, restoring original to preserve vault references: ${originalId}`);
+        vaultLog.warn(`[ValidationHealer] ID changed during healing, restoring original to preserve vault references: ${originalId}`);
         result.updatedItem.id = originalId;
       }
       return result;
@@ -294,12 +295,12 @@ export function healIssue(item: IIIFItem, issue: ValidationIssue): HealResult {
     const result = performHealing(healed, issue);
     // Only restore ID if original was valid (preserves vault references)
     if (result.success && result.updatedItem && shouldPreserveId && result.updatedItem.id !== originalId) {
-      console.warn(`[ValidationHealer] ID changed during healing, restoring original to preserve vault references: ${originalId}`);
+      vaultLog.warn(`[ValidationHealer] ID changed during healing, restoring original to preserve vault references: ${originalId}`);
       result.updatedItem.id = originalId;
     }
     return result;
   } catch (error) {
-    console.error('[ValidationHealer] Unexpected error during healing:', error);
+    vaultLog.error('[ValidationHealer] Unexpected error during healing:', error instanceof Error ? error : undefined);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error during healing' 
@@ -349,7 +350,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // or by the user manually renaming. Changing IDs here causes vault sync issues.
   if (msg.includes('duplicate id')) {
     // Log a warning that this needs manual intervention
-    console.warn(`[ValidationHealer] Duplicate ID detected: ${healed.id}. This requires manual fix to avoid breaking references.`);
+    vaultLog.warn(`[ValidationHealer] Duplicate ID detected: ${healed.id}. This requires manual fix to avoid breaking references.`);
     return { success: false, message: 'Duplicate ID requires manual fix - ID must remain stable for vault sync' };
   }
 
@@ -741,12 +742,12 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 export function healAllIssues(item: IIIFItem, issues: ValidationIssue[]): { item: IIIFItem; healed: number; failed: number; errors: string[] } {
   // Defensive: Validate inputs
   if (!item) {
-    console.error('[ValidationHealer] healAllIssues called with null item');
+    vaultLog.error('[ValidationHealer] healAllIssues called with null item');
     return { item: null as any, healed: 0, failed: 0, errors: ['Null item provided'] };
   }
 
   if (!Array.isArray(issues)) {
-    console.error('[ValidationHealer] healAllIssues called with invalid issues array');
+    vaultLog.error('[ValidationHealer] healAllIssues called with invalid issues array');
     return { item, healed: 0, failed: 0, errors: ['Invalid issues array'] };
   }
 
@@ -781,7 +782,7 @@ export function healAllIssues(item: IIIFItem, issues: ValidationIssue[]): { item
       failed++;
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       errors.push(`Exception during healing: ${errorMsg}`);
-      console.error('[ValidationHealer] Exception in healAllIssues:', error);
+      vaultLog.error('[ValidationHealer] Exception in healAllIssues:', error instanceof Error ? error : undefined);
       // Continue with next issue rather than crashing
     }
   }
@@ -798,15 +799,15 @@ export function healAllIssues(item: IIIFItem, issues: ValidationIssue[]): { item
 export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIFItem): IIIFItem | null {
   // Defensive: Validate inputs
   if (!root) {
-    console.error('[ValidationHealer] applyHealToTree called with null root');
+    vaultLog.error('[ValidationHealer] applyHealToTree called with null root');
     return null;
   }
   if (!itemId) {
-    console.error('[ValidationHealer] applyHealToTree called with null itemId');
+    vaultLog.error('[ValidationHealer] applyHealToTree called with null itemId');
     return null;
   }
   if (!healedItem) {
-    console.error('[ValidationHealer] applyHealToTree called with null healedItem');
+    vaultLog.error('[ValidationHealer] applyHealToTree called with null healedItem');
     return null;
   }
 
@@ -814,14 +815,14 @@ export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIF
     // Validate healedItem before applying
     const structureCheck = validateItemStructure(healedItem);
     if (!structureCheck.valid) {
-      console.error('[ValidationHealer] Cannot apply invalid healed item:', structureCheck.error);
+      vaultLog.error('[ValidationHealer] Cannot apply invalid healed item:', undefined, structureCheck.error);
       return null;
     }
 
     // Clone the root to avoid mutations
     const newRoot = safeClone(root);
     if (!newRoot) {
-      console.error('[ValidationHealer] Failed to clone root in applyHealToTree');
+      vaultLog.error('[ValidationHealer] Failed to clone root in applyHealToTree');
       return null;
     }
 
@@ -829,7 +830,7 @@ export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIF
     const targetNode = findNodeById(newRoot, itemId);
     
     if (!targetNode) {
-      console.warn(`[ValidationHealer] Could not find item with ID ${itemId} in tree`);
+      vaultLog.warn(`[ValidationHealer] Could not find item with ID ${itemId} in tree`);
       return newRoot;
     }
 
@@ -838,11 +839,11 @@ export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIF
       Object.assign(targetNode, healedItem);
       return newRoot;
     } catch (e) {
-      console.error('[ValidationHealer] Object.assign failed:', e);
+      vaultLog.error('[ValidationHealer] Object.assign failed:', e instanceof Error ? e : undefined);
       return null;
     }
   } catch (error) {
-    console.error('[ValidationHealer] Exception in applyHealToTree:', error);
+    vaultLog.error('[ValidationHealer] Exception in applyHealToTree:', error instanceof Error ? error : undefined);
     return null;
   }
 }
@@ -871,7 +872,7 @@ export function safeHealAll(item: IIIFItem, issues: ValidationIssue[]): HealResu
     const result = healAllIssues(item, issues);
     
     if (result.errors.length > 0) {
-      console.warn('[ValidationHealer] Healing completed with errors:', result.errors);
+      vaultLog.warn('[ValidationHealer] Healing completed with errors:', result.errors);
     }
 
     if (result.healed === 0 && result.failed > 0) {
@@ -888,7 +889,7 @@ export function safeHealAll(item: IIIFItem, issues: ValidationIssue[]): HealResu
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error in batch healing';
-    console.error('[ValidationHealer] safeHealAll exception:', error);
+    vaultLog.error('[ValidationHealer] safeHealAll exception:', error instanceof Error ? error : undefined);
     return { success: false, error: errorMsg };
   }
 }

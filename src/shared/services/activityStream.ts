@@ -16,6 +16,7 @@
 
 import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { IIIF_SPEC } from '../constants';
+import { storageLog } from '@/src/shared/services/logger';
 
 // ============================================================================
 // Types (Activity Streams 2.0 / IIIF Change Discovery 1.0)
@@ -381,7 +382,7 @@ class ActivityStreamService {
     
     // Check if rotation is needed (non-blocking)
     this.checkAndRotateIfNeeded().catch(err => {
-      console.warn('[ActivityStream] Log rotation check failed:', err);
+      storageLog.warn('[ActivityStream] Log rotation check failed', err);
     });
   }
 
@@ -395,7 +396,7 @@ class ActivityStreamService {
     
     if (count <= MAX_ACTIVITY_ENTRIES) return;
     
-    console.log(`[ActivityStream] Rotating activities: ${count} entries exceeds limit of ${MAX_ACTIVITY_ENTRIES}`);
+    storageLog.debug(`[ActivityStream] Rotating activities: ${count} entries exceeds limit of ${MAX_ACTIVITY_ENTRIES}`);
     
     // Get all activities sorted by time
     const allActivities = await db.getAllFromIndex('activities', 'by-time');
@@ -417,7 +418,7 @@ class ActivityStreamService {
     }
     
     await tx.done;
-    console.log(`[ActivityStream] Archived ${activitiesToArchive.length} activities`);
+    storageLog.debug(`[ActivityStream] Archived ${activitiesToArchive.length} activities`);
   }
 
   /**

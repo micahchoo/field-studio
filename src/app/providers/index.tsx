@@ -57,6 +57,7 @@ import { ThemeRoot } from '@/src/shared/ui/providers/ThemeRoot';
 import { UserIntentProvider } from './UserIntentProvider';
 import { ResourceContextProvider } from './ResourceContextProvider';
 import { AppModeProvider } from './AppModeProvider';
+import { AnnotationStateProvider } from './AnnotationStateProvider';
 
 export interface AppProvidersProps {
   children: ReactNode;
@@ -76,7 +77,9 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => (
           <UserIntentProvider>
             <ResourceContextProvider>
               <AppModeProvider>
-                {children}
+                <AnnotationStateProvider>
+                  {children}
+                </AnnotationStateProvider>
               </AppModeProvider>
             </ResourceContextProvider>
           </UserIntentProvider>
@@ -105,3 +108,5 @@ export type {
 } from './useTerminology';
 
 export { useAppModeState, useAppModeActions, useAppMode } from './AppModeProvider';
+export { useAnnotationState } from './AnnotationStateProvider';
+export type { AnnotationMotivation, AnnotationDrawingState, TimeRange, AnnotationStateContextValue } from './AnnotationStateProvider';

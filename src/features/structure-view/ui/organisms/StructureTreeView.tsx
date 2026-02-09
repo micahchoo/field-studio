@@ -25,6 +25,7 @@ import { TreeSearchBar } from '../atoms';
 import { useStructureTree } from '../../model/useStructureTree';
 import type { DropPosition } from '../atoms/DropIndicator';
 import { useResponsive } from '@/src/shared/lib/hooks';
+import { uiLog } from '@/src/shared/services/logger';
 
 // Feature flags for gradual rollout
 const FEATURES = {
@@ -149,7 +150,7 @@ export const StructureTreeView: React.FC<StructureTreeViewProps> = ({
 
         if (draggedNode && targetNode && onUpdate && root) {
           // TODO: Implement actual move using hierarchy utils with position
-          console.log('Move', draggedNode.type, 'to', targetNode.type, 'position:', position);
+          uiLog.debug(`Move ${draggedNode.type} to ${targetNode.type} position: ${position}`);
         }
       }
 

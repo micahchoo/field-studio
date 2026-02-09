@@ -11,6 +11,7 @@ import {
 } from '@/utils/iiifHierarchy';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
 import { useAppSettings } from '@/src/app/providers/useAppSettings';
+import { uiLog } from '@/src/shared/services/logger';
 
 interface SidebarProps {
   root: IIIFItem | null;
@@ -137,11 +138,11 @@ const TreeItem: React.FC<{
               if (!draggedNode) return false;
               if (!isValidChildType(parent.type, draggedNode.type)) {
                 const validChildren = getValidChildTypes(parent.type);
-                console.warn(`Cannot drop ${draggedNode.type} into ${parent.type}. Valid children: ${validChildren.join(', ') || 'none'}`);
+                uiLog.warn(`Cannot drop ${draggedNode.type} into ${parent.type}. Valid children: ${validChildren.join(', ') || 'none'}`);
                 return false;
               }
               const relationship = getRelationshipType(parent.type, draggedNode.type);
-              console.log(`Creating ${relationship} relationship: ${parent.type} → ${draggedNode.type}`);
+              uiLog.debug(`Creating ${relationship} relationship: ${parent.type} → ${draggedNode.type}`);
               if (!parent.items) parent.items = [];
               parent.items.push(draggedNode);
               return true;
@@ -253,12 +254,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
   const hasData = root && (root.items?.length || root.type);
 
   const handleImportClick = () => {
-    console.log('[Sidebar] Import button clicked');
+    uiLog.debug('[Sidebar] Import button clicked');
     if (fileInputRef.current) {
-      console.log('[Sidebar] Triggering file input click');
+      uiLog.debug('[Sidebar] Triggering file input click');
       fileInputRef.current.click();
     } else {
-      console.error('[Sidebar] File input ref is null');
+      uiLog.error('[Sidebar] File input ref is null');
     }
   };
 
@@ -356,7 +357,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
                 {...({ webkitdirectory: "" } as any)}
                 className="hidden"
                 onChange={(e) => {
-                  console.log('[Sidebar] File input changed:', e.target.files?.length, 'files selected');
+                  uiLog.debug(`[Sidebar] File input changed: ${e.target.files?.length} files selected`);
                   onImport(e);
                 }}
               />

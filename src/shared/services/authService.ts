@@ -12,6 +12,7 @@
  */
 
 import { IIIF_SPEC } from '@/src/shared/constants';
+import { networkLog } from '@/src/shared/services/logger';
 
 // ============================================================================
 // Types
@@ -96,6 +97,8 @@ export interface AuthState {
 // Auth Service
 // ============================================================================
 
+const AUTH_STORAGE_KEY = 'iiif-auth-tokens';
+
 class IIIFAuthService {
   private tokens: Map<string, { token: string; expiresAt: number }> = new Map();
   private pendingMessages: Map<string, { resolve: Function; reject: Function }> = new Map();
@@ -104,6 +107,38 @@ class IIIFAuthService {
     // Listen for postMessage from auth windows
     if (typeof window !== 'undefined') {
       window.addEventListener('message', this.handlePostMessage.bind(this));
+      this.loadTokensFromStorage();
+    }
+  }
+
+  /**
+   * Load persisted tokens from sessionStorage, filtering expired ones
+   */
+  private loadTokensFromStorage(): void {
+    try {
+      const stored = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      if (!stored) return;
+      const entries: Array<[string, { token: string; expiresAt: number }]> = JSON.parse(stored);
+      const now = Date.now();
+      for (const [key, entry] of entries) {
+        if (entry.expiresAt > now) {
+          this.tokens.set(key, entry);
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  /**
+   * Persist current tokens to sessionStorage
+   */
+  private persistTokensToStorage(): void {
+    try {
+      const entries = Array.from(this.tokens.entries());
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(entries));
+    } catch {
+      // sessionStorage might be full or disabled
     }
   }
 
@@ -207,7 +242,7 @@ class IIIFAuthService {
       const data = await response.json();
       return data as ProbeResponse;
     } catch (error) {
-      console.error('[AuthService] Probe failed:', error);
+      networkLog.error('[AuthService] Probe failed', error instanceof Error ? error : undefined);
       return {
         '@context': IIIF_SPEC.AUTH_2.CONTEXT as 'http://iiif.io/api/auth/2/context.json',
         type: 'AuthProbeResult2',
@@ -312,7 +347,7 @@ class IIIFAuthService {
 
     // Validate origin: only accept messages from HTTPS origins (IIIF Auth 2.0 spec)
     if (!event.origin || (!event.origin.startsWith('https://') && event.origin !== window.location.origin)) {
-      console.warn('[AuthService] Rejected postMessage from untrusted origin:', event.origin);
+      networkLog.warn(`[AuthService] Rejected postMessage from untrusted origin: ${event.origin}`);
       return;
     }
 
@@ -328,6 +363,7 @@ class IIIFAuthService {
         token: data.accessToken,
         expiresAt
       });
+      this.persistTokensToStorage();
 
       pending.resolve(data as TokenResponse);
     } else {
@@ -344,6 +380,7 @@ class IIIFAuthService {
       : Date.now() + 3600000;
 
     this.tokens.set(resourceId, { token, expiresAt });
+    this.persistTokensToStorage();
   }
 
   /**
@@ -355,6 +392,7 @@ class IIIFAuthService {
 
     if (Date.now() >= entry.expiresAt) {
       this.tokens.delete(resourceId);
+      this.persistTokensToStorage();
       return null;
     }
 
@@ -373,6 +411,7 @@ class IIIFAuthService {
    */
   clearToken(resourceId: string) {
     this.tokens.delete(resourceId);
+    this.persistTokensToStorage();
   }
 
   /**
@@ -380,6 +419,7 @@ class IIIFAuthService {
    */
   clearAllTokens() {
     this.tokens.clear();
+    this.persistTokensToStorage();
   }
 
   /**

@@ -6,8 +6,8 @@
  */
 
 import type { EmptyTrashResult, EntityType, IIIFItem, NormalizedState, TrashedEntity } from '@/src/shared/types';
+import { vaultLog } from '@/src/shared/services/logger';
 import { getDescendants, getEntity } from './queries';
-import { removeEntity } from './updates';
 
 /**
  * Move an entity and its descendants to trash (soft delete)
@@ -144,7 +144,7 @@ export function restoreEntityFromTrash(
 ): NormalizedState {
   const trashed = state.trashedEntities[id];
   if (!trashed) {
-    console.warn(`Entity ${id} not found in trash`);
+    vaultLog.warn(`Entity ${id} not found in trash`);
     return state;
   }
 
@@ -233,21 +233,36 @@ export function restoreEntityFromTrash(
  */
 export function emptyTrash(state: NormalizedState): EmptyTrashResult {
   const errors: string[] = [];
-  let currentState = state;
   let deletedCount = 0;
 
   // Get all trashed entity IDs
   const trashedIds = Object.keys(state.trashedEntities);
 
+  if (trashedIds.length === 0) {
+    return { state, deletedCount: 0, errors: [] };
+  }
+
+  // Trashed entities have already been removed from active stores (entities, typeIndex,
+  // references, reverseRefs) by moveEntityToTrash. We just need to clear the trash metadata.
+  const newTrashedEntities = { ...state.trashedEntities };
   for (const id of trashedIds) {
     try {
-      // Permanently remove each trashed entity
-      currentState = removeEntity(currentState, id, { permanent: true });
+      delete newTrashedEntities[id];
       deletedCount++;
     } catch (e) {
       errors.push(`Failed to delete ${id}: ${e instanceof Error ? e.message : 'Unknown error'}`);
     }
   }
 
-  return { state: currentState, deletedCount, errors };
+  // Also clean up any extensions that may remain for trashed entities
+  const newExtensions = { ...state.extensions };
+  for (const id of trashedIds) {
+    delete newExtensions[id];
+  }
+
+  return {
+    state: { ...state, trashedEntities: newTrashedEntities, extensions: newExtensions },
+    deletedCount,
+    errors,
+  };
 }

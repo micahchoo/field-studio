@@ -2,6 +2,7 @@
 import ExifReader from 'exifreader';
 import { IIIFItem } from '@/src/shared/types';
 import { isImageFile } from '@/src/shared/constants';
+import { storageLog } from '@/src/shared/services/logger';
 
 export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> => {
     if (!isImageFile(file)) return {};
@@ -63,7 +64,7 @@ export const extractMetadata = async (file: File): Promise<Partial<IIIFItem>> =>
         };
 
     } catch (e) {
-        console.warn(`[Metadata] Harvester failed for ${file.name}`, e);
+        storageLog.warn(`[Metadata] Harvester failed for ${file.name}`, e);
         return {};
     }
 };

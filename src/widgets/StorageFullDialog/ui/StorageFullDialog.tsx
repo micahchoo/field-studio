@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { storage } from '@/src/shared/services/storage';
+import { storageLog } from '@/src/shared/services/logger';
 
 interface StorageFullDialogProps {
   isOpen: boolean;
@@ -72,7 +73,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
       await loadStats();
       alert(`Cleared ${count} thumbnail images. Storage should now have more space.`);
     } catch (e) {
-      console.error('Failed to clear derivatives:', e);
+      storageLog.error('Failed to clear derivatives:', e instanceof Error ? e : undefined);
       alert('Failed to clear derivatives. Try the full clear option instead.');
     } finally {
       setIsClearingDerivatives(false);
@@ -98,7 +99,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
         window.location.reload();
       }, 1500);
     } catch (e) {
-      console.error('Failed to clear storage:', e);
+      storageLog.error('Failed to clear storage:', e instanceof Error ? e : undefined);
       alert('Failed to clear storage. Try closing and reopening the browser.');
     } finally {
       setIsClearing(false);

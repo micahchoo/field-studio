@@ -15,6 +15,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { IconButton } from '@/src/shared/ui/molecules/IconButton';
+import { uiLog } from '@/src/shared/services/logger';
 export interface FullscreenButtonProps {
   /** Reference to the container element to make fullscreen */
   containerRef: React.RefObject<HTMLElement>;
@@ -77,7 +78,7 @@ export const FullscreenButton: React.FC<FullscreenButtonProps> = ({
       }
     } catch (error) {
       // Silently fail if fullscreen is not supported or blocked
-      console.warn('Fullscreen toggle failed:', error);
+      uiLog.warn('Fullscreen toggle failed:', error);
     }
   }, [isFullscreen, containerRef]);
 

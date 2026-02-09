@@ -16,7 +16,7 @@
  * @see services/actions.ts for action dispatch
  */
 
-import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   createEmptyState,
   denormalize,
@@ -686,6 +686,46 @@ export function useEntitySearch() {
     searchByType,
     searchByLabel
   };
+}
+
+/**
+ * Hook for selective re-rendering — only re-renders when the specified entity changes.
+ * Uses useSyncExternalStore to subscribe to entity-level change notifications
+ * from the ActionDispatcher, avoiding full-tree re-renders.
+ *
+ * @param id - Entity ID to watch (or null)
+ * @returns The entity (or null), re-rendered only when that entity's ID appears in changedIds
+ */
+export function useEntityById<T extends IIIFItem = IIIFItem>(id: string | null): T | null {
+  const { dispatcher } = useVaultDispatch();
+
+  // Track entity snapshot for reference equality
+  const entityRef = useRef<T | null>(null);
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      return dispatcher.subscribeEntity((_state, changedIds) => {
+        if (!id) return;
+        // Re-render if this entity changed, or if all entities changed (undo/redo/reload)
+        if (changedIds.has(id) || changedIds.has('__all__')) {
+          onStoreChange();
+        }
+      });
+    },
+    [dispatcher, id]
+  );
+
+  const getSnapshot = useCallback(() => {
+    if (!id) return null;
+    const state = dispatcher.getState();
+    const entity = getEntity(state, id) as T | null;
+    // Preserve reference equality when entity hasn't changed
+    if (entity === entityRef.current) return entityRef.current;
+    entityRef.current = entity;
+    return entity;
+  }, [dispatcher, id]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /**

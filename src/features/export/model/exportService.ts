@@ -1,5 +1,6 @@
 
 import JSZip from 'jszip';
+import { uiLog } from '@/src/shared/services/logger';
 import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { validator } from '@/src/entities/manifest/model/validation/validator';
 import {
@@ -545,7 +546,7 @@ class ExportService {
                             });
                         }
                     } catch (e) {
-                        console.warn(`Failed to resize ${assetId} to ${targetWidth}x${targetHeight}`, e);
+                        uiLog.warn(`Failed to resize ${assetId} to ${targetWidth}x${targetHeight}`, e);
                         virtualFiles.push({
                             path: `${imagesBasePath}/${assetId}/full/${targetWidth},${targetHeight}/0/default.jpg`,
                             content: file,
@@ -579,7 +580,7 @@ class ExportService {
                         }
                     }
                 } catch (e) {
-                    console.warn(`Failed to generate grayscale for ${assetId}`, e);
+                    uiLog.warn(`Failed to generate grayscale for ${assetId}`, e);
                 }
             }
 
@@ -608,7 +609,7 @@ class ExportService {
                         }
                     }
                 } catch (e) {
-                    console.warn(`Failed to generate square region for ${assetId}`, e);
+                    uiLog.warn(`Failed to generate square region for ${assetId}`, e);
                 }
             }
 
@@ -623,7 +624,7 @@ class ExportService {
                     });
                 }
             } catch (e) {
-                console.warn(`Failed to generate tiles for ${assetId}`, e);
+                uiLog.warn(`Failed to generate tiles for ${assetId}`, e);
             }
         }
 
@@ -633,7 +634,7 @@ class ExportService {
                 const uvAssets = await this.fetchViewerAssets();
                 virtualFiles.push(...uvAssets);
             } catch (e) {
-                console.error("Failed to bundle viewer assets, falling back to CDN", e);
+                uiLog.error("Failed to bundle viewer assets, falling back to CDN", e instanceof Error ? e : undefined);
             }
 
             virtualFiles.push({

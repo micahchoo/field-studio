@@ -1,4 +1,5 @@
 
+import { storageLog } from '@/src/shared/services/logger';
 import {
   FileStatus,
   FileTree,
@@ -348,7 +349,7 @@ function handleWorkerFileComplete(message: IngestFileCompleteMessage['payload'])
         await storage.saveDerivative(message.assetId, 'thumb', message.thumbnailBlob);
       }
     } catch (error) {
-      console.warn('[ingestWorker] Failed to save asset:', message.assetId, error);
+      storageLog.warn('[ingestWorker] Failed to save asset:', { assetId: message.assetId, error });
     }
   })();
 }
@@ -387,7 +388,7 @@ function handleWorkerError(message: IngestErrorMessage['payload']): void {
   const state = activeWorkerOperations.get(message.operationId);
   if (!state) return;
 
-  console.error('[ingestWorker] Error:', message.error);
+  storageLog.error('[ingestWorker] Error:', undefined, message.error);
 
   if (!message.recoverable) {
     state.progress.stage = 'error';
@@ -509,7 +510,7 @@ async function processTileQueue(onProgress?: (msg: string, percent: number) => v
         onProgress(`Pre-generating tiles (${completed}/${totalTasks})...`, percent);
       }
     } catch (e) {
-      console.warn(`Background tile generation failed for ${task.assetId}:`, e);
+      storageLog.warn(`Background tile generation failed for ${task.assetId}:`, e);
     }
   }
 
@@ -830,7 +831,7 @@ const processNodeWithProgress = async (
             imageWidth = dims.width;
             imageHeight = dims.height;
           } catch (e) {
-            console.warn(`Could not read SVG dimensions for ${file.name}, using defaults`);
+            storageLog.warn(`Could not read SVG dimensions for ${file.name}, using defaults`);
           }
 
           const preset = getDerivativePreset();
@@ -849,7 +850,7 @@ const processNodeWithProgress = async (
             imageHeight = bitmap.height;
             bitmap.close();
           } catch (e) {
-            console.warn(`Could not read image dimensions for ${file.name}, using defaults`);
+            storageLog.warn(`Could not read image dimensions for ${file.name}, using defaults`);
           }
 
           const preset = getDerivativePreset();
@@ -965,7 +966,7 @@ const processNodeWithProgress = async (
           const fileLifecycleManager = getFileLifecycleManager();
           fileLifecycleManager.register(canvasId, file, () => {
             if (isFileLifecycleEnabled()) {
-              console.log(`[iiifBuilder] Cleaning up file reference for canvas ${canvasId}`);
+              storageLog.debug(`[iiifBuilder] Cleaning up file reference for canvas ${canvasId}`);
             }
           });
         }
@@ -1242,7 +1243,7 @@ const processNode = async (
                     imageWidth = dims.width;
                     imageHeight = dims.height;
                 } catch (e) {
-                    console.warn(`Could not read SVG dimensions for ${file.name}, using defaults`);
+                    storageLog.warn(`Could not read SVG dimensions for ${file.name}, using defaults`);
                 }
 
                 const preset = getDerivativePreset();
@@ -1257,7 +1258,7 @@ const processNode = async (
                     imageHeight = bitmap.height;
                     bitmap.close(); // Free memory
                 } catch (e) {
-                    console.warn(`Could not read image dimensions for ${file.name}, using defaults`);
+                    storageLog.warn(`Could not read image dimensions for ${file.name}, using defaults`);
                 }
 
                 const preset = getDerivativePreset();
@@ -1373,7 +1374,7 @@ const processNode = async (
                 fileLifecycleManager.register(canvasId, file, () => {
                     // Pre-cleanup callback: clear the reference from canvas when cleaned up
                     if (isFileLifecycleEnabled()) {
-                        console.log(`[iiifBuilder] Cleaning up file reference for canvas ${canvasId}`);
+                        storageLog.debug(`[iiifBuilder] Cleaning up file reference for canvas ${canvasId}`);
                     }
                 });
             }
@@ -1551,7 +1552,7 @@ export const ingestTree = async (
         }
       }
     } catch (workerError) {
-      console.warn('[ingestTree] Worker ingest failed, falling back to main thread:', workerError);
+      storageLog.warn('[ingestTree] Worker ingest failed, falling back to main thread:', workerError);
       // Fall through to enhanced progress path
       newRoot = await processNodeWithProgress(
         tree,
@@ -1630,7 +1631,7 @@ export const ingestTree = async (
       for (const item of newItems) {
         if (isValidChildType('Collection', item.type)) {
           const relationship = getRelationshipType('Collection', item.type);
-          console.log(`Adding ${item.type} to Collection with ${relationship} relationship`);
+          storageLog.debug(`Adding ${item.type} to Collection with ${relationship} relationship`);
           rootClone.items.push(item);
         } else {
           report.warnings.push(`Skipped ${item.type} - not valid child of Collection`);
@@ -1639,7 +1640,7 @@ export const ingestTree = async (
     } else {
       if (isValidChildType('Collection', newRoot.type)) {
         const relationship = getRelationshipType('Collection', newRoot.type);
-        console.log(`Adding ${newRoot.type} to existing Collection with ${relationship} relationship`);
+        storageLog.debug(`Adding ${newRoot.type} to existing Collection with ${relationship} relationship`);
         rootClone.items.push(newRoot);
       } else {
         report.warnings.push(`Cannot add ${newRoot.type} to existing Collection - invalid child type`);
@@ -1651,7 +1652,7 @@ export const ingestTree = async (
     if (tileGenerationQueue.length > 0) {
       report.warnings.push(`Background tile generation queued for ${tileGenerationQueue.length} images`);
       processTileQueue(legacyCallback).catch(e =>
-        console.warn('Background tile generation error:', e)
+        storageLog.warn('Background tile generation error:', e)
       );
     }
 
@@ -1663,7 +1664,7 @@ export const ingestTree = async (
     if (tileGenerationQueue.length > 0) {
       report.warnings.push(`Background tile generation queued for ${tileGenerationQueue.length} images`);
       processTileQueue(legacyCallback).catch(e =>
-        console.warn('Background tile generation error:', e)
+        storageLog.warn('Background tile generation error:', e)
       );
     }
 

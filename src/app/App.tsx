@@ -12,7 +12,7 @@ import { StagingWorkbench } from '@/src/features/staging/ui/organisms/StagingWor
 const ExportDialog = React.lazy(() => import('@/src/features/export/ui/ExportDialog').then(m => ({ default: m.ExportDialog })));
 import { ContextualHelp } from '@/src/widgets/ContextualHelp/ui/ContextualHelp';
 import { QuickReference } from '@/src/shared/ui/molecules/Tooltip';
-import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STAGING, QUICK_REF_STRUCTURE, QUICK_REF_VIEWER } from '@/src/shared/constants/helpContent';
+import { QUICK_REF_ARCHIVE, QUICK_REF_BOARD, QUICK_REF_METADATA, QUICK_REF_STAGING, QUICK_REF_VIEWER } from '@/src/shared/constants/helpContent';
 import { QCDashboard } from '@/src/widgets/QCDashboard/ui/QCDashboard';
 import { OnboardingModal } from '@/src/widgets/OnboardingModal/ui/OnboardingModal';
 import { ExternalImportDialog } from '@/src/features/ingest/ui/ExternalImportDialog';
@@ -32,10 +32,12 @@ import { buildTree, ingestTree } from '@/src/entities/manifest/model/builders/ii
 import { AuthService, AuthState } from '@/src/shared/services/authService';
 import { storage } from '@/src/shared/services/storage';
 import { setGlobalQuotaErrorHandler } from '@/src/entities/manifest/model/ingest/ingestWorkerPool';
-import { ValidationIssue, validator } from '@/src/entities/manifest/model/validation/validator';
 import { contentStateService } from '@/src/shared/services/contentState';
-import { useBulkOperations, useUndoRedoShortcuts, useVault, VaultProvider } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
+import { useBulkOperations, useUndoRedoShortcuts, useVault, useVaultState, VaultProvider } from '@/src/entities/manifest/model/hooks/useIIIFEntity';
 import { actions } from '@/src/entities/manifest/model/actions';
+import { getEntity as vaultGetEntity, getEntityType as vaultGetEntityType } from '@/src/entities/manifest/model/vault';
+import { denormalizeCanvas } from '@/src/entities/manifest/model/vault/denormalization';
+import { appLog } from '@/src/shared/services/logger';
 import { UserIntentProvider } from '@/src/app/providers/UserIntentProvider';
 import { ResourceContextProvider } from '@/src/app/providers/ResourceContextProvider';
 import { useAppMode, useAppModeState } from '@/src/app/providers';
@@ -43,7 +45,9 @@ import { useAppMode, useAppModeState } from '@/src/app/providers';
 // Custom hooks for cleaner state management
 import { useResponsive } from '@/src/shared/lib/hooks/useResponsive';
 import { useAppSettings } from '@/src/app/providers/useAppSettings';
-import { useDialogState } from '@/src/shared/lib/hooks/useDialogState';
+import { useDialogManager } from '@/src/app/hooks/useDialogManager';
+import { useAutoSave } from '@/src/app/hooks/useAutoSave';
+import { useValidation } from '@/src/app/hooks/useValidation';
 
 // ============================================================================
 // Types
@@ -63,8 +67,17 @@ const MainApp: React.FC = () => {
   // ---- Vault State (normalized IIIF data) ----
   const { state, dispatch, loadRoot, exportRoot, rootId } = useVault();
   const { batchUpdate } = useBulkOperations();
-  // Re-export root when vault state changes (including entity updates like annotations)
-  const root = useMemo(() => exportRoot(), [state]);
+  // Debounced exportRoot — avoids full denormalization on every keystroke.
+  // Uses 200ms timer so rapid edits batch into a single tree rebuild.
+  const [root, setRoot] = useState<IIIFItem | null>(() => exportRoot());
+  const exportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (exportTimerRef.current) clearTimeout(exportTimerRef.current);
+    exportTimerRef.current = setTimeout(() => {
+      setRoot(exportRoot());
+    }, 200);
+    return () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); };
+  }, [state, exportRoot]);
 
   // ---- Custom Hooks ----
   const { isMobile, isTablet: _isTablet } = useResponsive();
@@ -72,16 +85,11 @@ const MainApp: React.FC = () => {
   const { showToast } = useToast();
 
   // ---- Dialog States (consolidated) ----
-  const exportDialog = useDialogState();
-  const qcDashboard = useDialogState();
-  const onboardingModal = useDialogState(!localStorage.getItem('iiif-field-setup-complete'));
-  const externalImport = useDialogState();
-  const batchEditor = useDialogState();
-  const personaSettings = useDialogState();
-  const commandPalette = useDialogState();
-  const keyboardShortcuts = useDialogState();
-  const authDialog = useDialogState();
-  const storageFullDialog = useDialogState();
+  const {
+    exportDialog, qcDashboard, onboardingModal, externalImport,
+    batchEditor, personaSettings, commandPalette, keyboardShortcuts,
+    authDialog, storageFullDialog
+  } = useDialogManager();
 
   // ---- Panel States ----
   const [showSidebar, setShowSidebar] = useState(!isMobile);
@@ -99,7 +107,7 @@ const MainApp: React.FC = () => {
   const [stagingTree, setStagingTree] = useState<FileTree | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [pipelineContext, setPipelineContext] = useState<PipelineContext>({});
-  const [validationIssuesMap, setValidationIssuesMap] = useState<Record<string, ValidationIssue[]>>({});
+  const validationIssuesMap = useValidation(root);
   const [storageUsage, setStorageUsage] = useState<{ usage: number; quota: number } | null>(null);
   const [showQuickRef, setShowQuickRef] = useState(false);
 
@@ -197,7 +205,7 @@ const MainApp: React.FC = () => {
   const commands = useMemo(() => [
     { id: 'archive', label: 'Go to Archive', icon: 'inventory_2', shortcut: '⌘1', onExecute: () => setCurrentMode('archive'), section: 'Navigation' as const, description: 'Switch to Archive view' },
     { id: 'collections', label: 'Go to Collections', icon: 'folder_special', shortcut: '⌘2', onExecute: () => setCurrentMode('collections'), section: 'Navigation' as const, description: 'Switch to Collections/Staging view' },
-    { id: 'structure', label: 'Go to Structure View', icon: 'account_tree', shortcut: '⌘3', onExecute: () => setCurrentMode('structure'), section: 'Navigation' as const, description: 'Hierarchical tree view' },
+    // Structure view absorbed into sidebar tree — no longer a separate mode
     { id: 'metadata', label: 'Go to Metadata', icon: 'table_chart', shortcut: '⌘3', onExecute: () => setCurrentMode('metadata'), section: 'Navigation' as const, description: 'Switch to Metadata spreadsheet view' },
     { id: 'search', label: 'Go to Search', icon: 'search', shortcut: '⌘4', onExecute: () => setCurrentMode('search'), section: 'Navigation' as const, description: 'Switch to Search view' },
     { id: 'export', label: 'Export Archive', icon: 'download', shortcut: '⌘E', onExecute: exportDialog.open, section: 'Actions' as const, description: 'Export archive to IIIF package' },
@@ -257,7 +265,7 @@ const MainApp: React.FC = () => {
 
       const viewport = contentStateService.parseFromUrl();
       if (viewport) {
-        console.log('[App] Content State detected:', viewport);
+        appLog.debug('[App] Content State detected:', viewport);
 
         const findInProject = (node: IIIFItem | null, id: string): IIIFItem | null => {
           if (!node) return null;
@@ -277,7 +285,7 @@ const MainApp: React.FC = () => {
           setCurrentMode('viewer');
           setShowInspector(true);
         } else {
-          console.warn('[App] Content State canvas not found:', viewport.canvasId);
+          appLog.warn('[App] Content State canvas not found:', viewport.canvasId);
           showToastRef.current('The shared item could not be found in this archive', 'info');
           window.history.replaceState({}, '', window.location.pathname);
         }
@@ -293,49 +301,14 @@ const MainApp: React.FC = () => {
     return () => clearInterval(interval);
   }, [loadRoot, onboardingModal]);
 
-  // Auto-save interval — uses rootRef to avoid resetting interval on every state change
-  useEffect(() => {
-    let consecutiveFailures = 0;
-    const maxFailures = 3;
-
-    const interval = setInterval(async () => {
-      if (rootId && saveStatus === 'saved') {
-        try {
-          const quotaCheck = await storage.isStorageCriticallyFull();
-          if (quotaCheck.full) {
-            console.warn('[App] Auto-save skipped: Storage critically full', quotaCheck.usagePercent);
-            return;
-          }
-
-          const currentRoot = rootRef.current;
-          if (currentRoot) {
-            await storage.saveProject(currentRoot);
-            consecutiveFailures = 0;
-          }
-        } catch (error) {
-          consecutiveFailures++;
-          console.warn(`[App] Auto-save failed (${consecutiveFailures}/${maxFailures}):`, error);
-
-          if (consecutiveFailures >= maxFailures) {
-            console.error('[App] Auto-save disabled after repeated failures');
-          }
-        }
-      }
-    }, settings.autoSaveInterval * 1000);
-
-    return () => clearInterval(interval);
-  }, [rootId, settings.autoSaveInterval, saveStatus]);
-
-  // Validation — debounced to avoid running on every keystroke/state change
-  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!root) return;
-    if (validationTimerRef.current) clearTimeout(validationTimerRef.current);
-    validationTimerRef.current = setTimeout(() => {
-      setValidationIssuesMap(validator.validateTree(root));
-    }, 800);
-    return () => { if (validationTimerRef.current) clearTimeout(validationTimerRef.current); };
-  }, [root]);
+  // Auto-save with dirty-flag debouncing — uses rootRef to avoid resetting interval on every state change
+  const getRootRef = useCallback(() => rootRef.current, []);
+  const { markDirty } = useAutoSave({
+    rootId,
+    saveStatus,
+    autoSaveInterval: settings.autoSaveInterval,
+    getRootRef,
+  });
 
   // ============================================================================
   // Handlers
@@ -360,44 +333,23 @@ const MainApp: React.FC = () => {
       });
   }, [loadRoot, showToast]);
 
-  // Build a flat lookup index from the denormalized tree — O(n) once per root change, O(1) per lookup
-  const itemIndex = useMemo(() => {
-    const index = new Map<string, IIIFItem>();
-    if (!root) return index;
-    const walk = (node: IIIFItem) => {
-      index.set(node.id, node);
-      const children = (node as any).items || [];
-      for (const child of children) walk(child);
-      const annos = (node as any).annotations || [];
-      for (const anno of annos) walk(anno);
-    };
-    walk(root);
-    return index;
-  }, [root]);
-
-  const findItem = useCallback((node: IIIFItem | null, id: string): IIIFItem | null => {
-    return itemIndex.get(id) ?? null;
-  }, [itemIndex]);
+  // O(1) entity lookup via normalized vault state — no tree walk needed
+  // Canvas entities must be denormalized to include their annotation pages/annotations
+  const findItem = useCallback((_node: IIIFItem | null, id: string): IIIFItem | null => {
+    const type = vaultGetEntityType(state, id);
+    if (type === 'Canvas') {
+      return denormalizeCanvas(state, id);
+    }
+    return vaultGetEntity(state, id);
+  }, [state]);
 
   const handleItemUpdate = useCallback((updates: Partial<IIIFItem>) => {
     if (!selectedId) return;
     const success = dispatch(actions.batchUpdate([{ id: selectedId, changes: updates }]));
     if (success) {
-      setSaveStatus('saving');
-      const updatedRoot = exportRoot();
-      if (updatedRoot) {
-        storage.saveProject(updatedRoot)
-          .then(() => { setSaveStatus('saved'); checkStorage(); })
-          .catch((error) => {
-            setSaveStatus('error');
-            const msg = error instanceof DOMException && error.name === 'ReadOnlyError'
-              ? 'Storage is full - database is read-only. Export your archive immediately.'
-              : 'Failed to save project!';
-            showToast(msg, 'error');
-          });
-      }
+      markDirty();
     }
-  }, [selectedId, dispatch, exportRoot, showToast]);
+  }, [selectedId, dispatch, markDirty]);
 
   const handleReveal = useCallback((id: string, mode: AppMode) => {
     setSelectedId(id);
@@ -499,21 +451,9 @@ const MainApp: React.FC = () => {
     });
     const success = batchUpdate(updates);
     if (success) {
-      setSaveStatus('saving');
-      const updatedRoot = exportRoot();
-      if (updatedRoot) {
-        storage.saveProject(updatedRoot)
-          .then(() => { setSaveStatus('saved'); checkStorage(); })
-          .catch((error) => {
-            setSaveStatus('error');
-            const msg = error instanceof DOMException && error.name === 'ReadOnlyError'
-              ? 'Storage is full - database is read-only. Export your archive immediately.'
-              : 'Failed to save project!';
-            showToast(msg, 'error');
-          });
-      }
+      markDirty();
     }
-  }, [root, findItem, batchUpdate, exportRoot, showToast]);
+  }, [root, findItem, batchUpdate, markDirty]);
 
   const handleBatchRollback = useCallback((restoredRoot: IIIFItem) => {
     loadRoot(restoredRoot);
@@ -620,6 +560,7 @@ const MainApp: React.FC = () => {
           onOpenSettings={personaSettings.open}
           onToggleQuickHelp={() => setShowQuickRef(prev => !prev)}
           onAbstractionLevelChange={handleAbstractionLevelChange}
+          badges={{ validationErrors: Object.keys(validationIssuesMap).length || undefined }}
         />
 
         <main id="main-content" className={`flex-1 flex flex-col min-w-0 min-h-0 relative z-0 panel-fixed ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-white'} ${isMobile ? 'pt-header-compact' : ''}`}>
@@ -751,7 +692,6 @@ const MainApp: React.FC = () => {
         title={
           currentMode === 'archive' ? 'Archive View' :
           currentMode === 'collections' ? 'Staging/Import' :
-          currentMode === 'structure' ? 'Structure View' :
           currentMode === 'viewer' ? 'Viewer' :
           currentMode === 'boards' ? 'Board View' :
           'Metadata View'
@@ -759,7 +699,6 @@ const MainApp: React.FC = () => {
         items={
           currentMode === 'archive' ? QUICK_REF_ARCHIVE :
           currentMode === 'collections' ? QUICK_REF_STAGING :
-          currentMode === 'structure' ? QUICK_REF_STRUCTURE :
           currentMode === 'viewer' ? QUICK_REF_VIEWER :
           currentMode === 'boards' ? QUICK_REF_BOARD :
           QUICK_REF_METADATA

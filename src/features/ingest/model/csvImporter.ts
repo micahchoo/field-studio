@@ -1,4 +1,5 @@
 import { type CSVColumnMapping, getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
+import { uiLog } from '@/src/shared/services/logger';
 import {
   createLanguageMap,
   formatNavDate,
@@ -230,7 +231,7 @@ export class CSVImporterService {
     } else if (property === 'rights') {
       // Validate rights URI if it looks like a URL
       if (value.startsWith('http') && !isValidRightsUri(value)) {
-        console.warn(`Rights URI "${value}" is not a known Creative Commons or Rights Statements URI`);
+        uiLog.warn(`Rights URI "${value}" is not a known Creative Commons or Rights Statements URI`);
       }
       (canvas as any).rights = value;
     } else if (property.startsWith('metadata.')) {

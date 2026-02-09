@@ -4,6 +4,8 @@ import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFItem, isCanvas } from '@/
 import { getAllCanvases } from '@/utils';
 import { DEFAULT_SEARCH_CONFIG, fieldRegistry, SearchIndexConfig } from './fieldRegistry';
 import { USE_WORKER_SEARCH } from '@/src/shared/constants';
+import { logger } from '@/src/shared/services/logger';
+import { storage } from '@/src/shared/services/storage';
 
 // FlexSearch has inconsistent exports across bundlers - try all patterns
 const FlexSearch = (FlexSearchModule as any).default || FlexSearchModule;
@@ -111,7 +113,7 @@ export class SearchService {
                      (typeof FS === 'function' ? FS : null);
 
     if (!Document) {
-      console.error("FlexSearch Document constructor not found. Keys:", Object.keys(FS));
+      logger.error('general', 'FlexSearch Document constructor not found', undefined, { keys: Object.keys(FS) });
       return;
     }
 
@@ -127,7 +129,7 @@ export class SearchService {
       });
       this.isHealthy = true;
     } catch (e) {
-      console.error("Failed to initialize FlexSearch index", e);
+      logger.error('general', 'Failed to initialize FlexSearch index', e instanceof Error ? e : undefined);
       this.index = null;
       this.isHealthy = false;
     }
@@ -137,7 +139,85 @@ export class SearchService {
     this.reset();
     if (!root || !this.isHealthy) return;
     this.traverse(root, []);
-    console.log(`Indexed ${this.itemMap.size} items.`);
+    logger.debug('general', `Indexed ${this.itemMap.size} items.`);
+    // Persist index asynchronously (non-blocking)
+    this.persistIndex().catch(() => {});
+  }
+
+  /**
+   * Try to load persisted index. Returns true if index was loaded successfully.
+   * Falls back to full rebuild if persisted index is stale or missing.
+   */
+  async loadPersistedIndex(root: IIIFItem | null): Promise<boolean> {
+    if (!root) return false;
+
+    try {
+      const persisted = await storage.loadSearchIndex();
+      if (!persisted) return false;
+
+      const { itemCount, serialized } = persisted;
+      const data = serialized as {
+        itemMap: Array<[string, { item: IIIFItem | IIIFAnnotation; parent?: string }]>;
+        labelIndex: Array<[string, string[]]>;
+        typeCount: Array<[string, number]>;
+      };
+
+      // Staleness check: compare stored item count with current tree size
+      // Quick count of items in the tree (shallow — just top-level + canvas count)
+      let currentItemCount = 0;
+      const countItems = (item: IIIFItem) => {
+        currentItemCount++;
+        if (item.items) for (const child of item.items) countItems(child);
+      };
+      countItems(root);
+
+      if (Math.abs(itemCount - currentItemCount) > 0) {
+        logger.debug('general', `Search index stale (${itemCount} vs ${currentItemCount}), rebuilding.`);
+        return false;
+      }
+
+      // Restore maps
+      this.itemMap = new Map(data.itemMap);
+      this.labelIndex = new Map(data.labelIndex.map(([k, v]) => [k, new Set(v)]));
+      this.typeCount = new Map(data.typeCount);
+
+      // Rebuild FlexSearch index from itemMap (FlexSearch can't be serialized directly)
+      for (const [id, entry] of this.itemMap) {
+        const label = getIIIFValue(entry.item.label, 'none') || getIIIFValue(entry.item.label, 'en') || 'Untitled';
+        const summary = 'summary' in entry.item ? (getIIIFValue((entry.item as IIIFItem).summary, 'none') || '') : '';
+        this.index?.add({
+          id,
+          label,
+          text: summary,
+          type: entry.item.type,
+          context: ''
+        });
+      }
+
+      logger.debug('general', `Loaded persisted search index (${this.itemMap.size} items).`);
+      return true;
+    } catch (e) {
+      logger.debug('general', 'Failed to load persisted search index, will rebuild.');
+      return false;
+    }
+  }
+
+  /**
+   * Persist the current index state to IDB
+   */
+  private async persistIndex(): Promise<void> {
+    if (this.itemMap.size === 0) return;
+
+    const data = {
+      itemMap: Array.from(this.itemMap.entries()),
+      labelIndex: Array.from(this.labelIndex.entries()).map(([k, v]) => [k, Array.from(v)]),
+      typeCount: Array.from(this.typeCount.entries()),
+    };
+
+    await storage.saveSearchIndex({
+      itemCount: this.itemMap.size,
+      serialized: data,
+    });
   }
 
   private traverse(item: IIIFItem, path: string[]) {
@@ -297,7 +377,7 @@ export class SearchService {
       })));
     }
 
-    console.log(`Indexed ${itemsToIndex.length} items in worker.`);
+    logger.debug('general', `Indexed ${itemsToIndex.length} items in worker.`);
   }
 
   private collectItemsForWorker(

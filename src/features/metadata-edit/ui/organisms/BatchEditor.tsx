@@ -4,6 +4,7 @@ import { Button } from '@/src/shared/ui/atoms';
 import { getIIIFValue, IIIFItem } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useToast } from '@/src/shared/ui/molecules/Toast';
+import { uiLog } from '@/src/shared/services/logger';
 
 const BATCH_SNAPSHOT_KEY = 'batch-editor-snapshot';
 
@@ -24,7 +25,7 @@ const saveBatchSnapshot = (root: IIIFItem, itemCount: number): boolean => {
     localStorage.setItem(BATCH_SNAPSHOT_KEY, JSON.stringify(snapshot));
     return true;
   } catch (e) {
-    console.error('Failed to save batch snapshot:', e);
+    uiLog.error('Failed to save batch snapshot:', e instanceof Error ? e : undefined);
     return false;
   }
 };
@@ -36,7 +37,7 @@ const loadBatchSnapshot = (): BatchSnapshot | null => {
     if (!data) return null;
     return JSON.parse(data) as BatchSnapshot;
   } catch (e) {
-    console.error('Failed to load batch snapshot:', e);
+    uiLog.error('Failed to load batch snapshot:', e instanceof Error ? e : undefined);
     return null;
   }
 };

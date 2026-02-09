@@ -6,7 +6,9 @@
  */
 
 import type { EntityType, IIIFItem, NormalizedState } from '@/src/shared/types';
+import { vaultLog } from '@/src/shared/services/logger';
 import { getDescendants } from './queries';
+import { moveEntityToTrash } from './trash';
 
 /**
  * Update an entity by ID - O(1) time, O(1) memory
@@ -29,13 +31,13 @@ export function updateEntity(
     }
 
     if (!foundType) {
-      console.warn(`Entity not found in vault: ${id}. Update aborted.`);
+      vaultLog.warn(`Entity not found in vault: ${id}. Update aborted.`);
       return state;
     }
 
     // Auto-fix stale type index
     state.typeIndex[id] = foundType;
-    console.info(`Fixed stale type index for ${id} (${foundType})`);
+    vaultLog.info(`Fixed stale type index for ${id} (${foundType})`);
   }
 
   const actualType = type || state.typeIndex[id];
@@ -45,7 +47,7 @@ export function updateEntity(
 
   // Special handling: if ID itself is being updated, we need a more complex update
   if (updates.id && updates.id !== id) {
-    console.warn('Direct ID update through updateEntity is discouraged. Use renameEntity logic.');
+    vaultLog.warn('Direct ID update through updateEntity is discouraged. Use renameEntity logic.');
   }
 
   // Create new entity with updates
@@ -129,8 +131,6 @@ export function removeEntity(
 
   // If not permanent deletion, move to trash first
   if (!permanent) {
-    // Import dynamically to avoid circular dependency
-    const { moveEntityToTrash } = require('./trash');
     return moveEntityToTrash(state, id);
   }
 

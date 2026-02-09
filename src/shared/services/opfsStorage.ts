@@ -7,6 +7,8 @@
  * Directory structure: /originals/{id}
  */
 
+import { storageLog } from '@/src/shared/services/logger';
+
 const ORIGINALS_DIR = 'originals';
 
 export class OPFSStorage {
@@ -32,10 +34,10 @@ export class OPFSStorage {
       this._root = await navigator.storage.getDirectory();
       this._originalsDir = await this._root.getDirectoryHandle(ORIGINALS_DIR, { create: true });
       this._ready = true;
-      console.log('[OPFS] Initialized successfully');
+      storageLog.debug('[OPFS] Initialized successfully');
       return true;
     } catch (e) {
-      console.warn('[OPFS] Initialization failed:', e);
+      storageLog.warn('[OPFS] Initialization failed', e);
       this._ready = false;
       return false;
     }

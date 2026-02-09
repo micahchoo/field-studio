@@ -10,6 +10,7 @@
 
 import { IIIFCanvas, IIIFItem } from '@/src/shared/types';
 import { IIIF_SPEC } from '@/src/shared/constants';
+import { networkLog } from '@/src/shared/services/logger';
 
 // ============================================================================
 // Types
@@ -114,7 +115,7 @@ export const contentStateService = {
       const str = new TextDecoder().decode(bytes);
       return JSON.parse(str);
     } catch (e) {
-      console.error('[ContentState] Decoding failed', e);
+      networkLog.error('[ContentState] Decoding failed', e instanceof Error ? e : undefined);
       return null;
     }
   },
@@ -265,7 +266,7 @@ export const contentStateService = {
 
       return viewport;
     } catch (e) {
-      console.error('[ContentState] Parse failed', e);
+      networkLog.error('[ContentState] Parse failed', e instanceof Error ? e : undefined);
       return null;
     }
   },
@@ -278,7 +279,7 @@ export const contentStateService = {
     try {
       // Validate viewport has required fields
       if (!viewport.manifestId || !viewport.canvasId) {
-        console.warn('[ContentState] Invalid viewport state - missing manifestId or canvasId');
+        networkLog.warn('[ContentState] Invalid viewport state - missing manifestId or canvasId');
         return window.location.href;
       }
 
@@ -313,7 +314,7 @@ export const contentStateService = {
       url.searchParams.set('iiif-content', encoded);
       return url.toString();
     } catch (e) {
-      console.error('[ContentState] URL generation failed', e);
+      networkLog.error('[ContentState] URL generation failed', e instanceof Error ? e : undefined);
       // Return current URL as fallback - always safe
       return window.location.href;
     }
@@ -340,7 +341,7 @@ export const contentStateService = {
 
       return contentStateService.parseContentState(state);
     } catch (e) {
-      console.error('[ContentState] URL parse failed', e);
+      networkLog.error('[ContentState] URL parse failed', e instanceof Error ? e : undefined);
       return null;
     }
   },
@@ -368,7 +369,7 @@ export const contentStateService = {
       await navigator.clipboard.writeText(link);
       return true;
     } catch (e) {
-      console.error('[ContentState] Copy failed', e);
+      networkLog.error('[ContentState] Copy failed', e instanceof Error ? e : undefined);
       return false;
     }
   },

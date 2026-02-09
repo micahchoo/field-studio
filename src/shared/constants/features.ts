@@ -12,7 +12,7 @@ export const FEATURE_FLAGS = {
   /** Use Immer for immutable state updates in vault (performance optimization) */
   USE_IMMER_CLONING: false,
   /** Use Web Worker for FlexSearch indexing (offloads from main thread) */
-  USE_WORKER_SEARCH: false,
+  USE_WORKER_SEARCH: true,
   /** Enable progressive disclosure abstraction levels (Phase 3) */
   USE_PROGRESSIVE_DISCLOSURE: true,
   /** Enable simplified 3-mode UI consolidation (Phase 3) */

@@ -6,6 +6,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { Button } from '@/ui/primitives';
+import { uiLog } from '@/src/shared/services/logger';
 
 interface CopyableSectionProps {
   title: string;
@@ -28,7 +29,7 @@ export const CopyableSection: React.FC<CopyableSectionProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      uiLog.error('Failed to copy:', err instanceof Error ? err : undefined);
     }
   }, [getMarkdown]);
 
