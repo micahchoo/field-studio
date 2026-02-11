@@ -49,6 +49,7 @@
     ".claude",
     ".roo",
     ".vscode",
-    "scripts"
+    "scripts",
+    "svelte-migration"
   ]
 }

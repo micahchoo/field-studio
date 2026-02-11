@@ -135,7 +135,7 @@ export const FilterInput: React.FC<FilterInputProps> = ({
         name="search"
         className={`
           absolute left-3 top-2.5 text-lg
-          ${cx.label}
+          ${cx.textMuted || ''}
 `}
         aria-hidden="true"
       />

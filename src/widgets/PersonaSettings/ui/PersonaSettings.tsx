@@ -53,7 +53,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
   const visibleFieldCount = getVisibleFields(settings.metadataComplexity).length;
 
   return (
-    <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-nb-black/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-nb-black/60 backdrop-blur-sm">
       <div className="bg-nb-white w-full max-w-xl shadow-brutal-lg overflow-hidden border border-nb-black/20 animate-in zoom-in-95 ">
         <div className="p-6 border-b flex justify-between items-center bg-nb-white">
           <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ export const PersonaSettings: React.FC<PersonaSettingsProps> = ({ settings, onUp
         </div>
 
         <div className="p-6 bg-nb-white border-t flex justify-end">
-            <Button variant="ghost" size="bare" onClick={onClose} className="bg-nb-black text-white px-10 py-3 font-black uppercase tracking-widest text-xs hover:bg-nb-black transition-nb shadow-brutal">Commit Environment Profile</Button>
+            <Button variant="primary" size="base" onClick={onClose}>Commit Environment Profile</Button>
         </div>
       </div>
     </div>

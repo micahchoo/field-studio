@@ -8,9 +8,7 @@
  * For dark / custom themes: returns new theme-* Tailwind aliases that read
  * CSS custom properties set by ThemeRoot.
  *
- * The `fieldMode: boolean` parameter signature is preserved for backwards
- * compatibility with 132+ existing consumers. Internally, the hook reads the
- * current theme name from the theme bus to decide which class set to return.
+ * Reads the current theme name from the theme bus internally — no parameters needed.
  */
 
 import { useMemo } from 'react';
@@ -104,7 +102,9 @@ export interface ContextualClassNames {
   selectedText?: string;
 }
 
-// ── Static class sets for light and field (exact originals) ──────────
+// ── Static class sets for light and field (exact class names for Tailwind JIT) ──
+// NOTE: These MUST use complete class name literals — Tailwind JIT scans source
+// code for class names and cannot resolve template literals like `bg-${var}`.
 
 const LIGHT_CLASSES: ContextualClassNames = {
   surface:   'bg-nb-white border-2 border-nb-black',
@@ -202,9 +202,10 @@ const FIELD_CLASSES: ContextualClassNames = {
 let _cachedThemeName: string | null = null;
 let _cachedThemeClasses: ContextualClassNames | null = null;
 
-function buildThemeClasses(themeName: string): ContextualClassNames {
-  if (_cachedThemeName === themeName && _cachedThemeClasses) return _cachedThemeClasses;
-  _cachedThemeName = themeName;
+function buildThemeClasses(themeName: string, customOverrides?: Record<string, string>): ContextualClassNames {
+  const cacheKey = themeName + (customOverrides ? JSON.stringify(customOverrides) : '');
+  if (_cachedThemeName === cacheKey && _cachedThemeClasses) return _cachedThemeClasses;
+  _cachedThemeName = cacheKey;
   _cachedThemeClasses = {
     surface:   'bg-theme-surface nb-border-theme',
     text:      'text-theme-text',
@@ -251,7 +252,7 @@ function buildThemeClasses(themeName: string): ContextualClassNames {
   return _cachedThemeClasses;
 }
 
-export function useContextualStyles(fieldMode: boolean): ContextualClassNames {
+export function useContextualStyles(): ContextualClassNames {
   const themeName = useThemeName();
 
   return useMemo(() => {

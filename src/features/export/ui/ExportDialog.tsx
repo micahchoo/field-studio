@@ -831,51 +831,51 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ root, onClose }) => 
             <div className="p-6 bg-nb-white border-t flex justify-between items-center shrink-0">
                 {step === 'config' && (
                     <>
-                        <Button variant="ghost" size="bare" onClick={onClose} className="px-6 py-2 text-nb-black/40 font-bold hover:text-nb-black/60 transition-nb uppercase tracking-widest text-xs">Cancel</Button>
-                        <Button variant="ghost" size="bare"
+                        <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+                        <Button variant="primary" size="base"
                             onClick={() => {
                                 if (format === 'canopy') setStep('canopy-config');
                                 else if (format === 'ocfl' || format === 'bagit') setStep('archival-config');
                                 else if (format === 'activity-log') handleActivityLogExport();
                                 else setStep('dry-run');
                             }}
-                            className={`text-white px-10 py-3 font-black uppercase tracking-widest text-xs shadow-brutal flex items-center gap-2 transition-nb active:scale-95 ${format === 'activity-log' ? 'bg-cyan-600 hover:bg-cyan-700' : 'bg-iiif-blue hover:bg-nb-blue'}`}
+                            iconAfter={<Icon name={format === 'activity-log' ? 'download' : 'arrow_forward'} />}
                         >
-                            {format === 'canopy' ? 'Configure Site' : format === 'ocfl' || format === 'bagit' ? 'Configure Package' : format === 'activity-log' ? 'Export Log' : 'Start Dry Run'} <Icon name={format === 'activity-log' ? 'download' : 'arrow_forward'} />
+                            {format === 'canopy' ? 'Configure Site' : format === 'ocfl' || format === 'bagit' ? 'Configure Package' : format === 'activity-log' ? 'Export Log' : 'Start Dry Run'}
                         </Button>
                     </>
                 )}
                 {step === 'archival-config' && (
                     <>
-                        <Button variant="ghost" size="bare" onClick={() => setStep('config')} className="px-6 py-2 text-nb-black/40 font-bold hover:text-nb-black/60 transition-nb uppercase tracking-widest text-xs">Back</Button>
-                        <Button variant="ghost" size="bare"
+                        <Button variant="ghost" size="sm" onClick={() => setStep('config')}>Back</Button>
+                        <Button variant="primary" size="base"
                             onClick={handleArchivalExport}
-                            className={`text-white px-10 py-3 font-black uppercase tracking-widest text-xs shadow-brutal flex items-center gap-2 transition-nb active:scale-95 ${format === 'ocfl' ? 'bg-nb-orange hover:bg-nb-orange' : 'bg-nb-purple hover:bg-nb-purple'}`}
+                            iconAfter={<Icon name="download" />}
                         >
-                            Export {format.toUpperCase()} <Icon name="download" />
+                            Export {format.toUpperCase()}
                         </Button>
                     </>
                 )}
                 {step === 'canopy-config' && (
                     <>
-                        <Button variant="ghost" size="bare" onClick={() => setStep('config')} className="px-6 py-2 text-nb-black/40 font-bold hover:text-nb-black/60 transition-nb uppercase tracking-widest text-xs">Back</Button>
-                        <Button variant="ghost" size="bare"
+                        <Button variant="ghost" size="sm" onClick={() => setStep('config')}>Back</Button>
+                        <Button variant="primary" size="base"
                             onClick={handleCanopyExport}
-                            className="bg-iiif-blue text-white px-10 py-3 font-black uppercase tracking-widest text-xs hover:bg-nb-blue shadow-brutal flex items-center gap-2 transition-nb active:scale-95"
+                            iconAfter={<Icon name="arrow_forward" />}
                         >
-                            Generate Site Config <Icon name="arrow_forward" />
+                            Generate Site Config
                         </Button>
                     </>
                 )}
                 {step === 'dry-run' && !processing && (
                     <>
-                        <Button variant="ghost" size="bare" onClick={() => setStep('config')} className="px-6 py-2 text-nb-black/40 font-bold hover:text-nb-black/60 transition-nb uppercase tracking-widest text-xs">Back to Settings</Button>
-                        <Button variant="ghost" size="bare"
+                        <Button variant="ghost" size="sm" onClick={() => setStep('config')}>Back to Settings</Button>
+                        <Button variant="success" size="base"
                             onClick={handleFinalExport}
                             disabled={criticalErrors.length > 0 && !ignoreErrors}
-                            className="bg-nb-green text-white px-10 py-3 font-black uppercase tracking-widest text-xs hover:bg-nb-green shadow-brutal flex items-center gap-2 transition-nb active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            iconAfter={<Icon name="download" />}
                         >
-                            Finalize & Download ZIP <Icon name="download" />
+                            Finalize & Download ZIP
                         </Button>
                     </>
                 )}

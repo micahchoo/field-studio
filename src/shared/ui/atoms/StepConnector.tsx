@@ -19,6 +19,8 @@ export interface StepConnectorProps {
   completed: boolean;
   /** Width of the connector line */
   width?: string;
+  /** Field mode theming */
+  fieldMode?: boolean;
   /** Additional CSS class */
   className?: string;
 }
@@ -26,13 +28,16 @@ export interface StepConnectorProps {
 export const StepConnector: React.FC<StepConnectorProps> = ({
   completed,
   width ='w-16',
+  fieldMode,
   className ='',
 }) => {
+  const bg = completed
+    ? fieldMode ? 'bg-nb-yellow' : 'bg-nb-green'
+    : 'bg-nb-cream/80';
+
   return (
     <div
-      className={`h-0.5 mx-2 ${width} ${
-        completed ?'bg-nb-green' :'bg-nb-cream/80'
-      } ${className}`}
+      className={`h-0.5 mx-2 ${width} ${bg} ${className}`}
     />
   );
 };

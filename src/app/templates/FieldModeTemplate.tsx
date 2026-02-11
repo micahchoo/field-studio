@@ -56,7 +56,7 @@ export const FieldModeTemplate: React.FC<FieldModeTemplateProps> = React.memo(({
   const { settings } = useAppSettings();
 
   // Get contextual styles based on current fieldMode
-  const cx = useContextualStyles(settings.fieldMode);
+  const cx = useContextualStyles();
 
   // Get terminology based on abstraction level
   const { t, isAdvanced } = useTerminology({ level: settings.abstractionLevel });

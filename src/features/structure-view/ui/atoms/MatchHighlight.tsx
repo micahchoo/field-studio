@@ -23,6 +23,8 @@ export interface MatchHighlightProps {
   className?: string;
   /** ClassName for highlighted segments */
   highlightClassName?: string;
+  /** Field mode flag */
+  fieldMode?: boolean;
 }
 
 /**
@@ -35,8 +37,11 @@ export const MatchHighlight: React.FC<MatchHighlightProps> = ({
   text,
   query,
   className = '',
-  highlightClassName = 'bg-nb-yellow/40 text-nb-black/10',
+  highlightClassName,
+  fieldMode,
 }) => {
+  const resolvedHighlight = highlightClassName
+    ?? (fieldMode ? 'bg-nb-yellow/40 text-nb-black' : 'bg-yellow-200');
   const segments = useMemo(() => {
     if (!query.trim()) {
       return [{ text, isMatch: false }];
@@ -85,7 +90,7 @@ export const MatchHighlight: React.FC<MatchHighlightProps> = ({
         segment.isMatch ? (
           <mark
             key={index}
-            className={`${highlightClassName} px-0.5`}
+            className={`${resolvedHighlight} px-0.5`}
           >
             {segment.text}
           </mark>

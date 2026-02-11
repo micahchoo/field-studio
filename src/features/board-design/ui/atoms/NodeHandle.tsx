@@ -49,8 +49,8 @@ export const NodeHandle: React.FC<NodeHandleProps> = ({
   const color = active
     ? _cx.accent
     : _fieldMode
-      ? '#facc15' // yellow
-      : '#3b82f6'; // iiif-blue
+      ? '#FFE500'
+      : _cx.accent ?? '#3b82f6';
 
   return (
     <div className={`absolute ${positionClasses[position]}`}>

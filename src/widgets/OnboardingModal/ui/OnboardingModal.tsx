@@ -14,12 +14,15 @@ import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { AbstractionLevel } from '@/src/shared/types';
 import { ExperienceSelector } from '@/src/widgets/ExperienceSelector/ExperienceSelector';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface OnboardingModalProps {
   onComplete: (level: AbstractionLevel) => void;
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
+  const cx = useContextualStyles();
   const [showExpertise, setShowExpertise] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<AbstractionLevel>('standard');
 
@@ -42,8 +45,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-nb-black/80 z-[200] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in ">
-      <div className="bg-nb-white max-w-4xl w-full shadow-brutal-lg overflow-hidden border border-nb-black/20">
+    <div className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in ">
+      <div className={cn(cx.surface, 'max-w-4xl w-full shadow-brutal-lg overflow-hidden')}>
 
         {!showExpertise ? (
           // Welcome Screen - Simple and Quick
@@ -52,8 +55,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
               <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-nb-blue/100 to-nb-blue mb-4 text-white shadow-brutal">
                 <Icon name="auto_awesome" className="text-2xl" />
               </div>
-              <h1 className="text-2xl font-bold text-nb-black mb-2">Welcome to Field Studio</h1>
-              <p className="text-nb-black/50 text-sm leading-relaxed">
+              <h1 className={cn('text-2xl font-bold mb-2', cx.text)}>Welcome to Field Studio</h1>
+              <p className={cn('text-sm leading-relaxed', cx.textMuted)}>
                 Turn your files into organized, shareable digital archives.
               </p>
             </div>
@@ -65,8 +68,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                   <Icon name="folder" className="text-nb-green text-sm" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-nb-black/80">Drag folders to import</p>
-                  <p className="text-xs text-nb-black/40">Structure is preserved automatically</p>
+                  <p className={cn('text-sm font-medium', cx.text)}>Drag folders to import</p>
+                  <p className={cn('text-xs', cx.textMuted)}>Structure is preserved automatically</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-nb-white ">
@@ -74,8 +77,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                   <Icon name="photo_camera" className="text-nb-blue text-sm" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-nb-black/80">Metadata extracted</p>
-                  <p className="text-xs text-nb-black/40">GPS, dates, and camera info captured</p>
+                  <p className={cn('text-sm font-medium', cx.text)}>Metadata extracted</p>
+                  <p className={cn('text-xs', cx.textMuted)}>GPS, dates, and camera info captured</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-nb-white ">
@@ -83,35 +86,33 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                   <Icon name="public" className="text-nb-purple text-sm" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-nb-black/80">Export to web</p>
-                  <p className="text-xs text-nb-black/40">One-click shareable websites</p>
+                  <p className={cn('text-sm font-medium', cx.text)}>Export to web</p>
+                  <p className={cn('text-xs', cx.textMuted)}>One-click shareable websites</p>
                 </div>
               </div>
             </div>
 
             {/* Actions */}
             <div className="space-y-3">
-              <Button variant="ghost" size="bare"
+              <Button variant="success" size="lg"
                 onClick={handleQuickStart}
-                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-nb flex items-center justify-center gap-2 shadow-brutal hover:shadow-brutal"
+                fullWidth
+                iconAfter={<Icon name="arrow_forward" />}
               >
                 Get Started (Essential Mode)
-                <Icon name="arrow_forward" />
               </Button>
-              <Button variant="ghost" size="bare"
+              <Button variant="secondary" size="base"
                 onClick={() => setShowExpertise(true)}
-                className="w-full text-nb-black/60 px-6 py-3 text-sm hover:text-nb-black hover:bg-nb-white transition-nb border border-nb-black/20 hover:border-nb-black/20"
+                fullWidth
+                icon={<Icon name="tune" />}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Icon name="tune" className="text-nb-black/40" />
-                  Customize my experience level
-                </div>
+                Customize my experience level
               </Button>
             </div>
 
             {/* Help hint */}
-            <p className="text-center text-[10px] text-nb-black/40 mt-6">
-              Press <kbd className="px-1.5 py-0.5 bg-nb-cream text-[9px] font-mono">?</kbd> anytime for help
+            <p className={cn('text-center text-[10px] mt-6', cx.textMuted)}>
+              Press <kbd className={cn('px-1.5 py-0.5 text-[9px] font-mono', cx.kbd)}>?</kbd> anytime for help
             </p>
           </div>
         ) : (
@@ -121,12 +122,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
             <div className="flex items-center justify-between mb-6">
               <Button variant="ghost" size="bare"
                 onClick={() => setShowExpertise(false)}
-                className="flex items-center gap-2 text-nb-black/50 hover:text-nb-black/80 text-sm px-3 py-1.5 hover:bg-nb-white transition-nb"
+                className={cn('flex items-center gap-2 text-sm px-3 py-1.5 transition-nb', cx.textMuted)}
               >
                 <Icon name="arrow_back" className="text-sm" />
                 Back to welcome
               </Button>
-              <div className="text-sm text-nb-black/50">
+              <div className={cn('text-sm', cx.textMuted)}>
                 Step 2 of 2
               </div>
             </div>
@@ -143,25 +144,23 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
             </div>
 
             {/* Confirmation Actions */}
-            <div className="flex items-center justify-between pt-6 border-t border-nb-black/20">
-              <div className="text-sm text-nb-black/50">
-                Selected: <span className="font-semibold text-nb-black/80">
+            <div className={cn('flex items-center justify-between pt-6 border-t', cx.divider)}>
+              <div className={cn('text-sm', cx.textMuted)}>
+                Selected: <span className={cn('font-semibold', cx.text)}>
                   {selectedLevel === 'simple' ? 'Essential' : 
                    selectedLevel === 'standard' ? 'Complete' : 'Expert'}
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="bare"
+                <Button variant="ghost" size="sm"
                   onClick={handleSkipSelection}
-                  className="px-4 py-2 text-sm text-nb-black/50 hover:text-nb-black/80 hover:bg-nb-white transition-nb"
                 >
                   Skip for now
                 </Button>
-                <Button variant="ghost" size="bare"
+                <Button variant="primary" size="base"
                   onClick={handleConfirmSelection}
-                  className="px-6 py-2.5 bg-gradient-to-r from-nb-blue/100 to-nb-blue text-white font-semibold hover:from-nb-blue hover:to-nb-blue transition-nb shadow-brutal-sm hover:shadow-brutal"
                 >
-                  Continue with {selectedLevel === 'simple' ? 'Essential' : 
+                  Continue with {selectedLevel === 'simple' ? 'Essential' :
                                 selectedLevel === 'standard' ? 'Complete' : 'Expert'}
                 </Button>
               </div>

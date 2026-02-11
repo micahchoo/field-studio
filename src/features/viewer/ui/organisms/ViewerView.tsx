@@ -4,6 +4,10 @@
  * Main organism for the IIIF viewer feature. Composes molecules for
  * toolbar, content, navigation, and panels.
  *
+ * NOTE: This view intentionally bypasses PaneLayout. OSD (OpenSeadragon) canvas
+ * overlays require absolute positioning within the viewer body, which is
+ * incompatible with PaneLayout.Body's overflow management.
+ *
  * ATOMIC DESIGN COMPLIANCE:
  * - Receives cx and fieldMode via props (no hook calls)
  * - Composes molecules: ViewerToolbar, ViewerContent, FilmstripNavigator, ViewerPanels
@@ -84,6 +88,10 @@ export interface ViewerViewProps {
   onTimeAnnotationCreateRef?: (fn: (text: string, motivation: 'commenting' | 'tagging' | 'describing') => void) => void;
   /** Callback when user selects/deselects an annotation in the viewer */
   onAnnotationSelected?: (annotationId: string | null) => void;
+  /** Callback when page changes in filmstrip (1-indexed) */
+  onPageChange?: (page: number) => void;
+  /** Callback to switch to another view mode (e.g. 'archive', 'metadata') */
+  onSwitchView?: (mode: string) => void;
 }
 
 export const ViewerView: React.FC<ViewerViewProps> = ({
@@ -113,6 +121,8 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
   onPlaybackTimeChange,
   onTimeAnnotationCreateRef: _onTimeAnnotationCreateRef,
   onAnnotationSelected,
+  onPageChange,
+  onSwitchView,
 }) => {
   const [showWorkbench, setShowWorkbench] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
@@ -470,6 +480,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         onToggleLayers={() => setShowLayerPanel(prev => !prev)}
         layerCount={annotationLayers.layers.length}
         onShareLink={manifest ? handleShareLink : undefined}
+        onSwitchView={onSwitchView}
         cx={cx}
         fieldMode={fieldMode}
       />
@@ -583,6 +594,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         totalItems={totalItems}
         loadingStatus={resolvedImageUrl ? 'Image loaded' : 'Loading...'}
         label={t('Canvas')}
+        onPageChange={onPageChange}
         cx={cx}
         fieldMode={fieldMode}
       />

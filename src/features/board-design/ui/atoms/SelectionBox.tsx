@@ -44,7 +44,7 @@ export const SelectionBox: React.FC<SelectionBoxProps> = ({
   const width = Math.abs(current.x - start.x);
   const height = Math.abs(current.y - start.y);
 
-  const borderColor = fieldMode ? '#facc15' : cx.accent;
+  const borderColor = fieldMode ? '#FFE500' : cx.accent;
 
   return (
     <div

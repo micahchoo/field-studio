@@ -60,6 +60,8 @@ interface TooltipProps {
   initialDismissed?: boolean;
   /** Called when user dismisses (parent persists) */
   onDismiss?: () => void;
+  /** Field mode styling (yellow/black) */
+  fieldMode?: boolean;
 }
 
 // ============================================================================
@@ -76,6 +78,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   persist = false,
   initialDismissed = false,
   onDismiss,
+  fieldMode = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(initialDismissed);
@@ -106,7 +109,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
     right:'left-full top-1/2 -translate-y-1/2 ml-2'
   };
 
-  const arrowClasses = {
+  const arrowClasses = fieldMode ? {
+    top:'top-full left-1/2 -translate-x-1/2 border-t-nb-yellow border-x-transparent border-b-transparent',
+    bottom:'bottom-full left-1/2 -translate-x-1/2 border-b-nb-yellow border-x-transparent border-t-transparent',
+    left:'left-full top-1/2 -translate-y-1/2 border-l-nb-yellow border-y-transparent border-r-transparent',
+    right:'right-full top-1/2 -translate-y-1/2 border-r-nb-yellow border-y-transparent border-l-transparent'
+  } : {
     top:'top-full left-1/2 -translate-x-1/2 border-t-nb-black border-x-transparent border-b-transparent',
     bottom:'bottom-full left-1/2 -translate-x-1/2 border-b-nb-black border-x-transparent border-t-transparent',
     left:'left-full top-1/2 -translate-y-1/2 border-l-nb-black border-y-transparent border-r-transparent',
@@ -135,10 +143,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
           className={`absolute ${positionClasses[position]} z-[300] animate-in fade-in zoom-in-95`}
           role="tooltip"
         >
-          <div className="bg-nb-black text-white shadow-brutal max-w-xs min-w-[200px] overflow-hidden">
+          <div className={`${fieldMode ? 'bg-nb-yellow text-nb-black' : 'bg-nb-black text-white'} shadow-brutal max-w-xs min-w-[200px] overflow-hidden`}>
             {/* Header */}
-            <div className="px-3 py-2 border-b border-nb-black/80 flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-white">{content.title}</span>
+            <div className={`px-3 py-2 border-b ${fieldMode ? 'border-nb-black/20' : 'border-nb-black/80'} flex items-center justify-between gap-2`}>
+              <span className={`text-xs font-semibold ${fieldMode ? 'text-nb-black' : 'text-white'}`}>{content.title}</span>
               {!persist && (
                 <Button variant="ghost" size="bare"
                   onClick={(e) => { e.stopPropagation(); dismiss(); }}
@@ -152,7 +160,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
             {/* Body */}
             <div className="px-3 py-2 space-y-2">
-              <p className="text-[11px] text-nb-black/30 leading-relaxed">{content.body}</p>
+              <p className={`text-[11px] ${fieldMode ? 'text-nb-black/70' : 'text-nb-black/30'} leading-relaxed`}>{content.body}</p>
 
               {content.action && (
                 <p className="text-[10px] text-nb-blue/60 flex items-center gap-1">

@@ -76,34 +76,23 @@ export default {
         'mode-accent': 'var(--nb-accent)',
 
         // ── Theme-aware semantic aliases (driven by --theme-* CSS vars) ──
-        'theme-surface':     'var(--theme-surface-primary)',
-        'theme-surface-alt': 'var(--theme-surface-secondary)',
-        'theme-surface-elevated': 'var(--theme-surface-elevated)',
-        'theme-text':        'var(--theme-text-primary)',
-        'theme-text-secondary': 'var(--theme-text-secondary)',
-        'theme-text-muted':  'var(--theme-text-muted)',
-        'theme-text-inverse': 'var(--theme-text-inverse)',
-        'theme-accent':      'var(--theme-accent-primary)',
-        'theme-accent-hover': 'var(--theme-accent-hover)',
+        // Only aliases actively used in components are defined here.
+        // Full token set remains in ThemeTokens for the CSS var API.
+        'theme-surface':       'var(--theme-surface-primary)',
+        'theme-surface-alt':   'var(--theme-surface-secondary)',
+        'theme-text':          'var(--theme-text-primary)',
+        'theme-text-muted':    'var(--theme-text-muted)',
+        'theme-text-inverse':  'var(--theme-text-inverse)',
+        'theme-accent':        'var(--theme-accent-primary)',
         'theme-accent-subtle': 'var(--theme-accent-subtle)',
-        'theme-border':      'var(--theme-border-default)',
+        'theme-border':        'var(--theme-border-default)',
         'theme-border-subtle': 'var(--theme-border-subtle)',
-        'theme-border-focus': 'var(--theme-border-focus)',
-        'theme-success':     'var(--theme-success-color)',
-        'theme-warning':     'var(--theme-warning-color)',
-        'theme-error':       'var(--theme-error-color)',
-        'theme-info':        'var(--theme-info-color)',
-        'theme-selection-bg': 'var(--theme-selection-bg)',
-        'theme-selection-text': 'var(--theme-selection-text)',
-        // IIIF resource type colors
-        'theme-resource-collection': 'var(--theme-resource-collection)',
-        'theme-resource-manifest':   'var(--theme-resource-manifest)',
-        'theme-resource-canvas':     'var(--theme-resource-canvas)',
-        'theme-resource-range':      'var(--theme-resource-range)',
-        'theme-resource-annotation': 'var(--theme-resource-annotation)',
-        // Form input colors
-        'theme-input-bg': 'var(--theme-input-bg)',
-        'theme-input-border': 'var(--theme-input-border)',
+        'theme-border-focus':  'var(--theme-border-focus)',
+        'theme-warning':       'var(--theme-warning-color)',
+        'theme-error':         'var(--theme-error-color)',
+        // Form input colors (used in ValidatedInput)
+        'theme-input-bg':          'var(--theme-input-bg)',
+        'theme-input-border':      'var(--theme-input-border)',
         'theme-input-placeholder': 'var(--theme-input-placeholder)',
       },
       fontFamily: {
@@ -117,9 +106,8 @@ export default {
         '2': '2px',
         '3': '3px',
         '4': '4px',
-        // Theme-aware border widths
-        'theme-thin': 'var(--theme-border-width-thin)',
-        'theme-thick': 'var(--theme-border-width-thick)',
+        // Theme-aware border widths are available via CSS vars but
+        // not used in Tailwind classes — use --theme-border-width-* directly if needed.
       },
       boxShadow: {
         'brutal-sm': '2px 2px 0 0 #000',
@@ -143,12 +131,8 @@ export default {
         'status-bar': 'var(--status-bar-h)',
         'inspector': 'var(--inspector-w)',
         'filmstrip': 'var(--filmstrip-w)',
-        // Theme-aware spacing
-        'theme-xs': 'var(--theme-spacing-xs)',
-        'theme-sm': 'var(--theme-spacing-sm)',
-        'theme-md': 'var(--theme-spacing-md)',
-        'theme-lg': 'var(--theme-spacing-lg)',
-        'theme-xl': 'var(--theme-spacing-xl)',
+        // Theme-aware spacing available via CSS vars but not used
+        // in Tailwind classes — use --theme-spacing-* directly if needed.
       },
       fontSize: {
         // Neobrutalist type scale — weight controlled independently via font-* classes
@@ -161,11 +145,8 @@ export default {
         'nb-xl':      ['1.5rem',    { lineHeight: '1.2' }],   // 24px
         'nb-2xl':     ['2rem',      { lineHeight: '1.1' }],   // 32px
         'nb-3xl':     ['2.5rem',    { lineHeight: '1.0' }],   // 40px
-        // Theme-aware type scale
-        'theme-xs': 'var(--theme-font-size-xs)',
-        'theme-sm': 'var(--theme-font-size-sm)',
-        'theme-md': 'var(--theme-font-size-md)',
-        'theme-lg': 'var(--theme-font-size-lg)',
+        // Theme-aware type scale available via CSS vars but not used
+        // in Tailwind classes — use --theme-font-size-* directly if needed.
       },
       transitionDuration: {
         '100': '100ms',
@@ -206,26 +187,6 @@ export default {
           '&:active': {
             transform: 'translate(2px, 2px)',
             boxShadow: '1px 1px 0 0 #000',
-          },
-        },
-        // Field mode variants (deprecated — prefer nb-border-theme etc.)
-        '.nb-border-field': {
-          border: '2px solid #FFE500',
-        },
-        '.nb-shadow-field': {
-          boxShadow: '4px 4px 0 0 #FFE500',
-        },
-        '.nb-hover-field': {
-          transition: 'all 0.1s linear',
-          '&:hover': {
-            transform: 'translate(-1px, -1px)',
-            boxShadow: '5px 5px 0 0 #FFE500',
-          },
-        },
-        '.nb-active-field': {
-          '&:active': {
-            transform: 'translate(2px, 2px)',
-            boxShadow: '1px 1px 0 0 #FFE500',
           },
         },
         // ── Theme-aware utilities (driven by --theme-* CSS vars) ──

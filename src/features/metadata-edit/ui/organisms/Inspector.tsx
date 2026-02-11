@@ -8,6 +8,7 @@ import { MetadataFieldsPanel } from '../molecules/MetadataFieldsPanel';
 import { AnnotationCreateForm } from '../atoms/AnnotationCreateForm';
 import { AnnotationsTabPanel } from '../molecules/AnnotationsTabPanel';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
+import { PanelLayout } from '@/src/shared/ui/layout';
 import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
 import { IIIF_SPECS } from '@/src/shared/constants/iiifSpecs';
 // TODO: [FSD] Proper fix is to receive `t` via props from FieldModeTemplate
@@ -17,7 +18,7 @@ import { resolvePreviewUrl } from '@/utils/imageSourceResolver';
 import { usePersistedTab } from '@/src/shared/lib/hooks/usePersistedTab';
 import { useInspectorValidation } from '../../model/useInspectorValidation';
 import { useMetadataEditor } from '@/src/shared/lib/hooks/useMetadataEditor';
-import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import { StructureTabPanel } from '../molecules/StructureTabPanel';
 
 /** Time range for audio/video annotations */
@@ -30,6 +31,7 @@ interface InspectorProps {
   resource: IIIFItem | null;
   onUpdateResource: (r: Partial<IIIFItem>) => void;
   settings: AppSettings;
+  cx: ContextualClassNames;
   visible: boolean;
   onClose: () => void;
   isMobile?: boolean;
@@ -81,6 +83,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   resource: resourceProp,
   onUpdateResource,
   settings,
+  cx,
   visible,
   onClose,
   isMobile,
@@ -110,7 +113,6 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   const resource = resourceProp;
 
   const { t } = useTerminology({ level: settings.abstractionLevel });
-  const cx = useContextualStyles(settings.fieldMode);
 
   const { size: inspectorWidth, isResizing, handleProps, panelStyle } = useResizablePanel({
     id: 'inspector',
@@ -213,8 +215,8 @@ const InspectorComponent: React.FC<InspectorProps> = ({
   };
 
   const inspectorStyles = isMobile
-    ? `fixed inset-0 z-[1100] bg-nb-white flex flex-col animate-slide-in-right`
-    : `bg-nb-white border-l-4 border-l-mode-accent-border flex flex-col h-full z-30 animate-slide-in-right shrink-0 relative panel-fixed inspector-panel`;
+    ? `fixed inset-0 z-[1100] flex flex-col animate-slide-in-right ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-white'}`
+    : `border-l-2 flex flex-col h-full z-30 animate-slide-in-right shrink-0 relative panel-fixed inspector-panel ${settings.fieldMode ? 'bg-nb-black border-l-nb-yellow/30' : 'bg-nb-white border-l-nb-black/20'}`;
 
   return (
     <aside
@@ -222,25 +224,12 @@ const InspectorComponent: React.FC<InspectorProps> = ({
       style={isMobile ? undefined : panelStyle}
       aria-label="Resource Inspector"
     >
-      {/* Header */}
-      <div className={`h-header-compact flex items-center justify-between px-4 border-b shrink-0 ${cx.headerBg} ${cx.text}`}>
+      <PanelLayout.Header>
+        {/* Title bar — unified StatusBar style */}
+        <div className={`h-header-compact flex items-center justify-between px-3 ${settings.fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
         <div className="flex items-center gap-2">
-          {resource.provider?.[0] && (() => {
-            const provider = resource.provider[0] as Record<string, unknown>;
-            const logoUrl = (provider.logo as Array<{id: string}>)?.[0]?.id;
-            const providerLabel = getIIIFValue(provider.label as Record<string, string[]>) || 'Provider';
-            return logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={providerLabel}
-                title={providerLabel}
-                className="h-5 w-auto object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-            ) : null;
-          })()}
-          <Icon name={config.icon} className={`${config.colorClass} text-sm`}/>
-          <span className={`text-nb-xs font-bold uppercase tracking-wider font-mono ${settings.fieldMode ? cx.accent : config.colorClass}`}>
+          <Icon name={config.icon} className={`text-sm ${settings.fieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}/>
+          <span className={`text-xs font-bold uppercase tracking-wider font-mono ${settings.fieldMode ? 'text-nb-yellow' : 'text-nb-black'}`}>
             {t('Inspector')}
           </span>
         </div>
@@ -249,21 +238,21 @@ const InspectorComponent: React.FC<InspectorProps> = ({
           <Button variant="ghost" size="bare"
             aria-label="Close Inspector"
             onClick={onClose}
-            className={`p-2 ${settings.fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-cream'}`}
+            className={`p-2 ${settings.fieldMode ? 'text-nb-yellow/60 hover:text-nb-yellow' : 'text-nb-black/40 hover:text-nb-black'}`}
           >
             <Icon name="close"/>
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div role="tablist" aria-label="Inspector tabs" className={`flex px-2 gap-1 border-b shrink-0 ${settings.fieldMode ? `bg-nb-black ${cx.border}` : 'bg-nb-white'}`}>
+        {/* Tabs — sub-header style */}
+        <div role="tablist" aria-label="Inspector tabs" className={`flex px-2 gap-1 border-b-2 shrink-0 ${settings.fieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-white border-nb-black/20'}`}>
         {availableTabs.map(tabName => {
           const badge = getTabBadge(tabName);
           return (
             <Button variant="ghost" size="bare"
               key={tabName}
-              className={`py-3 px-3 text-nb-caption font-bold uppercase tracking-wider font-mono transition-nb border-b-2 ${
+              className={`py-2.5 px-3 text-nb-caption font-bold uppercase tracking-wider font-mono transition-nb border-b-2 ${
                 tab === tabName ? cx.active : cx.inactive
               }`}
               onClick={() => setTab(tabName as typeof ALLOWED_TABS[number])}
@@ -281,16 +270,17 @@ const InspectorComponent: React.FC<InspectorProps> = ({
                   <span className={`w-1.5 h-1.5 rounded-full ${badge.dotColor} shrink-0`} />
                 )}
                 {tabName === 'annotations' && annotationModeActive && (
-                  <span className="w-1.5 h-1.5 bg-mode-accent animate-pulse ml-1" />
+                  <span className={`w-1.5 h-1.5 animate-pulse ml-1 ${settings.fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue'}`} />
                 )}
               </span>
             </Button>
           );
-        })}
-      </div>
+          })}
+        </div>
+      </PanelLayout.Header>
 
       {/* Content */}
-      <div className={`flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar min-h-0 ${cx.pageBg}`}>
+      <PanelLayout.Body className={`p-4 space-y-4 custom-scrollbar ${cx.pageBg}`}>
         {tab === 'metadata' && (
           <MetadataFieldsPanel
             resource={resource}
@@ -357,6 +347,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
               manifest={resource as IIIFManifest}
               onUpdateManifest={(updates) => onUpdateResource(updates as Partial<IIIFItem>)}
               settings={settings}
+              cx={cx}
               canvases={canvases}
             />
           </div>
@@ -379,7 +370,7 @@ const InspectorComponent: React.FC<InspectorProps> = ({
         {tab === 'design' && designTab && (
           <div role="tabpanel">{designTab}</div>
         )}
-      </div>
+      </PanelLayout.Body>
 
       {/* Resize Handle - Desktop Only */}
       {!isMobile && (
@@ -418,6 +409,7 @@ export const Inspector = React.memo(InspectorComponent, (prev, next) => {
   // resource uses referential equality so metadata/annotation edits trigger re-render
   return prev.resource === next.resource &&
          prev.visible === next.visible &&
+         prev.cx === next.cx &&
          prev.settings.fieldMode === next.settings.fieldMode &&
          prev.annotationModeActive === next.annotationModeActive &&
          prev.annotationDrawingState?.pointCount === next.annotationDrawingState?.pointCount &&

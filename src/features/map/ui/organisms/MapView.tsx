@@ -33,6 +33,7 @@ import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { ViewHeader, ViewHeaderTitle, ViewHeaderActions } from '@/src/shared/ui/molecules/ViewHeader';
 import { MapMarker } from '@/src/shared/ui/molecules/MapMarker';
 import { ClusterBadge } from '@/src/shared/ui/molecules/ClusterBadge';
+import { PaneLayout } from '@/src/shared/ui/layout';
 import { VIEW_MODE_OPTIONS, saveViewMode, type ArchiveViewMode } from '@/src/features/archive/model';
 import {
   formatBounds,
@@ -103,61 +104,93 @@ export const MapView: React.FC<MapViewProps> = ({
   // Empty state
   if (!hasGeotaggedItems) {
     return (
-      <EmptyState
-        icon="map"
-        title="No Geotagged Items"
-        message={isAdvanced
-          ? 'Items need GPS coordinates in their metadata to appear on the map. Add a "Location" metadata field with coordinates like "40.7128, -74.0060".'
-          : 'Items need GPS coordinates in their metadata to appear on the map.'}
-        cx={cx}
-        fieldMode={fieldMode}
-      />
+      <PaneLayout className={fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}>
+        <PaneLayout.Header>
+          <ViewHeader cx={cx} fieldMode={fieldMode}>
+            <ViewHeaderTitle title="Map" />
+            <ViewHeaderActions>
+              {onSwitchView && (
+                <ViewToggle
+                  value="map"
+                  onChange={(v) => {
+                    const mode = v as ArchiveViewMode;
+                    if (mode === 'grid' || mode === 'list') {
+                      saveViewMode(mode);
+                      onSwitchView('archive');
+                    } else {
+                      onSwitchView(mode as AppMode);
+                    }
+                  }}
+                  options={VIEW_MODE_OPTIONS}
+                  ariaLabel="View mode toggle"
+                  cx={cx}
+                  fieldMode={fieldMode}
+                />
+              )}
+            </ViewHeaderActions>
+          </ViewHeader>
+        </PaneLayout.Header>
+        <PaneLayout.Body>
+          <EmptyState
+            icon="map"
+            title="No Geotagged Items"
+            message={isAdvanced
+              ? 'Items need GPS coordinates in their metadata to appear on the map. Add a "Location" metadata field with coordinates like "40.7128, -74.0060".'
+              : 'Items need GPS coordinates in their metadata to appear on the map.'}
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+        </PaneLayout.Body>
+      </PaneLayout>
     );
   }
 
   return (
-    <div className={`flex flex-col h-full ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
+    <PaneLayout variant="canvas" className={fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}>
       {/* Header */}
-      <ViewHeader cx={cx} fieldMode={fieldMode}>
-        <ViewHeaderTitle
-          title="Map"
-          badge={`${geoItems.length} geotagged ${t('Canvas').toLowerCase()}${geoItems.length !== 1 ? 'es' : ''}`}
-        />
-        <ViewHeaderActions>
-          <ZoomControl
-            zoom={zoom}
-            onZoomChange={(z) => {
-              if (z > zoom) zoomIn();
-              else if (z < zoom) zoomOut();
-            }}
-            onReset={resetView}
-            cx={cx}
+      <PaneLayout.Header>
+        <ViewHeader cx={cx} fieldMode={fieldMode}>
+          <ViewHeaderTitle
+            title="Map"
+            badge={`${geoItems.length} geotagged ${t('Canvas').toLowerCase()}${geoItems.length !== 1 ? 'es' : ''}`}
           />
-          {onSwitchView && (
-            <ViewToggle
-              value="map"
-              onChange={(v) => {
-                const mode = v as ArchiveViewMode;
-                if (mode === 'grid' || mode === 'list') {
-                  saveViewMode(mode);
-                  onSwitchView('archive');
-                } else {
-                  onSwitchView(mode as AppMode);
-                }
+          <ViewHeaderActions>
+            <ZoomControl
+              zoom={zoom}
+              onZoomChange={(z) => {
+                if (z > zoom) zoomIn();
+                else if (z < zoom) zoomOut();
               }}
-              options={VIEW_MODE_OPTIONS}
-              ariaLabel="View mode toggle"
+              onReset={resetView}
               cx={cx}
-              fieldMode={fieldMode}
             />
-          )}
-        </ViewHeaderActions>
-      </ViewHeader>
+            {onSwitchView && (
+              <ViewToggle
+                value="map"
+                onChange={(v) => {
+                  const mode = v as ArchiveViewMode;
+                  if (mode === 'grid' || mode === 'list') {
+                    saveViewMode(mode);
+                    onSwitchView('archive');
+                  } else {
+                    onSwitchView(mode as AppMode);
+                  }
+                }}
+                options={VIEW_MODE_OPTIONS}
+                ariaLabel="View mode toggle"
+                cx={cx}
+                fieldMode={fieldMode}
+              />
+            )}
+          </ViewHeaderActions>
+        </ViewHeader>
+      </PaneLayout.Header>
 
       {/* Map Container */}
-      <div
-        ref={containerRef}
-        className="flex-1 relative overflow-hidden bg-gradient-to-b from-blue-100 to-green-100"
+      <PaneLayout.Body>
+        <div
+          ref={containerRef}
+          className="h-full relative overflow-hidden bg-gradient-to-b from-blue-100 to-green-100"
         style={{
           backgroundImage: `
             linear-gradient(rgba(100,150,200,0.1) 1px, transparent 1px),
@@ -281,15 +314,16 @@ export const MapView: React.FC<MapViewProps> = ({
           </div>
         )}
 
-        {/* Coordinates Display (Advanced Users Only) */}
-        {bounds && isAdvanced && (
-          <div className={`absolute bottom-4 left-4 px-3 py-1 text-xs ${
-            fieldMode ? 'bg-nb-black/90 text-nb-black/40' : 'bg-nb-white/90 text-nb-black/60'
-          }`}>
-            Bounds: {formatBounds(bounds)}
-          </div>
-        )}
-      </div>
-    </div>
+          {/* Coordinates Display (Advanced Users Only) */}
+          {bounds && isAdvanced && (
+            <div className={`absolute bottom-4 left-4 px-3 py-1 text-xs ${
+              fieldMode ? 'bg-nb-black/90 text-nb-black/40' : 'bg-nb-white/90 text-nb-black/60'
+            }`}>
+              Bounds: {formatBounds(bounds)}
+            </div>
+          )}
+        </div>
+      </PaneLayout.Body>
+    </PaneLayout>
   );
 };

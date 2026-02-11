@@ -757,28 +757,21 @@ const StagingWorkbenchInner: React.FC<StagingWorkbenchInnerProps> = ({
 
           <div className="flex items-center justify-between pt-4 border-t border-nb-black/10">
             <Button
-              variant="ghost"
-              size="bare"
+              variant="danger" size="sm"
               onClick={() => {
-                if (confirm('This will remove all imported items. Continue?')) {
-                  // Clear undo record
-                  try { sessionStorage.removeItem('ingest-undo'); } catch { /* */ }
-                  setCompletionSummary(null);
-                  // Note: actual vault trash would go here for full undo
-                }
+                // Clear undo record
+                try { sessionStorage.removeItem('ingest-undo'); } catch { /* */ }
+                setCompletionSummary(null);
               }}
-              className="px-4 py-2 text-sm text-nb-red/70 hover:bg-nb-red/10 flex items-center gap-2"
+              icon={<Icon name="undo" />}
             >
-              <Icon name="undo" />
               Undo Import
             </Button>
             <Button
-              variant="ghost"
-              size="bare"
+              variant="primary" size="base"
               onClick={onCancel}
-              className="px-6 py-2 bg-nb-blue text-white font-medium text-sm hover:bg-nb-blue flex items-center gap-2 shadow-brutal"
+              icon={<Icon name="archive" />}
             >
-              <Icon name="archive" />
               Navigate to Archive
             </Button>
           </div>

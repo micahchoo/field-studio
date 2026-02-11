@@ -14,6 +14,7 @@
 
 import React from 'react';
 import { Icon } from '@/src/shared/ui/atoms';
+import { cn } from '@/src/shared/lib/cn';
 
 export interface DragPreviewProps {
   /** Label to display */
@@ -24,6 +25,8 @@ export interface DragPreviewProps {
   count?: number;
   /** Additional className */
   className?: string;
+  /** Field mode flag */
+  fieldMode?: boolean;
 }
 
 /**
@@ -77,27 +80,33 @@ export const DragPreview: React.FC<DragPreviewProps> = ({
   type,
   count = 1,
   className = '',
+  fieldMode,
 }) => {
   return (
     <div
-      className={`
-        flex items-center gap-2 px-3 py-2 
-        bg-nb-white 
-        border border-nb-black/20 
-         shadow-brutal
-        min-w-[200px]
-        ${className}
-      `}
+      className={cn(
+        'flex items-center gap-2 px-3 py-2 shadow-brutal min-w-[200px]',
+        fieldMode
+          ? 'bg-nb-black border border-nb-yellow text-nb-yellow'
+          : 'bg-nb-white border border-nb-black/20 text-nb-black',
+        className,
+      )}
     >
       <Icon
         name={getTypeIcon(type)}
         className={`text-lg ${getTypeColor(type)}`}
       />
-      <span className="flex-1 truncate text-sm font-medium text-nb-black/80">
+      <span className={cn(
+        'flex-1 truncate text-sm font-medium',
+        fieldMode ? 'text-nb-yellow' : 'text-nb-black/80',
+      )}>
         {label}
       </span>
       {count > 1 && (
-        <span className="text-xs bg-nb-cream/80 text-nb-black/50 px-1.5 py-0.5 ">
+        <span className={cn(
+          'text-xs px-1.5 py-0.5',
+          fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-cream/80 text-nb-black/50',
+        )}>
           {count}
         </span>
       )}

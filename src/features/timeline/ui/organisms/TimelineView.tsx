@@ -34,6 +34,7 @@ import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { ViewToggle } from '@/src/shared/ui/molecules/ViewToggle';
 import { ViewHeader, ViewHeaderTitle, ViewHeaderActions } from '@/src/shared/ui/molecules/ViewHeader';
 import { TimelineTick } from '@/src/shared/ui/molecules/TimelineTick';
+import { PaneLayout } from '@/src/shared/ui/layout';
 import { VIEW_MODE_OPTIONS, saveViewMode, type ArchiveViewMode } from '@/src/features/archive/model';
 import {
   formatShortDate,
@@ -100,62 +101,94 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   // Empty state
   if (!hasItems) {
     return (
-      <EmptyState
-        icon="event"
-        title="No Dated Items"
-        message="Items need a navDate property to appear in the timeline."
-        cx={cx}
-        fieldMode={fieldMode}
-      />
+      <PaneLayout className={cx.surface}>
+        <PaneLayout.Header>
+          <ViewHeader cx={cx} fieldMode={fieldMode}>
+            <ViewHeaderTitle title="Timeline" />
+            <ViewHeaderActions>
+              {onSwitchView && (
+                <ViewToggle
+                  value="timeline"
+                  onChange={(v) => {
+                    const mode = v as ArchiveViewMode;
+                    if (mode === 'grid' || mode === 'list') {
+                      saveViewMode(mode);
+                      onSwitchView('archive');
+                    } else {
+                      onSwitchView(mode as AppMode);
+                    }
+                  }}
+                  options={VIEW_MODE_OPTIONS}
+                  ariaLabel="View mode toggle"
+                  cx={cx}
+                  fieldMode={fieldMode}
+                />
+              )}
+            </ViewHeaderActions>
+          </ViewHeader>
+        </PaneLayout.Header>
+        <PaneLayout.Body>
+          <EmptyState
+            icon="event"
+            title="No Dated Items"
+            message="Items need a navDate property to appear in the timeline."
+            cx={cx}
+            fieldMode={fieldMode}
+          />
+        </PaneLayout.Body>
+      </PaneLayout>
     );
   }
 
   return (
-    <div className={`flex flex-col h-full ${cx.surface}`}>
+    <PaneLayout className={cx.surface}>
       {/* Header */}
-      <ViewHeader cx={cx} fieldMode={fieldMode} height="fluid" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 min-h-[var(--header-h)] sm:py-0">
-        <ViewHeaderTitle
-          title="Timeline"
-          badge={`${totalItems} dated item${totalItems !== 1 ? 's' : ''}`}
-        />
-        <ViewHeaderActions>
-          {/* Zoom Controls */}
-          <div className={`flex items-center gap-2 ${cx.surface} p-1 rounded`}>
-            {ZOOM_OPTIONS.map(({ level, label }) => (
-              <Button
-                key={level}
-                onClick={() => setZoomLevel(level)}
-                variant={zoomLevel === level ? 'primary' : 'ghost'}
-                size="sm"
-                className="text-xs font-bold"
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-          {onSwitchView && (
-            <ViewToggle
-              value="timeline"
-              onChange={(v) => {
-                const mode = v as ArchiveViewMode;
-                if (mode === 'grid' || mode === 'list') {
-                  saveViewMode(mode);
-                  onSwitchView('archive');
-                } else {
-                  onSwitchView(mode as AppMode);
-                }
-              }}
-              options={VIEW_MODE_OPTIONS}
-              ariaLabel="View mode toggle"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          )}
-        </ViewHeaderActions>
-      </ViewHeader>
+      <PaneLayout.Header>
+        <ViewHeader cx={cx} fieldMode={fieldMode}>
+          <ViewHeaderTitle
+            title="Timeline"
+            badge={`${totalItems} dated item${totalItems !== 1 ? 's' : ''}`}
+          />
+          <ViewHeaderActions>
+            {/* Zoom Controls */}
+            <div className={`flex items-center gap-1 p-0.5 ${fieldMode ? 'bg-nb-yellow/10' : 'bg-nb-black/5'}`}>
+              {ZOOM_OPTIONS.map(({ level, label }) => (
+                <Button
+                  key={level}
+                  onClick={() => setZoomLevel(level)}
+                  variant={zoomLevel === level ? 'primary' : 'ghost'}
+                  size="sm"
+                  className="text-xs font-bold"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            {onSwitchView && (
+              <ViewToggle
+                value="timeline"
+                onChange={(v) => {
+                  const mode = v as ArchiveViewMode;
+                  if (mode === 'grid' || mode === 'list') {
+                    saveViewMode(mode);
+                    onSwitchView('archive');
+                  } else {
+                    onSwitchView(mode as AppMode);
+                  }
+                }}
+                options={VIEW_MODE_OPTIONS}
+                ariaLabel="View mode toggle"
+                cx={cx}
+                fieldMode={fieldMode}
+              />
+            )}
+          </ViewHeaderActions>
+        </ViewHeader>
+      </PaneLayout.Header>
 
       {/* Date Range Minimap — hidden on mobile (dots too small for touch) */}
-      {minDate && maxDate && (
+      <PaneLayout.SubBar visible={!!(minDate && maxDate)}>
+        {minDate && maxDate && (
         <div className={`h-10 ${cx.surface} hidden sm:flex items-center px-6 text-xs ${cx.textMuted}`}>
           <span>{formatShortDate(minDate)}</span>
           <div className={`flex-1 mx-4 h-1 ${cx.border} relative`}>
@@ -179,10 +212,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           </div>
           <span>{formatShortDate(maxDate)}</span>
         </div>
-      )}
+        )}
+      </PaneLayout.SubBar>
 
       {/* Timeline Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <PaneLayout.Body scroll className="p-4 sm:p-6">
         <div className="max-w-4xl mx-auto">
           {groups.map((group, groupIdx) => (
             <div key={group.date} className="relative pl-8 pb-8">
@@ -272,7 +306,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </PaneLayout.Body>
+    </PaneLayout>
   );
 };

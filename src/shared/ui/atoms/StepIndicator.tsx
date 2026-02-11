@@ -27,6 +27,8 @@ export interface StepIndicatorProps {
   completed: boolean;
   /** Visual variant */
   variant?:'numbered' |'simple';
+  /** Field mode theming */
+  fieldMode?: boolean;
   /** Additional CSS class */
   className?: string;
 }
@@ -37,26 +39,27 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   active,
   completed,
   variant ='numbered',
+  fieldMode,
   className ='',
 }) => {
   const numberClasses = completed
     ?'bg-nb-green text-white'
     : active
-      ?'bg-nb-blue text-white'
+      ? fieldMode ? 'bg-nb-yellow text-nb-black' : 'bg-nb-blue text-white'
       :'bg-nb-cream text-nb-black/50';
 
   const labelClasses = active
-    ?'text-nb-black/20'
+    ? fieldMode ? 'text-nb-yellow' : 'text-nb-black/20'
     : completed
       ?'text-nb-green'
-      :'text-nb-black/40';
+      : fieldMode ? 'text-nb-yellow' : 'text-nb-black/40';
 
   if (variant ==='simple') {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <div
           className={`w-2 h-2 ${
-            completed ?'bg-nb-green' : active ?'bg-nb-blue' :'bg-nb-cream'
+            completed ?'bg-nb-green' : active ? (fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue') :'bg-nb-cream'
           }`}
         />
         <span className={`text-sm font-medium ${labelClasses}`}>{label}</span>

@@ -16,6 +16,8 @@ import React, { useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
 import { AbstractionLevel } from '@/src/shared/types';
 import { COLORS, INTERACTION, LAYOUT, SPACING } from '@/src/shared/config/design-tokens';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 export interface ExperienceSelectorProps {
   /** Current selected level */
@@ -169,6 +171,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
   onSkip,
   showFeatureComparison = true
 }) => {
+  const cx = useContextualStyles();
   const [showHelp, setShowHelp] = useState(false);
   const [helpOption, setHelpOption] = useState<AbstractionLevel | null>(null);
 
@@ -199,7 +202,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
         <div className="mt-3 flex items-center justify-center gap-4">
           <Button variant="ghost" size="bare"
             onClick={handleHelpClick}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm border transition-nb hover:bg-nb-white"
+            className={cn('flex items-center gap-1.5 px-3 py-1.5 text-sm border transition-nb', cx.accent)}
             style={{ color: COLORS.primary[600], borderColor: COLORS.primary[300] }}
           >
             <span className="text-base">💡</span>
@@ -208,7 +211,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
           {showSkipOption && onSkip && (
             <Button variant="ghost" size="bare"
               onClick={onSkip}
-              className="text-sm px-3 py-1.5 text-nb-black/50 hover:text-nb-black/80 hover:bg-nb-white transition-nb"
+              className={cn('text-sm px-3 py-1.5 transition-nb', cx.textMuted)}
             >
               Skip for now (uses Complete)
             </Button>

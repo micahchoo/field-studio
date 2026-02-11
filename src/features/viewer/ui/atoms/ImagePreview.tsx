@@ -23,6 +23,8 @@ export interface ImagePreviewProps {
   mirrored?: boolean;
   /** Alt text for accessibility */
   alt?: string;
+  /** Field mode styling */
+  fieldMode?: boolean;
 }
 
 const ERROR_SVG = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="%231e293b" width="400" height="300"/><text fill="%2394a3b8" x="50%25" y="50%25" text-anchor="middle" font-family="sans-serif">Invalid Request</text></svg>';
@@ -32,6 +34,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
   rotation = 0,
   mirrored = false,
   alt = 'IIIF Image Preview',
+  fieldMode,
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +53,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-6 relative group bg-nb-black">
+    <div className={`flex-1 flex items-center justify-center p-6 relative group ${fieldMode ? 'bg-nb-black' : 'bg-nb-cream'}`}>
       {/* Grid background pattern */}
       <div
         className="absolute inset-0 opacity-5"

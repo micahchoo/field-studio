@@ -122,11 +122,19 @@ export function useResizablePanel(config: ResizablePanelConfig): UseResizablePan
   const startSizeRef = useRef<number>(0);
   const wasCollapsedRef = useRef<boolean>(false);
 
-  // Persist size to localStorage
+  // Persist size to localStorage (debounced to avoid blocking main thread during drag)
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (persist && !isCollapsed) {
-      localStorage.setItem(`${STORAGE_PREFIX}${id}`, size.toString());
+      if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+      persistTimeoutRef.current = setTimeout(() => {
+        localStorage.setItem(`${STORAGE_PREFIX}${id}`, size.toString());
+        persistTimeoutRef.current = null;
+      }, 500);
     }
+    return () => {
+      if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+    };
   }, [id, size, persist, isCollapsed]);
 
   // Clamp size to constraints
@@ -192,7 +200,8 @@ export function useResizablePanel(config: ResizablePanelConfig): UseResizablePan
     return direction === 'horizontal' ? e.clientX : e.clientY;
   }, [direction]);
 
-  // Handle resize move
+  // Handle resize move (RAF-throttled to cap at ~60fps)
+  const rafRef = useRef<number | null>(null);
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     e.preventDefault();
     const currentPos = getEventPosition(e);
@@ -202,7 +211,11 @@ export function useResizablePanel(config: ResizablePanelConfig): UseResizablePan
     const adjustedDelta = (side === 'right' || side === 'bottom') ? -delta : delta;
     const newSize = startSizeRef.current + adjustedDelta;
 
-    setSize(newSize);
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      setSize(newSize);
+      rafRef.current = null;
+    });
   }, [getEventPosition, setSize, side]);
 
   // Handle resize end
@@ -283,6 +296,7 @@ export function useResizablePanel(config: ResizablePanelConfig): UseResizablePan
       window.removeEventListener('mouseup', handleEnd);
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, [handleMove, handleEnd]);
 

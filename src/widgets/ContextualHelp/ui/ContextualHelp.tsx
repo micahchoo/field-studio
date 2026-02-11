@@ -4,6 +4,8 @@ import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { guidance } from '@/src/shared/services/guidanceService';
 import { WELCOME_MESSAGES } from '@/src/shared/constants/helpContent';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface ContextualHelpProps {
   mode: string;
@@ -16,6 +18,7 @@ interface ContextualHelpProps {
  * Non-intrusive: appears at top of content area, easy to dismiss
  */
 export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
+  const cx = useContextualStyles();
   const [visible, setVisible] = useState(false);
   const [content, setContent] = useState<typeof WELCOME_MESSAGES['archive'] | null>(null);
 
@@ -57,12 +60,12 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
             <Icon name="lightbulb" className="text-nb-blue text-sm" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-nb-black mb-1">{content.title}</h4>
-            <p className="text-xs text-nb-black/60 leading-relaxed mb-2">{content.body}</p>
+            <h4 className={cn('text-sm font-semibold mb-1', cx.text)}>{content.title}</h4>
+            <p className={cn('text-xs leading-relaxed mb-2', cx.textMuted)}>{content.body}</p>
             {content.tips && content.tips.length > 0 && (
               <ul className="space-y-1">
                 {content.tips.slice(0, 2).map((tip, i) => (
-                  <li key={i} className="flex items-center gap-1.5 text-[11px] text-nb-black/50">
+                  <li key={i} className={cn('flex items-center gap-1.5 text-[11px]', cx.textMuted)}>
                     <Icon name="check" className="text-nb-green text-[10px]" />
                     {tip}
                   </li>
@@ -88,6 +91,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({ mode }) => {
  * Shows in the corner, expands on hover/click
  */
 export const ViewHelp: React.FC<{ mode: string }> = ({ mode }) => {
+  const cx = useContextualStyles();
   const [expanded, setExpanded] = useState(false);
   const content = WELCOME_MESSAGES[mode];
 
@@ -111,16 +115,16 @@ export const ViewHelp: React.FC<{ mode: string }> = ({ mode }) => {
 
       {expanded && (
         <div
-          className="absolute top-full right-0 mt-1 w-64 bg-nb-white shadow-brutal border border-nb-black/20 p-3 z-50 animate-in fade-in zoom-in-95 "
+          className={cn('absolute top-full right-0 mt-1 w-64 shadow-brutal p-3 z-50 animate-in fade-in zoom-in-95', cx.surface)}
           onMouseEnter={() => setExpanded(true)}
           onMouseLeave={() => setExpanded(false)}
         >
-          <h4 className="text-xs font-semibold text-nb-black/80 mb-1">{content.title}</h4>
-          <p className="text-[11px] text-nb-black/50 leading-relaxed mb-2">{content.body}</p>
+          <h4 className={cn('text-xs font-semibold mb-1', cx.text)}>{content.title}</h4>
+          <p className={cn('text-[11px] leading-relaxed mb-2', cx.textMuted)}>{content.body}</p>
           {content.tips && (
             <ul className="space-y-1">
               {content.tips.map((tip, i) => (
-                <li key={i} className="flex items-start gap-1.5 text-[10px] text-nb-black/40">
+                <li key={i} className={cn('flex items-start gap-1.5 text-[10px]', cx.textMuted)}>
                   <Icon name="arrow_right" className="text-[10px] text-nb-black/30 mt-0.5" />
                   {tip}
                 </li>

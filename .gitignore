@@ -190,6 +190,9 @@ toggle-verification.png
 *.png
 
 _archived
+
+# Svelte migration sandbox
+svelte-migration/
 # ----------------------------------------------------------------------
 # End of .gitignore
 # ----------------------------------------------------------------------

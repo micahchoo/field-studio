@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { CONSTANTS } from '@/src/shared/constants';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 type ToastType ='success' |'error' |'info' |'warning';
 
@@ -33,6 +35,7 @@ export const useToast = () => {
 };
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const cx = useContextualStyles();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -127,12 +130,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             role={toast.type ==='error' ?'alert' :'status'}
             aria-live={toast.type ==='error' ?'assertive' :'polite'}
             aria-atomic="true"
-            className={`pointer-events-auto min-w-[300px] max-w-[400px] p-4 shadow-brutal border flex flex-col gap-2 animate-fade-in ${
-              toast.type ==='success' ?'bg-nb-white border-nb-green/30 text-nb-green' :
-              toast.type ==='error' ?'bg-nb-white border-nb-red/30 text-nb-red' :
-              toast.type ==='warning' ?'bg-nb-white border-nb-orange/20 text-nb-orange' :
-'bg-nb-black border-nb-black/80 text-white'
-            } ${index === 0 ?'opacity-100' :'opacity-90'}`}
+            className={cn(
+              'pointer-events-auto min-w-[300px] max-w-[400px] p-4 shadow-brutal border flex flex-col gap-2 animate-fade-in',
+              toast.type ==='success' ? cn(cx.surface, 'border-nb-green/30 text-nb-green') :
+              toast.type ==='error' ? cn(cx.surface, 'border-nb-red/30 text-nb-red') :
+              toast.type ==='warning' ? cn(cx.surface, 'border-nb-orange/20 text-nb-orange') :
+              'bg-nb-black border-nb-black/80 text-white',
+              index === 0 ?'opacity-100' :'opacity-90'
+            )}
             style={{
               transform:`scale(${1 - index * 0.05})`,
               marginBottom: index > 0 ?'-8px' :'0'

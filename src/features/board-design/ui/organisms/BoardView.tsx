@@ -17,6 +17,7 @@ import { useToast } from '@/src/shared/ui/molecules/Toast';
 import { PipelineBanner } from '@/src/shared/ui/molecules/PipelineBanner';
 import { ContextMenu } from '@/src/shared/ui/molecules/ContextMenu';
 import { contentStateService } from '@/src/shared/services/contentState';
+import { PaneLayout } from '@/src/shared/ui/layout';
 import { uiLog } from '@/src/shared/services/logger';
 import {
   autoArrangeItems,
@@ -773,7 +774,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   const hasPipelineItems = pipeline.intent === 'compose' && pipeline.selectedIds.length > 0;
 
   return (
-    <div className={`flex flex-col h-full ${cx.surface}`}>
+    <PaneLayout variant="canvas" className={cx.surface}>
       {hasPipelineItems && (
         <PipelineBanner
           onBack={(mode) => onSwitchView?.(mode)}
@@ -783,8 +784,9 @@ export const BoardView: React.FC<BoardViewProps> = ({
         />
       )}
 
-      <BoardHeader
-        title="Board Design"
+      <PaneLayout.Header>
+        <BoardHeader
+          title="Board Design"
         activeTool={activeTool}
         onToolChange={handleToolChange}
         canUndo={canUndo}
@@ -819,9 +821,11 @@ export const BoardView: React.FC<BoardViewProps> = ({
         cx={cx}
         fieldMode={fieldMode}
       />
+      </PaneLayout.Header>
 
-      <div
-        className="flex-1 flex overflow-hidden relative"
+      <PaneLayout.Body>
+        <div
+          className="h-full flex overflow-hidden relative"
         onDragOver={handleBoardDragOver}
         onDrop={handleBoardDrop}
       >
@@ -897,6 +901,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
           </div>
         )}
       </div>
+      </PaneLayout.Body>
 
       {/* Context menu for board nodes */}
       <ContextMenu
@@ -1058,7 +1063,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
           onGoTo={presentation.goTo}
         />
       )}
-    </div>
+    </PaneLayout>
   );
 };
 

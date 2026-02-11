@@ -26,7 +26,8 @@ import { EmptyState } from '@/src/shared/ui/molecules/EmptyState';
 import { FacetPill } from '@/src/shared/ui/molecules/FacetPill';
 import { ResultCard } from '@/src/shared/ui/molecules/ResultCard';
 import { SearchField } from '@/src/shared/ui/molecules/SearchField';
-import { ViewHeader, ViewHeaderBody } from '@/src/shared/ui/molecules/ViewHeader';
+import { ViewHeader, ViewHeaderTitle, ViewHeaderActions, ViewHeaderSubBar } from '@/src/shared/ui/molecules/ViewHeader';
+import { PaneLayout } from '@/src/shared/ui/layout';
 import { EMPTY_STATES } from '@/src/shared/constants/ui';
 import { usePipeline } from '@/src/shared/lib/hooks';
 import {
@@ -165,123 +166,131 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const surfaceBg = fieldMode ? 'bg-nb-black' : 'bg-nb-white';
 
   return (
-    <div className={`flex flex-col h-full ${surfaceBg} ${cx.text}`}>
+    <PaneLayout className={`${surfaceBg} ${cx.text}`}>
       {/* Search Header */}
-      <ViewHeader cx={cx} fieldMode={fieldMode} height="fluid">
-        <ViewHeaderBody maxWidth="max-w-3xl mx-auto w-full">
-          <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${cx.text}`}>
-            <Icon name="search" className="text-mode-accent" />
-            Global Search
-          </h2>
-
-          {/* Search Tips */}
-          {!query && !indexing && (
-            <div className={`mb-4 flex flex-nowrap sm:flex-wrap gap-2 text-sm overflow-x-auto [&>*]:shrink-0 ${cx.textMuted}`}>
-              <span>Try:</span>
-              {['sunset', 'archaeological site', '2017', 'portrait'].map((tip) => (
-                <Button variant="ghost" size="bare"
-                  key={tip}
-                  onClick={() => setQuery(tip)}
-                  className={`px-2 py-0.5 text-xs transition-nb ${
-                    fieldMode
-                      ? 'bg-nb-black text-nb-black/40 hover:bg-nb-black/70 hover:text-nb-black/20'
-                      : 'bg-nb-cream text-nb-black/60 hover:bg-nb-black/10 hover:text-nb-black/70'
-                  }`}
-                >
-                  {tip}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          {/* Search Field with Autocomplete */}
-          <div className="relative">
-            <SearchField
-              value={query}
-              onChange={setQuery}
-              placeholder="Search for items, metadata, or content..."
-              autoFocus
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-
-            {/* Autocomplete Dropdown */}
-            {showAutocomplete && autocompleteResults.length > 0 && (
-              <div
-                ref={autocompleteRef}
-                className={`absolute top-full left-0 right-0 mt-1 ${fieldMode ? 'bg-nb-black border-nb-black/80' : 'bg-nb-white border-nb-black/20'} border  shadow-brutal z-20 overflow-hidden`}
-              >
-                {autocompleteResults.map((result, idx) => (
-                  <div
-                    key={`${result.type}-${result.value}`}
-                    onClick={() => handleAutocompleteClick(result.value)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-nb ${
-                      idx === autocompleteIndex
-                        ? 'bg-iiif-blue text-white'
-                        : fieldMode
-                          ? 'hover:bg-nb-black/80 text-nb-black/20'
-                          : 'hover:bg-nb-white text-nb-black/80'
-                    }`}
-                  >
-                    <Icon
-                      name={result.icon || 'search'}
-                      className={idx === autocompleteIndex ? 'text-white' : cx.textMuted}
-                    />
-                    <span className="flex-1 font-medium">{result.value}</span>
-                    {result.type === 'recent' && (
-                      <span className={`text-[10px] uppercase font-bold ${
-                        idx === autocompleteIndex ? 'text-white/70' : cx.textMuted
-                      }`}>
-                        Recent
-                      </span>
-                    )}
-                    {result.type === 'type' && result.count !== undefined && (
-                      <span className={`text-xs px-2 py-0.5 ${
-                        idx === autocompleteIndex
-                          ? 'bg-nb-white/20 text-white'
-                          : fieldMode
-                            ? 'bg-nb-black/80 text-nb-black/30'
-                            : 'bg-nb-cream text-nb-black/50'
-                      }`}>
-                        {result.count}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {recentSearches.length > 0 && (
-                  <div
-                    onClick={clearRecentSearches}
-                    className={`w-full px-4 py-2 text-[10px] uppercase font-bold border-t ${
+      <PaneLayout.Header>
+        <ViewHeader cx={cx} fieldMode={fieldMode}>
+          <ViewHeaderTitle icon="search" title="Search">
+            {shouldSearch(query) && results.length > 0 && (
+              <>
+                <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow/40' : 'bg-nb-black/20'}`} />
+                <span className={`text-[10px] font-bold uppercase font-mono ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
+                  {getResultCountText(results.length)}
+                </span>
+              </>
+            )}
+          </ViewHeaderTitle>
+          <ViewHeaderActions>
+            {!query && !indexing && (
+              <div className={`flex items-center gap-1 text-xs ${cx.textMuted}`}>
+                <span className="text-[10px] font-mono uppercase">Try:</span>
+                {['sunset', 'archaeological site', '2017', 'portrait'].map((tip) => (
+                  <Button variant="ghost" size="bare"
+                    key={tip}
+                    onClick={() => setQuery(tip)}
+                    className={`px-1.5 py-0.5 text-[10px] font-mono transition-nb ${
                       fieldMode
-                        ? 'text-nb-black/40 hover:text-nb-black/20 hover:bg-nb-black/80 border-nb-black/80'
-                        : 'text-nb-black/40 hover:text-nb-black/60 hover:bg-nb-white border-nb-black/20'
+                        ? 'text-nb-yellow/40 hover:text-nb-yellow hover:bg-nb-yellow/10'
+                        : 'text-nb-black/40 hover:text-nb-black hover:bg-nb-black/10'
                     }`}
                   >
-                    Clear Recent Searches
-                  </div>
-                )}
+                    {tip}
+                  </Button>
+                ))}
               </div>
             )}
-          </div>
+          </ViewHeaderActions>
 
-          {/* Filter Pills */}
-          <div className="flex gap-2 mt-4 overflow-x-auto [&>*]:shrink-0">
-            {FILTER_OPTIONS.map((f) => (
-              <FacetPill
-                key={f}
-                label={f === 'All' ? f : t(f)}
-                active={filter === f}
-                onToggle={() => setFilter(f)}
-                count={f !== 'All' && filter === f ? results.length : undefined}
+          {/* Sub-header: Search field + filter pills */}
+          <ViewHeaderSubBar visible={true}>
+            <div className="flex-1 max-w-xl relative">
+              <SearchField
+                value={query}
+                onChange={setQuery}
+                placeholder="Search items, metadata, or content..."
+                autoFocus
                 cx={cx}
+                fieldMode={fieldMode}
               />
-            ))}
-          </div>
-        </ViewHeaderBody>
-      </ViewHeader>
+
+              {/* Autocomplete Dropdown */}
+              {showAutocomplete && autocompleteResults.length > 0 && (
+                <div
+                  ref={autocompleteRef}
+                  className={`absolute top-full left-0 right-0 mt-1 ${fieldMode ? 'bg-nb-black border-nb-black/80' : 'bg-nb-white border-nb-black/20'} border shadow-brutal z-20 overflow-hidden`}
+                >
+                  {autocompleteResults.map((result, idx) => (
+                    <div
+                      key={`${result.type}-${result.value}`}
+                      onClick={() => handleAutocompleteClick(result.value)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-nb ${
+                        idx === autocompleteIndex
+                          ? 'bg-iiif-blue text-white'
+                          : fieldMode
+                            ? 'hover:bg-nb-black/80 text-nb-black/20'
+                            : 'hover:bg-nb-white text-nb-black/80'
+                      }`}
+                    >
+                      <Icon
+                        name={result.icon || 'search'}
+                        className={idx === autocompleteIndex ? 'text-white' : cx.textMuted}
+                      />
+                      <span className="flex-1 font-medium">{result.value}</span>
+                      {result.type === 'recent' && (
+                        <span className={`text-[10px] uppercase font-bold ${
+                          idx === autocompleteIndex ? 'text-white/70' : cx.textMuted
+                        }`}>
+                          Recent
+                        </span>
+                      )}
+                      {result.type === 'type' && result.count !== undefined && (
+                        <span className={`text-xs px-2 py-0.5 ${
+                          idx === autocompleteIndex
+                            ? 'bg-nb-white/20 text-white'
+                            : fieldMode
+                              ? 'bg-nb-black/80 text-nb-black/30'
+                              : 'bg-nb-cream text-nb-black/50'
+                        }`}>
+                          {result.count}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {recentSearches.length > 0 && (
+                    <div
+                      onClick={clearRecentSearches}
+                      className={`w-full px-4 py-2 text-[10px] uppercase font-bold border-t ${
+                        fieldMode
+                          ? 'text-nb-black/40 hover:text-nb-black/20 hover:bg-nb-black/80 border-nb-black/80'
+                          : 'text-nb-black/40 hover:text-nb-black/60 hover:bg-nb-white border-nb-black/20'
+                      }`}
+                    >
+                      Clear Recent Searches
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex gap-1.5 overflow-x-auto [&>*]:shrink-0">
+              {FILTER_OPTIONS.map((f) => (
+                <FacetPill
+                  key={f}
+                  label={f === 'All' ? f : t(f)}
+                  active={filter === f}
+                  onToggle={() => setFilter(f)}
+                  count={f !== 'All' && filter === f ? results.length : undefined}
+                  cx={cx}
+                />
+              ))}
+            </div>
+          </ViewHeaderSubBar>
+        </ViewHeader>
+      </PaneLayout.Header>
 
       {/* Results Area */}
-      <div className={`flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar ${cx.surface}`}>
+      <PaneLayout.Body scroll className={`p-4 sm:p-6 custom-scrollbar ${cx.surface}`}>
         <div className="max-w-3xl mx-auto w-full space-y-4">
           {indexing ? (
             <div className={`text-center py-12 ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
@@ -343,7 +352,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </PaneLayout.Body>
+    </PaneLayout>
   );
 };

@@ -16,6 +16,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface CollectionCardEditFormProps {
   /** Current name value */
@@ -24,6 +25,8 @@ export interface CollectionCardEditFormProps {
   onSave: (newName: string) => void;
   /** Called when edit is cancelled (Escape) */
   onCancel: () => void;
+  /** Contextual styles */
+  cx?: Partial<ContextualClassNames>;
 }
 
 /**
@@ -42,6 +45,7 @@ export const CollectionCardEditForm: React.FC<CollectionCardEditFormProps> = ({
   name,
   onSave,
   onCancel,
+  cx,
 }) => {
   const [editName, setEditName] = useState(name);
 
@@ -78,7 +82,7 @@ export const CollectionCardEditForm: React.FC<CollectionCardEditFormProps> = ({
       onBlur={handleSave}
       onKeyDown={handleKeyDown}
       autoFocus
-      className="w-full px-2 py-1 text-sm font-medium border border-nb-blue/40 focus:outline-none focus:ring-2 focus:ring-nb-blue"
+      className={`w-full px-2 py-1 text-sm font-medium ${cx?.input ?? 'border border-nb-blue/40 focus:outline-none focus:ring-2 focus:ring-nb-blue'}`}
       aria-label="Edit collection name"
     />
   );

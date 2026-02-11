@@ -146,8 +146,8 @@ export const CanvasComposer: React.FC<CanvasComposerProps> = ({ canvas, root, on
               <span className="px-3 py-1 text-[10px] font-bold text-white/60 min-w-[60px] text-center" aria-live="polite">{viewport.scalePercent}%</span>
               <Button variant="ghost" size="bare" onClick={viewport.zoomIn} aria-label="Zoom In" className="p-1 text-white/40 hover:text-white"><Icon name="add"/></Button>
           </div>
-          <Button variant="ghost" size="bare" onClick={onClose} aria-label="Cancel and close workspace" className="px-4 py-2 text-white/40 hover:text-white font-bold text-sm">Cancel</Button>
-          <Button variant="ghost" size="bare" onClick={handleSave} aria-label="Apply composition to canvas" className="bg-nb-blue text-white px-6 py-2 font-black uppercase tracking-widest text-xs hover:bg-nb-blue/100 shadow-brutal transition-nb">Apply Composition</Button>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Cancel and close workspace" className="text-white/40 hover:text-white">Cancel</Button>
+          <Button variant="primary" size="sm" onClick={handleSave} aria-label="Apply composition to canvas">Apply Composition</Button>
         </div>
       </div>
 

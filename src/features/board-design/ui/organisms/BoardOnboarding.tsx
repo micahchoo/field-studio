@@ -433,23 +433,17 @@ export const BoardOnboarding: React.FC<BoardOnboardingProps> = ({
               You can modify or delete these items anytime.
             </p>
             <div className="flex gap-3 justify-end">
-              <Button variant="ghost" size="bare"
+              <Button variant="ghost" size="sm"
                 onClick={() => setShowDemoPrompt(false)}
-                className={`px-4 py-2 font-medium transition-nb ${
-                  fieldMode ? 'text-nb-black/40 hover:text-nb-black/10' : 'text-nb-black/60 hover:text-nb-black'
-                }`}
               >
                 Cancel
               </Button>
-              <Button variant="ghost" size="bare"
+              <Button variant="primary" size="sm"
                 onClick={() => {
                   setShowDemoPrompt(false);
                   // Create a narrative template with demo flag
                   onSelectTemplate({ ...TEMPLATES[0], id: 'narrative-demo' });
                 }}
-                className={`px-4 py-2 font-medium transition-nb ${
-                  fieldMode ? 'bg-nb-orange hover:bg-nb-orange text-white' : 'bg-nb-orange hover:bg-nb-orange text-white'
-                }`}
               >
                 Create Demo Board
               </Button>

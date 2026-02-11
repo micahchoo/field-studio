@@ -23,6 +23,8 @@ export interface DropIndicatorProps {
   isValid: boolean;
   /** Additional className */
   className?: string;
+  /** Field mode flag */
+  fieldMode?: boolean;
 }
 
 /**
@@ -35,10 +37,13 @@ export const DropIndicator: React.FC<DropIndicatorProps> = ({
   position,
   isValid,
   className = '',
+  fieldMode,
 }) => {
   const baseClasses = 'absolute left-0 right-0 h-0.5 z-10 pointer-events-none';
   const colorClasses = isValid
-    ? 'bg-nb-blue shadow-[0_0_4px_rgba(59,130,246,0.5)]'
+    ? fieldMode
+      ? 'bg-nb-yellow shadow-[0_0_4px_rgba(234,179,8,0.5)]'
+      : 'bg-nb-blue shadow-[0_0_4px_rgba(59,130,246,0.5)]'
     : 'bg-nb-red shadow-[0_0_4px_rgba(239,68,68,0.5)]';
 
   const positionClasses = {
@@ -56,7 +61,7 @@ export const DropIndicator: React.FC<DropIndicatorProps> = ({
       {/* Arrow indicator for before/after */}
       {(position === 'before' || position === 'after') && (
         <div
-          className={`absolute left-1 w-2 h-2 ${isValid ? 'bg-nb-blue' : 'bg-nb-red'} ${
+          className={`absolute left-1 w-2 h-2 ${isValid ? (fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue') : 'bg-nb-red'} ${
             position === 'before' ? '-top-[3px]' : '-top-[3px]'
           }`}
         />

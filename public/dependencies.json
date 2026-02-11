@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-09T08:20:01.721Z",
-  "totalFiles": 470,
+  "generatedAt": "2026-02-09T20:31:56.617Z",
+  "totalFiles": 497,
   "files": {
     "src/app/App.tsx": {
       "filePath": "src/app/App.tsx",
@@ -26,6 +26,7 @@
             "type AppMode",
             "type FileTree",
             "getIIIFValue",
+            "type IIIFAnnotation",
             "type IIIFItem",
             "isCanvas",
             "isCollection",
@@ -345,6 +346,7 @@
           "source": "@/src/entities/manifest/model/hooks/useIIIFEntity",
           "specifiers": [
             "useBulkOperations",
+            "useHistory",
             "useUndoRedoShortcuts",
             "useVault",
             "useVaultState",
@@ -394,6 +396,50 @@
           "source": "@/src/shared/services/logger",
           "specifiers": [
             "appLog"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useNetworkStatus",
+          "specifiers": [
+            "useNetworkStatus"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/services/activityStream",
+          "specifiers": [
+            "activityStream"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/services/storage",
+          "specifiers": [
+            "DetailedStorageEstimate"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/widgets/StatusBar/ui/molecules/ActivityFeedPanel",
+          "specifiers": [
+            "ActivityFeedPanel"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -522,8 +568,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 32779,
-      "lines": 747
+      "size": 38208,
+      "lines": 877
     },
     "src/app/hooks/useAutoSave.ts": {
       "filePath": "src/app/hooks/useAutoSave.ts",
@@ -2041,8 +2087,8 @@
       "dependents": [
         "src/app/routes/index.ts"
       ],
-      "size": 29571,
-      "lines": 740
+      "size": 30539,
+      "lines": 762
     },
     "src/app/routes/index.ts": {
       "filePath": "src/app/routes/index.ts",
@@ -3815,6 +3861,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/services/activityStream",
+          "specifiers": [
+            "activityStream"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/lib/jsonPatch",
           "specifiers": [
             "diffStates",
@@ -3995,8 +4052,8 @@
       "dependents": [
         "src/entities/manifest/model/actions.ts"
       ],
-      "size": 20530,
-      "lines": 609
+      "size": 24405,
+      "lines": 709
     },
     "src/entities/manifest/model/actions/linking.ts": {
       "filePath": "src/entities/manifest/model/actions/linking.ts",
@@ -4977,8 +5034,8 @@
         "src/entities/manifest/model/ingest/ingestWorkerPool.ts"
       ],
       "dependents": [],
-      "size": 66023,
-      "lines": 1919
+      "size": 66195,
+      "lines": 1924
     },
     "src/entities/manifest/model/hooks/useIIIFEntity.tsx": {
       "filePath": "src/entities/manifest/model/hooks/useIIIFEntity.tsx",
@@ -5144,8 +5201,8 @@
       "dependents": [
         "src/entities/manifest/model/hooks/useVaultSelectors.ts"
       ],
-      "size": 22099,
-      "lines": 768
+      "size": 22949,
+      "lines": 790
     },
     "src/entities/manifest/model/hooks/useVaultSelectors.ts": {
       "filePath": "src/entities/manifest/model/hooks/useVaultSelectors.ts",
@@ -7370,8 +7427,8 @@
         "src/entities/manifest/model/vault/index.ts",
         "src/entities/manifest/model/vault/vault.ts"
       ],
-      "size": 6727,
-      "lines": 230
+      "size": 6828,
+      "lines": 233
     },
     "src/entities/manifest/model/vault/vault.ts": {
       "filePath": "src/entities/manifest/model/vault/vault.ts",
@@ -8107,8 +8164,8 @@
         "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx",
         "src/features/archive/ui/organisms/ArchiveGrid.tsx"
       ],
-      "size": 2475,
-      "lines": 82
+      "size": 3127,
+      "lines": 95
     },
     "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx": {
       "filePath": "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx",
@@ -8663,6 +8720,22 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderTitle",
+            "ViewHeaderActions",
+            "ViewHeaderDivider",
+            "ViewHeaderSelectionBar",
+            ""
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon"
@@ -8723,8 +8796,8 @@
         "src/features/archive/index.ts",
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 14838,
-      "lines": 397
+      "size": 10657,
+      "lines": 299
     },
     "src/features/archive/ui/organisms/ArchiveList.tsx": {
       "filePath": "src/features/archive/ui/organisms/ArchiveList.tsx",
@@ -11640,6 +11713,22 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderTitle",
+            "ViewHeaderCenter",
+            "ViewHeaderActions",
+            "ViewHeaderDivider",
+            ""
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/features/metadata-edit/ui/atoms/ShareButton",
           "specifiers": [
             "ShareButton"
@@ -11690,8 +11779,8 @@
         "src/features/board-design/index.ts",
         "src/features/board-design/ui/organisms/BoardView.tsx"
       ],
-      "size": 16806,
-      "lines": 482
+      "size": 16787,
+      "lines": 472
     },
     "src/features/board-design/ui/organisms/BoardOnboarding.tsx": {
       "filePath": "src/features/board-design/ui/organisms/BoardOnboarding.tsx",
@@ -13757,7 +13846,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 7828,
+      "size": 7871,
       "lines": 192
     },
     "src/features/map/index.ts": {
@@ -14008,6 +14097,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "AppMode"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon",
@@ -14023,6 +14123,30 @@
           "source": "@/src/shared/ui/molecules/EmptyState",
           "specifiers": [
             "EmptyState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/ViewToggle",
+          "specifiers": [
+            "ViewToggle"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderTitle",
+            "ViewHeaderActions"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -14047,6 +14171,19 @@
             "ClusterBadge"
           ],
           "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/features/archive/model",
+          "specifiers": [
+            "VIEW_MODE_OPTIONS",
+            "saveViewMode",
+            "type ArchiveViewMode"
+          ],
+          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -14084,8 +14221,8 @@
         "src/features/map/index.ts",
         "src/features/map/index.ts"
       ],
-      "size": 10087,
-      "lines": 273
+      "size": 10783,
+      "lines": 296
     },
     "src/features/metadata-edit/index.ts": {
       "filePath": "src/features/metadata-edit/index.ts",
@@ -14550,6 +14687,7 @@
         "src/features/metadata-edit/model/index.ts",
         "src/features/metadata-edit/ui/atoms/ValidatedField.tsx",
         "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx",
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
         "src/features/metadata-edit/ui/molecules/ValidationSummary.tsx",
         "src/features/metadata-edit/ui/molecules/ValidationTabPanel.tsx",
         "src/features/metadata-edit/ui/organisms/Inspector.tsx"
@@ -14737,8 +14875,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/molecules/AnnotationsTabPanel.tsx"
       ],
-      "size": 4845,
-      "lines": 139
+      "size": 5487,
+      "lines": 157
     },
     "src/features/metadata-edit/ui/atoms/AutoMapButton.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/AutoMapButton.tsx",
@@ -14876,8 +15014,8 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
+        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
       "size": 6509,
       "lines": 174
@@ -15061,7 +15199,7 @@
       "dependencies": [],
       "dependents": [
         "src/features/metadata-edit/ui/atoms/ValidatedField.tsx",
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx"
       ],
       "size": 1242,
       "lines": 36
@@ -15705,8 +15843,8 @@
         "src/features/metadata-edit/ui/atoms/LocationPicker.tsx"
       ],
       "dependents": [
-        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
+        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
       "size": 2160,
       "lines": 84
@@ -15726,6 +15864,17 @@
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationDot",
+          "specifiers": [
+            "ValidationDot"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
           "isInternalAlias": false
         },
         {
@@ -15757,13 +15906,15 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [],
-      "dependents": [
-        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+      "dependencies": [
+        "src/features/metadata-edit/ui/atoms/ValidationDot.tsx"
       ],
-      "size": 1575,
-      "lines": 62
+      "dependents": [
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
+        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
+      ],
+      "size": 1928,
+      "lines": 71
     },
     "src/features/metadata-edit/ui/atoms/PropertySelector.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/PropertySelector.tsx",
@@ -15958,8 +16109,8 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
+        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
       "size": 1685,
       "lines": 67
@@ -16427,7 +16578,7 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx"
       ],
       "size": 8963,
       "lines": 279
@@ -16491,6 +16642,45 @@
       ],
       "size": 1632,
       "lines": 72
+    },
+    "src/features/metadata-edit/ui/atoms/ValidationDot.tsx": {
+      "filePath": "src/features/metadata-edit/ui/atoms/ValidationDot.tsx",
+      "fileName": "ValidationDot.tsx",
+      "directory": "src/features/metadata-edit/ui/atoms",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ValidationDotProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ValidationDot",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/metadata-edit/ui/atoms/PropertyLabel.tsx",
+        "src/features/metadata-edit/ui/atoms/index.ts",
+        "src/features/metadata-edit/ui/atoms/index.ts"
+      ],
+      "size": 1026,
+      "lines": 45
     },
     "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx",
@@ -16652,8 +16842,8 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
+        "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx"
       ],
       "size": 1835,
       "lines": 68
@@ -16930,6 +17120,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationDot",
+          "specifiers": [
+            "[re-export]:ValidationDot"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationDot",
+          "specifiers": [
+            "[re-export]:ValidationDotProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -17067,6 +17279,16 @@
           "name": "ValidationFixActionProps",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "ValidationDot",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ValidationDotProps",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [
@@ -17089,11 +17311,13 @@
         "src/features/metadata-edit/ui/atoms/ValidationBadge.tsx",
         "src/features/metadata-edit/ui/atoms/ValidationBadge.tsx",
         "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx",
-        "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx"
+        "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx",
+        "src/features/metadata-edit/ui/atoms/ValidationDot.tsx",
+        "src/features/metadata-edit/ui/atoms/ValidationDot.tsx"
       ],
       "dependents": [],
-      "size": 1917,
-      "lines": 42
+      "size": 2025,
+      "lines": 44
     },
     "src/features/metadata-edit/ui/molecules/AnnotationsTabPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/molecules/AnnotationsTabPanel.tsx",
@@ -17102,20 +17326,21 @@
       "extension": ".tsx",
       "imports": [
         {
-          "source": "react",
+          "source": "@/src/shared/ui/molecules/ListContainer",
           "specifiers": [
-            "default:React"
+            "ListContainer"
           ],
           "isTypeImport": false,
           "isRelative": false,
           "isAbsolute": false,
-          "isExternal": true,
-          "isInternalAlias": false
+          "isExternal": false,
+          "isInternalAlias": true
         },
         {
-          "source": "@/src/shared/ui/molecules/ListContainer",
+          "source": "@/src/shared/ui/atoms",
           "specifiers": [
-            "ListContainer"
+            "Button",
+            "Icon"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -17181,8 +17406,8 @@
         "src/features/metadata-edit/ui/organisms/Inspector.tsx",
         "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx"
       ],
-      "size": 2918,
-      "lines": 86
+      "size": 8483,
+      "lines": 229
     },
     "src/features/metadata-edit/ui/molecules/CSVImportModal.tsx": {
       "filePath": "src/features/metadata-edit/ui/molecules/CSVImportModal.tsx",
@@ -17469,7 +17694,7 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx"
       ],
       "size": 15329,
       "lines": 509
@@ -17533,7 +17758,7 @@
       ],
       "dependencies": [],
       "dependents": [
-        "src/features/metadata-edit/ui/organisms/Inspector.tsx",
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
         "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx"
       ],
       "size": 3458,
@@ -17630,6 +17855,252 @@
       "size": 5619,
       "lines": 169
     },
+    "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx": {
+      "filePath": "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
+      "fileName": "MetadataFieldsPanel.tsx",
+      "directory": "src/features/metadata-edit/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "getIIIFValue",
+            "type IIIFItem",
+            "type IIIFManifest",
+            "isManifest"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button",
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/FormSection",
+          "specifiers": [
+            "FormSection"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/SelectField",
+          "specifiers": [
+            "SelectField"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../atoms/ValidatedInput",
+          "specifiers": [
+            "ValidatedInput"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../atoms/DebouncedField",
+          "specifiers": [
+            "DebouncedField"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../atoms/RightsSelector",
+          "specifiers": [
+            "RightsSelector"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../atoms/BehaviorSelector",
+          "specifiers": [
+            "BehaviorSelector"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../atoms/PropertyInput",
+          "specifiers": [
+            "PropertyInput"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../atoms/PropertyLabel",
+          "specifiers": [
+            "PropertyLabel"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../atoms/ViewingDirectionSelector",
+          "specifiers": [
+            "ViewingDirectionSelector"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./LocationPickerModal",
+          "specifiers": [
+            "LocationPickerModal"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./GeoEditor",
+          "specifiers": [
+            "GeoEditor"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/constants/iiif",
+          "specifiers": [
+            "BEHAVIOR_OPTIONS",
+            "getConflictingBehaviors",
+            "SUPPORTED_LANGUAGES"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/utils/iiifSchema",
+          "specifiers": [
+            "isPropertyAllowed"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/utils/iiifBehaviors",
+          "specifiers": [
+            "suggestBehaviors"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model/useInspectorValidation",
+          "specifiers": [
+            "ValidationIssue"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "FieldValidation",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MetadataFieldsPanelProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MetadataFieldsPanel",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/metadata-edit/ui/atoms/ValidatedInput.tsx",
+        "src/features/metadata-edit/ui/atoms/DebouncedField.tsx",
+        "src/features/metadata-edit/ui/atoms/RightsSelector.tsx",
+        "src/features/metadata-edit/ui/atoms/BehaviorSelector.tsx",
+        "src/features/metadata-edit/ui/atoms/PropertyInput.tsx",
+        "src/features/metadata-edit/ui/atoms/PropertyLabel.tsx",
+        "src/features/metadata-edit/ui/atoms/ViewingDirectionSelector.tsx",
+        "src/features/metadata-edit/ui/molecules/LocationPickerModal.tsx",
+        "src/features/metadata-edit/ui/molecules/GeoEditor.tsx",
+        "src/features/metadata-edit/model/useInspectorValidation.ts"
+      ],
+      "dependents": [
+        "src/features/metadata-edit/ui/organisms/Inspector.tsx"
+      ],
+      "size": 19973,
+      "lines": 466
+    },
     "src/features/metadata-edit/ui/molecules/MetadataTabPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/molecules/MetadataTabPanel.tsx",
       "fileName": "MetadataTabPanel.tsx",
@@ -17653,6 +18124,17 @@
           "specifiers": [
             "Button",
             "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/FormSection",
+          "specifiers": [
+            "FormSection"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -17706,8 +18188,8 @@
       "dependents": [
         "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx"
       ],
-      "size": 19221,
-      "lines": 500
+      "size": 17580,
+      "lines": 461
     },
     "src/features/metadata-edit/ui/molecules/ResultStep.tsx": {
       "filePath": "src/features/metadata-edit/ui/molecules/ResultStep.tsx",
@@ -18416,31 +18898,9 @@
           "isInternalAlias": false
         },
         {
-          "source": "../molecules/GeoEditor",
+          "source": "../molecules/MetadataFieldsPanel",
           "specifiers": [
-            "GeoEditor"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../atoms/ValidatedInput",
-          "specifiers": [
-            "ValidatedInput"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../atoms/DebouncedField",
-          "specifiers": [
-            "DebouncedField"
+            "MetadataFieldsPanel"
           ],
           "isTypeImport": false,
           "isRelative": true,
@@ -18515,28 +18975,6 @@
           "isInternalAlias": true
         },
         {
-          "source": "@/utils/iiifSchema",
-          "specifiers": [
-            "isPropertyAllowed"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "@/utils/iiifBehaviors",
-          "specifiers": [
-            "suggestBehaviors"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
           "source": "@/utils/imageSourceResolver",
           "specifiers": [
             "resolvePreviewUrl"
@@ -18603,96 +19041,6 @@
           "isInternalAlias": false
         },
         {
-          "source": "../atoms/RightsSelector",
-          "specifiers": [
-            "RightsSelector"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../atoms/BehaviorSelector",
-          "specifiers": [
-            "BehaviorSelector"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../atoms/PropertyInput",
-          "specifiers": [
-            "PropertyInput"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../atoms/PropertyLabel",
-          "specifiers": [
-            "PropertyLabel"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../atoms/ViewingDirectionSelector",
-          "specifiers": [
-            "ViewingDirectionSelector"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../molecules/LocationPickerModal",
-          "specifiers": [
-            "LocationPickerModal"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "@/src/shared/ui/molecules/SelectField",
-          "specifiers": [
-            "SelectField"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "@/src/shared/constants/iiif",
-          "specifiers": [
-            "BEHAVIOR_OPTIONS",
-            "getConflictingBehaviors",
-            "SUPPORTED_LANGUAGES"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
           "source": "@/src/shared/types",
           "specifiers": [
             "[dynamic]"
@@ -18713,25 +19061,17 @@
       ],
       "dependencies": [
         "src/features/metadata-edit/ui/atoms/ShareButton.tsx",
-        "src/features/metadata-edit/ui/molecules/GeoEditor.tsx",
-        "src/features/metadata-edit/ui/atoms/ValidatedInput.tsx",
-        "src/features/metadata-edit/ui/atoms/DebouncedField.tsx",
+        "src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.tsx",
         "src/features/metadata-edit/ui/atoms/AnnotationCreateForm.tsx",
         "src/features/metadata-edit/ui/molecules/AnnotationsTabPanel.tsx",
         "src/features/metadata-edit/model/useInspectorValidation.ts",
-        "src/features/metadata-edit/ui/molecules/StructureTabPanel.tsx",
-        "src/features/metadata-edit/ui/atoms/RightsSelector.tsx",
-        "src/features/metadata-edit/ui/atoms/BehaviorSelector.tsx",
-        "src/features/metadata-edit/ui/atoms/PropertyInput.tsx",
-        "src/features/metadata-edit/ui/atoms/PropertyLabel.tsx",
-        "src/features/metadata-edit/ui/atoms/ViewingDirectionSelector.tsx",
-        "src/features/metadata-edit/ui/molecules/LocationPickerModal.tsx"
+        "src/features/metadata-edit/ui/molecules/StructureTabPanel.tsx"
       ],
       "dependents": [
         "src/features/metadata-edit/index.ts"
       ],
-      "size": 33654,
-      "lines": 735
+      "size": 18058,
+      "lines": 435
     },
     "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx",
@@ -19013,6 +19353,18 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderBody"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/ui/primitives/Button",
           "specifiers": [
             "Button"
@@ -19111,8 +19463,8 @@
         "src/features/metadata-edit/index.ts",
         "src/features/metadata-edit/index.ts"
       ],
-      "size": 26154,
-      "lines": 730
+      "size": 26725,
+      "lines": 735
     },
     "src/features/search/index.ts": {
       "filePath": "src/features/search/index.ts",
@@ -19404,6 +19756,18 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderBody"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/constants/ui",
           "specifiers": [
             "EMPTY_STATES"
@@ -19458,8 +19822,8 @@
         "src/features/search/index.ts",
         "src/features/search/index.ts"
       ],
-      "size": 13584,
-      "lines": 351
+      "size": 13456,
+      "lines": 350
     },
     "src/features/staging/index.ts": {
       "filePath": "src/features/staging/index.ts",
@@ -21055,8 +21419,8 @@
         "src/features/staging/model/useConflictDetection.ts"
       ],
       "dependents": [],
-      "size": 42881,
-      "lines": 1121
+      "size": 44796,
+      "lines": 1169
     },
     "src/features/structure-view/index.ts": {
       "filePath": "src/features/structure-view/index.ts",
@@ -22549,6 +22913,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "AppMode"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon"
@@ -22582,11 +22957,48 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/molecules/ViewToggle",
+          "specifiers": [
+            "ViewToggle"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderTitle",
+            "ViewHeaderActions"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/ui/molecules/TimelineTick",
           "specifiers": [
             "TimelineTick"
           ],
           "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/features/archive/model",
+          "specifiers": [
+            "VIEW_MODE_OPTIONS",
+            "saveViewMode",
+            "type ArchiveViewMode"
+          ],
+          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -22627,8 +23039,8 @@
         "src/features/timeline/index.ts",
         "src/features/timeline/index.ts"
       ],
-      "size": 9550,
-      "lines": 256
+      "size": 10317,
+      "lines": 279
     },
     "src/features/viewer/index.ts": {
       "filePath": "src/features/viewer/index.ts",
@@ -23122,9 +23534,12 @@
       "dependencies": [],
       "dependents": [
         "src/features/viewer/model/index.ts",
+        "src/features/viewer/model/useWaveform.ts",
         "src/features/viewer/ui/molecules/AnnotationCanvas.tsx",
         "src/features/viewer/ui/molecules/AnnotationDrawingOverlay.tsx",
         "src/features/viewer/ui/molecules/AnnotationToolbar.tsx",
+        "src/features/viewer/ui/molecules/AudioWaveform.tsx",
+        "src/features/viewer/ui/molecules/AudioWaveform.tsx",
         "src/features/viewer/ui/molecules/TimeAnnotationOverlay.tsx"
       ],
       "size": 20545,
@@ -23392,8 +23807,67 @@
           "specifiers": [
             "[re-export]:useAnnotorious",
             "[re-export]:type AnnotoriousDrawingTool",
+            "[re-export]:type AnnotationStyleOptions",
             "[re-export]:type UseAnnotoriousOptions",
             "[re-export]:type UseAnnotoriousReturn",
+            "[re-export]:"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./useWaveform",
+          "specifiers": [
+            "[re-export]:useWaveform",
+            "[re-export]:type UseWaveformOptions",
+            "[re-export]:type UseWaveformReturn",
+            "[re-export]:"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./useImageFilters",
+          "specifiers": [
+            "[re-export]:useImageFilters",
+            "[re-export]:type FilterState",
+            "[re-export]:type UseImageFiltersReturn",
+            "[re-export]:"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./useMeasurement",
+          "specifiers": [
+            "[re-export]:useMeasurement",
+            "[re-export]:type MeasureUnit",
+            "[re-export]:type MeasurementState",
+            "[re-export]:type UseMeasurementReturn",
+            "[re-export]:"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./useComparison",
+          "specifiers": [
+            "[re-export]:useComparison",
+            "[re-export]:type ComparisonMode",
+            "[re-export]:type ComparisonState",
+            "[re-export]:type UseComparisonReturn",
             "[re-export]:"
           ],
           "isTypeImport": true,
@@ -23585,12 +24059,107 @@
           "isTypeExport": true
         },
         {
+          "name": "type AnnotationStyleOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "type UseAnnotoriousOptions",
           "type": "named",
           "isTypeExport": true
         },
         {
           "name": "type UseAnnotoriousReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useWaveform",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type UseWaveformOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type UseWaveformReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useImageFilters",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type FilterState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type UseImageFiltersReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useMeasurement",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type MeasureUnit",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type MeasurementState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type UseMeasurementReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useComparison",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type ComparisonMode",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type ComparisonState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "type UseComparisonReturn",
           "type": "named",
           "isTypeExport": true
         },
@@ -23615,6 +24184,11 @@
           "isTypeExport": true
         },
         {
+          "name": "ScreenshotFormat",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "UseViewerReturn",
           "type": "named",
           "isTypeExport": true
@@ -23631,11 +24205,15 @@
         "src/features/viewer/model/useMediaPlayer.ts",
         "src/features/viewer/model/useViewingBehavior.ts",
         "src/features/viewer/model/useAnnotationLayers.ts",
-        "src/features/viewer/model/useAnnotorious.ts"
+        "src/features/viewer/model/useAnnotorious.ts",
+        "src/features/viewer/model/useWaveform.ts",
+        "src/features/viewer/model/useImageFilters.ts",
+        "src/features/viewer/model/useMeasurement.ts",
+        "src/features/viewer/model/useComparison.ts"
       ],
       "dependents": [],
-      "size": 28026,
-      "lines": 866
+      "size": 31075,
+      "lines": 970
     },
     "src/features/viewer/model/useAnnotationLayers.ts": {
       "filePath": "src/features/viewer/model/useAnnotationLayers.ts",
@@ -23702,8 +24280,8 @@
       "dependents": [
         "src/features/viewer/model/index.ts"
       ],
-      "size": 5488,
-      "lines": 177
+      "size": 6615,
+      "lines": 208
     },
     "src/features/viewer/model/useAnnotorious.ts": {
       "filePath": "src/features/viewer/model/useAnnotorious.ts",
@@ -23730,6 +24308,7 @@
           "specifiers": [
             "createOSDAnnotator",
             "W3CImageFormat",
+            "UserSelectAction",
             "type DrawingStyle",
             "type ImageAnnotation",
             "type W3CImageAnnotation",
@@ -23779,7 +24358,17 @@
       ],
       "exports": [
         {
+          "name": "UserSelectAction",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
           "name": "AnnotoriousDrawingTool",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AnnotationStyleOptions",
           "type": "named",
           "isTypeExport": true
         },
@@ -23802,10 +24391,156 @@
       "dependencies": [],
       "dependents": [
         "src/features/viewer/model/index.ts",
-        "src/features/viewer/ui/molecules/AnnotationDrawingOverlay.tsx"
+        "src/features/viewer/ui/molecules/AnnotationDrawingOverlay.tsx",
+        "src/features/viewer/ui/molecules/ViewerToolbar.tsx"
       ],
-      "size": 11151,
-      "lines": 322
+      "size": 12988,
+      "lines": 367
+    },
+    "src/features/viewer/model/useComparison.ts": {
+      "filePath": "src/features/viewer/model/useComparison.ts",
+      "fileName": "useComparison.ts",
+      "directory": "src/features/viewer/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useCallback",
+            "useRef",
+            "useState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ComparisonMode",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ComparisonState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "UseComparisonReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useComparison",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/viewer/model/index.ts",
+        "src/features/viewer/ui/molecules/ComparisonViewer.tsx"
+      ],
+      "size": 5556,
+      "lines": 181
+    },
+    "src/features/viewer/model/useImageFilters.ts": {
+      "filePath": "src/features/viewer/model/useImageFilters.ts",
+      "fileName": "useImageFilters.ts",
+      "directory": "src/features/viewer/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useCallback",
+            "useEffect",
+            "useRef",
+            "useState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "FilterState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "UseImageFiltersReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useImageFilters",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/viewer/model/index.ts",
+        "src/features/viewer/ui/molecules/ImageFilterPanel.tsx"
+      ],
+      "size": 3681,
+      "lines": 133
+    },
+    "src/features/viewer/model/useMeasurement.ts": {
+      "filePath": "src/features/viewer/model/useMeasurement.ts",
+      "fileName": "useMeasurement.ts",
+      "directory": "src/features/viewer/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useCallback",
+            "useState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "MeasureUnit",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MeasurementState",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "UseMeasurementReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useMeasurement",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/viewer/model/index.ts",
+        "src/features/viewer/ui/molecules/MeasurementOverlay.tsx"
+      ],
+      "size": 4754,
+      "lines": 160
     },
     "src/features/viewer/model/useMediaPlayer.ts": {
       "filePath": "src/features/viewer/model/useMediaPlayer.ts",
@@ -23911,6 +24646,122 @@
       "size": 2546,
       "lines": 87
     },
+    "src/features/viewer/model/useWaveform.ts": {
+      "filePath": "src/features/viewer/model/useWaveform.ts",
+      "fileName": "useWaveform.ts",
+      "directory": "src/features/viewer/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useCallback",
+            "useEffect",
+            "useRef",
+            "useState"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "wavesurfer.js",
+          "specifiers": [
+            "default:WaveSurfer"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "wavesurfer.js/dist/base-plugin.js",
+          "specifiers": [
+            "GenericPlugin"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "wavesurfer.js/dist/plugins/timeline.js",
+          "specifiers": [
+            "default:TimelinePlugin"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "wavesurfer.js/dist/plugins/hover.js",
+          "specifiers": [
+            "default:HoverPlugin"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFAnnotation"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "./annotation",
+          "specifiers": [
+            "getAnnotationTimeRange",
+            "isTimeBasedAnnotation",
+            "type TimeRange"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "UseWaveformOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "UseWaveformReturn",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useWaveform",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/viewer/model/annotation.ts"
+      ],
+      "dependents": [
+        "src/features/viewer/model/index.ts",
+        "src/features/viewer/ui/molecules/AudioWaveform.tsx"
+      ],
+      "size": 8107,
+      "lines": 286
+    },
     "src/features/viewer/model/viewerCompatibility.ts": {
       "filePath": "src/features/viewer/model/viewerCompatibility.ts",
       "fileName": "viewerCompatibility.ts",
@@ -23991,6 +24842,49 @@
       "dependents": [],
       "size": 16709,
       "lines": 523
+    },
+    "src/features/viewer/ui/atoms/AnnotationColorPicker.tsx": {
+      "filePath": "src/features/viewer/ui/atoms/AnnotationColorPicker.tsx",
+      "fileName": "AnnotationColorPicker.tsx",
+      "directory": "src/features/viewer/ui/atoms",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "AnnotationColorPickerProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AnnotationColorPicker",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AnnotationColorPicker",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/viewer/ui/atoms/index.ts",
+        "src/features/viewer/ui/atoms/index.ts"
+      ],
+      "size": 1342,
+      "lines": 55
     },
     "src/features/viewer/ui/atoms/AutoAdvanceToast.tsx": {
       "filePath": "src/features/viewer/ui/atoms/AutoAdvanceToast.tsx",
@@ -24426,8 +25320,8 @@
       "dependents": [
         "src/features/viewer/ui/molecules/AnnotationLayerPanel.tsx"
       ],
-      "size": 2539,
-      "lines": 98
+      "size": 3767,
+      "lines": 130
     },
     "src/features/viewer/ui/atoms/MediaControlGroup.tsx": {
       "filePath": "src/features/viewer/ui/atoms/MediaControlGroup.tsx",
@@ -25161,6 +26055,61 @@
       "size": 2760,
       "lines": 98
     },
+    "src/features/viewer/ui/atoms/ScreenshotMenu.tsx": {
+      "filePath": "src/features/viewer/ui/atoms/ScreenshotMenu.tsx",
+      "fileName": "ScreenshotMenu.tsx",
+      "directory": "src/features/viewer/ui/atoms",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button",
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model",
+          "specifiers": [
+            "ScreenshotFormat"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ScreenshotMenuProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ScreenshotMenu",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ScreenshotMenu",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/viewer/ui/atoms/index.ts",
+        "src/features/viewer/ui/atoms/index.ts"
+      ],
+      "size": 5074,
+      "lines": 140
+    },
     "src/features/viewer/ui/atoms/Slider.tsx": {
       "filePath": "src/features/viewer/ui/atoms/Slider.tsx",
       "fileName": "Slider.tsx",
@@ -25204,6 +26153,49 @@
       ],
       "size": 1791,
       "lines": 82
+    },
+    "src/features/viewer/ui/atoms/StrokeWidthSelect.tsx": {
+      "filePath": "src/features/viewer/ui/atoms/StrokeWidthSelect.tsx",
+      "fileName": "StrokeWidthSelect.tsx",
+      "directory": "src/features/viewer/ui/atoms",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "StrokeWidthSelectProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "StrokeWidthSelect",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "StrokeWidthSelect",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/features/viewer/ui/atoms/index.ts",
+        "src/features/viewer/ui/atoms/index.ts"
+      ],
+      "size": 1452,
+      "lines": 59
     },
     "src/features/viewer/ui/atoms/TimeDisplay.tsx": {
       "filePath": "src/features/viewer/ui/atoms/TimeDisplay.tsx",
@@ -26161,6 +27153,72 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./ScreenshotMenu",
+          "specifiers": [
+            "[re-export]:ScreenshotMenu"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ScreenshotMenu",
+          "specifiers": [
+            "[re-export]:ScreenshotMenuProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AnnotationColorPicker",
+          "specifiers": [
+            "[re-export]:AnnotationColorPicker"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AnnotationColorPicker",
+          "specifiers": [
+            "[re-export]:AnnotationColorPickerProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./StrokeWidthSelect",
+          "specifiers": [
+            "[re-export]:StrokeWidthSelect"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./StrokeWidthSelect",
+          "specifiers": [
+            "[re-export]:StrokeWidthSelectProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -26448,6 +27506,36 @@
           "name": "MediaLoadingOverlayProps",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "ScreenshotMenu",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ScreenshotMenuProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AnnotationColorPicker",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AnnotationColorPickerProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "StrokeWidthSelect",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "StrokeWidthSelectProps",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [
@@ -26498,11 +27586,17 @@
         "src/features/viewer/ui/atoms/MediaErrorOverlay.tsx",
         "src/features/viewer/ui/atoms/MediaErrorOverlay.tsx",
         "src/features/viewer/ui/atoms/MediaLoadingOverlay.tsx",
-        "src/features/viewer/ui/atoms/MediaLoadingOverlay.tsx"
+        "src/features/viewer/ui/atoms/MediaLoadingOverlay.tsx",
+        "src/features/viewer/ui/atoms/ScreenshotMenu.tsx",
+        "src/features/viewer/ui/atoms/ScreenshotMenu.tsx",
+        "src/features/viewer/ui/atoms/AnnotationColorPicker.tsx",
+        "src/features/viewer/ui/atoms/AnnotationColorPicker.tsx",
+        "src/features/viewer/ui/atoms/StrokeWidthSelect.tsx",
+        "src/features/viewer/ui/atoms/StrokeWidthSelect.tsx"
       ],
       "dependents": [],
-      "size": 3948,
-      "lines": 101
+      "size": 4327,
+      "lines": 110
     },
     "src/features/viewer/ui/molecules/AnnotationCanvas.tsx": {
       "filePath": "src/features/viewer/ui/molecules/AnnotationCanvas.tsx",
@@ -26634,7 +27728,9 @@
           "source": "../../model/useAnnotorious",
           "specifiers": [
             "useAnnotorious",
-            "type AnnotoriousDrawingTool"
+            "UserSelectAction",
+            "type AnnotoriousDrawingTool",
+            "type AnnotationStyleOptions"
           ],
           "isTypeImport": true,
           "isRelative": true,
@@ -26668,8 +27764,8 @@
         "src/features/viewer/ui/molecules/index.ts",
         "src/features/viewer/ui/molecules/index.ts"
       ],
-      "size": 6681,
-      "lines": 205
+      "size": 9484,
+      "lines": 271
     },
     "src/features/viewer/ui/molecules/AnnotationForm.tsx": {
       "filePath": "src/features/viewer/ui/molecules/AnnotationForm.tsx",
@@ -26803,9 +27899,12 @@
       "dependencies": [
         "src/features/viewer/ui/atoms/LayerToggle.tsx"
       ],
-      "dependents": [],
-      "size": 3990,
-      "lines": 131
+      "dependents": [
+        "src/features/viewer/ui/molecules/index.ts",
+        "src/features/viewer/ui/molecules/index.ts"
+      ],
+      "size": 4211,
+      "lines": 136
     },
     "src/features/viewer/ui/molecules/AnnotationOverlay.tsx": {
       "filePath": "src/features/viewer/ui/molecules/AnnotationOverlay.tsx",
@@ -26949,6 +28048,261 @@
       ],
       "size": 2511,
       "lines": 84
+    },
+    "src/features/viewer/ui/molecules/AudioWaveform.tsx": {
+      "filePath": "src/features/viewer/ui/molecules/AudioWaveform.tsx",
+      "fileName": "AudioWaveform.tsx",
+      "directory": "src/features/viewer/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/IconButton",
+          "specifiers": [
+            "IconButton"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/features/viewer/ui/atoms",
+          "specifiers": [
+            "PlayPauseButton",
+            "TimeDisplay",
+            "VolumeControl",
+            "PlaybackRateSelect",
+            "MediaControlGroup",
+            ""
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model/useWaveform",
+          "specifiers": [
+            "useWaveform"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../../model/annotation",
+          "specifiers": [
+            "formatTimeForDisplay"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFAnnotation",
+            "IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "getIIIFValue"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model/annotation",
+          "specifiers": [
+            "TimeRange"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "AudioWaveformProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AudioWaveform",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AudioWaveform",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/viewer/model/useWaveform.ts",
+        "src/features/viewer/model/annotation.ts",
+        "src/features/viewer/model/annotation.ts"
+      ],
+      "dependents": [
+        "src/features/viewer/ui/molecules/ViewerContent.tsx",
+        "src/features/viewer/ui/molecules/index.ts",
+        "src/features/viewer/ui/molecules/index.ts"
+      ],
+      "size": 5477,
+      "lines": 170
+    },
+    "src/features/viewer/ui/molecules/ComparisonViewer.tsx": {
+      "filePath": "src/features/viewer/ui/molecules/ComparisonViewer.tsx",
+      "fileName": "ComparisonViewer.tsx",
+      "directory": "src/features/viewer/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button",
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/molecules/IconButton",
+          "specifiers": [
+            "IconButton"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model/useComparison",
+          "specifiers": [
+            "ComparisonMode",
+            "UseComparisonReturn"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "getIIIFValue"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/canvas/model/imageSourceResolver",
+          "specifiers": [
+            "resolveImageSource"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ComparisonViewerProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ComparisonViewer",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ComparisonViewer",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/viewer/model/useComparison.ts"
+      ],
+      "dependents": [
+        "src/features/viewer/ui/molecules/index.ts",
+        "src/features/viewer/ui/molecules/index.ts"
+      ],
+      "size": 10861,
+      "lines": 313
     },
     "src/features/viewer/ui/molecules/ComposerCanvas.tsx": {
       "filePath": "src/features/viewer/ui/molecules/ComposerCanvas.tsx",
@@ -27344,6 +28698,74 @@
       "size": 2886,
       "lines": 100
     },
+    "src/features/viewer/ui/molecules/ImageFilterPanel.tsx": {
+      "filePath": "src/features/viewer/ui/molecules/ImageFilterPanel.tsx",
+      "fileName": "ImageFilterPanel.tsx",
+      "directory": "src/features/viewer/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button",
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model/useImageFilters",
+          "specifiers": [
+            "FilterState"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ImageFilterPanelProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ImageFilterPanel",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ImageFilterPanel",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/viewer/model/useImageFilters.ts"
+      ],
+      "dependents": [
+        "src/features/viewer/ui/molecules/index.ts",
+        "src/features/viewer/ui/molecules/index.ts"
+      ],
+      "size": 4776,
+      "lines": 156
+    },
     "src/features/viewer/ui/molecules/KeyboardShortcutsModal.tsx": {
       "filePath": "src/features/viewer/ui/molecules/KeyboardShortcutsModal.tsx",
       "fileName": "KeyboardShortcutsModal.tsx",
@@ -27408,6 +28830,64 @@
       ],
       "size": 4759,
       "lines": 148
+    },
+    "src/features/viewer/ui/molecules/MeasurementOverlay.tsx": {
+      "filePath": "src/features/viewer/ui/molecules/MeasurementOverlay.tsx",
+      "fileName": "MeasurementOverlay.tsx",
+      "directory": "src/features/viewer/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button",
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "../../model/useMeasurement",
+          "specifiers": [
+            "MeasureUnit",
+            "UseMeasurementReturn"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "MeasurementOverlayProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MeasurementOverlay",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "MeasurementOverlay",
+          "type": "default",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/viewer/model/useMeasurement.ts"
+      ],
+      "dependents": [
+        "src/features/viewer/ui/molecules/index.ts",
+        "src/features/viewer/ui/molecules/index.ts"
+      ],
+      "size": 8575,
+      "lines": 267
     },
     "src/features/viewer/ui/molecules/MediaPlayer.tsx": {
       "filePath": "src/features/viewer/ui/molecules/MediaPlayer.tsx",
@@ -27522,6 +29002,11 @@
       ],
       "exports": [
         {
+          "name": "ChapterMarker",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "MediaPlayerProps",
           "type": "named",
           "isTypeExport": true
@@ -27543,8 +29028,8 @@
         "src/features/viewer/ui/molecules/index.ts",
         "src/features/viewer/ui/molecules/index.ts"
       ],
-      "size": 19618,
-      "lines": 477
+      "size": 25771,
+      "lines": 618
     },
     "src/features/viewer/ui/molecules/PagedViewer.tsx": {
       "filePath": "src/features/viewer/ui/molecules/PagedViewer.tsx",
@@ -27746,7 +29231,19 @@
         {
           "source": "./MediaPlayer",
           "specifiers": [
-            "MediaPlayer"
+            "MediaPlayer",
+            "type ChapterMarker"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AudioWaveform",
+          "specifiers": [
+            "AudioWaveform"
           ],
           "isTypeImport": false,
           "isRelative": true,
@@ -27819,14 +29316,15 @@
       ],
       "dependencies": [
         "src/features/viewer/ui/molecules/MediaPlayer.tsx",
+        "src/features/viewer/ui/molecules/AudioWaveform.tsx",
         "src/features/viewer/ui/atoms/ChoiceSelector.tsx"
       ],
       "dependents": [
         "src/features/viewer/ui/molecules/index.ts",
         "src/features/viewer/ui/molecules/index.ts"
       ],
-      "size": 5873,
-      "lines": 185
+      "size": 6453,
+      "lines": 197
     },
     "src/features/viewer/ui/molecules/ViewerEmptyState.tsx": {
       "filePath": "src/features/viewer/ui/molecules/ViewerEmptyState.tsx",
@@ -28112,9 +29610,28 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/molecules/ViewHeader",
+          "specifiers": [
+            "ViewHeader",
+            "ViewHeaderTitle",
+            "ViewHeaderCenter",
+            "ViewHeaderActions",
+            "ViewHeaderDivider",
+            ""
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/features/viewer/ui/atoms",
           "specifiers": [
-            "ZoomControl"
+            "ZoomControl",
+            "ScreenshotMenu",
+            "AnnotationColorPicker",
+            "StrokeWidthSelect"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -28132,6 +29649,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "../../model",
+          "specifiers": [
+            "ScreenshotFormat"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../../model/useAnnotorious",
+          "specifiers": [
+            "AnnotationStyleOptions"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -28156,13 +29695,15 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [],
+      "dependencies": [
+        "src/features/viewer/model/useAnnotorious.ts"
+      ],
       "dependents": [
         "src/features/viewer/ui/molecules/index.ts",
         "src/features/viewer/ui/molecules/index.ts"
       ],
-      "size": 11746,
-      "lines": 352
+      "size": 16908,
+      "lines": 482
     },
     "src/features/viewer/ui/molecules/ViewerWorkbench.tsx": {
       "filePath": "src/features/viewer/ui/molecules/ViewerWorkbench.tsx",
@@ -28670,6 +30211,116 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./AudioWaveform",
+          "specifiers": [
+            "[re-export]:AudioWaveform"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AudioWaveform",
+          "specifiers": [
+            "[re-export]:AudioWaveformProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ImageFilterPanel",
+          "specifiers": [
+            "[re-export]:ImageFilterPanel"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ImageFilterPanel",
+          "specifiers": [
+            "[re-export]:ImageFilterPanelProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MeasurementOverlay",
+          "specifiers": [
+            "[re-export]:MeasurementOverlay"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MeasurementOverlay",
+          "specifiers": [
+            "[re-export]:MeasurementOverlayProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ComparisonViewer",
+          "specifiers": [
+            "[re-export]:ComparisonViewer"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ComparisonViewer",
+          "specifiers": [
+            "[re-export]:ComparisonViewerProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AnnotationLayerPanel",
+          "specifiers": [
+            "[re-export]:AnnotationLayerPanel"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AnnotationLayerPanel",
+          "specifiers": [
+            "[re-export]:AnnotationLayerPanelProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -28882,6 +30533,56 @@
           "name": "TimeAnnotationOverlayProps",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "AudioWaveform",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AudioWaveformProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ImageFilterPanel",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ImageFilterPanelProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MeasurementOverlay",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "MeasurementOverlayProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ComparisonViewer",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ComparisonViewerProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AnnotationLayerPanel",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AnnotationLayerPanelProps",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [
@@ -28920,11 +30621,21 @@
         "src/features/viewer/ui/molecules/AnnotationDrawingOverlay.tsx",
         "src/features/viewer/ui/molecules/AnnotationDrawingOverlay.tsx",
         "src/features/viewer/ui/molecules/TimeAnnotationOverlay.tsx",
-        "src/features/viewer/ui/molecules/TimeAnnotationOverlay.tsx"
+        "src/features/viewer/ui/molecules/TimeAnnotationOverlay.tsx",
+        "src/features/viewer/ui/molecules/AudioWaveform.tsx",
+        "src/features/viewer/ui/molecules/AudioWaveform.tsx",
+        "src/features/viewer/ui/molecules/ImageFilterPanel.tsx",
+        "src/features/viewer/ui/molecules/ImageFilterPanel.tsx",
+        "src/features/viewer/ui/molecules/MeasurementOverlay.tsx",
+        "src/features/viewer/ui/molecules/MeasurementOverlay.tsx",
+        "src/features/viewer/ui/molecules/ComparisonViewer.tsx",
+        "src/features/viewer/ui/molecules/ComparisonViewer.tsx",
+        "src/features/viewer/ui/molecules/AnnotationLayerPanel.tsx",
+        "src/features/viewer/ui/molecules/AnnotationLayerPanel.tsx"
       ],
       "dependents": [],
-      "size": 2566,
-      "lines": 65
+      "size": 3183,
+      "lines": 80
     },
     "src/features/viewer/ui/organisms/AnnotationToolPanel.tsx": {
       "filePath": "src/features/viewer/ui/organisms/AnnotationToolPanel.tsx",
@@ -29285,7 +30996,9 @@
             "getIIIFValue",
             "type IIIFAnnotation",
             "type IIIFCanvas",
-            "type IIIFManifest"
+            "type IIIFManifest",
+            "type IIIFRange",
+            "type IIIFRangeReference"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -29308,6 +31021,17 @@
           "source": "@/src/shared/services/storage",
           "specifiers": [
             "storage"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/services/contentState",
+          "specifiers": [
+            "contentStateService"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -29339,10 +31063,30 @@
         {
           "source": "../../model",
           "specifiers": [
+            "type AnnotationStyleOptions",
+            "type ScreenshotFormat",
             "type SpatialDrawingMode",
-            "useViewer"
+            "useViewer",
+            "useImageFilters",
+            "useMeasurement",
+            "useComparison",
+            "useAnnotationLayers"
           ],
           "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../molecules",
+          "specifiers": [
+            "ImageFilterPanel",
+            "MeasurementOverlay",
+            "ComparisonViewer",
+            "AnnotationLayerPanel"
+          ],
+          "isTypeImport": false,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
@@ -29381,6 +31125,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "[dynamic]"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -29405,8 +31160,8 @@
         "src/features/viewer/index.ts",
         "src/features/viewer/index.ts"
       ],
-      "size": 14884,
-      "lines": 395
+      "size": 25023,
+      "lines": 633
     },
     "src/shared/config/design-tokens.ts": {
       "filePath": "src/shared/config/design-tokens.ts",
@@ -31565,6 +33320,39 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./useNetworkStatus",
+          "specifiers": [
+            "[re-export]:useNetworkStatus"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./useAuthStatus",
+          "specifiers": [
+            "[re-export]:useAuthStatus"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./useAuthStatus",
+          "specifiers": [
+            "[re-export]:AuthStatusResult"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -31787,6 +33575,21 @@
           "name": "UseTerminologyReturn",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "useNetworkStatus",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useAuthStatus",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AuthStatusResult",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [
@@ -31821,11 +33624,14 @@
         "src/shared/lib/hooks/useAppSettings.ts",
         "src/shared/lib/hooks/useAppSettings.ts",
         "src/shared/lib/hooks/useTerminology.ts",
-        "src/shared/lib/hooks/useTerminology.ts"
+        "src/shared/lib/hooks/useTerminology.ts",
+        "src/shared/lib/hooks/useNetworkStatus.ts",
+        "src/shared/lib/hooks/useAuthStatus.ts",
+        "src/shared/lib/hooks/useAuthStatus.ts"
       ],
       "dependents": [],
-      "size": 2688,
-      "lines": 75
+      "size": 2884,
+      "lines": 82
     },
     "src/shared/lib/hooks/useAppSettings.ts": {
       "filePath": "src/shared/lib/hooks/useAppSettings.ts",
@@ -31930,6 +33736,55 @@
       ],
       "size": 3551,
       "lines": 119
+    },
+    "src/shared/lib/hooks/useAuthStatus.ts": {
+      "filePath": "src/shared/lib/hooks/useAuthStatus.ts",
+      "fileName": "useAuthStatus.ts",
+      "directory": "src/shared/lib/hooks",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/services/authService",
+          "specifiers": [
+            "authService"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "AuthStatusResult",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "useAuthStatus",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/lib/hooks/index.ts",
+        "src/shared/lib/hooks/index.ts"
+      ],
+      "size": 1136,
+      "lines": 37
     },
     "src/shared/lib/hooks/useCommandHistory.ts": {
       "filePath": "src/shared/lib/hooks/useCommandHistory.ts",
@@ -32747,6 +34602,38 @@
       "dependents": [],
       "size": 3006,
       "lines": 78
+    },
+    "src/shared/lib/hooks/useNetworkStatus.ts": {
+      "filePath": "src/shared/lib/hooks/useNetworkStatus.ts",
+      "fileName": "useNetworkStatus.ts",
+      "directory": "src/shared/lib/hooks",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useSyncExternalStore"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "useNetworkStatus",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/lib/hooks/index.ts"
+      ],
+      "size": 714,
+      "lines": 27
     },
     "src/shared/lib/hooks/usePanZoomGestures.ts": {
       "filePath": "src/shared/lib/hooks/usePanZoomGestures.ts",
@@ -34148,8 +36035,8 @@
         "src/shared/services/index.ts",
         "src/shared/services/remoteLoader.ts"
       ],
-      "size": 13829,
-      "lines": 502
+      "size": 15093,
+      "lines": 536
     },
     "src/shared/services/contentState.ts": {
       "filePath": "src/shared/services/contentState.ts",
@@ -35399,7 +37286,7 @@
         "src/shared/services/index.ts",
         "src/shared/services/index.ts"
       ],
-      "size": 6785,
+      "size": 6863,
       "lines": 201
     },
     "src/shared/services/searchService.ts": {
@@ -35777,8 +37664,8 @@
         "src/shared/services/index.ts",
         "src/shared/services/index.ts"
       ],
-      "size": 31871,
-      "lines": 1006
+      "size": 32215,
+      "lines": 1010
     },
     "src/shared/services/virtualManifestFactory.ts": {
       "filePath": "src/shared/services/virtualManifestFactory.ts",
@@ -38591,6 +40478,45 @@
       "size": 4420,
       "lines": 157
     },
+    "src/shared/ui/molecules/FormSection.tsx": {
+      "filePath": "src/shared/ui/molecules/FormSection.tsx",
+      "fileName": "FormSection.tsx",
+      "directory": "src/shared/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button",
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "FormSectionProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "FormSection",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/molecules/index.ts",
+        "src/shared/ui/molecules/index.ts"
+      ],
+      "size": 2480,
+      "lines": 69
+    },
     "src/shared/ui/molecules/GuidanceEmptyState.tsx": {
       "filePath": "src/shared/ui/molecules/GuidanceEmptyState.tsx",
       "fileName": "GuidanceEmptyState.tsx",
@@ -40711,6 +42637,787 @@
       "size": 4978,
       "lines": 190
     },
+    "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+      "fileName": "ViewHeader.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/lib/hooks/useResponsive",
+          "specifiers": [
+            "useResponsive"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderContextValue",
+            "ViewHeaderProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderContext",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useViewHeaderContext",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeader",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderCenter.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderDivider.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 1469,
+      "lines": 49
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderActions.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderActions.tsx",
+      "fileName": "ViewHeaderActions.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderActionsProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderActions",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 233,
+      "lines": 7
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderBody.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderBody.tsx",
+      "fileName": "ViewHeaderBody.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderBodyProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderBody",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 236,
+      "lines": 10
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderCenter.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderCenter.tsx",
+      "fileName": "ViewHeaderCenter.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "useViewHeaderContext"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderCenterProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderCenter",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 367,
+      "lines": 10
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderDivider.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderDivider.tsx",
+      "fileName": "ViewHeaderDivider.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "useViewHeaderContext"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderDividerProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderDivider",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 425,
+      "lines": 16
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderSelectionBar.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderSelectionBar.tsx",
+      "fileName": "ViewHeaderSelectionBar.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/ui/primitives/Button",
+          "specifiers": [
+            "Button"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderSelectionBarProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderSelectionBar",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 2252,
+      "lines": 74
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx",
+      "fileName": "ViewHeaderSubBar.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "useViewHeaderContext"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderSubBarProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderSubBar",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 709,
+      "lines": 27
+    },
+    "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
+      "fileName": "ViewHeaderTitle.tsx",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "useViewHeaderContext"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "ViewHeaderTitleProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderTitle",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+        "src/shared/ui/molecules/ViewHeader/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 1224,
+      "lines": 50
+    },
+    "src/shared/ui/molecules/ViewHeader/index.ts": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./types",
+          "specifiers": [
+            "[re-export]:ViewHeaderHeight",
+            "[re-export]:ViewHeaderContextValue",
+            "[re-export]:ViewHeaderProps",
+            "[re-export]:ViewHeaderTitleProps",
+            "[re-export]:ViewHeaderCenterProps",
+            "[re-export]:ViewHeaderActionsProps",
+            "[re-export]:ViewHeaderSubBarProps",
+            "[re-export]:ViewHeaderSelectionBarProps",
+            "[re-export]:ViewHeaderBodyProps",
+            "[re-export]:ViewHeaderDividerProps",
+            "[re-export]:"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "[re-export]:ViewHeader",
+            "[re-export]:ViewHeaderContext",
+            "[re-export]:useViewHeaderContext"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderTitle",
+          "specifiers": [
+            "[re-export]:ViewHeaderTitle"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderCenter",
+          "specifiers": [
+            "[re-export]:ViewHeaderCenter"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderActions",
+          "specifiers": [
+            "[re-export]:ViewHeaderActions"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderSubBar",
+          "specifiers": [
+            "[re-export]:ViewHeaderSubBar"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderSelectionBar",
+          "specifiers": [
+            "[re-export]:ViewHeaderSelectionBar"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderBody",
+          "specifiers": [
+            "[re-export]:ViewHeaderBody"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeaderDivider",
+          "specifiers": [
+            "[re-export]:ViewHeaderDivider"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderHeight",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderContextValue",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderTitleProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderCenterProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderActionsProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderSubBarProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderSelectionBarProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderBodyProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderDividerProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeader",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderContext",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "useViewHeaderContext",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderTitle",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderCenter",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderActions",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderSubBar",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderSelectionBar",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderBody",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderDivider",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/molecules/ViewHeader/types.ts",
+        "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderCenter.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderActions.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderSelectionBar.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderBody.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderDivider.tsx"
+      ],
+      "dependents": [],
+      "size": 757,
+      "lines": 22
+    },
+    "src/shared/ui/molecules/ViewHeader/types.ts": {
+      "filePath": "src/shared/ui/molecules/ViewHeader/types.ts",
+      "fileName": "types.ts",
+      "directory": "src/shared/ui/molecules/ViewHeader",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewHeaderHeight",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderContextValue",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderTitleProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderCenterProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderActionsProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderSubBarProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderSelectionBarProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderBodyProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderDividerProps",
+          "type": "named",
+          "isTypeExport": true
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/molecules/ViewHeader/ViewHeader.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderActions.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderBody.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderCenter.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderDivider.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderSelectionBar.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx",
+        "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
+        "src/shared/ui/molecules/ViewHeader/index.ts"
+      ],
+      "size": 1222,
+      "lines": 59
+    },
     "src/shared/ui/molecules/ViewToggle.tsx": {
       "filePath": "src/shared/ui/molecules/ViewToggle.tsx",
       "fileName": "ViewToggle.tsx",
@@ -41216,6 +43923,45 @@
           "specifiers": [
             "[re-export]:ViewToggleProps",
             "[re-export]:ViewToggleOption"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "[re-export]:ViewHeader",
+            "[re-export]:ViewHeaderTitle",
+            "[re-export]:ViewHeaderCenter",
+            "[re-export]:ViewHeaderActions",
+            "[re-export]:ViewHeaderSubBar",
+            "[re-export]:ViewHeaderSelectionBar",
+            "[re-export]:ViewHeaderBody",
+            "[re-export]:ViewHeaderDivider",
+            "[re-export]:"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewHeader",
+          "specifiers": [
+            "[re-export]:ViewHeaderHeight",
+            "[re-export]:ViewHeaderProps",
+            "[re-export]:ViewHeaderTitleProps",
+            "[re-export]:ViewHeaderCenterProps",
+            "[re-export]:ViewHeaderActionsProps",
+            "[re-export]:ViewHeaderSubBarProps",
+            "[re-export]:ViewHeaderSelectionBarProps",
+            "[re-export]:ViewHeaderBodyProps",
+            "[re-export]:ViewHeaderDividerProps",
+            "[re-export]:"
           ],
           "isTypeImport": true,
           "isRelative": true,
@@ -42004,6 +44750,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./FormSection",
+          "specifiers": [
+            "[re-export]:FormSection"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./FormSection",
+          "specifiers": [
+            "[re-export]:FormSectionProps"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
@@ -42249,6 +45017,101 @@
         },
         {
           "name": "ViewToggleOption",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeader",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderTitle",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderCenter",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderActions",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderSubBar",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderSelectionBar",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderBody",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderDivider",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ViewHeaderHeight",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderTitleProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderCenterProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderActionsProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderSubBarProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderSelectionBarProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderBodyProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewHeaderDividerProps",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "",
           "type": "named",
           "isTypeExport": true
         },
@@ -42661,6 +45524,16 @@
           "name": "AgentItem",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "FormSection",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "FormSectionProps",
+          "type": "named",
+          "isTypeExport": true
         }
       ],
       "dependencies": [
@@ -42769,11 +45642,13 @@
         "src/shared/ui/molecules/LinkListEditor.tsx",
         "src/shared/ui/molecules/LinkListEditor.tsx",
         "src/shared/ui/molecules/AgentEditor.tsx",
-        "src/shared/ui/molecules/AgentEditor.tsx"
+        "src/shared/ui/molecules/AgentEditor.tsx",
+        "src/shared/ui/molecules/FormSection.tsx",
+        "src/shared/ui/molecules/FormSection.tsx"
       ],
       "dependents": [],
-      "size": 7882,
-      "lines": 214
+      "size": 8482,
+      "lines": 241
     },
     "src/shared/ui/molecules/metadataTypes.ts": {
       "filePath": "src/shared/ui/molecules/metadataTypes.ts",
@@ -44842,6 +47717,60 @@
       "size": 5881,
       "lines": 133
     },
+    "src/widgets/StatusBar/ui/molecules/ActivityFeedPanel.tsx": {
+      "filePath": "src/widgets/StatusBar/ui/molecules/ActivityFeedPanel.tsx",
+      "fileName": "ActivityFeedPanel.tsx",
+      "directory": "src/widgets/StatusBar/ui/molecules",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/ui/atoms",
+          "specifiers": [
+            "Button"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/atoms/Icon",
+          "specifiers": [
+            "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/services/activityStream",
+          "specifiers": [
+            "activityStream",
+            "type Activity",
+            "type ActivityType"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ActivityFeedPanel",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 3590,
+      "lines": 93
+    },
     "src/widgets/StatusBar/ui/organisms/StatusBar.tsx": {
       "filePath": "src/widgets/StatusBar/ui/organisms/StatusBar.tsx",
       "fileName": "StatusBar.tsx",
@@ -44873,7 +47802,6 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
-            "getIIIFValue",
             "IIIFItem"
           ],
           "isTypeImport": false,
@@ -44892,6 +47820,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/services/storage",
+          "specifiers": [
+            "DetailedStorageEstimate"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -44903,8 +47842,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 5867,
-      "lines": 143
+      "size": 10878,
+      "lines": 265
     },
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx": {
       "filePath": "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx",
@@ -44988,7 +47927,8 @@
     "jszip",
     "react",
     "react-dom",
-    "tailwindcss"
+    "tailwindcss",
+    "wavesurfer.js"
   ],
   "internalAliases": [
     "@/src/app/hooks/useAutoSave",
@@ -45080,6 +48020,7 @@
     "@/src/shared/lib/hooks/useKeyboardNav",
     "@/src/shared/lib/hooks/useLayerHistory",
     "@/src/shared/lib/hooks/useMetadataEditor",
+    "@/src/shared/lib/hooks/useNetworkStatus",
     "@/src/shared/lib/hooks/usePanZoomGestures",
     "@/src/shared/lib/hooks/usePersistedTab",
     "@/src/shared/lib/hooks/useResizablePanel",
@@ -45127,6 +48068,7 @@
     "@/src/shared/ui/molecules/FilterInput",
     "@/src/shared/ui/molecules/FloatingSelectionToolbar",
     "@/src/shared/ui/molecules/FormInput",
+    "@/src/shared/ui/molecules/FormSection",
     "@/src/shared/ui/molecules/GuidedEmptyState",
     "@/src/shared/ui/molecules/IconButton",
     "@/src/shared/ui/molecules/LinkListEditor",
@@ -45146,6 +48088,7 @@
     "@/src/shared/ui/molecules/Toolbar",
     "@/src/shared/ui/molecules/Tooltip",
     "@/src/shared/ui/molecules/ViewContainer",
+    "@/src/shared/ui/molecules/ViewHeader",
     "@/src/shared/ui/molecules/ViewToggle",
     "@/src/shared/ui/providers/ThemeRoot",
     "@/src/shared/workers",
@@ -45160,6 +48103,7 @@
     "@/src/widgets/PersonaSettings/ui/PersonaSettings",
     "@/src/widgets/QCDashboard/ui/QCDashboard",
     "@/src/widgets/RequiredStatementBar/ui/RequiredStatementBar",
+    "@/src/widgets/StatusBar/ui/molecules/ActivityFeedPanel",
     "@/src/widgets/StatusBar/ui/organisms/StatusBar",
     "@/src/widgets/StorageFullDialog/ui/StorageFullDialog",
     "@/ui/primitives",
@@ -45240,7 +48184,6 @@
     "src/features/viewer/ui/atoms/AutoAdvanceToast.tsx",
     "src/features/viewer/ui/atoms/RenderingDownloadMenu.tsx",
     "src/features/viewer/ui/atoms/ViewerModeSwitcher.tsx",
-    "src/features/viewer/ui/molecules/AnnotationLayerPanel.tsx",
     "src/features/viewer/ui/molecules/ContinuousViewer.tsx",
     "src/features/viewer/ui/molecules/PagedViewer.tsx",
     "src/features/viewer/ui/organisms/CanvasComposer.tsx",
@@ -45284,13 +48227,14 @@
     "src/widgets/QCDashboard/ui/QCDashboard.tsx",
     "src/widgets/RequiredStatementBar/ui/RequiredStatementBar.tsx",
     "src/widgets/StatusBar/ui/StatusBar.tsx",
+    "src/widgets/StatusBar/ui/molecules/ActivityFeedPanel.tsx",
     "src/widgets/StatusBar/ui/organisms/StatusBar.tsx",
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx"
   ],
   "stats": {
-    "totalImports": 2020,
-    "totalExports": 2616,
-    "avgImportsPerFile": 4.297872340425532,
+    "totalImports": 2158,
+    "totalExports": 2768,
+    "avgImportsPerFile": 4.3420523138833,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",
@@ -45301,12 +48245,20 @@
         "count": 9
       },
       {
-        "file": "src/shared/config/tokens.ts",
-        "count": 8
+        "file": "src/shared/ui/molecules/ViewHeader/types.ts",
+        "count": 9
       },
       {
         "file": "src/features/metadata-edit/model/useInspectorValidation.ts",
-        "count": 7
+        "count": 8
+      },
+      {
+        "file": "src/features/viewer/model/annotation.ts",
+        "count": 8
+      },
+      {
+        "file": "src/shared/config/tokens.ts",
+        "count": 8
       },
       {
         "file": "src/shared/config/themes/types.ts",
@@ -45322,14 +48274,6 @@
       },
       {
         "file": "src/features/structure-view/model/useStructureTree.ts",
-        "count": 5
-      },
-      {
-        "file": "src/features/structure-view/ui/atoms/DropIndicator.tsx",
-        "count": 5
-      },
-      {
-        "file": "src/features/viewer/model/annotation.ts",
         "count": 5
       }
     ]

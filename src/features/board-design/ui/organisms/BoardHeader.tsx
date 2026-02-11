@@ -19,6 +19,7 @@ import {
   ViewHeaderTitle,
   ViewHeaderCenter,
   ViewHeaderActions,
+  ViewHeaderSubBar,
   ViewHeaderDivider,
 } from '@/src/shared/ui/molecules/ViewHeader';
 import { ShareButton } from '@/src/features/metadata-edit/ui/atoms/ShareButton';
@@ -160,25 +161,33 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
     ...(onCopyContentState ? [{ id: 'content-state', icon: 'link', label: 'Copy Content State', onClick: onCopyContentState }] : []),
   ];
 
+  const dividerCls = `w-px h-5 ${fieldMode ? 'bg-nb-yellow/30' : 'bg-nb-black/15'}`;
+
   return (
-    <ViewHeader
-      cx={cx}
-      fieldMode={fieldMode}
-      shadow={false}
-      className={fieldMode ? 'border-nb-black' : 'border-nb-black/10'}
-    >
-      {/* Left: Title + Stats */}
+    <ViewHeader cx={cx} fieldMode={fieldMode} zIndex="">
+      {/* Header: Title + Stats */}
       <ViewHeaderTitle icon="dashboard" title={title}>
-        <p className={`text-xs ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/50'}`}>
-          {itemCount !== undefined && `${itemCount} items`}
-          {itemCount !== undefined && connectionCount !== undefined && ' · '}
-          {connectionCount !== undefined && `${connectionCount} connections`}
-          {selectionCount != null && selectionCount > 1 && ` · ${selectionCount} selected`}
-        </p>
+        {itemCount !== undefined && (
+          <>
+            <div className={dividerCls} />
+            <span className={`text-[10px] font-bold uppercase font-mono ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
+              {itemCount} items
+              {connectionCount !== undefined && ` · ${connectionCount} connections`}
+              {selectionCount != null && selectionCount > 1 && ` · ${selectionCount} selected`}
+            </span>
+          </>
+        )}
       </ViewHeaderTitle>
 
-      {/* Center: Tools with shortcuts */}
-      <ViewHeaderCenter>
+      <ViewHeaderActions>
+        {onToggleInspector && (
+          <IconButton icon="info" ariaLabel="Toggle Inspector" title="Inspector (I)" onClick={onToggleInspector} variant="ghost" cx={cx} fieldMode={fieldMode} />
+        )}
+        {selectedResource && <ShareButton item={selectedResource} fieldMode={fieldMode} size="sm" />}
+      </ViewHeaderActions>
+
+      {/* Sub-header: All tools */}
+      <ViewHeaderSubBar visible={true}>
         {/* Tool Selection */}
         <div className="flex items-center gap-1">
           {toolOptions.map((tool) => (
@@ -186,28 +195,25 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               key={tool.value}
               onClick={() => onToolChange(tool.value as 'select' | 'connect' | 'note' | 'text')}
               className={`
-                flex items-center gap-2 px-3 py-2  text-sm font-medium transition-nb
+                flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-nb
                 ${activeTool === tool.value
                   ? fieldMode
                     ? 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/50'
                     : 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/30'
                   : fieldMode
-                    ? 'text-nb-black/40 hover:bg-nb-black hover:text-nb-black/10'
+                    ? 'text-nb-yellow/60 hover:text-nb-yellow'
                     : 'text-nb-black/60 hover:bg-nb-cream hover:text-nb-black'
                 }
               `}
               title={`${tool.label} (${tool.shortcut})`}
             >
-              <Icon name={tool.icon} className="text-lg" />
+              <Icon name={tool.icon} className="text-base" />
               <span className="hidden md:inline">{tool.label}</span>
-              <span className={`text-xs opacity-60 hidden lg:inline ${fieldMode ? 'text-nb-black/50' : 'text-nb-black/40'}`}>
-                {tool.shortcut}
-              </span>
             </Button>
           ))}
         </div>
 
-        <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+        <ViewHeaderDivider className={dividerCls} />
 
         {/* Background Mode Toggle */}
         {onBgModeChange && (
@@ -217,14 +223,10 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
                 key={opt.value}
                 onClick={() => onBgModeChange(opt.value)}
                 className={`
-                  px-2 py-1 text-xs font-medium transition-nb
+                  px-2 py-0.5 text-[10px] font-medium transition-nb
                   ${bgMode === opt.value
-                    ? fieldMode
-                      ? 'bg-nb-black/70 text-nb-black/10'
-                      : 'bg-nb-white text-nb-black/70 shadow-brutal-sm'
-                    : fieldMode
-                      ? 'text-nb-black/50 hover:text-nb-black/20'
-                      : 'text-nb-black/50 hover:text-nb-black/70'
+                    ? fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-white text-nb-black shadow-brutal-sm'
+                    : fieldMode ? 'text-nb-yellow/40 hover:text-nb-yellow/70' : 'text-nb-black/50 hover:text-nb-black/70'
                   }
                 `}
                 title={`${opt.label} background`}
@@ -238,43 +240,33 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         {/* Alignment Tools (shown when item selected) */}
         {hasSelection && onAlign && (
           <>
-            <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+            <ViewHeaderDivider className={dividerCls} />
             <div className="flex items-center gap-0.5">
               {alignOptions.map((opt) => (
                 <Button variant="ghost" size="bare"
                   key={opt.type}
                   onClick={() => onAlign(opt.type)}
-                  className={`
-                    p-1.5 transition-nb
-                    ${fieldMode
-                      ? 'text-nb-black/40 hover:bg-nb-black hover:text-nb-black/10'
-                      : 'text-nb-black/50 hover:bg-nb-cream hover:text-nb-black/70'
-                    }
-                  `}
+                  className={`p-1 transition-nb ${fieldMode ? 'text-nb-yellow/40 hover:text-nb-yellow' : 'text-nb-black/50 hover:text-nb-black/70'}`}
                   title={opt.label}
                 >
-                  <Icon name={opt.icon} className="text-lg" />
+                  <Icon name={opt.icon} className="text-base" />
                 </Button>
               ))}
             </div>
           </>
         )}
 
-        <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+        <ViewHeaderDivider className={dividerCls} />
 
         {/* Snap-to-Grid Toggle */}
         {onSnapToggle && (
           <Button variant="ghost" size="bare"
             onClick={onSnapToggle}
             className={`
-              flex items-center gap-1 px-2 py-1.5  text-xs font-medium transition-nb
+              flex items-center gap-1 px-2 py-1 text-xs font-medium transition-nb
               ${snapEnabled
-                ? fieldMode
-                  ? 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/50'
-                  : 'bg-nb-orange/20 text-nb-orange ring-1 ring-nb-orange/30'
-                : fieldMode
-                  ? 'text-nb-black/50 hover:bg-nb-black hover:text-nb-black/20'
-                  : 'text-nb-black/50 hover:bg-nb-cream hover:text-nb-black/70'
+                ? fieldMode ? 'bg-nb-orange/20 text-nb-orange' : 'bg-nb-orange/20 text-nb-orange'
+                : fieldMode ? 'text-nb-yellow/40 hover:text-nb-yellow' : 'text-nb-black/50 hover:text-nb-black/70'
               }
             `}
             title="Snap to Grid (G)"
@@ -289,13 +281,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           <div className="relative">
             <Button variant="ghost" size="bare"
               onClick={() => setShowLayoutMenu((s) => !s)}
-              className={`
-                flex items-center gap-1 px-2 py-1.5  text-xs font-medium transition-nb
-                ${fieldMode
-                  ? 'text-nb-black/40 hover:bg-nb-black hover:text-nb-black/10'
-                  : 'text-nb-black/50 hover:bg-nb-cream hover:text-nb-black/70'
-                }
-              `}
+              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium transition-nb ${fieldMode ? 'text-nb-yellow/40 hover:text-nb-yellow' : 'text-nb-black/50 hover:text-nb-black/70'}`}
               title="Auto Layout (L)"
             >
               <Icon name="auto_fix_high" className="text-sm" />
@@ -303,22 +289,15 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             </Button>
             {showLayoutMenu && (
               <div className={`absolute top-full left-0 mt-1 z-50 shadow-brutal border py-1 min-w-[140px] ${
-                fieldMode ? 'bg-nb-black border-nb-black/70' : 'bg-nb-white border-nb-black/10'
+                fieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-white border-nb-black/10'
               }`}>
                 {layoutOptions.map((opt) => (
                   <Button variant="ghost" size="bare"
                     key={opt.value}
-                    onClick={() => {
-                      onAutoArrange(opt.value);
-                      setShowLayoutMenu(false);
-                    }}
-                    className={`
-                      w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb
-                      ${fieldMode
-                        ? 'text-nb-black/20 hover:bg-nb-black/70'
-                        : 'text-nb-black/70 hover:bg-nb-cream'
-                      }
-                    `}
+                    onClick={() => { onAutoArrange(opt.value); setShowLayoutMenu(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb ${
+                      fieldMode ? 'text-nb-yellow/70 hover:bg-nb-yellow/10' : 'text-nb-black/70 hover:bg-nb-cream'
+                    }`}
                   >
                     <Icon name={opt.icon} className="text-sm" />
                     {opt.label}
@@ -328,72 +307,29 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             )}
           </div>
         )}
-      </ViewHeaderCenter>
 
-      {/* Right: Actions */}
-      <ViewHeaderActions>
+        <div className="flex-1" />
+
+        {/* Right side actions */}
         <Toolbar>
-          <IconButton
-            icon="undo"
-            ariaLabel="Undo"
-            title="Undo (Ctrl+Z)"
-            onClick={onUndo}
-            disabled={!canUndo}
-            variant="ghost"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-          <IconButton
-            icon="redo"
-            ariaLabel="Redo"
-            title="Redo (Ctrl+Shift+Z)"
-            onClick={onRedo}
-            disabled={!canRedo}
-            variant="ghost"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
+          <IconButton icon="undo" ariaLabel="Undo" title="Undo (Ctrl+Z)" onClick={onUndo} disabled={!canUndo} variant="ghost" cx={cx} fieldMode={fieldMode} />
+          <IconButton icon="redo" ariaLabel="Redo" title="Redo (Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo} variant="ghost" cx={cx} fieldMode={fieldMode} />
 
           {onDelete && (
             <>
-              <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
-              <IconButton
-                icon="delete"
-                ariaLabel="Delete selected"
-                title="Delete (Delete key)"
-                onClick={onDelete}
-                disabled={!hasSelection}
-                variant="ghost"
-                cx={cx}
-                fieldMode={fieldMode}
-              />
+              <ViewHeaderDivider className={dividerCls} />
+              <IconButton icon="delete" ariaLabel="Delete selected" title="Delete (Delete key)" onClick={onDelete} disabled={!hasSelection} variant="ghost" cx={cx} fieldMode={fieldMode} />
             </>
           )}
 
-          <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
+          <ViewHeaderDivider className={dividerCls} />
 
           {onSave && (
-            <ActionButton
-              label={isDirty ? 'Save' : 'Saved'}
-              icon="save"
-              onClick={onSave}
-              variant={isDirty ? 'primary' : 'ghost'}
-              size="sm"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
+            <ActionButton label={isDirty ? 'Save' : 'Saved'} icon="save" onClick={onSave} variant={isDirty ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
           )}
 
           {onPresent && (
-            <IconButton
-              icon="slideshow"
-              ariaLabel="Present"
-              title="Present (P)"
-              onClick={onPresent}
-              variant="ghost"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
+            <IconButton icon="slideshow" ariaLabel="Present" title="Present (P)" onClick={onPresent} variant="ghost" cx={cx} fieldMode={fieldMode} />
           )}
 
           {/* Export dropdown */}
@@ -402,11 +338,8 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               label="Export"
               icon="download"
               onClick={() => {
-                if (exportOptions.length <= 1) {
-                  onExport();
-                } else {
-                  setShowExportMenu(s => !s);
-                }
+                if (exportOptions.length <= 1) { onExport(); }
+                else { setShowExportMenu(s => !s); }
               }}
               variant="primary"
               size="sm"
@@ -415,22 +348,15 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             />
             {showExportMenu && exportOptions.length > 1 && (
               <div className={`absolute top-full right-0 mt-1 z-50 shadow-brutal border py-1 min-w-[180px] ${
-                fieldMode ? 'bg-nb-black border-nb-black/70' : 'bg-nb-white border-nb-black/10'
+                fieldMode ? 'bg-nb-black border-nb-yellow/30' : 'bg-nb-white border-nb-black/10'
               }`}>
                 {exportOptions.map((opt) => (
                   <Button variant="ghost" size="bare"
                     key={opt.id}
-                    onClick={() => {
-                      opt.onClick();
-                      setShowExportMenu(false);
-                    }}
-                    className={`
-                      w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb
-                      ${fieldMode
-                        ? 'text-nb-black/20 hover:bg-nb-black/70'
-                        : 'text-nb-black/70 hover:bg-nb-cream'
-                      }
-                    `}
+                    onClick={() => { opt.onClick(); setShowExportMenu(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-nb ${
+                      fieldMode ? 'text-nb-yellow/70 hover:bg-nb-yellow/10' : 'text-nb-black/70 hover:bg-nb-cream'
+                    }`}
                   >
                     <Icon name={opt.icon} className="text-sm" />
                     {opt.label}
@@ -439,31 +365,8 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               </div>
             )}
           </div>
-
-          {onToggleInspector && (
-            <>
-              <ViewHeaderDivider className={`w-px h-6 ${fieldMode ? 'bg-nb-black/70' : 'bg-nb-black/10'}`} />
-              <IconButton
-                icon="info"
-                ariaLabel="Toggle Inspector"
-                title="Inspector (I)"
-                onClick={onToggleInspector}
-                variant="ghost"
-                cx={cx}
-                fieldMode={fieldMode}
-              />
-            </>
-          )}
-
-          {selectedResource && (
-            <ShareButton
-              item={selectedResource}
-              fieldMode={fieldMode}
-              size="sm"
-            />
-          )}
         </Toolbar>
-      </ViewHeaderActions>
+      </ViewHeaderSubBar>
     </ViewHeader>
   );
 };

@@ -10,6 +10,8 @@ import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { Button } from '@/src/shared/ui/atoms';
 import { fuzzyMatch, FuzzyMatchResult } from '@/utils/fuzzyMatch';
 import { CommandHistoryEntry, useCommandHistory } from '@/src/shared/lib/hooks/useCommandHistory';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 export interface Command {
   /** Unique identifier */
@@ -63,6 +65,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   commands,
   maxHistoryEntries = 10
 }) => {
+  const cx = useContextualStyles();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -373,26 +376,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       aria-label="Command palette"
     >
       <div 
-        className="bg-nb-white shadow-brutal-lg w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 "
+        className={cn(cx.surface, 'shadow-brutal-lg w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95')}
         onClick={e => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="border-b border-nb-black/20 p-4 flex items-center gap-3">
-          <Icon name="search" className="text-nb-black/40 text-xl" />
+        <div className={cn('border-b p-4 flex items-center gap-3', cx.divider)}>
+          <Icon name="search" className={cn('text-xl', cx.textMuted)} />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={e => handleQueryChange(e.target.value)}
             placeholder="Type a command or search..."
-            className="flex-1 text-lg outline-none placeholder:text-nb-black/40 bg-transparent"
+            className={cn('flex-1 text-lg outline-none bg-transparent', cx.text, 'placeholder:opacity-50')}
             aria-label="Search commands"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
           />
-          <kbd className="px-2 py-1 bg-nb-cream text-xs text-nb-black/50 font-mono">
+          <kbd className={cn('px-2 py-1 text-xs', cx.kbd)}>
             ESC
           </kbd>
         </div>
@@ -405,14 +408,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           aria-label="Command results"
         >
           {matches.length === 0 ? (
-            <div className="p-8 text-center text-nb-black/40">
+            <div className={cn('p-8 text-center', cx.textMuted)}>
               <Icon name="search_off" className="text-4xl mb-2 mx-auto" />
               <p>No commands found</p>
             </div>
           ) : (
             Object.entries(groupedMatches).map(([section, sectionMatches]) => (
               <div key={section} role="group" aria-label={section}>
-                <div className="px-4 py-2 text-xs font-bold text-nb-black/40 uppercase tracking-wider">
+                <div className={cn('px-4 py-2 text-xs font-bold uppercase tracking-wider', cx.textMuted)}>
                   {section}
                 </div>
                 {sectionMatches.map((match) => {
@@ -446,11 +449,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         )}
 
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-nb-black truncate">
+                          <div className={cn('font-medium truncate', cx.text)}>
                             {highlightText(match.command.label, match.highlightRanges)}
                           </div>
                           {match.command.description && (
-                            <div className="text-xs text-nb-black/40 truncate">
+                            <div className={cn('text-xs truncate', cx.textMuted)}>
                               {match.command.description}
                             </div>
                           )}
@@ -463,7 +466,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             </span>
                           )}
                           {match.command.shortcut && (
-                            <kbd className="px-2 py-1 bg-nb-cream text-xs text-nb-black/50 font-mono">
+                            <kbd className={cn('px-2 py-1 text-xs', cx.kbd)}>
                               {match.command.shortcut}
                             </kbd>
                           )}
@@ -478,13 +481,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-nb-black/20 px-4 py-2 flex items-center gap-4 text-xs text-nb-black/40">
+        <div className={cn('border-t px-4 py-2 flex items-center gap-4 text-xs', cx.divider, cx.textMuted)}>
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-nb-cream font-mono">↑↓</kbd>
+            <kbd className={cn('px-1.5 py-0.5', cx.kbd)}>↑↓</kbd>
             <span>Navigate</span>
           </div>
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-nb-cream font-mono">Enter</kbd>
+            <kbd className={cn('px-1.5 py-0.5', cx.kbd)}>Enter</kbd>
             <span>Select</span>
           </div>
           <div className="flex-1" />

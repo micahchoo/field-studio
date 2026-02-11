@@ -54,21 +54,21 @@ export const MetadataTemplateExport: React.FC<MetadataTemplateExportProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-[600] flex items-center justify-center bg-nb-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[600] flex items-center justify-center bg-nb-black/60 backdrop-blur-sm p-4">
       <div
         className="bg-nb-white shadow-brutal-lg w-full max-w-3xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-nb-black/20">
-          <div>
-            <h3 className="font-bold text-nb-black flex items-center gap-2">
-              <Icon name="table_chart" className="text-nb-blue" />
-              Export Metadata Template
-            </h3>
-            <p className="text-[11px] text-nb-black/50 mt-0.5">
-              CSV template for offline metadata editing
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-nb-blue/20 flex items-center justify-center text-nb-blue">
+              <Icon name="table_chart" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-nb-black">Export Metadata Template</h3>
+              <p className="text-[10px] font-bold text-nb-black/40 uppercase tracking-widest">CSV Template for Offline Editing</p>
+            </div>
           </div>
           <Button variant="ghost" size="bare"
             onClick={onClose}
@@ -248,17 +248,15 @@ export const MetadataTemplateExport: React.FC<MetadataTemplateExportProps> = ({
             Fill in the template and re-import to apply metadata
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="bare"
+            <Button variant="ghost" size="sm"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-nb-black/60 hover:text-nb-black"
             >
               Cancel
             </Button>
-            <Button variant="ghost" size="bare"
+            <Button variant="primary" size="sm"
               onClick={handleDownload}
-              className="px-6 py-2 bg-nb-blue text-white font-medium text-sm hover:bg-nb-blue flex items-center gap-2"
+              icon={<Icon name="download" />}
             >
-              <Icon name="download" />
               Download Template
             </Button>
           </div>

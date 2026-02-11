@@ -100,7 +100,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
     || (selected
       ? cx.accent
       : fieldMode
-        ? '#facc15'
+        ? '#FFE500'
         : cx.svgStroke);
 
   const strokeWidth = selected ? 3 : 2;

@@ -17,6 +17,7 @@ import {
   ViewHeaderTitle,
   ViewHeaderCenter,
   ViewHeaderActions,
+  ViewHeaderSubBar,
   ViewHeaderDivider,
 } from '@/src/shared/ui/molecules/ViewHeader';
 import { ZoomControl, ScreenshotMenu, AnnotationColorPicker, StrokeWidthSelect } from '@/src/features/viewer/ui/atoms';
@@ -152,6 +153,8 @@ export interface ViewerToolbarProps {
   layerCount?: number;
   /** Share link handler */
   onShareLink?: () => void;
+  /** Switch to another view mode (standalone viewer only) */
+  onSwitchView?: (mode: string) => void;
   /** Contextual styles from template */
   cx: ContextualClassNames;
   /** Current field mode */
@@ -213,267 +216,160 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
   onToggleLayers,
   layerCount,
   onShareLink,
+  onSwitchView,
 }) => {
   const iconName = mediaType === 'video' ? 'movie' : mediaType === 'audio' ? 'audiotrack' : 'image';
   const isAV = mediaType === 'audio' || mediaType === 'video';
 
+  const hasTools = mediaType === 'image' || showAnnotationTool;
+
   return (
-    <ViewHeader cx={cx} fieldMode={fieldMode} height="compact" shadow={false} zIndex="z-20" className="viewer-chrome">
-      {/* Left: Title & Type */}
-      <ViewHeaderTitle icon={iconName} title={label} />
+    <ViewHeader cx={cx} fieldMode={fieldMode} zIndex="z-20" className="viewer-chrome">
+      {/* Header: Title + minimal actions */}
+      <ViewHeaderTitle icon={iconName} title={label}>
+        {annotationCount > 0 && (
+          <>
+            <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow/40' : 'bg-nb-black/20'}`} />
+            <span className={`text-[10px] font-bold font-mono ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
+              {annotationCount} annotation{annotationCount !== 1 ? 's' : ''}
+            </span>
+          </>
+        )}
+      </ViewHeaderTitle>
 
-      {/* Center: View Controls (images only) */}
-      {mediaType === 'image' && (
-        <ViewHeaderCenter>
-          <ToolbarGroup fieldMode={fieldMode}>
-            <ZoomControl
-              zoom={zoomLevel / 100}
-              onZoomChange={(z) => {
-                const pct = Math.round(z * 100);
-                if (pct > zoomLevel) onZoomIn();
-                else if (pct < zoomLevel) onZoomOut();
-              }}
-              onReset={onResetView}
-              disabled={!viewerReady}
-              cx={cx}
-            />
-          </ToolbarGroup>
-
-          <ToolbarDivider cx={cx} />
-
-          <ToolbarGroup fieldMode={fieldMode}>
-            {onRotateCCW && (
-              <IconButton
-                icon="rotate_left"
-                ariaLabel="Rotate left"
-                title="Rotate counter-clockwise (Shift+R)"
-                onClick={onRotateCCW}
-                disabled={!viewerReady}
-                variant="ghost"
-                size="sm"
-                cx={cx}
-                fieldMode={fieldMode}
-              />
-            )}
-            {rotation !== 0 && (
-              <span className={`text-[10px] font-mono px-1 ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}>
-                {rotation}°
-              </span>
-            )}
-            {onRotateCW && (
-              <IconButton
-                icon="rotate_right"
-                ariaLabel="Rotate right"
-                title="Rotate clockwise (R)"
-                onClick={onRotateCW}
-                disabled={!viewerReady}
-                variant="ghost"
-                size="sm"
-                cx={cx}
-                fieldMode={fieldMode}
-              />
-            )}
-            {onFlipHorizontal && (
-              <IconButton
-                icon="flip"
-                ariaLabel="Flip"
-                title="Flip horizontally (F)"
-                onClick={onFlipHorizontal}
-                disabled={!viewerReady}
-                variant={isFlipped ? 'primary' : 'ghost'}
-                size="sm"
-                cx={cx}
-                fieldMode={fieldMode}
-              />
-            )}
-          </ToolbarGroup>
-        </ViewHeaderCenter>
-      )}
-
-      {/* Right: Actions */}
       <ViewHeaderActions>
         <div className="flex items-center gap-0.5">
-          {/* Annotation Count Badge - always visible */}
-          {annotationCount > 0 && (
-            <div
-              className={`px-2 py-1 text-[10px] font-bold flex items-center gap-1 mr-1 ${
-                fieldMode ? 'bg-nb-yellow/20 text-nb-yellow' : 'bg-nb-green/20 text-nb-green'
-              }`}
-              title={`${annotationCount} annotation${annotationCount !== 1 ? 's' : ''}`}
-            >
-              <Icon name="sticky_note_2" className="text-xs" />
-              {annotationCount}
-            </div>
-          )}
-
-          {/* Layers toggle - shown when annotation layers exist */}
-          {layerCount != null && layerCount > 0 && onToggleLayers && (
-            <IconButton
-              icon="layers"
-              ariaLabel="Annotation layers"
-              title={`Annotation layers (${layerCount})`}
-              onClick={onToggleLayers}
-              variant={showLayers ? 'primary' : 'ghost'}
-              size="sm"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          )}
-
-          {/* Annotate Button - works for all media types */}
-          <button
-            onClick={onToggleAnnotationTool}
-            title="Toggle annotation tool (A)"
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 transition-nb ${
-              showAnnotationTool
-                ? fieldMode ? 'bg-nb-yellow text-black' : 'bg-nb-green text-white'
-                : fieldMode ? 'bg-nb-yellow/20 text-nb-yellow hover:bg-nb-yellow/20' : 'bg-nb-black/80 text-nb-black/20 hover:bg-nb-black/60'
-            }`}
-          >
-            <Icon name={isAV ? 'timer' : 'gesture'} className="text-base" />
-            <span>Annotate</span>
-          </button>
-
-          {/* Drawing mode buttons - only for images when annotation active */}
-          {showAnnotationTool && mediaType === 'image' && onAnnotationModeChange && (
+          {onSwitchView && (
             <>
+              <IconButton icon="inventory_2" ariaLabel="Open in Archive" title="Open in Archive" onClick={() => onSwitchView('archive')} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
+              <IconButton icon="table_chart" ariaLabel="Open in Metadata" title="Open in Metadata" onClick={() => onSwitchView('metadata')} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
               <ToolbarDivider cx={cx} />
-              <ToolbarGroup fieldMode={fieldMode}>
-                <IconButton
-                  icon="pentagon"
-                  ariaLabel="Polygon"
-                  onClick={() => onAnnotationModeChange('polygon')}
-                  variant={annotationDrawingMode === 'polygon' ? 'primary' : 'ghost'}
-                  size="sm"
-                  cx={cx}
-                  fieldMode={fieldMode}
-                />
-                <IconButton
-                  icon="crop_square"
-                  ariaLabel="Rectangle"
-                  onClick={() => onAnnotationModeChange('rectangle')}
-                  variant={annotationDrawingMode === 'rectangle' ? 'primary' : 'ghost'}
-                  size="sm"
-                  cx={cx}
-                  fieldMode={fieldMode}
-                />
-                <IconButton
-                  icon="draw"
-                  ariaLabel="Freehand"
-                  onClick={() => onAnnotationModeChange('freehand')}
-                  variant={annotationDrawingMode === 'freehand' ? 'primary' : 'ghost'}
-                  size="sm"
-                  cx={cx}
-                  fieldMode={fieldMode}
-                />
-              </ToolbarGroup>
-              {/* Color and stroke controls */}
-              {onAnnotationStyleChange && annotationStyle && (
-                <>
-                  <ToolbarDivider cx={cx} />
-                  <AnnotationColorPicker
-                    value={annotationStyle.color || '#22c55e'}
-                    onChange={(color) => onAnnotationStyleChange({ ...annotationStyle, color })}
-                    fieldMode={fieldMode}
-                  />
-                  <StrokeWidthSelect
-                    value={annotationStyle.strokeWidth ?? 2}
-                    onChange={(strokeWidth) => onAnnotationStyleChange({ ...annotationStyle, strokeWidth })}
-                    color={annotationStyle.color || '#22c55e'}
-                    fieldMode={fieldMode}
-                  />
-                </>
-              )}
-              <ToolbarGroup fieldMode={fieldMode}>
-                {onAnnotationUndo && (
-                  <IconButton icon="undo" ariaLabel="Undo" title="Undo (Ctrl+Z)" onClick={onAnnotationUndo} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
-                )}
-                {onAnnotationRedo && (
-                  <IconButton icon="redo" ariaLabel="Redo" title="Redo (Ctrl+Shift+Z)" onClick={onAnnotationRedo} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
-                )}
-                {onAnnotationClear && (
-                  <IconButton icon="delete_outline" ariaLabel="Clear" onClick={onAnnotationClear} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
-                )}
-              </ToolbarGroup>
             </>
           )}
-
-          {/* Filter toggle - images only */}
-          {mediaType === 'image' && onToggleFilterPanel && (
-            <IconButton
-              icon="tune"
-              ariaLabel="Image filters"
-              title="Image filters (brightness, contrast)"
-              onClick={onToggleFilterPanel}
-              variant={showFilterPanel || filtersActive ? 'primary' : 'ghost'}
-              size="sm"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          )}
-
-          {/* Measurement toggle - images only */}
-          {mediaType === 'image' && onToggleMeasurement && (
-            <IconButton
-              icon="straighten"
-              ariaLabel="Measure"
-              title="Measurement tool (M)"
-              onClick={onToggleMeasurement}
-              variant={showMeasurement ? 'primary' : 'ghost'}
-              size="sm"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          )}
-
-          {/* Comparison toggle - images only, requires multiple canvases */}
-          {mediaType === 'image' && hasMultipleCanvases && onToggleComparison && (
-            <IconButton
-              icon="compare"
-              ariaLabel="Compare"
-              title="Compare canvases"
-              onClick={onToggleComparison}
-              variant={showComparison ? 'primary' : 'ghost'}
-              size="sm"
-              cx={cx}
-              fieldMode={fieldMode}
-            />
-          )}
-
-          {/* Screenshot menu - images only */}
-          {mediaType === 'image' && onTakeScreenshot && (
-            <>
-              <ToolbarDivider cx={cx} />
-              <ScreenshotMenu
-                onScreenshot={onTakeScreenshot}
-                disabled={!viewerReady}
-                fieldMode={fieldMode}
-              />
-            </>
-          )}
-
-          <ToolbarDivider cx={cx} />
-
-          {/* Secondary actions - collapsed into fewer buttons */}
-          {hasSearchService && (
-            <IconButton icon="search" ariaLabel="Search" onClick={onToggleSearch} variant={showSearchPanel ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
-          )}
-
-          {mediaType === 'image' && onToggleNavigator && (
-            <IconButton icon="picture_in_picture" ariaLabel="Navigator" title="Toggle navigator (N)" onClick={onToggleNavigator} variant={showNavigator ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
-          )}
-
-          {onShareLink && (
-            <IconButton icon="share" ariaLabel="Share link" title="Copy shareable link" onClick={onShareLink} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
-          )}
-
           <IconButton icon={isFullscreen ? 'fullscreen_exit' : 'fullscreen'} ariaLabel="Fullscreen" title="Toggle fullscreen (Esc to exit)" onClick={onToggleFullscreen} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
-
           {hasMultipleCanvases && (
             <IconButton icon="view_carousel" ariaLabel="Filmstrip" onClick={onToggleFilmstrip} variant={showFilmstrip ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
           )}
         </div>
       </ViewHeaderActions>
+
+      {/* Sub-header: All tools */}
+      <ViewHeaderSubBar visible={hasTools}>
+        {/* Zoom & rotation - images only */}
+        {mediaType === 'image' && (
+          <>
+            <ToolbarGroup fieldMode={fieldMode}>
+              <ZoomControl
+                zoom={zoomLevel / 100}
+                onZoomChange={(z) => {
+                  const pct = Math.round(z * 100);
+                  if (pct > zoomLevel) onZoomIn();
+                  else if (pct < zoomLevel) onZoomOut();
+                }}
+                onReset={onResetView}
+                disabled={!viewerReady}
+                cx={cx}
+              />
+            </ToolbarGroup>
+
+            <ToolbarDivider cx={cx} />
+
+            <ToolbarGroup fieldMode={fieldMode}>
+              {onRotateCCW && (
+                <IconButton icon="rotate_left" ariaLabel="Rotate left" title="Rotate counter-clockwise (Shift+R)" onClick={onRotateCCW} disabled={!viewerReady} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
+              )}
+              {rotation !== 0 && (
+                <span className={`text-[10px] font-mono px-1 ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`}>
+                  {rotation}°
+                </span>
+              )}
+              {onRotateCW && (
+                <IconButton icon="rotate_right" ariaLabel="Rotate right" title="Rotate clockwise (R)" onClick={onRotateCW} disabled={!viewerReady} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
+              )}
+              {onFlipHorizontal && (
+                <IconButton icon="flip" ariaLabel="Flip" title="Flip horizontally (F)" onClick={onFlipHorizontal} disabled={!viewerReady} variant={isFlipped ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+              )}
+            </ToolbarGroup>
+
+            <ToolbarDivider cx={cx} />
+          </>
+        )}
+
+        {/* Annotate Button */}
+        <button
+          onClick={onToggleAnnotationTool}
+          title="Toggle annotation tool (A)"
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 transition-nb ${
+            showAnnotationTool
+              ? fieldMode ? 'bg-nb-yellow text-black' : 'bg-nb-green text-white'
+              : fieldMode ? 'bg-nb-yellow/20 text-nb-yellow hover:bg-nb-yellow/30' : 'bg-nb-black/80 text-nb-black/20 hover:bg-nb-black/60'
+          }`}
+        >
+          <Icon name={isAV ? 'timer' : 'gesture'} className="text-base" />
+          <span>Annotate</span>
+        </button>
+
+        {/* Layers toggle */}
+        {layerCount != null && layerCount > 0 && onToggleLayers && (
+          <IconButton icon="layers" ariaLabel="Annotation layers" title={`Annotation layers (${layerCount})`} onClick={onToggleLayers} variant={showLayers ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+        )}
+
+        {/* Drawing mode buttons - only for images when annotation active */}
+        {showAnnotationTool && mediaType === 'image' && onAnnotationModeChange && (
+          <>
+            <ToolbarDivider cx={cx} />
+            <ToolbarGroup fieldMode={fieldMode}>
+              <IconButton icon="pentagon" ariaLabel="Polygon" onClick={() => onAnnotationModeChange('polygon')} variant={annotationDrawingMode === 'polygon' ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+              <IconButton icon="crop_square" ariaLabel="Rectangle" onClick={() => onAnnotationModeChange('rectangle')} variant={annotationDrawingMode === 'rectangle' ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+              <IconButton icon="draw" ariaLabel="Freehand" onClick={() => onAnnotationModeChange('freehand')} variant={annotationDrawingMode === 'freehand' ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+            </ToolbarGroup>
+            {onAnnotationStyleChange && annotationStyle && (
+              <>
+                <ToolbarDivider cx={cx} />
+                <AnnotationColorPicker value={annotationStyle.color || '#22c55e'} onChange={(color) => onAnnotationStyleChange({ ...annotationStyle, color })} fieldMode={fieldMode} />
+                <StrokeWidthSelect value={annotationStyle.strokeWidth ?? 2} onChange={(strokeWidth) => onAnnotationStyleChange({ ...annotationStyle, strokeWidth })} color={annotationStyle.color || '#22c55e'} fieldMode={fieldMode} />
+              </>
+            )}
+            <ToolbarGroup fieldMode={fieldMode}>
+              {onAnnotationUndo && <IconButton icon="undo" ariaLabel="Undo" title="Undo (Ctrl+Z)" onClick={onAnnotationUndo} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />}
+              {onAnnotationRedo && <IconButton icon="redo" ariaLabel="Redo" title="Redo (Ctrl+Shift+Z)" onClick={onAnnotationRedo} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />}
+              {onAnnotationClear && <IconButton icon="delete_outline" ariaLabel="Clear" onClick={onAnnotationClear} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />}
+            </ToolbarGroup>
+          </>
+        )}
+
+        {/* Image tools: filter, measurement, comparison */}
+        {mediaType === 'image' && onToggleFilterPanel && (
+          <IconButton icon="tune" ariaLabel="Image filters" title="Image filters" onClick={onToggleFilterPanel} variant={showFilterPanel || filtersActive ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+        )}
+        {mediaType === 'image' && onToggleMeasurement && (
+          <IconButton icon="straighten" ariaLabel="Measure" title="Measurement tool (M)" onClick={onToggleMeasurement} variant={showMeasurement ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+        )}
+        {mediaType === 'image' && hasMultipleCanvases && onToggleComparison && (
+          <IconButton icon="compare" ariaLabel="Compare" title="Compare canvases" onClick={onToggleComparison} variant={showComparison ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+        )}
+        {mediaType === 'image' && onTakeScreenshot && (
+          <>
+            <ToolbarDivider cx={cx} />
+            <ScreenshotMenu onScreenshot={onTakeScreenshot} disabled={!viewerReady} fieldMode={fieldMode} />
+          </>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Secondary actions */}
+        <div className="flex items-center gap-0.5">
+          {hasSearchService && (
+            <IconButton icon="search" ariaLabel="Search" onClick={onToggleSearch} variant={showSearchPanel ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+          )}
+          {mediaType === 'image' && onToggleNavigator && (
+            <IconButton icon="picture_in_picture" ariaLabel="Navigator" title="Toggle navigator (N)" onClick={onToggleNavigator} variant={showNavigator ? 'primary' : 'ghost'} size="sm" cx={cx} fieldMode={fieldMode} />
+          )}
+          {onShareLink && (
+            <IconButton icon="share" ariaLabel="Share link" title="Copy shareable link" onClick={onShareLink} variant="ghost" size="sm" cx={cx} fieldMode={fieldMode} />
+          )}
+        </div>
+      </ViewHeaderSubBar>
     </ViewHeader>
   );
 };

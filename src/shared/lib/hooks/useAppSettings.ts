@@ -18,11 +18,10 @@ import { themeBus } from '@/src/shared/lib/theme-bus';
 
 const SETTINGS_KEY = 'iiif-field-settings';
 
-const DEFAULT_SETTINGS: AppSettings = {
+const DEFAULT_SETTINGS: Omit<AppSettings, 'fieldMode'> = {
   defaultBaseUrl: IIIF_CONFIG.BASE_URL.DEFAULT,
   language: 'en',
   theme: 'light',
-  fieldMode: false,
   abstractionLevel: 'standard',
   mapConfig: DEFAULT_MAP_CONFIG,
   zoomConfig: DEFAULT_ZOOM_CONFIG,
@@ -33,6 +32,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   metadataTemplate: METADATA_TEMPLATES.ARCHIVIST,
   metadataComplexity: 'standard',
 };
+
+/** Derive fieldMode from theme — single source of truth */
+function withFieldMode(s: Omit<AppSettings, 'fieldMode'>): AppSettings {
+  return { ...s, fieldMode: s.theme === 'field' };
+}
 
 export interface UseAppSettingsReturn {
   settings: AppSettings;
@@ -49,12 +53,14 @@ export function useAppSettings(): UseAppSettingsReturn {
       if (stored) {
         const parsed = JSON.parse(stored);
         // Merge stored settings with defaults (in case new settings were added)
-        return { ...DEFAULT_SETTINGS, ...parsed };
+        // fieldMode is derived from theme, not stored
+        const { fieldMode: _ignored, ...rest } = parsed;
+        return withFieldMode({ ...DEFAULT_SETTINGS, ...rest });
       }
     } catch (e) {
       storageLog.warn('Failed to load settings from localStorage:', e);
     }
-    return DEFAULT_SETTINGS;
+    return withFieldMode(DEFAULT_SETTINGS);
   });
 
   // Persist settings to localStorage when they change
@@ -72,38 +78,24 @@ export function useAppSettings(): UseAppSettingsReturn {
   }, [settings.theme]);
 
   const updateSettings = useCallback((updates: Partial<AppSettings>) => {
-    setSettings(prev => ({ ...prev, ...updates }));
+    setSettings(prev => withFieldMode({ ...prev, ...updates }));
   }, []);
 
-  /**
-   * Set theme by name. Derives fieldMode from the theme value
-   * so existing `fieldMode: boolean` consumers keep working.
-   */
+  /** Set theme by name. fieldMode is derived automatically. */
   const setTheme = useCallback((theme: ThemeName) => {
-    setSettings(prev => ({
-      ...prev,
-      theme,
-      fieldMode: theme === 'field',
-    }));
+    setSettings(prev => withFieldMode({ ...prev, theme }));
   }, []);
 
-  /**
-   * Toggle field mode. Also syncs the theme field bidirectionally:
-   * turning fieldMode ON sets theme='field', turning it OFF sets theme='light'.
-   */
+  /** Toggle between field theme and the previous non-field theme (defaults to light). */
   const toggleFieldMode = useCallback(() => {
     setSettings(prev => {
-      const nextFieldMode = !prev.fieldMode;
-      return {
-        ...prev,
-        fieldMode: nextFieldMode,
-        theme: nextFieldMode ? 'field' : (prev.theme === 'field' ? 'light' : prev.theme),
-      };
+      const nextTheme = prev.theme === 'field' ? 'light' : 'field';
+      return withFieldMode({ ...prev, theme: nextTheme });
     });
   }, []);
 
   const resetSettings = useCallback(() => {
-    setSettings(DEFAULT_SETTINGS);
+    setSettings(withFieldMode(DEFAULT_SETTINGS));
   }, []);
 
   return {

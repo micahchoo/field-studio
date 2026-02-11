@@ -6,6 +6,8 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface NodeLabelProps {
   label: string;
@@ -13,6 +15,8 @@ interface NodeLabelProps {
   isSelected: boolean;
   isDragging: boolean;
   className?: string;
+  /** Contextual class names from parent */
+  cx?: Partial<ContextualClassNames>;
 }
 
 export const NodeLabel: React.FC<NodeLabelProps> = ({
@@ -21,16 +25,17 @@ export const NodeLabel: React.FC<NodeLabelProps> = ({
   isSelected,
   isDragging,
   className = '',
+  cx,
 }) => {
   const baseClasses = 'truncate text-sm';
   const stateClasses = isSelected
-    ? 'font-semibold text-nb-blue'
-    : 'text-nb-black/70';
+    ? cn('font-semibold', cx?.accent ?? 'text-nb-blue')
+    : cn(cx?.textMuted ?? 'text-nb-black/70');
   const dragClasses = isDragging ? 'opacity-50' : '';
 
   return (
     <span
-      className={`${baseClasses} ${stateClasses} ${dragClasses} ${className}`}
+      className={cn(baseClasses, stateClasses, dragClasses, className)}
       title={label}
     >
       {label}

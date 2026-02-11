@@ -4,6 +4,7 @@ import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { IIIFItem } from '@/src/shared/types';
 import { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 import type { DetailedStorageEstimate } from '@/src/shared/services/storage';
+import { cn } from '@/src/shared/lib/cn';
 
 interface StatusBarProps {
   totalItems: number;
@@ -31,6 +32,8 @@ interface StatusBarProps {
   onOpenActivityFeed?: () => void;
   // Storage breakdown
   storageDetail?: DetailedStorageEstimate | null;
+  // Field mode
+  fieldMode?: boolean;
 }
 
 const formatBytes = (bytes: number, decimals = 1) => {
@@ -64,6 +67,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   activityCount,
   onOpenActivityFeed,
   storageDetail,
+  fieldMode,
 }) => {
   const { errorCount, warningCount } = useMemo(() => {
     let errors = 0, warnings = 0;
@@ -84,7 +88,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const [showStorageTooltip, setShowStorageTooltip] = useState(false);
 
   return (
-    <div className="h-status-bar bg-nb-cream border-t-4 border-nb-black flex items-center justify-between px-4 font-mono text-nb-xs font-bold uppercase tracking-wider text-nb-black select-none z-50">
+    <div className={cn('h-status-bar border-t-4 flex items-center justify-between px-4 font-mono text-nb-xs font-bold uppercase tracking-wider select-none z-50', fieldMode ? 'bg-nb-yellow text-nb-black border-nb-yellow' : 'bg-nb-cream border-nb-black text-nb-black')}>
       <div className="flex items-center gap-4">
         {/* Items count */}
         <div className="flex items-center gap-1.5" title={`${totalItems} items in archive`}>
@@ -93,7 +97,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </div>
 
         {showSelectionCount && hasMultiSelection && (
-          <div className="flex items-center gap-1.5 pl-3 border-l-2 border-nb-black">
+          <div className="flex items-center gap-1.5 pl-3 border-l-2 border-current/30">
             <span>SELECTED:</span>
             <span className="text-nb-blue">{effectiveSelectionCount}</span>
             {onClearSelection && (
@@ -110,7 +114,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         {/* Undo/Redo */}
         {(onUndo || onRedo) && (
-          <div className="flex items-center gap-1 pl-3 border-l-2 border-nb-black">
+          <div className="flex items-center gap-1 pl-3 border-l-2 border-current/30">
             {onUndo && (
               <Button variant="ghost" size="bare"
                 onClick={onUndo}
@@ -143,7 +147,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       <div className="flex items-center gap-4">
         {/* Network Status */}
         {isOnline !== undefined && (
-          <div className="flex items-center gap-1.5 px-3 border-r-2 border-nb-black" title={isOnline ? 'Online' : 'Offline — changes are saved locally'}>
+          <div className="flex items-center gap-1.5 px-3 border-r-2 border-current/30" title={isOnline ? 'Online' : 'Offline — changes are saved locally'}>
             <div
               className={`w-2 h-2 rounded-full ${isOnline ? 'bg-nb-green' : 'bg-nb-red'}`}
               style={!isOnline ? { animation: 'savePulse 1s ease-in-out infinite' } : undefined}
@@ -153,7 +157,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         )}
 
         {/* Save Status */}
-        <div className="flex items-center gap-1.5 px-3 border-r-2 border-nb-black" title={saveStatus === 'saving' ? 'Saving...' : saveStatus === 'error' ? 'Save Failed' : 'Saved'}>
+        <div className="flex items-center gap-1.5 px-3 border-r-2 border-current/30" title={saveStatus === 'saving' ? 'Saving...' : saveStatus === 'error' ? 'Save Failed' : 'Saved'}>
           {saveStatus === 'saving' && <><div className="w-2 h-2 bg-nb-blue" style={{ animation: 'savePulse 0.5s linear infinite' }} /><span>SAVING</span></>}
           {saveStatus === 'saved' && <><div className="w-2 h-2 bg-nb-green" /><span>SAVED</span></>}
           {saveStatus === 'error' && <><div className="w-2 h-2 bg-nb-red" /><span>ERROR</span></>}
@@ -188,7 +192,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         {/* Storage with tooltip */}
         <div
-          className="pl-3 border-l-2 border-nb-black flex items-center gap-2 relative"
+          className="pl-3 border-l-2 border-current/30 flex items-center gap-2 relative"
           onMouseEnter={() => setShowStorageTooltip(true)}
           onMouseLeave={() => setShowStorageTooltip(false)}
         >
@@ -238,7 +242,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </div>
 
         {/* Help */}
-        <div className="pl-3 border-l-2 border-nb-black flex items-center gap-2">
+        <div className="pl-3 border-l-2 border-current/30 flex items-center gap-2">
           {onOpenKeyboardShortcuts && (
             <Button variant="ghost" size="bare"
               onClick={onOpenKeyboardShortcuts}

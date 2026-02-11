@@ -6,6 +6,8 @@ import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/sr
 import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
 import { StackedThumbnail } from '@/src/shared/ui/molecules/StackedThumbnail';
 import { vaultLog } from '@/src/shared/services/logger';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface QCDashboardProps {
   issuesMap: Record<string, ValidationIssue[]>;
@@ -30,6 +32,7 @@ const CATEGORIES: { id: IssueCategory; icon: string; label: string }[] = [
 ];
 
 export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems, root, onSelect, onUpdate, onClose }) => {
+  const cx = useContextualStyles();
   const [activeCategory, setActiveCategory] = useState<IssueCategory>('Identity');
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -228,17 +231,17 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
   };
 
   return (
-    <div className="fixed inset-0 bg-nb-black/70 backdrop-blur-xl z-[600] flex items-center justify-center p-8 animate-in fade-in " onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-nb-white w-full max-w-[1400px] h-[90vh] shadow-brutal-lg flex overflow-hidden border border-nb-black/20">
+    <div className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-8 animate-in fade-in " onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={cn(cx.surface, 'w-full max-w-[1400px] h-[90vh] shadow-brutal-lg flex overflow-hidden')}>
         
         {/* Left Sidebar: Categories */}
-        <div className="w-64 bg-nb-white border-r flex flex-col shrink-0">
+        <div className="w-64 border-r flex flex-col shrink-0">
             <div className="p-6 border-b">
                 <div className={`w-12 h-12 flex flex-col items-center justify-center shadow-brutal mb-4 ${healthScore > 80 ? 'bg-nb-green/20 text-nb-green' : 'bg-nb-red/20 text-nb-red'}`}>
                     <span className="text-lg font-black leading-none">{healthScore}%</span>
                     <span className="text-[7px] font-black uppercase tracking-widest">Health</span>
                 </div>
-                <h2 className="text-sm font-black text-nb-black uppercase tracking-widest">Integrity Guard</h2>
+                <h2 className={cn('text-sm font-black uppercase tracking-widest', cx.text)}>Integrity Guard</h2>
             </div>
             <div className="flex-1 p-3 space-y-1">
                 {CATEGORIES.map(cat => {
@@ -248,13 +251,13 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                             key={cat.id} 
                             onClick={() => setActiveCategory(cat.id)}
                             variant="ghost"
-                            className={`w-full flex items-center justify-between px-4 py-3 transition-nb ${activeCategory === cat.id ? 'bg-nb-white shadow-brutal-sm text-iiif-blue font-bold ring-1 ring-nb-black/10' : 'text-nb-black/50 hover:bg-nb-cream/50'}`}
+                            className={cn('w-full flex items-center justify-between px-4 py-3 transition-nb', activeCategory === cat.id ? cx.active : cx.inactive)}
                         >
                             <div className="flex items-center gap-3">
                                 <Icon name={cat.icon} className="text-sm" />
                                 <span className="text-xs uppercase tracking-wider">{cat.label}</span>
                             </div>
-                            {count > 0 && <span className={`text-[10px] px-1.5 font-bold ${count > 5 ? 'bg-nb-red/20 text-nb-red' : 'bg-nb-cream text-nb-black/60'}`}>{count}</span>}
+                            {count > 0 && <span className={cn('text-[10px] px-1.5 font-bold', count > 5 ? 'bg-nb-red/20 text-nb-red' : cn(cx.subtleBg, cx.textMuted))}>{count}</span>}
                         </Button>
                     );
                 })}
@@ -266,10 +269,10 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
         </div>
 
         {/* Middle: Issues List */}
-        <div className="flex-1 flex flex-col bg-nb-white overflow-hidden min-w-0 border-r border-nb-black/10">
-            <div className="p-6 border-b flex justify-between items-center bg-nb-cream">
-                <h3 className="font-bold text-nb-black flex items-center gap-2">
-                    <Icon name="list" className="text-nb-black/40"/>
+        <div className={cn('flex-1 flex flex-col overflow-hidden min-w-0 border-r', cx.divider)}>
+            <div className={cn('p-6 border-b flex justify-between items-center', cx.subtleBg)}>
+                <h3 className={cn('font-bold flex items-center gap-2', cx.text)}>
+                    <Icon name="list" className={cx.textMuted || ''}/>
                     Detected Violations in {activeCategory}
                 </h3>
                 <Button
@@ -283,7 +286,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {categoryIssues.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-nb-black/30">
+                    <div className={cn('h-full flex flex-col items-center justify-center', cx.textMuted)}>
                         <Icon name="task_alt" className="text-6xl mb-4 opacity-20" />
                         <p className="font-bold uppercase tracking-widest text-xs">No issues in this category</p>
                     </div>
@@ -292,16 +295,16 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                         <div 
                             key={issue.id} 
                             onClick={() => setSelectedIssueId(issue.id)}
-                            className={`p-4 border transition-nb cursor-pointer group flex items-center justify-between ${selectedIssueId === issue.id ? 'bg-nb-blue/10 border-iiif-blue ring-2 ring-nb-blue/20 shadow-brutal' : 'bg-nb-white border-nb-black/10 hover:border-nb-black/20'}`}
+                            className={cn('p-4 border transition-nb cursor-pointer group flex items-center justify-between', selectedIssueId === issue.id ? 'bg-nb-blue/10 border-iiif-blue ring-2 ring-nb-blue/20 shadow-brutal' : cn(cx.divider, 'hover:border-nb-black/20'))}
                         >
                             <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 ${issue.level === 'error' ? 'bg-nb-red/20 text-nb-red' : 'bg-nb-orange/20 text-nb-orange'}`}>
                                         {issue.level}
                                     </span>
-                                    <span className="text-[10px] font-bold text-nb-black truncate">{issue.itemLabel}</span>
+                                    <span className={cn('text-[10px] font-bold truncate', cx.text)}>{issue.itemLabel}</span>
                                 </div>
-                                <p className="text-xs text-nb-black/50 line-clamp-1">{issue.message}</p>
+                                <p className={cn('text-xs line-clamp-1', cx.textMuted)}>{issue.message}</p>
                             </div>
                             {issue.fixable && (
                                 <Button
@@ -321,10 +324,10 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
         </div>
 
         {/* Right: Contextual Preview & Interactive Fixes */}
-        <div className="w-[450px] bg-nb-white flex flex-col shrink-0">
-            <div className="p-6 border-b flex justify-between items-center bg-nb-white shadow-brutal-sm">
-                <span className="text-[10px] font-black text-nb-black/40 uppercase tracking-widest">Archival Context & Tools</span>
-                <Button onClick={onClose} variant="ghost" size="sm" className="p-1 hover:bg-nb-cream transition-nb"><Icon name="close" className="text-nb-black/40"/></Button>
+        <div className="w-[450px] flex flex-col shrink-0">
+            <div className="p-6 border-b flex justify-between items-center shadow-brutal-sm">
+                <span className={cn('text-[10px] font-black uppercase tracking-widest', cx.textMuted)}>Archival Context & Tools</span>
+                <Button onClick={onClose} variant="ghost" size="sm" className={cn('p-1 transition-nb', cx.iconButton)}><Icon name="close"/></Button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
@@ -345,12 +348,12 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
 
                         {/* Interactive Hierarchy Tree */}
                         <div className="space-y-3">
-                            <label className="text-[9px] font-black text-nb-black/40 uppercase tracking-widest">Archive Hierarchy Trace</label>
-                            <div className="bg-nb-white border overflow-hidden shadow-brutal-sm">
+                            <label className={cn('text-[9px] font-black uppercase tracking-widest', cx.textMuted)}>Archive Hierarchy Trace</label>
+                            <div className="border overflow-hidden shadow-brutal-sm">
                                 {previewPath.map((p, i) => (
-                                    <div key={i} style={{ paddingLeft: (i * 12) + 12 }} className={`flex items-center gap-2 p-2 border-b last:border-b-0 ${i === previewPath.length - 1 ? 'bg-nb-blue/10 border-l-4 border-l-iiif-blue' : 'bg-nb-white opacity-60'}`}>
-                                        <Icon name={p.type === 'Collection' ? 'folder' : p.type === 'Manifest' ? 'menu_book' : 'crop_original'} className={`text-xs ${i === previewPath.length - 1 ? 'text-iiif-blue' : 'text-nb-black/40'}`}/>
-                                        <span className={`text-[10px] truncate ${i === previewPath.length - 1 ? 'font-bold text-nb-black' : 'text-nb-black/50'}`}>{p.label}</span>
+                                    <div key={i} style={{ paddingLeft: (i * 12) + 12 }} className={cn('flex items-center gap-2 p-2 border-b last:border-b-0', i === previewPath.length - 1 ? 'bg-nb-blue/10 border-l-4 border-l-iiif-blue' : 'opacity-60')}>
+                                        <Icon name={p.type === 'Collection' ? 'folder' : p.type === 'Manifest' ? 'menu_book' : 'crop_original'} className={cn('text-xs', i === previewPath.length - 1 ? cx.accent : cx.textMuted)}/>
+                                        <span className={cn('text-[10px] truncate', i === previewPath.length - 1 ? cn('font-bold', cx.text) : cx.textMuted)}>{p.label}</span>
                                     </div>
                                 ))}
                             </div>
@@ -359,34 +362,34 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                         {/* Direct Metadata & Label Editor */}
                         {(activeCategory === 'Metadata' || activeCategory === 'Identity') && (
                             <div className="space-y-4">
-                                <label className="text-[9px] font-black text-nb-black/40 uppercase tracking-widest">Interactive Workbench</label>
-                                <div className="bg-nb-white border p-5 space-y-4 shadow-brutal-sm">
+                                <label className={cn('text-[9px] font-black uppercase tracking-widest', cx.textMuted)}>Interactive Workbench</label>
+                                <div className="border p-5 space-y-4 shadow-brutal-sm">
                                     <div>
-                                        <label className="text-[10px] font-black text-nb-black/40 uppercase mb-1.5 block">Resource Label</label>
-                                        <input 
+                                        <label className={cn('text-[10px] font-black uppercase mb-1.5 block', cx.textMuted)}>Resource Label</label>
+                                        <input
                                             value={getIIIFValue(previewItem.label)}
                                             onChange={(e) => handleUpdateItem(previewItem.id, { label: { none: [e.target.value] } })}
-                                            className="w-full text-xs p-2.5 bg-nb-white border focus:ring-2 focus:ring-iiif-blue outline-none font-bold"
+                                            className={cn('w-full text-xs p-2.5 border focus:ring-2 focus:ring-iiif-blue outline-none font-bold', cx.input)}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black text-nb-black/40 uppercase mb-1.5 block">Scientific Summary</label>
-                                        <textarea 
+                                        <label className={cn('text-[10px] font-black uppercase mb-1.5 block', cx.textMuted)}>Scientific Summary</label>
+                                        <textarea
                                             value={getIIIFValue(previewItem.summary)}
                                             onChange={(e) => handleUpdateItem(previewItem.id, { summary: { none: [e.target.value] } })}
-                                            className="w-full text-xs p-2.5 bg-nb-white border focus:ring-2 focus:ring-iiif-blue outline-none font-medium min-h-[60px]"
+                                            className={cn('w-full text-xs p-2.5 border focus:ring-2 focus:ring-iiif-blue outline-none font-medium min-h-[60px]', cx.input)}
                                             placeholder="Provide a descriptive summary..."
                                         />
                                     </div>
                                     
                                     <div className="pt-2 border-t">
                                         <div className="flex justify-between items-center mb-2">
-                                            <label className="text-[10px] font-black text-nb-black/40 uppercase">Archive Metadata</label>
+                                            <label className={cn('text-[10px] font-black uppercase', cx.textMuted)}>Archive Metadata</label>
                                             <div className="relative">
                                                 <Button onClick={() => setShowAddMenu(!showAddMenu)} variant="ghost" size="sm" className="text-[9px] font-black uppercase text-iiif-blue hover:underline flex items-center gap-1">Add Field <Icon name="expand_more" className="text-[10px]"/></Button>
                                                 {showAddMenu && (
-                                                    <div className="absolute right-0 top-full mt-1 bg-nb-white border border-nb-black/20 shadow-brutal py-2 z-[700] min-w-[140px] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                                    <div className={cn('absolute right-0 top-full mt-1 shadow-brutal py-2 z-[700] min-w-[140px] max-h-[200px] overflow-y-auto custom-scrollbar', cx.surface)}>
                                                         {IIIF_PROPERTY_SUGGESTIONS.map(prop => (
                                                             <Button 
                                                                 key={prop} 
@@ -399,7 +402,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                                             </Button>
                                                         ))}
                                                         <div className="border-t mt-1 pt-1">
-                                                            <Button onClick={() => handleAddMetadata(previewItem.id, "New Field")} variant="ghost" size="sm" className="w-full px-4 py-1.5 text-left text-[10px] font-black text-nb-black/40 hover:bg-nb-white italic justify-start">Custom...</Button>
+                                                            <Button onClick={() => handleAddMetadata(previewItem.id, "New Field")} variant="ghost" size="sm" className={cn('w-full px-4 py-1.5 text-left text-[10px] font-black italic justify-start', cx.textMuted)}>Custom...</Button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -407,13 +410,13 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                         </div>
                                         <div className="space-y-2">
                                             {(previewItem.metadata || []).length === 0 ? (
-                                                <p className="text-[10px] text-nb-black/40 italic">No custom metadata tags.</p>
+                                                <p className={cn('text-[10px] italic', cx.textMuted)}>No custom metadata tags.</p>
                                             ) : (
                                                 previewItem.metadata!.map((md, idx) => (
                                                     <div key={idx} className="flex gap-2 group/meta">
                                                         <input 
                                                             value={getIIIFValue(md.label)}
-                                                            className="w-1/3 text-[9px] font-black uppercase text-nb-black/50 bg-nb-white border-none p-1.5"
+                                                            className={cn('w-1/3 text-[9px] font-black uppercase border-none p-1.5', cx.textMuted)}
                                                             onChange={(e) => {
                                                                 if (!previewItem.metadata) return;
                                                                 const newMeta = JSON.parse(JSON.stringify(previewItem.metadata));
@@ -423,7 +426,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                                                         />
                                                         <input 
                                                             value={getIIIFValue(md.value)}
-                                                            className="flex-1 text-[10px] font-bold text-nb-black/80 bg-nb-white border-none p-1.5"
+                                                            className={cn('flex-1 text-[10px] font-bold border-none p-1.5', cx.text)}
                                                             onChange={(e) => {
                                                                 if (!previewItem.metadata) return;
                                                                 const newMeta = JSON.parse(JSON.stringify(previewItem.metadata));
@@ -450,7 +453,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
 
                         {/* Raw Resource DNA */}
                         <div className="space-y-2 opacity-50 grayscale hover:grayscale-0 transition-nb">
-                            <label className="text-[9px] font-black text-nb-black/40 uppercase tracking-widest">Technical Signature</label>
+                            <label className={cn('text-[9px] font-black uppercase tracking-widest', cx.textMuted)}>Technical Signature</label>
                             <div className="bg-nb-black p-4 font-mono text-[9px] text-nb-blue/60 leading-relaxed overflow-hidden border border-white/10 shadow-brutal">
                                 <p className="text-white/40 mb-1">// {previewItem.type} ID</p>
                                 <p className="break-all text-nb-green mb-2">{previewItem.id}</p>
@@ -471,17 +474,17 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ issuesMap, totalItems,
                         </Button>
                     </div>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-nb-black/30 text-center p-8">
-                        <div className="w-16 h-16 bg-nb-white flex items-center justify-center mb-6 shadow-brutal-sm border rotate-3">
+                    <div className={cn('h-full flex flex-col items-center justify-center text-center p-8', cx.textMuted)}>
+                        <div className="w-16 h-16 flex items-center justify-center mb-6 shadow-brutal-sm border rotate-3">
                             <Icon name="biotech" className="text-3xl opacity-20 text-iiif-blue"/>
                         </div>
-                        <h4 className="text-sm font-black uppercase text-nb-black/40 tracking-tighter">Diagnostic Panel Ready</h4>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-nb-black/40 mt-2 max-w-[200px]">Select an issue from the list to begin structural repair</p>
+                        <h4 className={cn('text-sm font-black uppercase tracking-tighter', cx.textMuted)}>Diagnostic Panel Ready</h4>
+                        <p className={cn('text-[10px] font-bold uppercase tracking-widest mt-2 max-w-[200px]', cx.textMuted)}>Select an issue from the list to begin structural repair</p>
                     </div>
                 )}
             </div>
             
-            <div className="p-4 bg-nb-white border-t">
+            <div className="p-4 border-t">
                 <div className="flex items-start gap-3 p-3 bg-nb-blue/10 border border-nb-blue/20">
                     <Icon name="auto_fix_high" className="text-nb-blue text-sm mt-0.5" />
                     <p className="text-[10px] text-nb-blue leading-tight italic">Direct healing allows you to patch standard violations without leaving the diagnostic dashboard.</p>

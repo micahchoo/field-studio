@@ -26,6 +26,8 @@ export interface FirstTimeHintProps {
   initialDismissed?: boolean;
   /** Called when user dismisses (parent persists) */
   onDismiss?: () => void;
+  /** Field mode styling */
+  fieldMode?: boolean;
 }
 
 export const FirstTimeHint: React.FC<FirstTimeHintProps> = ({
@@ -35,6 +37,7 @@ export const FirstTimeHint: React.FC<FirstTimeHintProps> = ({
   className ='',
   initialDismissed = false,
   onDismiss,
+  fieldMode = false,
 }) => {
   const [visible, setVisible] = useState(!initialDismissed);
 
@@ -46,12 +49,12 @@ export const FirstTimeHint: React.FC<FirstTimeHintProps> = ({
   if (!visible) return null;
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 bg-nb-blue/10 border border-nb-blue/20 text-xs text-nb-blue ${className}`}>
-      <Icon name={icon} className="text-nb-blue text-sm shrink-0" />
+    <div className={`flex items-center gap-2 px-3 py-2 border text-xs ${fieldMode ? 'bg-nb-yellow/10 border-nb-yellow text-nb-yellow' : 'bg-nb-blue/10 border-nb-blue/20 text-nb-blue'} ${className}`}>
+      <Icon name={icon} className={`text-sm shrink-0 ${fieldMode ? 'text-nb-yellow' : 'text-nb-blue'}`} />
       <span className="flex-1">{message}</span>
       <Button variant="ghost" size="bare"
         onClick={dismiss}
-        className="text-nb-blue hover:text-nb-blue shrink-0"
+        className={`shrink-0 ${fieldMode ? 'text-nb-yellow hover:text-nb-yellow' : 'text-nb-blue hover:text-nb-blue'}`}
         title="Dismiss"
       >
         <Icon name="close" className="text-xs" />

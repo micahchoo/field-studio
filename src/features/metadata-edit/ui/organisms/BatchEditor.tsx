@@ -198,8 +198,8 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
             <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-iiif-blue flex items-center justify-center text-white shadow-brutal"><Icon name="auto_fix_high" className="text-2xl" /></div>
                 <div>
-                    <h2 className="text-xl font-bold text-nb-black">Batch Archive Toolkit</h2>
-                    <p className="text-sm text-nb-black/50">Editing {ids.length} items</p>
+                    <h2 className="text-lg font-bold text-nb-black">Batch Archive Toolkit</h2>
+                    <p className="text-[10px] font-bold text-nb-black/40 uppercase tracking-widest">Editing {ids.length} Items</p>
                 </div>
             </div>
             <Button variant="ghost" size="bare" onClick={onClose} className="p-2 hover:bg-nb-cream text-nb-black/50 transition-nb"><Icon name="close" /></Button>
@@ -282,21 +282,17 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
         <div className="p-6 bg-nb-white border-t flex justify-between items-center">
             <div>
               {existingSnapshot && onRollback && (
-                <Button variant="ghost" size="bare"
+                <Button variant="secondary" size="sm"
                   onClick={() => setShowRollbackConfirm(true)}
-                  className="px-4 py-2 text-nb-orange bg-nb-orange/10 border border-nb-orange/20 font-bold hover:bg-nb-orange/20 flex items-center gap-2 text-sm"
+                  icon={<Icon name="history" />}
                 >
-                  <Icon name="history" className="text-sm" />
                   Rollback Last Batch
-                  <span className="text-[10px] text-nb-orange ml-1">
-                    ({existingSnapshot.itemCount} items, {formatTimestamp(existingSnapshot.timestamp)})
-                  </span>
                 </Button>
               )}
             </div>
             <div className="flex gap-3">
-              <Button variant="ghost" size="bare" onClick={onClose} className="px-6 py-2 text-nb-black/60 font-bold hover:bg-nb-cream ">Cancel</Button>
-              <Button variant="ghost" size="bare" onClick={handleApply} className="px-10 py-2 bg-iiif-blue text-white font-bold shadow-brutal hover:bg-nb-blue flex items-center gap-2">Apply Changes <Icon name="play_arrow"/></Button>
+              <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+              <Button variant="primary" size="base" onClick={handleApply} iconAfter={<Icon name="play_arrow"/>}>Apply Changes</Button>
             </div>
         </div>
 
@@ -324,17 +320,16 @@ export const BatchEditor: React.FC<BatchEditorProps> = ({ ids, root, onApply, on
                 </p>
               </div>
               <div className="flex gap-3 justify-end">
-                <Button variant="ghost" size="bare"
+                <Button variant="ghost" size="sm"
                   onClick={() => setShowRollbackConfirm(false)}
-                  className="px-6 py-2 text-nb-black/60 font-bold hover:bg-nb-cream "
                 >
                   Cancel
                 </Button>
-                <Button variant="ghost" size="bare"
+                <Button variant="danger" size="sm"
                   onClick={handleRollback}
-                  className="px-6 py-2 bg-nb-orange text-white font-bold hover:bg-nb-orange flex items-center gap-2"
+                  icon={<Icon name="history" />}
                 >
-                  <Icon name="history" /> Rollback
+                  Rollback
                 </Button>
               </div>
             </div>

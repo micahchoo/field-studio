@@ -57,7 +57,7 @@ export const getContextMenuItemClasses = (
     case'danger':
       return`${baseClasses} ${cx?.danger ??'text-nb-red'} ${cx?.dangerHover ??'hover:bg-nb-red/10'}`;
     case'primary':
-      return`${baseClasses} text-iiif-blue hover:bg-iiif-blue/10`;
+      return`${baseClasses} ${cx?.accent ??'text-iiif-blue'} hover:bg-iiif-blue/10`;
     default:
       return`${baseClasses} ${cx?.subtleText ??'text-nb-black/80'} hover:${cx?.subtleBg ??'bg-nb-cream'}`;
   }
@@ -77,7 +77,7 @@ export const getContextMenuIconClasses = (
     case'danger':
       return`${baseClasses} ${cx?.danger ??'text-nb-red'}`;
     case'primary':
-      return`${baseClasses} text-iiif-blue`;
+      return`${baseClasses} ${cx?.accent ??'text-iiif-blue'}`;
     default:
       return`${baseClasses} ${cx?.textMuted ??'text-nb-black/50'}`;
   }

@@ -94,7 +94,7 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
                 onClick={() => handleAction(onAddSubCollection)}
                 variant="ghost"
                 size="sm"
-                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ??'text-nb-black/80'} hover:bg-nb-white flex items-center gap-2 justify-start`}
+                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ??'text-nb-black/80'} ${cx?.subtleBg ? `hover:${cx.subtleBg}` : 'hover:bg-nb-cream'} flex items-center gap-2 justify-start`}
                 role="menuitem"
               >
                 <Icon name="create_new_folder" className={cx?.textMuted ??'text-nb-black/40'} />
@@ -106,7 +106,7 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
                 onClick={() => handleAction(onRename)}
                 variant="ghost"
                 size="sm"
-                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ??'text-nb-black/80'} hover:bg-nb-white flex items-center gap-2 justify-start`}
+                className={`w-full px-4 py-2 text-left text-sm ${cx?.subtleText ??'text-nb-black/80'} ${cx?.subtleBg ? `hover:${cx.subtleBg}` : 'hover:bg-nb-cream'} flex items-center gap-2 justify-start`}
                 role="menuitem"
               >
                 <Icon name="edit" className={cx?.textMuted ??'text-nb-black/40'} />
@@ -118,10 +118,10 @@ export const CollectionCardMenu: React.FC<CollectionCardMenuProps> = ({
                 onClick={() => handleAction(onDelete)}
                 variant="ghost"
                 size="sm"
-                className="w-full px-4 py-2 text-left text-sm text-nb-red hover:bg-nb-red/10 flex items-center gap-2 justify-start"
+                className={`w-full px-4 py-2 text-left text-sm ${cx?.danger ?? 'text-nb-red'} ${cx?.dangerHover ?? 'hover:bg-nb-red/10'} flex items-center gap-2 justify-start`}
                 role="menuitem"
               >
-                <Icon name="delete" className="text-nb-red" />
+                <Icon name="delete" className={cx?.danger ?? 'text-nb-red'} />
                 Delete
               </Button>
             )}

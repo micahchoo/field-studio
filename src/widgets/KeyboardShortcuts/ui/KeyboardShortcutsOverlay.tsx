@@ -6,6 +6,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { useFocusTrap } from '@/src/shared/lib/hooks/useFocusTrap';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 import {
   CATEGORY_CONFIG,
   compareShortcuts,
@@ -40,6 +42,7 @@ export const KeyboardShortcutsOverlay: React.FC<KeyboardShortcutsOverlayProps> =
   onClose,
   currentContext = 'global',
 }) => {
+  const cx = useContextualStyles();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContext, setSelectedContext] = useState<ShortcutContext | 'all'>('all');
   const [selectedCategory, setSelectedCategory] = useState<ShortcutCategory | null>(null);
@@ -190,24 +193,24 @@ ${categoriesHtml}
     >
       <div 
         ref={containerRef}
-        className="bg-nb-white shadow-brutal-lg w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 "
+        className={cn(cx.surface, 'shadow-brutal-lg w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95')}
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
         aria-labelledby="shortcuts-title"
       >
-        <div className="border-b border-nb-black/20 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className={cn('border-b p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4', cx.divider)}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-iiif-blue/10 flex items-center justify-center">
               <Icon name="keyboard" className="text-iiif-blue text-xl" />
             </div>
             <div>
-              <h2 id="shortcuts-title" className="text-xl font-bold text-nb-black/10">
+              <h2 id="shortcuts-title" className={cn('text-xl font-bold', cx.text)}>
                 Keyboard Shortcuts
               </h2>
-              <p className="text-xs text-nb-black/50">
-                Press <kbd className="px-1 py-0.5 bg-nb-cream font-mono text-[10px]">?</kbd> to toggle - <kbd className="px-1 py-0.5 bg-nb-cream font-mono text-[10px]">Esc</kbd> to close
+              <p className={cn('text-xs', cx.textMuted)}>
+                Press <kbd className={cn('px-1 py-0.5 font-mono text-[10px]', cx.kbd)}>?</kbd> to toggle - <kbd className={cn('px-1 py-0.5 font-mono text-[10px]', cx.kbd)}>Esc</kbd> to close
               </p>
             </div>
           </div>
@@ -221,7 +224,7 @@ ${categoriesHtml}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search shortcuts..."
-                className="w-full pl-10 pr-10 py-2.5 border border-nb-black/20 bg-nb-white text-nb-black/10 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none placeholder:text-nb-black/40 transition-nb"
+                className={cn('w-full pl-10 pr-10 py-2.5 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none transition-nb', cx.searchInput)}
                 aria-label="Search keyboard shortcuts"
               />
               {searchQuery && (
@@ -239,7 +242,7 @@ ${categoriesHtml}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="bare"
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-nb-black/60 hover:text-nb-black hover:bg-nb-cream transition-nb"
+              className={cn('flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-nb', cx.iconButton)}
               aria-label="Print cheat sheet"
               title="Print cheat sheet"
             >
@@ -248,7 +251,7 @@ ${categoriesHtml}
             </Button>
             <Button variant="ghost" size="bare"
               onClick={onClose}
-              className="p-2.5 hover:bg-nb-cream text-nb-black/40 hover:text-nb-black/60 transition-nb"
+              className={cn('p-2.5 transition-nb', cx.iconButton)}
               aria-label="Close shortcuts overlay"
             >
               <Icon name="close" />
@@ -256,13 +259,13 @@ ${categoriesHtml}
           </div>
         </div>
 
-        <div className="border-b border-nb-black/20 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div className={cn('border-b px-4 py-3 flex flex-wrap items-center gap-3', cx.divider)}>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-nb-black/50 uppercase tracking-wider">Context:</span>
+            <span className={cn('text-xs font-medium uppercase tracking-wider', cx.textMuted)}>Context:</span>
             <select
               value={selectedContext}
               onChange={(e) => setSelectedContext(e.target.value as ShortcutContext | 'all')}
-              className="px-3 py-1.5 text-sm border border-nb-black/20 bg-nb-white text-nb-black/80 focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none"
+              className={cn('px-3 py-1.5 text-sm focus:ring-2 focus:ring-iiif-blue focus:border-iiif-blue outline-none', cx.input)}
               aria-label="Filter by context"
             >
               <option value="all">All Contexts ({contextCounts.all})</option>
@@ -275,12 +278,12 @@ ${categoriesHtml}
           </div>
           <div className="w-px h-6 bg-nb-cream/80 hidden sm:block" />
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-nb-black/50 uppercase tracking-wider hidden sm:inline">Category:</span>
+            <span className={cn('text-xs font-medium uppercase tracking-wider hidden sm:inline', cx.textMuted)}>Category:</span>
             {sortedCategories.slice(0, 4).map((cat, idx) => (
               <Button variant="ghost" size="bare"
                 key={cat}
                 onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                className={`px-3 py-1.5 text-xs font-medium transition-nb flex items-center gap-1.5 ${selectedCategory === cat ? 'bg-iiif-blue text-white' : 'bg-nb-cream text-nb-black/50 hover:bg-nb-cream'}`}
+                className={cn('px-3 py-1.5 text-xs font-medium transition-nb flex items-center gap-1.5', selectedCategory === cat ? cx.active : cn(cx.subtleBg, cx.textMuted))}
                 title={`Press ${idx + 1} to toggle`}
               >
                 <Icon name={getCategoryIcon(cat)} className="text-sm" />
@@ -326,26 +329,26 @@ ${categoriesHtml}
                 const shortcuts = groupedShortcuts[category];
                 if (!shortcuts?.length) return null;
                 return (
-                  <section key={category} className="bg-nb-cream p-5" aria-labelledby={`category-${category}`}>
+                  <section key={category} className={cn('p-5', cx.subtleBg)} aria-labelledby={`category-${category}`}>
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-8 h-8 bg-nb-white/80 shadow-brutal-sm flex items-center justify-center">
                         <Icon name={getCategoryIcon(category)} className="text-iiif-blue" />
                       </div>
-                      <h3 id={`category-${category}`} className="font-bold text-nb-black/20 text-lg">{getCategoryLabel(category)}</h3>
+                      <h3 id={`category-${category}`} className={cn('font-bold text-lg', cx.text)}>{getCategoryLabel(category)}</h3>
                       <span className="text-xs text-nb-black/40 bg-nb-cream/80 px-2 py-0.5 ">{shortcuts.length}</span>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                       {shortcuts.map((shortcut) => (
-                        <div key={shortcut.id} className="flex items-center justify-between p-3 bg-nb-white border border-nb-black/10 hover:border-iiif-blue/30:border-iiif-blue/30 hover:shadow-brutal-sm transition-nb group">
+                        <div key={shortcut.id} className={cn('flex items-center justify-between p-3 border hover:border-iiif-blue/30 hover:shadow-brutal-sm transition-nb group', cx.surface)}>
                           <div className="flex items-center gap-3 min-w-0">
                             {shortcut.icon && <Icon name={shortcut.icon} className="text-nb-black/40 group-hover:text-nb-black/60 transition-nb" />}
-                            <span className="text-sm text-nb-black/70 truncate">{shortcut.description}</span>
+                            <span className={cn('text-sm truncate', cx.text)}>{shortcut.description}</span>
                           </div>
                           <div className="flex items-center gap-2 ml-3">
                             {shortcut.context !== 'global' && (
                               <span className="text-[10px] text-nb-black/40 bg-nb-cream/80 px-1.5 py-0.5 rounded">{getContextLabel(shortcut.context)}</span>
                             )}
-                            <kbd className="px-2.5 py-1.5 bg-nb-cream/80 border border-nb-black/20 text-xs font-mono font-medium text-nb-black/70 shadow-brutal-sm whitespace-nowrap">
+                            <kbd className={cn('px-2.5 py-1.5 text-xs font-medium shadow-brutal-sm whitespace-nowrap', cx.kbd)}>
                               {formatShortcut(shortcut.keys)}
                             </kbd>
                           </div>
@@ -359,11 +362,11 @@ ${categoriesHtml}
           )}
         </div>
 
-        <div className="border-t border-nb-black/20 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-nb-black/50 bg-nb-cream">
+        <div className={cn('border-t px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs', cx.divider, cx.subtleBg, cx.textMuted)}>
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-nb-white/80 border border-nb-black/20 font-mono text-[10px]">?</kbd><span>toggle overlay</span></span>
-            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-nb-white/80 border border-nb-black/20 font-mono text-[10px]">Esc</kbd><span>close</span></span>
-            <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 bg-nb-white/80 border border-nb-black/20 font-mono text-[10px]">1-6</kbd><span>filter category</span></span>
+            <span className="flex items-center gap-1.5"><kbd className={cn('px-1.5 py-0.5 text-[10px]', cx.kbd)}>?</kbd><span>toggle overlay</span></span>
+            <span className="flex items-center gap-1.5"><kbd className={cn('px-1.5 py-0.5 text-[10px]', cx.kbd)}>Esc</kbd><span>close</span></span>
+            <span className="flex items-center gap-1.5"><kbd className={cn('px-1.5 py-0.5 text-[10px]', cx.kbd)}>1-6</kbd><span>filter category</span></span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-nb-black/40">{filteredShortcuts.length} shortcut{filteredShortcuts.length !== 1 ? 's' : ''}</span>

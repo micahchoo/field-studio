@@ -14,6 +14,7 @@
  */
 
 import React from 'react';
+import { FieldLayout } from '@/src/shared/ui/layout';
 
 export interface SelectOption {
   readonly value: string;
@@ -71,44 +72,48 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   } ${disabled ?'opacity-50 cursor-not-allowed' :''} ${className}`;
 
   return (
-    <div className="space-y-1.5">
+    <FieldLayout>
       {showLabel && label && (
-        <div className={`flex justify-between items-center ${fieldMode ?'text-nb-black/30' :'text-nb-black/80'}`}>
-          <label className="block text-xs font-bold">{label}</label>
-          {hint && (
-            <span className={`text-[9px] font-mono px-1 ${fieldMode ?'bg-nb-black text-nb-black/50' :'bg-nb-white text-nb-black/40'}`}>
-              {hint}
-            </span>
-          )}
-        </div>
+        <FieldLayout.Label>
+          <div className={`flex justify-between items-center ${fieldMode ?'text-nb-black/30' :'text-nb-black/80'}`}>
+            <label className="block text-xs font-bold">{label}</label>
+            {hint && (
+              <span className={`text-[9px] font-mono px-1 ${fieldMode ?'bg-nb-black text-nb-black/50' :'bg-nb-white text-nb-black/40'}`}>
+                {hint}
+              </span>
+            )}
+          </div>
+        </FieldLayout.Label>
       )}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className={inputClass}
-      >
-        <option value="">{placeholder}</option>
+      <FieldLayout.Control>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className={inputClass}
+        >
+          <option value="">{placeholder}</option>
 
-        {/* Render simple options */}
-        {options && options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
+          {/* Render simple options */}
+          {options && options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
 
-        {/* Render grouped options */}
-        {groups && groups.map((group) => (
-          <optgroup key={group.label} label={group.label}>
-            {group.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </div>
+          {/* Render grouped options */}
+          {groups && groups.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </FieldLayout.Control>
+    </FieldLayout>
   );
 };
 

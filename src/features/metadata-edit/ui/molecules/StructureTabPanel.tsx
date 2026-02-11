@@ -23,7 +23,7 @@ import {
   LanguageMap
 } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
-import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 interface StructureTabPanelProps {
   /** The manifest containing structures */
@@ -32,6 +32,8 @@ interface StructureTabPanelProps {
   onUpdateManifest: (updates: Partial<IIIFManifest>) => void;
   /** App settings for theming */
   settings: AppSettings;
+  /** Contextual style classes (passed from Inspector) */
+  cx: ContextualClassNames;
   /** Available canvases in the manifest */
   canvases: IIIFCanvas[];
 }
@@ -418,9 +420,9 @@ export const StructureTabPanel: React.FC<StructureTabPanelProps> = ({
   manifest,
   onUpdateManifest,
   settings,
+  cx,
   canvases,
 }) => {
-  const cx = useContextualStyles(settings.fieldMode);
   const [expandedRanges, setExpandedRanges] = useState<Set<string>>(new Set());
   const [selectedRangeId, setSelectedRangeId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);

@@ -14,6 +14,7 @@
  */
 
 import React, { ReactNode } from 'react';
+import { FieldLayout } from '@/src/shared/ui/layout';
 
 export type FormInputType ='text' |'textarea' |'number' |'datetime-local' |'date' |'time' |'email' |'url' |'password';
 
@@ -136,20 +137,26 @@ export const FormInput: React.FC<FormInputProps> = ({
   };
 
   return (
-    <div className="space-y-1">
+    <FieldLayout>
       {label && (
-        <label htmlFor={id} className={labelClass}>
-          {label}
-          {required && <span className={fieldMode ?'text-nb-red' :'text-nb-red'}> *</span>}
-        </label>
+        <FieldLayout.Label>
+          <label htmlFor={id} className={labelClass}>
+            {label}
+            {required && <span className={fieldMode ?'text-nb-red' :'text-nb-red'}> *</span>}
+          </label>
+        </FieldLayout.Label>
       )}
-      {renderInput()}
+      <FieldLayout.Control>
+        {renderInput()}
+      </FieldLayout.Control>
       {(error || hint) && (
-        <div id={error ?`${id}-error` :`${id}-hint`} className={hintClass} role={error ?'alert' : undefined}>
-          {error || hint}
-        </div>
+        <FieldLayout.Hint>
+          <div id={error ?`${id}-error` :`${id}-hint`} className={hintClass} role={error ?'alert' : undefined}>
+            {error || hint}
+          </div>
+        </FieldLayout.Hint>
       )}
-    </div>
+    </FieldLayout>
   );
 };
 

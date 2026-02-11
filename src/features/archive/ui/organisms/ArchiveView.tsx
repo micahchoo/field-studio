@@ -35,6 +35,7 @@ import { BehaviorSelector } from '@/src/features/metadata-edit/ui/atoms/Behavior
 import { RightsSelector } from '@/src/features/metadata-edit/ui/atoms/RightsSelector';
 import { ModalDialog } from '@/src/shared/ui/molecules/ModalDialog';
 import { BEHAVIOR_OPTIONS, getConflictingBehaviors } from '@/src/shared/constants/iiif';
+import { PaneLayout } from '@/src/shared/ui/layout';
 
 /**
  * NavDate Bulk Set Modal
@@ -787,7 +788,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
   }
 
   return (
-    <div className={`flex-1 flex flex-col h-full relative overflow-hidden ${cx.pageBg}`}>
+    <PaneLayout className={`relative ${cx.pageBg}`}>
       {/* Pipeline Banner - show when coming from another view */}
       {!filmstripMode && hasPipeline && origin === 'search' && (
         <PipelineBanner
@@ -798,8 +799,9 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
       )}
 
       {/* Header - hide in filmstrip mode for compact sidebar */}
-      {!filmstripMode && (
-        <ArchiveHeader
+      <PaneLayout.Header>
+        {!filmstripMode ? (
+          <ArchiveHeader
           filter={filter}
           onFilterChange={handleFilterChange}
           view={view}
@@ -827,20 +829,16 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
           cx={cx}
           fieldMode={fieldMode}
         />
-      )}
+        ) : (
+          <div className="px-3 py-2.5 border-b border-mode-accent-border bg-mode-accent-bg-subtle">
+            <span className="text-[10px] font-bold text-mode-accent uppercase tracking-wider">
+              {filteredCanvases.length} items
+            </span>
+          </div>
+        )}
+      </PaneLayout.Header>
 
-      {/* Filmstrip mode: compact header with just count */}
-      {filmstripMode && (
-        <div className="px-3 py-2.5 border-b border-mode-accent-border bg-mode-accent-bg-subtle shrink-0">
-          <span className="text-[10px] font-bold text-mode-accent uppercase tracking-wider">
-            {filteredCanvases.length} items
-          </span>
-        </div>
-      )}
-
-      <div
-        ref={scrollContainerRef}
-        className={`flex-1 overflow-y-auto custom-scrollbar ${
+      <PaneLayout.Body scroll className={`custom-scrollbar ${
           filmstripMode
             ? 'p-2'
             : view === 'map' || view === 'timeline'
@@ -849,9 +847,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
         }`}
       >
         {filmstripMode ? renderFilmstripView() : renderContentView()}
-      </div>
+      </PaneLayout.Body>
 
-      {/* Context Menu - Enhanced with pipeline actions */}
       {contextMenu && (() => {
         const targetItem = allCanvases.find(c => c.id === contextMenu.targetId);
         const sections: ContextMenuSectionType[] = [
@@ -995,7 +992,7 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({
           </div>
         </ModalDialog>
       )}
-    </div>
+    </PaneLayout>
   );
 };
 

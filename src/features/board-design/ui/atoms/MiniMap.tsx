@@ -85,7 +85,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
         aria-label="MiniMap - click to pan"
       >
         {/* Background */}
-        <div className="absolute inset-0 bg-nb-black opacity-20" />
+        <div className={`absolute inset-0 opacity-20 ${fieldMode ? 'bg-nb-black' : cx.surface || 'bg-nb-black'}`} />
 
         {/* Items */}
         {items.map((item) => {
@@ -96,7 +96,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
           return (
             <div
               key={item.id}
-              className="absolute bg-nb-blue opacity-70 "
+              className={`absolute opacity-70 ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue'}`}
               style={{
                 left: `${x}px`,
                 top: `${y}px`,
@@ -111,7 +111,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
         {/* Viewport rectangle */}
         {viewportRect && (
           <div
-            className="absolute border-2 border-nb-yellow bg-nb-yellow bg-opacity-20"
+            className={`absolute border-2 bg-opacity-20 ${fieldMode ? 'border-nb-yellow bg-nb-yellow' : 'border-nb-blue bg-nb-blue'}`}
             style={{
               left: `${(viewportRect.x - effectiveBounds.minX) * scale}px`,
               top: `${(viewportRect.y - effectiveBounds.minY) * scale}px`,

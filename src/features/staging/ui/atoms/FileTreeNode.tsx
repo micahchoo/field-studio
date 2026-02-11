@@ -12,6 +12,7 @@ import { ExpandButton } from '@/src/features/structure-view/ui/atoms/ExpandButto
 import { MIME_TYPE_MAP } from '@/src/shared/constants/image';
 import type { FlatFileTreeNode } from '../../model';
 import type { IngestPreviewNode } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 
 export interface FileTreeNodeProps {
   node: FlatFileTreeNode;
@@ -24,6 +25,10 @@ export interface FileTreeNodeProps {
   analysisNode?: IngestPreviewNode;
   /** Whether this file has an unsupported format */
   isUnsupported?: boolean;
+  /** Contextual class names for theming */
+  cx?: Partial<ContextualClassNames>;
+  /** Field mode styling */
+  fieldMode?: boolean;
 }
 
 function getFileIcon(name: string): string {
@@ -73,6 +78,7 @@ export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   onDragStart,
   analysisNode,
   isUnsupported,
+  cx,
 }) => {
   const { annotations } = node;
   const isExcluded = !!annotations.excluded;
@@ -94,7 +100,9 @@ export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   return (
     <div
       className={`flex items-center gap-1.5 py-1 px-2 cursor-pointer group text-sm select-none ${
-        isSelected ? 'bg-nb-blue/15 text-nb-black' : 'hover:bg-nb-cream/60 text-nb-black/80'
+        isSelected
+          ? (cx?.selected ?? 'bg-nb-blue/15 text-nb-black')
+          : `hover:bg-nb-cream/60 ${cx?.text ?? 'text-nb-black/80'}`
       } ${isExcluded ? 'opacity-40 line-through' : ''} ${isUnsupported && !isExcluded ? 'opacity-50' : ''}`}
       style={{ paddingLeft: `${node.depth * 20 + 4}px` }}
       onClick={(e) => onSelect(node.path, e.metaKey || e.ctrlKey)}
@@ -156,11 +164,11 @@ export const FileTreeNode: React.FC<FileTreeNodeProps> = ({
 
       {/* Badge: file count or size */}
       {node.isDirectory ? (
-        <span className="text-[10px] text-nb-black/40 tabular-nums whitespace-nowrap">
+        <span className={`text-[10px] tabular-nums whitespace-nowrap ${cx?.text ?? 'text-nb-black/40'}`}>
           {node.totalFileCount} file{node.totalFileCount !== 1 ? 's' : ''}
         </span>
       ) : (
-        <span className="text-[10px] text-nb-black/40 tabular-nums whitespace-nowrap">
+        <span className={`text-[10px] tabular-nums whitespace-nowrap ${cx?.text ?? 'text-nb-black/40'}`}>
           {formatSize(node.size)}
         </span>
       )}

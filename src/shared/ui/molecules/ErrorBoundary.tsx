@@ -4,6 +4,8 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { appLog } from '@/src/shared/services/logger';
 import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface Props {
   // Made children optional to fix"Property'children' is missing" error in index.tsx
@@ -21,6 +23,52 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
+
+/** Default fallback UI — functional so it can call useContextualStyles */
+const DefaultErrorFallback: React.FC<{ error: Error | null; errorInfo: ErrorInfo | null; onRetry: () => void }> = ({ error, errorInfo, onRetry }) => {
+  const cx = useContextualStyles();
+  return (
+    <div className={cn('min-h-screen flex items-center justify-center p-4', cx.surface)}>
+      <div className={cn('max-w-lg w-full shadow-brutal-lg overflow-hidden border border-nb-red/20', cx.surface)}>
+        <div className="bg-nb-red/10 p-6 flex items-center gap-4 border-b border-nb-red/20">
+          <div className="w-12 h-12 bg-nb-red/20 flex items-center justify-center text-nb-red shrink-0">
+            <Icon name="error_outline" className="text-3xl" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-nb-red">Something went wrong</h1>
+            <p className="text-nb-red text-sm">The application encountered an unexpected error.</p>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="bg-nb-black p-4 overflow-auto max-h-64 custom-scrollbar">
+            <code className="text-nb-red/60 font-mono text-xs block mb-2">
+              {error && error.message}
+            </code>
+            {import.meta.env.DEV && (
+              <code className="text-nb-black/50 font-mono text-[10px] whitespace-pre-wrap block">
+                {errorInfo && errorInfo.componentStack}
+              </code>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" size="bare"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-nb-black text-white font-bold text-sm hover:bg-nb-black/80 flex items-center gap-2"
+            >
+              <Icon name="refresh" /> Reload Application
+            </Button>
+          </div>
+        </div>
+
+        <div className={cn('p-4 text-center text-xs border-t', cx.surface, cx.textMuted)}>
+          If this persists, please export your data and report the issue.
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Fix: Import Component directly and extend it to ensure property access (setState, props) works correctly in TypeScript
 export class ErrorBoundary extends Component<Props, State> {
@@ -64,45 +112,11 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-nb-white flex items-center justify-center p-4">
-          <div className="bg-nb-white max-w-lg w-full shadow-brutal-lg overflow-hidden border border-nb-red/20">
-            <div className="bg-nb-red/10 p-6 flex items-center gap-4 border-b border-nb-red/20">
-              <div className="w-12 h-12 bg-nb-red/20 flex items-center justify-center text-nb-red shrink-0">
-                <Icon name="error_outline" className="text-3xl" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-nb-red">Something went wrong</h1>
-                <p className="text-nb-red text-sm">The application encountered an unexpected error.</p>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="bg-nb-black p-4 overflow-auto max-h-64 custom-scrollbar">
-                <code className="text-nb-red/60 font-mono text-xs block mb-2">
-                  {this.state.error && this.state.error.message}
-                </code>
-                {import.meta.env.DEV && (
-                  <code className="text-nb-black/50 font-mono text-[10px] whitespace-pre-wrap block">
-                    {this.state.errorInfo && this.state.errorInfo.componentStack}
-                  </code>
-                )}
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <Button variant="ghost" size="bare"
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-nb-black text-white font-bold text-sm hover:bg-nb-black/80 flex items-center gap-2"
-                >
-                  <Icon name="refresh" /> Reload Application
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-nb-white p-4 text-center text-xs text-nb-black/40 border-t">
-              If this persists, please export your data and report the issue.
-            </div>
-          </div>
-        </div>
+        <DefaultErrorFallback
+          error={this.state.error}
+          errorInfo={this.state.errorInfo}
+          onRetry={this.handleRetry}
+        />
       );
     }
 
@@ -120,9 +134,10 @@ interface ViewErrorFallbackProps {
 }
 
 export const ViewErrorFallback: React.FC<ViewErrorFallbackProps> = ({ viewName, error, onRetry, onSwitchView }) => {
+  const cx = useContextualStyles();
   return (
-    <div className="flex-1 flex items-center justify-center p-8 bg-nb-white">
-      <div className="bg-nb-white max-w-md w-full shadow-brutal border border-nb-orange/20 overflow-hidden">
+    <div className={cn('flex-1 flex items-center justify-center p-8', cx.surface)}>
+      <div className={cn('max-w-md w-full shadow-brutal border border-nb-orange/20 overflow-hidden', cx.surface)}>
         <div className="bg-nb-orange/10 p-4 flex items-center gap-3 border-b border-nb-orange/20">
           <div className="w-10 h-10 bg-nb-orange/20 flex items-center justify-center text-nb-orange shrink-0">
             <Icon name="warning" className="text-xl" />
@@ -140,7 +155,7 @@ export const ViewErrorFallback: React.FC<ViewErrorFallbackProps> = ({ viewName, 
             </div>
           )}
 
-          <p className="text-nb-black/60 text-sm">
+          <p className={cn('text-sm', cx.textMuted)}>
             Your data is safe. You can try again or switch to a different view.
           </p>
 

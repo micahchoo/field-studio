@@ -18,6 +18,7 @@ import {
   ViewHeader,
   ViewHeaderTitle,
   ViewHeaderActions,
+  ViewHeaderSubBar,
   ViewHeaderDivider,
   ViewHeaderSelectionBar,
 } from '@/src/shared/ui/molecules/ViewHeader';
@@ -153,10 +154,11 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
   return (
     <>
       <ViewHeader cx={cx} fieldMode={fieldMode}>
+        {/* Title + context */}
         <ViewHeaderTitle title="Archive">
           {!isMobile && !hasSelection && !showReorderMode && (
             <>
-              <ViewHeaderDivider />
+              <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow/40' : 'bg-nb-black/20'}`} />
               <div className={`flex items-center gap-2 text-nb-caption font-bold uppercase tracking-wider font-mono ${cx.textMuted || 'text-nb-black/40'}`}>
                 Select items to begin synthesis pipeline
               </div>
@@ -164,21 +166,52 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
           )}
           {!isMobile && showReorderMode && (
             <>
-              <ViewHeaderDivider />
-              <span className={`text-xs font-medium ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
+              <div className={`h-4 w-px ${fieldMode ? 'bg-nb-yellow/40' : 'bg-nb-black/20'}`} />
+              <span className={`text-[10px] font-bold uppercase tracking-wider font-mono ${fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40'}`}>
                 Viewer closed — reorder enabled
               </span>
             </>
           )}
         </ViewHeaderTitle>
 
+        {/* Panel toggle buttons */}
         <ViewHeaderActions>
+          {hasCanvasSelected && onToggleInspectorPanel && onToggleViewerPanel && (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="bare"
+                onClick={onToggleInspectorPanel}
+                className={`p-1.5 transition-nb ${
+                  showInspectorPanel
+                    ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/30 text-nb-blue'
+                    : fieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/40 hover:bg-nb-black/80'
+                }`}
+                title={showInspectorPanel ? 'Hide Inspector' : 'Show Inspector'}
+              >
+                <Icon name="info" className="text-lg" />
+              </Button>
+              <Button variant="ghost" size="bare"
+                onClick={onToggleViewerPanel}
+                className={`p-1.5 transition-nb ${
+                  showViewerPanel
+                    ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/30 text-nb-blue'
+                    : fieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/40 hover:bg-nb-black/80'
+                }`}
+                title={showViewerPanel ? 'Close Viewer' : 'Open Viewer'}
+              >
+                <Icon name={showViewerPanel ? 'visibility' : 'visibility_off'} className="text-lg" />
+              </Button>
+            </div>
+          )}
+        </ViewHeaderActions>
+
+        {/* Sub-header: search + sort + view toggle */}
+        <ViewHeaderSubBar visible={true}>
           {!isMobile && (
             <SearchField
               value={filter}
               onChange={onFilterChange}
               placeholder="Filter archive..."
-              width="w-64"
+              width="w-48"
               showClear={true}
               cx={cx}
               fieldMode={fieldMode}
@@ -232,44 +265,17 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
               )}
             </div>
           )}
-          <ViewToggle
-            value={view}
-            onChange={onViewChange}
-            options={VIEW_MODE_OPTIONS}
-            ariaLabel="Archive view mode toggle"
-            cx={cx}
-            fieldMode={fieldMode}
-          />
-          {hasCanvasSelected && onToggleInspectorPanel && onToggleViewerPanel && (
-            <>
-              <ViewHeaderDivider className={`h-6 w-px ${fieldMode ? 'bg-nb-yellow' : 'bg-nb-black/60'}`} />
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="bare"
-                  onClick={onToggleInspectorPanel}
-                  className={`p-1.5 transition-nb ${
-                    showInspectorPanel
-                      ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/30 text-nb-blue'
-                      : fieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/40 hover:bg-nb-black/80'
-                  }`}
-                  title={showInspectorPanel ? 'Hide Inspector' : 'Show Inspector'}
-                >
-                  <Icon name="info" className="text-lg" />
-                </Button>
-                <Button variant="ghost" size="bare"
-                  onClick={onToggleViewerPanel}
-                  className={`p-1.5 transition-nb ${
-                    showViewerPanel
-                      ? fieldMode ? 'bg-nb-yellow/30 text-nb-yellow' : 'bg-nb-blue/30 text-nb-blue'
-                      : fieldMode ? 'text-nb-yellow hover:bg-nb-yellow/20' : 'text-nb-black/40 hover:bg-nb-black/80'
-                  }`}
-                  title={showViewerPanel ? 'Close Viewer' : 'Open Viewer'}
-                >
-                  <Icon name={showViewerPanel ? 'visibility' : 'visibility_off'} className="text-lg" />
-                </Button>
-              </div>
-            </>
-          )}
-        </ViewHeaderActions>
+          <div className="ml-auto">
+            <ViewToggle
+              value={view}
+              onChange={onViewChange}
+              options={VIEW_MODE_OPTIONS}
+              ariaLabel="Archive view mode toggle"
+              cx={cx}
+              fieldMode={fieldMode}
+            />
+          </div>
+        </ViewHeaderSubBar>
       </ViewHeader>
 
       <ViewHeaderSelectionBar

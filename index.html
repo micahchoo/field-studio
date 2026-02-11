@@ -34,6 +34,34 @@
     console.error("Window Error Event:", e);
   });
 </script>
+<script>
+  // FOUC protection: apply theme CSS vars before React mounts
+  (function() {
+    try {
+      var stored = localStorage.getItem('iiif-field-settings');
+      if (stored) {
+        var theme = JSON.parse(stored).theme;
+        if (theme === 'dark') {
+          document.documentElement.style.setProperty('--theme-surface-primary', '#1A1A1A');
+          document.documentElement.style.setProperty('--theme-surface-secondary', '#111111');
+          document.documentElement.style.setProperty('--theme-text-primary', '#F0F0F0');
+          document.documentElement.style.setProperty('--theme-border-default', '#F0F0F0');
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.style.backgroundColor = '#1A1A1A';
+          document.documentElement.style.color = '#F0F0F0';
+        } else if (theme === 'field') {
+          document.documentElement.style.setProperty('--theme-surface-primary', '#000000');
+          document.documentElement.style.setProperty('--theme-surface-secondary', '#1A1A00');
+          document.documentElement.style.setProperty('--theme-text-primary', '#FFE500');
+          document.documentElement.style.setProperty('--theme-border-default', '#FFE500');
+          document.documentElement.setAttribute('data-theme', 'field');
+          document.documentElement.style.backgroundColor = '#000000';
+          document.documentElement.style.color = '#FFE500';
+        }
+      }
+    } catch(e) {}
+  })();
+</script>
 </head>
   <body>
     <div id="root"></div>

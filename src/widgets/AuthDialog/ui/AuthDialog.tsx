@@ -10,6 +10,8 @@ import { networkLog } from '@/src/shared/services/logger';
 import { Button } from '@/src/shared/ui/atoms';
 import { authService, AuthService, AuthState, ProbeResponse } from '@/src/shared/services/authService';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface AuthDialogProps {
   /** The auth services extracted from the IIIF resource */
@@ -31,6 +33,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
   onClose,
   preferredLang = 'en'
 }) => {
+  const cx = useContextualStyles();
   const [state, setState] = useState<AuthState>({ status: 'probing' });
   const [probeResult, setProbeResult] = useState<ProbeResponse | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -144,16 +147,16 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <div className="bg-nb-white shadow-brutal-lg max-w-md w-full overflow-hidden">
+      <div className={cn(cx.surface, 'shadow-brutal-lg max-w-md w-full overflow-hidden')}>
         {/* Header */}
-        <div className="p-6 border-b bg-nb-white">
+        <div className="p-6 border-b">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-nb-orange/20 flex items-center justify-center text-nb-orange">
               <Icon name="lock" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-nb-black">{heading}</h2>
-              <p className="text-xs text-nb-black/50">IIIF Authorization Flow 2.0</p>
+              <h2 className={cn('text-lg font-bold', cx.text)}>{heading}</h2>
+              <p className={cn('text-[10px] font-bold uppercase tracking-widest', cx.textMuted)}>IIIF Authorization Flow 2.0</p>
             </div>
           </div>
         </div>
@@ -163,13 +166,13 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
           {state.status === 'probing' && (
             <div className="flex flex-col items-center py-8">
               <div className="w-12 h-12 border-4 border-nb-black/10 border-t-iiif-blue animate-spin mb-4"></div>
-              <p className="text-sm text-nb-black/50">Checking access...</p>
+              <p className={cn('text-sm', cx.textMuted)}>Checking access...</p>
             </div>
           )}
 
           {state.status === 'unauthenticated' && (
             <>
-              <p className="text-nb-black/60 mb-6">{description}</p>
+              <p className={cn('mb-6', cx.textMuted)}>{description}</p>
 
               {accessService?.profile === 'active' && (
                 <div className="bg-nb-blue/10 border border-nb-blue/20 p-4 mb-4">
@@ -208,7 +211,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
 
           {state.status === 'degraded' && (
             <>
-              <p className="text-nb-black/60 mb-4">{description}</p>
+              <p className={cn('mb-4', cx.textMuted)}>{description}</p>
 
               <div className="bg-nb-orange/10 border border-nb-orange/20 p-4 mb-4">
                 <div className="flex items-start gap-3">
@@ -226,12 +229,12 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
 
               {state.substitute && (
                 <div className="border p-3 mb-4">
-                  <p className="text-xs font-medium text-nb-black/50 mb-1">Available substitute:</p>
-                  <p className="text-sm text-nb-black/80 font-mono truncate">
+                  <p className={cn('text-xs font-medium mb-1', cx.textMuted)}>Available substitute:</p>
+                  <p className={cn('text-sm font-mono truncate', cx.text)}>
                     {state.substitute.id}
                   </p>
                   {state.substitute.width && state.substitute.height && (
-                    <p className="text-xs text-nb-black/50 mt-1">
+                    <p className={cn('text-xs mt-1', cx.textMuted)}>
                       {state.substitute.width} x {state.substitute.height}
                     </p>
                   )}
@@ -246,7 +249,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
                 <Icon name="check_circle" className="text-3xl" />
               </div>
               <p className="text-lg font-semibold text-nb-green">Access Granted</p>
-              <p className="text-sm text-nb-black/50 mt-1">You can now view this resource.</p>
+              <p className={cn('text-sm mt-1', cx.textMuted)}>You can now view this resource.</p>
             </div>
           )}
 
@@ -268,77 +271,55 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="p-4 border-t bg-nb-white flex gap-3 justify-end">
-          <Button variant="ghost" size="bare"
+        <div className="p-4 border-t flex gap-3 justify-end">
+          <Button variant="ghost" size="sm"
             onClick={onClose}
-            className="px-4 py-2 text-nb-black/60 hover:text-nb-black font-medium text-sm"
           >
             Cancel
           </Button>
 
           {state.status === 'unauthenticated' && accessService && (
-            <Button variant="ghost" size="bare"
+            <Button variant="primary" size="sm"
               onClick={handleLogin}
               disabled={isLoggingIn}
-              className="px-6 py-2 bg-iiif-blue text-white font-semibold text-sm hover:bg-nb-blue disabled:opacity-50 flex items-center gap-2"
+              loading={isLoggingIn}
+              icon={!isLoggingIn ? <Icon name="login" /> : undefined}
             >
-              {isLoggingIn ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin"></div>
-                  Logging in...
-                </>
-              ) : (
-                <>
-                  <Icon name="login" />
-                  {loginLabel}
-                </>
-              )}
+              {isLoggingIn ? 'Logging in...' : loginLabel}
             </Button>
           )}
 
           {state.status === 'degraded' && (
             <>
-              <Button variant="ghost" size="bare"
+              <Button variant="secondary" size="sm"
                 onClick={handleUseDegraded}
-                className="px-4 py-2 border border-nb-black/20 text-nb-black/80 font-medium text-sm hover:bg-nb-cream"
               >
                 Use Substitute
               </Button>
               {accessService && (
-                <Button variant="ghost" size="bare"
+                <Button variant="primary" size="sm"
                   onClick={handleLogin}
                   disabled={isLoggingIn}
-                  className="px-6 py-2 bg-iiif-blue text-white font-semibold text-sm hover:bg-nb-blue disabled:opacity-50 flex items-center gap-2"
+                  loading={isLoggingIn}
+                  icon={!isLoggingIn ? <Icon name="login" /> : undefined}
                 >
-                  {isLoggingIn ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin"></div>
-                      Logging in...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="login" />
-                      {loginLabel}
-                    </>
-                  )}
+                  {isLoggingIn ? 'Logging in...' : loginLabel}
                 </Button>
               )}
             </>
           )}
 
           {state.status === 'authenticated' && (
-            <Button variant="ghost" size="bare"
+            <Button variant="success" size="sm"
               onClick={() => onComplete(state)}
-              className="px-6 py-2 bg-nb-green text-white font-semibold text-sm hover:bg-nb-green"
             >
               Continue
             </Button>
           )}
 
           {state.status === 'error' && (
-            <Button variant="ghost" size="bare"
+            <Button variant="secondary" size="sm"
               onClick={probeForAccess}
-              className="px-4 py-2 border border-nb-black/20 text-nb-black/80 font-medium text-sm hover:bg-nb-cream"
             >
               Retry
             </Button>

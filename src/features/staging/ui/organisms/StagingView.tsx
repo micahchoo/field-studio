@@ -4,6 +4,10 @@
  * Main organism for the staging feature.
  * Provides a two-pane workbench for importing and organizing IIIF resources.
  *
+ * NOTE: Uses ViewContainer wrapper instead of PaneLayout. This predates
+ * PaneLayout and should be migrated when StagingView is decomposed into
+ * proper molecules.
+ *
  * ATOMIC DESIGN COMPLIANCE:
  * - Receives cx and fieldMode via props from FieldModeTemplate (no hook calls)
  * - Composes molecules: ViewContainer, Toolbar, EmptyState, FilterInput
@@ -400,7 +404,7 @@ export const StagingView: React.FC<StagingViewProps> = ({
 
       {/* Create Collection Modal */}
       {isCreatingCollection && (
-        <div className="fixed inset-0 bg-nb-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-nb-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div
             className={`${cx.surface}  shadow-brutal p-6 w-96 max-w-[90vw]`}
           >

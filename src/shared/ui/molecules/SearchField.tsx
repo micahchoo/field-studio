@@ -82,7 +82,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         name="search"
         className={`
           absolute left-3 top-2.5 text-lg pointer-events-none
-          ${cx.label}
+          ${cx.textMuted || ''}
 `}
         aria-hidden="true"
       />

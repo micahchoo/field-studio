@@ -5,6 +5,7 @@ import { AbstractionLevel, AppMode, getIIIFValue, IIIFItem, ViewType } from '@/s
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { CONSTANTS } from '@/src/shared/constants';
 import { useResizablePanel } from '@/src/shared/lib/hooks/useResizablePanel';
+import { PanelLayout } from '@/src/shared/ui/layout';
 import { useAppSettings } from '@/src/app/providers/useAppSettings';
 import { useAppMode } from '@/src/app/providers';
 
@@ -403,7 +404,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
         onTouchEnd={handleTouchEnd}
       >
         {/* Header */}
-        <div className={`flex items-center px-3 shrink-0 gap-2 h-14 border-b-4 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
+        <PanelLayout.Header className={`flex items-center px-3 gap-2 h-header-compact border-b-4 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
           <div className={`w-8 h-8 flex items-center justify-center font-mono font-black text-sm border-2 shrink-0 ${isFieldMode ? 'bg-nb-yellow text-nb-black border-nb-yellow' : 'bg-nb-blue text-nb-white border-nb-black'}`}>
             <Icon name="photo_library" className="text-lg" />
           </div>
@@ -433,10 +434,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               <Icon name={isCollapsed ? 'chevron_right' : 'chevron_left'} className="text-lg" />
             </Button>
           )}
-        </div>
+        </PanelLayout.Header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
+        <PanelLayout.Body className="custom-scrollbar flex flex-col">
 
           {/* Navigation */}
           <nav className={isCollapsed ? 'py-2' : 'px-4 py-3'}>
@@ -600,12 +601,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               )}
             </div>
           )}
-        </div>
+        </PanelLayout.Body>
 
         {/* Bottom Actions */}
-        <div className={`border-t-4 shrink-0 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
+        <PanelLayout.Footer className={`border-t-4 ${isFieldMode ? 'border-nb-yellow bg-nb-black' : 'border-nb-black bg-nb-cream'}`}>
           {hasData && !isCollapsed && (
-            <div className={`p-3 border-b-2 ${isFieldMode ? 'border-nb-yellow/20' : 'border-nb-black/20'}`}>
+            <div className="p-3">
               <Button variant="ghost" size="bare"
                 onClick={onExportTrigger}
                 className={`
@@ -671,7 +672,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(function Sidebar({
               {!isCollapsed && <span>SETUP</span>}
             </Button>
           </div>
-        </div>
+        </PanelLayout.Footer>
 
         {/* Resize Handle */}
         {!isMobile && (

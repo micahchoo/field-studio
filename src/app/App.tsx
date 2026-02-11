@@ -1,6 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/src/shared/ui/atoms';
+import { ScreenLayout } from '@/src/shared/ui/layout';
 import { type AbstractionLevel, type AppMode, type FileTree, getIIIFValue, type IIIFAnnotation, type IIIFItem, isCanvas, isCollection, type ViewType } from '@/src/shared/types';
 import { ToastProvider, useToast } from '@/src/shared/ui/molecules/Toast';
 import { ErrorBoundary } from '@/src/shared/ui/molecules/ErrorBoundary';
@@ -45,6 +46,7 @@ import { ActivityFeedPanel } from '@/src/widgets/StatusBar/ui/molecules/Activity
 import { UserIntentProvider } from '@/src/app/providers/UserIntentProvider';
 import { ResourceContextProvider } from '@/src/app/providers/ResourceContextProvider';
 import { useAppMode, useAppModeState } from '@/src/app/providers';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
 
 // Custom hooks for cleaner state management
 import { useResponsive } from '@/src/shared/lib/hooks/useResponsive';
@@ -118,6 +120,7 @@ const MainApp: React.FC = () => {
   // ---- Custom Hooks ----
   const { isMobile, isTablet: _isTablet } = useResponsive();
   const { settings, updateSettings, toggleFieldMode } = useAppSettings();
+  const cx = useContextualStyles();
   const { showToast } = useToast();
 
   // ---- Dialog States (consolidated) ----
@@ -594,11 +597,11 @@ const MainApp: React.FC = () => {
   // ============================================================================
 
   return (
-    <div
+    <ScreenLayout
       data-mode={currentMode}
       data-field-mode={settings.fieldMode ? 'true' : 'false'}
       data-annotation-mode={appModeState.annotationModeActive ? 'true' : 'false'}
-      className={`flex flex-col h-dvh w-screen overflow-hidden font-sans ${settings.fieldMode ? 'bg-nb-black text-nb-yellow' : 'text-nb-black bg-nb-cream'}`}
+      className={`w-screen overflow-hidden font-sans ${settings.fieldMode ? 'bg-nb-black text-nb-yellow' : 'text-nb-black bg-nb-cream'}`}
     >
       {/* Skip Links for Accessibility - screen reader only, visible on focus */}
       <SkipLink targetId="main-content" label="Skip to main content" />
@@ -630,7 +633,7 @@ const MainApp: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex min-h-0 min-w-0 relative overflow-hidden">
+      <ScreenLayout.Body className="min-w-0 relative overflow-hidden">
         {/* Mobile Header */}
         {isMobile && (
           <header className={`absolute top-0 left-0 right-0 h-header-compact z-[100] flex items-center px-4 justify-between border-b-4 ${settings.fieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-cream border-nb-black'}`}>
@@ -706,9 +709,10 @@ const MainApp: React.FC = () => {
             resource={selectedItem}
             onUpdateResource={handleItemUpdate}
             settings={settings}
+            cx={cx}
             visible={showInspector && !!selectedId}
             isMobile={isMobile}
-            onClose={() => { setShowInspector(false); setSelectedId(null); }}
+            onClose={() => { setShowInspector(false); if (currentMode !== 'viewer') setSelectedId(null); }}
             annotations={selectedItem && isCanvas(selectedItem)
               ? selectedItem.annotations?.flatMap(page => page.items) || []
               : []}
@@ -716,10 +720,10 @@ const MainApp: React.FC = () => {
             onEditAnnotation={handleEditAnnotation}
           />
         )}
-      </div>
+      </ScreenLayout.Body>
 
       {!isMobile && (
-        <div className="relative">
+        <ScreenLayout.StatusBar className="relative h-auto">
           {showActivityFeed && (
             <ActivityFeedPanel onClose={() => setShowActivityFeed(false)} />
           )}
@@ -743,7 +747,7 @@ const MainApp: React.FC = () => {
             onOpenActivityFeed={() => setShowActivityFeed(prev => !prev)}
             storageDetail={storageDetail}
           />
-        </div>
+        </ScreenLayout.StatusBar>
       )}
 
       {/* Modals & Dialogs */}
@@ -855,7 +859,7 @@ const MainApp: React.FC = () => {
           exportDialog.open();
         }}
       />
-    </div>
+    </ScreenLayout>
   );
 };
 

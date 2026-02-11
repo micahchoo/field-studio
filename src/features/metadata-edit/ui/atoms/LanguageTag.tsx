@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 export interface LanguageOption {
   code: string;
   label: string;
@@ -27,6 +28,10 @@ export interface LanguageTagProps {
   onChange: (code: string) => void;
   /** Whether the selector is disabled */
   disabled?: boolean;
+  /** Contextual class names for theming */
+  cx?: Partial<ContextualClassNames>;
+  /** Field mode styling */
+  fieldMode?: boolean;
 }
 
 export const LanguageTag: React.FC<LanguageTagProps> = ({
@@ -34,14 +39,18 @@ export const LanguageTag: React.FC<LanguageTagProps> = ({
   value,
   onChange,
   disabled = false,
+  cx,
 }) => {
+  const inputBg = cx?.input ?? 'bg-nb-white text-nb-black/80 border-nb-black/20';
+  const disabledBg = cx?.surface ?? 'bg-nb-cream';
+
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className={`w-full px-2 py-1.5 text-sm border border-nb-black/20 focus:ring-2 focus:ring-nb-blue focus:border-nb-blue outline-none bg-nb-white text-nb-black/80 ${
-        disabled ? 'opacity-50 cursor-not-allowed bg-nb-cream' : ''
+      className={`w-full px-2 py-1.5 text-sm border focus:ring-2 focus:ring-nb-blue focus:border-nb-blue outline-none ${inputBg} ${
+        disabled ? `opacity-50 cursor-not-allowed ${disabledBg}` : ''
       }`}
     >
       {languages.map((lang) => (

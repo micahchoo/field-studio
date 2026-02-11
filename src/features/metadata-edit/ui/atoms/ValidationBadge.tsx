@@ -25,25 +25,30 @@ export interface ValidationBadgeProps {
   label?: string;
   /** Icon name (defaults based on status) */
   icon?: string;
+  /** Field mode styling */
+  fieldMode?: boolean;
 }
 
 const statusConfig: Record<
   ValidationStatus,
-  { icon: string; bgColor: string; textColor: string }
+  { icon: string; bgColor: string; fieldBgColor: string; textColor: string }
 > = {
   success: {
     icon: 'check_circle',
     bgColor: 'bg-nb-green/10',
+    fieldBgColor: 'bg-nb-yellow/20',
     textColor: 'text-nb-green',
   },
   warning: {
     icon: 'warning',
     bgColor: 'bg-nb-orange/10',
+    fieldBgColor: 'bg-nb-yellow/20',
     textColor: 'text-nb-orange',
   },
   error: {
     icon: 'error',
     bgColor: 'bg-nb-red/10',
+    fieldBgColor: 'bg-nb-yellow/20',
     textColor: 'text-nb-red',
   },
 };
@@ -53,12 +58,14 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
   value,
   label,
   icon,
+  fieldMode,
 }) => {
   const config = statusConfig[status];
   const displayIcon = icon || config.icon;
+  const bg = fieldMode ? config.fieldBgColor : config.bgColor;
 
   return (
-    <div className={`p-4 ${config.bgColor} ${config.textColor}`}>
+    <div className={`p-4 ${bg} ${config.textColor}`}>
       <Icon name={displayIcon} className="text-2xl mb-2" />
       {value !== undefined && (
         <div className="text-2xl font-bold">{value}</div>

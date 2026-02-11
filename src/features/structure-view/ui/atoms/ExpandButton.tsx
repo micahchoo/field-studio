@@ -7,12 +7,15 @@
 
 import React from 'react';
 import { Button } from '@/src/shared/ui/atoms';
+import { cn } from '@/src/shared/lib/cn';
 
 interface ExpandButtonProps {
   isExpanded: boolean;
   onClick: (e: React.MouseEvent) => void;
   hasChildren: boolean;
   className?: string;
+  /** Field mode flag */
+  fieldMode?: boolean;
 }
 
 export const ExpandButton: React.FC<ExpandButtonProps> = ({
@@ -20,6 +23,7 @@ export const ExpandButton: React.FC<ExpandButtonProps> = ({
   onClick,
   hasChildren,
   className = '',
+  fieldMode,
 }) => {
   if (!hasChildren) {
     return <span className="w-5 h-5 inline-block" />;
@@ -29,7 +33,7 @@ export const ExpandButton: React.FC<ExpandButtonProps> = ({
     <Button variant="ghost" size="bare"
       type="button"
       onClick={onClick}
-      className={`w-5 h-5 inline-flex items-center justify-center hover:bg-nb-cream transition-nb ${className}`}
+      className={cn('w-5 h-5 inline-flex items-center justify-center transition-nb', fieldMode ? 'hover:bg-nb-yellow/20' : 'hover:bg-nb-black/10', className)}
       aria-label={isExpanded ? 'Collapse' : 'Expand'}
     >
       <svg

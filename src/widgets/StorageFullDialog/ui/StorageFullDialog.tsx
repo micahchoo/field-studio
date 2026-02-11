@@ -12,6 +12,8 @@ import { Button } from '@/src/shared/ui/atoms';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { storage } from '@/src/shared/services/storage';
 import { storageLog } from '@/src/shared/services/logger';
+import { useContextualStyles } from '@/src/shared/lib/hooks/useContextualStyles';
+import { cn } from '@/src/shared/lib/cn';
 
 interface StorageFullDialogProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
   onClose,
   onExport,
 }) => {
+  const cx = useContextualStyles();
   const [stats, setStats] = useState<StorageStats | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isClearingDerivatives, setIsClearingDerivatives] = useState(false);
@@ -110,7 +113,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-nb-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-nb-black shadow-brutal-lg border border-nb-red/30 overflow-hidden">
+      <div className={cn(cx.surface, 'w-full max-w-lg shadow-brutal-lg overflow-hidden')}>
         {/* Header */}
         <div className="bg-nb-red/10 border-b border-nb-red/20 p-6">
           <div className="flex items-center gap-3">
@@ -118,7 +121,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
               <Icon name="storage" className="text-2xl text-nb-red" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Storage Full</h2>
+              <h2 className={cn('text-xl font-bold', cx.text)}>Storage Full</h2>
               <p className="text-nb-red/60 text-sm">Browser storage quota exceeded</p>
             </div>
           </div>
@@ -131,8 +134,8 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
               <div className="w-16 h-16 bg-nb-green/20 flex items-center justify-center mx-auto mb-4">
                 <Icon name="check" className="text-3xl text-nb-green" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Storage Cleared</h3>
-              <p className="text-nb-black/40">Reloading page...</p>
+              <h3 className={cn('text-lg font-semibold mb-2', cx.text)}>Storage Cleared</h3>
+              <p className={cn(cx.textMuted)}>Reloading page...</p>
             </div>
           ) : (
             <>
@@ -140,8 +143,8 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
               {stats && (
                 <div className="bg-nb-black/50 p-4 border border-nb-black/80">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-nb-black/40 text-sm">Storage Used</span>
-                    <span className="text-white font-mono font-bold">
+                    <span className={cn('text-sm', cx.textMuted)}>Storage Used</span>
+                    <span className={cn('font-mono font-bold', cx.text)}>
                       {formatBytes(stats.usage)} / {formatBytes(stats.quota)}
                     </span>
                   </div>
@@ -154,7 +157,7 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
                     />
                   </div>
                   
-                  <div className="flex justify-between text-xs text-nb-black/50">
+                  <div className={cn('flex justify-between text-xs', cx.textMuted)}>
                     <span>{stats.assetCount} assets stored</span>
                     <span>{stats.usagePercent.toFixed(1)}% full</span>
                   </div>
@@ -163,10 +166,10 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 
               {/* Explanation */}
               <div className="space-y-3">
-                <p className="text-nb-black/30 text-sm leading-relaxed">
+                <p className={cn('text-sm leading-relaxed', cx.textMuted)}>
                   Your browser's storage is full. This happens when:
                 </p>
-                <ul className="text-nb-black/40 text-sm space-y-2 ml-4">
+                <ul className={cn('text-sm space-y-2 ml-4', cx.textMuted)}>
                   <li className="flex items-start gap-2">
                     <span className="text-nb-red mt-0.5">•</span>
                     You've imported many large images
@@ -184,53 +187,37 @@ export const StorageFullDialog: React.FC<StorageFullDialogProps> = ({
 
               {/* Actions */}
               <div className="space-y-3">
-                <Button variant="ghost" size="bare"
+                <Button variant="primary" size="base"
                   onClick={onExport}
-                  className="w-full py-3 px-4 bg-nb-blue hover:bg-nb-blue text-white font-semibold flex items-center justify-center gap-2 transition-nb"
+                  fullWidth
+                  icon={<Icon name="download" />}
                 >
-                  <Icon name="download" />
                   Export Archive to File
                 </Button>
 
-                <Button variant="ghost" size="bare"
+                <Button variant="secondary" size="base"
                   onClick={handleClearDerivatives}
                   disabled={isClearingDerivatives}
-                  className="w-full py-3 px-4 bg-nb-orange hover:bg-nb-orange text-white font-semibold flex items-center justify-center gap-2 transition-nb disabled:opacity-50"
+                  loading={isClearingDerivatives}
+                  fullWidth
+                  icon={!isClearingDerivatives ? <Icon name="image_not_supported" /> : undefined}
                 >
-                  {isClearingDerivatives ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white animate-spin" />
-                      Clearing Thumbnails...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="image_not_supported" />
-                      Clear Thumbnails (Free Space)
-                    </>
-                  )}
+                  {isClearingDerivatives ? 'Clearing Thumbnails...' : 'Clear Thumbnails (Free Space)'}
                 </Button>
 
-                <Button variant="ghost" size="bare"
+                <Button variant="danger" size="base"
                   onClick={handleClearStorage}
                   disabled={isClearing}
-                  className="w-full py-3 px-4 bg-nb-black/80 hover:bg-nb-black/60 text-white font-semibold flex items-center justify-center gap-2 transition-nb disabled:opacity-50"
+                  loading={isClearing}
+                  fullWidth
+                  icon={!isClearing ? <Icon name="delete_forever" /> : undefined}
                 >
-                  {isClearing ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white animate-spin" />
-                      Clearing...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="delete_forever" />
-                      Clear All Files (Keep Structure)
-                    </>
-                  )}
+                  {isClearing ? 'Clearing...' : 'Clear All Files (Keep Structure)'}
                 </Button>
 
-                <Button variant="ghost" size="bare"
+                <Button variant="ghost" size="sm"
                   onClick={onClose}
-                  className="w-full py-3 px-4 text-nb-black/40 hover:text-white text-sm transition-nb"
+                  fullWidth
                 >
                   I'll manage this later
                 </Button>

@@ -11,6 +11,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { FileTree, SourceManifests } from '@/src/shared/types';
 import { Icon } from '@/src/shared/ui/atoms/Icon';
 import { Button } from '@/ui/primitives/Button';
+import { cn } from '@/src/shared/lib/cn';
+import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
 import { FileTreeNode } from '../atoms/FileTreeNode';
 import type { NodeAnnotations, FlatFileTreeNode } from '../../model';
 import { flattenFileTree } from '../../model';
@@ -33,6 +35,8 @@ export interface SourceTreePaneProps {
   onFocus: () => void;
   analysisRoot?: IngestPreviewNode;
   unsupportedPaths?: Set<string>;
+  cx?: Partial<ContextualClassNames>;
+  fieldMode?: boolean;
 }
 
 /** Collect all directory paths at depth 0 (root-level dirs) */
@@ -116,6 +120,8 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
   onFocus,
   analysisRoot,
   unsupportedPaths,
+  cx,
+  fieldMode,
 }) => {
   // Expanded paths — init with root-level directories
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
@@ -235,20 +241,22 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
 
   return (
     <div
-      className={`h-full flex flex-col border-r transition-nb ${
-        isFocused ? 'border-nb-blue/30 bg-nb-cream/30' : 'border-nb-black/20 bg-nb-cream/30'
-      }`}
+      className={cn(
+        'h-full flex flex-col border-r transition-nb',
+        isFocused ? 'border-nb-blue/30' : (cx?.border ?? 'border-nb-black/20'),
+        cx?.surface ?? 'bg-nb-cream/30',
+      )}
       onClick={onFocus}
     >
       {/* Header */}
-      <div className="flex-shrink-0 p-3 border-b border-nb-black/20 bg-nb-cream/40">
+      <div className={cn('flex-shrink-0 p-3 border-b', cx?.border ?? 'border-nb-black/20', cx?.headerBg ?? 'bg-nb-cream/40')}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-nb-black flex items-center gap-2 text-sm">
+          <h3 className={cn('font-bold flex items-center gap-2 text-sm', cx?.text ?? 'text-nb-black')}>
             <Icon name="source" className="text-nb-blue" />
             Source Files
           </h3>
           <div className="text-right">
-            <span className="text-xs text-nb-black/50">{totalFiles} files</span>
+            <span className={cn('text-xs', cx?.textMuted ?? 'text-nb-black/50')}>{totalFiles} files</span>
           </div>
         </div>
 
@@ -256,14 +264,14 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
         <div className="relative">
           <Icon
             name="search"
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-nb-black/40 text-sm"
+            className={cn('absolute left-2.5 top-1/2 -translate-y-1/2 text-sm', cx?.textMuted ?? 'text-nb-black/40')}
           />
           <input
             type="text"
             value={filterText}
             onChange={(e) => onFilterChange(e.target.value)}
             placeholder="Filter files..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-nb-black/20 focus:ring-2 focus:ring-nb-blue focus:border-nb-blue outline-none"
+            className={cn('w-full pl-8 pr-3 py-1.5 text-xs border focus:ring-2 focus:ring-nb-blue focus:border-nb-blue outline-none', cx?.input ?? 'border-nb-black/20')}
           />
           {filterText && (
             <Button
@@ -278,7 +286,7 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
         </div>
 
         {filterText && (
-          <div className="mt-1.5 text-[10px] text-nb-black/50">
+          <div className={cn('mt-1.5 text-[10px]', cx?.textMuted ?? 'text-nb-black/50')}>
             {visibleNodes.length} of {flatNodes.length} nodes
           </div>
         )}
@@ -290,7 +298,7 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
         onClick={(e) => { if (e.target === e.currentTarget) onClearSelection(); }}
       >
         {visibleNodes.length === 0 ? (
-          <div className="p-6 text-center text-nb-black/40">
+          <div className={cn('p-6 text-center', cx?.textMuted ?? 'text-nb-black/40')}>
             <Icon name="folder_open" className="text-3xl mb-2 opacity-50" />
             <p className="text-xs">{filterText ? 'No files match your filter' : 'No files'}</p>
           </div>
@@ -316,9 +324,9 @@ export const SourceTreePane: React.FC<SourceTreePaneProps> = ({
 
       {/* Footer */}
       {selectedPaths.length > 0 && (
-        <div className="flex-shrink-0 p-2 border-t border-nb-black/20 bg-nb-cream/40">
+        <div className={cn('flex-shrink-0 p-2 border-t', cx?.border ?? 'border-nb-black/20', cx?.headerBg ?? 'bg-nb-cream/40')}>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-nb-black/60">{selectedPaths.length} selected</span>
+            <span className={cn('text-xs', cx?.textMuted ?? 'text-nb-black/60')}>{selectedPaths.length} selected</span>
             <button
               onClick={onClearSelection}
               className="text-xs text-nb-blue hover:text-nb-blue font-medium"

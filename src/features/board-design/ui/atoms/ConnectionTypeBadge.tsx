@@ -61,11 +61,11 @@ export const ConnectionTypeBadge: React.FC<ConnectionTypeBadgeProps> = ({
   };
 
   const fieldModeColors: Record<ConnectionType, { bg: string; text: string }> = {
-    associated: { bg: 'bg-nb-blue', text: 'text-nb-blue/40' },
-    partOf: { bg: 'bg-nb-green', text: 'text-nb-green/40' },
-    similarTo: { bg: 'bg-nb-purple', text: 'text-nb-purple/20' },
-    references: { bg: 'bg-nb-yellow/20', text: 'text-nb-yellow/60' },
-    requires: { bg: 'bg-nb-red', text: 'text-nb-red/40' },
+    associated: { bg: 'bg-nb-blue/20', text: 'text-nb-blue' },
+    partOf: { bg: 'bg-nb-green/20', text: 'text-nb-green' },
+    similarTo: { bg: 'bg-nb-purple/20', text: 'text-nb-purple' },
+    references: { bg: 'bg-nb-yellow/20', text: 'text-nb-yellow' },
+    requires: { bg: 'bg-nb-red/20', text: 'text-nb-red' },
     sequence: { bg: 'bg-cyan-900', text: 'text-cyan-200' },
   };
 

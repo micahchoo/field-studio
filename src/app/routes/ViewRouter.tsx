@@ -495,6 +495,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
                     resource={selectedItem}
                     onUpdateResource={(updates) => onUpdateItem?.(updates)}
                     settings={settings}
+                    cx={cx}
                     visible={true}
                     onClose={() => setShowInspectorPanel(false)}
                     // Canvases for structure tab (when inspecting manifest)
@@ -585,6 +586,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
               resource={boardSelectedItem}
               onUpdateResource={(updates) => onUpdateItem?.(updates)}
               settings={settings}
+              cx={boardCx}
               visible={true}
               onClose={() => {
                 setBoardSelectedId(null);
@@ -690,6 +692,14 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
   if (currentMode === 'viewer') {
     const isFieldMode = settings?.fieldMode || false;
     const viewerCx = isFieldMode ? FIELD_CX : NORMAL_CX;
+    const manifestCanvases = viewerData.manifest?.items || [];
+
+    const handleViewerPageChange = (page: number) => {
+      const idx = page - 1; // PageCounter is 1-indexed
+      if (manifestCanvases[idx]) {
+        onSelectId?.(manifestCanvases[idx].id);
+      }
+    };
 
     return (
       <ViewTransition mode="viewer">
@@ -698,7 +708,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
           <ViewerView
             item={viewerData.canvas}
             manifest={viewerData.manifest}
+            manifestItems={manifestCanvases}
             onUpdate={(updates) => onUpdateItem?.(updates)}
+            onPageChange={handleViewerPageChange}
+            onSwitchView={setCurrentMode}
             cx={viewerCx}
             fieldMode={isFieldMode}
             t={(key) => key}
