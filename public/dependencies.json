@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-09T20:31:56.617Z",
-  "totalFiles": 497,
+  "generatedAt": "2026-02-11T08:37:35.316Z",
+  "totalFiles": 519,
   "files": {
     "src/app/App.tsx": {
       "filePath": "src/app/App.tsx",
@@ -12,6 +12,17 @@
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Button"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "ScreenLayout"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -482,6 +493,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/lib/hooks/useResponsive",
           "specifiers": [
             "useResponsive"
@@ -568,8 +590,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 38208,
-      "lines": 877
+      "size": 38482,
+      "lines": 881
     },
     "src/app/hooks/useAutoSave.ts": {
       "filePath": "src/app/hooks/useAutoSave.ts",
@@ -2087,8 +2109,8 @@
       "dependents": [
         "src/app/routes/index.ts"
       ],
-      "size": 30539,
-      "lines": 762
+      "size": 31004,
+      "lines": 775
     },
     "src/app/routes/index.ts": {
       "filePath": "src/app/routes/index.ts",
@@ -2227,7 +2249,7 @@
       "dependents": [
         "src/app/templates/index.ts"
       ],
-      "size": 2853,
+      "size": 2835,
       "lines": 83
     },
     "src/app/templates/index.ts": {
@@ -8164,7 +8186,7 @@
         "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx",
         "src/features/archive/ui/organisms/ArchiveGrid.tsx"
       ],
-      "size": 3127,
+      "size": 3217,
       "lines": 95
     },
     "src/features/archive/ui/molecules/GroupedArchiveGrid.tsx": {
@@ -8299,7 +8321,7 @@
       "dependents": [
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 8475,
+      "size": 8493,
       "lines": 213
     },
     "src/features/archive/ui/molecules/HoverPreviewCard.tsx": {
@@ -8335,6 +8357,17 @@
           "specifiers": [
             "getIIIFValue",
             "type IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -8397,8 +8430,8 @@
       "dependents": [
         "src/features/archive/ui/organisms/ArchiveGrid.tsx"
       ],
-      "size": 5519,
-      "lines": 162
+      "size": 5624,
+      "lines": 164
     },
     "src/features/archive/ui/molecules/MultiSelectFilmstrip.tsx": {
       "filePath": "src/features/archive/ui/molecules/MultiSelectFilmstrip.tsx",
@@ -8725,6 +8758,7 @@
             "ViewHeader",
             "ViewHeaderTitle",
             "ViewHeaderActions",
+            "ViewHeaderSubBar",
             "ViewHeaderDivider",
             "ViewHeaderSelectionBar",
             ""
@@ -8796,8 +8830,8 @@
         "src/features/archive/index.ts",
         "src/features/archive/ui/organisms/ArchiveView.tsx"
       ],
-      "size": 10657,
-      "lines": 299
+      "size": 10914,
+      "lines": 305
     },
     "src/features/archive/ui/organisms/ArchiveList.tsx": {
       "filePath": "src/features/archive/ui/organisms/ArchiveList.tsx",
@@ -9199,6 +9233,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PaneLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -9228,8 +9273,8 @@
         "src/features/archive/index.ts",
         "src/features/archive/index.ts"
       ],
-      "size": 38276,
-      "lines": 1003
+      "size": 38182,
+      "lines": 1000
     },
     "src/features/board-design/hooks/useAlignmentGuides.ts": {
       "filePath": "src/features/board-design/hooks/useAlignmentGuides.ts",
@@ -10552,7 +10597,7 @@
         "src/features/board-design/ui/molecules/BoardDesignPanel.tsx",
         "src/features/board-design/ui/molecules/ConnectionEditPanel.tsx"
       ],
-      "size": 2772,
+      "size": 2769,
       "lines": 97
     },
     "src/features/board-design/ui/atoms/ContentTypeIcon.tsx": {
@@ -10755,7 +10800,7 @@
       "dependents": [
         "src/features/board-design/ui/organisms/BoardCanvas.tsx"
       ],
-      "size": 3936,
+      "size": 4069,
       "lines": 127
     },
     "src/features/board-design/ui/atoms/NodeHandle.tsx": {
@@ -10801,7 +10846,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 1845,
+      "size": 1836,
       "lines": 77
     },
     "src/features/board-design/ui/atoms/RangeFilmstrip.tsx": {
@@ -11719,6 +11764,7 @@
             "ViewHeaderTitle",
             "ViewHeaderCenter",
             "ViewHeaderActions",
+            "ViewHeaderSubBar",
             "ViewHeaderDivider",
             ""
           ],
@@ -11779,8 +11825,8 @@
         "src/features/board-design/index.ts",
         "src/features/board-design/ui/organisms/BoardView.tsx"
       ],
-      "size": 16787,
-      "lines": 472
+      "size": 14627,
+      "lines": 375
     },
     "src/features/board-design/ui/organisms/BoardOnboarding.tsx": {
       "filePath": "src/features/board-design/ui/organisms/BoardOnboarding.tsx",
@@ -11856,8 +11902,8 @@
         "src/features/board-design/ui/molecules/TemplateItemPicker.tsx",
         "src/features/board-design/ui/organisms/BoardView.tsx"
       ],
-      "size": 20269,
-      "lines": 481
+      "size": 19858,
+      "lines": 475
     },
     "src/features/board-design/ui/organisms/BoardToolbar.tsx": {
       "filePath": "src/features/board-design/ui/organisms/BoardToolbar.tsx",
@@ -11991,6 +12037,17 @@
           "source": "@/src/shared/services/contentState",
           "specifiers": [
             "contentStateService"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PaneLayout"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -12176,8 +12233,8 @@
         "src/features/board-design/index.ts",
         "src/features/board-design/index.ts"
       ],
-      "size": 40376,
-      "lines": 1066
+      "size": 40544,
+      "lines": 1071
     },
     "src/features/board-design/ui/organisms/PresentationOverlay.tsx": {
       "filePath": "src/features/board-design/ui/organisms/PresentationOverlay.tsx",
@@ -13617,7 +13674,7 @@
         "src/features/export/ui/ExportDryRun.tsx"
       ],
       "dependents": [],
-      "size": 52593,
+      "size": 51271,
       "lines": 887
     },
     "src/features/export/ui/ExportDryRun.tsx": {
@@ -13846,8 +13903,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 7871,
-      "lines": 192
+      "size": 7769,
+      "lines": 197
     },
     "src/features/map/index.ts": {
       "filePath": "src/features/map/index.ts",
@@ -14177,6 +14234,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PaneLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/features/archive/model",
           "specifiers": [
             "VIEW_MODE_OPTIONS",
@@ -14221,8 +14289,8 @@
         "src/features/map/index.ts",
         "src/features/map/index.ts"
       ],
-      "size": 10783,
-      "lines": 296
+      "size": 12116,
+      "lines": 330
     },
     "src/features/metadata-edit/index.ts": {
       "filePath": "src/features/metadata-edit/index.ts",
@@ -15460,6 +15528,17 @@
           "isAbsolute": false,
           "isExternal": true,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -15490,8 +15569,8 @@
         "src/features/metadata-edit/ui/atoms/index.ts",
         "src/features/metadata-edit/ui/atoms/index.ts"
       ],
-      "size": 1335,
-      "lines": 57
+      "size": 1661,
+      "lines": 66
     },
     "src/features/metadata-edit/ui/atoms/LocationPicker.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/LocationPicker.tsx",
@@ -16640,8 +16719,8 @@
         "src/features/metadata-edit/ui/atoms/index.ts",
         "src/features/metadata-edit/ui/atoms/index.ts"
       ],
-      "size": 1632,
-      "lines": 72
+      "size": 1880,
+      "lines": 79
     },
     "src/features/metadata-edit/ui/atoms/ValidationDot.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/ValidationDot.tsx",
@@ -16679,8 +16758,8 @@
         "src/features/metadata-edit/ui/atoms/index.ts",
         "src/features/metadata-edit/ui/atoms/index.ts"
       ],
-      "size": 1026,
-      "lines": 45
+      "size": 1077,
+      "lines": 47
     },
     "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx": {
       "filePath": "src/features/metadata-edit/ui/atoms/ValidationFixAction.tsx",
@@ -18319,9 +18398,9 @@
         {
           "source": "@/src/shared/lib/hooks/useContextualStyles",
           "specifiers": [
-            "useContextualStyles"
+            "ContextualClassNames"
           ],
-          "isTypeImport": false,
+          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -18345,8 +18424,8 @@
         "src/features/metadata-edit/index.ts",
         "src/features/metadata-edit/ui/organisms/Inspector.tsx"
       ],
-      "size": 26482,
-      "lines": 741
+      "size": 26526,
+      "lines": 743
     },
     "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/molecules/TechnicalTabPanel.tsx",
@@ -18838,8 +18917,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 18201,
-      "lines": 354
+      "size": 17520,
+      "lines": 349
     },
     "src/features/metadata-edit/ui/organisms/Inspector.tsx": {
       "filePath": "src/features/metadata-edit/ui/organisms/Inspector.tsx",
@@ -18942,6 +19021,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PanelLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/constants",
           "specifiers": [
             "RESOURCE_TYPE_CONFIG"
@@ -19021,9 +19111,9 @@
         {
           "source": "@/src/shared/lib/hooks/useContextualStyles",
           "specifiers": [
-            "useContextualStyles"
+            "ContextualClassNames"
           ],
-          "isTypeImport": false,
+          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -19070,8 +19160,8 @@
       "dependents": [
         "src/features/metadata-edit/index.ts"
       ],
-      "size": 18058,
-      "lines": 435
+      "size": 17864,
+      "lines": 427
     },
     "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx": {
       "filePath": "src/features/metadata-edit/ui/organisms/MetadataEditorPanel.tsx",
@@ -19356,7 +19446,8 @@
           "source": "@/src/shared/ui/molecules/ViewHeader",
           "specifiers": [
             "ViewHeader",
-            "ViewHeaderBody"
+            "ViewHeaderTitle",
+            "ViewHeaderSubBar"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -19379,6 +19470,17 @@
           "source": "@/src/shared/ui/atoms",
           "specifiers": [
             "Icon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PaneLayout"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -19463,8 +19565,8 @@
         "src/features/metadata-edit/index.ts",
         "src/features/metadata-edit/index.ts"
       ],
-      "size": 26725,
-      "lines": 735
+      "size": 26639,
+      "lines": 737
     },
     "src/features/search/index.ts": {
       "filePath": "src/features/search/index.ts",
@@ -19759,7 +19861,20 @@
           "source": "@/src/shared/ui/molecules/ViewHeader",
           "specifiers": [
             "ViewHeader",
-            "ViewHeaderBody"
+            "ViewHeaderTitle",
+            "ViewHeaderActions",
+            "ViewHeaderSubBar"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PaneLayout"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -19822,8 +19937,8 @@
         "src/features/search/index.ts",
         "src/features/search/index.ts"
       ],
-      "size": 13456,
-      "lines": 350
+      "size": 14121,
+      "lines": 359
     },
     "src/features/staging/index.ts": {
       "filePath": "src/features/staging/index.ts",
@@ -20288,6 +20403,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -20308,8 +20434,8 @@
         "src/features/staging/index.ts",
         "src/features/staging/ui/molecules/SourceTreePane.tsx"
       ],
-      "size": 6495,
-      "lines": 172
+      "size": 6815,
+      "lines": 180
     },
     "src/features/staging/ui/molecules/ArchivePane.tsx": {
       "filePath": "src/features/staging/ui/molecules/ArchivePane.tsx",
@@ -20427,6 +20553,28 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "../../model/useConflictDetection",
           "specifiers": [
             "ConflictReport",
@@ -20468,8 +20616,8 @@
       "dependents": [
         "src/features/staging/ui/organisms/StagingWorkbench.tsx"
       ],
-      "size": 3717,
-      "lines": 111
+      "size": 4215,
+      "lines": 119
     },
     "src/features/staging/ui/molecules/IngestProgressPanel.tsx": {
       "filePath": "src/features/staging/ui/molecules/IngestProgressPanel.tsx",
@@ -20640,8 +20788,8 @@
       "dependents": [
         "src/features/staging/ui/organisms/StagingWorkbench.tsx"
       ],
-      "size": 10324,
-      "lines": 270
+      "size": 10252,
+      "lines": 268
     },
     "src/features/staging/ui/molecules/PreviewPane.tsx": {
       "filePath": "src/features/staging/ui/molecules/PreviewPane.tsx",
@@ -20666,6 +20814,28 @@
             "Icon"
           ],
           "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -20722,8 +20892,8 @@
       "dependents": [
         "src/features/staging/ui/organisms/StagingWorkbench.tsx"
       ],
-      "size": 10230,
-      "lines": 280
+      "size": 10766,
+      "lines": 286
     },
     "src/features/staging/ui/molecules/SourcePane.tsx": {
       "filePath": "src/features/staging/ui/molecules/SourcePane.tsx",
@@ -20876,6 +21046,28 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "../atoms/FileTreeNode",
           "specifiers": [
             "FileTreeNode"
@@ -20941,8 +21133,8 @@
         "src/features/staging/index.ts",
         "src/features/staging/ui/organisms/StagingWorkbench.tsx"
       ],
-      "size": 11778,
-      "lines": 336
+      "size": 12283,
+      "lines": 344
     },
     "src/features/staging/ui/organisms/StagingView.tsx": {
       "filePath": "src/features/staging/ui/organisms/StagingView.tsx",
@@ -21071,8 +21263,8 @@
         "src/features/staging/index.ts",
         "src/features/staging/index.ts"
       ],
-      "size": 16184,
-      "lines": 446
+      "size": 16375,
+      "lines": 450
     },
     "src/features/staging/ui/organisms/StagingWorkbench.tsx": {
       "filePath": "src/features/staging/ui/organisms/StagingWorkbench.tsx",
@@ -21419,8 +21611,8 @@
         "src/features/staging/model/useConflictDetection.ts"
       ],
       "dependents": [],
-      "size": 44796,
-      "lines": 1169
+      "size": 44369,
+      "lines": 1162
     },
     "src/features/structure-view/index.ts": {
       "filePath": "src/features/structure-view/index.ts",
@@ -21661,6 +21853,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -21684,8 +21887,8 @@
       "dependents": [
         "src/features/structure-view/ui/atoms/index.ts"
       ],
-      "size": 2339,
-      "lines": 111
+      "size": 2672,
+      "lines": 120
     },
     "src/features/structure-view/ui/atoms/DropIndicator.tsx": {
       "filePath": "src/features/structure-view/ui/atoms/DropIndicator.tsx",
@@ -21735,8 +21938,8 @@
         "src/features/structure-view/ui/molecules/VirtualTreeList.tsx",
         "src/features/structure-view/ui/organisms/StructureTreeView.tsx"
       ],
-      "size": 1762,
-      "lines": 71
+      "size": 1932,
+      "lines": 76
     },
     "src/features/structure-view/ui/atoms/ExpandButton.tsx": {
       "filePath": "src/features/structure-view/ui/atoms/ExpandButton.tsx",
@@ -21765,6 +21968,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -21778,8 +21992,8 @@
       "dependents": [
         "src/features/structure-view/ui/atoms/index.ts"
       ],
-      "size": 1189,
-      "lines": 48
+      "size": 1338,
+      "lines": 52
     },
     "src/features/structure-view/ui/atoms/MatchHighlight.tsx": {
       "filePath": "src/features/structure-view/ui/atoms/MatchHighlight.tsx",
@@ -21808,8 +22022,8 @@
       "dependents": [
         "src/features/structure-view/ui/atoms/index.ts"
       ],
-      "size": 2465,
-      "lines": 103
+      "size": 2607,
+      "lines": 108
     },
     "src/features/structure-view/ui/atoms/NodeLabel.tsx": {
       "filePath": "src/features/structure-view/ui/atoms/NodeLabel.tsx",
@@ -21827,6 +22041,28 @@
           "isAbsolute": false,
           "isExternal": true,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -21840,8 +22076,8 @@
       "dependents": [
         "src/features/structure-view/ui/atoms/index.ts"
       ],
-      "size": 805,
-      "lines": 42
+      "size": 1058,
+      "lines": 47
     },
     "src/features/structure-view/ui/atoms/StructureNodeIcon.tsx": {
       "filePath": "src/features/structure-view/ui/atoms/StructureNodeIcon.tsx",
@@ -21913,6 +22149,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -21936,8 +22194,8 @@
       "dependents": [
         "src/features/structure-view/ui/atoms/index.ts"
       ],
-      "size": 3952,
-      "lines": 128
+      "size": 4294,
+      "lines": 131
     },
     "src/features/structure-view/ui/atoms/index.ts": {
       "filePath": "src/features/structure-view/ui/atoms/index.ts",
@@ -22992,6 +23250,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PaneLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/features/archive/model",
           "specifiers": [
             "VIEW_MODE_OPTIONS",
@@ -23039,8 +23308,8 @@
         "src/features/timeline/index.ts",
         "src/features/timeline/index.ts"
       ],
-      "size": 10317,
-      "lines": 279
+      "size": 11535,
+      "lines": 313
     },
     "src/features/viewer/index.ts": {
       "filePath": "src/features/viewer/index.ts",
@@ -24859,6 +25128,17 @@
           "isAbsolute": false,
           "isExternal": true,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -24883,8 +25163,8 @@
         "src/features/viewer/ui/atoms/index.ts",
         "src/features/viewer/ui/atoms/index.ts"
       ],
-      "size": 1342,
-      "lines": 55
+      "size": 1536,
+      "lines": 58
     },
     "src/features/viewer/ui/atoms/AutoAdvanceToast.tsx": {
       "filePath": "src/features/viewer/ui/atoms/AutoAdvanceToast.tsx",
@@ -25256,8 +25536,8 @@
         "src/features/viewer/ui/atoms/index.ts",
         "src/features/viewer/ui/atoms/index.ts"
       ],
-      "size": 2600,
-      "lines": 89
+      "size": 2699,
+      "lines": 92
     },
     "src/features/viewer/ui/atoms/LayerToggle.tsx": {
       "filePath": "src/features/viewer/ui/atoms/LayerToggle.tsx",
@@ -26074,6 +26354,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "../../model",
           "specifiers": [
             "ScreenshotFormat"
@@ -26107,8 +26398,8 @@
         "src/features/viewer/ui/atoms/index.ts",
         "src/features/viewer/ui/atoms/index.ts"
       ],
-      "size": 5074,
-      "lines": 140
+      "size": 5330,
+      "lines": 143
     },
     "src/features/viewer/ui/atoms/Slider.tsx": {
       "filePath": "src/features/viewer/ui/atoms/Slider.tsx",
@@ -26170,6 +26461,17 @@
           "isAbsolute": false,
           "isExternal": true,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -26194,8 +26496,8 @@
         "src/features/viewer/ui/atoms/index.ts",
         "src/features/viewer/ui/atoms/index.ts"
       ],
-      "size": 1452,
-      "lines": 59
+      "size": 1623,
+      "lines": 62
     },
     "src/features/viewer/ui/atoms/TimeDisplay.tsx": {
       "filePath": "src/features/viewer/ui/atoms/TimeDisplay.tsx",
@@ -29616,6 +29918,7 @@
             "ViewHeaderTitle",
             "ViewHeaderCenter",
             "ViewHeaderActions",
+            "ViewHeaderSubBar",
             "ViewHeaderDivider",
             ""
           ],
@@ -29702,8 +30005,8 @@
         "src/features/viewer/ui/molecules/index.ts",
         "src/features/viewer/ui/molecules/index.ts"
       ],
-      "size": 16908,
-      "lines": 482
+      "size": 15482,
+      "lines": 378
     },
     "src/features/viewer/ui/molecules/ViewerWorkbench.tsx": {
       "filePath": "src/features/viewer/ui/molecules/ViewerWorkbench.tsx",
@@ -30842,7 +31145,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 27457,
+      "size": 27289,
       "lines": 425
     },
     "src/features/viewer/ui/organisms/CanvasComposerPanel.tsx": {
@@ -31160,8 +31463,8 @@
         "src/features/viewer/index.ts",
         "src/features/viewer/index.ts"
       ],
-      "size": 25023,
-      "lines": 633
+      "size": 25566,
+      "lines": 645
     },
     "src/shared/config/design-tokens.ts": {
       "filePath": "src/shared/config/design-tokens.ts",
@@ -32951,6 +33254,24 @@
       "size": 2364,
       "lines": 81
     },
+    "src/shared/lib/cn.ts": {
+      "filePath": "src/shared/lib/cn.ts",
+      "fileName": "cn.ts",
+      "directory": "src/shared/lib",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "cn",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 193,
+      "lines": 5
+    },
     "src/shared/lib/hooks/index.ts": {
       "filePath": "src/shared/lib/hooks/index.ts",
       "fileName": "index.ts",
@@ -33734,8 +34055,8 @@
         "src/shared/lib/hooks/index.ts",
         "src/shared/lib/hooks/index.ts"
       ],
-      "size": 3551,
-      "lines": 119
+      "size": 3640,
+      "lines": 111
     },
     "src/shared/lib/hooks/useAuthStatus.ts": {
       "filePath": "src/shared/lib/hooks/useAuthStatus.ts",
@@ -33902,8 +34223,8 @@
         "src/shared/lib/hooks/index.ts",
         "src/shared/lib/hooks/index.ts"
       ],
-      "size": 11964,
-      "lines": 266
+      "size": 12089,
+      "lines": 267
     },
     "src/shared/lib/hooks/useDebouncedCallback.ts": {
       "filePath": "src/shared/lib/hooks/useDebouncedCallback.ts",
@@ -34901,8 +35222,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 10227,
-      "lines": 333
+      "size": 10968,
+      "lines": 347
     },
     "src/shared/lib/hooks/useResponsive.ts": {
       "filePath": "src/shared/lib/hooks/useResponsive.ts",
@@ -38183,8 +38504,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 537,
-      "lines": 19
+      "size": 616,
+      "lines": 21
     },
     "src/shared/ui/atoms/Icon.tsx": {
       "filePath": "src/shared/ui/atoms/Icon.tsx",
@@ -38242,6 +38563,17 @@
           "isAbsolute": false,
           "isExternal": true,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -38258,8 +38590,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 650,
-      "lines": 24
+      "size": 974,
+      "lines": 32
     },
     "src/shared/ui/atoms/SkipLink.tsx": {
       "filePath": "src/shared/ui/atoms/SkipLink.tsx",
@@ -38341,8 +38673,8 @@
         "src/shared/ui/atoms/index.ts",
         "src/shared/ui/atoms/index.ts"
       ],
-      "size": 813,
-      "lines": 41
+      "size": 918,
+      "lines": 46
     },
     "src/shared/ui/atoms/StepIndicator.tsx": {
       "filePath": "src/shared/ui/atoms/StepIndicator.tsx",
@@ -38395,8 +38727,8 @@
         "src/shared/ui/atoms/index.ts",
         "src/shared/ui/atoms/index.ts"
       ],
-      "size": 1937,
-      "lines": 80
+      "size": 2141,
+      "lines": 83
     },
     "src/shared/ui/atoms/TabButtonBase.tsx": {
       "filePath": "src/shared/ui/atoms/TabButtonBase.tsx",
@@ -38485,8 +38817,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 1053,
-      "lines": 31
+      "size": 1651,
+      "lines": 46
     },
     "src/shared/ui/atoms/ZoomControl.tsx": {
       "filePath": "src/shared/ui/atoms/ZoomControl.tsx",
@@ -38833,6 +39165,1524 @@
       "dependents": [],
       "size": 3388,
       "lines": 68
+    },
+    "src/shared/ui/layout/composites/FieldLayout.tsx": {
+      "filePath": "src/shared/ui/layout/composites/FieldLayout.tsx",
+      "fileName": "FieldLayout.tsx",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "FieldLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/composites/index.ts",
+        "src/shared/ui/layout/index.ts"
+      ],
+      "size": 953,
+      "lines": 38
+    },
+    "src/shared/ui/layout/composites/InlineLayout.tsx": {
+      "filePath": "src/shared/ui/layout/composites/InlineLayout.tsx",
+      "fileName": "InlineLayout.tsx",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "gapClasses",
+            "alignClasses"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "GapSize",
+            "Alignment"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "InlineLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/types.ts",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/layout/composites/index.ts",
+        "src/shared/ui/layout/index.ts"
+      ],
+      "size": 627,
+      "lines": 25
+    },
+    "src/shared/ui/layout/composites/PaneLayout.tsx": {
+      "filePath": "src/shared/ui/layout/composites/PaneLayout.tsx",
+      "fileName": "PaneLayout.tsx",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "PaneLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/composites/index.ts",
+        "src/shared/ui/layout/index.ts"
+      ],
+      "size": 1835,
+      "lines": 74
+    },
+    "src/shared/ui/layout/composites/PanelLayout.tsx": {
+      "filePath": "src/shared/ui/layout/composites/PanelLayout.tsx",
+      "fileName": "PanelLayout.tsx",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "PanelLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/composites/index.ts",
+        "src/shared/ui/layout/index.ts"
+      ],
+      "size": 1170,
+      "lines": 48
+    },
+    "src/shared/ui/layout/composites/ScreenLayout.tsx": {
+      "filePath": "src/shared/ui/layout/composites/ScreenLayout.tsx",
+      "fileName": "ScreenLayout.tsx",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ScreenLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/composites/index.ts",
+        "src/shared/ui/layout/index.ts"
+      ],
+      "size": 1554,
+      "lines": 52
+    },
+    "src/shared/ui/layout/composites/SectionLayout.tsx": {
+      "filePath": "src/shared/ui/layout/composites/SectionLayout.tsx",
+      "fileName": "SectionLayout.tsx",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "gapClasses"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "GapSize"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "SectionLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/types.ts",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/layout/composites/index.ts",
+        "src/shared/ui/layout/index.ts"
+      ],
+      "size": 1060,
+      "lines": 42
+    },
+    "src/shared/ui/layout/composites/index.ts": {
+      "filePath": "src/shared/ui/layout/composites/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/shared/ui/layout/composites",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./ScreenLayout",
+          "specifiers": [
+            "[re-export]:ScreenLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PaneLayout",
+          "specifiers": [
+            "[re-export]:PaneLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PanelLayout",
+          "specifiers": [
+            "[re-export]:PanelLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./SectionLayout",
+          "specifiers": [
+            "[re-export]:SectionLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./FieldLayout",
+          "specifiers": [
+            "[re-export]:FieldLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./InlineLayout",
+          "specifiers": [
+            "[re-export]:InlineLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "ScreenLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "PaneLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "PanelLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "SectionLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "FieldLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "InlineLayout",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/composites/ScreenLayout.tsx",
+        "src/shared/ui/layout/composites/PaneLayout.tsx",
+        "src/shared/ui/layout/composites/PanelLayout.tsx",
+        "src/shared/ui/layout/composites/SectionLayout.tsx",
+        "src/shared/ui/layout/composites/FieldLayout.tsx",
+        "src/shared/ui/layout/composites/InlineLayout.tsx"
+      ],
+      "dependents": [],
+      "size": 276,
+      "lines": 7
+    },
+    "src/shared/ui/layout/index.ts": {
+      "filePath": "src/shared/ui/layout/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/shared/ui/layout",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./primitives/Stack",
+          "specifiers": [
+            "[re-export]:Stack"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./primitives/Row",
+          "specifiers": [
+            "[re-export]:Row"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./primitives/Scroll",
+          "specifiers": [
+            "[re-export]:Scroll"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./primitives/Fill",
+          "specifiers": [
+            "[re-export]:Fill"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./primitives/Shelf",
+          "specifiers": [
+            "[re-export]:Shelf"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./primitives/Center",
+          "specifiers": [
+            "[re-export]:Center"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./primitives/Split",
+          "specifiers": [
+            "[re-export]:Split"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./composites/ScreenLayout",
+          "specifiers": [
+            "[re-export]:ScreenLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./composites/PaneLayout",
+          "specifiers": [
+            "[re-export]:PaneLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./composites/PanelLayout",
+          "specifiers": [
+            "[re-export]:PanelLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./composites/SectionLayout",
+          "specifiers": [
+            "[re-export]:SectionLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./composites/FieldLayout",
+          "specifiers": [
+            "[re-export]:FieldLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./composites/InlineLayout",
+          "specifiers": [
+            "[re-export]:InlineLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./presets",
+          "specifiers": [
+            "[re-export]:archiveSizes",
+            "[re-export]:viewerSizes",
+            "[re-export]:boardSizes"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./types",
+          "specifiers": [
+            "[re-export]:GapSize",
+            "[re-export]:Alignment",
+            "[re-export]:Justify",
+            "[re-export]:OverflowAxis",
+            "[re-export]:ShelfHeight",
+            "[re-export]:ShelfWidth"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "Stack",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Row",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Scroll",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Fill",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Shelf",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Center",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Split",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ScreenLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "PaneLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "PanelLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "SectionLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "FieldLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "InlineLayout",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "archiveSizes",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "viewerSizes",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "boardSizes",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "GapSize",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "Alignment",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "Justify",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "OverflowAxis",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ShelfHeight",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ShelfWidth",
+          "type": "named",
+          "isTypeExport": true
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/primitives/Stack.tsx",
+        "src/shared/ui/layout/primitives/Row.tsx",
+        "src/shared/ui/layout/primitives/Scroll.tsx",
+        "src/shared/ui/layout/primitives/Fill.tsx",
+        "src/shared/ui/layout/primitives/Shelf.tsx",
+        "src/shared/ui/layout/primitives/Center.tsx",
+        "src/shared/ui/layout/primitives/Split.tsx",
+        "src/shared/ui/layout/composites/ScreenLayout.tsx",
+        "src/shared/ui/layout/composites/PaneLayout.tsx",
+        "src/shared/ui/layout/composites/PanelLayout.tsx",
+        "src/shared/ui/layout/composites/SectionLayout.tsx",
+        "src/shared/ui/layout/composites/FieldLayout.tsx",
+        "src/shared/ui/layout/composites/InlineLayout.tsx",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [],
+      "size": 865,
+      "lines": 23
+    },
+    "src/shared/ui/layout/presets/archive.ts": {
+      "filePath": "src/shared/ui/layout/presets/archive.ts",
+      "fileName": "archive.ts",
+      "directory": "src/shared/ui/layout/presets",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "archiveSizes",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/presets/index.ts"
+      ],
+      "size": 184,
+      "lines": 6
+    },
+    "src/shared/ui/layout/presets/board.ts": {
+      "filePath": "src/shared/ui/layout/presets/board.ts",
+      "fileName": "board.ts",
+      "directory": "src/shared/ui/layout/presets",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "boardSizes",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/presets/index.ts"
+      ],
+      "size": 124,
+      "lines": 5
+    },
+    "src/shared/ui/layout/presets/index.ts": {
+      "filePath": "src/shared/ui/layout/presets/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/shared/ui/layout/presets",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./archive",
+          "specifiers": [
+            "[re-export]:archiveSizes"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./viewer",
+          "specifiers": [
+            "[re-export]:viewerSizes"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./board",
+          "specifiers": [
+            "[re-export]:boardSizes"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "archiveSizes",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "viewerSizes",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "boardSizes",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/presets/archive.ts",
+        "src/shared/ui/layout/presets/viewer.ts",
+        "src/shared/ui/layout/presets/board.ts"
+      ],
+      "dependents": [],
+      "size": 120,
+      "lines": 4
+    },
+    "src/shared/ui/layout/presets/viewer.ts": {
+      "filePath": "src/shared/ui/layout/presets/viewer.ts",
+      "fileName": "viewer.ts",
+      "directory": "src/shared/ui/layout/presets",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "viewerSizes",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/presets/index.ts"
+      ],
+      "size": 126,
+      "lines": 5
+    },
+    "src/shared/ui/layout/primitives/Center.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Center.tsx",
+      "fileName": "Center.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Center",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 394,
+      "lines": 19
+    },
+    "src/shared/ui/layout/primitives/Fill.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Fill.tsx",
+      "fileName": "Fill.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Fill",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 384,
+      "lines": 18
+    },
+    "src/shared/ui/layout/primitives/Row.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Row.tsx",
+      "fileName": "Row.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "gapClasses",
+            "alignClasses",
+            "justifyClasses"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "GapSize",
+            "Alignment",
+            "Justify"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Row",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/types.ts",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 1059,
+      "lines": 46
+    },
+    "src/shared/ui/layout/primitives/Scroll.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Scroll.tsx",
+      "fileName": "Scroll.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "overflowClasses"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "OverflowAxis"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Scroll",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/types.ts",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 514,
+      "lines": 22
+    },
+    "src/shared/ui/layout/primitives/Shelf.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Shelf.tsx",
+      "fileName": "Shelf.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "shelfHeightClasses",
+            "shelfWidthClasses"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "ShelfHeight",
+            "ShelfWidth"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Shelf",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/types.ts",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 722,
+      "lines": 26
+    },
+    "src/shared/ui/layout/primitives/Split.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Split.tsx",
+      "fileName": "Split.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "@/src/shared/lib/hooks/useResizablePanel",
+          "specifiers": [
+            "useResizablePanel"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useResizablePanel",
+          "specifiers": [
+            "UseResizablePanelReturn"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Split",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 3349,
+      "lines": 135
+    },
+    "src/shared/ui/layout/primitives/Stack.tsx": {
+      "filePath": "src/shared/ui/layout/primitives/Stack.tsx",
+      "fileName": "Stack.tsx",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".tsx",
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "default:React"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "gapClasses",
+            "alignClasses"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "../types",
+          "specifiers": [
+            "GapSize",
+            "Alignment"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "Stack",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/types.ts",
+        "src/shared/ui/layout/types.ts"
+      ],
+      "dependents": [
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/index.ts"
+      ],
+      "size": 600,
+      "lines": 25
+    },
+    "src/shared/ui/layout/primitives/index.ts": {
+      "filePath": "src/shared/ui/layout/primitives/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/shared/ui/layout/primitives",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./Stack",
+          "specifiers": [
+            "[re-export]:Stack"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./Row",
+          "specifiers": [
+            "[re-export]:Row"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./Scroll",
+          "specifiers": [
+            "[re-export]:Scroll"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./Fill",
+          "specifiers": [
+            "[re-export]:Fill"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./Shelf",
+          "specifiers": [
+            "[re-export]:Shelf"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./Center",
+          "specifiers": [
+            "[re-export]:Center"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./Split",
+          "specifiers": [
+            "[re-export]:Split"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "Stack",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Row",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Scroll",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Fill",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Shelf",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Center",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "Split",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/shared/ui/layout/primitives/Stack.tsx",
+        "src/shared/ui/layout/primitives/Row.tsx",
+        "src/shared/ui/layout/primitives/Scroll.tsx",
+        "src/shared/ui/layout/primitives/Fill.tsx",
+        "src/shared/ui/layout/primitives/Shelf.tsx",
+        "src/shared/ui/layout/primitives/Center.tsx",
+        "src/shared/ui/layout/primitives/Split.tsx"
+      ],
+      "dependents": [],
+      "size": 229,
+      "lines": 8
+    },
+    "src/shared/ui/layout/types.ts": {
+      "filePath": "src/shared/ui/layout/types.ts",
+      "fileName": "types.ts",
+      "directory": "src/shared/ui/layout",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "GapSize",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "Alignment",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "Justify",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "OverflowAxis",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "gapClasses",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "alignClasses",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "justifyClasses",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "overflowClasses",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ShelfHeight",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ShelfWidth",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "shelfHeightClasses",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "shelfWidthClasses",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/ui/layout/composites/InlineLayout.tsx",
+        "src/shared/ui/layout/composites/InlineLayout.tsx",
+        "src/shared/ui/layout/composites/SectionLayout.tsx",
+        "src/shared/ui/layout/composites/SectionLayout.tsx",
+        "src/shared/ui/layout/index.ts",
+        "src/shared/ui/layout/primitives/Row.tsx",
+        "src/shared/ui/layout/primitives/Row.tsx",
+        "src/shared/ui/layout/primitives/Scroll.tsx",
+        "src/shared/ui/layout/primitives/Scroll.tsx",
+        "src/shared/ui/layout/primitives/Shelf.tsx",
+        "src/shared/ui/layout/primitives/Shelf.tsx",
+        "src/shared/ui/layout/primitives/Stack.tsx",
+        "src/shared/ui/layout/primitives/Stack.tsx"
+      ],
+      "size": 1419,
+      "lines": 52
     },
     "src/shared/ui/molecules/ActionButton.tsx": {
       "filePath": "src/shared/ui/molecules/ActionButton.tsx",
@@ -39359,6 +41209,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -39384,15 +41245,27 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 1857,
-      "lines": 64
+      "size": 2304,
+      "lines": 71
     },
     "src/shared/ui/molecules/CollectionCardEditForm.tsx": {
       "filePath": "src/shared/ui/molecules/CollectionCardEditForm.tsx",
       "fileName": "CollectionCardEditForm.tsx",
       "directory": "src/shared/ui/molecules",
       "extension": ".tsx",
-      "imports": [],
+      "imports": [
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
       "exports": [
         {
           "name": "CollectionCardEditFormProps",
@@ -39416,8 +41289,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 2226,
-      "lines": 88
+      "size": 2405,
+      "lines": 92
     },
     "src/shared/ui/molecules/CollectionCardHeader.tsx": {
       "filePath": "src/shared/ui/molecules/CollectionCardHeader.tsx",
@@ -39576,7 +41449,7 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 4247,
+      "size": 4398,
       "lines": 136
     },
     "src/shared/ui/molecules/ContextMenu.tsx": {
@@ -39755,7 +41628,7 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 3724,
+      "size": 3760,
       "lines": 141
     },
     "src/shared/ui/molecules/ContextMenuSection.tsx": {
@@ -40130,6 +42003,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -40146,8 +42041,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 6436,
-      "lines": 168
+      "size": 6878,
+      "lines": 183
     },
     "src/shared/ui/molecules/FacetPill.tsx": {
       "filePath": "src/shared/ui/molecules/FacetPill.tsx",
@@ -40302,7 +42197,7 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 4663,
+      "size": 4673,
       "lines": 179
     },
     "src/shared/ui/molecules/FirstTimeHint.tsx": {
@@ -40358,8 +42253,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 1624,
-      "lines": 64
+      "size": 1862,
+      "lines": 67
     },
     "src/shared/ui/molecules/FloatingSelectionToolbar.tsx": {
       "filePath": "src/shared/ui/molecules/FloatingSelectionToolbar.tsx",
@@ -40445,7 +42340,19 @@
       "fileName": "FormInput.tsx",
       "directory": "src/shared/ui/molecules",
       "extension": ".tsx",
-      "imports": [],
+      "imports": [
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "FieldLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
       "exports": [
         {
           "name": "FormInputType",
@@ -40475,8 +42382,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 4420,
-      "lines": 157
+      "size": 4653,
+      "lines": 164
     },
     "src/shared/ui/molecules/FormSection.tsx": {
       "filePath": "src/shared/ui/molecules/FormSection.tsx",
@@ -40555,6 +42462,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "ContextualClassNames"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -40581,8 +42499,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 2144,
-      "lines": 74
+      "size": 2581,
+      "lines": 81
     },
     "src/shared/ui/molecules/GuidedEmptyState.tsx": {
       "filePath": "src/shared/ui/molecules/GuidedEmptyState.tsx",
@@ -41550,6 +43468,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -41576,8 +43516,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 2565,
-      "lines": 81
+      "size": 2677,
+      "lines": 85
     },
     "src/shared/ui/molecules/RangeSelector.tsx": {
       "filePath": "src/shared/ui/molecules/RangeSelector.tsx",
@@ -41808,7 +43748,7 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 3286,
+      "size": 3296,
       "lines": 128
     },
     "src/shared/ui/molecules/SelectField.tsx": {
@@ -41827,6 +43767,17 @@
           "isAbsolute": false,
           "isExternal": true,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "FieldLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -41861,8 +43812,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 3197,
-      "lines": 116
+      "size": 3421,
+      "lines": 121
     },
     "src/shared/ui/molecules/SelectionThumbnailStrip.tsx": {
       "filePath": "src/shared/ui/molecules/SelectionThumbnailStrip.tsx",
@@ -42299,6 +44250,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -42315,8 +44288,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 7223,
-      "lines": 186
+      "size": 7440,
+      "lines": 191
     },
     "src/shared/ui/molecules/Toolbar.tsx": {
       "filePath": "src/shared/ui/molecules/Toolbar.tsx",
@@ -42532,8 +44505,8 @@
         "src/shared/ui/molecules/index.ts",
         "src/shared/ui/molecules/index.ts"
       ],
-      "size": 6113,
-      "lines": 181
+      "size": 6826,
+      "lines": 189
     },
     "src/shared/ui/molecules/ViewContainer.tsx": {
       "filePath": "src/shared/ui/molecules/ViewContainer.tsx",
@@ -42655,6 +44628,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "./types",
           "specifiers": [
             "ViewHeaderContextValue",
@@ -42679,6 +44663,11 @@
           "isTypeExport": false
         },
         {
+          "name": "SUB_BAR_MARKER",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
           "name": "ViewHeader",
           "type": "named",
           "isTypeExport": false
@@ -42694,8 +44683,8 @@
         "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
         "src/shared/ui/molecules/ViewHeader/index.ts"
       ],
-      "size": 1469,
-      "lines": 49
+      "size": 2472,
+      "lines": 81
     },
     "src/shared/ui/molecules/ViewHeader/ViewHeaderActions.tsx": {
       "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderActions.tsx",
@@ -42941,6 +44930,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "./types",
           "specifiers": [
             "ViewHeaderSelectionBarProps"
@@ -42965,8 +44965,8 @@
       "dependents": [
         "src/shared/ui/molecules/ViewHeader/index.ts"
       ],
-      "size": 2252,
-      "lines": 74
+      "size": 2103,
+      "lines": 68
     },
     "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx": {
       "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderSubBar.tsx",
@@ -42988,13 +44988,25 @@
         {
           "source": "./ViewHeader",
           "specifiers": [
-            "useViewHeaderContext"
+            "useViewHeaderContext",
+            "SUB_BAR_MARKER"
           ],
           "isTypeImport": false,
           "isRelative": true,
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         },
         {
           "source": "./types",
@@ -43022,8 +45034,8 @@
       "dependents": [
         "src/shared/ui/molecules/ViewHeader/index.ts"
       ],
-      "size": 709,
-      "lines": 27
+      "size": 978,
+      "lines": 34
     },
     "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx": {
       "filePath": "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
@@ -43090,8 +45102,8 @@
       "dependents": [
         "src/shared/ui/molecules/ViewHeader/index.ts"
       ],
-      "size": 1224,
-      "lines": 50
+      "size": 1140,
+      "lines": 43
     },
     "src/shared/ui/molecules/ViewHeader/index.ts": {
       "filePath": "src/shared/ui/molecules/ViewHeader/index.ts",
@@ -43415,8 +45427,8 @@
         "src/shared/ui/molecules/ViewHeader/ViewHeaderTitle.tsx",
         "src/shared/ui/molecules/ViewHeader/index.ts"
       ],
-      "size": 1222,
-      "lines": 59
+      "size": 1286,
+      "lines": 60
     },
     "src/shared/ui/molecules/ViewToggle.tsx": {
       "filePath": "src/shared/ui/molecules/ViewToggle.tsx",
@@ -45721,8 +47733,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 1138,
-      "lines": 34
+      "size": 1706,
+      "lines": 48
     },
     "src/shared/workers/compression.worker.ts": {
       "filePath": "src/shared/workers/compression.worker.ts",
@@ -46187,6 +48199,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -46208,8 +48242,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 13721,
-      "lines": 388
+      "size": 12803,
+      "lines": 369
     },
     "src/widgets/CommandPalette/ui/CommandPalette.tsx": {
       "filePath": "src/widgets/CommandPalette/ui/CommandPalette.tsx",
@@ -46262,6 +48296,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -46288,8 +48344,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 15872,
-      "lines": 499
+      "size": 15991,
+      "lines": 502
     },
     "src/widgets/ContextualHelp/ui/ContextualHelp.tsx": {
       "filePath": "src/widgets/ContextualHelp/ui/ContextualHelp.tsx",
@@ -46340,6 +48396,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -46356,8 +48434,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 4747,
-      "lines": 135
+      "size": 4933,
+      "lines": 139
     },
     "src/widgets/ExperienceSelector/ExperienceSelector.tsx": {
       "filePath": "src/widgets/ExperienceSelector/ExperienceSelector.tsx",
@@ -46400,6 +48478,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -46419,8 +48519,8 @@
         "src/widgets/ExperienceSelector/index.ts",
         "src/widgets/ExperienceSelector/index.ts"
       ],
-      "size": 12531,
-      "lines": 334
+      "size": 12652,
+      "lines": 337
     },
     "src/widgets/ExperienceSelector/index.ts": {
       "filePath": "src/widgets/ExperienceSelector/index.ts",
@@ -46647,6 +48747,28 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/shared/constants/shortcuts",
           "specifiers": [
             "CATEGORY_CONFIG",
@@ -46697,8 +48819,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 17822,
-      "lines": 381
+      "size": 17593,
+      "lines": 384
     },
     "src/widgets/NavigationHeader/HeaderBreadcrumb.tsx": {
       "filePath": "src/widgets/NavigationHeader/HeaderBreadcrumb.tsx",
@@ -47220,6 +49342,17 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/ui/layout",
+          "specifiers": [
+            "PanelLayout"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/src/app/providers/useAppSettings",
           "specifiers": [
             "useAppSettings"
@@ -47323,8 +49456,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 28703,
-      "lines": 717
+      "size": 28731,
+      "lines": 718
     },
     "src/widgets/OnboardingModal/ui/OnboardingModal.tsx": {
       "filePath": "src/widgets/OnboardingModal/ui/OnboardingModal.tsx",
@@ -47375,6 +49508,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -47386,8 +49541,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 8660,
-      "lines": 190
+      "size": 7980,
+      "lines": 189
     },
     "src/widgets/PersonaSettings/ui/PersonaSettings.tsx": {
       "filePath": "src/widgets/PersonaSettings/ui/PersonaSettings.tsx",
@@ -47461,7 +49616,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 14835,
+      "size": 14700,
       "lines": 276
     },
     "src/widgets/QCDashboard/ui/QCDashboard.tsx": {
@@ -47555,6 +49710,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -47566,8 +49743,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 29201,
-      "lines": 494
+      "size": 29083,
+      "lines": 497
     },
     "src/widgets/RequiredStatementBar/ui/RequiredStatementBar.tsx": {
       "filePath": "src/widgets/RequiredStatementBar/ui/RequiredStatementBar.tsx",
@@ -47757,6 +49934,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -47768,8 +49967,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 3590,
-      "lines": 93
+      "size": 3736,
+      "lines": 96
     },
     "src/widgets/StatusBar/ui/organisms/StatusBar.tsx": {
       "filePath": "src/widgets/StatusBar/ui/organisms/StatusBar.tsx",
@@ -47831,6 +50030,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -47842,8 +50052,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 10878,
-      "lines": 265
+      "size": 11053,
+      "lines": 269
     },
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx": {
       "filePath": "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx",
@@ -47894,6 +50104,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/hooks/useContextualStyles",
+          "specifiers": [
+            "useContextualStyles"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/lib/cn",
+          "specifiers": [
+            "cn"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -47910,8 +50142,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 9689,
-      "lines": 257
+      "size": 8961,
+      "lines": 244
     }
   },
   "externalDependencies": [
@@ -48007,6 +50239,7 @@
     "@/src/shared/constants/ui",
     "@/src/shared/constants/viewport",
     "@/src/shared/lib",
+    "@/src/shared/lib/cn",
     "@/src/shared/lib/hooks",
     "@/src/shared/lib/hooks/useAppSettings",
     "@/src/shared/lib/hooks/useCommandHistory",
@@ -48054,6 +50287,7 @@
     "@/src/shared/ui/atoms/StepConnector",
     "@/src/shared/ui/atoms/StepIndicator",
     "@/src/shared/ui/atoms/ZoomControl",
+    "@/src/shared/ui/layout",
     "@/src/shared/ui/molecules",
     "@/src/shared/ui/molecules/ActionButton",
     "@/src/shared/ui/molecules/AgentEditor",
@@ -48190,6 +50424,7 @@
     "src/features/viewer/ui/organisms/PolygonAnnotationTool.tsx",
     "src/shared/config/design-tokens.ts",
     "src/shared/constants/iiifSpecs.ts",
+    "src/shared/lib/cn.ts",
     "src/shared/lib/hooks/useCommandHistory.ts",
     "src/shared/lib/hooks/useHistory.ts",
     "src/shared/lib/hooks/useIngestProgress.ts",
@@ -48232,10 +50467,14 @@
     "src/widgets/StorageFullDialog/ui/StorageFullDialog.tsx"
   ],
   "stats": {
-    "totalImports": 2158,
-    "totalExports": 2768,
-    "avgImportsPerFile": 4.3420523138833,
+    "totalImports": 2290,
+    "totalExports": 2836,
+    "avgImportsPerFile": 4.4123314065510595,
     "mostImported": [
+      {
+        "file": "src/shared/ui/layout/types.ts",
+        "count": 13
+      },
       {
         "file": "src/entities/manifest/model/actions/types.ts",
         "count": 11
@@ -48270,10 +50509,6 @@
       },
       {
         "file": "src/entities/manifest/model/vault/queries.ts",
-        "count": 5
-      },
-      {
-        "file": "src/features/structure-view/model/useStructureTree.ts",
         "count": 5
       }
     ]
