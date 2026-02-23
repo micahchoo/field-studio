@@ -19,9 +19,6 @@ import { moveEntity, reorderChildren } from './movement';
 
 /**
  * Vault class - Stateful wrapper for IIIF resource management
- *
- * Implements the Digirati Manifest Editor pattern of flat, normalized storage
- * for O(1) entity lookups and efficient updates without full-tree cloning.
  */
 export class Vault {
   private state: NormalizedState;
@@ -41,11 +38,6 @@ export class Vault {
 
   /**
    * Reload the vault from a potentially modified IIIF tree.
-   * Use this when the tree has been modified externally (e.g., by healing)
-   * and you need to sync the vault's normalized state.
-   *
-   * This is safer than individual updateEntity calls because it ensures
-   * all IDs are properly indexed and the typeIndex is fresh.
    */
   reload(root: IIIFItem): void {
     this.state = normalize(root);
@@ -54,7 +46,6 @@ export class Vault {
 
   /**
    * Check if an entity exists in the vault by ID.
-   * Useful for validating that healing hasn't broken ID references.
    */
   has(id: string): boolean {
     const type = this.state.typeIndex[id];
@@ -180,45 +171,27 @@ export class Vault {
   // Collection Membership (Non-hierarchical, many-to-many)
   // ============================================================================
 
-  /**
-   * Get all Collections that contain a resource
-   */
   getCollectionsContaining(resourceId: string): string[] {
     return getCollectionsContaining(this.state, resourceId);
   }
 
-  /**
-   * Get all members of a Collection
-   */
   getCollectionMembers(collectionId: string): string[] {
     return getCollectionMembers(this.state, collectionId);
   }
 
-  /**
-   * Check if a Manifest is standalone (not in any Collection)
-   */
   isOrphanManifest(manifestId: string): boolean {
     return isOrphanManifest(this.state, manifestId);
   }
 
-  /**
-   * Get all standalone Manifests
-   */
   getOrphanManifests(): IIIFManifest[] {
     return getOrphanManifests(this.state);
   }
 
-  /**
-   * Add a resource to a Collection (reference, not ownership)
-   */
   addToCollection(collectionId: string, resourceId: string): void {
     this.state = addToCollection(this.state, collectionId, resourceId);
     this.notify();
   }
 
-  /**
-   * Remove a resource from a Collection (removes reference only)
-   */
   removeFromCollection(collectionId: string, resourceId: string): void {
     this.state = removeFromCollection(this.state, collectionId, resourceId);
     this.notify();
@@ -243,7 +216,7 @@ export class Vault {
    */
   snapshot(): VaultSnapshot {
     return {
-      state: this.state, // Immutable, safe to share
+      state: this.state,
       timestamp: Date.now()
     };
   }
@@ -263,9 +236,6 @@ export class Vault {
 
 let vaultInstance: Vault | null = null;
 
-/**
- * Get the singleton vault instance
- */
 export function getVault(): Vault {
   if (!vaultInstance) {
     vaultInstance = new Vault();
@@ -273,9 +243,6 @@ export function getVault(): Vault {
   return vaultInstance;
 }
 
-/**
- * Reset the singleton vault instance (useful for testing)
- */
 export function resetVault(): void {
   vaultInstance = null;
 }

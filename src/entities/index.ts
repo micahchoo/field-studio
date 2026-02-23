@@ -1,15 +1,13 @@
 /**
  * Entities Layer - Public API
  *
- * Features import entities from this file:
- *
- * import { canvas, manifest, collection } from '@/src/entities';
- *
- * // Access selectors and actions
- * const canvasData = canvas.model.selectById(state, id);
- * const action = canvas.actions.updateLabel(id, label);
+ * Features import entity operations from this barrel:
+ * import { canvas, collection, manifest } from '@/src/entities';
  */
 
 export * as canvas from './canvas';
-export * as manifest from './manifest';
 export * as collection from './collection';
+export * as manifest from './manifest';
+// Annotation entity exports selectors and services directly
+export * as annotationSelectors from './annotation/model/selectors';
+export * as contentSearch from './annotation/model/contentSearchService';

@@ -1,79 +1,31 @@
 /**
- * Viewer Feature Molecules
+ * Viewer feature — molecules barrel export
  *
- * Feature-specific molecules for the viewer feature.
- * These are composed by the ViewerView organism.
+ * All molecule components for the viewer feature are re-exported here.
  */
 
-// Composer molecules
-export { ComposerToolbar } from './ComposerToolbar';
-export type { ComposerToolbarProps, BackgroundMode } from './ComposerToolbar';
-
-export { ComposerSidebar } from './ComposerSidebar';
-export type { ComposerSidebarProps, SidebarTab } from './ComposerSidebar';
-
-export { ComposerCanvas } from './ComposerCanvas';
-export type { ComposerCanvasProps } from './ComposerCanvas';
-
-// Annotation molecules
-export { AnnotationToolbar } from './AnnotationToolbar';
-export type { AnnotationToolbarProps } from './AnnotationToolbar';
-
-export { AnnotationCanvas } from './AnnotationCanvas';
-export type { AnnotationCanvasProps } from './AnnotationCanvas';
-
-export { AnnotationForm } from './AnnotationForm';
-export type { AnnotationFormProps } from './AnnotationForm';
-
-// Viewer molecules (migrated from legacy components)
-export { MediaPlayer } from './MediaPlayer';
-export type { MediaPlayerProps } from './MediaPlayer';
-
-export { ViewerSearchPanel } from './ViewerSearchPanel';
-export type { ViewerSearchPanelProps, SearchResult, SearchService } from './ViewerSearchPanel';
-
-export { ViewerWorkbench } from './ViewerWorkbench';
-export type { ViewerWorkbenchProps } from './ViewerWorkbench';
-
-// New decomposition molecules (Phase 2)
-export { ViewerToolbar } from './ViewerToolbar';
-export type { ViewerToolbarProps, AnnotationDrawingMode } from './ViewerToolbar';
-
-export { FilmstripNavigator } from './FilmstripNavigator';
-export type { FilmstripNavigatorProps } from './FilmstripNavigator';
-
-export { AnnotationOverlay } from './AnnotationOverlay';
-export type { AnnotationOverlayProps, IIIFAnnotation } from './AnnotationOverlay';
-
-export { ViewerPanels } from './ViewerPanels';
-export type { ViewerPanelsProps } from './ViewerPanels';
-
-export { ViewerEmptyState } from './ViewerEmptyState';
-export type { ViewerEmptyStateProps } from './ViewerEmptyState';
-
-export { ViewerContent } from './ViewerContent';
-export type { ViewerContentProps } from './ViewerContent';
-
-export { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
-export type { KeyboardShortcutsModalProps } from './KeyboardShortcutsModal';
-
-export { AnnotationDrawingOverlay } from './AnnotationDrawingOverlay';
-export type { AnnotationDrawingOverlayProps } from './AnnotationDrawingOverlay';
-
-export { TimeAnnotationOverlay } from './TimeAnnotationOverlay';
-export type { TimeAnnotationOverlayProps } from './TimeAnnotationOverlay';
-
-export { AudioWaveform } from './AudioWaveform';
-export type { AudioWaveformProps } from './AudioWaveform';
-
-export { ImageFilterPanel } from './ImageFilterPanel';
-export type { ImageFilterPanelProps } from './ImageFilterPanel';
-
-export { MeasurementOverlay } from './MeasurementOverlay';
-export type { MeasurementOverlayProps } from './MeasurementOverlay';
-
-export { ComparisonViewer } from './ComparisonViewer';
-export type { ComparisonViewerProps } from './ComparisonViewer';
-
-export { AnnotationLayerPanel } from './AnnotationLayerPanel';
-export type { AnnotationLayerPanelProps } from './AnnotationLayerPanel';
+export { default as AnnotationCanvas } from './AnnotationCanvas.svelte';
+export { default as AnnotationDrawingOverlay } from './AnnotationDrawingOverlay.svelte';
+export { default as AnnotationForm } from './AnnotationForm.svelte';
+export { default as AnnotationLayerPanel } from './AnnotationLayerPanel.svelte';
+export { default as AnnotationOverlay } from './AnnotationOverlay.svelte';
+export { default as AnnotationToolbar } from './AnnotationToolbar.svelte';
+export { default as AudioWaveform } from './AudioWaveform.svelte';
+export { default as ComparisonViewer } from './ComparisonViewer.svelte';
+export { default as ComposerCanvas } from './ComposerCanvas.svelte';
+export { default as ComposerSidebar } from './ComposerSidebar.svelte';
+export { default as ComposerToolbar } from './ComposerToolbar.svelte';
+export { default as ContinuousViewer } from './ContinuousViewer.svelte';
+export { default as FilmstripNavigator } from './FilmstripNavigator.svelte';
+export { default as ImageFilterPanel } from './ImageFilterPanel.svelte';
+export { default as KeyboardShortcutsModal } from './KeyboardShortcutsModal.svelte';
+export { default as MediaPlayer } from './MediaPlayer.svelte';
+export { default as MeasurementOverlay } from './MeasurementOverlay.svelte';
+export { default as PagedViewer } from './PagedViewer.svelte';
+export { default as TimeAnnotationOverlay } from './TimeAnnotationOverlay.svelte';
+export { default as ViewerContent } from './ViewerContent.svelte';
+export { default as ViewerEmptyState } from './ViewerEmptyState.svelte';
+export { default as ViewerPanels } from './ViewerPanels.svelte';
+export { default as ViewerSearchPanel } from './ViewerSearchPanel.svelte';
+export { default as ViewerToolbar } from './ViewerToolbar.svelte';
+export { default as ViewerWorkbench } from './ViewerWorkbench.svelte';

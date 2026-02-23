@@ -9,7 +9,9 @@
  */
 
 import { type Action, actions as vaultActions } from '@/src/entities/manifest/model/actions';
-import type { LanguageMap } from '@/src/shared/types';
+
+/** LanguageMap alias (Record<string, string[]>) until shared/types exports it */
+type LanguageMap = Record<string, string[]>;
 
 /**
  * Update collection label

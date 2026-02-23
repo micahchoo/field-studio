@@ -1,3 +1,5 @@
+// Pure TypeScript — no Svelte-specific conversion
+
 /**
  * IIIF Image API Pure Functions
  *
@@ -39,9 +41,6 @@ export interface Region {
 
 /**
  * Calculate a centered square region from image dimensions.
- * @param width - Image width
- * @param height - Image height
- * @returns Square region centered on the image
  */
 export function calculateSquareRegion(width: number, height: number): Region {
   const size = Math.min(width, height);
@@ -61,11 +60,6 @@ export interface Size {
 
 /**
  * Calculate confined size (best fit within bounds, no upscale).
- * @param regionWidth - Region width
- * @param regionHeight - Region height
- * @param maxWidth - Maximum width constraint
- * @param maxHeight - Maximum height constraint
- * @returns Size that fits within bounds without upscaling
  */
 export function calculateConfinedSize(
   regionWidth: number,
@@ -93,9 +87,6 @@ export interface FormatOptions {
 
 /**
  * Get MIME type and encoding options for an image format.
- * @param format - Format string (jpg, png, webp, gif)
- * @param quality - Quality string (default, color, gray, bitonal)
- * @returns MIME type and blob encoding options
  */
 export function getFormatOptions(format: string, quality?: string): FormatOptions {
   const formatMap: Record<string, FormatOptions> = {
@@ -107,9 +98,7 @@ export function getFormatOptions(format: string, quality?: string): FormatOption
   };
 
   // For bitonal, prefer PNG for lossless
-  if (quality === 'bitonal' && format === 'jpg') {
-    return formatMap['png'];
-  }
+  if (quality === 'bitonal' && format === 'jpg') return formatMap['png'];
 
   return formatMap[format] || formatMap['jpg'];
 }
@@ -120,8 +109,6 @@ export function getFormatOptions(format: string, quality?: string): FormatOption
 
 /**
  * Get MIME type for a media file extension.
- * @param ext - File extension (mp3, mp4, webm, ogg, wav, m4a, aac, flac, svg)
- * @returns MIME type string
  */
 export function getMimeTypeForExtension(ext: string): string {
   const mimeTypes: Record<string, string> = {
@@ -149,9 +136,6 @@ export interface ByteRange {
 
 /**
  * Parse an HTTP Range header.
- * @param header - Range header value (e.g. "bytes=0-999", "bytes=1000-")
- * @param total - Total size of the resource
- * @returns Parsed byte range, or null if invalid
  */
 export function parseRangeHeader(header: string, total: number): ByteRange | null {
   const match = header.match(/bytes=(\d+)-(\d*)/);
@@ -159,11 +143,8 @@ export function parseRangeHeader(header: string, total: number): ByteRange | nul
 
   const start = parseInt(match[1], 10);
   const end = match[2] ? parseInt(match[2], 10) : total - 1;
-
-  // Clamp end to total
   const clampedEnd = Math.min(end, total - 1);
 
-  // Validate
   if (start < 0 || clampedEnd >= total || start > clampedEnd) return null;
 
   return { start, end: clampedEnd };
@@ -171,10 +152,6 @@ export function parseRangeHeader(header: string, total: number): ByteRange | nul
 
 /**
  * Build an HTTP Content-Range header value.
- * @param start - Start byte offset
- * @param end - End byte offset (inclusive)
- * @param total - Total resource size
- * @returns Content-Range header value
  */
 export function buildContentRangeHeader(start: number, end: number, total: number): string {
   return `bytes ${start}-${end}/${total}`;
@@ -193,27 +170,20 @@ export interface FailureEntry {
 
 /**
  * Check if a key is currently in backoff.
- * @param tracker - Failure tracker map
- * @param key - Request key
  * @returns false if OK to proceed, or remaining backoff ms
  */
 export function isInBackoff(tracker: Map<string, FailureEntry>, key: string): false | number {
   const entry = tracker.get(key);
   if (!entry) return false;
   const now = Date.now();
-  if (now < entry.backoffUntil) {
-    return entry.backoffUntil - now;
-  }
+  if (now < entry.backoffUntil) return entry.backoffUntil - now;
   return false;
 }
 
 /**
  * Record a failure for a key with exponential backoff.
- * Backoff schedule: 1s, 2s, 4s, 8s, 16s, 30s, 30s... (capped at 30s).
+ * Schedule: 1s, 2s, 4s, 8s, 16s, 30s, 30s... (capped at 30s).
  * After 10 consecutive failures, backoff jumps to 5 minutes.
- * @param tracker - Failure tracker map
- * @param key - Request key
- * @param errorMsg - Error message
  */
 export function recordFailure(tracker: Map<string, FailureEntry>, key: string, errorMsg: string): void {
   const entry = tracker.get(key) || { count: 0, lastAttempt: 0, backoffUntil: 0 };
@@ -234,8 +204,6 @@ export function recordFailure(tracker: Map<string, FailureEntry>, key: string, e
 
 /**
  * Clear failure record for a key (asset recovered).
- * @param tracker - Failure tracker map
- * @param key - Request key
  */
 export function clearFailure(tracker: Map<string, FailureEntry>, key: string): void {
   tracker.delete(key);

@@ -5,6 +5,9 @@
  *   `textPrimary` -> `--theme-text-primary`
  *
  * All values are CSS color strings (hex, rgb, rgba, color-mix, etc.).
+ *
+ * COPIED VERBATIM from React: src/shared/config/themes/types.ts
+ * Pure TypeScript — zero framework dependency.
  */
 
 export type ThemeName = 'light' | 'dark' | 'field' | 'custom';
@@ -61,12 +64,12 @@ export interface ThemeTokens {
   resourceRange: string;
   resourceAnnotation: string;
 
-  // ── Forms & Inputs ──────────────────────────────────────────
+  // ── Forms & Inputs ──────────────────────────────────────────────
   inputBg: string;
   inputBorder: string;
   inputPlaceholder: string;
 
-  // ── Typography ──────────────────────────────────────────────
+  // ── Typography ──────────────────────────────────────────────────
   fontFamilyMono: string;
   fontSizeXs: string;
   fontSizeSm: string;
@@ -74,14 +77,14 @@ export interface ThemeTokens {
   fontSizeLg: string;
   fontWeightBold: string;
 
-  // ── Spacing ─────────────────────────────────────────────────
+  // ── Spacing ─────────────────────────────────────────────────────
   spacingXs: string;
   spacingSm: string;
   spacingMd: string;
   spacingLg: string;
   spacingXl: string;
 
-  // ── Border Widths ───────────────────────────────────────────
+  // ── Border Widths ───────────────────────────────────────────────
   borderWidthThin: string;
   borderWidthThick: string;
 }

@@ -1,12 +1,8 @@
-/**
- * Structure View Atoms
- */
-
-export { StructureNodeIcon } from './StructureNodeIcon';
-export { ExpandButton } from './ExpandButton';
-export { NodeLabel } from './NodeLabel';
-export { DropIndicator } from './DropIndicator';
-export type { DropPosition } from './DropIndicator';
-export { DragPreview } from './DragPreview';
-export { TreeSearchBar } from './TreeSearchBar';
-export { MatchHighlight } from './MatchHighlight';
+export { default as DragPreview } from './DragPreview.svelte';
+export { default as DropIndicator } from './DropIndicator.svelte';
+export { default as ExpandButton } from './ExpandButton.svelte';
+export { default as MatchHighlight } from './MatchHighlight.svelte';
+export { default as NodeLabel } from './NodeLabel.svelte';
+export { default as StructureNodeIcon } from './StructureNodeIcon.svelte';
+export { default as TreeSearchBar } from './TreeSearchBar.svelte';
+export type { DropPosition } from './types';

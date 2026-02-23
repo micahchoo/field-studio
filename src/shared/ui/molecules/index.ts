@@ -1,240 +1,89 @@
 /**
- * Molecules: Composable UI Units
+ * Molecules: Composed UI components (Svelte 5)
  *
- * All molecules are exported here for consistent imports across features.
- *
- * PRINCIPLE: Molecules are imported by organisms, never used directly in features.
- * Features compose organisms, which compose molecules.
- *
- * @example
- * import {
- *   FilterInput,
- *   SearchField,
- *   ViewToggle,
- *   ViewContainer,
- *   Toolbar,
- * } from '@/src/shared/ui/molecules';
- *
- * export const MyOrganism = () => (
- *   <ViewContainer
- *     title="Archive"
- *     icon="inventory"
- *     filter={{ value: filter, onChange: setFilter }}
- *     viewToggle={{ value: mode, onChange: setMode, options: [...] }}
- *   >
- *     <FilterInput value={search} onChange={setSearch} />
- *     <Toolbar>
- *       <Button onClick={onCreate}>Create</Button>
- *     </Toolbar>
- *   </ViewContainer>
- * );
+ * Built from atoms + layout primitives. Molecules have minimal internal
+ * state and receive theming via cx: ContextualClassNames prop.
  */
 
-// Navigation & Tabs
-export { TabBar } from './TabBar';
-export type { TabBarProps, TabDefinition } from './TabBar';
+// ViewHeader system
+export { ViewHeader, SelectionBar } from './ViewHeader';
+export type { ViewHeaderProps, ViewHeaderSelectionBarProps, ViewHeaderHeight } from './ViewHeader';
 
-// Form Controls & Selectors
-export { SelectField } from './SelectField';
-export type { SelectFieldProps, SelectOption, SelectOptionGroup } from './SelectField';
+// Form molecules
+export { default as FormInput } from './FormInput.svelte';
+export { default as FormSection } from './FormSection.svelte';
+export { default as DebouncedInput } from './DebouncedInput.svelte';
+export { default as SelectField } from './SelectField.svelte';
+export { default as FilterInput } from './FilterInput.svelte';
+export { default as SearchField } from './SearchField.svelte';
+export { default as DropdownSelect } from './DropdownSelect.svelte';
+export { default as RangeSelector } from './RangeSelector.svelte';
 
-export { DropdownSelect } from './DropdownSelect';
-export type { DropdownSelectProps, DropdownOption } from './DropdownSelect';
+// State & container molecules
+export { default as ModalDialog } from './ModalDialog.svelte';
+export { default as EmptyState } from './EmptyState.svelte';
+export { default as GuidanceEmptyState } from './GuidanceEmptyState.svelte';
+export { default as LoadingState } from './LoadingState.svelte';
+export { default as ErrorBoundary } from './ErrorBoundary.svelte';
+export { default as ListContainer } from './ListContainer.svelte';
+export { default as ListItemBase } from './ListItemBase.svelte';
+export { default as ViewContainer } from './ViewContainer.svelte';
+export { default as Toolbar } from './Toolbar.svelte';
+export { default as TabBar } from './TabBar.svelte';
 
-export { FormInput } from './FormInput';
-export type { FormInputProps, FormInputType } from './FormInput';
+// Action molecules
+export { default as ActionButton } from './ActionButton.svelte';
+export { default as IconButton } from './IconButton.svelte';
+export { default as MenuButton } from './MenuButton.svelte';
+export { default as ViewToggle } from './ViewToggle.svelte';
+export { default as Tooltip } from './Tooltip.svelte';
+export { default as Toast } from './Toast.svelte';
+export { default as ContextMenu } from './ContextMenu.svelte';
+export { default as ContextMenuItem } from './ContextMenuItem.svelte';
+export { default as ContextMenuSection } from './ContextMenuSection.svelte';
+export { default as ContextMenuSelectionBadge } from './ContextMenuSelectionBadge.svelte';
 
-// List Components
-export { ListContainer } from './ListContainer';
-export type { ListContainerProps } from './ListContainer';
+// Card molecules
+export { default as CollectionCard } from './CollectionCard.svelte';
+export { default as CollectionCardHeader } from './CollectionCardHeader.svelte';
+export { default as CollectionCardEditForm } from './CollectionCardEditForm.svelte';
+export { default as CollectionCardMenu } from './CollectionCardMenu.svelte';
+export { default as CollectionCardDropOverlay } from './CollectionCardDropOverlay.svelte';
 
-export { ListItemBase } from './ListItemBase';
-export type { ListItemBaseProps } from './ListItemBase';
+// Badge & status molecules
+export { default as StatusBadge } from './StatusBadge.svelte';
+export { default as FacetPill } from './FacetPill.svelte';
+export { default as ResourceTypeBadge } from './ResourceTypeBadge.svelte';
 
-// Modal & Dialog
-export { ModalDialog } from './ModalDialog';
-export type { ModalDialogProps, ModalSize } from './ModalDialog';
+// Selection molecules
+export { default as SelectionToolbar } from './SelectionToolbar.svelte';
+export { default as SelectionThumbnailStrip } from './SelectionThumbnailStrip.svelte';
+export { default as FloatingSelectionToolbar } from './FloatingSelectionToolbar.svelte';
 
-// Display & Content
-export { StackedThumbnail } from './StackedThumbnail';
-export type { StackedThumbnailProps } from './StackedThumbnail';
+// Navigation molecules
+export { default as BreadcrumbNav } from './BreadcrumbNav.svelte';
+export { default as BreadcrumbSiblingMenu } from './BreadcrumbSiblingMenu.svelte';
+export type { BreadcrumbItem } from './breadcrumbTypes';
 
-export { MuseumLabel } from './MuseumLabel';
-export type { MuseumLabelProps, MuseumLabelType } from './MuseumLabel';
+// Display molecules
+export { default as MuseumLabel } from './MuseumLabel.svelte';
+export { default as PipelineBanner } from './PipelineBanner.svelte';
 
-// Context Menu
-export { ContextMenu } from './ContextMenu';
-export type { ContextMenuProps, ContextMenuItem as ContextMenuItemType, ContextMenuSectionType } from './ContextMenu';
+// Hint & reference molecules
+export { default as FirstTimeHint } from './FirstTimeHint.svelte';
+export { default as QuickReference } from './QuickReference.svelte';
 
-// Context Menu Sub-components
-export { ContextMenuItem, getContextMenuItemClasses, getContextMenuIconClasses } from './ContextMenuItem';
-export type { ContextMenuItemProps } from './ContextMenuItem';
+// IIIF-specific molecules
+export { default as AgentEditor } from './AgentEditor.svelte';
+export { default as CanvasItem } from './CanvasItem.svelte';
+export { default as ClusterBadge } from './ClusterBadge.svelte';
+export { default as LinkListEditor } from './LinkListEditor.svelte';
+export { default as MapMarker } from './MapMarker.svelte';
+export { default as MetadataCard } from './MetadataCard.svelte';
+export { default as MetadataFieldRenderer } from './MetadataFieldRenderer.svelte';
+export { default as ResultCard } from './ResultCard.svelte';
+export { default as StackedThumbnail } from './StackedThumbnail.svelte';
+export { default as TimelineTick } from './TimelineTick.svelte';
 
-export { ContextMenuSection } from './ContextMenuSection';
-export type { ContextMenuSectionProps } from './ContextMenuSection';
-
-export { ContextMenuSelectionBadge } from './ContextMenuSelectionBadge';
-export type { ContextMenuSelectionBadgeProps } from './ContextMenuSelectionBadge';
-
-// Filter & Search
-export { FilterInput } from './FilterInput';
-export type { FilterInputProps } from './FilterInput';
-
-export { SearchField } from './SearchField';
-export type { SearchFieldProps } from './SearchField';
-
-export { DebouncedInput } from './DebouncedInput';
-export type { DebouncedInputProps } from './DebouncedInput';
-
-// Layout & Container
-export { ViewContainer } from './ViewContainer';
-export type { ViewContainerProps } from './ViewContainer';
-
-export { ViewToggle } from './ViewToggle';
-export type { ViewToggleProps, ViewToggleOption } from './ViewToggle';
-
-// View Header (compound component)
-export {
-  ViewHeader,
-  ViewHeaderTitle,
-  ViewHeaderCenter,
-  ViewHeaderActions,
-  ViewHeaderSubBar,
-  ViewHeaderSelectionBar,
-  ViewHeaderBody,
-  ViewHeaderDivider,
-} from './ViewHeader';
-export type {
-  ViewHeaderHeight,
-  ViewHeaderProps,
-  ViewHeaderTitleProps,
-  ViewHeaderCenterProps,
-  ViewHeaderActionsProps,
-  ViewHeaderSubBarProps,
-  ViewHeaderSelectionBarProps,
-  ViewHeaderBodyProps,
-  ViewHeaderDividerProps,
-} from './ViewHeader';
-
-// Actions & Controls
-export { Toolbar } from './Toolbar';
-export type { ToolbarProps } from './Toolbar';
-
-export { SelectionToolbar } from './SelectionToolbar';
-export type { SelectionToolbarProps } from './SelectionToolbar';
-
-export { IconButton } from './IconButton';
-export type { IconButtonProps } from './IconButton';
-
-export { ActionButton } from './ActionButton';
-export type { ActionButtonProps } from './ActionButton';
-
-export { MenuButton } from './MenuButton';
-export type { MenuButtonProps } from './MenuButton';
-
-// Tooltip & Guidance
-export { Tooltip } from './Tooltip';
-export type { TooltipContent } from './Tooltip';
-
-export { FirstTimeHint } from './FirstTimeHint';
-export type { FirstTimeHintProps } from './FirstTimeHint';
-
-export { QuickReference } from './QuickReference';
-export type { QuickReferenceProps } from './QuickReference';
-
-export { GuidanceEmptyState } from './GuidanceEmptyState';
-export type { GuidanceEmptyStateProps } from './GuidanceEmptyState';
-
-// State & Info
-export { EmptyState } from './EmptyState';
-export type { EmptyStateProps, EmptyStateAction } from './EmptyState';
-
-export { GuidedEmptyState } from './GuidedEmptyState';
-export type { GuidedEmptyStateProps, WorkflowStep } from './GuidedEmptyState';
-
-export { FloatingSelectionToolbar } from './FloatingSelectionToolbar';
-export type { FloatingSelectionToolbarProps } from './FloatingSelectionToolbar';
-
-export { SelectionThumbnailStrip } from './SelectionThumbnailStrip';
-export type { SelectionThumbnailStripProps } from './SelectionThumbnailStrip';
-
-export { BreadcrumbNav } from './BreadcrumbNav';
-export type { BreadcrumbNavProps, BreadcrumbItem } from './BreadcrumbNav';
-
-export { BreadcrumbSiblingMenu } from './BreadcrumbSiblingMenu';
-export type { BreadcrumbSiblingMenuProps } from './BreadcrumbSiblingMenu';
-
-export { MetadataCard } from './MetadataCard';
-export type { MetadataCardProps, MetadataField } from './MetadataCard';
-
-export { MetadataFieldRenderer, formatFieldValue } from './MetadataFieldRenderer';
-export type { MetadataFieldRendererProps } from './MetadataFieldRenderer';
-
-export { LoadingState } from './LoadingState';
-export type { LoadingStateProps } from './LoadingState';
-
-export { ResourceTypeBadge } from './ResourceTypeBadge';
-export type { ResourceTypeBadgeProps } from './ResourceTypeBadge';
-
-export { StatusBadge } from './StatusBadge';
-export type { StatusBadgeProps, StatusVariant } from './StatusBadge';
-
-// Search & Discovery (for decomposition)
-export { FacetPill } from './FacetPill';
-export type { FacetPillProps } from './FacetPill';
-
-export { ResultCard } from './ResultCard';
-export type { ResultCardProps } from './ResultCard';
-
-// Viewer Controls - MOVED to viewer feature
-// ZoomControl and PageCounter are now in src/features/viewer/ui/atoms/
-// and should be imported from there instead.
-
-// Map Components (for decomposition)
-export { MapMarker } from './MapMarker';
-export type { MapMarkerProps } from './MapMarker';
-
-export { ClusterBadge } from './ClusterBadge';
-export type { ClusterBadgeProps, ClusterItem } from './ClusterBadge';
-
-// Timeline Components (for decomposition)
-export { TimelineTick } from './TimelineTick';
-export type { TimelineTickProps, TimelineItem } from './TimelineTick';
-
-export { RangeSelector } from './RangeSelector';
-export type { RangeSelectorProps, RangePreset } from './RangeSelector';
-
-// Drag & Drop Components (Phase 4)
-export { CanvasItem } from './CanvasItem';
-export type { CanvasItemProps } from './CanvasItem';
-
-export { CollectionCard } from './CollectionCard';
-export type { CollectionCardProps } from './CollectionCard';
-
-// CollectionCard Sub-components (for advanced composition)
-export { CollectionCardHeader } from './CollectionCardHeader';
-export type { CollectionCardHeaderProps } from './CollectionCardHeader';
-
-export { CollectionCardDropOverlay } from './CollectionCardDropOverlay';
-export type { CollectionCardDropOverlayProps } from './CollectionCardDropOverlay';
-
-export { CollectionCardEditForm } from './CollectionCardEditForm';
-export type { CollectionCardEditFormProps } from './CollectionCardEditForm';
-
-export { CollectionCardMenu } from './CollectionCardMenu';
-export type { CollectionCardMenuProps } from './CollectionCardMenu';
-
-// Pipeline Navigation
-export { PipelineBanner } from './PipelineBanner';
-export type { PipelineBannerProps } from './PipelineBanner';
-
-// IIIF Property Editors
-export { LinkListEditor } from './LinkListEditor';
-export type { LinkListEditorProps, LinkItem, LinkResourceType } from './LinkListEditor';
-
-export { AgentEditor } from './AgentEditor';
-export type { AgentEditorProps, AgentItem } from './AgentEditor';
-
-// Form Layout
-export { FormSection } from './FormSection';
-export type { FormSectionProps } from './FormSection';
+// ViewHeader sub-components
+export { ViewHeaderTitle, ViewHeaderCenter, ViewHeaderActions, ViewHeaderSubBar, ViewHeaderBody, ViewHeaderDivider } from './ViewHeader';

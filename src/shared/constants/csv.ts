@@ -1,6 +1,8 @@
+// Pure TypeScript — no Svelte-specific conversion
+
 /**
  * CSV Import/Export Constants
- * 
+ *
  * Configuration for CSV metadata import and export functionality.
  */
 
@@ -46,7 +48,7 @@ export const CSV_TEMPLATE_COLUMNS: CSVColumnDefinition[] = [
   { key: 'navDate', description: 'Navigation date in ISO 8601 format (YYYY-MM-DD)', category: 'iiif' },
   { key: 'requiredStatement.value', description: 'Required attribution text', category: 'iiif' },
 
-  // Dublin Core (metadata.* format for csvImporter compatibility)
+  // Dublin Core
   { key: 'metadata.title', description: 'Title of the resource', category: 'dublin-core' },
   { key: 'metadata.creator', description: 'Person or organization responsible for creating the content', category: 'dublin-core' },
   { key: 'metadata.date', description: 'Date associated with the resource (YYYY-MM-DD or YYYY)', category: 'dublin-core' },
@@ -64,10 +66,8 @@ export const CSV_TEMPLATE_COLUMNS: CSVColumnDefinition[] = [
 
 /**
  * Aliases for CSV column auto-detection
- * Maps common column names to their IIIF property equivalent
  */
 export const CSV_COLUMN_ALIASES: Record<string, string> = {
-  // Direct IIIF matches
   'label': 'label',
   'summary': 'summary',
   'rights': 'rights',
@@ -77,8 +77,6 @@ export const CSV_COLUMN_ALIASES: Record<string, string> = {
   'requiredStatement.value': 'requiredStatement.value',
   'requiredstatement.label': 'requiredStatement.label',
   'requiredStatement.label': 'requiredStatement.label',
-
-  // metadata.* format
   'metadata.title': 'metadata.title',
   'metadata.creator': 'metadata.creator',
   'metadata.date': 'metadata.date',
@@ -92,8 +90,6 @@ export const CSV_COLUMN_ALIASES: Record<string, string> = {
   'metadata.coverage': 'metadata.coverage',
   'metadata.rights': 'metadata.rights',
   'metadata.publisher': 'metadata.publisher',
-
-  // dc:* format aliases (legacy support)
   'dc:title': 'metadata.title',
   'dc:creator': 'metadata.creator',
   'dc:date': 'metadata.date',
@@ -107,8 +103,6 @@ export const CSV_COLUMN_ALIASES: Record<string, string> = {
   'dc:coverage': 'metadata.coverage',
   'dc:rights': 'metadata.rights',
   'dc:publisher': 'metadata.publisher',
-
-  // Common friendly names
   'title': 'metadata.title',
   'creator': 'metadata.creator',
   'author': 'metadata.creator',

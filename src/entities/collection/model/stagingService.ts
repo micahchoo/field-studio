@@ -1,8 +1,64 @@
 
-import { ArchiveCollection, ArchiveLayout, FileTree, SourceManifest, SourceManifests } from '@/src/shared/types';
+import type { FileTree } from '@/src/shared/types';
 import { filenameRelationshipPatterns } from '@/utils/filenameUtils';
-import { buildTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
 import { MIME_TYPE_MAP } from '@/src/shared/constants';
+
+// ============================================================================
+// Staging workflow types (will move to shared/types when fully wired)
+// ============================================================================
+
+export interface SourceManifest {
+  id: string;
+  name: string;
+  breadcrumbs: string[];
+  files: File[];
+  canvasOrder: string[];
+  detectedPattern?: string;
+}
+
+export interface SourceManifests {
+  id: string;
+  rootPath: string;
+  manifests: SourceManifest[];
+  createdAt: string;
+}
+
+export interface ArchiveCollection {
+  id: string;
+  name: string;
+  manifestRefs: string[];
+  children: ArchiveCollection[];
+}
+
+export interface ArchiveLayout {
+  id: string;
+  root: ArchiveCollection;
+  unassignedManifests: string[];
+}
+
+// ============================================================================
+// Stub: buildTree will be available after iiifBuilder translation
+// ============================================================================
+
+function buildTree(files: File[]): FileTree {
+  const root: FileTree = { name: 'root', path: '', files: new Map(), directories: new Map() };
+  for (const file of files) {
+    const parts = file.webkitRelativePath?.split('/') || [file.name];
+    let current = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!current.directories.has(parts[i])) {
+        current.directories.set(parts[i], { name: parts[i], path: parts.slice(0, i + 1).join('/'), files: new Map(), directories: new Map() });
+      }
+      current = current.directories.get(parts[i])!;
+    }
+    current.files.set(file.name, file);
+  }
+  return root;
+}
+
+// ============================================================================
+// Internal helpers
+// ============================================================================
 
 /**
  * Natural sort comparison for strings with numbers
@@ -63,6 +119,10 @@ function detectAndOrderSequence(files: File[]): {
     detectedPattern: null
   };
 }
+
+// ============================================================================
+// Public API
+// ============================================================================
 
 /**
  * Build SourceManifests from an array of files (from folder upload)
@@ -223,12 +283,12 @@ export function removeManifestsFromCollection(
   };
 
   // Check if manifest is still referenced anywhere
-  const isReferenced = (layout: ArchiveLayout, manifestId: string): boolean => {
+  const isReferenced = (currentLayout: ArchiveLayout, manifestId: string): boolean => {
     const checkCollection = (collection: ArchiveCollection): boolean => {
       if (collection.manifestRefs.includes(manifestId)) return true;
       return collection.children.some(checkCollection);
     };
-    return checkCollection(layout.root);
+    return checkCollection(currentLayout.root);
   };
 
   const newLayout = {

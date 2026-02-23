@@ -1,59 +1,41 @@
-import type { ContextualClassNames } from '@/src/shared/lib/hooks/useContextualStyles';
+import type { Snippet } from 'svelte';
+import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
+
+export type { ContextualClassNames };
 
 export type ViewHeaderHeight = 'default' | 'compact' | 'fluid';
 
-export interface ViewHeaderContextValue {
-  height: ViewHeaderHeight;
-  cx: ContextualClassNames;
-  fieldMode: boolean;
-  isMobile: boolean;
-}
-
 export interface ViewHeaderProps {
+  /** Contextual class name tokens for theming */
   cx: ContextualClassNames;
-  fieldMode: boolean;
+  /** Height variant */
   height?: ViewHeaderHeight;
-  /** @deprecated shadow removed — headers are always flat */
-  shadow?: boolean;
+  /** z-index class */
   zIndex?: string;
-  className?: string;
-  children: React.ReactNode;
-}
+  /** Additional class */
+  class?: string;
 
-export interface ViewHeaderTitleProps {
-  icon?: string;
-  title: string;
-  badge?: string | number;
-  children?: React.ReactNode;
-}
-
-export interface ViewHeaderCenterProps {
-  children: React.ReactNode;
-}
-
-export interface ViewHeaderActionsProps {
-  children: React.ReactNode;
-}
-
-export interface ViewHeaderSubBarProps {
-  visible: boolean;
-  className?: string;
-  children: React.ReactNode;
+  // Named snippet slots (replaces React children + partitionChildren)
+  /** Icon + title + optional badge area (left) */
+  title?: Snippet;
+  /** Center content (hidden on mobile) */
+  center?: Snippet;
+  /** Action buttons (right) */
+  actions?: Snippet;
+  /** Sub-bar below main header row */
+  subbar?: Snippet;
+  /** Whether sub-bar is visible */
+  subbarVisible?: boolean;
+  /** Body content below everything */
+  body?: Snippet;
+  /** Divider elements (if any) */
+  children?: Snippet;
 }
 
 export interface ViewHeaderSelectionBarProps {
   count: number;
   onClear: () => void;
-  fieldMode: boolean;
+  cx: ContextualClassNames;
   isMobile?: boolean;
-  children: React.ReactNode;
-}
-
-export interface ViewHeaderBodyProps {
-  maxWidth?: string;
-  children: React.ReactNode;
-}
-
-export interface ViewHeaderDividerProps {
-  className?: string;
+  children?: Snippet;
 }

@@ -1,17 +1,45 @@
 /**
- * Viewer Compatibility Service
- * Validates IIIF exports against known viewer requirements
+ * Viewer Compatibility Service -- Pure TS (no framework imports)
  *
- * Tested Viewers:
- * - Mirador 3.x
- * - Universal Viewer 4.x
- * - Annona
- * - Clover
+ * Validates IIIF exports against known viewer requirements.
+ * Produces a compatibility report scoring the manifest against
+ * Mirador 3.x, Universal Viewer 4.x, Annona, and Clover.
+ *
+ * SOURCE: React codebase src/features/viewer/model/viewerCompatibility.ts
+ * MIGRATION: Nearly verbatim copy -- this is pure TS with no React deps.
+ *
+ * EXTERNAL DEPENDENCIES:
+ * - IIIF_SPEC from @/src/shared/constants (already migrated)
+ * - IIIF_CONFIG: Not yet fully migrated. The generateTestManifest() method
+ *   requires IIIF_CONFIG.BASE_URL, IIIF_CONFIG.ID_PATTERNS, which need
+ *   to be added to the shared/constants/iiif.ts stub.
+ * - isCanvas, isRange from @/src/shared/types (already migrated)
+ * - createImageServiceReference, isImageService3: utility functions from
+ *   the old @/utils path. These need inline stubs or a new shared/lib utility.
+ * - getDerivativePreset from @/src/shared/constants (already migrated)
+ *
+ * TODO (for final implementation):
+ * 1. Expand IIIF_CONFIG stub in shared/constants/iiif.ts with BASE_URL
+ *    and ID_PATTERNS (MANIFEST, CANVAS, RANGE)
+ * 2. Add createImageServiceReference + isImageService3 utilities to
+ *    shared/lib or inline here
+ * 3. Wire generateTestManifest() once IIIF_CONFIG is complete
  */
 
-import { IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isRange } from '@/src/shared/types';
-import { createImageServiceReference, isImageService3 } from '@/utils';
-import { getDerivativePreset, IIIF_CONFIG, IIIF_SPEC } from '@/src/shared/constants';
+import type {
+  IIIFAnnotation,
+  IIIFCanvas,
+  IIIFCollection,
+  IIIFItem,
+  IIIFManifest,
+} from '@/src/shared/types';
+import { isCanvas } from '@/src/shared/types';
+
+/** Inline type guard — isRange not yet exported from shared/types */
+function isRange(item: IIIFItem): boolean {
+  return item.type === 'Range';
+}
+import { IIIF_SPEC, getDerivativePreset } from '@/src/shared/constants';
 
 // ============================================================================
 // Types
@@ -46,11 +74,56 @@ export interface ViewerRequirement {
 }
 
 // ============================================================================
+// IIIF_CONFIG stub (inline until shared/constants is expanded)
+// ============================================================================
+
+// PSEUDO: These patterns replicate IIIF_CONFIG from the React codebase.
+// In the final implementation, import these from @/src/shared/constants.
+const IIIF_CONFIG_STUB = {
+  BASE_URL: {
+    LEGACY_DOMAINS: ['https://iiif.example.org', 'https://example.org'],
+  },
+  ID_PATTERNS: {
+    MANIFEST: (base: string, slug: string) => `${base}/manifest/${slug}`,
+    CANVAS: (manifestId: string, index: number) => `${manifestId}/canvas/${index}`,
+    RANGE: (base: string, slug: string) => `${base}/range/${slug}`,
+  },
+} as const;
+
+// PSEUDO: Stub for createImageServiceReference until shared/lib is expanded.
+// Returns a minimal ImageService3 reference object.
+function createImageServiceReference(
+  serviceId: string,
+  profile: string,
+): Record<string, unknown> {
+  return {
+    id: serviceId,
+    type: 'ImageService3',
+    profile: `level${profile.replace('level', '')}`,
+    protocol: IIIF_SPEC.IMAGE_3.PROTOCOL,
+  };
+}
+
+// PSEUDO: Stub for isImageService3 check.
+function isImageService3(svc: Record<string, unknown>): boolean {
+  return svc?.type === 'ImageService3';
+}
+
+// ============================================================================
 // Viewer Requirements Database
 // ============================================================================
 
+/**
+ * Static array of 13 viewer requirement checks.
+ * Each requirement defines:
+ * - A check function that returns true if the item passes
+ * - Which viewers are affected
+ * - Severity level and recommendation text
+ *
+ * Rule 2.F: Static data at top level (no framework wrapper needed)
+ */
 const REQUIREMENTS: ViewerRequirement[] = [
-  // Context requirements
+  // --- Context requirements ---
   {
     id: 'context-v3',
     description: 'Manifest must use IIIF Presentation API 3.0 context',
@@ -63,33 +136,33 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer', 'annona', 'clover'],
     severity: 'error',
-    recommendation: `Set @context to "${IIIF_SPEC.PRESENTATION_3.CONTEXT}"`
+    recommendation: `Set @context to "${IIIF_SPEC.PRESENTATION_3.CONTEXT}"`,
   },
 
-  // ID requirements
+  // --- ID requirements ---
   {
     id: 'http-id',
     description: 'Resource ID must be a valid HTTP(S) URI',
     check: (item) => item.id?.startsWith('http://') || item.id?.startsWith('https://'),
     viewers: ['mirador', 'universalviewer', 'annona', 'clover'],
     severity: 'error',
-    recommendation: 'Use HTTP or HTTPS URLs for all resource IDs'
+    recommendation: 'Use HTTP or HTTPS URLs for all resource IDs',
   },
 
-  // Label requirements
+  // --- Label requirements ---
   {
     id: 'label-present',
     description: 'Manifest must have a label',
     check: (item) => {
       if (item.type !== 'Manifest') return true;
-      return item.label && Object.keys(item.label).length > 0;
+      return item.label !== undefined && Object.keys(item.label).length > 0;
     },
     viewers: ['mirador', 'universalviewer', 'annona', 'clover'],
     severity: 'error',
-    recommendation: 'Add a label to the manifest'
+    recommendation: 'Add a label to the manifest',
   },
 
-  // Canvas requirements
+  // --- Canvas requirements ---
   {
     id: 'canvas-dimensions',
     description: 'Canvas must have width and height',
@@ -100,7 +173,7 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer', 'annona', 'clover'],
     severity: 'error',
-    recommendation: 'Set width and height on all canvases'
+    recommendation: 'Set width and height on all canvases',
   },
 
   {
@@ -110,15 +183,15 @@ const REQUIREMENTS: ViewerRequirement[] = [
       if (item.type !== 'Canvas') return true;
       const canvas = item as IIIFCanvas;
       return canvas.items?.some(page =>
-        page.items?.some((anno: IIIFAnnotation) => anno.motivation === 'painting')
+        page.items?.some((anno: IIIFAnnotation) => anno.motivation === 'painting'),
       ) ?? false;
     },
     viewers: ['mirador', 'universalviewer', 'annona', 'clover'],
     severity: 'error',
-    recommendation: 'Add at least one painting annotation to each canvas'
+    recommendation: 'Add at least one painting annotation to each canvas',
   },
 
-  // Image Service requirements
+  // --- Image Service requirements ---
   {
     id: 'image-service-protocol',
     description: 'ImageService3 must include protocol property',
@@ -128,9 +201,11 @@ const REQUIREMENTS: ViewerRequirement[] = [
       const paintings = canvas.items?.flatMap(p => p.items || []) || [];
       for (const anno of paintings) {
         if (anno.body && !Array.isArray(anno.body)) {
-          const services = (anno.body as any).service || [];
+          const services = (anno.body as unknown as Record<string, unknown>).service as
+            | Record<string, unknown>[]
+            | undefined;
+          if (!services) continue;
           for (const svc of services) {
-            // Use centralized type check for ImageService3
             if (isImageService3(svc) && !svc.protocol) {
               return false;
             }
@@ -141,10 +216,10 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer'],
     severity: 'warning',
-    recommendation: `Add protocol: "${IIIF_SPEC.IMAGE_3.PROTOCOL}" to ImageService3`
+    recommendation: `Add protocol: "${IIIF_SPEC.IMAGE_3.PROTOCOL}" to ImageService3`,
   },
 
-  // Thumbnail requirements
+  // --- Thumbnail requirements ---
   {
     id: 'manifest-thumbnail',
     description: 'Manifest should have a thumbnail for navigation',
@@ -154,10 +229,10 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer'],
     severity: 'warning',
-    recommendation: 'Add a thumbnail to the manifest for better navigation UX'
+    recommendation: 'Add a thumbnail to the manifest for better navigation UX',
   },
 
-  // Annotation requirements
+  // --- Annotation requirements ---
   {
     id: 'annotation-target',
     description: 'Annotation must have a valid target',
@@ -168,10 +243,10 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer', 'annona'],
     severity: 'error',
-    recommendation: 'Ensure all annotations have a target property'
+    recommendation: 'Ensure all annotations have a target property',
   },
 
-  // Mirador-specific
+  // --- Mirador-specific ---
   {
     id: 'mirador-items-array',
     description: 'Manifest items must be an array',
@@ -181,41 +256,40 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador'],
     severity: 'error',
-    recommendation: 'Ensure manifest.items is an array of Canvases'
+    recommendation: 'Ensure manifest.items is an array of Canvases',
   },
 
-  // Universal Viewer specific
+  // --- Universal Viewer specific ---
   {
     id: 'uv-behavior',
     description: 'Paged manifests should have behavior: ["paged"]',
-    check: (item) => {
-      if (item.type !== 'Manifest') return true;
-      // This is just a recommendation, not required
+    check: (_item) => {
+      // This is just a recommendation, always passes
       return true;
     },
     viewers: ['universalviewer'],
     severity: 'info',
-    recommendation: 'Add behavior: ["paged"] for book-like navigation in UV'
+    recommendation: 'Add behavior: ["paged"] for book-like navigation in UV',
   },
 
-  // Range requirements
+  // --- Range requirements ---
   {
     id: 'range-items',
     description: 'Range must reference valid Canvas IDs or other Ranges',
     check: (item) => {
       if (item.type !== 'Range') return true;
-      const range = item as any;
+      const range = item as { items?: Array<{ id?: string; type?: string }> };
       if (!range.items) return false;
-      return range.items.every((ref: any) =>
-        ref.id && (isCanvas(ref) || isRange(ref))
+      return range.items.every((ref) =>
+        ref.id && (isCanvas(ref as IIIFItem) || isRange(ref as IIIFItem)),
       );
     },
     viewers: ['mirador', 'universalviewer'],
     severity: 'error',
-    recommendation: 'Ensure Range items array contains valid Canvas or Range references'
+    recommendation: 'Ensure Range items array contains valid Canvas or Range references',
   },
 
-  // Collection requirements
+  // --- Collection requirements ---
   {
     id: 'collection-items',
     description: 'Collection must have items array',
@@ -225,10 +299,10 @@ const REQUIREMENTS: ViewerRequirement[] = [
     },
     viewers: ['mirador', 'universalviewer', 'clover'],
     severity: 'error',
-    recommendation: 'Ensure collection.items is an array'
+    recommendation: 'Ensure collection.items is an array',
   },
 
-  // Annona specific
+  // --- Annona specific ---
   {
     id: 'annona-annotation-body',
     description: 'Annotation body should have type for Annona rendering',
@@ -237,14 +311,14 @@ const REQUIREMENTS: ViewerRequirement[] = [
       const anno = item as IIIFAnnotation;
       if (!anno.body) return true;
       if (Array.isArray(anno.body)) {
-        return anno.body.every(b => b.type);
+        return anno.body.every(b => (b as unknown as Record<string, unknown>).type);
       }
-      return !!(anno.body as any).type;
+      return !!(anno.body as unknown as Record<string, unknown>).type;
     },
     viewers: ['annona'],
     severity: 'warning',
-    recommendation: 'Add type property to annotation bodies for proper Annona rendering'
-  }
+    recommendation: 'Add type property to annotation bodies for proper Annona rendering',
+  },
 ];
 
 // ============================================================================
@@ -253,7 +327,16 @@ const REQUIREMENTS: ViewerRequirement[] = [
 
 class ViewerCompatibilityService {
   /**
-   * Run full compatibility check against all viewers
+   * Run full compatibility check against all viewers.
+   *
+   * Traverses the IIIF resource tree (manifest -> canvases -> annotations)
+   * and checks each resource against all 13 requirements.
+   *
+   * Scoring: 100 base per viewer, -15 per error, -5 per warning, -1 per info.
+   * Overall score is the average of all four viewer scores.
+   *
+   * @param root - Root IIIF resource (typically a Manifest)
+   * @returns Complete compatibility report
    */
   checkCompatibility(root: IIIFItem): CompatibilityReport {
     const issues: CompatibilityIssue[] = [];
@@ -261,10 +344,10 @@ class ViewerCompatibilityService {
       mirador: 0,
       universalviewer: 0,
       annona: 0,
-      clover: 0
+      clover: 0,
     };
 
-    // Traverse the tree and check each resource
+    // Recursive traversal of the IIIF tree
     const traverse = (item: IIIFItem) => {
       for (const req of REQUIREMENTS) {
         if (!req.check(item)) {
@@ -276,23 +359,26 @@ class ViewerCompatibilityService {
               resourceId: item.id,
               resourceType: item.type,
               message: req.description,
-              recommendation: req.recommendation
+              recommendation: req.recommendation,
             });
           }
         }
       }
 
-      // Traverse children
-      const children = (item as any).items || (item as any).annotations || [];
-      for (const child of children) {
-        if (child && typeof child === 'object' && child.type) {
-          traverse(child);
+      // Traverse children (items, annotations)
+      const children = (item as unknown as Record<string, unknown>).items as IIIFItem[] | undefined;
+      const annotations = item.annotations;
+      const allChildren = [...(children || []), ...(annotations || [])];
+      for (const child of allChildren) {
+        if (child && typeof child === 'object' && 'type' in child) {
+          traverse(child as IIIFItem);
         }
       }
 
       // Traverse structures (ranges)
-      if ((item as any).structures) {
-        for (const range of (item as any).structures) {
+      const structures = (item as unknown as Record<string, unknown>).structures as IIIFItem[] | undefined;
+      if (structures) {
+        for (const range of structures) {
           traverse(range);
         }
       }
@@ -300,7 +386,7 @@ class ViewerCompatibilityService {
 
     traverse(root);
 
-    // Calculate scores (100 - penalty per issue)
+    // Calculate scores
     const errorPenalty = 15;
     const warningPenalty = 5;
     const infoPenalty = 1;
@@ -309,7 +395,7 @@ class ViewerCompatibilityService {
       mirador: 100,
       universalviewer: 100,
       annona: 100,
-      clover: 100
+      clover: 100,
     };
 
     for (const issue of issues) {
@@ -321,7 +407,7 @@ class ViewerCompatibilityService {
 
     const overallScore = Math.round(
       (viewerScores.mirador + viewerScores.universalviewer +
-       viewerScores.annona + viewerScores.clover) / 4
+       viewerScores.annona + viewerScores.clover) / 4,
     );
 
     return {
@@ -329,12 +415,16 @@ class ViewerCompatibilityService {
       manifestId: root.id,
       overallScore,
       issues,
-      viewerScores
+      viewerScores,
     };
   }
 
   /**
-   * Check compatibility for a specific viewer
+   * Check compatibility for a specific viewer only.
+   *
+   * @param root   - Root IIIF resource
+   * @param viewer - Target viewer name
+   * @returns Issues specific to the requested viewer
    */
   checkForViewer(root: IIIFItem, viewer: ViewerName): CompatibilityIssue[] {
     const report = this.checkCompatibility(root);
@@ -342,7 +432,10 @@ class ViewerCompatibilityService {
   }
 
   /**
-   * Get viewer-specific recommendations
+   * Get all recommendations for a specific viewer.
+   *
+   * @param viewer - Target viewer name
+   * @returns Array of recommendation strings
    */
   getViewerRecommendations(viewer: ViewerName): string[] {
     return REQUIREMENTS
@@ -351,11 +444,20 @@ class ViewerCompatibilityService {
   }
 
   /**
-   * Generate a test manifest for compatibility testing
+   * Generate a test manifest for compatibility testing.
+   *
+   * PSEUDO: This creates a minimal valid manifest with 2 canvases,
+   * painting annotations, image services, comment annotations, and
+   * a Range structure. Used for self-testing the compatibility checker.
+   *
+   * TODO: Wire up properly once IIIF_CONFIG is fully migrated.
+   * Currently uses IIIF_CONFIG_STUB (inline) for ID patterns.
+   *
+   * @returns A complete IIIFManifest for testing
    */
   generateTestManifest(): IIIFManifest {
-    const baseUrl = `${IIIF_CONFIG.BASE_URL.LEGACY_DOMAINS[1]}/iiif`; // example.org/iiif
-    const manifestId = IIIF_CONFIG.ID_PATTERNS.MANIFEST(baseUrl, `test-${Date.now()}`);
+    const baseUrl = `${IIIF_CONFIG_STUB.BASE_URL.LEGACY_DOMAINS[1]}/iiif`;
+    const manifestId = IIIF_CONFIG_STUB.ID_PATTERNS.MANIFEST(baseUrl, `test-${Date.now()}`);
     const preset = getDerivativePreset();
 
     return {
@@ -366,94 +468,96 @@ class ViewerCompatibilityService {
       summary: { en: ['A test manifest for verifying viewer compatibility'] },
       metadata: [
         { label: { en: ['Source'] }, value: { en: ['IIIF Field Studio'] } },
-        { label: { en: ['Generated'] }, value: { en: [new Date().toISOString()] } }
+        { label: { en: ['Generated'] }, value: { en: [new Date().toISOString()] } },
       ],
       thumbnail: [{
         id: `${baseUrl}/image/test/full/${preset.thumbnailWidth},/0/default.jpg`,
-        type: 'Image',
-        format: 'image/jpeg'
+        type: 'Image' as const,
+        format: 'image/jpeg',
       }],
       viewingDirection: 'left-to-right',
       behavior: ['individuals'],
       items: [
         {
-          id: IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 1),
-          type: 'Canvas',
+          id: IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 1),
+          type: 'Canvas' as const,
           label: { en: ['Test Canvas 1'] },
           width: 1000,
           height: 1500,
           items: [{
             id: `${manifestId}/canvas/1/page/1`,
-            type: 'AnnotationPage',
+            type: 'AnnotationPage' as const,
             items: [{
               id: `${manifestId}/canvas/1/annotation/1`,
-              type: 'Annotation',
-              motivation: 'painting',
-              target: IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 1),
+              type: 'Annotation' as const,
+              motivation: 'painting' as const,
+              target: IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 1),
               body: {
                 id: `${baseUrl}/image/test1/full/max/0/default.jpg`,
-                type: 'Image',
+                type: 'Image' as const,
                 format: 'image/jpeg',
-                // Use centralized ImageService3 reference creation
-                service: [createImageServiceReference(`${baseUrl}/image/test1`, 'level2')]
-              }
-            }]
+                service: [createImageServiceReference(`${baseUrl}/image/test1`, 'level2')],
+              },
+            }],
           }],
           annotations: [{
             id: `${manifestId}/canvas/1/page/annotations`,
-            type: 'AnnotationPage',
+            type: 'AnnotationPage' as const,
             items: [{
               id: `${manifestId}/canvas/1/annotation/comment`,
-              type: 'Annotation',
-              motivation: 'commenting',
-              target: `${IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 1)}#xywh=100,100,200,200`,
+              type: 'Annotation' as const,
+              motivation: 'commenting' as const,
+              target: `${IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 1)}#xywh=100,100,200,200`,
               body: {
-                type: 'TextualBody',
+                type: 'TextualBody' as const,
                 value: 'Test comment annotation',
-                format: 'text/plain'
-              }
-            }]
-          }]
+                format: 'text/plain',
+              },
+            }],
+          }],
         },
         {
-          id: IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 2),
-          type: 'Canvas',
+          id: IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 2),
+          type: 'Canvas' as const,
           label: { en: ['Test Canvas 2'] },
           width: 1000,
           height: 1500,
           items: [{
             id: `${manifestId}/canvas/2/page/1`,
-            type: 'AnnotationPage',
+            type: 'AnnotationPage' as const,
             items: [{
               id: `${manifestId}/canvas/2/annotation/1`,
-              type: 'Annotation',
-              motivation: 'painting',
-              target: IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 2),
+              type: 'Annotation' as const,
+              motivation: 'painting' as const,
+              target: IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 2),
               body: {
                 id: `${baseUrl}/image/test2/full/max/0/default.jpg`,
-                type: 'Image',
+                type: 'Image' as const,
                 format: 'image/jpeg',
-                // Use centralized ImageService3 reference creation
-                service: [createImageServiceReference(`${baseUrl}/image/test2`, 'level2')]
-              }
-            }]
-          }]
-        }
+                service: [createImageServiceReference(`${baseUrl}/image/test2`, 'level2')],
+              },
+            }],
+          }],
+        },
       ],
       structures: [{
-        id: IIIF_CONFIG.ID_PATTERNS.RANGE(baseUrl, '1'),
-        type: 'Range',
+        id: IIIF_CONFIG_STUB.ID_PATTERNS.RANGE(baseUrl, '1'),
+        type: 'Range' as const,
         label: { en: ['Chapter 1'] },
         items: [
-          { id: IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 1), type: 'Canvas' },
-          { id: IIIF_CONFIG.ID_PATTERNS.CANVAS(manifestId, 2), type: 'Canvas' }
-        ]
-      }]
+          { id: IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 1), type: 'Canvas' as const },
+          { id: IIIF_CONFIG_STUB.ID_PATTERNS.CANVAS(manifestId, 2), type: 'Canvas' as const },
+        ],
+      }],
     } as IIIFManifest;
   }
 
   /**
-   * Format report as markdown for documentation
+   * Format a compatibility report as Markdown.
+   * Useful for export/documentation generation.
+   *
+   * @param report - Compatibility report to format
+   * @returns Markdown string
    */
   formatReportMarkdown(report: CompatibilityReport): string {
     const lines: string[] = [
@@ -466,11 +570,11 @@ class ViewerCompatibilityService {
       '## Viewer Scores',
       '',
       '| Viewer | Score | Status |',
-      '|--------|-------|--------|'
+      '|--------|-------|--------|',
     ];
 
     for (const [viewer, score] of Object.entries(report.viewerScores)) {
-      const status = score >= 80 ? '✅ Good' : score >= 50 ? '⚠️ Issues' : '❌ Critical';
+      const status = score >= 80 ? 'Good' : score >= 50 ? 'Issues' : 'Critical';
       lines.push(`| ${viewer} | ${score}/100 | ${status} |`);
     }
 

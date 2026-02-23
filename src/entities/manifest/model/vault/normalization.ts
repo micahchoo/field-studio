@@ -3,9 +3,11 @@
  *
  * Functions for converting nested IIIF trees into flat normalized state.
  * This is a complex organism composed of smaller normalization molecules.
+ *
+ * Uses isomorphic-dompurify for annotation body sanitization (XSS prevention).
+ * vaultLog uses our local stub.
  */
 
-import { sanitizeAnnotationBody } from '@/utils/sanitization';
 import type {
   EntityType,
   IIIFAnnotationPage,
@@ -16,9 +18,36 @@ import type {
   IIIFRange,
   NormalizedState
 } from '@/src/shared/types';
-import { vaultLog } from '@/src/shared/services/logger';
+import { vaultLog } from '@/src/shared/lib/logger';
 import { cloneAsRecord, hasType } from './cloning';
 import { extractExtensions, hasUnknownProperties } from './extensions';
+import DOMPurify from 'isomorphic-dompurify';
+
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li',
+    'span', 'div', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'blockquote', 'pre', 'code', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  ],
+  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel'],
+};
+
+/**
+ * Sanitize annotation body content to prevent XSS.
+ * Strips dangerous tags/attrs while preserving safe HTML for IIIF annotations.
+ */
+function sanitizeAnnotationBody(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return DOMPurify.sanitize(value, PURIFY_CONFIG);
+  }
+  if (value && typeof value === 'object' && 'value' in value) {
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.value === 'string') {
+      return { ...obj, value: DOMPurify.sanitize(obj.value, PURIFY_CONFIG) };
+    }
+  }
+  return value;
+}
 
 /**
  * Create empty normalized state
@@ -128,7 +157,6 @@ function normalizeCollection(
   };
 
   // Process Collection members (referenced resources, not owned)
-  // Collections reference Manifests/Collections - this is many-to-many, not hierarchical
   if (collection.items) {
     for (const child of collection.items) {
       memberIds.push(child.id);

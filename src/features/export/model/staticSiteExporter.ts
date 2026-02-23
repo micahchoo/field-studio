@@ -8,9 +8,9 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Static-First Infrastructure (Wax)"
  */
 
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
-import { LunrDocument, searchService } from '@/src/shared/services/searchService';
+import { searchService } from '@/src/shared/services/searchService';
 import { DEFAULT_SEARCH_CONFIG, fieldRegistry } from '@/src/shared/services/fieldRegistry';
 import {
   createImageServiceReference,
@@ -18,10 +18,9 @@ import {
   generateStandardSizes,
   getAllCanvases,
   getAllManifests,
-  ImageApiProfile,
   isPaintingMotivation
 } from '@/utils';
-import { DEFAULT_DERIVATIVE_SIZES, getDerivativePreset, IIIF_SPEC } from '@/src/shared/constants';
+import { getDerivativePreset, IIIF_SPEC } from '@/src/shared/constants';
 
 // ============================================================================
 // Types
@@ -289,7 +288,7 @@ class StaticSiteExporter {
   /**
    * Generate YAML metadata (Jekyll-compatible)
    */
-  private generateMetadataYaml(items: IIIFItem[], cfg: StaticSiteConfig): string {
+  private generateMetadataYaml(items: IIIFItem[], _cfg: StaticSiteConfig): string {
     const lines: string[] = [];
 
     for (const item of items) {
@@ -528,7 +527,7 @@ class StaticSiteExporter {
       label: manifest.label,
       summary: (manifest as any).summary,
       metadata: manifest.metadata,
-      items: manifest.items?.map(item =>
+      items: manifest.items?.map((item: IIIFItem) =>
         isCanvas(item) ? rewriteCanvas(item as IIIFCanvas) : item
       )
     };
@@ -778,7 +777,7 @@ class StaticSiteExporter {
   /**
    * Generate stylesheet
    */
-  private generateStylesheet(cfg: StaticSiteConfig): string {
+  private generateStylesheet(_cfg: StaticSiteConfig): string {
     return `/* IIIF Field Studio - Static Site Styles */
 :root {
   --iiif-blue: #2f5496;

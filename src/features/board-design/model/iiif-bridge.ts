@@ -9,6 +9,8 @@
  * Canvas-as-content pattern: each board item is a painting annotation
  * whose body references another canvas via source.
  *
+ * Framework-agnostic pure TypeScript — no React/Svelte dependencies.
+ *
  * @module features/board-design/model/iiif-bridge
  */
 
@@ -41,7 +43,7 @@ const PAINTING_PAGE_SUFFIX = '/items/painting';
 const SUPPLEMENTING_PAGE_SUFFIX = '/annotations/supplementing';
 
 // ============================================================================
-// BoardState → IIIF Manifest
+// BoardState -> IIIF Manifest
 // ============================================================================
 
 /**
@@ -153,7 +155,7 @@ export function boardStateToManifest(
 }
 
 // ============================================================================
-// IIIF Manifest → BoardState
+// IIIF Manifest -> BoardState
 // ============================================================================
 
 /**
@@ -184,7 +186,7 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
     return { items: [], connections: [], groups: [], viewport };
   }
 
-  // Extract painting annotations → BoardItems
+  // Extract painting annotations -> BoardItems
   for (const page of surfaceCanvas.items || []) {
     for (const annotation of page.items || []) {
       const item = annotationToBoardItem(annotation);
@@ -192,7 +194,7 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
     }
   }
 
-  // Extract supplementing annotations → Connections + Notes
+  // Extract supplementing annotations -> Connections + Notes
   const annotationPages = (surfaceCanvas as IIIFCanvas & { annotations?: IIIFAnnotationPage[] }).annotations || [];
   for (const page of annotationPages) {
     for (const annotation of page.items || []) {
@@ -233,7 +235,7 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
 }
 
 // ============================================================================
-// Individual Converters: BoardItem ↔ Annotation
+// Individual Converters: BoardItem <-> Annotation
 // ============================================================================
 
 /**
@@ -340,7 +342,7 @@ function annotationToNoteItem(annotation: IIIFAnnotation): BoardItem | null {
 }
 
 // ============================================================================
-// Individual Converters: Connection ↔ Annotation
+// Individual Converters: Connection <-> Annotation
 // ============================================================================
 
 /** Map connection types to IIIF annotation label strings */

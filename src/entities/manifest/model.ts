@@ -17,7 +17,7 @@ import {
   getParentId,
   isOrphanManifest,
   NormalizedState
-} from '@/src/entities/manifest/model/vault';
+} from './model/vault';
 import type { IIIFManifest } from '@/src/shared/types';
 
 /**

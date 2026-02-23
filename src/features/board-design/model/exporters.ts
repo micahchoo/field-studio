@@ -3,6 +3,9 @@
  *
  * PNG, SVG, JSON-LD, and Content State URL exporters.
  *
+ * Framework-agnostic pure TypeScript — no React/Svelte dependencies.
+ * Uses DOM APIs (Canvas 2D, btoa) which are available in browsers.
+ *
  * @module features/board-design/model/exporters
  */
 

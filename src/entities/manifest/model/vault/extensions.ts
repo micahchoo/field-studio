@@ -4,11 +4,47 @@
  * Handles preservation of unknown/vendor-specific properties
  * for round-tripping IIIF resources. Ensures properties like
  * Mirador configs, Tify settings survive import/export.
+ *
+ * ADAPTATION NOTE: Inlines getAllowedProperties() instead of importing
+ * from @/utils/iiifSchema. The property lists are derived from the
+ * IIIF Presentation API 3.0 PROPERTY_MATRIX.
  */
 
-import { getAllowedProperties } from '@/utils/iiifSchema';
 import type { EntityType } from '@/src/shared/types';
 import { cloneAsRecord } from './cloning';
+
+/**
+ * Inline stub for getAllowedProperties.
+ * Returns all IIIF 3.0 properties that are NOT "NOT_ALLOWED" for a given type.
+ * Derived from the PROPERTY_MATRIX in utils/iiifSchema.ts.
+ */
+function getAllowedProperties(type: string): string[] {
+  // Properties that apply to nearly all resource types
+  const common = [
+    'label', 'metadata', 'summary', 'requiredStatement', 'rights',
+    'provider', 'thumbnail', 'navDate', 'placeholderCanvas', 'accompanyingCanvas',
+    'id', 'type', 'homepage', 'rendering', 'service', 'seeAlso', 'partOf',
+  ];
+
+  switch (type) {
+    case 'Collection':
+      return [...common, 'viewingDirection', 'behavior', 'items', 'structures', 'annotations', 'services', 'logo'];
+    case 'Manifest':
+      return [...common, 'viewingDirection', 'behavior', 'items', 'structures', 'annotations', 'services', 'start', 'logo'];
+    case 'Canvas':
+      return [...common, 'height', 'width', 'duration', 'behavior', 'items', 'annotations'];
+    case 'Range':
+      return [...common, 'viewingDirection', 'behavior', 'items', 'annotations', 'start', 'supplementary'];
+    case 'AnnotationPage':
+      return ['id', 'type', 'label', 'items', 'partOf'];
+    case 'Annotation':
+      return ['id', 'type', 'label', 'motivation', 'body', 'target', 'created',
+              'rights', 'body', 'bodyValue', 'source', 'selector', 'purpose',
+              'thumbnail', 'partOf', 'service', 'homepage', 'rendering', 'seeAlso'];
+    default:
+      return common;
+  }
+}
 
 /**
  * Known IIIF Presentation API 3.0 properties by entity type

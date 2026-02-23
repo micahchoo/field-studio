@@ -1,109 +1,43 @@
 /**
- * Viewer Feature Atoms
+ * Viewer Feature Atoms — Svelte 5 migrations
  *
- * Feature-specific atoms for the IIIF Image API workbench and viewer components.
- * These atoms decompose complex viewer molecules into composable, testable units.
+ * Feature-specific atoms for the IIIF viewer and Image API workbench.
  *
- * ATOMIC DESIGN PRINCIPLES:
- * - Feature-specific (not shared across features)
- * - Minimal or zero local state
- * - Props-only API
- * - No domain logic
+ * Existing atoms (migrated earlier):
  */
+export { default as AnnotationColorPicker } from './AnnotationColorPicker.svelte';
+export { default as FormatSelector } from './FormatSelector.svelte';
+export { default as PlayPauseButton } from './PlayPauseButton.svelte';
+export { default as PresetSelector } from './PresetSelector.svelte';
+export { default as PreviewHeader } from './PreviewHeader.svelte';
+export { default as QualitySelector } from './QualitySelector.svelte';
+export { default as StrokeWidthSelect } from './StrokeWidthSelect.svelte';
+export { default as UrlSegment } from './UrlSegment.svelte';
+export { default as WorkbenchFooter } from './WorkbenchFooter.svelte';
 
-// ============================================================================
-// Viewer Controls Atoms - Navigation and zoom controls
-// ============================================================================
-
-// Re-export from shared (moved for cross-feature use)
-export { ZoomControl } from '@/src/shared/ui/atoms/ZoomControl';
-export type { ZoomControlProps } from '@/src/shared/ui/atoms/ZoomControl';
-
-export { PageCounter } from './PageCounter';
-export type { PageCounterProps } from './PageCounter';
-
-// ============================================================================
-// Workbench Atoms - IIIF Image API workbench components
-// ============================================================================
-
-export { ParameterSection } from './ParameterSection';
-export type { ParameterSectionProps } from './ParameterSection';
-
-export { PresetSelector } from './PresetSelector';
-export type { PresetSelectorProps, PresetOption } from './PresetSelector';
-
-export { CoordinateInput } from './CoordinateInput';
-export type { CoordinateInputProps, CoordinateField } from './CoordinateInput';
-
-export { UrlSegment } from './UrlSegment';
-export type { UrlSegmentProps, SegmentColor } from './UrlSegment';
-
-export { UrlBar } from './UrlBar';
-export type { UrlBarProps } from './UrlBar';
-
-export { ImagePreview } from './ImagePreview';
-export type { ImagePreviewProps } from './ImagePreview';
-
-export { PreviewHeader } from './PreviewHeader';
-export type { PreviewHeaderProps } from './PreviewHeader';
-
-export { RotationDial } from './RotationDial';
-export type { RotationDialProps } from './RotationDial';
-
-export { UpscaleToggle } from './UpscaleToggle';
-export type { UpscaleToggleProps } from './UpscaleToggle';
-
-export { QualitySelector } from './QualitySelector';
-export type { QualitySelectorProps, QualityOption } from './QualitySelector';
-
-export { FormatSelector } from './FormatSelector';
-export type { FormatSelectorProps, FormatOption } from './FormatSelector';
-
-export { CodePanel } from './CodePanel';
-export type { CodePanelProps } from './CodePanel';
-
-export { WorkbenchFooter } from './WorkbenchFooter';
-export type { WorkbenchFooterProps } from './WorkbenchFooter';
-
-export { Slider } from './Slider';
-export type { SliderProps } from './Slider';
-
-// ============================================================================
-// Media Player Atoms - AV playback control components
-// ============================================================================
-
-export { PlayPauseButton } from './PlayPauseButton';
-export type { PlayPauseButtonProps } from './PlayPauseButton';
-
-export { VolumeControl } from './VolumeControl';
-export type { VolumeControlProps } from './VolumeControl';
-
-export { ProgressBar } from './ProgressBar';
-export type { ProgressBarProps } from './ProgressBar';
-
-export { TimeDisplay } from './TimeDisplay';
-export type { TimeDisplayProps } from './TimeDisplay';
-
-export { PlaybackRateSelect } from './PlaybackRateSelect';
-export type { PlaybackRateSelectProps, PlaybackRate } from './PlaybackRateSelect';
-
-export { FullscreenButton } from './FullscreenButton';
-export type { FullscreenButtonProps } from './FullscreenButton';
-
-export { MediaControlGroup } from './MediaControlGroup';
-export type { MediaControlGroupProps } from './MediaControlGroup';
-
-export { MediaErrorOverlay } from './MediaErrorOverlay';
-export type { MediaErrorOverlayProps, MediaErrorType } from './MediaErrorOverlay';
-
-export { MediaLoadingOverlay } from './MediaLoadingOverlay';
-export type { MediaLoadingOverlayProps } from './MediaLoadingOverlay';
-
-export { ScreenshotMenu } from './ScreenshotMenu';
-export type { ScreenshotMenuProps } from './ScreenshotMenu';
-
-export { AnnotationColorPicker } from './AnnotationColorPicker';
-export type { AnnotationColorPickerProps } from './AnnotationColorPicker';
-
-export { StrokeWidthSelect } from './StrokeWidthSelect';
-export type { StrokeWidthSelectProps } from './StrokeWidthSelect';
+/**
+ * New atoms (23 created in this migration pass):
+ */
+export { default as AutoAdvanceToast } from './AutoAdvanceToast.svelte';
+export { default as ChoiceSelector } from './ChoiceSelector.svelte';
+export { default as CodePanel } from './CodePanel.svelte';
+export { default as CoordinateInput } from './CoordinateInput.svelte';
+export { default as FullscreenButton } from './FullscreenButton.svelte';
+export { default as ImagePreview } from './ImagePreview.svelte';
+export { default as LayerToggle } from './LayerToggle.svelte';
+export { default as MediaControlGroup } from './MediaControlGroup.svelte';
+export { default as MediaErrorOverlay } from './MediaErrorOverlay.svelte';
+export { default as MediaLoadingOverlay } from './MediaLoadingOverlay.svelte';
+export { default as PageCounter } from './PageCounter.svelte';
+export { default as ParameterSection } from './ParameterSection.svelte';
+export { default as PlaybackRateSelect } from './PlaybackRateSelect.svelte';
+export { default as ProgressBar } from './ProgressBar.svelte';
+export { default as RenderingDownloadMenu } from './RenderingDownloadMenu.svelte';
+export { default as RotationDial } from './RotationDial.svelte';
+export { default as ScreenshotMenu } from './ScreenshotMenu.svelte';
+export { default as Slider } from './Slider.svelte';
+export { default as TimeDisplay } from './TimeDisplay.svelte';
+export { default as UpscaleToggle } from './UpscaleToggle.svelte';
+export { default as UrlBar } from './UrlBar.svelte';
+export { default as ViewerModeSwitcher } from './ViewerModeSwitcher.svelte';
+export { default as VolumeControl } from './VolumeControl.svelte';

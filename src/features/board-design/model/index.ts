@@ -4,15 +4,30 @@
  * Domain-specific selectors and helpers for the board-design feature.
  * Manages board state: items, connections, history, and export.
  *
+ * Framework-agnostic pure TypeScript — no React/Svelte dependencies.
+ *
  * @module features/board-design/model
  */
 
 import { getIIIFValue, type IIIFItem, type IIIFManifest } from '@/src/shared/types';
-import { canvas, manifest } from '@/src/entities';
-import { resolveHierarchicalThumb } from '@/utils/imageSourceResolver';
 
-// Re-export entity models for convenience
-export { manifest, canvas };
+// @migration: stub — entity re-exports not available in svelte-migration
+// In React source these were: export { manifest, canvas } from '@/src/entities';
+// Consumers should import vault functions directly from entities/manifest/model/vault
+
+// @migration: stub — resolveHierarchicalThumb not available in svelte-migration
+// Original: import { resolveHierarchicalThumb } from '@/utils/imageSourceResolver';
+function resolveHierarchicalThumb(resource: IIIFItem, _maxSize: number): string | null {
+  // @migration: stub — resolve thumbnail URL from IIIF resource
+  // In production this walks resource.thumbnail[], resource.items[0].items[0].body,
+  // and service descriptors to find the best available thumbnail URL.
+  // Returns null when no thumbnail is discoverable.
+  const thumb = resource.thumbnail;
+  if (thumb && Array.isArray(thumb) && thumb.length > 0) {
+    return (thumb[0] as { id?: string }).id || null;
+  }
+  return resource._blobUrl || null;
+}
 
 // ============================================================================
 // Types
@@ -446,7 +461,7 @@ export const exportToManifest = (
     items: state.items
       .filter((item) => !item.isNote)
       .map((item, index) => {
-        const resultCanvas: any = {
+        const resultCanvas: Record<string, unknown> = {
           type: 'Canvas' as const,
           id: item.resourceId,
           label: { en: [item.label] },
@@ -478,12 +493,12 @@ export const exportToManifest = (
         }
 
         return resultCanvas;
-      }),
+      }) as unknown as IIIFManifest['items'],
   };
 
   // Add behavior from template or explicit option
   if (options?.behavior && options.behavior.length > 0) {
-    (resultManifest as any).behavior = options.behavior;
+    (resultManifest as Record<string, unknown>).behavior = options.behavior;
   } else if (options?.templateType) {
     const behaviorMap: Record<string, string[]> = {
       'continuous': ['continuous'],
@@ -495,20 +510,20 @@ export const exportToManifest = (
     };
     const defaultBehavior = behaviorMap[options.templateType];
     if (defaultBehavior) {
-      (resultManifest as any).behavior = defaultBehavior;
+      (resultManifest as Record<string, unknown>).behavior = defaultBehavior;
     }
   }
 
   // Add viewingDirection
   if (options?.viewingDirection) {
-    (resultManifest as any).viewingDirection = options.viewingDirection;
+    (resultManifest as Record<string, unknown>).viewingDirection = options.viewingDirection;
   }
 
   // Add start property if a highlighted item exists
   if (options?.highlightedItemId) {
     const startItem = state.items.find(i => i.id === options.highlightedItemId);
     if (startItem) {
-      (resultManifest as any).start = {
+      (resultManifest as Record<string, unknown>).start = {
         id: startItem.resourceId,
         type: 'Canvas',
       };
@@ -517,7 +532,7 @@ export const exportToManifest = (
 
   // Add structures (Ranges) from grouped items
   if (options?.groups && options.groups.length > 0) {
-    (resultManifest as any).structures = options.groups.map((group, gi) => ({
+    (resultManifest as Record<string, unknown>).structures = options.groups.map((group, gi) => ({
       id: `urn:field-studio:range:${crypto.randomUUID().slice(0, 8)}-${gi}`,
       type: 'Range',
       label: { en: [group.label] },
@@ -563,7 +578,7 @@ export const exportToManifest = (
       return annotation;
     });
 
-    (resultManifest as any).annotations = [
+    (resultManifest as Record<string, unknown>).annotations = [
       {
         type: 'AnnotationPage',
         id: `${title}-annotations`,

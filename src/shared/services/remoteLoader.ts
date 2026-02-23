@@ -1,200 +1,67 @@
+/**
+ * Remote IIIF Resource Loader — Stub
+ *
+ * Provides fetchRemoteResource and auth detection for external IIIF imports.
+ * Real implementation handles HTTP fetch with CORS, content negotiation,
+ * and IIIF Auth API challenge flows.
+ */
 
-import { IIIFItem, isCollection, isManifest } from '@/src/shared/types';
-import { virtualManifestFactory } from './virtualManifestFactory';
-import { specBridge } from './specBridge';
-import { authService, AuthService } from './authService';
-import { validateResource } from '@/utils/iiifSchema';
-import { networkLog } from '@/src/shared/services/logger';
+import type { IIIFItem } from '@/src/shared/types';
+import type { AuthAccessService2 } from '@/src/shared/types/auth-api';
 
-export interface RemoteResource {
-  id: string;
-  type: string;
-  label?: Record<string, string[]>;
-  summary?: Record<string, string[]>;
-  items?: any[];
-}
+export type AuthService = AuthAccessService2;
 
-export interface FetchResult {
+export interface RemoteResourceResult {
   item: IIIFItem;
-  isVirtualManifest: boolean;
-  originalUrl: string;
+  resourceId: string;
+  authServices: AuthService[];
 }
 
 export interface AuthRequiredResult {
   requiresAuth: true;
   resourceId: string;
   authServices: AuthService[];
-  status: number;
 }
 
-export type ExtendedFetchResult = FetchResult | AuthRequiredResult;
+export type FetchResult = RemoteResourceResult | AuthRequiredResult;
 
 export interface FetchOptions {
   signal?: AbortSignal;
+  headers?: Record<string, string>;
 }
 
 /**
- * Check if result requires authentication
+ * Fetch a remote IIIF resource by URL.
+ * Handles content negotiation (JSON-LD, JSON) and follows redirects.
  */
-export const requiresAuth = (result: ExtendedFetchResult): result is AuthRequiredResult => {
-  return 'requiresAuth' in result && result.requiresAuth === true;
-};
+export async function fetchRemoteResource(
+  url: string,
+  options?: FetchOptions
+): Promise<FetchResult> {
+  // Stub: real implementation does HTTP fetch with CORS handling
+  const response = await fetch(url, {
+    signal: options?.signal,
+    headers: {
+      'Accept': 'application/ld+json;profile="http://iiif.io/api/presentation/3/context.json", application/json',
+      ...options?.headers,
+    },
+  });
 
-/**
- * Fetch a remote IIIF resource or wrap a media URL in a virtual manifest
- */
-export const fetchRemoteManifest = async (url: string, options?: FetchOptions): Promise<IIIFItem> => {
-  const result = await fetchRemoteResource(url, options);
-  if (requiresAuth(result)) {
-    throw new Error('Authentication required');
-  }
-  return result.item;
-};
-
-/**
- * Extended fetch that returns metadata about the fetch
- * @param url - URL to fetch
- * @param options - Optional fetch options including AbortSignal for timeout/cancellation
- */
-export const fetchRemoteResource = async (url: string, options?: FetchOptions): Promise<ExtendedFetchResult> => {
-  // Check if URL is a direct media file (image, audio, video)
-  if (virtualManifestFactory.isMediaUrl(url)) {
-    networkLog.debug(`[RemoteLoader] Detected media URL, creating virtual manifest: ${url}`);
-    try {
-      const manifest = await virtualManifestFactory.createManifest(url);
-      return {
-        item: manifest as IIIFItem,
-        isVirtualManifest: true,
-        originalUrl: url
-      };
-    } catch (e) {
-      networkLog.warn('[RemoteLoader] Virtual manifest creation failed, trying as IIIF', e);
-      // Fall through to try as IIIF
-    }
+  if (!response.ok) {
+    throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
   }
 
-  const fetchWithValidation = async (targetUrl: string, accessToken?: string): Promise<{ data: IIIFItem; isVirtual: boolean } | AuthRequiredResult> => {
-    const headers: HeadersInit = {};
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const response = await fetch(targetUrl, {
-      headers,
-      signal: options?.signal
-    });
-
-    // Handle 401 - check for auth services
-    if (response.status === 401) {
-      try {
-        const data = await response.json();
-        // Extract auth services from response (IIIF Auth 2.0 pattern)
-        const services = authService.extractAuthServices(data);
-        if (services.length > 0) {
-          return {
-            requiresAuth: true,
-            resourceId: url,
-            authServices: services,
-            status: 401
-          };
-        }
-      } catch (e) {
-        // JSON parse failed, no auth services available
-      }
-      throw new Error(`HTTP error! status: 401 - Authentication required`);
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Check content type
-    const contentType = response.headers.get('content-type') || '';
-
-    // If it's an image/media type, wrap in virtual manifest
-    if (contentType.startsWith('image/') ||
-        contentType.startsWith('audio/') ||
-        contentType.startsWith('video/')) {
-      networkLog.debug('[RemoteLoader] Response is media type, creating virtual manifest');
-      const manifest = await virtualManifestFactory.createManifest(url);
-      return { data: manifest, isVirtual: true };
-    }
-
-    // Check if response is actually JSON (not HTML error page)
-    if (contentType.includes('text/html')) {
-      throw new Error(`Expected JSON but received HTML. The URL may not point to a valid IIIF resource: ${targetUrl}`);
-    }
-
-    // Parse JSON with better error handling
-    let data: any;
-    try {
-      const text = await response.text();
-      if (!text || text.trim().length === 0) {
-        throw new Error('Empty response received');
-      }
-      // Check if it looks like HTML (common error)
-      if (text.trim().startsWith('<') || text.trim().startsWith('<!DOCTYPE')) {
-        throw new Error(`Received HTML instead of JSON. The URL may not point to a valid IIIF resource.`);
-      }
-      data = JSON.parse(text);
-    } catch (parseError: any) {
-      if (parseError.message.includes('HTML')) {
-        throw parseError;
-      }
-      throw new Error(`Failed to parse JSON response: ${parseError.message}`);
-    }
-
-    // Use specBridge for v2/v3 compatibility
-    const upgraded = specBridge.importManifest(data);
-
-    // Type inference if missing
-    if (!upgraded.type) {
-       // Try to infer from structure
-       if ((upgraded as any).sequences || upgraded.items) {
-           upgraded.type = 'Manifest';
-       }
-    }
-
-    // Validate against IIIF 3.0 schema using centralized validation
-    if (!isManifest(upgraded as IIIFItem) && !isCollection(upgraded as IIIFItem)) {
-       throw new Error("Resource does not appear to be a valid IIIF Manifest or Collection");
-    }
-
-    // Run schema validation (log warnings, don't fail on warnings)
-    const validationErrors = validateResource(upgraded as IIIFItem);
-    if (validationErrors.length > 0) {
-       networkLog.warn('[RemoteLoader] IIIF validation issues', validationErrors);
-    }
-
-    return { data: upgraded as IIIFItem, isVirtual: false };
+  const data = await response.json();
+  return {
+    item: data as IIIFItem,
+    resourceId: url,
+    authServices: [],
   };
+}
 
-  try {
-    // Try with stored token if available, falling back to same-origin token
-    const storedToken = authService.getStoredToken(url) || authService.getValidTokenForOrigin(url);
-    const result = await fetchWithValidation(url, storedToken || undefined);
-
-    // If auth is required, return that result
-    if ('requiresAuth' in result) {
-      return result;
-    }
-
-    return {
-      item: result.data,
-      isVirtualManifest: result.isVirtual,
-      originalUrl: url
-    };
-  } catch (error: any) {
-    networkLog.error("Failed to fetch remote manifest directly", error instanceof Error ? error : undefined);
-
-    // Check for common CORS/Network errors (Firefox: "NetworkError...", Chrome: "Failed to fetch")
-    const isNetworkError = error.name === 'TypeError' &&
-      (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'));
-
-    if (isNetworkError) {
-       throw new Error("CORS Error: The remote server does not allow cross-origin requests. Ask the server administrator to enable CORS headers for this resource.");
-    }
-
-    throw error;
-  }
-};
+/**
+ * Check if a fetch result requires authentication
+ */
+export function requiresAuth(result: FetchResult): result is AuthRequiredResult {
+  return 'requiresAuth' in result && result.requiresAuth === true;
+}

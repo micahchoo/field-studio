@@ -1,23 +1,47 @@
 /**
  * Dependency Explorer Feature
- * 
+ *
  * Admin-only tool for visualizing and analyzing code dependencies.
- * Provides searchable, filterable views of imports/exports across the codebase.
- * 
+ *
  * @example
- * ```tsx
- * import { DependencyExplorer } from '@/src/features/dependency-explorer';
- * 
+ * ```svelte
+ * <script>
+ *   import { DependencyExplorer } from '@/src/features/dependency-explorer';
+ * </script>
  * <DependencyExplorer />
  * ```
  */
 
-export { DependencyExplorer } from './ui/DependencyExplorer';
-export { DependencyGraphView } from './ui/DependencyGraphView';
-export { useDependencyData } from './model/useDependencyData';
-export type { 
-  DependencyGraph, 
-  FileAnalysis, 
-  ImportInfo, 
-  ExportInfo 
+// Main organism
+export { default as DependencyExplorer } from './ui/organisms/DependencyExplorer.svelte';
+
+// Molecules (for independent use)
+export { default as DependencyGraphView } from './ui/molecules/DependencyGraphView.svelte';
+
+// Store
+export { DependencyDataStore } from './stores/dependencyData.svelte';
+
+// Types
+export type {
+  DependencyGraph,
+  FileAnalysis,
+  ImportInfo,
+  ExportInfo,
+  ViewMode,
+  FilterType,
+  SortBy,
+  SortOrder,
 } from './types';
+
+// Markdown formatters (pure functions)
+export {
+  formatLayersAsMarkdown,
+  formatCrossLayerDepsAsMarkdown,
+  formatHealthMetricsAsMarkdown,
+  formatHotFilesAsMarkdown,
+  formatHeavyFilesAsMarkdown,
+  formatStatsAsMarkdown,
+  formatCircularDepsAsMarkdown,
+  formatOrphansAsMarkdown,
+  formatBytes,
+} from './lib/markdownFormatters';

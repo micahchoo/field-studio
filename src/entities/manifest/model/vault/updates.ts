@@ -6,7 +6,7 @@
  */
 
 import type { EntityType, IIIFItem, NormalizedState } from '@/src/shared/types';
-import { vaultLog } from '@/src/shared/services/logger';
+import { vaultLog } from '@/src/shared/lib/logger';
 import { getDescendants } from './queries';
 import { moveEntityToTrash } from './trash';
 
@@ -35,8 +35,8 @@ export function updateEntity(
       return state;
     }
 
-    // Auto-fix stale type index
-    state.typeIndex[id] = foundType;
+    // Auto-fix stale type index — clone to preserve immutability
+    state = { ...state, typeIndex: { ...state.typeIndex, [id]: foundType } };
     vaultLog.info(`Fixed stale type index for ${id} (${foundType})`);
   }
 
@@ -47,7 +47,6 @@ export function updateEntity(
 
   // Strip `id` from updates — changing an entity's ID via updateEntity creates
   // inconsistent state (store keyed by old ID but entity.id is new).
-  // Use renameEntity logic for ID changes instead.
   if (updates.id && updates.id !== id) {
     const { id: _stripId, ...safeUpdates } = updates;
     updates = safeUpdates;
@@ -113,12 +112,6 @@ export function addEntity(
 
 /**
  * Remove an entity and all its descendants
- *
- * @param state - Current normalized state
- * @param id - Entity ID to remove
- * @param options - Removal options
- * @param options.permanent - If true, permanently delete; if false, move to trash (soft delete)
- * @returns Updated state
  */
 export function removeEntity(
   state: NormalizedState,

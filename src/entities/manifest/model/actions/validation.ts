@@ -50,7 +50,7 @@ export function validateBehavior(behavior: string[], entityType: string): string
   // Check for disjoint set conflicts using centralized utility
   const conflicts = findBehaviorConflicts(behavior);
   if (conflicts.length > 0) {
-    return conflicts[0];
+    return `Conflicting behaviors: ${conflicts[0].join(', ')}`;
   }
 
   return null;

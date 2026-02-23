@@ -7,11 +7,10 @@
  */
 
 import type { IIIFManifest, NormalizedState } from '@/src/shared/types';
-import { vaultLog } from '@/src/shared/services/logger';
+import { vaultLog } from '@/src/shared/lib/logger';
 
 /**
  * Get all Collections that reference a given resource (Manifest or nested Collection)
- * Supports the IIIF 3.0 model where same Manifest can be in multiple Collections
  */
 export function getCollectionsContaining(state: NormalizedState, resourceId: string): string[] {
   return state.memberOfCollections[resourceId] || [];

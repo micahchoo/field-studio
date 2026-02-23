@@ -1,29 +1,5 @@
 /**
- * Vault Module - Atomic Design Decomposition
- *
- * Re-exports all vault functionality organized by atomic design layers:
- *
- * **Atoms** (types.ts): Core type definitions
- *   - EntityType, NormalizedState, TrashedEntity, VaultSnapshot
- *
- * **Molecules**: Small, focused utility functions
- *   - cloning.ts: cloneAsRecord, deepCloneState, recordAs, hasType
- *   - extensions.ts: extractExtensions, applyExtensions
- *
- * **Organisms**: Larger logical groupings
- *   - normalization.ts: normalize, createEmptyState
- *   - denormalization.ts: denormalize, denormalizeCanvas, denormalizeAnnotationPage
- *   - queries.ts: getEntity, getChildIds, getAncestors, getDescendants
- *   - collections.ts: addToCollection, removeFromCollection, isOrphanManifest
- *   - updates.ts: updateEntity, addEntity, removeEntity
- *   - trash.ts: moveEntityToTrash, restoreEntityFromTrash, emptyTrash
- *   - movement.ts: moveEntity, reorderChildren
- *
- * **Widgets** (vault.ts): Stateful components
- *   - Vault class, getVault(), resetVault()
- *
- * **Pages**: Test API aliases (for backward compatibility)
- *   - createEmptyVault, normalizeIIIF, denormalizeIIIF, getChildren, getParent
+ * Vault Module - Re-exports all vault functionality
  */
 
 // ============================================================================
@@ -126,7 +102,7 @@ export {
 } from './vault';
 
 // ============================================================================
-// Test API Aliases (Backward Compatibility - Page Layer)
+// Test API Aliases (Backward Compatibility)
 // ============================================================================
 export {
   createEmptyState as createEmptyVault,

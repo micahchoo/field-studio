@@ -3,7 +3,7 @@
  *
  * Unified strategy for resolving image URLs across all viewer components.
  * Provides a fallback chain to find the best available image source:
- * blob URL → fileRef → IIIF service → direct URL → thumbnail → placeholder
+ * blob URL -> fileRef -> IIIF service -> direct URL -> thumbnail -> placeholder
  *
  * This centralizes the image resolution logic that was previously duplicated
  * across Viewer.tsx, PolygonAnnotationTool.tsx, and other components.
@@ -264,7 +264,7 @@ function isValidUrl(str: string): boolean {
  *
  * Resolution chain:
  * 1. Check for _blobUrl (local blob)
- * 2. Check for _fileRef → create object URL
+ * 2. Check for _fileRef -> create object URL
  * 3. Check for IIIF Image API service
  * 4. Check for direct body.id URL
  * 5. Check for thumbnail
@@ -569,7 +569,7 @@ export function cleanupImageSource(source: ResolvedImageSource | null): boolean 
 }
 
 // ============================================================================
-// React Hook Utilities
+// Effect Cleanup Utilities
 // ============================================================================
 
 /**

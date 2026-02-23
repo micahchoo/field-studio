@@ -1,3 +1,4 @@
+// Pure TypeScript — no Svelte-specific conversion
 
 /**
  * Help Content Configurations
@@ -6,7 +7,13 @@
  * Organized by view/context for screen-relevant help.
  */
 
-import { TooltipContent } from '@/src/shared/ui/molecules/Tooltip';
+// TooltipContent type inlined (no Tooltip molecule export in Svelte migration)
+export interface TooltipContent {
+  title: string;
+  body: string;
+  action?: string;
+  shortcut?: string;
+}
 
 // ============================================================================
 // Quick Reference Items (per-view keyboard shortcuts & actions)
@@ -72,7 +79,6 @@ export const QUICK_REF_STAGING: QuickRefItem[] = [
 // ============================================================================
 
 export const TOOLTIPS: Record<string, TooltipContent> = {
-  // IIIF Resource Types
   'resource-collection': {
     title: 'Collection',
     body: 'A group of related Manifests or other Collections. Use it like a folder to organize your archive.',
@@ -96,8 +102,6 @@ export const TOOLTIPS: Record<string, TooltipContent> = {
     title: 'Range',
     body: 'Defines a table of contents or structure within a Manifest. Groups Canvases into logical sections.',
   },
-
-  // Common Fields
   'field-label': {
     title: 'Label',
     body: 'The display name shown to users. Can be in multiple languages.',
@@ -128,8 +132,6 @@ export const TOOLTIPS: Record<string, TooltipContent> = {
     title: 'Behavior',
     body: 'Hints for viewers on how to display content. Examples: "paged" for books, "continuous" for scrolls.',
   },
-
-  // Actions
   'action-ingest': {
     title: 'Ingest Files',
     body: 'Import files from your computer. Folders become Collections, files become Canvases with Manifests.',
@@ -146,8 +148,6 @@ export const TOOLTIPS: Record<string, TooltipContent> = {
     body: 'Check your archive for errors and best-practice issues. Fixes common problems automatically.',
     shortcut: 'Cmd+Shift+V'
   },
-
-  // Inspector sections
   'inspector-core': {
     title: 'Core Properties',
     body: 'Essential fields like label and summary. These are required for a valid IIIF resource.',
@@ -164,8 +164,6 @@ export const TOOLTIPS: Record<string, TooltipContent> = {
     title: 'Structural Properties',
     body: 'Relationships to other resources. Part-of references, linked items, and navigation structures.',
   },
-
-  // Export options
   'export-canopy': {
     title: 'Canopy Template',
     body: 'A ready-to-deploy Next.js website with search, faceted browsing, and responsive image viewer.',
@@ -184,7 +182,7 @@ export const TOOLTIPS: Record<string, TooltipContent> = {
 // First-Time Hints (inline contextual prompts)
 // ============================================================================
 
-export const HINTS = {
+export const HINTS: Record<string, string> = {
   'empty-archive': 'Drag a folder here to get started, or click "Add Files" to select individual items.',
   'first-manifest': 'Great! Your first item. Click it to see details in the Inspector panel on the right.',
   'first-export': 'Ready to share? Click Export to package your archive for the web.',

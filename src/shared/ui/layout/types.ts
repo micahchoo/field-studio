@@ -31,9 +31,7 @@ export const overflowClasses: Record<OverflowAxis, string> = {
   both: 'overflow-auto',
 };
 
-/** Named height presets mapping to CSS vars or Tailwind classes */
 export type ShelfHeight = 'header' | 'header-compact' | 'status-bar' | 'auto';
-/** Named width presets */
 export type ShelfWidth = 'sidebar' | 'inspector' | 'filmstrip' | 'auto';
 
 export const shelfHeightClasses: Record<ShelfHeight, string> = {

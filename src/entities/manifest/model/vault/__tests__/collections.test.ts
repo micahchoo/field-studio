@@ -15,27 +15,17 @@ import { addEntity } from '../updates';
 beforeEach(() => resetIds());
 
 describe('addToCollection', () => {
-  it('adds resource to collection members', () => {
+  it('adds resource to collection with bidirectional indexes', () => {
     const collection = createMinimalCollection();
     const state = normalize(collection);
 
+    // Create a new manifest and add it to the state
     const newManifest = createManifest({ canvasCount: 1 });
-    // First add the manifest entity to state
-    let s = addEntity(state, newManifest as IIIFItem, collection.id);
-    s = addToCollection(s, collection.id, newManifest.id);
+    let newState = addEntity(state, newManifest as IIIFItem, collection.id);
+    newState = addToCollection(newState, collection.id, newManifest.id);
 
-    expect(getCollectionMembers(s, collection.id)).toContain(newManifest.id);
-    expect(getCollectionsContaining(s, newManifest.id)).toContain(collection.id);
-  });
-
-  it('updates bidirectional indexes', () => {
-    const collection = createMinimalCollection();
-    const state = normalize(collection);
-    const manifest1Id = collection.items[0].id;
-
-    // Verify bidirectional relationship from normalization
-    expect(getCollectionMembers(state, collection.id)).toContain(manifest1Id);
-    expect(getCollectionsContaining(state, manifest1Id)).toContain(collection.id);
+    expect(getCollectionMembers(newState, collection.id)).toContain(newManifest.id);
+    expect(getCollectionsContaining(newState, newManifest.id)).toContain(collection.id);
   });
 
   it('prevents duplicate membership', () => {

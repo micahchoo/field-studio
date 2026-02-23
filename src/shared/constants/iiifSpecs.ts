@@ -1,3 +1,5 @@
+// Pure TypeScript — no Svelte-specific conversion
+
 /** IIIF specification descriptions and implications per resource type */
 export const IIIF_SPECS: Record<string, {
   desc: string;

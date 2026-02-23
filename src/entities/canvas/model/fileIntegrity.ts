@@ -10,7 +10,19 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Content-Addressable Storage (Hashing)" pattern
  */
 
-import { DBSchema, IDBPDatabase, openDB } from 'idb';
+// Inline IDB types - replace with `import { DBSchema, IDBPDatabase, openDB } from 'idb'` when idb is installed
+interface IDBPDatabase<T> {
+  get(storeName: string, key: string): Promise<any>;
+  put(storeName: string, value: any, key: string): Promise<string>;
+  delete(storeName: string, key: string): Promise<void>;
+  clear(storeName: string): Promise<void>;
+  getAll(storeName: string): Promise<any[]>;
+  getAllKeys(storeName: string): Promise<string[]>;
+  objectStoreNames: DOMStringList;
+  createObjectStore(name: string): IDBObjectStore;
+}
+interface DBSchema {}
+declare function openDB<T>(name: string, version: number, options: any): Promise<IDBPDatabase<T>>;
 
 // ============================================================================
 // Types
@@ -56,17 +68,17 @@ const DB_NAME = 'biiif-integrity-db';
 const DB_VERSION = 1;
 
 interface IntegrityDB extends DBSchema {
-  /** Hash → Fingerprint mapping */
+  /** Hash -> Fingerprint mapping */
   fingerprints: {
     key: string; // hash
     value: FileFingerprint;
   };
-  /** Entity ID → Hash mapping for quick lookups */
+  /** Entity ID -> Hash mapping for quick lookups */
   entityHashes: {
     key: string; // entity ID
     value: string; // hash
   };
-  /** Filename → Hash index for consolidator */
+  /** Filename -> Hash index for consolidator */
   filenameIndex: {
     key: string; // filename
     value: string[]; // hashes (same filename could have different content over time)
@@ -141,7 +153,7 @@ class FileIntegrityService {
 
   constructor() {
     this.dbPromise = openDB<IntegrityDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db: IDBPDatabase<IntegrityDB>) {
         if (!db.objectStoreNames.contains('fingerprints')) {
           db.createObjectStore('fingerprints');
         }
@@ -322,7 +334,7 @@ class FileIntegrityService {
     if (hash) {
       const fingerprint = await db.get('fingerprints', hash);
       if (fingerprint) {
-        fingerprint.entityIds = fingerprint.entityIds.filter(id => id !== entityId);
+        fingerprint.entityIds = fingerprint.entityIds.filter((id: string) => id !== entityId);
 
         if (fingerprint.entityIds.length === 0) {
           // No more associations - remove fingerprint

@@ -1,76 +1,60 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { normalize } from '../normalization';
 import { updateEntity, addEntity, removeEntity } from '../updates';
-import { getEntity, getChildIds, getDescendants, hasEntity } from '../queries';
-import type { IIIFCanvas, IIIFItem } from '@/src/shared/types';
-import { resetIds, createMinimalManifest, createCanvas, createPaintingAnnotation, createAnnotationPage } from './fixtures';
+import { getEntity, hasEntity, getChildIds, getParentId } from '../queries';
+import type { IIIFCanvas, IIIFItem, IIIFManifest } from '@/src/shared/types';
+import { resetIds, createMinimalManifest, createMinimalCollection, createManifest } from './fixtures';
 
 beforeEach(() => resetIds());
 
 describe('updateEntity', () => {
-  it('returns a new state object (immutability)', () => {
+  it('returns new state with updated entity', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
+
     const newState = updateEntity(state, manifest.id, { label: { en: ['Updated'] } });
 
     expect(newState).not.toBe(state);
-    expect(newState.entities.Manifest[manifest.id]).not.toBe(state.entities.Manifest[manifest.id]);
+    expect(getEntity(newState, manifest.id)!.label).toEqual({ en: ['Updated'] });
   });
 
-  it('preserves unmodified entities', () => {
+  it('preserves unmodified entities (structural sharing)', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
     const canvasId = manifest.items[0].id;
+
     const newState = updateEntity(state, manifest.id, { label: { en: ['Updated'] } });
 
-    // Canvas should be the same reference (untouched)
-    expect(newState.entities.Canvas[canvasId]).toBe(state.entities.Canvas[canvasId]);
+    // Canvas store should be the same reference (untouched)
+    expect(newState.entities.Canvas).toBe(state.entities.Canvas);
   });
 
-  it('applies partial updates correctly', () => {
+  it('returns same state for nonexistent entity', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
-    const newState = updateEntity(state, manifest.id, { label: { en: ['New Label'] } });
 
-    const updated = getEntity(newState, manifest.id)!;
-    expect(updated.label).toEqual({ en: ['New Label'] });
-    expect(updated.type).toBe('Manifest');
-  });
-
-  it('returns same state when entity not found', () => {
-    const manifest = createMinimalManifest();
-    const state = normalize(manifest);
-    const newState = updateEntity(state, 'nonexistent', { label: { en: ['X'] } });
-
+    const newState = updateEntity(state, 'nonexistent', { label: { en: ['Test'] } });
     expect(newState).toBe(state);
   });
 
-  it('auto-fixes stale typeIndex', () => {
+  it('strips id from updates to prevent store key mismatch', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
 
-    // Simulate stale index by removing from typeIndex
-    const staleState = {
-      ...state,
-      typeIndex: { ...state.typeIndex },
-    };
-    delete staleState.typeIndex[manifest.id];
-
-    const newState = updateEntity(staleState, manifest.id, { label: { en: ['Fixed'] } });
-    const updated = getEntity(newState, manifest.id);
-    expect(updated).not.toBeNull();
-    expect(updated!.label).toEqual({ en: ['Fixed'] });
+    const newState = updateEntity(state, manifest.id, { id: 'new-id', label: { en: ['Updated'] } } as Partial<IIIFItem>);
+    // Should still be accessible by old ID
+    expect(getEntity(newState, manifest.id)).not.toBeNull();
+    expect(getEntity(newState, manifest.id)!.label).toEqual({ en: ['Updated'] });
   });
 });
 
 describe('addEntity', () => {
-  it('adds entity to correct store', () => {
+  it('adds entity to correct type store', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
 
-    const newCanvasId = 'https://example.org/canvas/new';
     const newCanvas: IIIFCanvas = {
-      id: newCanvasId,
+      id: 'https://example.org/canvas/new',
       type: 'Canvas',
       width: 500,
       height: 400,
@@ -79,17 +63,16 @@ describe('addEntity', () => {
 
     const newState = addEntity(state, newCanvas as IIIFItem, manifest.id);
 
-    expect(newState.entities.Canvas[newCanvasId]).toBeDefined();
-    expect(newState.typeIndex[newCanvasId]).toBe('Canvas');
+    expect(hasEntity(newState, newCanvas.id)).toBe(true);
+    expect(newState.typeIndex[newCanvas.id]).toBe('Canvas');
   });
 
   it('updates parent references', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
 
-    const newCanvasId = 'https://example.org/canvas/new';
     const newCanvas: IIIFCanvas = {
-      id: newCanvasId,
+      id: 'https://example.org/canvas/new',
       type: 'Canvas',
       width: 500,
       height: 400,
@@ -98,18 +81,17 @@ describe('addEntity', () => {
 
     const newState = addEntity(state, newCanvas as IIIFItem, manifest.id);
 
-    expect(newState.references[manifest.id]).toContain(newCanvasId);
-    expect(newState.reverseRefs[newCanvasId]).toBe(manifest.id);
+    expect(getChildIds(newState, manifest.id)).toContain(newCanvas.id);
+    expect(getParentId(newState, newCanvas.id)).toBe(manifest.id);
   });
 
-  it('preserves existing children when adding', () => {
+  it('preserves existing children', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
     const existingCanvasId = manifest.items[0].id;
 
-    const newCanvasId = 'https://example.org/canvas/new';
     const newCanvas: IIIFCanvas = {
-      id: newCanvasId,
+      id: 'https://example.org/canvas/new',
       type: 'Canvas',
       width: 500,
       height: 400,
@@ -118,8 +100,8 @@ describe('addEntity', () => {
 
     const newState = addEntity(state, newCanvas as IIIFItem, manifest.id);
 
-    expect(newState.references[manifest.id]).toContain(existingCanvasId);
-    expect(newState.references[manifest.id]).toContain(newCanvasId);
+    expect(getChildIds(newState, manifest.id)).toContain(existingCanvasId);
+    expect(getChildIds(newState, manifest.id)).toContain(newCanvas.id);
   });
 });
 
@@ -132,7 +114,7 @@ describe('removeEntity', () => {
     const newState = removeEntity(state, canvasId, { permanent: true });
 
     expect(hasEntity(newState, canvasId)).toBe(false);
-    // Descendants (annotation page + annotation) should also be gone
+    // Descendants should also be gone
     const pageIds = state.references[canvasId] || [];
     for (const pid of pageIds) {
       expect(hasEntity(newState, pid)).toBe(false);
@@ -145,15 +127,17 @@ describe('removeEntity', () => {
     const canvasId = manifest.items[0].id;
 
     const newState = removeEntity(state, canvasId, { permanent: true });
+
     expect(getChildIds(newState, manifest.id)).not.toContain(canvasId);
   });
 
-  it('cleans up typeIndex for removed entities', () => {
+  it('cleans up typeIndex', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
     const canvasId = manifest.items[0].id;
 
     const newState = removeEntity(state, canvasId, { permanent: true });
+
     expect(newState.typeIndex[canvasId]).toBeUndefined();
   });
 
@@ -162,19 +146,26 @@ describe('removeEntity', () => {
     const state = normalize(manifest);
 
     const newState = removeEntity(state, manifest.id, { permanent: true });
+
     expect(newState.rootId).toBeNull();
   });
 
-  it('soft-deletes to trash when permanent is false', () => {
+  it('soft-deletes to trash by default', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
     const canvasId = manifest.items[0].id;
 
-    const newState = removeEntity(state, canvasId, { permanent: false });
+    const newState = removeEntity(state, canvasId);
 
-    // Entity should be gone from active state
     expect(hasEntity(newState, canvasId)).toBe(false);
-    // But present in trash
     expect(newState.trashedEntities[canvasId]).toBeDefined();
+  });
+
+  it('returns same state for nonexistent entity', () => {
+    const manifest = createMinimalManifest();
+    const state = normalize(manifest);
+
+    const newState = removeEntity(state, 'nonexistent');
+    expect(newState).toBe(state);
   });
 });

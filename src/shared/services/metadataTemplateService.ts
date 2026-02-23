@@ -1,6 +1,14 @@
+// Pure TypeScript — no Svelte-specific conversion
 
-import { SourceManifest, SourceManifests } from '@/src/shared/types';
-import { getCSVColumnsByCategory, SUPPORTED_LANGUAGES } from '@/src/shared/constants';
+/**
+ * Metadata Template Service
+ *
+ * Generates CSV templates and instructions for batch metadata editing.
+ */
+
+// ============================================================================
+// Types
+// ============================================================================
 
 export type VocabularyOption = 'iiif' | 'dublin-core' | 'both';
 
@@ -15,26 +23,61 @@ export interface MetadataTemplateExport {
   instructions: string;
 }
 
-/**
- * Get columns based on vocabulary selection
- * Uses centralized CSV_TEMPLATE_COLUMNS from constants.ts
- */
-function getColumns(vocabulary: VocabularyOption): { key: string; description: string }[] {
+interface SourceFile {
+  name: string;
+}
+
+interface SourceManifest {
+  name: string;
+  files: SourceFile[];
+}
+
+interface SourceManifests {
+  manifests: SourceManifest[];
+}
+
+interface ColumnDefinition {
+  key: string;
+  description: string;
+}
+
+// ============================================================================
+// Column definitions (inline, no external dependency)
+// ============================================================================
+
+const IIIF_COLUMNS: ColumnDefinition[] = [
+  { key: 'label', description: 'Human-readable title for the item (required)' },
+  { key: 'summary', description: 'Brief description of the content' },
+  { key: 'rights', description: 'License URL (e.g., https://creativecommons.org/licenses/by/4.0/)' },
+  { key: 'navDate', description: 'Navigation date in ISO 8601 format (YYYY-MM-DD)' },
+  { key: 'requiredStatement.value', description: 'Required attribution text' },
+];
+
+const DC_COLUMNS: ColumnDefinition[] = [
+  { key: 'metadata.title', description: 'Title of the resource' },
+  { key: 'metadata.creator', description: 'Person or organization responsible for creating the content' },
+  { key: 'metadata.date', description: 'Date associated with the resource (YYYY-MM-DD or YYYY)' },
+  { key: 'metadata.description', description: 'Detailed description of the content' },
+  { key: 'metadata.subject', description: 'Topic or keywords (semicolon-separated for multiple)' },
+  { key: 'metadata.type', description: 'Nature of the resource (e.g., Image, Text, Dataset)' },
+  { key: 'metadata.format', description: 'File format or medium' },
+  { key: 'metadata.identifier', description: 'Unique identifier for the resource' },
+  { key: 'metadata.source', description: 'Related resource from which this was derived' },
+  { key: 'metadata.language', description: 'Language of the content (ISO 639-1 code)' },
+  { key: 'metadata.coverage', description: 'Spatial or temporal coverage (location, time period)' },
+  { key: 'metadata.rights', description: 'Copyright or access rights statement' },
+  { key: 'metadata.publisher', description: 'Entity responsible for making the resource available' },
+];
+
+function getColumns(vocabulary: VocabularyOption): ColumnDefinition[] {
   switch (vocabulary) {
-    case 'iiif':
-      return getCSVColumnsByCategory('iiif');
-    case 'dublin-core':
-      return getCSVColumnsByCategory('dublin-core');
-    case 'both':
-      return getCSVColumnsByCategory('both');
-    default:
-      return getCSVColumnsByCategory('iiif');
+    case 'iiif': return IIIF_COLUMNS;
+    case 'dublin-core': return DC_COLUMNS;
+    case 'both': return [...IIIF_COLUMNS, ...DC_COLUMNS];
+    default: return IIIF_COLUMNS;
   }
 }
 
-/**
- * Escape a value for CSV (handle commas, quotes, newlines)
- */
 function escapeCSV(value: string): string {
   if (!value) return '';
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -43,23 +86,17 @@ function escapeCSV(value: string): string {
   return value;
 }
 
-/**
- * Generate CSV content from source manifests
- */
 function generateCSV(sourceManifests: SourceManifests, options: MetadataTemplateOptions): string {
   const columns = getColumns(options.vocabulary);
-
-  // Header row
   const headers = ['filename', 'manifest', ...columns.map(c => c.key)];
   const rows: string[] = [headers.join(',')];
 
-  // Data rows - one per file
   for (const manifest of sourceManifests.manifests) {
     for (const file of manifest.files) {
       const row = [
         escapeCSV(file.name),
         escapeCSV(manifest.name),
-        ...columns.map(() => '') // Empty values for user to fill
+        ...columns.map(() => '')
       ];
       rows.push(row.join(','));
     }
@@ -68,79 +105,28 @@ function generateCSV(sourceManifests: SourceManifests, options: MetadataTemplate
   return rows.join('\n');
 }
 
-/**
- * Generate instructions text
- */
 function generateInstructions(options: MetadataTemplateOptions): string {
   const columns = getColumns(options.vocabulary);
-
-  const instructions = `
-IIIF Field Studio - Metadata Template Instructions
+  return `IIIF Field Studio - Metadata Template Instructions
 ================================================
 
-This CSV file contains your archive structure with columns for adding metadata.
 Fill in the values and re-import to apply metadata to your items.
-
-FILE STRUCTURE
---------------
-- filename: The original file name (DO NOT MODIFY)
-- manifest: The manifest/folder this file belongs to (DO NOT MODIFY)
 
 COLUMN DESCRIPTIONS
 -------------------
 ${columns.map(c => `${c.key}: ${c.description}`).join('\n')}
 
-FORMATTING GUIDELINES
---------------------
-1. Dates should be in ISO 8601 format: YYYY-MM-DD (e.g., 2024-01-15)
-2. Rights URLs should be complete URLs (e.g., https://creativecommons.org/licenses/by/4.0/)
-3. For multiple values, separate with semicolons (e.g., "keyword1; keyword2; keyword3")
-4. Language is set to: ${options.language}
-5. Text can include Unicode characters
-
-VOCABULARY USED
----------------
-${options.vocabulary === 'iiif' ? 'IIIF Presentation API 3.0 properties' :
-  options.vocabulary === 'dublin-core' ? 'Dublin Core Metadata Element Set (metadata.* format)' :
-  'Combined IIIF and Dublin Core vocabularies'}
-
-COLUMN FORMAT
--------------
-- IIIF core properties use their standard names: label, summary, rights, navDate
-- Dublin Core properties use the format: metadata.{property} (e.g., metadata.creator, metadata.date)
-- This format is compatible with the CSV Import feature in the Catalog view
-
-RE-IMPORTING
-------------
-1. Save your edited CSV file
-2. In Field Studio, go to the Metadata view
-3. Use the "Import CSV" option
-4. Select your edited file
-5. Review the preview and confirm
-
-TIPS
-----
-- Empty cells will be ignored (existing metadata preserved)
-- You can delete rows for files you don't want to update
-- The manifest column determines which IIIF Manifest the metadata applies to
-- For batch operations, copy values down to apply to multiple files
-
-Generated: ${new Date().toISOString()}
-`.trim();
-
-  return instructions;
+Language is set to: ${options.language}
+Generated: ${new Date().toISOString()}`.trim();
 }
 
-/**
- * Export metadata template as CSV + instructions
- */
+// ============================================================================
+// Public API
+// ============================================================================
+
 export function exportMetadataTemplate(
   sourceManifests: SourceManifests,
-  options: MetadataTemplateOptions = {
-    vocabulary: 'both',
-    language: 'en',
-    includeInstructions: true
-  }
+  options: MetadataTemplateOptions = { vocabulary: 'both', language: 'en', includeInstructions: true }
 ): MetadataTemplateExport {
   return {
     csv: generateCSV(sourceManifests, options),
@@ -148,9 +134,6 @@ export function exportMetadataTemplate(
   };
 }
 
-/**
- * Generate a preview of the first N rows
- */
 export function previewMetadataTemplate(
   sourceManifests: SourceManifests,
   options: MetadataTemplateOptions,
@@ -173,32 +156,14 @@ export function previewMetadataTemplate(
   return preview;
 }
 
-/**
- * Get available vocabulary options with descriptions
- */
 export function getVocabularyOptions(): { value: VocabularyOption; label: string; description: string }[] {
   return [
-    {
-      value: 'iiif',
-      label: 'IIIF Only',
-      description: 'Core IIIF Presentation API properties (label, summary, rights, etc.)'
-    },
-    {
-      value: 'dublin-core',
-      label: 'Dublin Core Only',
-      description: 'Standard Dublin Core metadata elements (dc:title, dc:creator, etc.)'
-    },
-    {
-      value: 'both',
-      label: 'IIIF + Dublin Core',
-      description: 'Full vocabulary with both IIIF properties and Dublin Core elements'
-    }
+    { value: 'iiif', label: 'IIIF Only', description: 'Core IIIF Presentation API properties' },
+    { value: 'dublin-core', label: 'Dublin Core Only', description: 'Standard Dublin Core metadata elements' },
+    { value: 'both', label: 'IIIF + Dublin Core', description: 'Full vocabulary with both IIIF properties and Dublin Core elements' }
   ];
 }
 
-/**
- * Download helper - triggers browser download
- */
 export function downloadMetadataTemplate(
   sourceManifests: SourceManifests,
   options: MetadataTemplateOptions,
@@ -206,7 +171,6 @@ export function downloadMetadataTemplate(
 ): void {
   const { csv, instructions } = exportMetadataTemplate(sourceManifests, options);
 
-  // Download CSV
   const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const csvUrl = URL.createObjectURL(csvBlob);
   const csvLink = document.createElement('a');
@@ -215,14 +179,12 @@ export function downloadMetadataTemplate(
   csvLink.click();
   URL.revokeObjectURL(csvUrl);
 
-  // Download instructions if included
   if (instructions) {
     const txtBlob = new Blob([instructions], { type: 'text/plain;charset=utf-8;' });
     const txtUrl = URL.createObjectURL(txtBlob);
     const txtLink = document.createElement('a');
     txtLink.href = txtUrl;
     txtLink.download = `${baseName}-instructions.txt`;
-    // Small delay to avoid browser blocking multiple downloads
     setTimeout(() => {
       txtLink.click();
       URL.revokeObjectURL(txtUrl);

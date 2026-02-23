@@ -2,6 +2,8 @@
  * Theme Registry
  *
  * Central registry of all built-in themes + resolver for custom overrides.
+ * COPIED from React: src/shared/config/themes/index.ts
+ * Pure TypeScript — zero framework dependency.
  */
 
 export type { ThemeName, ThemeTokens } from './types';

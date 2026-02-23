@@ -1,6 +1,8 @@
+// Pure TypeScript — no Svelte-specific conversion
+
 /**
  * UI Constants
- * 
+ *
  * User interface, layout, and design system constants.
  */
 
@@ -9,23 +11,14 @@
 // ============================================================================
 
 export const BREAKPOINTS = {
-  /** Mobile portrait */
   xs: 320,
-  /** Mobile landscape */
   sm: 640,
-  /** Tablet portrait */
   md: 768,
-  /** Tablet landscape / Small desktop */
   lg: 1024,
-  /** Desktop */
   xl: 1280,
-  /** Large desktop */
   '2xl': 1536
 } as const;
 
-/**
- * Tailwind-compatible breakpoint strings for use in className
- */
 export const BP = {
   xs: 'xs:',
   sm: 'sm:',
@@ -35,18 +28,12 @@ export const BP = {
   '2xl': '2xl:'
 } as const;
 
-/**
- * Check if viewport matches a breakpoint
- */
 export function isMinBreakpoint(breakpoint: keyof typeof BREAKPOINTS | number): boolean {
   if (typeof window === 'undefined') return false;
   const width = typeof breakpoint === 'number' ? breakpoint : BREAKPOINTS[breakpoint];
   return window.innerWidth >= width;
 }
 
-/**
- * Check if viewport is below a breakpoint
- */
 export function isMaxBreakpoint(breakpoint: keyof typeof BREAKPOINTS | number): boolean {
   if (typeof window === 'undefined') return false;
   const width = typeof breakpoint === 'number' ? breakpoint : BREAKPOINTS[breakpoint];
@@ -60,61 +47,57 @@ export function isMaxBreakpoint(breakpoint: keyof typeof BREAKPOINTS | number): 
 export const SPACING = {
   px: '1px',
   0: '0',
-  0.5: '0.125rem', // 2px
-  1: '0.25rem',    // 4px
-  1.5: '0.375rem', // 6px
-  2: '0.5rem',     // 8px
-  2.5: '0.625rem', // 10px
-  3: '0.75rem',    // 12px
-  3.5: '0.875rem', // 14px
-  4: '1rem',       // 16px
-  5: '1.25rem',    // 20px
-  6: '1.5rem',     // 24px
-  7: '1.75rem',    // 28px
-  8: '2rem',       // 32px
-  9: '2.25rem',    // 36px
-  10: '2.5rem',    // 40px
-  11: '2.75rem',   // 44px
-  12: '3rem',      // 48px
-  14: '3.5rem',    // 56px
-  16: '4rem',      // 64px
-  20: '5rem',      // 80px
-  24: '6rem',      // 96px
+  0.5: '0.125rem',
+  1: '0.25rem',
+  1.5: '0.375rem',
+  2: '0.5rem',
+  2.5: '0.625rem',
+  3: '0.75rem',
+  3.5: '0.875rem',
+  4: '1rem',
+  5: '1.25rem',
+  6: '1.5rem',
+  7: '1.75rem',
+  8: '2rem',
+  9: '2.25rem',
+  10: '2.5rem',
+  11: '2.75rem',
+  12: '3rem',
+  14: '3.5rem',
+  16: '4rem',
+  20: '5rem',
+  24: '6rem',
 } as const;
 
 export const LAYOUT = {
-  // Standard 3-panel layout dimensions
-  // CSS custom properties defined in src/index.css (:root)
   sidebar: {
     default: '240px',
     min: '180px',
     max: '400px',
   },
   inspector: {
-    default: '320px',  // --inspector-w / w-inspector
+    default: '320px',
     min: '280px',
     max: '480px',
   },
   filmstrip: {
-    default: '288px',  // --filmstrip-w / w-filmstrip
+    default: '288px',
   },
   statusBar: {
-    height: '28px',    // --status-bar-h / h-status-bar
+    height: '28px',
   },
   header: {
-    height: '64px',         // --header-h / h-header
-    compactHeight: '56px',  // --header-compact-h / h-header-compact
+    height: '64px',
+    compactHeight: '56px',
   },
-
-  // Border radius
   borderRadius: {
     none: '0',
-    sm: '0.125rem',  // 2px
-    base: '0.25rem', // 4px
-    md: '0.375rem',  // 6px
-    lg: '0.5rem',    // 8px
-    xl: '0.75rem',   // 12px
-    '2xl': '1rem',   // 16px
+    sm: '0.125rem',
+    base: '0.25rem',
+    md: '0.375rem',
+    lg: '0.5rem',
+    xl: '0.75rem',
+    '2xl': '1rem',
     full: '9999px',
   },
 } as const;
@@ -124,55 +107,23 @@ export const LAYOUT = {
 // ============================================================================
 
 export const TOUCH_TARGETS = {
-  // Minimum touch target sizes
-  minimum: {
-    width: '44px',
-    height: '44px',
-  },
-
-  // Field mode (larger for gloves)
-  field: {
-    width: '56px',
-    height: '56px',
-  },
-
-  // Button sizes
+  minimum: { width: '44px', height: '44px' },
+  field: { width: '56px', height: '56px' },
   button: {
     sm: { height: '32px', padding: '0 12px' },
     base: { height: '40px', padding: '0 16px' },
     lg: { height: '48px', padding: '0 24px' },
-    xl: { height: '56px', padding: '0 32px' }, // Field mode
+    xl: { height: '56px', padding: '0 32px' },
   },
-
-  // Icon button sizes
-  iconButton: {
-    sm: '32px',
-    base: '40px',
-    lg: '48px',
-    xl: '56px', // Field mode
-  },
-
-  // Input field sizes
+  iconButton: { sm: '32px', base: '40px', lg: '48px', xl: '56px' },
   input: {
-    height: {
-      sm: '32px',
-      base: '40px',
-      lg: '48px',
-    },
+    height: { sm: '32px', base: '40px', lg: '48px' },
     padding: '0 12px',
   },
 } as const;
 
 export const INTERACTION = {
-  // Animation timing
-  duration: {
-    fast: '150ms',
-    base: '200ms',
-    slow: '300ms',
-    slower: '500ms',
-  },
-
-  // Easing functions
+  duration: { fast: '150ms', base: '200ms', slow: '300ms', slower: '500ms' },
   easing: {
     default: 'cubic-bezier(0.4, 0, 0.2, 1)',
     in: 'cubic-bezier(0.4, 0, 1, 1)',
@@ -186,35 +137,18 @@ export const INTERACTION = {
 // ============================================================================
 
 export const REDUCED_MOTION = {
-  /**
-   * Check if user prefers reduced motion
-   */
   prefersReducedMotion: (): boolean => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   },
 
-  /**
-   * Get animation duration based on user preference
-   */
   getDuration: (normalDuration: number): number => {
     if (typeof window === 'undefined') return normalDuration;
     return REDUCED_MOTION.prefersReducedMotion() ? 0 : normalDuration;
   },
 
-  /**
-   * Animation durations used throughout the app
-   */
-  DURATIONS: {
-    fast: 150,
-    normal: 300,
-    slow: 500,
-    stagger: 50
-  },
+  DURATIONS: { fast: 150, normal: 300, slow: 500, stagger: 50 },
 
-  /**
-   * CSS classes for transitions respecting motion preferences
-   */
   TRANSITIONS: {
     default: 'transition-all motion-reduce:transition-none',
     colors: 'transition-colors motion-reduce:transition-none',
@@ -222,9 +156,6 @@ export const REDUCED_MOTION = {
     opacity: 'transition-opacity motion-reduce:transition-none'
   },
 
-  /**
-   * Easing curves for consistent animations
-   */
   EASING: {
     default: 'ease-out',
     bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',

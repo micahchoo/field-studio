@@ -20,9 +20,9 @@ export const autoStructureService = {
         const currentNum = numMatch ? parseInt(numMatch[1], 10) : null;
 
         // Start new range if: first item, no number detected, or numeric gap > 1
-        const shouldBreak = currentRange === null || 
-                            currentNum === null || 
-                            lastNum === null || 
+        const shouldBreak = currentRange === null ||
+                            currentNum === null ||
+                            lastNum === null ||
                             Math.abs(currentNum - lastNum) > 1;
 
         if (shouldBreak) {

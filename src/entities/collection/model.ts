@@ -16,9 +16,8 @@ import {
   getEntity,
   getOrphanManifests,
   getParentId,
-  NormalizedState
 } from '@/src/entities/manifest/model/vault';
-import type { IIIFCollection } from '@/src/shared/types';
+import type { NormalizedState, IIIFCollection } from '@/src/shared/types';
 
 /**
  * Select a collection by ID

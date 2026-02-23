@@ -49,3 +49,5 @@ export interface DependencyGraph {
 
 export type ViewMode = 'list' | 'graph' | 'architecture' | 'stats' | 'circular' | 'orphans';
 export type FilterType = 'all' | 'components' | 'hooks' | 'utils' | 'services' | 'types';
+export type SortBy = 'name' | 'size' | 'imports' | 'exports' | 'dependents';
+export type SortOrder = 'asc' | 'desc';

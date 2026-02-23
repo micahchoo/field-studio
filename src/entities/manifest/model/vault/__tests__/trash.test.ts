@@ -105,9 +105,7 @@ describe('restoreEntityFromTrash', () => {
     const state = normalize(manifest);
     const canvasId = manifest.items[0].id;
 
-    // We don't have a second manifest, but we can test the parentId option
     const trashed = moveEntityToTrash(state, canvasId);
-    // Restore to same manifest (still valid)
     const restored = restoreEntityFromTrash(trashed, canvasId, { parentId: manifest.id });
 
     expect(getChildIds(restored, manifest.id)).toContain(canvasId);

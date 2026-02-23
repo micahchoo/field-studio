@@ -4,21 +4,10 @@
  * Domain-specific selectors and helpers for the metadata-edit feature.
  * Manages metadata editing state: flat items, columns, filters, and validation.
  *
- * ATOMIC REFACTOR NOTE: This feature slice follows the Atomic Design philosophy.
- * - Organisms receive cx and fieldMode via props from FieldModeTemplate
- * - Molecules from shared/ui/molecules are composed here
- * - No prop-drilling of fieldMode - context is injected at template level
- *
- * LEGACY DECOMPOSITION:
- * - MetadataSpreadsheet.tsx (722 lines) → MetadataView organism
- * - MetadataEditor.tsx (395 lines) → MetadataEditorPanel organism
- * - Shared metadata logic → This model file
- *
- * TODO: Full refactoring requires extracting:
- *   - MetadataSpreadsheet table logic → MetadataView organism
- *   - MetadataEditor panel → MetadataEditorPanel organism  
- *   - CSV export/import → Export/Import molecules
- *   - Navigation guard logic → App-level hook
+ * SVELTE MIGRATION NOTE:
+ * - Removed entity model re-exports (canvas, collection, manifest) -- not yet migrated
+ * - Removed useInspectorValidation hook re-export -- replaced by inspectorValidation.ts
+ * - All functions are pure TypeScript with zero framework dependency
  *
  * @module features/metadata-edit/model
  */
@@ -33,10 +22,6 @@ interface IIIFMetadataPair {
   label: Record<string, string[]>;
   value: Record<string, string[]>;
 }
-import { canvas, collection, manifest } from '@/src/entities';
-
-// Re-export entity models for convenience
-export { manifest, canvas, collection };
 
 // ============================================================================
 // Types
@@ -133,7 +118,7 @@ export const flattenIIIFItem = (
         metadata,
         rights: current.rights || '',
         navDate: current.navDate || '',
-        viewingDirection: (current as any).viewingDirection || '',
+        viewingDirection: 'viewingDirection' in current ? String((current as unknown as Record<string, unknown>).viewingDirection) : '',
       });
     }
 
@@ -368,16 +353,13 @@ export const detectChanges = (
 };
 
 // ============================================================================
-// Validation
+// Validation (re-exported from inspectorValidation.ts)
 // ============================================================================
 
-export {
-  useInspectorValidation,
-} from './useInspectorValidation';
+export { validateResource, fixIssue, fixAll } from '../lib/inspectorValidation';
 
 export type {
   ValidationIssue,
   ValidationResult,
   ValidationSeverity,
-  UseInspectorValidationReturn,
-} from './useInspectorValidation';
+} from '../lib/inspectorValidation';

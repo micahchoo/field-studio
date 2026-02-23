@@ -16,7 +16,7 @@
  * @see https://iiif.io/api/annex/openannotation/#selectors
  */
 
-import { IIIFSpecificResource, Selector } from '@/src/shared/types';
+import type { IIIFSpecificResource, Selector } from '@/src/shared/types';
 
 // ============================================================================
 // Types

@@ -222,7 +222,7 @@ export const removeSourceManifest = (
   sourceManifests: SourceManifests,
   id: string
 ): SourceManifests => {
-  const { [id]: _, ...remainingById } = sourceManifests.byId;
+  const { [id]: _removed, ...remainingById } = sourceManifests.byId;
   return {
     byId: remainingById,
     allIds: sourceManifests.allIds.filter((manifestId) => manifestId !== id),
@@ -391,7 +391,7 @@ export interface NodeAnnotations {
 }
 
 // ============================================================================
-// FlatFileTreeNode — Virtualised-list–friendly flat representation
+// FlatFileTreeNode — Virtualised-list-friendly flat representation
 // ============================================================================
 
 export interface FlatFileTreeNode {
@@ -411,7 +411,7 @@ export interface FlatFileTreeNode {
 // flattenFileTree — recursive flatten respecting expand state
 // ============================================================================
 
-function countFilesRecursive(tree: FileTree): number {
+export function countFilesRecursive(tree: FileTree): number {
   let count = tree.files.size;
   for (const dir of tree.directories.values()) {
     count += countFilesRecursive(dir);

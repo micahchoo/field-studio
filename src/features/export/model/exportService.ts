@@ -1,15 +1,12 @@
 
 import JSZip from 'jszip';
 import { uiLog } from '@/src/shared/services/logger';
-import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCollection, isManifest } from '@/src/shared/types';
 import { validator } from '@/src/entities/manifest/model/validation/validator';
 import {
   createImageServiceReference,
-  generateInfoJson,
   generateStandardSizes,
-  generateStandardTiles,
   getAllManifests,
-  ImageApiProfile
 } from '@/utils';
 import { DEFAULT_DERIVATIVE_SIZES, DEFAULT_INGEST_PREFS, getDerivativePreset, IIIF_SPEC } from '@/src/shared/constants';
 import {
@@ -433,7 +430,7 @@ class ExportService {
                             // Update painting annotation body with ImageService for deep zoom
                             const painting = processedCanvas.items?.[0]?.items?.[0];
                             if (painting && painting.body && !Array.isArray(painting.body)) {
-                                const imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
+                                const _imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
                                 const imgWidth = origCanvas.width || 2000;
                                 const imgHeight = origCanvas.height || 2000;
 
@@ -1114,7 +1111,7 @@ ${featuredInfo}
         const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
             onProgress({ status: 'Compressing archive...', percent: 30 + (metadata.percent * 0.7) });
         });
-        
+
         onProgress({ status: 'Export Complete', percent: 100 });
         return blob;
     }

@@ -1,3 +1,5 @@
+// Pure TypeScript — no Svelte-specific conversion
+
 /**
  * Virtual Manifest Factory
  *
@@ -10,33 +12,48 @@
  * This enables Field Studio to work with any media URL, not just IIIF resources.
  */
 
-import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '@/src/shared/types';
-import { IIIF_SPEC } from '@/src/shared/constants';
-import {
-  getExtension,
-  getMimeType
-} from '@/utils';
-import { networkLog } from '@/src/shared/services/logger';
+import { networkLog } from './logger';
 
-// Extension arrays - keep local to avoid conflicts with centralized utils naming
+// Extension arrays
 const LOCAL_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'tif', 'bmp', 'svg'];
 const LOCAL_AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'weba'];
 const LOCAL_VIDEO_EXTENSIONS = ['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'];
 const LOCAL_PDF_EXTENSIONS = ['pdf'];
 
-// Local MIME type mapping for extensions not fully covered by centralized utils
+// Local MIME type mapping
 const LOCAL_MIME_TYPES: Record<string, string> = {
-  // Additional document types
-  pdf: 'application/pdf',
-  // Additional video types
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  tiff: 'image/tiff',
+  tif: 'image/tiff',
+  bmp: 'image/bmp',
+  svg: 'image/svg+xml',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  flac: 'audio/flac',
+  aac: 'audio/aac',
+  m4a: 'audio/mp4',
+  weba: 'audio/webm',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  ogv: 'video/ogg',
   mov: 'video/quicktime',
   avi: 'video/x-msvideo',
-  mkv: 'video/x-matroska'
+  mkv: 'video/x-matroska',
+  pdf: 'application/pdf',
 };
+
+const IIIF_CONTEXT = 'http://iiif.io/api/presentation/3/context.json';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export type LanguageMap = Record<string, string[]>;
 
 export interface MediaInfo {
   url: string;
@@ -49,19 +66,13 @@ export interface MediaInfo {
 }
 
 export interface VirtualManifestOptions {
-  /** Label for the manifest */
   label?: string | LanguageMap;
-  /** Summary/description */
   summary?: string | LanguageMap;
-  /** Rights statement */
   rights?: string;
-  /** Required statement (attribution) */
   requiredStatement?: { label: LanguageMap; value: LanguageMap };
-  /** Provider information */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   provider?: any[];
-  /** Additional metadata */
   metadata?: Array<{ label: LanguageMap; value: LanguageMap }>;
-  /** Language for default labels */
   language?: string;
 }
 
@@ -70,9 +81,6 @@ export interface VirtualManifestOptions {
 // ============================================================================
 
 class VirtualManifestFactory {
-  /**
-   * Check if a URL points to a supported media type
-   */
   isMediaUrl(url: string): boolean {
     const ext = this.getExtension(url);
     return (
@@ -83,41 +91,32 @@ class VirtualManifestFactory {
     );
   }
 
-  /**
-   * Check if a URL points to an image
-   */
   isImageUrl(url: string): boolean {
     return LOCAL_IMAGE_EXTENSIONS.includes(this.getExtension(url));
   }
 
-  /**
-   * Check if a URL points to audio
-   */
   isAudioUrl(url: string): boolean {
     return LOCAL_AUDIO_EXTENSIONS.includes(this.getExtension(url));
   }
 
-  /**
-   * Check if a URL points to video
-   */
   isVideoUrl(url: string): boolean {
     return LOCAL_VIDEO_EXTENSIONS.includes(this.getExtension(url));
   }
 
-  /**
-   * Get file extension from URL (delegates to centralized utility)
-   */
   private getExtension(url: string): string {
-    return getExtension(url);
+    try {
+      const pathname = new URL(url).pathname;
+      const ext = pathname.split('.').pop()?.toLowerCase() || '';
+      return ext.split('?')[0];
+    } catch {
+      return url.split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+    }
   }
 
-  /**
-   * Get filename from URL
-   */
   private getFilename(url: string): string {
     try {
       const urlObj = new URL(url);
-      const {pathname} = urlObj;
+      const { pathname } = urlObj;
       const parts = pathname.split('/');
       return decodeURIComponent(parts[parts.length - 1] || 'resource');
     } catch {
@@ -126,9 +125,6 @@ class VirtualManifestFactory {
     }
   }
 
-  /**
-   * Detect media type from URL
-   */
   detectMediaType(url: string): MediaInfo['type'] {
     const ext = this.getExtension(url);
     if (LOCAL_IMAGE_EXTENSIONS.includes(ext)) return 'image';
@@ -138,27 +134,15 @@ class VirtualManifestFactory {
     return 'unknown';
   }
 
-  /**
-   * Get MIME type from extension (uses centralized utility with local fallback)
-   */
   getMimeType(url: string): string {
-    // Try centralized utility first
-    const mimeFromUtils = getMimeType(url);
-    if (mimeFromUtils) return mimeFromUtils.format;
-
-    // Fall back to local mapping for edge cases
     const ext = this.getExtension(url);
     return LOCAL_MIME_TYPES[ext] || 'application/octet-stream';
   }
 
-  /**
-   * Probe media to get dimensions/duration
-   */
   async probeMedia(url: string): Promise<MediaInfo> {
     const type = this.detectMediaType(url);
     const mimeType = this.getMimeType(url);
     const filename = this.getFilename(url);
-
     const info: MediaInfo = { url, type, mimeType, filename };
 
     try {
@@ -177,165 +161,94 @@ class VirtualManifestFactory {
       }
     } catch (e) {
       networkLog.warn('[VirtualManifestFactory] Media probe failed', e);
-      // Use defaults
-      if (type === 'image') {
-        info.width = 1000;
-        info.height = 1000;
-      } else if (type === 'video') {
-        info.width = 1920;
-        info.height = 1080;
-        info.duration = 0;
-      } else if (type === 'audio') {
-        info.duration = 0;
-      }
+      if (type === 'image') { info.width = 1000; info.height = 1000; }
+      else if (type === 'video') { info.width = 1920; info.height = 1080; info.duration = 0; }
+      else if (type === 'audio') { info.duration = 0; }
     }
 
     return info;
   }
 
-  /**
-   * Probe image dimensions
-   */
   private probeImageDimensions(url: string): Promise<{ width: number; height: number }> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
-
-      img.onload = () => {
-        resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-
-      img.onerror = () => {
-        reject(new Error('Failed to load image'));
-      };
-
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => reject(new Error('Failed to load image'));
       img.src = url;
-
-      // Timeout after 10 seconds
       setTimeout(() => reject(new Error('Image load timeout')), 10000);
     });
   }
 
-  /**
-   * Probe video dimensions and duration
-   */
   private probeVideoDimensions(url: string): Promise<{ width: number; height: number; duration: number }> {
     return new Promise((resolve, reject) => {
       const video = document.createElement('video');
       video.crossOrigin = 'anonymous';
       video.preload = 'metadata';
-
       video.onloadedmetadata = () => {
-        resolve({
-          width: video.videoWidth,
-          height: video.videoHeight,
-          duration: video.duration
-        });
+        resolve({ width: video.videoWidth, height: video.videoHeight, duration: video.duration });
         video.src = '';
       };
-
-      video.onerror = () => {
-        reject(new Error('Failed to load video metadata'));
-      };
-
+      video.onerror = () => reject(new Error('Failed to load video metadata'));
       video.src = url;
-
       setTimeout(() => reject(new Error('Video metadata load timeout')), 15000);
     });
   }
 
-  /**
-   * Probe audio duration
-   */
   private probeAudioDuration(url: string): Promise<{ duration: number }> {
     return new Promise((resolve, reject) => {
       const audio = document.createElement('audio');
       audio.crossOrigin = 'anonymous';
       audio.preload = 'metadata';
-
-      audio.onloadedmetadata = () => {
-        resolve({ duration: audio.duration });
-        audio.src = '';
-      };
-
-      audio.onerror = () => {
-        reject(new Error('Failed to load audio metadata'));
-      };
-
+      audio.onloadedmetadata = () => { resolve({ duration: audio.duration }); audio.src = ''; };
+      audio.onerror = () => reject(new Error('Failed to load audio metadata'));
       audio.src = url;
-
       setTimeout(() => reject(new Error('Audio metadata load timeout')), 15000);
     });
   }
 
-  /**
-   * Create a language map from a string or return existing LanguageMap
-   */
-  private toLanguageMap(value: string | LanguageMap, lang: string = 'none'): LanguageMap {
-    if (typeof value === 'string') {
-      return { [lang]: [value] };
-    }
+  private toLanguageMap(value: string | LanguageMap, lang = 'none'): LanguageMap {
+    if (typeof value === 'string') return { [lang]: [value] };
     return value;
   }
 
-  /**
-   * Generate a unique ID
-   */
   private generateId(): string {
     return `urn:uuid:${crypto.randomUUID()}`;
   }
 
-  /**
-   * Create a virtual IIIF Manifest from a media URL
-   */
-  async createManifest(url: string, options: VirtualManifestOptions = {}): Promise<IIIFManifest> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async createManifest(url: string, options: VirtualManifestOptions = {}): Promise<any> {
     const mediaInfo = await this.probeMedia(url);
     const lang = options.language || 'none';
     const manifestId = this.generateId();
     const canvasId = `${manifestId}/canvas/1`;
 
-    // Default label from filename
     const defaultLabel = mediaInfo.filename?.replace(/\.[^/.]+$/, '') || 'Untitled';
     const label = this.toLanguageMap(options.label || defaultLabel, lang);
 
-    // Build the manifest
-    const manifest: IIIFManifest = {
-      '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manifest: any = {
+      '@context': IIIF_CONTEXT,
       id: manifestId,
       type: 'Manifest',
       label,
       items: []
     };
 
-    // Add optional properties
-    if (options.summary) {
-      (manifest as any).summary = this.toLanguageMap(options.summary, lang);
-    }
-    if (options.rights) {
-      (manifest as any).rights = options.rights;
-    }
-    if (options.requiredStatement) {
-      (manifest as any).requiredStatement = options.requiredStatement;
-    }
-    if (options.provider) {
-      (manifest as any).provider = options.provider;
-    }
-    if (options.metadata) {
-      manifest.metadata = options.metadata;
-    }
+    if (options.summary) manifest.summary = this.toLanguageMap(options.summary, lang);
+    if (options.rights) manifest.rights = options.rights;
+    if (options.requiredStatement) manifest.requiredStatement = options.requiredStatement;
+    if (options.provider) manifest.provider = options.provider;
+    if (options.metadata) manifest.metadata = options.metadata;
 
-    // Create canvas
-    const canvas = this.createCanvas(canvasId, mediaInfo, label);
-    manifest.items = [canvas];
-
+    manifest.items = [this.createCanvas(canvasId, mediaInfo, label)];
     return manifest;
   }
 
-  /**
-   * Create a canvas for a media resource
-   */
-  private createCanvas(canvasId: string, mediaInfo: MediaInfo, label: LanguageMap): IIIFCanvas {
-    const canvas: IIIFCanvas = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private createCanvas(canvasId: string, mediaInfo: MediaInfo, label: LanguageMap): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const canvas: any = {
       id: canvasId,
       type: 'Canvas',
       label,
@@ -344,52 +257,42 @@ class VirtualManifestFactory {
       items: []
     };
 
-    // Add duration for time-based media
     if (mediaInfo.duration !== undefined && mediaInfo.duration > 0) {
-      (canvas as any).duration = mediaInfo.duration;
+      canvas.duration = mediaInfo.duration;
     }
 
-    // Create annotation page and painting annotation
     const annoPageId = `${canvasId}/page/1`;
     const annoId = `${canvasId}/annotation/1`;
-
-    const annotation: IIIFAnnotation = {
-      id: annoId,
-      type: 'Annotation',
-      motivation: 'painting',
-      body: this.createBody(mediaInfo),
-      target: canvasId
-    };
 
     canvas.items = [{
       id: annoPageId,
       type: 'AnnotationPage',
-      items: [annotation]
+      items: [{
+        id: annoId,
+        type: 'Annotation',
+        motivation: 'painting',
+        body: this.createBody(mediaInfo),
+        target: canvasId
+      }]
     }];
 
     return canvas;
   }
 
-  /**
-   * Create annotation body for media
-   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private createBody(mediaInfo: MediaInfo): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body: any = {
       id: mediaInfo.url,
       type: this.getBodyType(mediaInfo.type),
       format: mediaInfo.mimeType
     };
-
     if (mediaInfo.width) body.width = mediaInfo.width;
     if (mediaInfo.height) body.height = mediaInfo.height;
     if (mediaInfo.duration) body.duration = mediaInfo.duration;
-
     return body;
   }
 
-  /**
-   * Get IIIF body type from media type
-   */
   private getBodyType(mediaType: MediaInfo['type']): string {
     switch (mediaType) {
       case 'image': return 'Image';
@@ -399,77 +302,54 @@ class VirtualManifestFactory {
     }
   }
 
-  /**
-   * Create a manifest from multiple media URLs
-   */
-  async createManifestFromMultiple(
-    urls: string[],
-    options: VirtualManifestOptions = {}
-  ): Promise<IIIFManifest> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async createManifestFromMultiple(urls: string[], options: VirtualManifestOptions = {}): Promise<any> {
     const lang = options.language || 'none';
     const manifestId = this.generateId();
+    const label = this.toLanguageMap(options.label || `Collection of ${urls.length} items`, lang);
 
-    const label = this.toLanguageMap(
-      options.label || `Collection of ${urls.length} items`,
-      lang
-    );
-
-    const manifest: IIIFManifest = {
-      '@context': IIIF_SPEC.PRESENTATION_3.CONTEXT,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manifest: any = {
+      '@context': IIIF_CONTEXT,
       id: manifestId,
       type: 'Manifest',
       label,
       items: []
     };
 
-    // Add optional properties
-    if (options.summary) {
-      (manifest as any).summary = this.toLanguageMap(options.summary, lang);
-    }
-    if (options.metadata) {
-      manifest.metadata = options.metadata;
-    }
+    if (options.summary) manifest.summary = this.toLanguageMap(options.summary, lang);
+    if (options.metadata) manifest.metadata = options.metadata;
 
-    // Create canvases for each URL
-    const canvases: IIIFCanvas[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const canvases: any[] = [];
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
       const mediaInfo = await this.probeMedia(url);
       const canvasId = `${manifestId}/canvas/${i + 1}`;
       const canvasLabel = this.toLanguageMap(mediaInfo.filename || `Item ${i + 1}`, lang);
-      const canvas = this.createCanvas(canvasId, mediaInfo, canvasLabel);
-      canvases.push(canvas);
+      canvases.push(this.createCanvas(canvasId, mediaInfo, canvasLabel));
     }
 
     manifest.items = canvases;
     return manifest;
   }
 
-  /**
-   * Wrap a File object in a virtual manifest
-   */
   async createManifestFromFile(file: File, options: VirtualManifestOptions = {}): Promise<{
-    manifest: IIIFManifest;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    manifest: any;
     blobUrl: string;
   }> {
     const blobUrl = URL.createObjectURL(file);
-
-    // Determine media type from file (check extension first — file.type can be empty)
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+
     let type: MediaInfo['type'] = 'unknown';
     if (LOCAL_IMAGE_EXTENSIONS.includes(fileExt) || file.type.startsWith('image/')) type = 'image';
     else if (LOCAL_AUDIO_EXTENSIONS.includes(fileExt) || file.type.startsWith('audio/')) type = 'audio';
     else if (LOCAL_VIDEO_EXTENSIONS.includes(fileExt) || file.type.startsWith('video/')) type = 'video';
     else if (fileExt === 'pdf' || file.type === 'application/pdf') type = 'pdf';
 
-    const mediaInfo: MediaInfo = {
-      url: blobUrl,
-      type,
-      mimeType: file.type,
-      filename: file.name
-    };
+    const mediaInfo: MediaInfo = { url: blobUrl, type, mimeType: file.type, filename: file.name };
 
-    // Probe dimensions/duration
     try {
       if (type === 'image') {
         const dims = await this.probeImageDimensions(blobUrl);
@@ -486,10 +366,7 @@ class VirtualManifestFactory {
       }
     } catch (e) {
       networkLog.warn('[VirtualManifestFactory] File probe failed', e);
-      if (type === 'image') {
-        mediaInfo.width = 1000;
-        mediaInfo.height = 1000;
-      }
+      if (type === 'image') { mediaInfo.width = 1000; mediaInfo.height = 1000; }
     }
 
     const manifest = await this.createManifest(blobUrl, {
@@ -497,10 +374,9 @@ class VirtualManifestFactory {
       label: options.label || file.name.replace(/\.[^/.]+$/, '')
     });
 
-    // Store file reference on canvas for export
     if (manifest.items?.[0]) {
-      (manifest.items[0] as any)._fileRef = file;
-      (manifest.items[0] as any)._blobUrl = blobUrl;
+      manifest.items[0]._fileRef = file;
+      manifest.items[0]._blobUrl = blobUrl;
     }
 
     return { manifest, blobUrl };
@@ -508,5 +384,4 @@ class VirtualManifestFactory {
 }
 
 export const virtualManifestFactory = new VirtualManifestFactory();
-
 export default virtualManifestFactory;

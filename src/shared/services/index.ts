@@ -1,83 +1,11 @@
-/**
- * Shared Services
- *
- * FSD Location: src/shared/services/
- *
- * Domain-agnostic services used across the application.
- * These should contain zero domain-specific logic.
- */
-
-// ============================================================================
-// Logging Service
-// ============================================================================
-export {
-  logger,
-  appLog,
-  vaultLog,
-  storageLog,
-  networkLog,
-  uiLog,
-  workerLog,
-} from './logger';
-export type { LogLevel, LogGroup, LogEntry } from './logger';
-
-// ============================================================================
-// Storage Service
-// ============================================================================
-export { storage } from './storage';
-export type { TileManifest, TileStorage } from './storage';
-
-// ============================================================================
-// Authentication Service
-// ============================================================================
-export { authService } from './authService';
-export type { AuthService } from './authService';
-
-// ============================================================================
-// Content State API
-// ============================================================================
-export { contentStateService } from './contentState';
-export type { ContentState } from './contentState';
-
-// ============================================================================
-// Remote Loader (IIIF Resource Fetching)
-// ============================================================================
-export {
-  fetchRemoteManifest,
-  fetchRemoteResource,
-  requiresAuth
-} from './remoteLoader';
-export type { RemoteResource, FetchResult, FetchOptions } from './remoteLoader';
-
-// ============================================================================
-// Search Service
-// ============================================================================
-export { searchService } from './searchService';
-
-// ============================================================================
-// Field Registry
-// ============================================================================
-export { fieldRegistry } from './fieldRegistry';
-
-// ============================================================================
-// Provenance Service
-// ============================================================================
-export { provenanceService } from './provenanceService';
-
-// ============================================================================
-// Metadata Services
-// ============================================================================
-export { extractMetadata } from './metadataHarvester';
-export {
-  exportMetadataTemplate,
-  previewMetadataTemplate,
-  getVocabularyOptions,
-  downloadMetadataTemplate
-} from './metadataTemplateService';
-export type { MetadataTemplateOptions, MetadataTemplateExport } from './metadataTemplateService';
-
-// ============================================================================
-// Guidance Service
-// ============================================================================
-export { guidance } from './guidanceService';
-export type { GuidanceTopic } from './guidanceService';
+export { provenanceService, type PropertyChange, type ProvenanceEntry } from './provenanceService';
+export { activityStreamService, type ActivityEntry } from './activityStream';
+export { vaultLog, uiLog, networkLog, ingestLog, storageLog } from './logger';
+export { contentStateService, type ContentState, type ViewportState, type SpecificResource, type PartOf, type Selector, type PointSelector, type FragmentSelector, type ImageApiSelector, type AnnotationSelector } from './contentState';
+export { guidance, type GuidanceTopic } from './guidanceService';
+export { navPlaceService, type NavPlace, type GeoFeature, type GeoGeometry, type GeoProperties, type LatLng, type LatLngBounds, type GeocodedLocation } from './navPlaceService';
+export { OPFSStorage } from './opfsStorage';
+export { exportMetadataTemplate, previewMetadataTemplate, getVocabularyOptions, downloadMetadataTemplate, type MetadataTemplateOptions, type MetadataTemplateExport, type VocabularyOption } from './metadataTemplateService';
+export { virtualManifestFactory, type MediaInfo, type VirtualManifestOptions } from './virtualManifestFactory';
+export { specBridge, detectVersion, needsUpgrade, upgradeToV3, importManifest, getVersionInfo, type IIIFVersion } from './specBridge';
+export { authService, type AuthService, type AuthServiceType, type AuthProfile, type ProbeResponse, type ResourceSubstitute, type TokenResponse, type TokenError, type AuthState } from './authService';

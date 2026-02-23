@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+/*
+ * Field Studio Design Tokens — Tailwind v4 @theme
+ *
+ * Ported from tailwind.config.js (React codebase).
+ * Neobrutalist palette + theme-aware semantic aliases.
+ */
+
+@theme {
+  /* ── Neobrutalist Palette ── */
+  --color-nb-black: #000000;
+  --color-nb-white: #FFFFFF;
+  --color-nb-cream: #FFF8E7;
+  --color-nb-blue: #0055FF;
+  --color-nb-red: #FF3333;
+  --color-nb-yellow: #FFE500;
+  --color-nb-green: #00CC66;
+  --color-nb-pink: #FF66B2;
+  --color-nb-orange: #FF8800;
+  --color-nb-purple: #8833FF;
+
+  /* Legacy IIIF colors */
+  --color-iiif-blue: #005596;
+  --color-iiif-red: #E31C24;
+
+  /* Mode accent (CSS variable driven) */
+  --color-mode-accent: var(--nb-accent);
+
+  /* ── Theme-aware semantic aliases ── */
+  --color-theme-surface: var(--theme-surface-primary);
+  --color-theme-surface-alt: var(--theme-surface-secondary);
+  --color-theme-text: var(--theme-text-primary);
+  --color-theme-text-muted: var(--theme-text-muted);
+  --color-theme-text-inverse: var(--theme-text-inverse);
+  --color-theme-accent: var(--theme-accent-primary);
+  --color-theme-accent-subtle: var(--theme-accent-subtle);
+  --color-theme-border: var(--theme-border-default);
+  --color-theme-border-subtle: var(--theme-border-subtle);
+  --color-theme-border-focus: var(--theme-border-focus);
+  --color-theme-warning: var(--theme-warning-color);
+  --color-theme-error: var(--theme-error-color);
+  --color-theme-input-bg: var(--theme-input-bg);
+  --color-theme-input-border: var(--theme-input-border);
+  --color-theme-input-placeholder: var(--theme-input-placeholder);
+
+  /* ── Fonts ── */
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ── Border Radius — all 0 (neobrutalist) ── */
+  --radius-sm: 0;
+  --radius: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-full: 9999px;
+
+  /* ── Box Shadows ── */
+  --shadow-brutal-sm: 2px 2px 0 0 #000;
+  --shadow-brutal: 4px 4px 0 0 #000;
+  --shadow-brutal-lg: 6px 6px 0 0 #000;
+  --shadow-brutal-active: 1px 1px 0 0 #000;
+  --shadow-brutal-field-sm: 2px 2px 0 0 #FFE500;
+  --shadow-brutal-field: 4px 4px 0 0 #FFE500;
+  --shadow-brutal-field-lg: 6px 6px 0 0 #FFE500;
+  --shadow-brutal-field-active: 1px 1px 0 0 #FFE500;
+  --shadow-theme-sm: var(--theme-shadow-sm);
+  --shadow-theme: var(--theme-shadow-base);
+  --shadow-theme-lg: var(--theme-shadow-lg);
+  --shadow-theme-active: var(--theme-shadow-active);
+
+  /* ── Spacing ── */
+  --spacing-header: var(--header-h);
+  --spacing-header-compact: var(--header-compact-h);
+  --spacing-status-bar: var(--status-bar-h);
+  --spacing-inspector: var(--inspector-w);
+  --spacing-filmstrip: var(--filmstrip-w);
+
+  /* ── Font Sizes (neobrutalist type scale) ── */
+  --text-nb-micro: 0.5625rem;
+  --text-nb-micro--line-height: 1.3;
+  --text-nb-caption: 0.625rem;
+  --text-nb-caption--line-height: 1.3;
+  --text-nb-xs: 0.75rem;
+  --text-nb-xs--line-height: 1.2;
+  --text-nb-sm: 0.875rem;
+  --text-nb-sm--line-height: 1.3;
+  --text-nb-base: 1rem;
+  --text-nb-base--line-height: 1.4;
+  --text-nb-lg: 1.25rem;
+  --text-nb-lg--line-height: 1.3;
+  --text-nb-xl: 1.5rem;
+  --text-nb-xl--line-height: 1.2;
+  --text-nb-2xl: 2rem;
+  --text-nb-2xl--line-height: 1.1;
+  --text-nb-3xl: 2.5rem;
+  --text-nb-3xl--line-height: 1.0;
+}
+
+/* ── Neobrutalist Utility Classes ── */
+
+@utility nb-border {
+  border: 2px solid #000;
+}
+@utility nb-border-4 {
+  border: 4px solid #000;
+}
+@utility nb-shadow {
+  box-shadow: 4px 4px 0 0 #000;
+}
+@utility nb-shadow-sm {
+  box-shadow: 2px 2px 0 0 #000;
+}
+@utility nb-shadow-lg {
+  box-shadow: 6px 6px 0 0 #000;
+}
+@utility nb-border-theme {
+  border: 2px solid var(--theme-border-default);
+}
+@utility nb-border-theme-4 {
+  border: 4px solid var(--theme-border-default);
+}
+@utility nb-shadow-theme {
+  box-shadow: var(--theme-shadow-base);
+}
+@utility nb-shadow-theme-sm {
+  box-shadow: var(--theme-shadow-sm);
+}
+@utility nb-shadow-theme-lg {
+  box-shadow: var(--theme-shadow-lg);
+}
+@utility nb-label {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+@utility nb-label-sm {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+@utility nb-border-subtle {
+  border: var(--theme-border-width-thin) solid var(--theme-border-subtle);
+}

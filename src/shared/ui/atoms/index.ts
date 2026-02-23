@@ -1,67 +1,58 @@
 /**
- * Atoms: UI Primitives
+ * Atoms: UI Primitives (Svelte 5)
  *
- * Re-exports indivisible UI elements from the existing ui/primitives/ directory.
- * These are zero-state, zero-logic components that form the foundation of molecules.
+ * Re-exports indivisible UI elements. These are zero-state, zero-logic
+ * components that form the foundation of molecules.
  *
  * ATOMIC DESIGN PRINCIPLES:
- * - Atoms are the smallest building blocks - they cannot be broken down further
- * - Atoms have ZERO business logic and ZERO state
- * - Atoms only receive props and render based on design tokens
- * - Atoms are never imported directly in application code - always composed into Molecules first
- *
- * COMPLIANCE CHECKLIST:
- * ✅ No useState, useEffect, or other React hooks
- * ✅ No context consumption (useContext, useAppSettings, etc.)
- * ✅ No domain knowledge (IIIF, vault, etc.)
- * ✅ Pure props-driven rendering
- * ✅ Styling from design tokens only
+ * - Atoms are the smallest building blocks
+ * - Zero business logic, zero state
+ * - Props-only rendering from design tokens
+ * - Never imported directly in app code — composed into Molecules
  */
 
-// ============================================================================
-// Button Atom - Interactive element for user actions
-// ============================================================================
-export { Button } from '@/ui/primitives/Button';
-export type { ButtonProps, ButtonVariant, ButtonSize } from '@/ui/primitives/Button';
+// Types (from .ts file — visible to both tsc and svelte-check)
+export type { ButtonVariant, ButtonSize, InputSize, TagColor } from './types';
 
-// ============================================================================
-// Input Atom - Text entry primitive
-// ============================================================================
-export { Input } from '@/ui/primitives/Input';
-export type { InputProps, InputSize } from '@/ui/primitives/Input';
+// Button
+export { default as Button } from './Button.svelte';
 
-// ============================================================================
-// Icon Atom - Visual indicator using Material Icons
-// ============================================================================
-export { Icon } from '@/src/shared/ui/atoms/Icon';
-export type { IconProps } from '@/src/shared/ui/atoms/Icon';
+// Input
+export { default as Input } from './Input.svelte';
 
-// ============================================================================
-// Card Atom - Elevated surface container
-// ============================================================================
-export { Card } from '@/ui/primitives/Card';
-export type { CardProps } from '@/ui/primitives/Card';
+// Icon
+export { default as Icon } from './Icon.svelte';
 
-// ============================================================================
-// TabButtonBase Atom - Tab button for tabbed interfaces
-// ============================================================================
-export { TabButtonBase } from './TabButtonBase';
-export type { TabButtonBaseProps } from './TabButtonBase';
+// Card
+export { default as Card } from './Card.svelte';
 
-// ============================================================================
-// StepIndicator Atom - Step indicator for wizards and multi-step flows
-// ============================================================================
-export { StepIndicator } from './StepIndicator';
-export type { StepIndicatorProps } from './StepIndicator';
+// Tag
+export { default as Tag } from './Tag.svelte';
 
-// ============================================================================
-// StepConnector Atom - Visual connector between steps
-// ============================================================================
-export { StepConnector } from './StepConnector';
-export type { StepConnectorProps } from './StepConnector';
+// Divider
+export { default as Divider } from './Divider.svelte';
 
-// ============================================================================
-// ZoomControl Atom - Zoom in/out/reset controls
-// ============================================================================
-export { ZoomControl } from './ZoomControl';
-export type { ZoomControlProps } from './ZoomControl';
+// Panel
+export { default as Panel } from './Panel.svelte';
+
+// TabButtonBase
+export { default as TabButtonBase } from './TabButtonBase.svelte';
+
+// StepIndicator
+export { default as StepIndicator } from './StepIndicator.svelte';
+
+// StepConnector
+export { default as StepConnector } from './StepConnector.svelte';
+
+// ZoomControl
+export { default as ZoomControl } from './ZoomControl.svelte';
+
+// TextArea
+export { default as TextArea } from './TextArea.svelte';
+
+// Select
+export { default as Select } from './Select.svelte';
+
+// SkipLink
+export { default as SkipLink } from './SkipLink.svelte';
+export { default as SkipLinks } from './SkipLinks.svelte';

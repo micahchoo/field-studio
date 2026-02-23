@@ -1,23 +1,38 @@
 /**
- * Annotation Tool Model
+ * Annotation Tool Model -- Pure TS (no framework imports)
  *
- * Domain-specific logic for annotation tools including:
+ * Domain-specific logic for annotation tools:
  * - Spatial annotations (polygon, rectangle, freehand) for images
- * - Time-based annotations for audio/video content
+ * - Time-based annotations (W3C Media Fragments) for audio/video
  *
- * ATOMIC DESIGN COMPLIANCE:
- * - Pure business logic, no UI concerns
- * - Reactive hooks for drawing state
- * - SVG path utilities for spatial annotations
- * - Media fragment utilities for time-based annotations
+ * This file contains ONLY types and pure utility functions.
+ * The stateful annotation tool logic lives in annotation.svelte.ts
+ * as Svelte 5 reactive classes (Cat 2 migration).
+ *
+ * SOURCE: React codebase src/features/viewer/model/annotation.ts
+ * MIGRATION: Types + pure functions copied verbatim.
+ *            UseAnnotationReturn / UseTimeAnnotationReturn REMOVED
+ *            (hook-specific interfaces; replaced by class APIs in .svelte.ts)
  *
  * @see https://www.w3.org/TR/media-frags/ - W3C Media Fragments URI 1.0
  * @see https://iiif.io/api/annex/oai/#temporal-media - IIIF Temporal Annotation
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
-import type { Point } from '@/src/shared/constants/viewport';
+
+// ============================================================================
+// Point type (locally defined; matches shared/constants/viewport.Point)
+// ============================================================================
+
+/**
+ * 2D point used for spatial annotations.
+ * Defined locally to avoid circular dependency on viewport constants.
+ * Matches the canonical Point from @/src/shared/constants/viewport.
+ */
+export interface Point {
+  x: number;
+  y: number;
+}
 
 // ============================================================================
 // Types
@@ -40,7 +55,7 @@ export interface TimeRange {
   end?: number;
 }
 
-/** State for time-based annotation tool */
+/** State snapshot for time-based annotation tool */
 export interface TimeAnnotationState {
   /** Current time range being defined */
   timeRange: TimeRange | null;
@@ -54,6 +69,7 @@ export interface TimeAnnotationState {
   motivation: 'commenting' | 'tagging' | 'describing';
 }
 
+/** State snapshot for spatial annotation tool */
 export interface AnnotationState {
   mode: DrawingMode;
   points: Point[];
@@ -67,51 +83,51 @@ export interface AnnotationState {
   offset: { x: number; y: number };
 }
 
-export interface UseAnnotationReturn extends AnnotationState {
-  // Refs
-  containerRef: React.RefObject<HTMLDivElement>;
-  imageRef: React.RefObject<HTMLImageElement>;
-  
-  // Computed
-  canClose: boolean;
-  canSave: boolean;
-  existingSvgAnnotations: IIIFAnnotation[];
-  
-  // Actions
-  setMode: (mode: DrawingMode) => void;
-  setAnnotationText: (text: string) => void;
-  setMotivation: (mot: 'commenting' | 'tagging' | 'describing') => void;
-  setShowExisting: (show: boolean) => void;
-  handleMouseMove: (e: React.MouseEvent) => void;
-  handleClick: (e: React.MouseEvent) => void;
-  handleMouseDown: (e: React.MouseEvent) => void;
-  handleMouseUp: () => void;
-  handleUndo: () => void;
-  handleClear: () => void;
-  handleSave: () => IIIFAnnotation | null;
-  getCanvasCoords: (e: React.MouseEvent | MouseEvent) => Point;
-  updateScale: (canvas: IIIFCanvas) => void;
-}
-
 // ============================================================================
-// SVG Utilities
+// SVG Utilities (pure functions)
 // ============================================================================
 
+/**
+ * Convert a sequence of points to an SVG path `d` attribute string.
+ *
+ * @param points - Ordered vertices of the shape
+ * @param closed - Whether to append `Z` (close the path). Default true.
+ * @returns SVG path data string (e.g., "M10,20 L30,40 Z")
+ */
 export const pointsToSvgPath = (points: Point[], closed: boolean = true): string => {
   if (points.length < 2) return '';
-  const pathParts = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`);
+  const pathParts = points.map((p, i) =>
+    `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`
+  );
   if (closed && points.length >= 3) pathParts.push('Z');
   return pathParts.join(' ');
 };
 
+/**
+ * Create an SVG selector value for a IIIF annotation target.
+ * Wraps points in a full `<svg>` element with a viewBox matching the canvas.
+ *
+ * @param points       - Polygon vertices in canvas coordinate space
+ * @param canvasWidth  - Width of the IIIF canvas
+ * @param canvasHeight - Height of the IIIF canvas
+ * @returns Complete SVG string suitable for SvgSelector.value
+ */
 export const createSvgSelector = (
   points: Point[],
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
 ): string => {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><path d="${pointsToSvgPath(points, true)}"/></svg>`;
 };
 
+/**
+ * Parse an SVG selector value back into an array of points.
+ * Extracts the `d` attribute from the first `<path>` element
+ * and converts M/L commands into Point objects.
+ *
+ * @param svgValue - SVG string from SvgSelector.value
+ * @returns Parsed points (empty array if parsing fails)
+ */
 export const parseSvgSelector = (svgValue: string): Point[] => {
   const points: Point[] = [];
   const pathMatch = svgValue.match(/d="([^"]+)"/);
@@ -129,7 +145,15 @@ export const parseSvgSelector = (svgValue: string): Point[] => {
   return points;
 };
 
-export const getBoundingBox = (points: Point[]) => {
+/**
+ * Calculate the axis-aligned bounding box of a set of points.
+ *
+ * @param points - Array of 2D points
+ * @returns Bounding box as {x, y, width, height}
+ */
+export const getBoundingBox = (
+  points: Point[],
+): { x: number; y: number; width: number; height: number } => {
   if (points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
@@ -142,16 +166,19 @@ export const getBoundingBox = (points: Point[]) => {
 };
 
 // ============================================================================
-// Time Fragment Utilities (W3C Media Fragments)
+// Time Fragment Utilities (W3C Media Fragments URI 1.0)
 // ============================================================================
 
 /**
- * Create a media fragment selector for time-based annotations
- * Uses W3C Media Fragments URI 1.0 specification
+ * Create a media fragment selector for time-based annotations.
+ * Uses W3C Media Fragments URI 1.0 specification.
+ *
  * @see https://www.w3.org/TR/media-frags/
+ * @param timeRange - Start and optional end time in seconds
+ * @returns FragmentSelector object for IIIF annotation target
  */
 export const createTimeFragmentSelector = (
-  timeRange: TimeRange
+  timeRange: TimeRange,
 ): { type: 'FragmentSelector'; conformsTo: string; value: string } => {
   const value = timeRange.end !== undefined
     ? `t=${timeRange.start.toFixed(2)},${timeRange.end.toFixed(2)}`
@@ -165,11 +192,13 @@ export const createTimeFragmentSelector = (
 };
 
 /**
- * Parse a media fragment selector to extract time range
+ * Parse a media fragment selector to extract time range.
  * Handles formats: t=10, t=10,20, t=10.5,20.75
+ *
+ * @param value - Fragment selector value string
+ * @returns Parsed TimeRange, or null if not a valid time fragment
  */
 export const parseTimeFragmentSelector = (value: string): TimeRange | null => {
-  // Match temporal fragment: t=start or t=start,end
   const match = value.match(/t=(\d+(?:\.\d+)?)(,(\d+(?:\.\d+)?))?/);
   if (!match) return null;
 
@@ -180,7 +209,10 @@ export const parseTimeFragmentSelector = (value: string): TimeRange | null => {
 };
 
 /**
- * Format time for display (MM:SS.ms or HH:MM:SS.ms)
+ * Format time for display (MM:SS.ms or HH:MM:SS.ms).
+ *
+ * @param seconds - Time value in seconds
+ * @returns Human-readable time string
  */
 export const formatTimeForDisplay = (seconds: number): string => {
   const h = Math.floor(seconds / 3600);
@@ -195,13 +227,19 @@ export const formatTimeForDisplay = (seconds: number): string => {
 };
 
 /**
- * Create a IIIF-compliant time-based annotation
+ * Create a IIIF-compliant time-based annotation.
+ *
+ * @param canvasId   - Target canvas ID
+ * @param timeRange  - Time range for the annotation
+ * @param text       - Annotation body text
+ * @param motivation - W3C motivation (default: 'commenting')
+ * @returns Complete IIIFAnnotation object
  */
 export const createTimeAnnotation = (
   canvasId: string,
   timeRange: TimeRange,
   text: string,
-  motivation: 'commenting' | 'tagging' | 'describing' = 'commenting'
+  motivation: 'commenting' | 'tagging' | 'describing' = 'commenting',
 ): IIIFAnnotation => {
   return {
     id: `${canvasId}/annotation/time-${Date.now()}`,
@@ -221,7 +259,10 @@ export const createTimeAnnotation = (
 };
 
 /**
- * Check if an annotation is time-based
+ * Check if an annotation is time-based (has a temporal fragment selector).
+ *
+ * @param annotation - IIIF annotation to inspect
+ * @returns true if the annotation targets a time range
  */
 export const isTimeBasedAnnotation = (annotation: IIIFAnnotation): boolean => {
   const target = annotation.target as { selector?: { type?: string; value?: string } };
@@ -242,10 +283,16 @@ export const isTimeBasedAnnotation = (annotation: IIIFAnnotation): boolean => {
 };
 
 /**
- * Extract time range from a time-based annotation
+ * Extract time range from a time-based annotation.
+ *
+ * @param annotation - IIIF annotation with temporal target
+ * @returns Parsed TimeRange, or null if not time-based
  */
 export const getAnnotationTimeRange = (annotation: IIIFAnnotation): TimeRange | null => {
-  const target = annotation.target as { selector?: { type?: string; value?: string }; source?: string };
+  const target = annotation.target as {
+    selector?: { type?: string; value?: string };
+    source?: string;
+  };
 
   // Check FragmentSelector first
   if (target?.selector?.type === 'FragmentSelector' && target.selector.value) {
@@ -267,410 +314,25 @@ export const getAnnotationTimeRange = (annotation: IIIFAnnotation): TimeRange | 
 // Path Simplification
 // ============================================================================
 
+/**
+ * Simplify a freehand path by removing points that are closer
+ * than `tolerance` to the previous retained point.
+ * Uses a simple distance-based decimation (not Ramer-Douglas-Peucker).
+ *
+ * @param pts       - Input point array from freehand drawing
+ * @param tolerance - Minimum distance between retained points (pixels)
+ * @returns Simplified point array (always includes first and last)
+ */
 export const simplifyPath = (pts: Point[], tolerance: number): Point[] => {
   if (pts.length <= 2) return pts;
   const result: Point[] = [pts[0]];
   for (let i = 1; i < pts.length - 1; i++) {
     const prev = result[result.length - 1];
     const dist = Math.sqrt(
-      Math.pow(pts[i].x - prev.x, 2) + Math.pow(pts[i].y - prev.y, 2)
+      Math.pow(pts[i].x - prev.x, 2) + Math.pow(pts[i].y - prev.y, 2),
     );
     if (dist > tolerance) result.push(pts[i]);
   }
   result.push(pts[pts.length - 1]);
   return result;
-};
-
-// ============================================================================
-// Hook
-// ============================================================================
-
-export const useAnnotation = (
-  canvas: IIIFCanvas,
-  existingAnnotations: IIIFAnnotation[],
-  onCreateAnnotation: (annotation: IIIFAnnotation) => void,
-  onClose: () => void
-): UseAnnotationReturn => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-
-  const [mode, setModeState] = useState<DrawingMode>('polygon');
-  const [points, setPoints] = useState<Point[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [annotationText, setAnnotationText] = useState('');
-  const [motivation, setMotivation] = useState<'commenting' | 'tagging' | 'describing'>('commenting');
-  const [showExisting, setShowExisting] = useState(true);
-  const [freehandPoints, setFreehandPoints] = useState<Point[]>([]);
-  const [cursorPoint, setCursorPoint] = useState<Point | null>(null);
-  const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-  // Calculate fit-to-screen scale
-  const updateScale = useCallback((c: IIIFCanvas) => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const padding = 48;
-    const scaleX = (containerRect.width - padding) / c.width;
-    const scaleY = (containerRect.height - padding) / c.height;
-    const fitScale = Math.min(scaleX, scaleY, 1);
-
-    setScale(fitScale);
-    setOffset({
-      x: (containerRect.width - c.width * fitScale) / 2,
-      y: (containerRect.height - c.height * fitScale) / 2,
-    });
-  }, []);
-
-  // Get canvas coordinates from mouse event
-  const getCanvasCoords = useCallback(
-    (e: React.MouseEvent | MouseEvent): Point => {
-      const container = containerRef.current;
-      if (!container) return { x: 0, y: 0 };
-
-      const rect = container.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      return {
-        x: (mouseX - offset.x) / scale,
-        y: (mouseY - offset.y) / scale,
-      };
-    },
-    [scale, offset]
-  );
-
-  // Mouse handlers
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      const point = getCanvasCoords(e);
-      setCursorPoint(point);
-
-      if (mode === 'freehand' && isDrawing) {
-        setFreehandPoints((prev) => [...prev, point]);
-      }
-    },
-    [mode, isDrawing, getCanvasCoords]
-  );
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0 || mode === 'select') return;
-
-      const point = getCanvasCoords(e);
-
-      if (mode === 'polygon') {
-        // Check if clicking near first point to close
-        if (points.length >= 3) {
-          const first = points[0];
-          const dist = Math.sqrt(
-            Math.pow(point.x - first.x, 2) + Math.pow(point.y - first.y, 2)
-          );
-          if (dist < 15) {
-            setIsDrawing(false);
-            return;
-          }
-        }
-        setPoints((prev) => [...prev, point]);
-        setIsDrawing(true);
-      } else if (mode === 'rectangle') {
-        if (points.length === 0) {
-          setPoints([point]);
-          setIsDrawing(true);
-        } else if (points.length === 1) {
-          const start = points[0];
-          setPoints([
-            start,
-            { x: point.x, y: start.y },
-            point,
-            { x: start.x, y: point.y },
-          ]);
-          setIsDrawing(false);
-        }
-      }
-    },
-    [mode, points, getCanvasCoords]
-  );
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (mode === 'freehand' && e.button === 0) {
-        const point = getCanvasCoords(e);
-        setFreehandPoints([point]);
-        setIsDrawing(true);
-      }
-    },
-    [mode, getCanvasCoords]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    if (mode === 'freehand' && isDrawing) {
-      // Simplify freehand path
-      if (freehandPoints.length > 2) {
-        const simplified = simplifyPath(freehandPoints, 3);
-        setPoints(simplified);
-      }
-      setFreehandPoints([]);
-      setIsDrawing(false);
-    }
-  }, [mode, isDrawing, freehandPoints]);
-
-  const handleUndo = useCallback(() => {
-    setPoints((prev) => {
-      const newPoints = prev.slice(0, -1);
-      if (newPoints.length < 2) setIsDrawing(false);
-      return newPoints;
-    });
-  }, []);
-
-  const handleClear = useCallback(() => {
-    setPoints([]);
-    setFreehandPoints([]);
-    setIsDrawing(false);
-  }, []);
-
-  const handleSave = useCallback((): IIIFAnnotation | null => {
-    if (points.length < 3) return null;
-    if (!annotationText.trim()) return null;
-
-    const annotation: IIIFAnnotation = {
-      id: `${canvas.id}/annotation/${Date.now()}`,
-      type: 'Annotation',
-      motivation,
-      body: {
-        type: 'TextualBody',
-        value: annotationText.trim(),
-        format: 'text/plain',
-      },
-      target: {
-        type: 'SpecificResource',
-        source: canvas.id,
-        selector: {
-          type: 'SvgSelector',
-          value: createSvgSelector(points, canvas.width, canvas.height),
-        },
-      },
-    };
-
-    onCreateAnnotation(annotation);
-    handleClear();
-    setAnnotationText('');
-    return annotation;
-  }, [points, annotationText, motivation, canvas, onCreateAnnotation, handleClear]);
-
-  // Set mode with clear
-  const setMode = useCallback(
-    (newMode: DrawingMode) => {
-      setModeState(newMode);
-      handleClear();
-    },
-    [handleClear]
-  );
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isDrawing) handleClear();
-        else onClose();
-      } else if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault();
-        handleUndo();
-      } else if (e.key === 'Enter' && points.length >= 3) {
-        setIsDrawing(false);
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isDrawing, points.length, onClose, handleClear, handleUndo]);
-
-  // Filter existing SVG annotations
-  const existingSvgAnnotations = existingAnnotations.filter((anno) => {
-    const selector = (anno.target as any)?.selector;
-    return selector?.type === 'SvgSelector';
-  });
-
-  // Check if can close polygon
-  const canClose =
-    points.length >= 3 &&
-    cursorPoint &&
-    (() => {
-      const first = points[0];
-      const dist = Math.sqrt(
-        Math.pow((cursorPoint?.x || 0) - first.x, 2) +
-          Math.pow((cursorPoint?.y || 0) - first.y, 2)
-      );
-      return dist < 15;
-    })();
-
-  const canSave = points.length >= 3 && annotationText.trim().length > 0;
-
-  return {
-    mode,
-    points,
-    isDrawing,
-    annotationText,
-    motivation,
-    showExisting,
-    freehandPoints,
-    cursorPoint,
-    scale,
-    offset,
-    containerRef,
-    imageRef,
-    canClose,
-    canSave,
-    existingSvgAnnotations,
-    setMode,
-    setAnnotationText,
-    setMotivation,
-    setShowExisting,
-    handleMouseMove,
-    handleClick,
-    handleMouseDown,
-    handleMouseUp,
-    handleUndo,
-    handleClear,
-    handleSave,
-    getCanvasCoords,
-    updateScale,
-  };
-};
-
-// ============================================================================
-// Time-Based Annotation Hook
-// ============================================================================
-
-export interface UseTimeAnnotationReturn extends TimeAnnotationState {
-  /** Whether the tool is active */
-  isActive: boolean;
-  /** Can save annotation (has range and text) */
-  canSave: boolean;
-  /** Existing time-based annotations */
-  existingTimeAnnotations: IIIFAnnotation[];
-  /** Set start time */
-  setStartTime: (time: number) => void;
-  /** Set end time */
-  setEndTime: (time: number) => void;
-  /** Set time range directly */
-  setTimeRange: (range: TimeRange | null) => void;
-  /** Set annotation text */
-  setAnnotationText: (text: string) => void;
-  /** Set motivation */
-  setMotivation: (mot: 'commenting' | 'tagging' | 'describing') => void;
-  /** Clear current selection */
-  handleClear: () => void;
-  /** Save current annotation */
-  handleSave: () => IIIFAnnotation | null;
-  /** Start selection mode */
-  startSelecting: () => void;
-  /** Cancel selection */
-  cancelSelecting: () => void;
-}
-
-/**
- * Hook for managing time-based annotations on audio/video content
- */
-export const useTimeAnnotation = (
-  canvasId: string,
-  duration: number,
-  existingAnnotations: IIIFAnnotation[],
-  onCreateAnnotation: (annotation: IIIFAnnotation) => void
-): UseTimeAnnotationReturn => {
-  const [isActive, setIsActive] = useState(false);
-  const [timeRange, setTimeRangeState] = useState<TimeRange | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [hasStart, setHasStart] = useState(false);
-  const [annotationText, setAnnotationText] = useState('');
-  const [motivation, setMotivation] = useState<'commenting' | 'tagging' | 'describing'>('commenting');
-
-  // Filter existing time-based annotations for this canvas
-  const existingTimeAnnotations = existingAnnotations.filter(isTimeBasedAnnotation);
-
-  const setTimeRange = useCallback((range: TimeRange | null) => {
-    setTimeRangeState(range);
-    if (range) {
-      setHasStart(true);
-    }
-  }, []);
-
-  const setStartTime = useCallback((time: number) => {
-    const clampedTime = Math.max(0, Math.min(time, duration));
-    setTimeRangeState(prev => ({
-      start: clampedTime,
-      end: prev?.end !== undefined && prev.end > clampedTime ? prev.end : undefined,
-    }));
-    setHasStart(true);
-    setIsSelecting(true);
-  }, [duration]);
-
-  const setEndTime = useCallback((time: number) => {
-    if (!hasStart) return;
-
-    const clampedTime = Math.max(0, Math.min(time, duration));
-    setTimeRangeState(prev => {
-      if (!prev) return null;
-      // Ensure end is after start
-      const start = Math.min(prev.start, clampedTime);
-      const end = Math.max(prev.start, clampedTime);
-      return { start, end };
-    });
-    setIsSelecting(false);
-  }, [hasStart, duration]);
-
-  const handleClear = useCallback(() => {
-    setTimeRangeState(null);
-    setIsSelecting(false);
-    setHasStart(false);
-    setAnnotationText('');
-  }, []);
-
-  const startSelecting = useCallback(() => {
-    setIsActive(true);
-    setIsSelecting(true);
-    handleClear();
-  }, [handleClear]);
-
-  const cancelSelecting = useCallback(() => {
-    setIsActive(false);
-    handleClear();
-  }, [handleClear]);
-
-  const handleSave = useCallback((): IIIFAnnotation | null => {
-    if (!timeRange || !annotationText.trim()) return null;
-
-    const annotation = createTimeAnnotation(
-      canvasId,
-      timeRange,
-      annotationText,
-      motivation
-    );
-
-    onCreateAnnotation(annotation);
-    handleClear();
-    return annotation;
-  }, [timeRange, annotationText, motivation, canvasId, onCreateAnnotation, handleClear]);
-
-  const canSave = timeRange !== null && annotationText.trim().length > 0;
-
-  return {
-    isActive,
-    timeRange,
-    isSelecting,
-    hasStart,
-    annotationText,
-    motivation,
-    canSave,
-    existingTimeAnnotations,
-    setStartTime,
-    setEndTime,
-    setTimeRange,
-    setAnnotationText,
-    setMotivation,
-    handleClear,
-    handleSave,
-    startSelecting,
-    cancelSelecting,
-  };
 };

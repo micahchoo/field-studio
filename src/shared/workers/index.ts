@@ -1,43 +1,34 @@
-/**
- * Shared Workers
- *
- * FSD Location: src/shared/workers/
- *
- * Web workers for background processing.
- */
+/** Workers -- Stub */
+export function getCompressionWorker(): Worker | null { return null; }
 
-// Note: Workers are typically imported directly by their path, not via barrel exports.
-// This index provides documentation of available workers.
+/** Worker message types for ingest pipeline */
+export interface IngestProgressMessage {
+  type: 'progress';
+  fileId: string;
+  progress: number;
+  stage: string;
+}
 
-/**
- * Ingest Worker - Background file processing
- * Import: new Worker(new URL('./ingest.worker.ts', import.meta.url))
- */
-export type {
-  IngestWorkerRequest,
-  IngestWorkerResponse,
-  InitIngestMessage,
-  ProcessFileMessage,
-  CancelIngestMessage,
-  ProcessNodeMessage,
-  IngestProgressMessage,
-  IngestFileCompleteMessage,
-  IngestNodeCompleteMessage,
-  IngestCompleteMessage,
-  IngestErrorMessage,
-  IngestInitializedMessage,
-} from './ingest.worker';
+export interface IngestFileCompleteMessage {
+  type: 'file-complete';
+  fileId: string;
+  entityId: string;
+}
 
-/**
- * Search Indexer - Background search index building
- * Import: new Worker(new URL('./searchIndexer.ts', import.meta.url))
- *
- * Note: Uses internal message protocol, no exported types.
- */
+export interface IngestCompleteMessage {
+  type: 'complete';
+  totalFiles: number;
+  duration: number;
+}
 
-/**
- * Validation Worker - Background IIIF validation
- * Import: new Worker(new URL('./validation.worker.ts', import.meta.url))
- *
- * Note: Uses internal message protocol, no exported types.
- */
+export interface IngestErrorMessage {
+  type: 'error';
+  fileId?: string;
+  error: string;
+}
+
+export type IngestWorkerResponse =
+  | IngestProgressMessage
+  | IngestFileCompleteMessage
+  | IngestCompleteMessage
+  | IngestErrorMessage;

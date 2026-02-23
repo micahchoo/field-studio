@@ -104,8 +104,6 @@ function denormalizeManifest(state: NormalizedState, id: string): IIIFManifest {
 
 /**
  * Check if an annotation page contains painting annotations.
- * Per IIIF spec, all annotations in a page share the same motivation,
- * so checking only the first annotation is sufficient — O(1) instead of O(n).
  */
 function isPaintingAnnotationPage(state: NormalizedState, pageId: string): boolean {
   const annoIds = state.references[pageId] || [];

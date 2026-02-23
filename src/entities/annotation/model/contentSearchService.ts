@@ -13,9 +13,12 @@
  * @see https://iiif.io/api/search/2.0/
  */
 
-import { IIIFAnnotation, IIIFCanvas, LanguageMap } from '@/src/shared/types';
+import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
 import { IIIF_SPEC } from '@/src/shared/constants';
 import { networkLog } from '@/src/shared/services/logger';
+
+/** LanguageMap alias (Record<string, string[]>) until shared/types exports it */
+type LanguageMap = Record<string, string[]>;
 
 // ============================================================================
 // Types
@@ -138,15 +141,15 @@ class ContentSearchService {
   /**
    * Extract search services from a IIIF resource
    */
-  extractSearchService(resource: any): SearchService | null {
+  extractSearchService(resource: Record<string, unknown>): SearchService | null {
     if (!resource) return null;
 
-    const services = resource.service || resource.services || [];
+    const services = (resource.service || resource.services || []) as Record<string, unknown>[];
     const serviceArray = Array.isArray(services) ? services : [services];
 
     for (const svc of serviceArray) {
-      if (svc.type === 'SearchService2' || svc['@type']?.includes('SearchService')) {
-        return svc as SearchService;
+      if (svc.type === 'SearchService2' || (svc['@type'] as string)?.includes?.('SearchService')) {
+        return svc as unknown as SearchService;
       }
     }
 
@@ -160,7 +163,7 @@ class ContentSearchService {
     if (!searchService.service) return null;
 
     for (const svc of searchService.service) {
-      if (svc.type === 'AutoCompleteService2' || (svc as any)['@type']?.includes('AutoComplete')) {
+      if (svc.type === 'AutoCompleteService2' || (svc as unknown as Record<string, unknown>)['@type']?.toString().includes('AutoComplete')) {
         return svc;
       }
     }

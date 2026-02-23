@@ -1,6 +1,8 @@
+// Pure TypeScript — no Svelte-specific conversion
+
 /**
  * Error Handling Constants
- * 
+ *
  * Error messages, retry configuration, and error patterns.
  */
 
@@ -9,19 +11,12 @@
 // ============================================================================
 
 export const ERROR_MESSAGES = {
-  /** Generic errors */
   generic: 'An unexpected error occurred. Please try again.',
-  /** Network errors */
   network: 'Connection failed. Please check your internet connection.',
-  /** Validation errors */
   validation: 'Please check your input and try again.',
-  /** Not found errors */
   notFound: 'The requested item could not be found.',
-  /** Permission errors */
   permission: 'You do not have permission to perform this action.',
-  /** Timeout errors */
   timeout: 'The operation timed out. Please try again.',
-  /** Parse errors */
   parse: 'Could not process the file. It may be corrupted or in an unexpected format.'
 } as const;
 
@@ -30,11 +25,8 @@ export const ERROR_MESSAGES = {
 // ============================================================================
 
 export const RETRY_CONFIG = {
-  /** Number of retry attempts */
   maxAttempts: 3,
-  /** Delay between retries in ms */
   delayMs: 1000,
-  /** Exponential backoff multiplier */
   backoffMultiplier: 2
 } as const;
 

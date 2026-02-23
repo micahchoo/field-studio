@@ -2,4 +2,4 @@
  * Structure View Organisms
  */
 
-export { StructureTreeView } from './StructureTreeView';
+export { default as StructureTreeView } from './StructureTreeView.svelte';

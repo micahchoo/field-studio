@@ -1,3 +1,4 @@
+// Pure TypeScript — no Svelte-specific conversion
 
 /**
  * Guidance Service
@@ -6,27 +7,22 @@
  * Supports just-in-time contextual help that doesn't repeat.
  */
 
-import { storageLog } from '@/src/shared/services/logger';
+import { storageLog } from './logger';
 
 export type GuidanceTopic =
-  // Legacy intro topics
   | 'intro-archive'
   | 'intro-collections'
   | 'intro-viewer'
-  // Concept explanations
   | 'concept-manifest'
   | 'concept-canvas'
   | 'concept-collection'
   | 'concept-annotation'
   | 'concept-range'
-  // Feature introductions
   | 'feature-ingest'
   | 'feature-export'
   | 'feature-metadata'
   | 'feature-validation'
-  // Validation/error guidance
   | 'validation-error'
-  // Dynamic tooltip/hint IDs (prefixed)
   | `tooltip-${string}`
   | `hint-${string}`;
 
@@ -41,16 +37,18 @@ class GuidanceService {
 
   private load() {
     try {
+      if (typeof localStorage === 'undefined') return;
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         this.seenTopics = new Set(JSON.parse(stored));
       }
-    } catch (e) {
-      storageLog.warn("Failed to load guidance state");
+    } catch {
+      storageLog.warn('Failed to load guidance state');
     }
   }
 
   private save() {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(Array.from(this.seenTopics)));
     this.notifyListeners();
   }
@@ -59,24 +57,15 @@ class GuidanceService {
     this.listeners.forEach(fn => fn());
   }
 
-  /**
-   * Subscribe to changes in guidance state
-   */
   subscribe(callback: () => void): () => void {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
 
-  /**
-   * Check if a topic has been seen
-   */
   hasSeen(topic: GuidanceTopic | string): boolean {
     return this.seenTopics.has(topic);
   }
 
-  /**
-   * Mark a topic as seen
-   */
   markSeen(topic: GuidanceTopic | string) {
     if (!this.seenTopics.has(topic)) {
       this.seenTopics.add(topic);
@@ -84,24 +73,15 @@ class GuidanceService {
     }
   }
 
-  /**
-   * Get count of seen topics (for settings display)
-   */
   getSeenCount(): number {
     return this.seenTopics.size;
   }
 
-  /**
-   * Reset all guidance - show all tips again
-   */
   reset() {
     this.seenTopics.clear();
     this.save();
   }
 
-  /**
-   * Reset only tooltips and hints, keep major introductions
-   */
   resetTooltips() {
     const toRemove: string[] = [];
     this.seenTopics.forEach(topic => {
@@ -113,24 +93,18 @@ class GuidanceService {
     this.save();
   }
 
-  /**
-   * Check if user has completed initial setup
-   */
   hasCompletedSetup(): boolean {
+    if (typeof localStorage === 'undefined') return false;
     return localStorage.getItem('iiif-field-setup-complete') === 'true';
   }
 
-  /**
-   * Mark setup as complete
-   */
   completeSetup() {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem('iiif-field-setup-complete', 'true');
   }
 
-  /**
-   * Reset setup state (for testing)
-   */
   resetSetup() {
+    if (typeof localStorage === 'undefined') return;
     localStorage.removeItem('iiif-field-setup-complete');
   }
 }

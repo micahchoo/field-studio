@@ -146,7 +146,7 @@ function ensureLanguageMap(value: any, defaultValue: string, language: string = 
   }
   if (typeof value === 'object' && !Array.isArray(value)) {
     // Check if it's already a valid language map
-    const hasLanguageKeys = Object.keys(value).some(k => 
+    const hasLanguageKeys = Object.keys(value).some(k =>
       typeof k === 'string' && (k === 'none' || k.includes('-') || /^[a-z]{2}$/.test(k))
     );
     if (hasLanguageKeys && Object.values(value).every(v => Array.isArray(v))) {
@@ -172,7 +172,11 @@ function ensureLanguageMap(value: any, defaultValue: string, language: string = 
  * Get a valid rights URI or default to CC0
  */
 function getDefaultRightsUri(): string {
-  return COMMON_RIGHTS_URIS['CC0 1.0'];
+  // Find CC0 URI in the COMMON_RIGHTS_URIS array
+  const cc0 = (COMMON_RIGHTS_URIS as readonly string[]).find(
+    uri => uri.includes('publicdomain/zero') || uri.includes('cc0')
+  );
+  return cc0 || 'http://creativecommons.org/publicdomain/zero/1.0/';
 }
 
 /**
@@ -182,9 +186,9 @@ function createMinimalProvider(item: IIIFItem): any {
   try {
     const label = getIIIFValue(item.label) || 'Untitled Resource';
     return [{
-      id: generateValidUri('Agent'),
+      id: generateValidUri('http://archive.local/iiif', 'Agent'),
       type: 'Agent',
-      label: createLanguageMap('Unknown Institution')
+      label: createLanguageMap('Unknown Institution', 'none')
     }];
   } catch (e) {
     return [{
@@ -211,8 +215,8 @@ function createMinimalThumbnail(): any[] {
  */
 function createMinimalRequiredStatement(): { label: Record<string, string[]>; value: Record<string, string[]> } {
   return {
-    label: createLanguageMap('Attribution'),
-    value: createLanguageMap('Provided by Example Institution')
+    label: createLanguageMap('Attribution', 'none'),
+    value: createLanguageMap('Provided by Example Institution', 'none')
   };
 }
 
@@ -239,7 +243,7 @@ function validateItemStructure(item: IIIFItem): { valid: boolean; error?: string
 /**
  * Attempt to automatically fix a validation issue on an item.
  * Returns a new item with the fix applied, or null if the issue cannot be auto-fixed.
- * 
+ *
  * This function is wrapped in comprehensive error handling to prevent crashes
  * during batch healing operations.
  */
@@ -248,7 +252,7 @@ export function healIssue(item: IIIFItem, issue: ValidationIssue): HealResult {
   if (!item) {
     return { success: false, error: 'Cannot heal null item' };
   }
-  
+
   if (!issue) {
     return { success: false, error: 'Cannot heal without issue' };
   }
@@ -301,9 +305,9 @@ export function healIssue(item: IIIFItem, issue: ValidationIssue): HealResult {
     return result;
   } catch (error) {
     vaultLog.error('[ValidationHealer] Unexpected error during healing:', error instanceof Error ? error : undefined);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error during healing' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during healing'
     };
   }
 }
@@ -329,7 +333,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // Missing or invalid ID
   if (msg.includes('missing required field: id') || msg.includes('id is required')) {
     if (!healed.id) {
-      healed.id = generateValidUri(healed.type || 'Resource');
+      healed.id = generateValidUri('http://archive.local/iiif', healed.type || 'Resource');
     }
     return { success: true, updatedItem: healed, message: 'Generated valid ID' };
   }
@@ -375,8 +379,8 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
     // Label must be a language map
     if (msg.includes('must be a language map') || msg.includes('language map')) {
-      const labelText = typeof healed.label === 'string' 
-        ? healed.label 
+      const labelText = typeof healed.label === 'string'
+        ? healed.label
         : (healed.id ? healed.id.split('/').pop() : 'Untitled');
       healed.label = createLanguageMap(labelText || 'Untitled', 'none');
       return { success: true, updatedItem: healed, message: 'Converted label to language map' };
@@ -735,7 +739,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 /**
  * Attempt to heal multiple issues on an item.
  * Returns the healed item with all applicable fixes applied.
- * 
+ *
  * This function applies fixes sequentially, updating the item after each fix
  * to ensure subsequent fixes operate on the updated state.
  */
@@ -793,7 +797,7 @@ export function healAllIssues(item: IIIFItem, issues: ValidationIssue[]): { item
 /**
  * Apply a healed item back to the tree.
  * Returns a new root with the item updated.
- * 
+ *
  * This function now includes error handling to prevent crashes during tree traversal.
  */
 export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIFItem): IIIFItem | null {
@@ -828,7 +832,7 @@ export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIF
 
     // Use centralized traversal to find the target node
     const targetNode = findNodeById(newRoot, itemId);
-    
+
     if (!targetNode) {
       vaultLog.warn(`[ValidationHealer] Could not find item with ID ${itemId} in tree`);
       return newRoot;
@@ -855,7 +859,7 @@ export function applyHealToTree(root: IIIFItem, itemId: string, healedItem: IIIF
 /**
  * Safely heal all issues on a single item and return the updated item.
  * This is the recommended function for the "Heal All" button in the Inspector.
- * 
+ *
  * Unlike calling healIssue in a forEach loop, this function properly sequences
  * the fixes and validates the result.
  */
@@ -870,15 +874,15 @@ export function safeHealAll(item: IIIFItem, issues: ValidationIssue[]): HealResu
 
   try {
     const result = healAllIssues(item, issues);
-    
+
     if (result.errors.length > 0) {
       vaultLog.warn('[ValidationHealer] Healing completed with errors:', result.errors);
     }
 
     if (result.healed === 0 && result.failed > 0) {
-      return { 
-        success: false, 
-        error: `Failed to heal any issues. Errors: ${result.errors.join(', ')}` 
+      return {
+        success: false,
+        error: `Failed to heal any issues. Errors: ${result.errors.join(', ')}`
       };
     }
 

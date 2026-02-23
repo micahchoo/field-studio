@@ -3,7 +3,6 @@ import { uiLog } from '@/src/shared/services/logger';
 import {
   createLanguageMap,
   formatNavDate,
-  isValidNavDate,
   isValidRightsUri
 } from '@/utils';
 import { CSV_COLUMN_ALIASES, CSV_SUPPORTED_PROPERTIES } from '@/src/shared/constants';
@@ -220,16 +219,13 @@ export class CSVImporterService {
     } else if (property === 'summary') {
       (canvas as any).summary = createLanguageMap(value, language);
     } else if (property === 'navDate') {
-      // Parse the date value and format it as ISO 8601
       const parsedDate = new Date(value);
       if (!isNaN(parsedDate.getTime())) {
         canvas.navDate = formatNavDate(parsedDate);
       } else {
-        // If not parseable, store as-is (let validator catch it)
         canvas.navDate = value;
       }
     } else if (property === 'rights') {
-      // Validate rights URI if it looks like a URL
       if (value.startsWith('http') && !isValidRightsUri(value)) {
         uiLog.warn(`Rights URI "${value}" is not a known Creative Commons or Rights Statements URI`);
       }
@@ -274,9 +270,6 @@ export class CSVImporterService {
   // CSV Export
   // ============================================================================
 
-  /**
-   * Export IIIF items to CSV format
-   */
   exportCSV(root: IIIFItem, options: CSVExportOptions = {}): CSVExportResult {
     const {
       properties = SUPPORTED_IIIF_PROPERTIES,
@@ -286,46 +279,31 @@ export class CSVImporterService {
       itemTypes = ['Canvas']
     } = options;
 
-    // Collect all items of specified types
     const items: IIIFItem[] = [];
     this.collectItems(root, items, itemTypes);
 
-    // Build headers
     const headers: string[] = [];
     if (includeId) headers.push('id');
-    headers.push('filename'); // Always include filename for matching
+    headers.push('filename');
     if (includeType) headers.push('type');
     headers.push(...properties);
 
-    // Build rows
     const rows: string[][] = [];
     for (const item of items) {
       const row: string[] = [];
-
       if (includeId) row.push(item.id);
       row.push(this.getFilename(item));
       if (includeType) row.push(item.type);
-
       for (const prop of properties) {
         row.push(this.extractProperty(item, prop, language));
       }
-
       rows.push(row);
     }
 
-    // Generate CSV
     const csv = this.generateCSV(headers, rows);
-
-    return {
-      csv,
-      itemCount: items.length,
-      columnCount: headers.length
-    };
+    return { csv, itemCount: items.length, columnCount: headers.length };
   }
 
-  /**
-   * Export with auto-detected columns (only non-empty)
-   */
   exportCSVSmart(root: IIIFItem, options: Omit<CSVExportOptions, 'properties'> = {}): CSVExportResult {
     const {
       language = 'en',
@@ -334,11 +312,9 @@ export class CSVImporterService {
       itemTypes = ['Canvas']
     } = options;
 
-    // Collect all items
     const items: IIIFItem[] = [];
     this.collectItems(root, items, itemTypes);
 
-    // Detect which properties have values
     const propertyHasValues = new Map<string, boolean>();
     for (const prop of SUPPORTED_IIIF_PROPERTIES) {
       for (const item of items) {
@@ -350,15 +326,10 @@ export class CSVImporterService {
       }
     }
 
-    // Only include properties that have at least one value
     const properties = SUPPORTED_IIIF_PROPERTIES.filter(p => propertyHasValues.get(p));
-
     return this.exportCSV(root, { ...options, properties, includeId, includeType, itemTypes });
   }
 
-  /**
-   * Generate CSV for specific items by ID
-   */
   exportCSVByIds(root: IIIFItem, ids: string[], options: CSVExportOptions = {}): CSVExportResult {
     const {
       properties = SUPPORTED_IIIF_PROPERTIES,
@@ -367,51 +338,33 @@ export class CSVImporterService {
       includeType = true
     } = options;
 
-    // Collect items by ID
     const idSet = new Set(ids);
     const items: IIIFItem[] = [];
     this.collectItemsById(root, items, idSet);
 
-    // Build headers
     const headers: string[] = [];
     if (includeId) headers.push('id');
     headers.push('filename');
     if (includeType) headers.push('type');
     headers.push(...properties);
 
-    // Build rows
     const rows: string[][] = [];
     for (const item of items) {
       const row: string[] = [];
-
       if (includeId) row.push(item.id);
       row.push(this.getFilename(item));
       if (includeType) row.push(item.type);
-
       for (const prop of properties) {
         row.push(this.extractProperty(item, prop, language));
       }
-
       rows.push(row);
     }
 
     const csv = this.generateCSV(headers, rows);
-
-    return {
-      csv,
-      itemCount: items.length,
-      columnCount: headers.length
-    };
+    return { csv, itemCount: items.length, columnCount: headers.length };
   }
 
-  /**
-   * Collect items of specified types recursively
-   */
-  private collectItems(
-    item: IIIFItem,
-    result: IIIFItem[],
-    types: string[]
-  ): void {
+  private collectItems(item: IIIFItem, result: IIIFItem[], types: string[]): void {
     if (types.includes(item.type)) {
       result.push(item);
     }
@@ -420,7 +373,6 @@ export class CSVImporterService {
         this.collectItems(child, result, types);
       }
     }
-    // Also check annotations for Annotation type
     if (types.includes('Annotation') && (item as any).annotations) {
       for (const page of (item as any).annotations) {
         if (page.items) {
@@ -432,14 +384,7 @@ export class CSVImporterService {
     }
   }
 
-  /**
-   * Collect items by ID
-   */
-  private collectItemsById(
-    item: IIIFItem,
-    result: IIIFItem[],
-    ids: Set<string>
-  ): void {
+  private collectItemsById(item: IIIFItem, result: IIIFItem[], ids: Set<string>): void {
     if (ids.has(item.id)) {
       result.push(item);
     }
@@ -450,37 +395,26 @@ export class CSVImporterService {
     }
   }
 
-  /**
-   * Get filename from item label
-   */
   private getFilename(item: IIIFItem): string {
     return getIIIFValue(item.label) || item.id;
   }
 
-  /**
-   * Extract a property value from an item
-   */
   private extractProperty(item: IIIFItem, property: string, language: string): string {
     if (property === 'label') {
       return this.extractLanguageValue(item.label, language);
     }
-
     if (property === 'summary') {
       return this.extractLanguageValue((item as any).summary, language);
     }
-
     if (property === 'navDate') {
       return (item as any).navDate || '';
     }
-
     if (property === 'rights') {
       return (item as any).rights || '';
     }
-
     if (property.startsWith('metadata.')) {
       const metaKey = property.replace('metadata.', '').toLowerCase();
       const metadata = item.metadata || [];
-
       for (const entry of metadata) {
         const entryLabel = this.extractLanguageValue(entry.label, 'en').toLowerCase();
         if (entryLabel === metaKey) {
@@ -489,11 +423,9 @@ export class CSVImporterService {
       }
       return '';
     }
-
     if (property.startsWith('requiredStatement.')) {
       const rs = (item as any).requiredStatement;
       if (!rs) return '';
-
       const part = property.replace('requiredStatement.', '');
       if (part === 'label') {
         return this.extractLanguageValue(rs.label, language);
@@ -502,101 +434,62 @@ export class CSVImporterService {
         return this.extractLanguageValue(rs.value, language);
       }
     }
-
     return '';
   }
 
-  /**
-   * Extract value from language map
-   */
   private extractLanguageValue(langMap: Record<string, string[]> | undefined, preferredLang: string): string {
     if (!langMap) return '';
-
-    // Try preferred language first
     if (langMap[preferredLang]?.length) {
       return langMap[preferredLang].join('; ');
     }
-
-    // Try 'none' (language-neutral)
     if (langMap['none']?.length) {
       return langMap['none'].join('; ');
     }
-
-    // Try '@none' (JSON-LD style)
     if (langMap['@none']?.length) {
       return langMap['@none'].join('; ');
     }
-
-    // Try 'en' as fallback
     if (langMap['en']?.length) {
       return langMap['en'].join('; ');
     }
-
-    // Return first available value
     for (const values of Object.values(langMap)) {
       if (values?.length) {
         return values.join('; ');
       }
     }
-
     return '';
   }
 
-  /**
-   * Generate CSV string from headers and rows
-   */
   private generateCSV(headers: string[], rows: string[][]): string {
     const lines: string[] = [];
-
-    // Header line
     lines.push(headers.map(h => this.escapeCSVField(h)).join(','));
-
-    // Data lines
     for (const row of rows) {
       lines.push(row.map(cell => this.escapeCSVField(cell)).join(','));
     }
-
     return lines.join('\n');
   }
 
-  /**
-   * Escape a CSV field value (handles quotes and commas)
-   */
   private escapeCSVField(value: string): string {
     if (!value) return '';
-
-    // If contains comma, quote, or newline, wrap in quotes
     if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
-      // Escape internal quotes by doubling them
       const escaped = value.replace(/"/g, '""');
       return `"${escaped}"`;
     }
-
     return value;
   }
 
-  /**
-   * Download CSV as file
-   */
   downloadCSV(csv: string, filename: string = 'iiif-metadata.csv'): void {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
     link.style.display = 'none';
-
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
     URL.revokeObjectURL(url);
   }
 
-  /**
-   * Get column definitions for UI
-   */
   getExportColumns(): Array<{ key: string; label: string; category: string }> {
     return [
       { key: 'label', label: 'Label', category: 'Core' },

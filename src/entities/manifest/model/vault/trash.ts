@@ -6,7 +6,7 @@
  */
 
 import type { EmptyTrashResult, EntityType, IIIFItem, NormalizedState, TrashedEntity } from '@/src/shared/types';
-import { vaultLog } from '@/src/shared/services/logger';
+import { vaultLog } from '@/src/shared/lib/logger';
 import { getDescendants, getEntity } from './queries';
 
 /**
@@ -136,9 +136,7 @@ export function restoreEntityFromTrash(
   state: NormalizedState,
   id: string,
   options?: {
-    /** Optional new parent ID; if not provided, uses original parent */
     parentId?: string;
-    /** Optional index for positioning in parent */
     index?: number;
   }
 ): NormalizedState {
@@ -229,21 +227,17 @@ export function restoreEntityFromTrash(
 
 /**
  * Permanently delete all entities in trash
- * @returns Object with deleted count and any errors
  */
 export function emptyTrash(state: NormalizedState): EmptyTrashResult {
   const errors: string[] = [];
   let deletedCount = 0;
 
-  // Get all trashed entity IDs
   const trashedIds = Object.keys(state.trashedEntities);
 
   if (trashedIds.length === 0) {
     return { state, deletedCount: 0, errors: [] };
   }
 
-  // Trashed entities have already been removed from active stores (entities, typeIndex,
-  // references, reverseRefs) by moveEntityToTrash. We just need to clear the trash metadata.
   const newTrashedEntities = { ...state.trashedEntities };
   for (const id of trashedIds) {
     try {
