@@ -6,6 +6,7 @@
 <script lang="ts">
   import type { FileAnalysis } from '../../types';
   import { formatOrphansAsMarkdown } from '../../lib/markdownFormatters';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import CopyableSection from '../atoms/CopyableSection.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
@@ -15,9 +16,11 @@
     orphans: string[];
     files: Record<string, FileAnalysis>;
     onSelectFile: (file: FileAnalysis) => void;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { orphans, files, onSelectFile }: Props = $props();
+  let { orphans, files, onSelectFile, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   let markdown = $derived(formatOrphansAsMarkdown(orphans, files));
 

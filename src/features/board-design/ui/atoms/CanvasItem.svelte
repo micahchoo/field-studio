@@ -78,6 +78,8 @@
   style:top="{position.y}px"
   style:width="{size.width}px"
   style:height="{size.height}px"
+  role="button"
+  tabindex="0"
 >
   {@render children()}
 </div>

@@ -6,10 +6,11 @@
   interface Props {
     label?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     children: Snippet;
   }
 
-  let { label, cx, children }: Props = $props();
+  let { label, cx, fieldMode = false, children }: Props = $props();
 </script>
 
 <div

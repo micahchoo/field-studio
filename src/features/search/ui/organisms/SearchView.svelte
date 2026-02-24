@@ -392,7 +392,6 @@
                   fieldMode ? 'hover:bg-nb-yellow/10' : 'hover:bg-nb-cream'
                 )}
                 onclick={() => handleResultSelect(result.entry.entityId)}
-                role="listitem"
               >
                 <div class="flex-1 min-w-0">
                   <p class={cn('font-medium truncate', cx.text)}>

@@ -137,6 +137,8 @@
   ondragstart={handleDragStart}
   role="treeitem"
   aria-selected={isSelected}
+  tabindex="0"
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(node.path, false); } }}
 >
   <!-- Expand button -->
   <ExpandButton

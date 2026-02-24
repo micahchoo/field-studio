@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
 
   interface Props {
@@ -9,10 +10,12 @@
     attribution?: string;
     class?: string;
     type?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
     children?: Snippet;
   }
 
-  let { title, date, description, attribution, class: className = '', type: _type, children }: Props = $props();
+  let { title, date, description, attribution, class: className = '', type: _type, cx = {} as ContextualClassNames, fieldMode = false, children }: Props = $props();
 </script>
 
 <div class={cn('bg-nb-cream border-4 border-nb-black shadow-brutal p-6', className)}>

@@ -358,6 +358,7 @@
             role="dialog"
             aria-label="{selectedCluster.items.length} {t('clusteredItems', 'clustered items')}"
             onkeydown={(e) => { if (e.key === 'Escape') dismissClusterPopup(); }}
+            tabindex="0"
           >
             <div class="flex items-center justify-between mb-3">
               <span class={cn('text-sm font-bold', cx.text || 'text-nb-black')}>

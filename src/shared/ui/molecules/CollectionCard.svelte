@@ -17,6 +17,7 @@
     onclick?: () => void;
     oncontextmenu?: (e: MouseEvent) => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     header?: Snippet;
   }
 
@@ -26,6 +27,7 @@
     onclick,
     oncontextmenu,
     cx,
+    fieldMode = false,
     header
   }: Props = $props();
 </script>

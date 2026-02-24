@@ -26,5 +26,5 @@
     class={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0', COLOR_MAP[color], className)}
     title={message}
     aria-label={message || 'Validation issue'}
-  />
+  ></span>
 {/if}

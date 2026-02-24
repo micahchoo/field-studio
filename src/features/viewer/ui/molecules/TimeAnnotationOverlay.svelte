@@ -9,6 +9,7 @@
   clear (X) button for an existing range and start/end time labels.
 -->
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import { formatTimeForDisplay } from '@/src/features/viewer/model/annotation';
 
@@ -26,6 +27,7 @@
     onRangeEnd: (time: number) => void;
     onRangeClear: () => void;
     fieldMode: boolean;
+    cx?: ContextualClassNames;
   }
 
   let {
@@ -37,6 +39,7 @@
     onRangeEnd,
     onRangeClear,
     fieldMode,
+    cx = {} as ContextualClassNames,
   }: Props = $props();
 
   let trackEl: HTMLDivElement | undefined = $state(undefined);

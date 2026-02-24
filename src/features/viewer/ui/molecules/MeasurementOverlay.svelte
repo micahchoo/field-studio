@@ -41,11 +41,14 @@
   import { cn } from '@/src/shared/lib/cn';
   import { Button, Icon } from '@/src/shared/ui/atoms';
 
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
+
   interface Props {
     measurement: MeasurementStore;
     viewerRef: any;
     osdContainerRef: HTMLDivElement | null;
     fieldMode?: boolean;
+    cx?: ContextualClassNames;
   }
 
   let {
@@ -53,6 +56,7 @@
     viewerRef,
     osdContainerRef,
     fieldMode = false,
+    cx = {} as ContextualClassNames,
   }: Props = $props();
 
   // Local state

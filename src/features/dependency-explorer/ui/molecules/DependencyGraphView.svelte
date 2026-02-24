@@ -51,6 +51,7 @@
 
 <script lang="ts">
   import type { FileAnalysis } from '../../types';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import FileIcon from '../atoms/FileIcon.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
@@ -60,9 +61,11 @@
     files: FileAnalysis[];
     selectedFile: FileAnalysis | null;
     onSelectFile: (file: FileAnalysis) => void;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { files, selectedFile, onSelectFile }: Props = $props();
+  let { files, selectedFile, onSelectFile, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   /** Build nested directory tree from flat file list */
   let treeData = $derived.by(() => {

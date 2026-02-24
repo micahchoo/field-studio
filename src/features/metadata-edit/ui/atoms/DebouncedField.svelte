@@ -81,7 +81,7 @@
     {placeholder}
     {disabled}
     class={inputClasses}
-  />
+  ></textarea>
 {:else}
   <input
     type="text"

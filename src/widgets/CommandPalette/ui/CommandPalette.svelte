@@ -275,7 +275,9 @@
     role="combobox"
     aria-expanded={isOpen}
     aria-haspopup="listbox"
+    aria-controls="command-list"
     aria-label="Command palette"
+    tabindex="0"
   >
 
     <!-- ================================================================= -->

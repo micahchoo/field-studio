@@ -332,6 +332,7 @@
   role="grid"
   aria-label="Archive grid"
   aria-multiselectable="true"
+  tabindex="0"
 >
   <!-- Lasso selection overlay -->
   {#if isLassoing && lassoRect}
@@ -424,6 +425,7 @@
         ondragend={handleDragEnd}
         oncontextmenu={(e) => onContextMenu(e, asset.id)}
         onclick={(e) => onItemClick(e, asset)}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onItemClick(e as unknown as MouseEvent, asset); }}
         onmouseenter={(e) => handleHoverEnter(asset, e)}
         onmouseleave={handleHoverLeave}
         class={cn(

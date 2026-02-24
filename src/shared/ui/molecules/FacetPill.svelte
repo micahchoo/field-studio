@@ -7,10 +7,11 @@
     label: string;
     onRemove: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
-  let { label, onRemove, cx, class: className = '' }: Props = $props();
+  let { label, onRemove, cx, fieldMode = false, class: className = '' }: Props = $props();
 </script>
 
 <span class={cn(

@@ -39,15 +39,18 @@
     formatHotFilesAsMarkdown,
     formatHeavyFilesAsMarkdown,
   } from '../../lib/markdownFormatters';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import CopyableSection from '../atoms/CopyableSection.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
   interface Props {
     data: DependencyGraph;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { data }: Props = $props();
+  let { data, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   /** Group files into architecture layers */
   let layers = $derived.by((): LayerStats[] => {
@@ -145,7 +148,7 @@
       {#each layers as layer (layer.name)}
         <div class="bg-nb-white border border-nb-black/20 p-4">
           <div class="flex items-center gap-2 mb-3">
-            <div class={cn('w-3 h-3', layer.color)} />
+            <div class={cn('w-3 h-3', layer.color)} ></div>
             <h3 class="font-medium text-nb-black/70">{layer.name}</h3>
             <span class="ml-auto text-xs text-nb-black/50">{layer.files.length} files</span>
           </div>
@@ -175,7 +178,7 @@
             <th class="px-4 py-2 text-left font-medium text-nb-black/50">From \ To</th>
             {#each layers as l (l.name)}
               <th class="px-2 py-2 text-center font-medium text-nb-black/50">
-                <div class={cn('w-2 h-2 mx-auto mb-1', l.color)} />
+                <div class={cn('w-2 h-2 mx-auto mb-1', l.color)} ></div>
                 <span class="text-xs">{l.name}</span>
               </th>
             {/each}

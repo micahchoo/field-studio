@@ -11,6 +11,7 @@
     disabled?: boolean;
     onclick: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -20,7 +21,8 @@
     destructive = false,
     disabled = false,
     onclick,
-    cx
+    cx,
+    fieldMode = false
   }: Props = $props();
 </script>
 

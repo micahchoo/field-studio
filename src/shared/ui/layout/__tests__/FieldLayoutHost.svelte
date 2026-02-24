@@ -16,14 +16,14 @@
 
 {#if showLabel && showHint}
   <FieldLayout class={className}>
-    {#snippet control()}<input type="text" placeholder="test" />{/snippet}
-    {#snippet label()}<label>Field Label</label>{/snippet}
+    {#snippet control()}<input id="field-layout-test" type="text" placeholder="test" />{/snippet}
+    {#snippet label()}<label for="field-layout-test">Field Label</label>{/snippet}
     {#snippet hint()}<span>Hint text</span>{/snippet}
   </FieldLayout>
 {:else if showLabel}
   <FieldLayout class={className}>
-    {#snippet control()}<input type="text" placeholder="test" />{/snippet}
-    {#snippet label()}<label>Field Label</label>{/snippet}
+    {#snippet control()}<input id="field-layout-test2" type="text" placeholder="test" />{/snippet}
+    {#snippet label()}<label for="field-layout-test2">Field Label</label>{/snippet}
   </FieldLayout>
 {:else if showHint}
   <FieldLayout class={className}>

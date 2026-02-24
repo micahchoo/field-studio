@@ -9,6 +9,7 @@
     placeholder?: string;
     autoFocus?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -18,6 +19,7 @@
     placeholder = 'Filter...',
     autoFocus = false,
     cx,
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 

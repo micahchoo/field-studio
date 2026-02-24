@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import TextArea from '@/src/shared/ui/atoms/TextArea.svelte';
   import Select from '@/src/shared/ui/atoms/Select.svelte';
@@ -21,9 +22,10 @@
     isEditing: boolean;
     onFieldChange?: (fieldId: string, value: string) => void;
     fieldMode?: boolean;
+    cx?: ContextualClassNames;
   }
 
-  let { field, isEditing, onFieldChange, fieldMode = false }: Props = $props();
+  let { field, isEditing, onFieldChange, fieldMode = false, cx = {} as ContextualClassNames }: Props = $props();
 
   function formatValue(value: string | string[] | null, type?: string): string {
     if (value === null || value === undefined) return '\u2014';
@@ -57,14 +59,15 @@
 </script>
 
 {#if isEditing && field.editable}
+  {@const fId="field-renderer-"+field.id}
   <div class="space-y-1">
-    <label class={`text-xs font-medium ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
+    <label for={fId} class={`text-xs font-medium ${fieldMode ? 'text-nb-black/40' : 'text-nb-black/60'}`}>
       {field.label}
       {#if field.required}<span class="text-nb-red ml-1">*</span>{/if}
     </label>
 
     {#if field.type === 'textarea'}
-      <TextArea
+      <TextArea id={fId}
         value={getStringValue()}
         oninput={(e) => onFieldChange?.(field.id, (e.target as HTMLTextAreaElement).value)}
         rows={3}
@@ -73,7 +76,7 @@
         placeholder={`Enter ${field.label.toLowerCase()}`}
       />
     {:else if field.type === 'select' && field.options}
-      <Select
+      <Select id={fId}
         value={getStringValue()}
         onchange={(e) => onFieldChange?.(field.id, (e.target as HTMLSelectElement).value)}
         cx={{ input: inputClass }}
@@ -87,6 +90,7 @@
       </Select>
     {:else}
       <input
+        id={fId}
         type={field.type === 'date' ? 'date' : field.type === 'url' ? 'url' : 'text'}
         value={getStringValue()}
         oninput={(e) => onFieldChange?.(field.id, (e.target as HTMLInputElement).value)}

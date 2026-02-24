@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import type { DependencyGraph } from '../../types';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { formatStatsAsMarkdown } from '../../lib/markdownFormatters';
   import CopyableSection from '../atoms/CopyableSection.svelte';
   import StatCard from '../atoms/StatCard.svelte';
@@ -13,9 +14,11 @@
 
   interface Props {
     data: DependencyGraph;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { data }: Props = $props();
+  let { data, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   let markdown = $derived(formatStatsAsMarkdown(data));
 </script>

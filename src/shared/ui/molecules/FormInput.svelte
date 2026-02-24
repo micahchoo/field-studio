@@ -14,6 +14,7 @@
     disabled?: boolean;
     placeholder?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     action?: Snippet;
     min?: number;
     max?: number;
@@ -34,6 +35,7 @@
     disabled = false,
     placeholder,
     cx,
+    fieldMode = false,
     action,
     min,
     max,

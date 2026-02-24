@@ -21,10 +21,10 @@ import ViewerToolbar from '../ui/molecules/ViewerToolbar.svelte';
 // Helpers
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const cx = {} as any;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function defaultProps(overrides: Record<string, unknown> = {}): any {
   return {
     label: 'Test Canvas',

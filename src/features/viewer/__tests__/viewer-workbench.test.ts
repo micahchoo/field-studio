@@ -53,7 +53,7 @@ function makeCanvas(serviceId?: string) {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function defaultProps(overrides: Record<string, unknown> = {}): any {
   return {
     canvas: makeCanvas('https://example.org/iiif/image1'),

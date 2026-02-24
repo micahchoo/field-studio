@@ -4,8 +4,9 @@ import {
   IIIF_SCHEMA,
   isBehaviorAllowed,
   validateResource as schemaValidateResource,
-  type SchemaError
 } from '@/utils/iiifSchema';
+
+
 import { isValidHttpUri } from '@/utils';
 import {
   doesInheritBehavior,
@@ -81,9 +82,8 @@ export class ValidationService {
   /**
    * Map schema validation errors to ValidationIssue format
    */
-  private mapSchemaErrors(item: IIIFItem, schemaErrors: SchemaError[]): ValidationIssue[] {
-    return schemaErrors.map(schemaErr => {
-      const err = schemaErr.message;
+  private mapSchemaErrors(item: IIIFItem, schemaErrors: string[]): ValidationIssue[] {
+    return schemaErrors.map(err => {
       let category: IssueCategory = 'Structure';
       let fixable = false;
 
@@ -153,7 +153,7 @@ export class ValidationService {
         // Check for disjoint set conflicts
         const conflicts = findBehaviorConflicts(item.behavior);
         for (const conflict of conflicts) {
-            addIssue('error', 'Structure', `Conflicting behaviors: ${conflict.join(', ')}`, true);
+            addIssue('error', 'Structure', conflict, true);
         }
     }
 

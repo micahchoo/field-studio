@@ -7,12 +7,13 @@
     size?: 'sm' | 'md' | 'lg';
     inline?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   const SIZE_CLASSES = { sm: 'w-4 h-4', md: 'w-8 h-8', lg: 'w-12 h-12' };
   const TEXT_SIZE = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' };
 
-  let { message, size = 'md', inline = false, cx }: Props = $props();
+  let { message, size = 'md', inline = false, cx, fieldMode = false }: Props = $props();
 </script>
 
 <div class={cn(inline ? 'inline-flex' : 'flex', 'flex-col items-center justify-center gap-3', !inline && 'py-12')}>

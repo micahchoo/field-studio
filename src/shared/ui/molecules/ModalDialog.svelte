@@ -12,6 +12,7 @@
     closable?: boolean;
     onClose?: () => void;
     cx?: Partial<ContextualClassNames>;
+    fieldMode?: boolean;
     header?: Snippet;
     footer?: Snippet;
     children: Snippet;
@@ -26,6 +27,7 @@
     closable = true,
     onClose,
     cx = {},
+    fieldMode = false,
     header,
     footer,
     children
@@ -72,6 +74,7 @@
   <div
     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     onclick={handleBackdropClick}
+    onkeydown={(e) => { if (e.key === "Escape" && closable) { open = false; onClose?.(); } }}
     transition:fade={{ duration: 200 }}
     role="presentation"
   >
@@ -83,6 +86,8 @@
       aria-labelledby={title ? 'modal-title' : undefined}
       transition:fly={{ y: -20, duration: 200 }}
       onclick={(e: MouseEvent) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      tabindex="0"
     >
       {#if header || title}
         <div class={cn('flex items-center justify-between p-4 border-b-2', cx.border || 'border-nb-black')}>

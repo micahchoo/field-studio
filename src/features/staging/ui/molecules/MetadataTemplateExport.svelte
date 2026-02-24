@@ -102,6 +102,7 @@
     onclick={(e) => e.stopPropagation()}
     role="dialog"
     aria-labelledby="template-export-title"
+    tabindex="0"
   >
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-nb-black/20">
@@ -127,9 +128,9 @@
       <div class="grid grid-cols-2 gap-4">
         <!-- Vocabulary selection -->
         <div>
-          <label class="block text-[10px] font-bold text-nb-black/50 uppercase tracking-wider mb-2">
+          <p class="block text-[10px] font-bold text-nb-black/50 uppercase tracking-wider mb-2">
             Vocabulary
-          </label>
+          </p>
           <div class="space-y-2">
             {#each vocabularyOptions as opt (opt.value)}
               <label
@@ -164,10 +165,10 @@
         <div class="space-y-4">
           <!-- Language -->
           <div>
-            <label class="block text-[10px] font-bold text-nb-black/50 uppercase tracking-wider mb-2">
+            <label for="field-export-language" class="block text-[10px] font-bold text-nb-black/50 uppercase tracking-wider mb-2">
               Default Language
             </label>
-            <select
+            <select id="field-export-language"
               bind:value={language}
               class="w-full px-3 py-2 text-sm bg-nb-white border border-nb-black/20 outline-none focus:border-nb-blue"
             >

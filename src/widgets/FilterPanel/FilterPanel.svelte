@@ -97,6 +97,7 @@
   }: Props = $props();
 
   // ── Local State (uncontrolled mode) ──
+  // svelte-ignore state_referenced_locally -- intentional: defaultView is the initial value only
   let internalActiveView = $state<TabView>(defaultView);
 
   // ── Derived: controlled vs uncontrolled ──

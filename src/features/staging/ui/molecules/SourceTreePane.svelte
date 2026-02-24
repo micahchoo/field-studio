@@ -295,6 +295,7 @@
     class="flex-1 overflow-y-auto"
     onclick={handleBodyClick}
     role="tree"
+    tabindex="0"
   >
     {#if visibleNodes.length === 0}
       <div class={cn('p-6 text-center', cx?.textMuted ?? 'text-nb-black/40')}>

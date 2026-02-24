@@ -20,7 +20,7 @@ import ViewerContent from '../ui/molecules/ViewerContent.svelte';
 // Helpers
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const cx = {} as any;
 
 function makeCanvas() {
@@ -33,7 +33,7 @@ function makeCanvas() {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function defaultProps(overrides: Record<string, unknown> = {}): any {
   return {
     canvas: makeCanvas(),

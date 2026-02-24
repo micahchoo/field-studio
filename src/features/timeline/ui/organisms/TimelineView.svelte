@@ -199,7 +199,7 @@
           {@const isExpanded = selectedDate === null || selectedDate === group.key}
           {@const isSelected = selectedDate === group.key}
 
-          <div class="relative mb-8" role="listitem" aria-expanded={isExpanded}>
+          <div class="relative mb-8" aria-expanded={isExpanded}>
             <!-- Timeline dot -->
             <button
               class={cn(

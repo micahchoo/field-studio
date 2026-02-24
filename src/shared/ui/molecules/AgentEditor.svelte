@@ -130,20 +130,20 @@
       <!-- Edit form -->
       <div class={`p-3 border space-y-3 ${formBorder}`}>
         <div class="space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>Organization Name <span class="text-nb-red">*</span></label>
-          <input bind:value={formName} placeholder="Example Museum" class={inputClass} />
+          <label for="field-edit-org-name-{i}" class={`block text-xs font-medium ${labelText}`}>Organization Name <span class="text-nb-red">*</span></label>
+          <input id="field-edit-org-name-{i}" bind:value={formName} placeholder="Example Museum" class={inputClass} />
         </div>
         <div class="space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>URI</label>
-          <input type="url" bind:value={formUri} placeholder="https://example.org" class={inputClass} />
+          <label for="field-edit-uri-{i}" class={`block text-xs font-medium ${labelText}`}>URI</label>
+          <input id="field-edit-uri-{i}" type="url" bind:value={formUri} placeholder="https://example.org" class={inputClass} />
         </div>
         <div class="space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>Homepage URL</label>
-          <input type="url" bind:value={formHomepage} placeholder="https://example.org/about" class={inputClass} />
+          <label for="field-edit-homepage-{i}" class={`block text-xs font-medium ${labelText}`}>Homepage URL</label>
+          <input id="field-edit-homepage-{i}" type="url" bind:value={formHomepage} placeholder="https://example.org/about" class={inputClass} />
         </div>
         <div class="space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>Logo URL</label>
-          <input
+          <label for="field-edit-logo-{i}" class={`block text-xs font-medium ${labelText}`}>Logo URL</label>
+          <input id="field-edit-logo-{i}"
             type="url"
             bind:value={formLogoUrl}
             placeholder="https://example.org/logo.png"
@@ -201,20 +201,20 @@
   {#if isAdding}
     <div class={`p-3 border space-y-3 ${formBorder}`}>
       <div class="space-y-1">
-        <label class={`block text-xs font-medium ${labelText}`}>Organization Name <span class="text-nb-red">*</span></label>
-        <input bind:value={formName} placeholder="Example Museum" class={inputClass} />
+        <label for="field-add-org-name" class={`block text-xs font-medium ${labelText}`}>Organization Name <span class="text-nb-red">*</span></label>
+        <input id="field-add-org-name" bind:value={formName} placeholder="Example Museum" class={inputClass} />
       </div>
       <div class="space-y-1">
-        <label class={`block text-xs font-medium ${labelText}`}>URI</label>
-        <input type="url" bind:value={formUri} placeholder="https://example.org" class={inputClass} />
+        <label for="field-add-uri" class={`block text-xs font-medium ${labelText}`}>URI</label>
+        <input id="field-add-uri" type="url" bind:value={formUri} placeholder="https://example.org" class={inputClass} />
       </div>
       <div class="space-y-1">
-        <label class={`block text-xs font-medium ${labelText}`}>Homepage URL</label>
-        <input type="url" bind:value={formHomepage} placeholder="https://example.org/about" class={inputClass} />
+        <label for="field-add-homepage" class={`block text-xs font-medium ${labelText}`}>Homepage URL</label>
+        <input id="field-add-homepage" type="url" bind:value={formHomepage} placeholder="https://example.org/about" class={inputClass} />
       </div>
       <div class="space-y-1">
-        <label class={`block text-xs font-medium ${labelText}`}>Logo URL</label>
-        <input type="url" bind:value={formLogoUrl} placeholder="https://example.org/logo.png" class={inputClass} oninput={() => { formLogoError = false; }} />
+        <label for="field-add-logo" class={`block text-xs font-medium ${labelText}`}>Logo URL</label>
+        <input id="field-add-logo" type="url" bind:value={formLogoUrl} placeholder="https://example.org/logo.png" class={inputClass} oninput={() => { formLogoError = false; }} />
       </div>
       <div class="flex justify-end gap-2 pt-1">
         <button onclick={() => { isAdding = false; }} class="text-xs px-3 py-1.5 border hover:opacity-70">Cancel</button>

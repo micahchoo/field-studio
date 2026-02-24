@@ -16,6 +16,7 @@
     isEditing: boolean;
     fieldMode: boolean;
     language: string;
+    cx?: import('@/src/shared/lib/contextual-styles').ContextualClassNames;
   }
 </script>
 
@@ -37,6 +38,7 @@
     isEditing,
     fieldMode,
     language,
+    cx = {} as ContextualClassNames,
   }: RangeEditModalProps = $props();
 
   let label = $state(initialLabel);
@@ -122,14 +124,14 @@
       <div class="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
         <!-- Label input -->
         <div>
-          <label class={cn(
+          <label for="field-range-label" class={cn(
             'block text-[10px] font-bold uppercase tracking-wider mb-1.5',
             fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
           )}>
             Range Label
           </label>
           <!-- svelte-ignore a11y_autofocus -->
-          <input
+          <input id="field-range-label"
             type="text"
             value={label}
             oninput={handleLabelInput}
@@ -146,12 +148,12 @@
 
         <!-- Canvas selection -->
         <div>
-          <label class={cn(
+          <p class={cn(
             'block text-[10px] font-bold uppercase tracking-wider mb-1.5',
             fieldMode ? 'text-nb-black/40' : 'text-nb-black/50'
           )}>
             Select Pages/Canvases ({selectedCanvasIds.size} selected)
-          </label>
+          </p>
           <div class={cn(
             'border max-h-48 overflow-y-auto',
             fieldMode ? 'border-nb-black/80' : 'border-nb-black/20'

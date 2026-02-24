@@ -46,6 +46,7 @@
     fieldMode?: boolean;
     readOnly?: boolean;
     hint?: string;
+    id?: string;
   }
 
   let {
@@ -57,8 +58,10 @@
     fieldMode = false,
     readOnly = false,
     hint,
+    id,
   }: Props = $props();
 
+  const fieldId = $derived(id ?? label.toLowerCase().replace(/[W_]+/g,'-').replace(/^-|-$/g,''));
   let isFocused = $state(false);
   let isHovered = $state(false);
 
@@ -105,7 +108,7 @@
   onmouseleave={() => { isHovered = false; }}
 >
   <div class="flex items-center justify-between mb-1.5">
-    <label class={labelClass}>
+    <label for={fieldId} class={labelClass}>
       {label}
     </label>
     {#if readOnly}
@@ -122,6 +125,7 @@
 
   {#if type === 'textarea'}
     <textarea
+      id={fieldId}
       {value}
       oninput={handleInput}
       {placeholder}
@@ -134,6 +138,7 @@
   {:else if type === 'date'}
     <div class="relative">
       <input
+        id={fieldId}
         type="text"
         value={formatDate(value)}
         oninput={handleDateInput}
@@ -149,6 +154,7 @@
     </div>
   {:else}
     <input
+      id={fieldId}
       type="text"
       {value}
       oninput={handleInput}

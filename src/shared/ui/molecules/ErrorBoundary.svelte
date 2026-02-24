@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import Icon from '../atoms/Icon.svelte';
   import Button from '../atoms/Button.svelte';
 
@@ -7,9 +8,11 @@
     onError?: (error: Error) => void;
     fallback?: Snippet<[Error, () => void]>;
     children: Snippet;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { onError, fallback, children }: Props = $props();
+  let { onError, fallback, children, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 </script>
 
 <svelte:boundary>

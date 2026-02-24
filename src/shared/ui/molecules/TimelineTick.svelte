@@ -67,6 +67,7 @@
   style={`left: ${position * 100}%`}
   onmouseenter={() => { isHovered = true; }}
   onmouseleave={() => { isHovered = false; }}
+  role="presentation"
 >
   <!-- Label above tick -->
   <span class={`${config.label} ${cx.textMuted ?? 'text-nb-black/40'} whitespace-nowrap mb-1 transition-nb ${isHovered || selected ? 'opacity-100' : 'opacity-60'}`}>

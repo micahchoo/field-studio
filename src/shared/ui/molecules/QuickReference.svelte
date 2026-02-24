@@ -11,10 +11,11 @@
     title: string;
     items: ReferenceItem[];
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
-  let { title, items, cx, class: className = '' }: Props = $props();
+  let { title, items, cx, fieldMode = false, class: className = '' }: Props = $props();
 </script>
 
 <div class={cn('p-4', cx.surface || 'bg-nb-white border-2 border-nb-black', className)}>

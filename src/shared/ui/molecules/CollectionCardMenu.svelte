@@ -13,6 +13,7 @@
     onDuplicate?: () => void;
     onExport?: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -23,7 +24,8 @@
     onDelete,
     onDuplicate,
     onExport,
-    cx
+    cx,
+    fieldMode = false
   }: Props = $props();
 </script>
 

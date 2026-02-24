@@ -53,6 +53,9 @@
   tabindex={tabIndex}
   onclick={onSelect}
   ondblclick={onDoubleClick}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(new MouseEvent("click")); } }}
+  role="option"
+  aria-selected={isSelected}
   class={`
     group relative flex items-center gap-3 p-2 cursor-pointer transition-nb
     ${isSelected

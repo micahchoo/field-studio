@@ -36,4 +36,4 @@
 <div
   class="w-8 h-px my-2 {bgClass}"
   aria-hidden="true"
-/>
+></div>

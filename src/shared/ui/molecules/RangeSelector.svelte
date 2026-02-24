@@ -20,6 +20,7 @@
     showPresets?: boolean;
     disabled?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -31,7 +32,8 @@
     maxDate,
     showPresets = true,
     disabled = false,
-    cx
+    cx,
+    fieldMode = false
   }: Props = $props();
 
   let localStart = $state(start);
@@ -44,7 +46,7 @@
   $effect(() => { if (end !== localEnd) localEnd = end; });
 
   // Date API calls (getTime) — not external services, safe for reactive context
-  /* eslint-disable @field-studio/lifecycle-restrictions */
+   
   function validateRange(s: string, e: string): boolean {
     if (!s || !e) { validationError = 'Both start and end dates are required'; return false; }
     const st = new Date(s).getTime();
@@ -55,7 +57,7 @@
     validationError = '';
     return true;
   }
-  /* eslint-enable @field-studio/lifecycle-restrictions */
+   
 
   const isValid = $derived(validateRange(localStart, localEnd));
 
@@ -97,8 +99,8 @@
 <div class="flex flex-col gap-4">
   <div class="flex gap-4 items-end">
     <div class="flex-1">
-      <label class={cn(cx.label || 'text-[11px] font-bold uppercase tracking-wider font-mono', 'block mb-2')}>Start Date</label>
-      <input
+      <label for="field-start-date" class={cn(cx.label || 'text-[11px] font-bold uppercase tracking-wider font-mono', 'block mb-2')}>Start Date</label>
+      <input id="field-start-date"
         type="date"
         bind:value={localStart}
         min={minDate}
@@ -109,8 +111,8 @@
     </div>
 
     <div class="flex-1">
-      <label class={cn(cx.label || 'text-[11px] font-bold uppercase tracking-wider font-mono', 'block mb-2')}>End Date</label>
-      <input
+      <label for="field-end-date" class={cn(cx.label || 'text-[11px] font-bold uppercase tracking-wider font-mono', 'block mb-2')}>End Date</label>
+      <input id="field-end-date"
         type="date"
         bind:value={localEnd}
         min={minDate}

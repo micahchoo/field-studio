@@ -11,10 +11,11 @@
   interface Props {
     items: ThumbnailItem[];
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
-  let { items, cx, class: className = '' }: Props = $props();
+  let { items, cx, fieldMode = false, class: className = '' }: Props = $props();
 </script>
 
 <div class={cn('flex items-center gap-1 overflow-x-auto py-1 px-2', className)}>

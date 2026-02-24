@@ -265,7 +265,7 @@
   <FormSection title={t('Metadata')} icon="list_alt" {cx}>
     {#snippet children()}
       <div class="flex justify-between items-center mb-3">
-        <label class={cn('text-[10px] font-bold uppercase tracking-wider', cx.label)}>Fields</label>
+        <span class={cn('text-[10px] font-bold uppercase tracking-wider', cx.label)}>Fields</span>
         <div class="relative" bind:this={addMenuEl}>
           <Button
             variant="ghost"
@@ -519,7 +519,7 @@
     <FormSection title="Location" icon="place" open={false} {cx}>
       {#snippet children()}
         <div class="flex justify-between items-center mb-2">
-          <label class={cn('text-[10px] font-bold uppercase tracking-wider', cx.label)}>Geo Location</label>
+          <span class={cn('text-[10px] font-bold uppercase tracking-wider', cx.label)}>Geo Location</span>
           <Button
             variant="ghost"
             size="bare"

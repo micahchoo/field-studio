@@ -510,6 +510,8 @@
   let controlBgClass = $derived(fieldMode ? 'from-black/90' : 'from-nb-black/90');
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
   bind:this={containerEl}
   class={cn(
@@ -575,12 +577,15 @@
 
         <!-- Spatial annotation overlay (video only) -->
         {#if spatialAnnotationMode}
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
           <svg
             class="absolute inset-0 w-full h-full cursor-crosshair"
             style:pointer-events="all"
             onmousedown={handleSpatialMouseDown}
             onmousemove={handleSpatialMouseMove}
             onmouseup={handleSpatialMouseUp}
+            role="application"
+            aria-label="Spatial annotation drawing area"
           >
             {#if drawStart && drawEnd}
               <rect
@@ -653,6 +658,7 @@
         )}
         style:background={fieldMode ? '#334155' : '#475569'}
         onclick={handleProgressClick}
+        onkeydown={(e) => { if (e.key === 'ArrowLeft') seekRelative(-5); else if (e.key === 'ArrowRight') seekRelative(5); }}
         onmousemove={handleProgressHover}
         onmouseleave={handleProgressLeave}
         role="slider"
@@ -660,6 +666,7 @@
         aria-valuemin={0}
         aria-valuemax={duration}
         aria-valuenow={currentTime}
+        tabindex="0"
       >
         <!-- Chapter markers -->
         {#each chapters as ch, idx}
@@ -673,6 +680,9 @@
               style:background-color="{ch.color}30"
               style:border-left="1px solid {ch.color}80"
               onclick={(e) => { e.stopPropagation(); seek(ch.start); }}
+              onkeydown={(e) => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); e.stopPropagation(); seek(ch.start); } }}
+              role="button"
+              tabindex="0"
               title={ch.label}
             >
               <div class="absolute -top-6 left-0 hidden group-hover/ch:block px-1 py-0.5 text-[9px] text-white bg-nb-black/90 whitespace-nowrap z-10">

@@ -257,6 +257,10 @@ export function isCollection(item: IIIFItem | null | undefined): item is IIIFCol
   return item?.type === 'Collection';
 }
 
+export function isRange(item: IIIFItem | null | undefined): item is IIIFRange {
+  return item?.type === 'Range';
+}
+
 /** Column mapping for CSV import */
 export interface CSVColumnMapping {
   csvColumn: string;

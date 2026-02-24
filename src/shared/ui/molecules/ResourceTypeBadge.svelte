@@ -10,14 +10,17 @@
 </script>
 
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
 
   interface Props {
     type: string;
     class?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { type, class: className = '' }: Props = $props();
+  let { type, class: className = '', cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   const colorClasses = $derived(TYPE_COLORS[type] || 'bg-gray-100 text-gray-800 border-gray-400');
 </script>

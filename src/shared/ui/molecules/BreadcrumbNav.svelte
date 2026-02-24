@@ -8,10 +8,11 @@
     crumbs: BreadcrumbItem[];
     onNavigate: (id: string) => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
-  let { crumbs, onNavigate, cx, class: className = '' }: Props = $props();
+  let { crumbs, onNavigate, cx, fieldMode = false, class: className = '' }: Props = $props();
 </script>
 
 <nav aria-label="Breadcrumb" class={className}>

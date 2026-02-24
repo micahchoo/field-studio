@@ -141,7 +141,7 @@ class AppSettingsStore {
       const stored = localStorage.getItem(SETTINGS_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+         
         const { fieldMode: _ignored, ...rest } = parsed;
         this.#settings = withFieldMode({ ...DEFAULT_SETTINGS, ...rest });
         // Sync theme store with loaded theme

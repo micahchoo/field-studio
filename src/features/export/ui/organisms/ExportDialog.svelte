@@ -617,9 +617,9 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">Digest Algorithm</label>
+              <label for="field-digest-algo" class="block text-sm font-bold text-nb-black/80 mb-1">Digest Algorithm</label>
               <select
-                bind:value={archivalConfig.digestAlgorithm}
+                id="field-digest-algo" bind:value={archivalConfig.digestAlgorithm}
                 class="w-full border p-2 text-sm"
               >
                 <option value="sha256">SHA-256 (Recommended)</option>
@@ -627,8 +627,8 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">Organization</label>
-              <input
+              <label for="field-organization" class="block text-sm font-bold text-nb-black/80 mb-1">Organization</label>
+              <input id="field-organization"
                 type="text"
                 bind:value={archivalConfig.organization}
                 class="w-full border p-2 text-sm"
@@ -638,8 +638,8 @@
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-nb-black/80 mb-1">Description</label>
-            <textarea
+            <label for="field-description" class="block text-sm font-bold text-nb-black/80 mb-1">Description</label>
+            <textarea id="field-description"
               bind:value={archivalConfig.description}
               class="w-full border p-2 text-sm"
               rows="2"
@@ -649,8 +649,8 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">External Identifier</label>
-              <input
+              <label for="field-external-id" class="block text-sm font-bold text-nb-black/80 mb-1">External Identifier</label>
+              <input id="field-external-id"
                 type="text"
                 bind:value={archivalConfig.externalId}
                 class="w-full border p-2 text-sm"
@@ -658,8 +658,8 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">Version Message</label>
-              <input
+              <label for="field-version-msg" class="block text-sm font-bold text-nb-black/80 mb-1">Version Message</label>
+              <input id="field-version-msg"
                 type="text"
                 bind:value={archivalConfig.versionMessage}
                 class="w-full border p-2 text-sm"
@@ -670,8 +670,8 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">User Name</label>
-              <input
+              <label for="field-user-name" class="block text-sm font-bold text-nb-black/80 mb-1">User Name</label>
+              <input id="field-user-name"
                 type="text"
                 value={archivalConfig.user?.name || ''}
                 oninput={(e) => { archivalConfig = { ...archivalConfig, user: { ...archivalConfig.user, name: e.currentTarget.value } }; }}
@@ -680,8 +680,8 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">User Email</label>
-              <input
+              <label for="field-user-email" class="block text-sm font-bold text-nb-black/80 mb-1">User Email</label>
+              <input id="field-user-email"
                 type="email"
                 value={archivalConfig.user?.email || ''}
                 oninput={(e) => { archivalConfig = { ...archivalConfig, user: { name: archivalConfig.user?.name ?? '', ...archivalConfig.user, email: e.currentTarget.value } }; }}
@@ -729,8 +729,8 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">Site Title</label>
-              <input
+              <label for="field-site-title" class="block text-sm font-bold text-nb-black/80 mb-1">Site Title</label>
+              <input id="field-site-title"
                 type="text"
                 bind:value={canopyConfig.title}
                 class="w-full border p-2 text-sm"
@@ -738,8 +738,8 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">Base URL</label>
-              <input
+              <label for="field-base-url" class="block text-sm font-bold text-nb-black/80 mb-1">Base URL</label>
+              <input id="field-base-url"
                 type="text"
                 bind:value={canopyConfig.baseUrl}
                 class="w-full border p-2 text-sm"
@@ -747,8 +747,8 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-1">IIIF Server Port</label>
-              <input
+              <label for="field-iiif-port" class="block text-sm font-bold text-nb-black/80 mb-1">IIIF Server Port</label>
+              <input id="field-iiif-port"
                 type="number"
                 value={canopyConfig.port || 8765}
                 oninput={(e) => { canopyConfig = { ...canopyConfig, port: parseInt(e.currentTarget.value) || 8765 }; }}
@@ -763,11 +763,11 @@
 
           <!-- Theme Colors -->
           <div>
-            <label class="block text-sm font-bold text-nb-black/80 mb-2">Theme Colors</label>
+            <p class="block text-sm font-bold text-nb-black/80 mb-2">Theme Colors</p>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="text-xs text-nb-black/50 block mb-1">Accent Color</label>
-                <select
+                <label for="field-accent-color" class="text-xs text-nb-black/50 block mb-1">Accent Color</label>
+                <select id="field-accent-color"
                   value={canopyConfig.theme.accentColor}
                   onchange={(e) => { canopyConfig = { ...canopyConfig, theme: { ...canopyConfig.theme, accentColor: e.currentTarget.value } }; }}
                   class="w-full border p-2 text-sm capitalize"
@@ -778,8 +778,8 @@
                 </select>
               </div>
               <div>
-                <label class="text-xs text-nb-black/50 block mb-1">Background Tone</label>
-                <select
+                <label for="field-bg-tone" class="text-xs text-nb-black/50 block mb-1">Background Tone</label>
+                <select id="field-bg-tone"
                   value={canopyConfig.theme.grayColor}
                   onchange={(e) => { canopyConfig = { ...canopyConfig, theme: { ...canopyConfig.theme, grayColor: e.currentTarget.value } }; }}
                   class="w-full border p-2 text-sm capitalize"
@@ -816,7 +816,7 @@
 
           <!-- Image Processing Options -->
           <div>
-            <label class="block text-sm font-bold text-nb-black/80 mb-2">Image Processing Options</label>
+            <p class="block text-sm font-bold text-nb-black/80 mb-2">Image Processing Options</p>
             <div class="grid grid-cols-2 gap-3">
               <label class="flex items-center gap-2 cursor-pointer bg-nb-white p-3 border border-nb-black/20">
                 <input
@@ -872,9 +872,9 @@
           <!-- Featured Items Picker -->
           {#if manifestList.length > 0}
             <div>
-              <label class="block text-sm font-bold text-nb-black/80 mb-2">
+              <p class="block text-sm font-bold text-nb-black/80 mb-2">
                 Featured Items <span class="font-normal text-nb-black/40">({canopyConfig.featured.length}/6 selected)</span>
-              </label>
+              </p>
               <p class="text-xs text-nb-black/50 mb-3">Select up to 6 manifests to feature on the homepage.</p>
               <div class="max-h-48 overflow-y-auto border border-nb-black/20 divide-y divide-nb-black/10">
                 {#each manifestList as manifest (manifest.id)}

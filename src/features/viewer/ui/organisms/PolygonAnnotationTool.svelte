@@ -8,7 +8,7 @@
   Emits createSvgSelector-based IIIFAnnotation on shape completion.
 -->
 <script lang="ts">
-  /* eslint-disable @field-studio/lifecycle-restrictions -- keyboard listener for Escape/Enter drawing shortcuts */
+   
   import { cn } from '@/src/shared/lib/cn';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
@@ -215,6 +215,7 @@
   });
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex -->
 <svg
   bind:this={svgEl}
   class={cn(
@@ -227,8 +228,8 @@
   onmousemove={handleMouseMove}
   onmouseup={handleMouseUp}
   onclick={handleClick}
+  onkeydown={handleKeyDown}
   role="application"
-  tabindex="0"
   aria-label="Drawing overlay. Press Escape to cancel, Enter to close polygon."
 >
   <!-- Existing annotations (read-only) -->

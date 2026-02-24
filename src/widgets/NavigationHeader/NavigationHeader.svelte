@@ -82,6 +82,7 @@
 
   // ── Bridge: ArchiveHeader needs a bindable filter, but we receive callback ──
   // We use a local $state synced with the prop via $effect for two-way bridging.
+  // svelte-ignore state_referenced_locally -- intentional: filter is initial value, $effect handles sync
   let localFilter = $state(filter);
 
   $effect(() => {
@@ -118,7 +119,6 @@
 
 <header
   class={cn('flex flex-col border-b', cx.border, cx.headerBg)}
-  role="banner"
 >
   <!-- Row 1: Brand, Breadcrumb, User Context -->
   <div class={cn('flex items-center justify-between px-4 py-2 border-b border-nb-black/20')}>

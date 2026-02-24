@@ -10,6 +10,7 @@
 -->
 <script lang="ts">
   import { cn } from '@/src/shared/lib/cn';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { IIIFAnnotation } from '@/src/shared/types';
   import { parseSvgSelector } from '@/src/features/viewer/model/annotation';
 
@@ -22,6 +23,7 @@
     selectedId?: string;
     onSelect?: (id: string) => void;
     fieldMode: boolean;
+    cx?: ContextualClassNames;
   }
 
   let {
@@ -33,6 +35,7 @@
     selectedId,
     onSelect,
     fieldMode,
+    cx = {} as ContextualClassNames,
   }: Props = $props();
 
   // Scale factors from canvas space to container space

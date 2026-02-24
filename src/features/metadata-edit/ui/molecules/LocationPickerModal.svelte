@@ -5,7 +5,7 @@
 -->
 <script module lang="ts">
   // Leaflet is loaded globally via CDN
-  declare const L: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  declare const L: any;  
 
   const TILE_LAYER = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors';
@@ -22,6 +22,8 @@
     initialValue: string;
     onSave: (val: string) => void;
     onClose: () => void;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -29,6 +31,8 @@
     initialValue,
     onSave,
     onClose,
+    cx: _cx = {} as ContextualClassNames,
+    fieldMode = false,
   }: Props = $props();
 
   let coords = $state<{ lat: number; lng: number } | null>(null);

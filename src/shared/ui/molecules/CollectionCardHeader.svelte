@@ -8,9 +8,10 @@
     itemCount: number;
     onMenuClick?: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { label, itemCount, onMenuClick, cx }: Props = $props();
+  let { label, itemCount, onMenuClick, cx, fieldMode = false }: Props = $props();
 </script>
 
 <div class="flex items-center justify-between px-3 py-2">

@@ -5,11 +5,12 @@
 
   interface Props {
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
     children: Snippet;
   }
 
-  let { cx, class: className = '', children }: Props = $props();
+  let { cx, fieldMode = false, class: className = '', children }: Props = $props();
 </script>
 
 <div

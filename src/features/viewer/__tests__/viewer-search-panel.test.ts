@@ -36,7 +36,7 @@ function makeResult(
   return { id, canvasId, text, ...overrides };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function defaultProps(overrides: Record<string, unknown> = {}): any {
   return {
     manifest: { id: 'https://example.org/manifest/1', type: 'Manifest', label: { en: ['Test'] }, items: [] },

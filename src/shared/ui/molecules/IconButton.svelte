@@ -12,6 +12,7 @@
     disabled?: boolean;
     size?: 'sm' | 'md' | 'lg';
     cx?: Partial<ContextualClassNames>;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -23,6 +24,7 @@
     disabled = false,
     size = 'md',
     cx = {},
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 

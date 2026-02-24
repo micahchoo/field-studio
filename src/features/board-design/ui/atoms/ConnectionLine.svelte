@@ -106,7 +106,7 @@
   }
 </script>
 
-<g onclick={handleClick} ondblclick={handleDblClick} style="cursor: pointer">
+<g onclick={handleClick} ondblclick={handleDblClick} onkeydown={(e) => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); onSelect(id); } }} style="cursor: pointer" role="button" tabindex="0" aria-label="Connection line">
   {#if showArrow}
     <defs>
       <marker

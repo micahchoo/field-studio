@@ -10,6 +10,7 @@
 <script lang="ts">
   /* eslint-disable @field-studio/no-native-html-in-molecules -- Layer opacity slider requires native range input */
   import type { AnnotationLayer } from '../../model/annotationLayers.svelte';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
@@ -21,6 +22,7 @@
     onLayerOpacityChange?: (id: string, opacity: number) => void;
     onCreateLayer?: () => void;
     fieldMode?: boolean;
+    cx?: ContextualClassNames;
     visible?: boolean;
     onClose?: () => void;
   }
@@ -32,6 +34,7 @@
     onLayerOpacityChange,
     onCreateLayer,
     fieldMode = false,
+    cx = {} as ContextualClassNames,
     visible = true,
     onClose,
   }: Props = $props();
@@ -73,6 +76,7 @@
     role="dialog"
     aria-label="Annotation layers"
     onkeydown={handleKeydown}
+    tabindex="0"
   >
     <!-- Header -->
     <div class={cn(

@@ -65,8 +65,9 @@
 <div
   class={tagClass}
   {onclick}
-  role={onclick ? 'button' : undefined}
-  tabindex={onclick ? 0 : undefined}
+  onkeydown={onclick ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick(); } } : undefined}
+  role="button"
+  tabindex="0"
   title={definition?.description ?? behavior}
 >
   <span>{displayLabel}</span>

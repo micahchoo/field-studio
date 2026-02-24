@@ -135,7 +135,7 @@
         placeholder="Annotation text..."
         rows={3}
         class={inputClass}
-      />
+      ></textarea>
     </div>
 
     <!-- Current playback time (AV only) -->

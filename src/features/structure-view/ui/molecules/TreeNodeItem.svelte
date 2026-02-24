@@ -5,6 +5,7 @@
   Local state: localDropPosition, isDraggingOver
 -->
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import ExpandButton from '../atoms/ExpandButton.svelte';
   import StructureNodeIcon from '../atoms/StructureNodeIcon.svelte';
@@ -24,6 +25,8 @@
     canDrop?: boolean;
     dropPosition?: DropPosition | null;
     isDropOver?: boolean;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -37,6 +40,8 @@
     canDrop = false,
     dropPosition = null,
     isDropOver = false,
+    cx = {} as ContextualClassNames,
+    fieldMode = false,
   }: Props = $props();
 
   let localDropPosition = $state<DropPosition | null>(null);
@@ -129,6 +134,7 @@
     effectiveIsDropOver && canDrop && 'bg-nb-blue/10',
   )}
   onclick={handleClick}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(e as unknown as MouseEvent); }}
   draggable="true"
   ondragstart={handleDragStart}
   ondragend={handleDragEnd}

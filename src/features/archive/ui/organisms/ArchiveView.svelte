@@ -785,6 +785,7 @@
                       selected && (cx.selected || 'ring-2 ring-nb-blue')
                     )}
                     onclick={(e) => handleItemClick(e, canvas)}
+                    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleItemClick(e as unknown as MouseEvent, canvas); }}
                     ondblclick={() => onOpen(canvas)}
                     oncontextmenu={(e) => handleContextMenu(e, canvas)}
                     tabindex="0"
@@ -852,8 +853,10 @@
         style:left="{contextMenu.x}px"
         style:top="{contextMenu.y}px"
         onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => { if (e.key === 'Escape') contextMenu = null; }}
         role="menu"
         aria-label="Canvas context menu"
+        tabindex="0"
       >
         <button
           type="button"

@@ -9,11 +9,11 @@
   /* ── Stubbed navPlaceService (shared with GeoEditor) ── */
 
   const navPlaceService = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     getNavPlace: (item: any) => (item as any).navPlace || null,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     toGeoJSON: (np: any) => np,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     getBounds: (_np: any): { north: number; south: number; east: number; west: number } | null => null,
   };
 
@@ -45,7 +45,7 @@
 
   /* ── Local State ── */
   let mapContainer: HTMLDivElement | undefined = $state(undefined);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let leafletMap: any = $state(null);
   let hasFeatures = $state(false);
 
@@ -162,7 +162,7 @@
 </script>
 
 {#if navPlace}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_static_element_interactions -->
   <div
     class={cn(
       'relative border border-nb-black/20 overflow-hidden',
@@ -174,7 +174,7 @@
     onclick={isClickable ? handleClick : undefined}
     onkeydown={isClickable ? handleKeydown : undefined}
     role={isClickable ? 'button' : 'img'}
-    tabindex={isClickable ? 0 : -1}
+    tabindex={isClickable ? 0 : undefined}
     aria-label="Geographic location preview"
   >
     <div bind:this={mapContainer} class="absolute inset-0"></div>
@@ -197,38 +197,65 @@
   </div>
 {:else}
   <!-- Empty State (no navPlace) -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class={cn(
-      'relative border border-dashed border-nb-black/15 overflow-hidden',
-      'flex items-center justify-center bg-nb-cream/30',
-      isClickable && 'cursor-pointer hover:border-nb-black/30 hover:bg-nb-cream/50 transition-colors',
-      fieldMode && 'border-yellow-700/20 bg-yellow-50/20',
-      cx.surface
-    )}
-    style="height: {height}px"
-    onclick={isClickable ? handleClick : undefined}
-    onkeydown={isClickable ? handleKeydown : undefined}
-    role={isClickable ? 'button' : 'presentation'}
-    tabindex={isClickable ? 0 : -1}
-    aria-label={isClickable ? 'Add geographic location' : 'No geographic location set'}
-  >
-    <div class="text-center">
-      <Icon
-        name="map"
-        class={cn(
-          'text-2xl opacity-20',
-          fieldMode && 'opacity-30'
-        )}
-      />
-      <p class={cn(
-        'text-[10px] font-mono opacity-30 mt-1',
-        fieldMode && 'opacity-40'
-      )}>
-        {isClickable ? 'Click to add location' : 'No location'}
-      </p>
+  {#if isClickable}
+    <div
+      class={cn(
+        'relative border border-dashed border-nb-black/15 overflow-hidden',
+        'flex items-center justify-center bg-nb-cream/30 cursor-pointer hover:border-nb-black/30 hover:bg-nb-cream/50 transition-colors',
+        fieldMode && 'border-yellow-700/20 bg-yellow-50/20',
+        cx.surface
+      )}
+      style="height: {height}px"
+      onclick={handleClick}
+      onkeydown={handleKeydown}
+      role="button"
+      tabindex="0"
+      aria-label="Add geographic location"
+    >
+      <div class="text-center">
+        <Icon
+          name="map"
+          class={cn(
+            'text-2xl opacity-20',
+            fieldMode && 'opacity-30'
+          )}
+        />
+        <p class={cn(
+          'text-[10px] font-mono opacity-30 mt-1',
+          fieldMode && 'opacity-40'
+        )}>
+          Click to add location
+        </p>
+      </div>
     </div>
-  </div>
+  {:else}
+    <div
+      class={cn(
+        'relative border border-dashed border-nb-black/15 overflow-hidden',
+        'flex items-center justify-center bg-nb-cream/30',
+        fieldMode && 'border-yellow-700/20 bg-yellow-50/20',
+        cx.surface
+      )}
+      style="height: {height}px"
+      aria-label="No geographic location set"
+    >
+      <div class="text-center">
+        <Icon
+          name="map"
+          class={cn(
+            'text-2xl opacity-20',
+            fieldMode && 'opacity-30'
+          )}
+        />
+        <p class={cn(
+          'text-[10px] font-mono opacity-30 mt-1',
+          fieldMode && 'opacity-40'
+        )}>
+          No location
+        </p>
+      </div>
+    </div>
+  {/if}
 {/if}
 
 <style>

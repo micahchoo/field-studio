@@ -10,6 +10,7 @@
     leading?: Snippet;
     trailing?: Snippet;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
     children: Snippet;
   }
@@ -21,6 +22,7 @@
     leading,
     trailing,
     cx,
+    fieldMode = false,
     class: className = '',
     children
   }: Props = $props();
@@ -43,8 +45,7 @@
   )}
   {disabled}
   {onclick}
-  role="listitem"
-  aria-selected={selected}
+  aria-pressed={selected}
 >
   {#if leading}
     <div class="flex-shrink-0">{@render leading()}</div>

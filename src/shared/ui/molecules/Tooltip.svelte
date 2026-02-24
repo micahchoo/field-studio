@@ -9,6 +9,7 @@
 
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { fade } from 'svelte/transition';
 
   interface Props {
@@ -16,6 +17,8 @@
     position?: keyof typeof POSITION_STYLES;
     delay?: number;
     class?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
     children: Snippet;
   }
 
@@ -24,6 +27,8 @@
     position = 'top',
     delay = 300,
     class: className = '',
+    cx = {} as ContextualClassNames,
+    fieldMode = false,
     children
   }: Props = $props();
 

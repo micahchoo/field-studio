@@ -16,6 +16,7 @@
     emptyIcon?: string;
     onRetry?: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     children: Snippet;
   }
 
@@ -27,6 +28,7 @@
     emptyIcon = 'inbox',
     onRetry,
     cx,
+    fieldMode = false,
     children
   }: Props = $props();
 

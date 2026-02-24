@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import Select from '@/src/shared/ui/atoms/Select.svelte';
 
@@ -17,9 +18,10 @@
     resourceType: LinkResourceType;
     fieldMode?: boolean;
     disabled?: boolean;
+    cx?: ContextualClassNames;
   }
 
-  let { value, onChange, resourceType, fieldMode = false, disabled = false }: Props = $props();
+  let { value, onChange, resourceType, fieldMode = false, disabled = false, cx = {} as ContextualClassNames }: Props = $props();
 
   const RESOURCE_CONFIG: Record<LinkResourceType, { title: string; icon: string; defaultType: string; placeholder: string }> = {
     rendering: { title: 'Downloads', icon: 'download', defaultType: 'Text', placeholder: 'https://example.org/resource.pdf' },
@@ -149,17 +151,17 @@
     {#if editingIndex === i}
       <div class={`p-3 border space-y-3 ${formBorder}`}>
         <div class="space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>URL <span class="text-nb-red">*</span></label>
-          <input type="url" bind:value={formUrl} placeholder={config.placeholder} class={inputClass} />
+          <label for="field-edit-url-{i}" class={`block text-xs font-medium ${labelText}`}>URL <span class="text-nb-red">*</span></label>
+          <input id="field-edit-url-{i}" type="url" bind:value={formUrl} placeholder={config.placeholder} class={inputClass} />
         </div>
         <div class="space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>Label</label>
-          <input bind:value={formLabel} placeholder="Display name" class={inputClass} />
+          <label for="field-edit-label-{i}" class={`block text-xs font-medium ${labelText}`}>Label</label>
+          <input id="field-edit-label-{i}" bind:value={formLabel} placeholder="Display name" class={inputClass} />
         </div>
         <div class="flex gap-2">
           <div class="flex-1 space-y-1">
-            <label class={`block text-xs font-medium ${labelText}`}>Format</label>
-            <Select bind:value={formFormat} cx={{ input: inputClass }}>
+            <label for="field-edit-format-{i}" class={`block text-xs font-medium ${labelText}`}>Format</label>
+            <Select id="field-edit-format-{i}" bind:value={formFormat} cx={{ input: inputClass }}>
               {#snippet children()}
                 <option value="">Select format...</option>
                 {#each FORMAT_PRESETS as p}
@@ -169,8 +171,8 @@
             </Select>
           </div>
           <div class="flex-1 space-y-1">
-            <label class={`block text-xs font-medium ${labelText}`}>Type</label>
-            <input bind:value={formType} placeholder="Text" class={inputClass} />
+            <label for="field-edit-type-{i}" class={`block text-xs font-medium ${labelText}`}>Type</label>
+            <input id="field-edit-type-{i}" bind:value={formType} placeholder="Text" class={inputClass} />
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-1">
@@ -203,17 +205,17 @@
   {#if isAdding}
     <div class={`p-3 border space-y-3 ${formBorder}`}>
       <div class="space-y-1">
-        <label class={`block text-xs font-medium ${labelText}`}>URL <span class="text-nb-red">*</span></label>
-        <input type="url" bind:value={formUrl} placeholder={config.placeholder} class={inputClass} />
+        <label for="field-add-url" class={`block text-xs font-medium ${labelText}`}>URL <span class="text-nb-red">*</span></label>
+        <input id="field-add-url" type="url" bind:value={formUrl} placeholder={config.placeholder} class={inputClass} />
       </div>
       <div class="space-y-1">
-        <label class={`block text-xs font-medium ${labelText}`}>Label</label>
-        <input bind:value={formLabel} placeholder="Display name" class={inputClass} />
+        <label for="field-add-label" class={`block text-xs font-medium ${labelText}`}>Label</label>
+        <input id="field-add-label" bind:value={formLabel} placeholder="Display name" class={inputClass} />
       </div>
       <div class="flex gap-2">
         <div class="flex-1 space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>Format</label>
-          <Select bind:value={formFormat} cx={{ input: inputClass }}>
+          <label for="field-add-format" class={`block text-xs font-medium ${labelText}`}>Format</label>
+          <Select id="field-add-format" bind:value={formFormat} cx={{ input: inputClass }}>
             {#snippet children()}
               <option value="">Select format...</option>
               {#each FORMAT_PRESETS as p}
@@ -223,8 +225,8 @@
           </Select>
         </div>
         <div class="flex-1 space-y-1">
-          <label class={`block text-xs font-medium ${labelText}`}>Type</label>
-          <input bind:value={formType} placeholder="Text" class={inputClass} />
+          <label for="field-add-type" class={`block text-xs font-medium ${labelText}`}>Type</label>
+          <input id="field-add-type" bind:value={formType} placeholder="Text" class={inputClass} />
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-1">

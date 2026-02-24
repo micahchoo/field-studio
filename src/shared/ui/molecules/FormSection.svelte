@@ -10,6 +10,7 @@
     open?: boolean;
     badge?: Snippet;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     children: Snippet;
   }
 
@@ -19,6 +20,7 @@
     open = $bindable(true),
     badge,
     cx,
+    fieldMode = false,
     children
   }: Props = $props();
 

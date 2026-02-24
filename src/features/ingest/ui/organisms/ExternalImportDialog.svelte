@@ -210,7 +210,7 @@
     <div class="p-6 space-y-4">
       <!-- URL input row -->
       <div>
-        <label
+        <label for="field-import-url"
           class={cn(
             'block text-xs font-bold uppercase mb-1',
             fieldMode ? 'text-nb-yellow/50' : 'text-nb-black/50',
@@ -220,7 +220,7 @@
           Manifest or Collection URL
         </label>
         <div class="flex gap-2">
-          <input
+          <input id="field-import-url"
             type="text"
             bind:value={url}
             onkeydown={handleKeydown}

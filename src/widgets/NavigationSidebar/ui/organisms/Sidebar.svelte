@@ -688,16 +688,19 @@
                 >
                   <!-- Expand/collapse chevron -->
                   {#if node.hasChildren}
-                    <button
+                    <span
+                      role="button"
+                      tabindex="0"
                       class="p-0.5 text-theme-text-muted hover:text-theme-text transition-colors shrink-0"
                       onclick={(e) => { e.stopPropagation(); handleToggleExpand(node.id); }}
+                      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleToggleExpand(node.id); } }}
                       aria-label={node.isExpanded ? 'Collapse' : 'Expand'}
                     >
                       <Icon
                         name={node.isExpanded ? 'chevron-down' : 'chevron-right'}
                         size={12}
                       />
-                    </button>
+                    </span>
                   {:else}
                     <span class="w-5 shrink-0"></span>
                   {/if}
@@ -788,9 +791,9 @@
           isResizing && 'bg-theme-primary/30'
         )}
         onmousedown={handleResizeStart}
-        role="separator"
-        aria-orientation="vertical"
+        role="button"
         aria-label="Resize sidebar"
+        tabindex="0"
       ></div>
     {/if}
   </aside>
@@ -808,7 +811,9 @@
       )}
       style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
       role="menu"
+      tabindex="0"
       onclick={handleContextMenuClick}
+      onkeydown={(e) => { if (e.key === 'Escape') contextMenu = null; }}
     >
       <!-- Context menu title -->
       <div class="px-3 py-1.5 border-b border-theme-border/50">
@@ -888,6 +893,7 @@
     <div
       class="fixed inset-0 z-40 bg-black/30"
       onclick={onClose}
+      onkeydown={(e) => { if (e.key === 'Escape') onClose?.(); }}
     ></div>
   {/if}
 {/if}

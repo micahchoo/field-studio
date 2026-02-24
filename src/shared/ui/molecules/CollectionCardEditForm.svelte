@@ -10,6 +10,7 @@
     onSave: () => void;
     onCancel: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -17,7 +18,8 @@
     description = $bindable(''),
     onSave,
     onCancel,
-    cx
+    cx,
+    fieldMode = false
   }: Props = $props();
 
   let inputRef: HTMLInputElement | undefined = $state();

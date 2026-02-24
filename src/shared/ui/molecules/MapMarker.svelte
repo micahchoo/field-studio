@@ -58,6 +58,8 @@
   style="position: absolute; transform: translate(-50%, -50%);"
   onmouseenter={() => { isHovered = true; }}
   onmouseleave={() => { isHovered = false; }}
+  role="button"
+  tabindex="0"
 >
   <!-- Tooltip on hover -->
   {#if isHovered}

@@ -52,7 +52,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
 
       // FSD architecture rules
-      '@field-studio/max-lines-feature': 'warn',
+      '@field-studio/max-lines-feature': ['warn', { moleculeMax: 300, organismMax: 500 }],
       '@field-studio/component-props-validation': 'warn',
       '@field-studio/lifecycle-restrictions': 'error',
       '@field-studio/template-constraints': 'error',
@@ -99,7 +99,7 @@ export default [
       ...sveltePlugin.configs.recommended.rules,
 
       // FSD architecture rules
-      '@field-studio/max-lines-feature': 'warn',
+      '@field-studio/max-lines-feature': ['warn', { moleculeMax: 300, organismMax: 500 }],
       '@field-studio/component-props-validation': 'warn',
       '@field-studio/lifecycle-restrictions': 'error',
       '@field-studio/template-constraints': 'error',

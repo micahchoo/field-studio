@@ -67,5 +67,5 @@
     style:cursor="crosshair"
     aria-label="Connect from {position} side"
     title="Click to start connection"
-  />
+  ></button>
 </div>

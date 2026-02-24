@@ -73,6 +73,8 @@
 </script>
 
 {#if showSearchPanel}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     class={cn(
       'absolute right-0 top-0 bottom-0 w-96 z-30',
@@ -82,6 +84,7 @@
     role="complementary"
     aria-label="Search panel"
     onkeydown={handleKeydown}
+    tabindex="0"
     transition:slide={{ axis: 'x', duration: 200 }}
   >
     <!-- Panel Header -->

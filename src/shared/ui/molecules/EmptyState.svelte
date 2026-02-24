@@ -9,10 +9,11 @@
     title: string;
     description?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     action?: Snippet;
   }
 
-  let { icon, title, description, cx, action }: Props = $props();
+  let { icon, title, description, cx, fieldMode = false, action }: Props = $props();
 </script>
 
 <div class="flex flex-col items-center justify-center text-center py-12 px-6 gap-4">

@@ -166,6 +166,14 @@ export const IIIF_CONFIG = {
   DEFAULT_CONTEXT: 'http://iiif.io/api/presentation/3/context.json',
   IMAGE_API_VERSION: 3,
   SEARCH_API_VERSION: 2,
+  BASE_URL: {
+    DEFAULT: 'http://archive.local/iiif',
+  },
+  ID_PATTERNS: {
+    MANIFEST: (base: string, uuid: string) => `${base}/manifest/${uuid}`,
+    COLLECTION: (base: string, uuid: string) => `${base}/collection/${uuid}`,
+    RANGE: (base: string, uuid: string) => `${base}/range/${uuid}`,
+  },
 };
 
 // ============================================================================

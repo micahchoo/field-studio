@@ -209,10 +209,13 @@
       isDragOver ? 'border-2 border-dashed border-nb-blue bg-nb-blue/5' : 'border-nb-black/10',
     )}
     onclick={onFocus}
+    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFocus(); } }}
     ondragover={(e) => handleNodeDragOver(e, node.id)}
     ondragleave={handleNodeDragLeave}
     ondrop={(e) => handleNodeDrop(e, node.id)}
     role="treeitem"
+    aria-selected={false}
+    tabindex="0"
   >
     <!-- Collection header -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->

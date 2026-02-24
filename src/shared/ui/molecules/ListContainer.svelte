@@ -10,6 +10,7 @@
     emptyIcon?: string;
     maxHeight?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     children: Snippet;
   }
 
@@ -19,6 +20,7 @@
     emptyIcon = 'inbox',
     maxHeight,
     cx,
+    fieldMode = false,
     children
   }: Props = $props();
 

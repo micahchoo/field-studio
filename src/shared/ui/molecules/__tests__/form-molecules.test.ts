@@ -17,7 +17,7 @@ import DebouncedInput from '../DebouncedInput.svelte';
 import TestHost from './TestHost.svelte';
 import FormSection from '../FormSection.svelte';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const cx = {} as any;
 
 let target: HTMLDivElement;
@@ -121,7 +121,7 @@ describe('FormInput', () => {
   });
 
   it('renders label with cx.label override', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     mount(FormInput, { target, props: { label: 'Test', cx: { label: 'custom-label-class' } as any } });
     const label = target.querySelector('label');
     expect(label!.className).toContain('custom-label-class');

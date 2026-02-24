@@ -53,5 +53,5 @@
     style:background-color="{borderColor}20"
     style:z-index="999"
     aria-label="Selection box"
-  />
+  ></div>
 {/if}

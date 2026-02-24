@@ -6,6 +6,7 @@
 <script lang="ts">
   import type { FileAnalysis } from '../../types';
   import { formatCircularDepsAsMarkdown } from '../../lib/markdownFormatters';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import CopyableSection from '../atoms/CopyableSection.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
@@ -13,9 +14,11 @@
   interface Props {
     circularDeps: string[][];
     files: Record<string, FileAnalysis>;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { circularDeps, files }: Props = $props();
+  let { circularDeps, files, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   let markdown = $derived(formatCircularDepsAsMarkdown(circularDeps));
 </script>

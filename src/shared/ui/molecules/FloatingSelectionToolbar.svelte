@@ -8,11 +8,12 @@
     count: number;
     onClear: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     children?: Snippet;
     class?: string;
   }
 
-  let { count, onClear, cx, children, class: className = '' }: Props = $props();
+  let { count, onClear, cx, fieldMode = false, children, class: className = '' }: Props = $props();
 </script>
 
 {#if count > 0}

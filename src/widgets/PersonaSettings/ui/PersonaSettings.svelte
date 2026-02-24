@@ -148,7 +148,7 @@
 
       <!-- Section: Affordance Overrides -->
       <section>
-        <label class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Affordance Overrides</label>
+        <p class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Affordance Overrides</p>
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1">
             <span class="text-[9px] font-bold text-nb-black/50 uppercase">Auto-Save Frequency</span>
@@ -176,7 +176,7 @@
 
       <!-- Section: Metadata Complexity -->
       <section class="pt-6 border-t border-nb-black/10">
-        <label class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Metadata Complexity</label>
+        <p class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Metadata Complexity</p>
         <div class="bg-nb-white border p-4 space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-nb-black/80">Field Visibility Level</span>
@@ -277,7 +277,7 @@
 
       <!-- Section: Developer Tools / Admin Mode -->
       <section class="pt-6 border-t border-nb-black/10 space-y-3">
-        <label class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Developer Tools</label>
+        <p class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Developer Tools</p>
         <div class={cn(
           'flex items-center justify-between p-3 border transition-nb',
           adminMode ? 'bg-nb-purple/5 border-nb-purple/20' : 'bg-nb-white border-nb-black/20'
@@ -313,7 +313,7 @@
 
       <!-- Section: Help & Tooltips (inline, was HelpResetSection sub-component) -->
       <section class="pt-6 border-t border-nb-black/10">
-        <label class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Help & Tooltips</label>
+        <p class="block text-[10px] font-black text-nb-black/40 uppercase tracking-widest mb-4">Help & Tooltips</p>
         <div class="bg-nb-white border p-4 space-y-4">
           <div class="flex items-center justify-between">
             <div>

@@ -9,6 +9,7 @@
     label?: string;
     icon?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
     menu: Snippet;
     children?: Snippet;
@@ -18,6 +19,7 @@
     label,
     icon,
     cx,
+    fieldMode = false,
     class: className = '',
     menu,
     children

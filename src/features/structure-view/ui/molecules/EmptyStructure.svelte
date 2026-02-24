@@ -4,11 +4,15 @@
   Pure presentational: "No structure loaded" message
 -->
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
+
   interface Props {
     class?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { class: className = '' }: Props = $props();
+  let { class: className = '', cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 </script>
 
 <div

@@ -393,13 +393,13 @@
                   </span>
                 {/if}
                 {#if badge.dotColor}
-                  <span class={cn('w-1.5 h-1.5 rounded-full shrink-0', badge.dotColor)} />
+                  <span class={cn('w-1.5 h-1.5 rounded-full shrink-0', badge.dotColor)} ></span>
                 {/if}
                 {#if tabName === 'annotations' && annotationModeActive}
                   <span class={cn(
                     'w-1.5 h-1.5 animate-pulse ml-1',
                     fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue'
-                  )} />
+                  )} ></span>
                 {/if}
               </span>
             </Button>
@@ -519,6 +519,9 @@
         )}
         onpointerdown={() => { isResizing = true; }}
         onpointerup={() => { isResizing = false; }}
+        role="button"
+        aria-label="Resize inspector"
+        tabindex="0"
       >
         <div
           class={cn(
@@ -530,7 +533,7 @@
               ? (fieldMode ? 'bg-nb-yellow opacity-100' : 'bg-iiif-blue opacity-100')
               : (fieldMode ? 'bg-nb-yellow/60 group-hover:bg-nb-yellow' : 'bg-nb-black/40 group-hover:bg-iiif-blue')
           )}
-        />
+        ></div>
       </div>
     {/if}
   </aside>

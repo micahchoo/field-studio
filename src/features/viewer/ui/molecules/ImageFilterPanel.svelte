@@ -114,6 +114,7 @@
   role="dialog"
   aria-label="Image filters"
   onkeydown={handleKeydown}
+  tabindex="0"
 >
   <!-- Header -->
   <div class={cn(

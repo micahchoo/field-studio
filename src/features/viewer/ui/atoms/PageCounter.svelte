@@ -52,7 +52,7 @@
   // Using $derived avoids the state_referenced_locally warning since we close
   // over the prop reactively.
   $effect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+     
     current; // track the prop
     if (!isEditing) {
       editValue = current.toString();

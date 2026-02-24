@@ -4,6 +4,7 @@
   Local state: showMenu dropdown toggle
 -->
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
 
   interface Props {
@@ -14,6 +15,8 @@
     onClearSelection: () => void;
     abstractionLevel?: 'simple' | 'standard' | 'advanced';
     class?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -24,6 +27,8 @@
     onClearSelection,
     abstractionLevel = 'standard',
     class: className = '',
+    cx = {} as ContextualClassNames,
+    fieldMode = false,
   }: Props = $props();
 
   let showMenu = $state(false);

@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import Icon from '../atoms/Icon.svelte';
 
@@ -17,9 +18,11 @@
     variant: keyof typeof VARIANT_STYLES;
     icon?: string;
     class?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { label, variant, icon, class: className = '' }: Props = $props();
+  let { label, variant, icon, class: className = '', cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 </script>
 
 <span class={cn(

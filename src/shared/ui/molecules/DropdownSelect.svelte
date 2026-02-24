@@ -27,6 +27,7 @@
     themeColor?: ThemeColor;
     showDescriptions?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -37,6 +38,7 @@
     themeColor = 'blue',
     showDescriptions = false,
     cx,
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 
@@ -73,7 +75,8 @@
   }
 </script>
 
-<div bind:this={dropdownRef} class={cn('relative', className)} onkeydown={handleKeydown}>
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div bind:this={dropdownRef} class={cn('relative', className)} onkeydown={handleKeydown} role="group">
   <button
     type="button"
     class={cn(

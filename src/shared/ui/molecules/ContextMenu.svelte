@@ -9,7 +9,8 @@
     x: number;
     y: number;
     cx: ContextualClassNames;
-    children: Snippet;
+    fieldMode?: boolean;
+    children?: Snippet;
   }
 
   let {
@@ -17,11 +18,14 @@
     x,
     y,
     cx,
+    fieldMode = false,
     children
   }: Props = $props();
 
   let menuRef: HTMLDivElement | undefined = $state();
+  // svelte-ignore state_referenced_locally -- intentional: x/y are initial position; adjusted reactively by $effect
   let adjustedX = $state(x);
+  // svelte-ignore state_referenced_locally -- intentional: x/y are initial position; adjusted reactively by $effect
   let adjustedY = $state(y);
 
   // Update position when x/y change
@@ -79,7 +83,7 @@
       role="menu"
       tabindex="-1"
     >
-      {@render children()}
+      {@render children?.()}
     </div>
   </div>
 {/if}

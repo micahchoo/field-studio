@@ -285,7 +285,7 @@
       <div
         class="absolute w-2 h-2 rounded-full bg-nb-yellow cursor-crosshair {anchor.cls}"
         onmousedown={handleAnchorClick}
-      />
+      ></div>
     {/each}
   {/if}
 
@@ -296,7 +296,7 @@
       <div
         class="absolute w-2.5 h-2.5 {resizeHandleColor} {handle.cls}"
         onmousedown={(e: MouseEvent) => handleResizeMouseDown(e, handle.direction)}
-      />
+      ></div>
     {/each}
   {/if}
 </div>

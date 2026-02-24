@@ -173,7 +173,7 @@ function ensureLanguageMap(value: any, defaultValue: string, language: string = 
  */
 function getDefaultRightsUri(): string {
   // Find CC0 URI in the COMMON_RIGHTS_URIS array
-  const cc0 = (COMMON_RIGHTS_URIS as readonly string[]).find(
+  const cc0 = Object.values(COMMON_RIGHTS_URIS).find(
     uri => uri.includes('publicdomain/zero') || uri.includes('cc0')
   );
   return cc0 || 'http://creativecommons.org/publicdomain/zero/1.0/';
@@ -186,7 +186,7 @@ function createMinimalProvider(item: IIIFItem): any {
   try {
     const label = getIIIFValue(item.label) || 'Untitled Resource';
     return [{
-      id: generateValidUri('http://archive.local/iiif', 'Agent'),
+      id: generateValidUri('http://archive.local/iiif/agent'),
       type: 'Agent',
       label: createLanguageMap('Unknown Institution', 'none')
     }];
@@ -333,7 +333,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // Missing or invalid ID
   if (msg.includes('missing required field: id') || msg.includes('id is required')) {
     if (!healed.id) {
-      healed.id = generateValidUri('http://archive.local/iiif', healed.type || 'Resource');
+      healed.id = generateValidUri(`http://archive.local/iiif/${(healed.type || 'Resource').toLowerCase()}`);
     }
     return { success: true, updatedItem: healed, message: 'Generated valid ID' };
   }

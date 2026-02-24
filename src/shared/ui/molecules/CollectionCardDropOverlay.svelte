@@ -6,9 +6,10 @@
   interface Props {
     active: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { active, cx }: Props = $props();
+  let { active, cx, fieldMode = false }: Props = $props();
 </script>
 
 {#if active}

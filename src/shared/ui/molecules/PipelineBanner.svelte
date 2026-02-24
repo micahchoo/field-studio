@@ -18,6 +18,7 @@
     variant?: keyof typeof VARIANT_STYLES;
     onCancel?: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -25,7 +26,8 @@
     status,
     variant = 'processing',
     onCancel,
-    cx
+    cx,
+    fieldMode = false
   }: Props = $props();
 
   const style = $derived(VARIANT_STYLES[variant]);

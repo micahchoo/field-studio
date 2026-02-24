@@ -379,6 +379,7 @@
             aria-valuemin={5}
             aria-valuemax={95}
             aria-label="Comparison curtain divider"
+            tabindex="0"
           >
             <div class={cn('absolute inset-0', fieldMode ? 'bg-nb-yellow' : 'bg-nb-blue')}></div>
             <div class={cn(

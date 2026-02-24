@@ -1049,9 +1049,10 @@
           <!-- Resize handle -->
           <div
             class="w-1 bg-nb-black/20 hover:bg-nb-blue cursor-col-resize transition-nb flex-shrink-0"
-            role="separator"
-            aria-orientation="vertical"
+            role="button"
+            aria-label="Resize panels"
             onmousedown={handleResizeStart}
+            tabindex="0"
           ></div>
 
           <!-- Center pane: Archive -->
@@ -1188,8 +1189,8 @@
               </button>
             </div>
             <div class="p-4">
-              <label class="block text-sm font-medium mb-2">Rights URI</label>
-              <input
+              <label for="field-rights-uri" class="block text-sm font-medium mb-2">Rights URI</label>
+              <input id="field-rights-uri"
                 type="text"
                 class="w-full border rounded px-3 py-2 text-sm"
                 value={annotationsMap.get(rPath)?.rights ?? ''}
@@ -1225,8 +1226,8 @@
               </button>
             </div>
             <div class="p-4">
-              <label class="block text-sm font-medium mb-2">Date (ISO 8601)</label>
-              <input
+              <label for="field-nav-date" class="block text-sm font-medium mb-2">Date (ISO 8601)</label>
+              <input id="field-nav-date"
                 type="datetime-local"
                 class="w-full border rounded px-3 py-2 text-sm"
                 value={(annotationsMap.get(ndPath)?.navDate ?? '').replace('Z', '').slice(0, 16)}

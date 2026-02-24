@@ -49,5 +49,5 @@
     style:background-image={gridStyle.backgroundImage}
     style:background-size={gridStyle.backgroundSize}
     aria-hidden="true"
-  />
+  ></div>
 {/if}

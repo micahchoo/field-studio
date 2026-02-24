@@ -66,9 +66,9 @@
   <!-- Filename column selector -->
   <div>
     <div class="flex items-center justify-between mb-2">
-      <label class={cn('block', labelClass)}>
+      <p class={cn('block', labelClass)}>
         Filename Column <span class="text-nb-red">*</span>
-      </label>
+      </p>
       {#if onAutoDetect}
         <AutoMapButton
           onclick={onAutoDetect}

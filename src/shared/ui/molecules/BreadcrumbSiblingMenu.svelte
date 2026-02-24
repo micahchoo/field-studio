@@ -9,10 +9,11 @@
     currentId: string;
     onNavigate: (id: string) => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
-  let { siblings, currentId, onNavigate, cx, class: className = '' }: Props = $props();
+  let { siblings, currentId, onNavigate, cx, fieldMode = false, class: className = '' }: Props = $props();
 
   let isOpen = $state(false);
   let ref: HTMLDivElement | undefined;

@@ -91,10 +91,13 @@
   <div
     class="relative w-full h-20 border border-nb-black/30 overflow-hidden cursor-pointer"
     onclick={handleClick}
+    onkeydown={(e) => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); undefined; } }}
     aria-label="MiniMap - click to pan"
+    role="button"
+    tabindex="0"
   >
     <!-- Background -->
-    <div class="absolute inset-0 opacity-20 {fieldMode ? 'bg-nb-black' : cx.surface || 'bg-nb-black'}" />
+    <div class="absolute inset-0 opacity-20 {fieldMode ? 'bg-nb-black' : cx.surface || 'bg-nb-black'}" ></div>
 
     <!-- Items -->
     {#each items as item (item.id)}
@@ -105,7 +108,7 @@
         style:width="{Math.max(item.w * scale, 2)}px"
         style:height="{Math.max(item.h * scale, 2)}px"
         title={item.label}
-      />
+      ></div>
     {/each}
 
     <!-- Viewport rectangle -->
@@ -117,7 +120,7 @@
         style:width="{viewportRect.width * scale}px"
         style:height="{viewportRect.height * scale}px"
         aria-label="Current viewport"
-      />
+      ></div>
     {/if}
   </div>
 </div>

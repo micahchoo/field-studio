@@ -12,7 +12,9 @@
     placeholder?: string;
     autoFocus?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
+    id?: string;
   }
 
   let {
@@ -25,9 +27,12 @@
     placeholder,
     autoFocus = false,
     cx,
-    class: className = ''
+    fieldMode = false,
+    class: className = '',
+    id,
   }: Props = $props();
 
+  const fieldId = $derived(id ?? (label ? label.toLowerCase().replace(/[W_]+/g,'-').replace(/^-|-$/g,'') : undefined));
   let localValue = $state(value);
   let isPending = $state(false);
   let inputRef: HTMLInputElement | undefined = $state();
@@ -71,13 +76,14 @@
 
 <div class={className}>
   {#if label}
-    <label class={cn(cx.label || 'text-[11px] font-bold uppercase tracking-wider font-mono', 'block mb-2')}>
+    <label for={fieldId} class={cn(cx.label || 'text-[11px] font-bold uppercase tracking-wider font-mono', 'block mb-2')}>
       {label}
     </label>
   {/if}
 
   <div class="relative">
     <input
+      {id}
       bind:this={inputRef}
       bind:value={localValue}
       type="text"

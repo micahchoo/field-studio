@@ -9,11 +9,12 @@
     onClear: () => void;
     onSelectAll?: () => void;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     children?: Snippet;
     class?: string;
   }
 
-  let { count, onClear, onSelectAll, cx, children, class: className = '' }: Props = $props();
+  let { count, onClear, onSelectAll, cx, fieldMode = false, children, class: className = '' }: Props = $props();
 </script>
 
 <div class={cn('flex items-center gap-2 px-3 py-1.5', cx.headerBg || 'bg-nb-cream border-b-2 border-nb-black', className)}>

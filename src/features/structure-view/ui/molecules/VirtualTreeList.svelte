@@ -5,6 +5,7 @@
   Local state: scrollTop
 -->
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import TreeNodeItem from './TreeNodeItem.svelte';
   import type { StructureNode } from '../../stores/structureTree.svelte';
@@ -22,6 +23,8 @@
     onDrop: (targetId: string, position?: DropPosition) => void;
     onDoubleClick?: (id: string) => void;
     class?: string;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
   let {
@@ -36,6 +39,8 @@
     onDrop,
     onDoubleClick,
     class: className = '',
+    cx = {} as ContextualClassNames,
+    fieldMode = false,
   }: Props = $props();
 
   let scrollTop = $state(0);

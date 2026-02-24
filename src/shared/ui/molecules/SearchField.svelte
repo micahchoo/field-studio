@@ -10,6 +10,7 @@
     autoFocus?: boolean;
     showClear?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -20,6 +21,7 @@
     autoFocus = false,
     showClear = true,
     cx,
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 

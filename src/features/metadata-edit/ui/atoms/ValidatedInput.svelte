@@ -187,7 +187,7 @@
       aria-invalid={isInvalid || undefined}
       aria-describedby={validation.message ? messageId : undefined}
       aria-errormessage={isInvalid ? messageId : undefined}
-    />
+    ></textarea>
   {:else}
     <input
       {id}

@@ -896,7 +896,7 @@
               style="left: {item.x}px; top: {item.y}px; width: {item.width}px; height: {item.height}px;{item.type === 'note' && item.color ? ` background-color: ${item.color};` : ''}"
               role="button"
               tabindex="0"
-              aria-selected={selection.isSelected(item.id)}
+              aria-pressed={selection.isSelected(item.id)}
               aria-label={item.label ?? item.resourceId ?? 'Board item'}
               onpointerdown={(e) => handleItemPointerDown(e, item.id)}
               onpointerup={(e) => handleItemPointerUp(e, item.id)}
@@ -991,6 +991,7 @@
       style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
       onclick={(e: MouseEvent) => e.stopPropagation()}
       role="menu"
+      tabindex="0"
     >
       <button
         class={cn('block w-full px-3 py-1.5 text-sm text-left hover:bg-black/5', cx.text)}
@@ -1045,13 +1046,14 @@
         onclick={(e: MouseEvent) => e.stopPropagation()}
         role="dialog"
         aria-label="Edit connection"
+        tabindex="0"
       >
         <h3 class={cn('font-mono uppercase text-sm font-semibold mb-3', cx.text)}>Edit Connection</h3>
 
         <div class="space-y-3">
           <div>
-            <label class={cn('block text-xs font-medium mb-1', cx.textMuted)}>Type</label>
-            <select
+            <label for="field-conn-type" class={cn('block text-xs font-medium mb-1', cx.textMuted)}>Type</label>
+            <select id="field-conn-type"
               class={cn('w-full px-2 py-1.5 text-sm border-2 rounded', cx.border || 'border-nb-black', cx.surface || 'bg-white')}
               value={conn.type}
               onchange={(e) => {
@@ -1066,8 +1068,8 @@
             </select>
           </div>
           <div>
-            <label class={cn('block text-xs font-medium mb-1', cx.textMuted)}>Label</label>
-            <input
+            <label for="field-conn-label" class={cn('block text-xs font-medium mb-1', cx.textMuted)}>Label</label>
+            <input id="field-conn-label"
               class={cn('w-full px-2 py-1.5 text-sm border-2 rounded', cx.border || 'border-nb-black', cx.surface || 'bg-white')}
               type="text"
               value={conn.label ?? ''}

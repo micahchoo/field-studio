@@ -8,10 +8,11 @@
     message: string;
     icon?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
-  let { id, message, icon = 'lightbulb', cx, class: className = '' }: Props = $props();
+  let { id, message, icon = 'lightbulb', cx, fieldMode = false, class: className = '' }: Props = $props();
 
   let dismissed = $state(false);
 

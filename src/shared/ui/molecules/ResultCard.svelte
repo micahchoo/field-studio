@@ -57,7 +57,7 @@
     <div class={`h-3 ${cx.headerBg ?? 'bg-nb-cream'} w-1/2`}></div>
   </div>
 {:else}
-  <article
+  <div
     onclick={() => onSelect(id)}
     onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(id); } }}
     class={`
@@ -70,7 +70,7 @@
     `}
     role="button"
     tabindex="0"
-    aria-selected={selected}
+    aria-pressed={selected}
   >
     <!-- Thumbnail -->
     <div class={`aspect-video ${cx.headerBg ?? 'bg-nb-cream'} relative overflow-hidden`}>
@@ -138,5 +138,5 @@
         </dl>
       {/if}
     </div>
-  </article>
+  </div>
 {/if}

@@ -17,12 +17,12 @@
 <script module lang="ts">
   /* ── NavPlace types (stubbed until navPlaceService migration) ── */
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   export type NavPlace = any;
 
   export type GeoFeature = {
     type: 'Feature';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     geometry: any;
     properties: Record<string, unknown>;
   };
@@ -41,7 +41,7 @@
   /* ── Stubbed navPlaceService ── */
 
   const navPlaceService = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     getNavPlace: (item: any): NavPlace | null => (item as any).navPlace || null,
     toGeoJSON: (np: NavPlace): NavPlace => np,
     getBounds: (_np: NavPlace): { north: number; south: number; east: number; west: number } | null => null,
@@ -103,11 +103,11 @@
 
   /* ── Local State ── */
   let mapContainer: HTMLDivElement | undefined = $state(undefined);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let leafletMap: any = $state(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let drawnItems: any = $state(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let L: any = $state(null);
 
   let searchQuery = $state('');
@@ -199,7 +199,7 @@
   /* eslint-enable @field-studio/lifecycle-restrictions */
 
   /* ── navPlace Loading ── */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function loadNavPlace(leaflet: any, map: any, items: any) {
     const navPlace = navPlaceService.getNavPlace(item);
     if (!navPlace) return;
@@ -231,7 +231,7 @@
   }
 
   /* ── Feature Management ── */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function addMarkerFeature(leaflet: any, items: any, lat: number, lng: number) {
     const marker = leaflet.marker([lat, lng]);
     marker.addTo(items);
@@ -239,7 +239,7 @@
     emitChange(items);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function addBoundsFeature(leaflet: any, map: any, items: any) {
     const bounds = map.getBounds();
     const rect = leaflet.rectangle(bounds, {
@@ -252,12 +252,12 @@
     emitChange(items);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function updateFeatureCount(items: any) {
     featureCount = items ? items.getLayers().length : 0;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function emitChange(items: any) {
     if (!items) return;
     const layers = items.getLayers();
@@ -267,7 +267,7 @@
     }
 
     const features: GeoFeature[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     layers.forEach((layer: any) => {
       if (layer.getLatLng) {
         // Marker

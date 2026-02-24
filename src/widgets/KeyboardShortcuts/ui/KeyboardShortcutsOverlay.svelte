@@ -65,6 +65,7 @@
   // State
   // ---------------------------------------------------------------------------
   let searchQuery: string = $state('');
+  // svelte-ignore state_referenced_locally -- intentional: currentContext is the initial value only
   let selectedContext: ShortcutContext | 'all' = $state(currentContext);
   let selectedCategory: ShortcutCategory | null = $state(null);
   let searchInputRef: HTMLInputElement | undefined = $state(undefined);
@@ -304,6 +305,7 @@
     onkeydown={handleKeydown}
     role="dialog"
     aria-label="Keyboard shortcuts"
+    tabindex="0"
   >
 
     <!-- ================================================================= -->

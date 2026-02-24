@@ -8,6 +8,7 @@
 </script>
 
 <script lang="ts">
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { slide } from 'svelte/transition';
   import Button from '../atoms/Button.svelte';
   import Icon from '../atoms/Icon.svelte';
@@ -19,9 +20,11 @@
     action?: { label: string; onclick: () => void };
     duration?: number;
     onDismiss: () => void;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { id, variant, message, action, duration = 5000, onDismiss }: Props = $props();
+  let { id, variant, message, action, duration = 5000, onDismiss, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   const style = $derived(VARIANT_STYLES[variant]);
 

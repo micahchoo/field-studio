@@ -10,6 +10,7 @@
     options: Option[];
     value?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -17,6 +18,7 @@
     options,
     value = $bindable(''),
     cx,
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 </script>

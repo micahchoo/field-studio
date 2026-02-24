@@ -26,7 +26,7 @@ import SelectionBar from '../../molecules/ViewHeader/SelectionBar.svelte';
 // TestHost for children
 import TestHost from './TestHost.svelte';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const cx = {} as any;
 
 let target: HTMLDivElement;
@@ -212,7 +212,7 @@ describe('ViewHeader', () => {
   });
 
   it('applies cx.headerBg override', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     mount(ViewHeader, { target, props: { cx: { headerBg: 'bg-nb-black text-nb-cream' } as any } });
     const container = target.firstElementChild;
     expect(container!.className).toContain('bg-nb-black');

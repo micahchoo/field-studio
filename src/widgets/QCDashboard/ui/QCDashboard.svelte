@@ -493,7 +493,7 @@
 
             <!-- Hierarchy breadcrumb trace -->
             <div class="space-y-3">
-              <label class="text-[9px] font-black uppercase tracking-widest text-nb-black/40">Archive Hierarchy Trace</label>
+              <p class="text-[9px] font-black uppercase tracking-widest text-nb-black/40">Archive Hierarchy Trace</p>
               <div class="border overflow-hidden shadow-brutal-sm">
                 {#each previewPath as p, i (p.id)}
                   <div
@@ -523,12 +523,12 @@
             <!-- Interactive metadata workbench (for Metadata/Identity categories) -->
             {#if activeCategory === 'Metadata' || activeCategory === 'Identity'}
               <div class="space-y-4">
-                <label class="text-[9px] font-black uppercase tracking-widest text-nb-black/40">Interactive Workbench</label>
+                <p class="text-[9px] font-black uppercase tracking-widest text-nb-black/40">Interactive Workbench</p>
                 <div class="border p-5 space-y-4 shadow-brutal-sm">
                   <!-- Resource Label -->
                   <div>
-                    <label class="text-[10px] font-black uppercase mb-1.5 block text-nb-black/40">Resource Label</label>
-                    <input
+                    <label for="field-qc-resource-label" class="text-[10px] font-black uppercase mb-1.5 block text-nb-black/40">Resource Label</label>
+                    <input id="field-qc-resource-label"
                       value={getIIIFValue(previewItem.label)}
                       oninput={(e) => handleUpdateItem(previewItem.id, { label: { none: [(e.target as HTMLInputElement).value] } })}
                       class="w-full text-xs p-2.5 border focus:ring-2 focus:ring-iiif-blue outline-none font-bold bg-nb-white"
@@ -537,8 +537,8 @@
 
                   <!-- Summary -->
                   <div>
-                    <label class="text-[10px] font-black uppercase mb-1.5 block text-nb-black/40">Scientific Summary</label>
-                    <textarea
+                    <label for="field-qc-summary" class="text-[10px] font-black uppercase mb-1.5 block text-nb-black/40">Scientific Summary</label>
+                    <textarea id="field-qc-summary"
                       value={getIIIFValue(previewItem.summary)}
                       oninput={(e) => handleUpdateItem(previewItem.id, { summary: { none: [(e.target as HTMLTextAreaElement).value] } })}
                       class="w-full text-xs p-2.5 border focus:ring-2 focus:ring-iiif-blue outline-none font-medium min-h-[60px] bg-nb-white"
@@ -549,7 +549,7 @@
                   <!-- Metadata key-value pairs -->
                   <div class="pt-2 border-t">
                     <div class="flex justify-between items-center mb-2">
-                      <label class="text-[10px] font-black uppercase text-nb-black/40">Archive Metadata</label>
+                      <span class="text-[10px] font-black uppercase text-nb-black/40">Archive Metadata</span>
                       <div class="relative">
                         <Button
                           variant="ghost"
@@ -630,7 +630,7 @@
 
             <!-- Raw technical signature (JSON) -->
             <div class="space-y-2 opacity-50 grayscale hover:grayscale-0 transition-nb">
-              <label class="text-[9px] font-black uppercase tracking-widest text-nb-black/40">Technical Signature</label>
+              <p class="text-[9px] font-black uppercase tracking-widest text-nb-black/40">Technical Signature</p>
               <div class="bg-nb-black p-4 font-mono text-[9px] text-nb-blue/60 leading-relaxed overflow-hidden border border-white/10 shadow-brutal">
                 <p class="text-white/40 mb-1">// {previewItem.type} ID</p>
                 <p class="break-all text-nb-green mb-2">{previewItem.id}</p>

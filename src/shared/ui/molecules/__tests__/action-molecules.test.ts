@@ -23,7 +23,7 @@ import ViewToggle from '../ViewToggle.svelte';
 import TabBar from '../TabBar.svelte';
 // TestHost available but not needed for current tests (all mount directly)
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const cx = {} as any;
 
 let target: HTMLDivElement;

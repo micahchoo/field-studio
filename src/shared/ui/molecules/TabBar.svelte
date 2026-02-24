@@ -13,6 +13,7 @@
     tabs: Tab[];
     activeTab?: string;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -20,6 +21,7 @@
     tabs,
     activeTab = $bindable(''),
     cx,
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 

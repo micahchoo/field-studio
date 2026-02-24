@@ -32,6 +32,8 @@
     cx: ContextualClassNames;
     /** Available canvases in the manifest */
     canvases: IIIFCanvas[];
+    /** Field mode flag */
+    fieldMode?: boolean;
   }
 </script>
 
@@ -49,6 +51,7 @@
     settings,
     cx,
     canvases,
+    fieldMode = false,
   }: StructureTabPanelProps = $props();
 
   let expandedRanges = $state(new Set<string>());

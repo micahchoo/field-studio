@@ -6,6 +6,7 @@
 <script lang="ts">
   import type { FileAnalysis } from '../../types';
   import { formatBytes } from '../../lib/markdownFormatters';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
@@ -15,9 +16,11 @@
     allFiles: Record<string, FileAnalysis>;
     onClose: () => void;
     onSelectFile: (file: FileAnalysis) => void;
+    cx?: ContextualClassNames;
+    fieldMode?: boolean;
   }
 
-  let { file, allFiles, onClose, onSelectFile }: Props = $props();
+  let { file, allFiles, onClose, onSelectFile, cx = {} as ContextualClassNames, fieldMode = false }: Props = $props();
 
   let externalImports = $derived(file.imports.filter(i => i.isExternal));
   let internalImports = $derived(file.imports.filter(i => !i.isExternal && !i.isInternalAlias));

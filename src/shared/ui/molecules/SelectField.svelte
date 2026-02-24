@@ -22,6 +22,7 @@
     disabled?: boolean;
     required?: boolean;
     cx: ContextualClassNames;
+    fieldMode?: boolean;
     onchange?: (value: string) => void;
     class?: string;
   }
@@ -35,6 +36,7 @@
     disabled = false,
     required = false,
     cx,
+    fieldMode = false,
     onchange,
     class: className = ''
   }: Props = $props();

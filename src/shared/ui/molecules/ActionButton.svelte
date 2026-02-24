@@ -13,6 +13,7 @@
     loading?: boolean;
     direction?: 'vertical' | 'horizontal';
     cx?: Partial<ContextualClassNames>;
+    fieldMode?: boolean;
     class?: string;
   }
 
@@ -25,6 +26,7 @@
     loading = false,
     direction = 'vertical',
     cx = {},
+    fieldMode = false,
     class: className = ''
   }: Props = $props();
 </script>

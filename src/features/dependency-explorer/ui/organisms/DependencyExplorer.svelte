@@ -92,7 +92,7 @@
   <!-- Loading -->
   <div class={cn('flex items-center justify-center h-full', className)}>
     <div class="flex items-center gap-3 text-nb-black/50">
-      <div class="w-5 h-5 border-2 border-nb-black/20 border-t-nb-black/60 animate-spin" />
+      <div class="w-5 h-5 border-2 border-nb-black/20 border-t-nb-black/60 animate-spin" ></div>
       <span>Loading dependency graph...</span>
     </div>
   </div>
@@ -136,7 +136,7 @@
         </span>
       </div>
 
-      <div class="flex-1" />
+      <div class="flex-1" ></div>
 
       <!-- View Mode Tabs -->
       <div class="flex items-center gap-1 bg-nb-cream/80 p-1">
@@ -210,7 +210,7 @@
         Show External
       </label>
 
-      <div class="flex-1" />
+      <div class="flex-1" ></div>
 
       <!-- Results Count -->
       <span class="text-sm text-nb-black/50">
