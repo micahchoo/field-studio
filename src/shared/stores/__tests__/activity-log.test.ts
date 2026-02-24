@@ -185,7 +185,6 @@ describe('activityLog.resolveConflict', () => {
   function injectConflict(id: string) {
     // We access private state via cast — necessary for unit testing
     const store = activityLog as unknown as {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       _conflicts?: unknown[];
     };
     // Reset and inject a fake conflict by calling reset + patching

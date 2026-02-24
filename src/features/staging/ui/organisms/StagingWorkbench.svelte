@@ -1079,13 +1079,12 @@
           </div>
 
           <!-- Resize handle -->
-          <div
+          <button
+            type="button"
             class="w-1 bg-nb-black/20 hover:bg-nb-blue cursor-col-resize transition-nb flex-shrink-0"
-            role="button"
             aria-label="Resize panels"
             onmousedown={handleResizeStart}
-            tabindex="0"
-          ></div>
+          ></button>
 
           <!-- Center pane: Archive -->
           <div

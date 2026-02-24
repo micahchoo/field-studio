@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { denormalize, denormalizeCanvas } from '../denormalization';
 import { normalize, createEmptyState } from '../normalization';
-import type { IIIFCanvas, IIIFCollection, IIIFManifest } from '@/src/shared/types';
+import type { IIIFCollection, IIIFManifest } from '@/src/shared/types';
 import {
   resetIds,
   createMinimalManifest,

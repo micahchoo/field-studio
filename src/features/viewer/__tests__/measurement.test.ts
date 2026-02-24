@@ -10,8 +10,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   MeasurementStore,
-  type MeasurementPoint,
-  type Measurement,
 } from '@/src/features/viewer/model/measurement.svelte';
 
 // ============================================================================

@@ -10,7 +10,7 @@
  * tested with the real Web Crypto API, which is available in happy-dom.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // ─── idb mock — must come before any import of fileIntegrity ─────────────────
 vi.mock('idb', () => ({

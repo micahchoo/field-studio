@@ -62,12 +62,10 @@
   );
 </script>
 
-<div
+<button
+  type="button"
   class={tagClass}
   {onclick}
-  onkeydown={onclick ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick(); } } : undefined}
-  role="button"
-  tabindex="0"
   title={definition?.description ?? behavior}
 >
   <span>{displayLabel}</span>
@@ -76,4 +74,4 @@
       {category}
     </span>
   {/if}
-</div>
+</button>

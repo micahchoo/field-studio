@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildTree, ingestTree } from '../iiifBuilder';
+import { ingestTree } from '../iiifBuilder';
 import type { FileTree, IngestResult } from '@/src/shared/types';
 
 // ─── Mock idb (storage.ts uses idb) ──────────────────────────────────────────

@@ -130,7 +130,7 @@
         'text-nb-caption font-bold uppercase tracking-wider font-mono hidden md:inline',
         cx.textMuted || 'text-nb-black/40'
       )}>
-        Select items to begin synthesis pipeline
+        Select items to access pipeline
       </span>
     {/if}
     {#if showReorderHint}

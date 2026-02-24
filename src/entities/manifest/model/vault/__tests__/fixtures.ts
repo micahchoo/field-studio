@@ -9,7 +9,6 @@ import type {
   IIIFCollection,
   IIIFManifest,
   IIIFRange,
-  IIIFItem
 } from '@/src/shared/types';
 
 let counter = 0;

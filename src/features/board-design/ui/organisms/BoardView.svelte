@@ -887,8 +887,8 @@
         <!-- Board items -->
         {#each boardItems as item (item.id)}
           {#if item.type !== 'group'}
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
+            <button
+              type="button"
               class={cn(
                 'absolute transition-shadow',
                 itemBgClass(item),
@@ -896,8 +896,6 @@
                 activeTool === 'connect' && 'hover:ring-2 hover:ring-blue-400',
               )}
               style="left: {item.x}px; top: {item.y}px; width: {item.width}px; height: {item.height}px;{item.type === 'note' && item.color ? ` background-color: ${item.color};` : ''}"
-              role="button"
-              tabindex="0"
               aria-pressed={selection.isSelected(item.id)}
               aria-label={item.label ?? item.resourceId ?? 'Board item'}
               onpointerdown={(e) => handleItemPointerDown(e, item.id)}
@@ -939,7 +937,7 @@
                   fieldMode ? 'bg-yellow-400 border-yellow-600' : 'bg-blue-500 border-blue-700',
                 )}></div>
               {/if}
-            </div>
+            </button>
           {/if}
         {/each}
 

@@ -4,7 +4,6 @@
 import { describe, it, expect } from 'vitest';
 import { cloneAsRecord, deepCloneState, recordAs, hasType } from '../cloning';
 import { createEmptyState } from '../normalization';
-import type { NormalizedState } from '@/src/shared/types';
 
 describe('cloneAsRecord', () => {
   it('creates a deep copy (no reference sharing)', () => {

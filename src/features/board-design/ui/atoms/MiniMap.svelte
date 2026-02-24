@@ -88,13 +88,11 @@
 
 <div class="absolute bottom-4 left-4 w-40 h-28 p-2 shadow-brutal {cx.surface} border {borderClass} backdrop-blur-sm bg-opacity-90">
   <div class="text-xs font-medium mb-1">Canvas Overview</div>
-  <div
+  <button
+    type="button"
     class="relative w-full h-20 border border-nb-black/30 overflow-hidden cursor-pointer"
     onclick={handleClick}
-    onkeydown={(e) => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); undefined; } }}
     aria-label="MiniMap - click to pan"
-    role="button"
-    tabindex="0"
   >
     <!-- Background -->
     <div class="absolute inset-0 opacity-20 {fieldMode ? 'bg-nb-black' : cx.surface || 'bg-nb-black'}" ></div>
@@ -122,5 +120,5 @@
         aria-label="Current viewport"
       ></div>
     {/if}
-  </div>
+  </button>
 </div>

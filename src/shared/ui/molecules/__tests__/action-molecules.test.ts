@@ -469,16 +469,18 @@ describe('CollectionCard', () => {
     expect(imgs[0].src).toContain('a.jpg');
   });
 
-  it('has role="button" and tabindex', () => {
+  it('has native button element and is keyboard accessible', () => {
+    // CollectionCard uses semantic <button> (replaces former <div role="button">).
+    // Native buttons have tabIndex=0 implicitly.
     mount(CollectionCard, { target, props: { collection, cx } });
-    const btn = target.querySelector('[role="button"]');
+    const btn = target.querySelector('button') as HTMLButtonElement;
     expect(btn).toBeTruthy();
-    expect(btn!.getAttribute('tabindex')).toBe('0');
+    expect(btn.tabIndex).toBe(0);
   });
 
   it('applies selected ring styles', () => {
     mount(CollectionCard, { target, props: { collection, selected: true, cx } });
-    const outer = target.querySelector('[role="button"]');
+    const outer = target.querySelector('button');
     expect(outer!.className).toContain('ring-2');
   });
 

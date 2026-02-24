@@ -485,7 +485,7 @@
           class="p-2"
         >
           <Icon
-            name={isCollapsed ? 'panel-left-open' : 'panel-left-close'}
+            name={isCollapsed ? 'menu' : 'menu_open'}
             size={18}
           />
         </Button>
@@ -513,19 +513,19 @@
           >
             <Icon name={nav.icon} size={20} />
 
-            <!-- Badge dot -->
+            <!-- Badge dot — aria-hidden: parent button title carries the label -->
             {#if badge?.dot}
-              <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500"></span>
+              <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" aria-hidden="true"></span>
             {/if}
 
-            <!-- Badge count -->
+            <!-- Badge count — TODO(loop): count not exposed to AT when parent title is the accessible name -->
             {#if badge?.count && badge.count > 0}
               <span class={cn(
                 'absolute -top-0.5 -right-0.5',
                 'min-w-[16px] h-4 px-1',
                 'flex items-center justify-center',
                 'text-[9px] font-bold text-white bg-red-500 rounded-full'
-              )}>
+              )} aria-hidden="true">
                 {badge.count > 99 ? '99+' : badge.count}
               </span>
             {/if}
@@ -543,7 +543,7 @@
             title="Quick Help"
             class="w-10 h-10 flex items-center justify-center"
           >
-            <Icon name="help-circle" size={18} />
+            <Icon name="help_outline" size={18} />
           </Button>
         {/if}
 
@@ -574,7 +574,7 @@
           </span>
           {#if isMobile && onClose}
             <Button variant="ghost" size="bare" onclick={onClose} class="p-1">
-              <Icon name="x" size={16} />
+              <Icon name="close" size={16} />
             </Button>
           {/if}
         </div>
@@ -616,7 +616,7 @@
             />
             {#if treeSearchQuery}
               <Button variant="ghost" size="bare" onclick={() => { treeSearchQuery = ''; }}>
-                <Icon name="x" size={12} />
+                <Icon name="close" size={12} />
               </Button>
             {/if}
           </div>
@@ -690,6 +690,7 @@
                 >
                   <!-- Expand/collapse chevron -->
                   {#if node.hasChildren}
+                    <!-- eslint-disable-next-line @field-studio/prefer-semantic-elements -- inside <button> (tree row), nesting <button> is invalid HTML -->
                     <span
                       role="button"
                       tabindex="0"
@@ -746,7 +747,7 @@
             </div>
           {:else}
             <div class="flex flex-col items-center justify-center h-full p-4 text-center">
-              <Icon name="folder-open" size={32} class="text-theme-text-muted mb-2" />
+              <Icon name="folder_open" size={32} class="text-theme-text-muted mb-2" />
               <p class="text-sm text-theme-text-muted">No project loaded</p>
               <Button variant="primary" size="sm" class="mt-3" onclick={onImport}>
                 Import
@@ -768,7 +769,7 @@
 
           {#if onOpenExternalImport}
             <Button variant="ghost" size="sm" onclick={onOpenExternalImport} title="External import">
-              <Icon name="globe" size={14} />
+              <Icon name="language" size={14} />
             </Button>
           {/if}
 
@@ -780,23 +781,21 @@
             onclick={onToggleFieldMode}
             title={fieldMode ? 'Exit Field Mode' : 'Enter Field Mode'}
           >
-            <Icon name="zap" size={14} />
+            <Icon name="bolt" size={14} />
           </Button>
         </div>
       </div>
 
       <!-- Resize handle -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
+      <button
+        type="button"
         class={cn(
           'w-1 cursor-col-resize hover:bg-theme-primary/30 transition-colors',
           isResizing && 'bg-theme-primary/30'
         )}
         onmousedown={handleResizeStart}
-        role="button"
         aria-label="Resize sidebar"
-        tabindex="0"
-      ></div>
+      ></button>
     {/if}
   </aside>
 
@@ -835,7 +834,7 @@
         onclick={() => handleContextMenuAction('navigate')}
         role="menuitem"
       >
-        <Icon name="arrow-right" size={14} />
+        <Icon name="arrow_forward" size={14} />
         Go to Item
       </button>
 
@@ -853,7 +852,7 @@
           onclick={() => handleContextMenuAction('rename')}
           role="menuitem"
         >
-          <Icon name="edit-2" size={14} />
+          <Icon name="edit" size={14} />
           Rename
         </button>
       {/if}
@@ -882,7 +881,7 @@
           onclick={() => handleContextMenuAction('delete')}
           role="menuitem"
         >
-          <Icon name="trash-2" size={14} />
+          <Icon name="delete" size={14} />
           Delete
         </button>
       {/if}

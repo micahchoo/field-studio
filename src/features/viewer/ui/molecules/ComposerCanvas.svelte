@@ -98,18 +98,16 @@
   <!-- Layers -->
   {#each sortedLayers as layer (layer.id)}
     {@const isActive = layer.id === activeLayerId}
-    <div
+    <button
+      type="button"
       class={cn(
         'absolute transition-shadow',
         isActive && (fieldMode ? 'ring-2 ring-nb-yellow' : 'ring-2 ring-nb-blue')
       )}
       style:z-index={layer.zIndex}
-      role="button"
-      tabindex="0"
       aria-label="{getLayerTypeLabel(layer.type)} layer"
       aria-pressed={isActive}
       onclick={() => onLayerSelect?.(layer.id)}
-      onkeydown={(e) => e.key === 'Enter' && onLayerSelect?.(layer.id)}
     >
       {#if layer.type === 'image' && layer.content?.src}
         <img
@@ -133,7 +131,7 @@
           {getLayerTypeLabel(layer.type)}
         </div>
       {/if}
-    </div>
+    </button>
   {/each}
 
   <!-- Empty state -->

@@ -32,16 +32,14 @@
   }: Props = $props();
 </script>
 
-<div
+<button
+  type="button"
   class={cn(
-    'relative cursor-pointer transition-all',
+    'relative cursor-pointer transition-all block w-full text-left',
     selected && (cx.selected || 'ring-2 ring-nb-orange')
   )}
-  role="button"
-  tabindex="0"
   {onclick}
   {oncontextmenu}
-  onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter') onclick?.(); }}
 >
   <Card {cx}>
     {#if header}
@@ -67,4 +65,4 @@
       </div>
     {/if}
   </Card>
-</div>
+</button>

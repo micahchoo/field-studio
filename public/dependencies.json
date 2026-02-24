@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T08:51:16.497Z",
+  "generatedAt": "2026-02-24T09:42:51.613Z",
   "totalFiles": 234,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -6886,7 +6886,8 @@
             "IIIFCollection",
             "IIIFItem",
             "isCollection",
-            "isManifest"
+            "isManifest",
+            "LanguageMap"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -7003,8 +7004,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 59605,
-      "lines": 1532
+      "size": 60079,
+      "lines": 1536
     },
     "src/features/export/model/staticSiteExporter.ts": {
       "filePath": "src/features/export/model/staticSiteExporter.ts",
@@ -8084,8 +8085,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 19418,
-      "lines": 595
+      "size": 19594,
+      "lines": 597
     },
     "src/features/structure-view/ui/atoms/index.ts": {
       "filePath": "src/features/structure-view/ui/atoms/index.ts",
@@ -10954,6 +10955,17 @@
           "isInternalAlias": false
         },
         {
+          "source": "openseadragon",
+          "specifiers": [
+            "default:OpenSeadragon"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
           "source": "./app.css",
           "specifiers": [
             "[side-effect]"
@@ -10968,8 +10980,8 @@
       "exports": [],
       "dependencies": [],
       "dependents": [],
-      "size": 504,
-      "lines": 18
+      "size": 716,
+      "lines": 22
     },
     "src/shared/actions/clickOutside.ts": {
       "filePath": "src/shared/actions/clickOutside.ts",
@@ -15638,8 +15650,8 @@
       "dependents": [
         "src/shared/services/index.ts"
       ],
-      "size": 10525,
-      "lines": 281
+      "size": 10559,
+      "lines": 283
     },
     "src/shared/services/opfsStorage.ts": {
       "filePath": "src/shared/services/opfsStorage.ts",
@@ -15967,8 +15979,8 @@
         "src/shared/services/logger.ts"
       ],
       "dependents": [],
-      "size": 6423,
-      "lines": 197
+      "size": 6928,
+      "lines": 206
     },
     "src/shared/services/tilePipeline.ts": {
       "filePath": "src/shared/services/tilePipeline.ts",
@@ -21001,6 +21013,7 @@
     "isomorphic-dompurify",
     "js-yaml",
     "jszip",
+    "openseadragon",
     "react",
     "svelte",
     "tailwindcss",
@@ -21171,9 +21184,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 672,
+    "totalImports": 673,
     "totalExports": 1810,
-    "avgImportsPerFile": 2.871794871794872,
+    "avgImportsPerFile": 2.876068376068376,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

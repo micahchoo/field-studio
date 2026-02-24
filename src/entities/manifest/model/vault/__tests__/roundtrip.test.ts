@@ -3,7 +3,7 @@ import { normalize } from '../normalization';
 import { denormalize } from '../denormalization';
 import { updateEntity } from '../updates';
 import { moveEntityToTrash, restoreEntityFromTrash } from '../trash';
-import { getEntity, hasEntity } from '../queries';
+import { hasEntity } from '../queries';
 import type { IIIFCollection, IIIFManifest } from '@/src/shared/types';
 import {
   resetIds,

@@ -53,13 +53,12 @@
   const markerColor = $derived(TYPE_COLORS[type] ?? 'bg-nb-black/70');
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -- tooltip-only hover; the inner <button> handles the actual interaction -->
 <div
   class="relative group"
   style="position: absolute; transform: translate(-50%, -50%);"
   onmouseenter={() => { isHovered = true; }}
   onmouseleave={() => { isHovered = false; }}
-  role="button"
-  tabindex="0"
 >
   <!-- Tooltip on hover -->
   {#if isHovered}

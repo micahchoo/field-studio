@@ -544,7 +544,8 @@ describe('ComposerCanvas', () => {
         cx,
       },
     });
-    const layerEl = target.querySelector('[role="button"]') as HTMLElement;
+    // ComposerCanvas layers now use semantic <button> (not <div role="button">).
+    const layerEl = target.querySelector('button') as HTMLElement;
     if (layerEl) layerEl.click();
     expect(onLayerSelect).toHaveBeenCalledWith('layer-1');
   });

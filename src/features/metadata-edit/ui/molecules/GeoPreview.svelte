@@ -198,7 +198,8 @@
 {:else}
   <!-- Empty State (no navPlace) -->
   {#if isClickable}
-    <div
+    <button
+      type="button"
       class={cn(
         'relative border border-dashed border-nb-black/15 overflow-hidden',
         'flex items-center justify-center bg-nb-cream/30 cursor-pointer hover:border-nb-black/30 hover:bg-nb-cream/50 transition-colors',
@@ -207,9 +208,6 @@
       )}
       style="height: {height}px"
       onclick={handleClick}
-      onkeydown={handleKeydown}
-      role="button"
-      tabindex="0"
       aria-label="Add geographic location"
     >
       <div class="text-center">
@@ -227,7 +225,7 @@
           Click to add location
         </p>
       </div>
-    </div>
+    </button>
   {:else}
     <div
       class={cn(

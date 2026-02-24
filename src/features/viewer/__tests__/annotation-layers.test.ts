@@ -10,7 +10,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   AnnotationLayerStore,
-  type AnnotationLayer,
 } from '@/src/features/viewer/model/annotationLayers.svelte';
 
 // ============================================================================

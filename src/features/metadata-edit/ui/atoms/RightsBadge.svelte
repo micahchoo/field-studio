@@ -70,8 +70,12 @@
   >
     No rights statement
   </span>
+{:else if onclick}
+  <button type="button" class={badgeClass} {onclick} title={value}>
+    {displayLabel}
+  </button>
 {:else}
-  <span class={badgeClass} onclick={onclick} onkeydown={(e) => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); onclick&&onclick(); } }} role="button" tabindex={onclick?0:undefined} title={value}>
+  <span class={badgeClass} title={value}>
     {displayLabel}
   </span>
 {/if}

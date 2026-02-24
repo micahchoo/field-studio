@@ -18,7 +18,6 @@ import type { IIIFCanvas } from '@/src/shared/types';
 import {
   resetIds,
   createMinimalManifest,
-  createMinimalCollection,
   createFullTree,
 } from './fixtures';
 

@@ -85,16 +85,13 @@
   );
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
+<button
+  type="button"
   class={zoneClass}
   ondragover={handleDragOver}
   ondragleave={handleDragLeave}
   ondrop={handleDrop}
   onclick={handleClick}
-  role="button"
-  tabindex="0"
-  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
 >
   {#if isLoading}
     <span class="animate-spin">
@@ -118,13 +115,13 @@
       Accepted: {accept}
     </p>
   {/if}
+</button>
 
-  <input
-    bind:this={fileInputRef}
-    type="file"
-    {accept}
-    onchange={handleFileChange}
-    class="hidden"
-    tabindex="-1"
-  />
-</div>
+<input
+  bind:this={fileInputRef}
+  type="file"
+  {accept}
+  onchange={handleFileChange}
+  class="hidden"
+  tabindex="-1"
+/>

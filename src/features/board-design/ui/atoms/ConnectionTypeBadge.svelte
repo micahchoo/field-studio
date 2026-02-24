@@ -82,7 +82,8 @@
   }
 </script>
 
-<span
+<button
+  type="button"
   onclick={handleClick}
   class={cn(
     'inline-flex items-center px-2 py-1 text-xs font-medium transition-nb',
@@ -93,9 +94,6 @@
   )}
   title="Connection type: {label}"
   aria-label="{label} connection"
-  role="button"
-  tabindex={clickable ? 0 : undefined}
-  onkeydown={(e) => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); handleClick(); } }}
 >
   {label}
-</span>
+</button>

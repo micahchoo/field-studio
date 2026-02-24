@@ -404,21 +404,18 @@
 
               <!-- Results for this canvas -->
               {#each canvasResults as result, index}
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
+                <button
+                  type="button"
                   onclick={() => onResultSelect(result)}
-                  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onResultSelect(result); }}
                   class={cn(
                     'w-full px-4 py-3 text-left transition-nb group cursor-pointer',
                     fieldMode
                       ? 'hover:bg-nb-black text-nb-black/30'
                       : 'hover:bg-nb-white text-nb-black/80'
                   )}
-                  role="button"
-                  tabindex="0"
                 >
                   {@render searchResultItem(result, query)}
-                </div>
+                </button>
               {/each}
             </div>
           {/each}

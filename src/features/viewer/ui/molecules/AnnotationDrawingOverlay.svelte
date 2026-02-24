@@ -65,7 +65,6 @@
     annotationText?: string;
     annotationMotivation?: 'commenting' | 'tagging' | 'describing';
     annotationStyle?: AnnotationStyleOptions;
-    osdReady?: number;
     onAnnotationSelected?: (annotation: IIIFAnnotation | null) => void;
     cx: ContextualClassNames;
     fieldMode: boolean;
@@ -88,7 +87,6 @@
     annotationText = '',
     annotationMotivation = 'commenting',
     annotationStyle,
-    osdReady = 0,
     onAnnotationSelected,
     cx,
     fieldMode,
@@ -106,11 +104,11 @@
   let anno: any = null;
 
   // Stable ref for onAnnotationSelected to avoid re-init loops.
-  // eslint-disable-next-line @field-studio/no-effect-for-derived
   // Cannot be $derived: onAnnotationSelectedCurrent is a plain (non-reactive) let used as
   // a callback ref inside Annotorious event handlers — making it $derived would add Svelte
   // reactivity overhead and trigger unnecessary Annotorious re-inits.
   let onAnnotationSelectedCurrent = onAnnotationSelected;
+  // eslint-disable-next-line @field-studio/no-effect-for-derived
   $effect(() => { onAnnotationSelectedCurrent = onAnnotationSelected; });
 
   // --- Derived ---
@@ -128,8 +126,7 @@
 
   $effect(() => {
     const viewer = viewerRef;
-    const ready = osdReady;
-    if (!viewer || !ready) return;
+    if (!viewer) return;
 
     // Dynamic import of Annotorious OSD
     let destroyed = false;

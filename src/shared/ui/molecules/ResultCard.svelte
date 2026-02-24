@@ -57,19 +57,17 @@
     <div class={`h-3 ${cx.headerBg ?? 'bg-nb-cream'} w-1/2`}></div>
   </div>
 {:else}
-  <div
+  <button
+    type="button"
     onclick={() => onSelect(id)}
-    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(id); } }}
     class={`
       group relative border overflow-hidden
-      transition-nb cursor-pointer
+      transition-nb cursor-pointer block w-full text-left
       ${selected
         ? `${cx.accent ?? 'bg-nb-blue'} border-current ring-2 ring-current ring-opacity-50`
         : `${cx.surface ?? 'bg-nb-white'} ${cx.border ?? 'border-nb-black/20'} hover:${cx.headerBg ?? 'bg-nb-cream'}`
       }
     `}
-    role="button"
-    tabindex="0"
     aria-pressed={selected}
   >
     <!-- Thumbnail -->
@@ -138,5 +136,5 @@
         </dl>
       {/if}
     </div>
-  </div>
+  </button>
 {/if}

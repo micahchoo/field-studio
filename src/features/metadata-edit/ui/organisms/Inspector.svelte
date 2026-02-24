@@ -566,7 +566,8 @@
 
     <!-- Resize Handle - Desktop Only -->
     {#if !isMobile}
-      <div
+      <button
+        type="button"
         data-resize-handle
         class={cn(
           'absolute left-0 top-0 bottom-0 w-1 z-30 group',
@@ -577,9 +578,7 @@
         )}
         onpointerdown={() => { isResizing = true; }}
         onpointerup={() => { isResizing = false; }}
-        role="button"
         aria-label="Resize inspector"
-        tabindex="0"
       >
         <div
           class={cn(
@@ -592,7 +591,7 @@
               : (fieldMode ? 'bg-nb-yellow/60 group-hover:bg-nb-yellow' : 'bg-nb-black/40 group-hover:bg-iiif-blue')
           )}
         ></div>
-      </div>
+      </button>
     {/if}
   </aside>
 {/if}

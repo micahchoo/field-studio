@@ -16,7 +16,7 @@ import {
   validateAction,
   executeAction,
 } from '../index';
-import type { Action, ActionResult, HistoryEntry } from '../types';
+import type { Action } from '../types';
 import type { NormalizedState } from '../../vault';
 import type { IIIFCanvas, IIIFManifest } from '@/src/shared/types';
 
@@ -55,7 +55,7 @@ function makeCanvas(id: string, overrides?: Partial<IIIFCanvas>): IIIFCanvas {
   };
 }
 
-function makeManifest(id: string, canvasIds: string[]): IIIFManifest {
+function makeManifest(id: string, _canvasIds: string[]): IIIFManifest {
   return {
     id,
     type: 'Manifest',

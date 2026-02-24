@@ -251,6 +251,7 @@
         onclick={onOpenActivityFeed}
         class="flex items-center gap-1 hover:bg-nb-black hover:text-nb-white px-1 py-0.5 transition-nb relative"
         title="Activity feed"
+        aria-label="Activity feed"
       >
         <Icon name="notifications" class="text-[14px]" />
         {#if activityCount != null && activityCount > 0}
@@ -294,6 +295,9 @@
       </div>
       {#if storageUsage}
         <span class="text-nb-micro">{formatBytes(storageUsage.usage)}</span>
+        {#if usagePercent > 0}
+          <span class="text-nb-micro opacity-50">({Math.round(usagePercent)}%)</span>
+        {/if}
       {/if}
 
       <!-- Tooltip (rendered via snippet) -->
@@ -307,6 +311,7 @@
           onclick={onOpenKeyboardShortcuts}
           class="flex items-center gap-1 hover:bg-nb-black hover:text-nb-white px-1 py-0.5 transition-nb"
           title="Keyboard Shortcuts (?)"
+          aria-label="Keyboard shortcuts"
         >
           <Icon name="keyboard" class="text-[14px]" />
         </Button>
@@ -319,6 +324,7 @@
             quickHelpOpen ? 'bg-nb-blue text-nb-white' : 'hover:bg-nb-black hover:text-nb-white'
           )}
           title="Quick Help"
+          aria-label="Quick help"
         >
           <Icon name="help_outline" class="text-[14px]" />
         </Button>

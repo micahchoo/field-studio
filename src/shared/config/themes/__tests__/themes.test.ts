@@ -10,7 +10,6 @@ import { lightTheme } from '../light';
 import { darkTheme } from '../dark';
 import { fieldTheme } from '../field';
 import { resolveTheme, themes, tokenToCssVar } from '../index';
-import type { ThemeTokens } from '../types';
 
 // ============================================================================
 // tokenToCssVar

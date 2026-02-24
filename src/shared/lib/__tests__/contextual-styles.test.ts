@@ -11,7 +11,6 @@ import {
   FIELD_CLASSES,
   THEME_CLASSES,
   getContextualClasses,
-  type ContextualClassNames,
 } from '../contextual-styles';
 
 describe('ContextualClassNames', () => {

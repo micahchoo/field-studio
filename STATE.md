@@ -3,6 +3,175 @@
 _Single source of truth for the Svelte 5 migration plan._
 _Updated after every phase loop. See [plan](docs/migration-plan.md) for background._
 
+## Current Phase: Dead Code + Aria Round ⏳ IN PROGRESS
+
+### State-of-Repo Report (2026-02-24)
+
+**Verified metrics (live run):**
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **240 warnings** |
+
+**Warning breakdown by rule:**
+| Rule | Count | Status |
+|------|-------|--------|
+| `@typescript-eslint/no-unused-vars` | 126 | 🎯 Round target — test dead imports + source unused vars |
+| `@typescript-eslint/no-explicit-any` | 31 | ❌ Blocked — TYPE_DEBT (external libs, structural) |
+| `@field-studio/require-aria-for-icon-buttons` | 29 | 🎯 Round target — add aria-labels to 22 icon buttons |
+| `@field-studio/no-unsafe-type-cast-in-props` | 22 | ❌ Mostly blocked — annotorious interop, MouseEvent coercions |
+| `@field-studio/max-lines-feature` | 20 | ❌ Deferred — architectural decomposition needed |
+| `@field-studio/prefer-semantic-elements` | 7 | ❌ Deferred — structural (slider, listbox, combobox, button-in-button) |
+| `@field-studio/typed-context-keys` | 3 | 🎯 Round target — convert 2 string context keys to typed Symbols |
+| `@field-studio/no-effect-for-derived` | 2 | 🎯 Round target — 2 `$effect` → `$derived` conversions |
+| `@field-studio/no-unsafe-type-cast-in-props` (annotorious) | 2 | ❌ External lib — add eslint-disable with explanation |
+
+**Top `no-unused-vars` files (highest count first):**
+- `validationHealer.ts` — 10 (source dead code)
+- `model.test.ts` (board-design) — 9 (test unused imports)
+- `edge-cases.test.ts` (vault) — 9 (test unused imports)
+- `actions.test.ts` (shared/actions) — 6 (test unused imports)
+- `viewer-stores.test.ts` — 5 (test unused imports)
+
+**Structural debt inventory (unresolvable without major work):**
+- `IIIFItem.service?: any[]`, `IIIFItem.items?: any[]`, `IIIFItem.navPlace?: any`
+- `ValidationIssue` (3 incompatible shapes)
+- 7 `prefer-semantic-elements` (slider/listbox/combobox/button-in-button)
+- 20 `max-lines-feature` (organisms/molecules too large — need decomposition)
+
+---
+
+## Previous Phase: Semantic-HTML Conversion Round 2 ✅ COMPLETE
+
+### Metrics (post Semantic-HTML Conversion Round 2)
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **240 warnings** (was 241; -1 from button conversions) |
+
+### Semantic-HTML Conversion Round 2 — Changes Made
+**`div/span role="button"` → `<button type="button">` (18 sites):**
+- `BehaviorTag.svelte` — removed onkeydown (native button handles Enter/Space)
+- `ConnectionTypeBadge.svelte` — removed onkeydown, role, tabindex
+- `RightsBadge.svelte` — conditional: `<button>` when onclick, `<span>` otherwise
+- `CollectionCard.svelte` — added `block w-full text-left`, removed onkeydown
+- `ResultCard.svelte` — added `block w-full text-left`, removed onkeydown
+- `CanvasItem.svelte` (board-design/atoms) — added `onclick={() => onClick(id)}` for keyboard
+- `FileDropZone.svelte` — moved `<input type="file">` outside button (was invalid to nest); removed role/tabindex/onkeydown
+- `MiniMap.svelte` — removed buggy onkeydown (called `undefined`)
+- `ComposerCanvas.svelte` — removed onkeydown
+- `GeoPreview.svelte` — removed onkeydown
+- `ViewerSearchPanel.svelte` — removed svelte-ignore, onkeydown
+- `MediaPlayer.svelte` — chapter marker div → button
+- `BoardView.svelte` — board item div → button (pointerdown/up/dblclick/contextmenu preserved)
+- `Inspector.svelte` — resize handle → button
+- `StagingWorkbench.svelte` — resize handle → button
+- `Sidebar.svelte` (resize handle) — removed svelte-ignore, div → button
+
+**`MapMarker.svelte` — removed invalid outer `role="button" tabindex="0"`:**
+- Outer div was button-in-button (inner `<button>` already handles interaction)
+- Added `<!-- svelte-ignore a11y_no_static_element_interactions -->` (tooltip-only mouse handlers)
+
+**`Sidebar.svelte` — chevron span (button-in-button deferred):**
+- Reverted `<span role="button">` → `<button>` (invalid: span is inside tree-row `<button>`)
+- Added `<!-- eslint-disable-next-line @field-studio/prefer-semantic-elements -->` comment
+
+**`activity-log.test.ts` — removed unused eslint-disable:**
+- `@typescript-eslint/naming-convention` suppression on `_conflicts` (underscore prefix already allowed)
+
+**Remaining `prefer-semantic-elements` warnings (8 — structural debt, deferred):**
+- `div role="slider"` (×3): ProgressBar, MediaPlayer, TimeAnnotationOverlay — custom drag sliders, can't be `<input type="range">`
+- `li/div role="option"` (×2): ViewerSearchPanel, CanvasItem (shared) — custom listbox items
+- `div role="combobox"` (×1): CommandPalette — complex custom combobox
+- `span role="button"` (×1): Sidebar chevron — inside outer `<button>`, button nesting invalid HTML
+- `div role="button"` (×1): FileDropZone (should now be resolved — confirm on next run)
+
+### Previous Phase: UI/UX Audit + Semantic-HTML Round ✅ COMPLETE
+
+### Metrics (post UI/UX Audit Round)
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **241 warnings** (was 257; 16 fewer from aria fixes) |
+
+### UI/UX Audit Round — Changes Made
+**`ModalDialog.svelte` — accessibility + z-index:**
+- Added `<script module>` refcount (`scrollLockCount`) — nested modals no longer fight over `overflow: hidden`
+- Full Tab-cycling focus trap: saves `previousFocus`, cycles first↔last, restores on close
+- Renamed `getFocusable` → `focusableEls` to satisfy `lifecycle-restrictions` rule (`^get` prefix forbidden)
+- `z-50` → `z-[300]` (above context menu z-[201] and other z-index layers)
+- `tabindex="0"` → `tabindex="-1"` on dialog div (not tabbable, but can receive programmatic focus)
+
+**`StatusBar.svelte` — aria-labels on icon-only buttons:**
+- Activity feed button: added `aria-label="Activity feed"`
+- Keyboard shortcuts button: added `aria-label="Keyboard shortcuts"`
+- Quick help button: added `aria-label="Quick help"`
+
+**`ArchiveView.svelte` — context menu + accessibility:**
+- Context menu position viewport-clamped: `Math.min(x, window.innerWidth - 204)` / `Math.min(y, window.innerHeight - 224)`
+- Divider `<div class="border-t">` → `<hr class="border-0 border-t" />` (semantic separator)
+- Added `// TODO(loop): filter debounce` comment (filter drives O(n log n) `$derived` without debounce)
+
+**`Sidebar.svelte` — badge dot accessibility:**
+- Badge dot `<span class="bg-red-500">` → added `aria-hidden="true"` (decorative, parent button title covers label)
+- Badge count: added `aria-hidden="true"` + `// TODO(loop): count not exposed to AT when parent title is accessible name`
+
+**Test fixes (semantic HTML migration — `<div role="button">` → `<button>`):**
+- `shared-molecules-critical.test.ts`: CollectionCard tests updated (`[role="button"]` → `button`), tabindex test updated (`getAttribute` → `.tabIndex`), Enter-key test updated (dispatch `click` not `keydown`), ContextMenu keydown test fixed (add `flushSync()` before assertion)
+- `action-molecules.test.ts`: CollectionCard `[role="button"]` → `button`, `getAttribute('tabindex')` → `.tabIndex`
+- `viewer-molecules-new.test.ts`: ComposerCanvas layer `[role="button"]` → `button`
+- `viewer-search-panel.test.ts`: Result buttons `[role="button"]` → `button.w-full`, Enter-key test → click event
+
+### Previous Phase: Dead Code + Visual Bug Round ✅ COMPLETE
+
+### Metrics (post Dead Code + Visual Bug Round)
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **257 warnings** (was 310; 53 fewer) |
+
+### Dead Code + Visual Bug Round — Changes Made
+**`iiifBuilder.ts` — 42 unused imports + dead scaffold functions removed:**
+- Removed worker-pool imports: `getIngestWorkerPool`, `ingestTreeWithWorkers`, `IngestWorkerPool`, `PoolStats` + 5 worker message types
+- Removed unused constant imports: `DEFAULT_INGEST_PREFS`, `FEATURE_FLAGS`, `getDerivativePreset`, `IMAGE_QUALITY`, `isRasterImage`, `USE_ENHANCED_PROGRESS`, `USE_WORKER_INGEST`
+- Removed unused service imports: `storageLog`, `extractMetadata`, `fileIntegrity`, `HashLookupResult`, `getFileLifecycleManager`, `generateDerivativeAsync`, `getTileWorkerPool`
+- Removed unused utility imports: `getRelationshipType`, `isStandaloneType`, `isValidChildType`, `createImageServiceReference`, `DEFAULT_VIEWING_DIRECTION`, `getContentTypeFromFilename`, `IMAGE_API_PROTOCOL`, `isImageMimeType`, `isTimeBasedMimeType`, `suggestBehaviors`, `validateResource`, `isCollection`, `FileStatus`
+- Removed dead functions: `updateFileProgress`, `addFileToProgress`, `checkPaused`, `progressToLegacyCallback`, `isFileLifecycleEnabled`, `isWorkerIngestEnabled`, `areWorkersSupported`, `slugify`
+- Removed section headers for "Phase 4: Worker Migration" and "Feature Flag Check"
+
+**`AnnotationDrawingOverlay.svelte` — visual bug fix + lint fix:**
+- Removed `osdReady?: number` prop (ViewerView no longer provides it; guard `if (!viewer || !ready)` would permanently block Annotorious init when component is re-enabled)
+- Replaced guard `if (!viewer || !ready) return` → `if (!viewer) return` (matches AnnotationCanvas pattern)
+- Fixed misplaced `eslint-disable-next-line @field-studio/no-effect-for-derived` — was on comment block before `$effect`, now directly on the `$effect` line
+- `annotation-drawing-overlay.test.ts`: removed 5 stale `osdReady: 1` prop assignments
+
+**`DebouncedField.svelte` — removed unused eslint-disable:**
+- Removed `eslint-disable-next-line @field-studio/no-effect-for-derived` that was not needed (rule doesn't fire because `localValue` is also written by `scheduleFlush`)
+
+**`technical-tab-wiring.test.ts` — removed 2 unused eslint-disable directives:**
+- `makeManifest` and `makeCanvas` return `: any` — `@typescript-eslint/no-explicit-any` rule doesn't fire in test context
+
+**Additional non-TYPE_DEBT improvements (from previous uncommitted work):**
+- `main.ts`: `globalThis.OpenSeadragon = OpenSeadragon` — OSD available as global for ViewerView + Annotorious
+- `storage.ts`: Added `!text.startsWith('{')` guard + try/catch for JSON.parse (handles binary blobs from old React build)
+- `Sidebar.svelte`: `breadcrumbs` from `$state([])` + `$effect` → `$derived(computeBreadcrumbs(root, selectedId))` (cleaner, no effect needed)
+- `ArchiveView.svelte`: `getThumbnailUrl()` now checks `item._blobUrl` first (local files without SW URL)
+- `navPlaceService.ts` + `BoardView.svelte`: Added `default: break` to switch statements (exhaustive-switch lint rule)
+- Selector atoms (`FormatSelector`, `PresetSelector`, `QualitySelector`): Added explanatory comments + eslint-disable to the two-effect `boundValue` bridge pattern
+
+**Blocked (properly annotated):**
+- `annotorious.ts` (14) + `waveform.ts` (9): external libs, no @types
+- `shared/types/index.ts` (6): items/service/navPlace structural debt
+- `svelte-shims.d.ts` (2): framework shim
+
 ## Current Phase: TYPE_DEBT Round 6 ✅ COMPLETE
 
 ### Metrics (post TYPE_DEBT Round 6)

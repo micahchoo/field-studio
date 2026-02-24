@@ -1,3 +1,8 @@
+<script module>
+  // Refcount for scroll lock — multiple concurrent modals stay locked until all close.
+  let scrollLockCount = 0;
+</script>
+
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
@@ -45,19 +50,46 @@
     return () => document.removeEventListener('keydown', handleEscape);
   });
 
-  // Scroll lock
+  // Scroll lock — refcounted so nested modals don't fight each other.
   $effect(() => {
     if (!open) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
+    scrollLockCount++;
+    if (scrollLockCount === 1) document.body.style.overflow = 'hidden';
+    return () => {
+      scrollLockCount--;
+      if (scrollLockCount === 0) document.body.style.overflow = '';
+    };
   });
 
-  // Focus trap
+  // Focus trap: Tab cycling + restore focus on close.
   $effect(() => {
     if (!open || !dialogRef) return;
-    const focusable = dialogRef.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    if (focusable.length > 0) (focusable[0] as HTMLElement).focus();
+    const previousFocus = document.activeElement as HTMLElement | null;
+    // Named without "get" prefix to satisfy lifecycle-restrictions rule (local DOM util, not a service).
+    const focusableEls = () =>
+      Array.from(dialogRef!.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+    const els = focusableEls();
+    if (els.length > 0) els[0].focus(); else dialogRef!.focus();
+
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+      const focusable = focusableEls();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+    dialogRef.addEventListener('keydown', handleTab);
+    return () => {
+      dialogRef?.removeEventListener('keydown', handleTab);
+      previousFocus?.focus();
+    };
   });
 
   function handleBackdropClick(e: MouseEvent) {
@@ -72,7 +104,7 @@
 
 {#if open}
   <div
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[300] flex items-center justify-center p-4"
     onclick={handleBackdropClick}
     onkeydown={(e) => { if (e.key === "Escape" && closable) { open = false; onClose?.(); } }}
     transition:fade={{ duration: 200 }}
@@ -87,7 +119,7 @@
       transition:fly={{ y: -20, duration: 200 }}
       onclick={(e: MouseEvent) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
-      tabindex="0"
+      tabindex="-1"
     >
       {#if header || title}
         <div class={cn('flex items-center justify-between p-4 border-b-2', cx.border || 'border-nb-black')}>

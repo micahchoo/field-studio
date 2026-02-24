@@ -3,7 +3,7 @@ import { normalize } from '../normalization';
 import { moveEntity, reorderChildren, insertChildAt, removeChild } from '../movement';
 import { addEntity } from '../updates';
 import { getChildIds, getParentId } from '../queries';
-import type { IIIFCanvas, IIIFItem } from '@/src/shared/types';
+import type { IIIFItem } from '@/src/shared/types';
 import { resetIds, createManifest } from './fixtures';
 
 beforeEach(() => resetIds());

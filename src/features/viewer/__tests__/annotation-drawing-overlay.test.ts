@@ -70,7 +70,7 @@ function makeCanvas(): IIIFCanvas {
   } as unknown as IIIFCanvas;
 }
 
-function makeAnnotation(id: string, text: string): IIIFAnnotation {
+function _makeAnnotation(id: string, text: string): IIIFAnnotation {
   return {
     id,
     type: 'Annotation',
@@ -315,7 +315,6 @@ describe('AnnotationDrawingOverlay', () => {
         onDrawingStateChange,
         cx,
         fieldMode: false,
-        osdReady: 1,
       },
     });
 
@@ -428,7 +427,6 @@ describe('AnnotationDrawingOverlay', () => {
         onUndoRef,
         cx,
         fieldMode: false,
-        osdReady: 1,
       },
     });
 
@@ -456,7 +454,6 @@ describe('AnnotationDrawingOverlay', () => {
         onRedoRef,
         cx,
         fieldMode: false,
-        osdReady: 1,
       },
     });
 
@@ -484,7 +481,6 @@ describe('AnnotationDrawingOverlay', () => {
         annotationText: 'Test text',
         cx,
         fieldMode: false,
-        osdReady: 1,
       },
     });
 
@@ -511,7 +507,6 @@ describe('AnnotationDrawingOverlay', () => {
         onClearRef,
         cx,
         fieldMode: false,
-        osdReady: 1,
       },
     });
 

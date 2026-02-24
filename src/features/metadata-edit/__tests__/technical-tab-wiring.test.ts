@@ -14,7 +14,6 @@ import { describe, it, expect, vi } from 'vitest';
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeManifest(overrides: Record<string, unknown> = {}): any {
   return {
     id: 'https://example.org/manifest/1',
@@ -25,7 +24,6 @@ function makeManifest(overrides: Record<string, unknown> = {}): any {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeCanvas(overrides: Record<string, unknown> = {}): any {
   return {
     id: 'https://example.org/canvas/1',

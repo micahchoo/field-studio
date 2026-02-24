@@ -72,6 +72,7 @@
 
   // ── Derived State ──
   const canvases = $derived(extractCanvases(root));
+  // TODO(loop): add debounce on `filter` input — every keystroke triggers O(n log n) filterAndSort.
   const filteredCanvases = $derived(filterAndSort(canvases, filter, sortBy, sortDirection));
   const isEmpty = $derived(canvases.length === 0);
   const hasCanvasSelected = $derived(selectedIds.size > 0);
@@ -606,7 +607,7 @@
 
               <!-- Label -->
               <div class="flex-1 min-w-0">
-                <div class={cn('text-sm font-medium truncate', cx.text)}>
+                <div class={cn('text-sm font-medium truncate', cx.text)} title={label}>
                   {label}
                 </div>
                 {#if (canvas as IIIFCanvas).width && (canvas as IIIFCanvas).height}
@@ -680,7 +681,7 @@
 
               <!-- Label bar -->
               <div class="px-2 py-1.5 min-h-[2rem] flex items-center gap-1">
-                <span class={cn('text-xs truncate flex-1', cx.text || 'text-nb-black')}>
+                <span class={cn('text-xs truncate flex-1', cx.text || 'text-nb-black')} title={label}>
                   {label}
                 </span>
                 {#if hasIssues}
@@ -802,7 +803,7 @@
                       {/if}
                     </div>
                     <div class="px-2 py-1.5">
-                      <span class={cn('text-xs truncate block', cx.text)}>{label}</span>
+                      <span class={cn('text-xs truncate block', cx.text)} title={label}>{label}</span>
                     </div>
                     {#if selected}
                       <div class={cn(
@@ -852,8 +853,8 @@
             ? 'bg-nb-black border-nb-yellow text-nb-yellow'
             : 'bg-nb-white border-nb-black text-nb-black'
         )}
-        style:left="{contextMenu.x}px"
-        style:top="{contextMenu.y}px"
+        style:left="{Math.min(contextMenu.x, window.innerWidth - 204)}px"
+        style:top="{Math.min(contextMenu.y, window.innerHeight - 224)}px"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => { if (e.key === 'Escape') contextMenu = null; }}
         role="menu"
@@ -888,7 +889,7 @@
           {selectedIds.has(contextMenu.item.id) ? 'Deselect' : 'Select'}
         </button>
 
-        <div class={cn('my-1', fieldMode ? 'border-t border-nb-yellow/30' : 'border-t border-nb-black/10')}></div>
+        <hr class={cn('my-1 border-0 border-t', fieldMode ? 'border-nb-yellow/30' : 'border-nb-black/10')} />
 
         <button
           type="button"

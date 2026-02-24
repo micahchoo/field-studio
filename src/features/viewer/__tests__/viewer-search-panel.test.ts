@@ -363,8 +363,8 @@ describe('ViewerSearchPanel', () => {
       expect(target.textContent).toContain('Click me');
     });
 
-    // Click the result item (has role="button")
-    const resultButton = target.querySelector('[role="button"]') as HTMLElement;
+    // Click the result item — result buttons have class "w-full" (unlike the clear button).
+    const resultButton = target.querySelector('button.w-full') as HTMLElement;
     expect(resultButton).toBeTruthy();
     flushSync(() => { resultButton.click(); });
     expect(onResultSelect).toHaveBeenCalledWith(results[0]);
@@ -397,9 +397,10 @@ describe('ViewerSearchPanel', () => {
       expect(target.textContent).toContain('Press enter');
     });
 
-    const resultButton = target.querySelector('[role="button"]') as HTMLElement;
+    // Result buttons are native <button>.w-full (Enter fires click in browsers, use click in tests).
+    const resultButton = target.querySelector('button.w-full') as HTMLElement;
     flushSync(() => {
-      resultButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      resultButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(onResultSelect).toHaveBeenCalledWith(results[0]);
   });

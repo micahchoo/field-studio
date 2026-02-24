@@ -5,7 +5,7 @@ import {
   METADATA_FIELD_DEFINITIONS,
   getVisibleFields,
 } from '@/src/shared/constants/metadata';
-import type { MetadataComplexity, FieldDefinition } from '@/src/shared/constants/metadata';
+import type { MetadataComplexity } from '@/src/shared/constants/metadata';
 
 // ============================================================================
 // RIGHTS_OPTIONS

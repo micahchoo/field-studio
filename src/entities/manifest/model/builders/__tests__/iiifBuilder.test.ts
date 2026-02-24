@@ -5,7 +5,7 @@
  * exported and testable without triggering the un-migrated `ingestTree` path
  * (which intentionally throws).
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   buildTree,
   createManifest,

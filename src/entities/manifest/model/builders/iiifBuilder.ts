@@ -1,7 +1,5 @@
 
-import { storageLog } from '@/src/shared/services/logger';
 import {
-  FileStatus,
   FileTree,
   IIIFAnnotation,
   IIIFAnnotationPage,
@@ -19,53 +17,16 @@ import {
   IngestReport,
   IngestResult,
   IngestStage,
-  isCollection,
   LegacyProgressCallback
 } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
-import { DEFAULT_INGEST_PREFS, FEATURE_FLAGS, getDerivativePreset, IIIF_CONFIG, IIIF_SPEC, IMAGE_QUALITY, isAudioFile, isImageFile, isRasterImage, isSvgFile, isVideoFile, MIME_TYPE_MAP, resolveFileFormat, USE_ENHANCED_PROGRESS, USE_WORKER_INGEST } from '@/src/shared/constants';
+import { IIIF_CONFIG, IIIF_SPEC, isAudioFile, isImageFile, isSvgFile, isVideoFile, MIME_TYPE_MAP, resolveFileFormat } from '@/src/shared/constants';
 import { load } from 'js-yaml';
-import { extractMetadata } from '@/src/shared/services/metadataHarvester';
-import { generateDerivativeAsync, getTileWorkerPool } from '../ingest/tileWorker';
-import { fileIntegrity, HashLookupResult } from '@/src/entities/canvas/model/fileIntegrity';
-import {
-  generateId,
-  getRelationshipType,
-  isStandaloneType,
-  isValidChildType
-} from '@/utils/iiifHierarchy';
-import {
-  createImageServiceReference,
-  DEFAULT_VIEWING_DIRECTION,
-  getContentTypeFromFilename,
-  getMimeTypeString,
-  IMAGE_API_PROTOCOL,
-  isImageMimeType,
-  isTimeBasedMimeType,
-  suggestBehaviors,
-  validateResource
-} from '@/utils';
-import { getFileLifecycleManager } from './fileLifecycle';
+import { generateId } from '@/utils/iiifHierarchy';
+import { getMimeTypeString } from '@/utils';
 
 // ============================================================================
-// Phase 4: Worker Migration Imports
-// ============================================================================
-import {
-  getIngestWorkerPool,
-  ingestTreeWithWorkers,
-  IngestWorkerPool,
-  PoolStats
-} from '../ingest/ingestWorkerPool';
-import type {
-  IngestCompleteMessage,
-  IngestErrorMessage,
-  IngestFileCompleteMessage,
-  IngestProgressMessage,
-  IngestWorkerResponse
-} from '@/src/shared/workers';
-
-// ============================================================================
-// Phase 3: Enhanced Progress Indicators (P1 - UX)
+// Progress Helpers
 // ============================================================================
 
 /**
@@ -93,76 +54,6 @@ function createInitialProgress(operationId: string, totalFiles: number): IngestP
       message: 'Ingest operation started'
     }],
     overallProgress: 0
-  };
-}
-
-/**
- * Update progress with new file information
- */
-function updateFileProgress(
-  progress: IngestProgress,
-  fileId: string,
-  updates: Partial<IngestFileInfo>
-): IngestProgress {
-  const fileIndex = progress.files.findIndex(f => f.id === fileId);
-  const updatedFiles = [...progress.files];
-
-  if (fileIndex >= 0) {
-    updatedFiles[fileIndex] = { ...updatedFiles[fileIndex], ...updates };
-  }
-
-  // Recalculate aggregates
-  const completed = updatedFiles.filter(f => f.status === 'completed').length;
-  const processing = updatedFiles.filter(f => f.status === 'processing').length;
-  const errors = updatedFiles.filter(f => f.status === 'error').length;
-
-  // Calculate speed and ETA
-  const elapsedSeconds = (Date.now() - progress.startedAt) / 1000;
-  const speed = elapsedSeconds > 0 ? completed / elapsedSeconds : 0;
-  const remainingFiles = progress.filesTotal - completed;
-  const etaSeconds = speed > 0 ? remainingFiles / speed : 0;
-
-  // Calculate overall progress
-  const fileProgressSum = updatedFiles.reduce((sum, f) => sum + f.progress, 0);
-  const overallProgress = progress.filesTotal > 0
-    ? Math.round(fileProgressSum / progress.filesTotal)
-    : 0;
-
-  return {
-    ...progress,
-    files: updatedFiles,
-    filesCompleted: completed,
-    filesProcessing: processing,
-    filesError: errors,
-    speed,
-    etaSeconds: Math.round(etaSeconds),
-    overallProgress,
-    updatedAt: Date.now()
-  };
-}
-
-/**
- * Add file to progress tracking
- */
-function addFileToProgress(
-  progress: IngestProgress,
-  fileInfo: Omit<IngestFileInfo, 'id' | 'status' | 'progress'>
-): { progress: IngestProgress; fileId: string } {
-  const fileId = `file-${progress.files.length}-${Date.now()}`;
-  const newFile: IngestFileInfo = {
-    ...fileInfo,
-    id: fileId,
-    status: 'pending',
-    progress: 0
-  };
-
-  return {
-    progress: {
-      ...progress,
-      files: [...progress.files, newFile],
-      updatedAt: Date.now()
-    },
-    fileId
   };
 }
 
@@ -218,28 +109,6 @@ function checkCancellation(signal?: AbortSignal): void {
 }
 
 /**
- * Check if operation is paused and wait
- */
-async function checkPaused(progress: IngestProgress, checkInterval: number = 100): Promise<void> {
-  while (progress.isPaused && !progress.isCancelled) {
-    await new Promise(resolve => setTimeout(resolve, checkInterval));
-  }
-}
-
-/**
- * Convert enhanced progress to legacy callback format
- */
-function progressToLegacyCallback(
-  progress: IngestProgress,
-  legacyCallback: LegacyProgressCallback
-): void {
-  const msg = progress.currentFile
-    ? `${progress.stage}: ${progress.currentFile.name} (${progress.filesCompleted}/${progress.filesTotal})`
-    : `${progress.stage}: ${progress.overallProgress}%`;
-  legacyCallback(msg, progress.overallProgress);
-}
-
-/**
  * Create progress summary from final state
  */
 function createProgressSummary(progress: IngestProgress): IngestProgressSummary {
@@ -254,31 +123,6 @@ function createProgressSummary(progress: IngestProgress): IngestProgressSummary 
     wasCancelled: progress.isCancelled
   };
 }
-
-// ============================================================================
-// Feature Flag Check
-// ============================================================================
-
-/**
- * Check if file lifecycle management is enabled
- */
-const isFileLifecycleEnabled = (): boolean => {
-  return (FEATURE_FLAGS as Record<string, boolean>).USE_FILE_LIFECYCLE !== false;
-};
-
-/**
- * Check if worker-based ingest is enabled
- */
-const isWorkerIngestEnabled = (): boolean => {
-  return USE_WORKER_INGEST as boolean;
-};
-
-/**
- * Check if workers are supported in this environment
- */
-const areWorkersSupported = (): boolean => {
-  return typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined';
-};
 
 // ============================================================================
 // Count Media Files Helper
@@ -310,16 +154,6 @@ function countMediaFiles(node: FileTree): number {
 // ============================================================================
 // Core Ingest: processNodeIngest
 // ============================================================================
-
-/** Make a URL-safe slug from a file/directory name */
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\.[^.]+$/, '')        // strip extension
-    .replace(/[^a-z0-9]+/g, '-')   // non-alphanumeric → dash
-    .replace(/^-|-$/g, '')          // trim leading/trailing dashes
-    || 'item';
-}
 
 /** Detect whether a file is a media (painting) file */
 function isPaintingFile(fileName: string): boolean {
@@ -584,7 +418,9 @@ export const ingestTree = async (
   progress = updateStage(progress, 'scanning');
   options.onProgress?.(progress);
 
-  const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
+  const baseUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/iiif`
+    : IIIF_CONFIG.BASE_URL.DEFAULT;
 
   try {
     progress = updateStage(progress, 'processing');

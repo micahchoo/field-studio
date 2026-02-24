@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mount, unmount } from 'svelte';
+import { mount, unmount, flushSync } from 'svelte';
 import TestHost from './TestHost.svelte';
 
 // ---------------------------------------------------------------------------
@@ -169,7 +169,7 @@ describe('ContextMenu', () => {
 
   it('registers global keydown listener when open', () => {
     // Verify that opening ContextMenu registers event listeners on document.
-    // We spy on addEventListener before mounting.
+    // flushSync ensures Svelte 5 $effect callbacks run before asserting.
     const addSpy = vi.spyOn(document, 'addEventListener');
     instance = mount(TestHost, {
       target,
@@ -179,9 +179,8 @@ describe('ContextMenu', () => {
         text: 'Item',
       },
     });
-    // The $effect registers 'click' and 'keydown' listeners when open
-    const keydownCall = addSpy.mock.calls.find(([evt]) => evt === 'keydown');
-    expect(keydownCall).toBeTruthy();
+    flushSync(); // flush $effect queue so addEventListener calls are captured
+    expect(addSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
     addSpy.mockRestore();
   });
 
@@ -271,22 +270,26 @@ describe('CollectionCard', () => {
     expect(target.textContent).toContain('folder');
   });
 
-  it('has role="button" on outer wrapper', () => {
+  it('has native <button> element as outer wrapper', () => {
+    // CollectionCard uses a semantic <button> (replaces former <div role="button">).
     instance = mount(CollectionCard, {
       target,
       props: { collection, cx: cx as any },
     });
-    const btn = target.querySelector('[role="button"]');
+    const btn = target.querySelector('button');
     expect(btn).toBeTruthy();
+    expect(btn!.tagName.toLowerCase()).toBe('button');
   });
 
-  it('has tabindex="0" for keyboard accessibility', () => {
+  it('is keyboard accessible via native button element', () => {
+    // Native <button> has tabIndex=0 by default — no explicit attribute needed.
     instance = mount(CollectionCard, {
       target,
       props: { collection, cx: cx as any },
     });
-    const btn = target.querySelector('[role="button"]');
-    expect(btn!.getAttribute('tabindex')).toBe('0');
+    const btn = target.querySelector('button') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.tabIndex).toBe(0);
   });
 
   it('applies selected ring styling when selected is true', () => {
@@ -294,7 +297,7 @@ describe('CollectionCard', () => {
       target,
       props: { collection, selected: true, cx: cx as any },
     });
-    const btn = target.querySelector('[role="button"]');
+    const btn = target.querySelector('button');
     expect(btn!.className).toContain('ring-2');
   });
 
@@ -303,7 +306,7 @@ describe('CollectionCard', () => {
       target,
       props: { collection, selected: false, cx: cx as any },
     });
-    const btn = target.querySelector('[role="button"]');
+    const btn = target.querySelector('button');
     expect(btn!.className).not.toContain('ring-2');
   });
 
@@ -313,20 +316,20 @@ describe('CollectionCard', () => {
       target,
       props: { collection, onclick, cx: cx as any },
     });
-    const btn = target.querySelector('[role="button"]') as HTMLElement;
+    const btn = target.querySelector('button') as HTMLButtonElement;
     btn.click();
     expect(onclick).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onclick when Enter key is pressed on card', () => {
+  it('calls onclick when card receives a click event', () => {
+    // Native <button> handles Enter/Space natively in browsers; test click wiring directly.
     const onclick = vi.fn();
     instance = mount(CollectionCard, {
       target,
       props: { collection, onclick, cx: cx as any },
     });
-    const btn = target.querySelector('[role="button"]') as HTMLElement;
-    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-    btn.dispatchEvent(enterEvent);
+    const btn = target.querySelector('button') as HTMLButtonElement;
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(onclick).toHaveBeenCalledTimes(1);
   });
 
