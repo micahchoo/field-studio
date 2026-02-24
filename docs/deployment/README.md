@@ -1,6 +1,11 @@
 # Field Studio Deployment Documentation
 
-This directory contains comprehensive documentation for deploying Field Studio across multiple targets: **Web (GitHub Pages)**, **Docker (Server)**, and **Tauri (Desktop)**.
+> **STATUS: PLANNING.** These documents describe planned deployment architectures (Docker and Tauri).
+> The codebase currently supports **web deployment only** (GitHub Pages with IndexedDB + Service Worker).
+> Docker and Tauri support have not been implemented. The framework is **Svelte 5** with Feature Slice Design (FSD).
+> See `DOCSTATE.md` at project root for current documentation status.
+
+This directory contains planning documentation for deploying Field Studio across multiple targets: **Web (GitHub Pages)**, **Docker (Server)**, and **Tauri (Desktop)**.
 
 ---
 
@@ -55,8 +60,8 @@ deployment/
 
 ```
                     ┌─────────────────────────────────────┐
-                    │      Shared React Frontend          │
-                    │  (components/, hooks/, services/)   │
+                    │     Shared Svelte 5 Frontend         │
+                    │  (features/, widgets/, shared/)      │
                     └──────────────┬──────────────────────┘
                                    │
            ┌───────────────────────┼───────────────────────┐
@@ -176,10 +181,10 @@ export const FEATURES = {
 
 ### Add a New Feature
 
-1. Define interface in `shared/types/`
+1. Define interface in `src/shared/types/`
 2. Implement for each platform:
    - Web: IndexedDB/OPFS version
-   - Docker: HTTP API version  
+   - Docker: HTTP API version
    - Tauri: Native FS version
 3. Add to `createStorageAdapter()` factory
 4. Write E2E tests for all platforms
@@ -201,24 +206,17 @@ await importUniversal(blob);
 # Web
 npm run dev
 
-# Docker
+# Docker (not yet implemented)
 npm run dev:docker
 docker-compose up
 
-# Tauri (Windows/Linux)
+# Tauri (not yet implemented)
 npm run tauri dev
 
 # Build for distribution
 npm run tauri build -- --target x86_64-pc-windows-msvc    # Windows MSI
 npm run tauri build -- --target x86_64-unknown-linux-gnu  # Linux (for Flatpak)
 ```
-
----
-
-## External References
-
-- [ADVANCED_STORAGE_STRATEGIES.md](../ADVANCED_STORAGE_STRATEGIES.md) - OPFS, SQLite Wasm, CRDTs
-- [STORAGE_LIMITS_SOLUTIONS.md](../STORAGE_LIMITS_SOLUTIONS.md) - Browser storage limits and solutions
 
 ---
 
@@ -231,7 +229,8 @@ npm run tauri build -- --target x86_64-unknown-linux-gnu  # Linux (for Flatpak)
 | **CRDT** | Conflict-free Replicated Data Type - for sync |
 | **LRU** | Least Recently Used - cache eviction strategy |
 | **PWA** | Progressive Web App |
+| **FSD** | Feature Slice Design - architecture pattern |
 
 ---
 
-*Last Updated: 2026-01-29*
+*Last Updated: 2026-02-24*

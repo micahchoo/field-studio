@@ -16,7 +16,7 @@
   import { ModalDialog, Toast } from '@/src/shared/ui/molecules';
   import { toast } from '@/src/shared/stores/toast.svelte';
 
-  import type { IIIFItem } from '@/src/shared/types';
+  import type { IIIFItem, ValidatorIssue, IssueCategory } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
 
   // @migration stub -- validation healer functions not yet migrated
@@ -36,26 +36,9 @@
   } from '../lib/qcHelpers';
 
   // ---------------------------------------------------------------------------
-  // Types
+  // Types — use canonical ValidatorIssue from shared/types
   // ---------------------------------------------------------------------------
-  type IssueSeverity = 'error' | 'warning' | 'info';
-
-  type IssueCategory =
-    | 'Identity'
-    | 'Structure'
-    | 'Metadata'
-    | 'Content';
-
-  interface ValidationIssue {
-    id: string;
-    itemId: string;
-    itemLabel: string;
-    level: IssueSeverity;
-    category: IssueCategory;
-    message: string;
-    fixable: boolean;
-    path?: string;
-  }
+  type ValidationIssue = ValidatorIssue;
 
   const CATEGORIES: { id: IssueCategory; icon: string; label: string }[] = [
     { id: 'Identity',  icon: 'fingerprint',   label: 'Identity & IDs' },
@@ -241,7 +224,7 @@
       const { item: targetItem } = findItemAndPath(issue.itemId);
       if (!targetItem) return;
 
-      const result = healIssue(targetItem, issue as unknown as Parameters<typeof healIssue>[1]);
+      const result = healIssue(targetItem, issue);
       if (result.success && result.updatedItem) {
         const newRoot = applyHealToTree(root, issue.itemId, result.updatedItem);
         if (newRoot) {
@@ -267,7 +250,7 @@
         const { item: targetItem } = findItemAndPath(issue.itemId);
         if (!targetItem) continue;
 
-        const result = safeHealAll(targetItem, [issue] as unknown as Parameters<typeof safeHealAll>[1]);
+        const result = safeHealAll(targetItem, [issue]);
         if (result.success && result.updatedItem) {
           const newRoot = applyHealToTree(currentRoot, issue.itemId, result.updatedItem);
           if (newRoot) {

@@ -1,4 +1,5 @@
 import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
+import type { ValidatorIssue, IssueCategory } from '@/src/shared/types';
 import { validateResource as schemaValidateResource } from '@/utils/iiifSchema';
 import {
   doesInheritBehavior,
@@ -6,17 +7,8 @@ import {
   validateBehaviors
 } from '@/utils/iiifBehaviors';
 
-export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
-
-export interface ValidationIssue {
-  id: string;
-  itemId: string;
-  itemLabel: string;
-  level: 'error' | 'warning';
-  message: string;
-  category: IssueCategory;
-  fixable: boolean;
-}
+export type { IssueCategory };
+export type ValidationIssue = ValidatorIssue;
 
 /**
  * ValidationService provides tree-aware IIIF validation.

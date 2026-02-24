@@ -127,6 +127,7 @@
   }: SourceTreePaneProps = $props();
 
   // --- Internal State ---
+  // svelte-ignore state_referenced_locally -- intentional: initial computation from fileTree prop to seed expanded paths
   let expandedPaths = $state(new Set<string>(getRootDirPaths(fileTree)));
 
   // --- Derived Values ---

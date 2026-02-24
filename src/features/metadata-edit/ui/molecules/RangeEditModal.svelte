@@ -41,7 +41,9 @@
     cx = {} as ContextualClassNames,
   }: RangeEditModalProps = $props();
 
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture, reset via $effect when modal opens
   let label = $state(initialLabel);
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture, reset via $effect when modal opens
   let selectedCanvasIds = $state(new Set<string>(initialCanvasIds));
 
   // Reset internal state when modal opens with new initial values

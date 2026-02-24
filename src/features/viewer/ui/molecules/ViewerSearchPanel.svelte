@@ -289,6 +289,7 @@
         </div>
         <input
           type="text"
+          role="combobox"
           value={localQuery}
           oninput={handleInputChange}
           onkeydown={handleKeyDown}

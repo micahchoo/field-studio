@@ -10,6 +10,7 @@
   }
 
   let { type, class: className = '' }: Props = $props();
+  // svelte-ignore state_referenced_locally -- intentional: const interpolation, className is static per mount
   const iconClass = `w-4 h-4 ${className}`;
 </script>
 

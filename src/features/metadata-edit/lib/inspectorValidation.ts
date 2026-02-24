@@ -18,24 +18,14 @@
  *   const fixed = fixAll(manifest, result.autoFixableIssues);
  */
 
-import type { IIIFItem } from '@/src/shared/types';
+import type { IIIFItem, InspectorIssue, IssueSeverity } from '@/src/shared/types';
 
 // ------------------------------------------------------------------
-// Types
+// Types — re-exported from shared/types (canonical)
 // ------------------------------------------------------------------
 
-export type ValidationSeverity = 'error' | 'warning' | 'info';
-
-export interface ValidationIssue {
-  id: string;
-  severity: ValidationSeverity;
-  title: string;
-  description: string;
-  field?: string;
-  autoFixable: boolean;
-  fixSuggestion?: string;
-  currentValue?: unknown;
-}
+export type ValidationSeverity = IssueSeverity;
+export type ValidationIssue = InspectorIssue;
 
 export interface ValidationResult {
   issues: ValidationIssue[];

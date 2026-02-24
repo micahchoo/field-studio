@@ -194,7 +194,7 @@
             class={toolBtnStyle(activeTool === tool)}
             role="radio"
             aria-checked={activeTool === tool}
-            title="{label} ({key})"
+            title="{label} ({key})" aria-label="{label} ({key})"
             onclick={(e: MouseEvent) => { e.stopPropagation(); onToolChange(tool); }}
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
@@ -213,7 +213,7 @@
             class={toolBtnStyle(bgMode === mode)}
             role="radio"
             aria-checked={bgMode === mode}
-            title="{label} background"
+            title="{label} background" aria-label="{label} background"
             onclick={(e: MouseEvent) => { e.stopPropagation(); onBgModeChange(mode); }}
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -272,7 +272,7 @@
       <button
         class={toolBtnStyle(snapEnabled)}
         onclick={(e: MouseEvent) => { e.stopPropagation(); onSnapToggle(); }}
-        title="Snap to grid ({snapEnabled ? 'on' : 'off'})"
+        title="Snap to grid ({snapEnabled ? 'on' : 'off'})" aria-label="Snap to grid"
         aria-pressed={snapEnabled}
       >
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square">

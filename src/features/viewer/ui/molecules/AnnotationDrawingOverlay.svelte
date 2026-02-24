@@ -107,6 +107,7 @@
   // Cannot be $derived: onAnnotationSelectedCurrent is a plain (non-reactive) let used as
   // a callback ref inside Annotorious event handlers — making it $derived would add Svelte
   // reactivity overhead and trigger unnecessary Annotorious re-inits.
+  // svelte-ignore state_referenced_locally -- intentional: callback-ref pattern for Annotorious event handler
   let onAnnotationSelectedCurrent = onAnnotationSelected;
   // eslint-disable-next-line @field-studio/no-effect-for-derived
   $effect(() => { onAnnotationSelectedCurrent = onAnnotationSelected; });

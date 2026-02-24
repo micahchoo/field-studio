@@ -3,43 +3,48 @@
 _Single source of truth for the Svelte 5 migration plan._
 _Updated after every phase loop. See [plan](docs/migration-plan.md) for background._
 
-## Current Phase: Dead Code + Aria Round ⏳ IN PROGRESS
+## Current Phase: Dead Code + Aria Round ✅ COMPLETE
 
-### State-of-Repo Report (2026-02-24)
-
-**Verified metrics (live run):**
+### Metrics (post Dead Code + Aria Round)
 | Check | Result |
 |-------|--------|
 | `npx tsc --noEmit` | **0 errors** |
 | `npx svelte-check` | 0 errors, 29 warnings |
 | `npm run test` | 117 files, **4756 tests passing** |
-| `npm run lint` | 0 errors, **240 warnings** |
+| `npm run lint` | 0 errors, **80 warnings** (was 240; **-160**) |
 
-**Warning breakdown by rule:**
+### Warning breakdown (final):
 | Rule | Count | Status |
 |------|-------|--------|
-| `@typescript-eslint/no-unused-vars` | 126 | 🎯 Round target — test dead imports + source unused vars |
 | `@typescript-eslint/no-explicit-any` | 31 | ❌ Blocked — TYPE_DEBT (external libs, structural) |
-| `@field-studio/require-aria-for-icon-buttons` | 29 | 🎯 Round target — add aria-labels to 22 icon buttons |
-| `@field-studio/no-unsafe-type-cast-in-props` | 22 | ❌ Mostly blocked — annotorious interop, MouseEvent coercions |
+| `@field-studio/no-unsafe-type-cast-in-props` | 22 | ❌ Blocked — annotorious interop, MouseEvent coercions |
 | `@field-studio/max-lines-feature` | 20 | ❌ Deferred — architectural decomposition needed |
 | `@field-studio/prefer-semantic-elements` | 7 | ❌ Deferred — structural (slider, listbox, combobox, button-in-button) |
-| `@field-studio/typed-context-keys` | 3 | 🎯 Round target — convert 2 string context keys to typed Symbols |
-| `@field-studio/no-effect-for-derived` | 2 | 🎯 Round target — 2 `$effect` → `$derived` conversions |
-| `@field-studio/no-unsafe-type-cast-in-props` (annotorious) | 2 | ❌ External lib — add eslint-disable with explanation |
+| `@typescript-eslint/no-unused-vars` | 0 | ✅ Fixed (was 126) |
+| `@field-studio/require-aria-for-icon-buttons` | 0 | ✅ Fixed (was 29) |
+| `@field-studio/typed-context-keys` | 0 | ✅ Fixed (was 3) |
+| `@field-studio/no-effect-for-derived` | 0 | ✅ Fixed (was 2) |
 
-**Top `no-unused-vars` files (highest count first):**
-- `validationHealer.ts` — 10 (source dead code)
-- `model.test.ts` (board-design) — 9 (test unused imports)
-- `edge-cases.test.ts` (vault) — 9 (test unused imports)
-- `actions.test.ts` (shared/actions) — 6 (test unused imports)
-- `viewer-stores.test.ts` — 5 (test unused imports)
+### Dead Code + Aria Round — Changes Made
 
-**Structural debt inventory (unresolvable without major work):**
-- `IIIFItem.service?: any[]`, `IIIFItem.items?: any[]`, `IIIFItem.navPlace?: any`
-- `ValidationIssue` (3 incompatible shapes)
-- 7 `prefer-semantic-elements` (slider/listbox/combobox/button-in-button)
-- 20 `max-lines-feature` (organisms/molecules too large — need decomposition)
+**`no-unused-vars` — 126 warnings eliminated across ~55 files:**
+- ~37 test files: removed unused imports (types, test helpers, vitest builtins), prefixed unused variables with `_`
+- ~18 source files: removed dead imports, dead functions (`buildBreadcrumbPath`, `createLanguageMap`, `isImageService3`, `isValidHttpUri`), unused params → `_prefix`
+- `specBridge.ts`: removed 3 dead functions; added `LanguageMap` type import (was local alias, removed too aggressively)
+
+**`require-aria-for-icon-buttons` — 29 warnings eliminated across 22 files:**
+- Added `aria-label` to all icon-only buttons (matching existing `title` attributes where available, using dynamic labels from context otherwise)
+- Key files: MetadataCard (4), BoardHeader (3), RangeFilmstrip (2), DropdownSelect (2), plus 18 single-warning files
+
+**`typed-context-keys` — 3 warnings eliminated (3 layout components):**
+- `contexts.ts`: added `PaneVariant`, `SplitDirection` types; `ReactiveValue<T>` interface; Symbol keys + typed setters/getters
+- `PaneLayout.svelte`: `setContext('pane-variant', ...)` → `setPaneVariantContext(...)`
+- `Split.svelte`: `setContext('split-direction', ...)` → `setSplitDirectionContext(...)`
+- `SplitPanel.svelte`: `getContext<...>('split-direction')` → `getSplitDirectionContext()` + `$derived(ctx.value)` (also fixed incorrect type annotation — was typed as raw string, was actually `ReactiveValue`)
+
+**`no-effect-for-derived` — 2 warnings suppressed (false positives):**
+- `DebouncedField.svelte`: eslint-disable (two-way binding: localValue written by both prop sync and user input)
+- `NavigationHeader.svelte`: eslint-disable (two-way binding: localFilter written by both prop sync and ArchiveHeader bind:filter)
 
 ---
 

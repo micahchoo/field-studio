@@ -92,6 +92,7 @@
   let activeTab = $state<'params' | 'code'>('params');
 
   // Extract image service URL from canvas
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture, canvas is static for workbench lifetime
   const paintingBody = canvas.items?.[0]?.items?.[0]?.body as { id?: string; service?: Array<{ id: string }> } | undefined;
   const service = paintingBody?.service?.[0];
   const rawImageId = service?.id || paintingBody?.id || '';
@@ -179,7 +180,7 @@
         {#if url}
           <img
             src={url}
-            alt="IIIF Image preview"
+            alt=""
             class="max-w-full max-h-full object-contain"
             style={rotationDeg !== 0 ? `transform: rotate(${rotationDeg}deg)${mirrored ? ' scaleX(-1)' : ''}` : mirrored ? 'transform: scaleX(-1)' : ''}
           />

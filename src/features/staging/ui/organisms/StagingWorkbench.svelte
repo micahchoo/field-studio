@@ -269,6 +269,7 @@
 
   // ── UI state ──
   let showMetadataExport = $state(false);
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture, merge flag set once from existingRoot
   let merge = $state(!!existingRoot);
   let splitPosition = $state(40);
   let filterText = $state('');

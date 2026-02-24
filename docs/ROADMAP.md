@@ -25,7 +25,7 @@ Exit criterion per phase is measurable; prose alone does not close a phase.
 | `tsc --noEmit` | 0 errors |
 | `svelte-check` | 0 errors, 29 warnings |
 | `vitest` | 117 files, 4756 passing |
-| `eslint` | 0 errors, **240 warnings** (was 310 at migration; reduced via 6 TYPE_DEBT rounds + dead code + semantic-HTML) |
+| `eslint` | 0 errors, **80 warnings** (was 310 at migration; reduced via 6 TYPE_DEBT rounds + dead code + semantic-HTML + aria fixes) |
 | `grep -rc @migration src/` | **85 markers** (non-actionable stubs — largest: ViewerView 25, BoardView 10, Sidebar 6, AuthDialog 6) |
 | Remaining `// TYPE_DEBT:` (actionable) | 5 structural items |
 | Workers implemented | 0 / 4 (all stubs) |
@@ -182,7 +182,7 @@ Every `rounded-*` class (except intentional ones with `// DS-EXCEPTION:` comment
 
 ### D.5 — Viewer error state (HIGH — no designed fallback)
 
-**File:** `src/features/viewer/ui/molecules/MediaErrorOverlay.svelte` (likely) or raw in ViewerView/ViewerContent
+**File:** `src/features/viewer/ui/atoms/MediaErrorOverlay.svelte` or raw in ViewerView/ViewerContent
 **Issue:** OpenSeadragon errors render as raw text: `"Unable to open [object Object]: Error loading archive.local/iiif/image/..."`. No styled error component exists.
 **Target:** Design a `ViewerErrorState.svelte` molecule:
 ```

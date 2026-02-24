@@ -67,6 +67,7 @@
 
   // ── Local State ──
   // Label is locally controlled, committed on blur (optimistic pattern)
+  // svelte-ignore state_referenced_locally -- intentional: two-way bridge, label synced from connection on mount
   let label = $state(connection.label || '');
 
   // ── Derived ──

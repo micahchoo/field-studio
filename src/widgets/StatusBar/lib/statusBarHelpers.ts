@@ -6,14 +6,11 @@
  */
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — re-exported from shared/types (canonical)
 // ---------------------------------------------------------------------------
 
-export interface ValidationIssue {
-  id: string;
-  level: 'error' | 'warning' | 'info';
-  message: string;
-}
+import type { ValidatorIssue } from '@/src/shared/types';
+export type ValidationIssue = ValidatorIssue;
 
 // ---------------------------------------------------------------------------
 // Functions

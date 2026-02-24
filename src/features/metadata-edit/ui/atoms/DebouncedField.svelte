@@ -37,6 +37,7 @@
     delay = 300,
   }: Props = $props();
 
+  // svelte-ignore state_referenced_locally -- intentional: two-way bridge between prop and local debounced state
   let localValue = $state(value);
   let timer: ReturnType<typeof setTimeout> | undefined;
 

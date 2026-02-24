@@ -14,6 +14,7 @@
  */
 
 import { networkLog } from './logger';
+import type { ServiceDescriptor, IIIFGenericService } from '@/src/shared/types';
 
 const IIIF_AUTH_CONTEXT = 'http://iiif.io/api/auth/2/context.json';
 
@@ -162,11 +163,9 @@ class IIIFAuthService {
     return services;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private isAuthService(service: any): service is AuthService {
-    if (!service || typeof service !== 'object') return false;
-    const type = service.type || service['@type'];
-    return type && (
+  private isAuthService(service: ServiceDescriptor): service is AuthService {
+    const type = service.type || (service as IIIFGenericService)['@type'];
+    return !!type && (
       type.includes('AuthProbeService') ||
       type.includes('AuthAccessService') ||
       type.includes('AuthAccessTokenService') ||

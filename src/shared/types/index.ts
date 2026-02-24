@@ -11,6 +11,151 @@ export type ResourceState = 'cached' | 'stub' | 'local-only' | 'stale' | 'confli
 
 export type AbstractionLevel = 'simple' | 'standard' | 'advanced';
 
+// ============================================================================
+// Service Descriptors — IIIF 3.0 §7.2 polymorphic services
+// ============================================================================
+
+export interface IIIFImageService {
+  type: 'ImageService2' | 'ImageService3';
+  id: string;
+  profile?: string | string[];
+  width?: number;
+  height?: number;
+  sizes?: Array<{ width: number; height: number }>;
+  '@id'?: string;
+  '@type'?: string;
+}
+
+export interface IIIFAuthService {
+  type: string;
+  id: string;
+  label?: LanguageMap;
+  profile?: string;
+  service?: ServiceDescriptor[];
+}
+
+export interface IIIFSearchService {
+  type: 'SearchService2' | string;
+  id: string;
+  service?: ServiceDescriptor[];
+}
+
+export interface IIIFGenericService {
+  type: string;
+  id?: string;
+  '@id'?: string;
+  '@type'?: string;
+  [key: string]: unknown;
+}
+
+export type ServiceDescriptor =
+  | IIIFImageService
+  | IIIFAuthService
+  | IIIFSearchService
+  | IIIFGenericService;
+
+export function isImageService(s: ServiceDescriptor): s is IIIFImageService {
+  return s.type === 'ImageService2' || s.type === 'ImageService3' || s.type?.includes?.('ImageService');
+}
+
+export function isAuthService(s: ServiceDescriptor): s is IIIFAuthService {
+  const t = s.type;
+  return !!t && (t.includes('AuthProbeService') || t.includes('AuthAccessService') || t.includes('AuthAccessTokenService') || t.includes('AuthLogoutService'));
+}
+
+export function isSearchService(s: ServiceDescriptor): s is IIIFSearchService {
+  return s.type === 'SearchService2' || s.type?.includes?.('SearchService');
+}
+
+// ============================================================================
+// GeoJSON / NavPlace — IIIF navPlace extension
+// ============================================================================
+
+export interface NavPlace {
+  id?: string;
+  type: 'Feature' | 'FeatureCollection';
+  features?: GeoFeature[];
+  geometry?: GeoGeometry;
+  properties?: GeoProperties;
+}
+
+export interface GeoFeature {
+  id?: string;
+  type: 'Feature';
+  geometry: GeoGeometry;
+  properties?: GeoProperties;
+}
+
+export type GeoGeometry =
+  | PointGeometry
+  | LineStringGeometry
+  | PolygonGeometry
+  | MultiPointGeometry
+  | MultiLineStringGeometry
+  | MultiPolygonGeometry
+  | GeometryCollection;
+
+export interface PointGeometry { type: 'Point'; coordinates: [number, number] | [number, number, number]; }
+export interface LineStringGeometry { type: 'LineString'; coordinates: Array<[number, number]>; }
+export interface PolygonGeometry { type: 'Polygon'; coordinates: Array<Array<[number, number]>>; }
+export interface MultiPointGeometry { type: 'MultiPoint'; coordinates: Array<[number, number]>; }
+export interface MultiLineStringGeometry { type: 'MultiLineString'; coordinates: Array<Array<[number, number]>>; }
+export interface MultiPolygonGeometry { type: 'MultiPolygon'; coordinates: Array<Array<Array<[number, number]>>>; }
+export interface GeometryCollection { type: 'GeometryCollection'; geometries: GeoGeometry[]; }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface GeoProperties { label?: string | Record<string, string[]>; summary?: string | Record<string, string[]>; [key: string]: any; }
+
+// ============================================================================
+// Provider types — IIIF 3.0 §7 linking properties
+// ============================================================================
+
+export interface ProviderHomepage {
+  id: string;
+  type: 'Text';
+  label?: LanguageMap;
+  format?: string;
+  language?: string[];
+}
+
+export type ProviderLogo = IIIFExternalWebResource;
+
+export interface IIIFProvider {
+  id: string;
+  type: 'Agent';
+  label: LanguageMap;
+  homepage?: ProviderHomepage[];
+  logo?: ProviderLogo[];
+}
+
+// ============================================================================
+// Validation types — canonical shapes
+// ============================================================================
+
+export type IssueSeverity = 'error' | 'warning' | 'info';
+export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
+
+export interface ValidatorIssue {
+  id: string;
+  itemId: string;
+  itemLabel: string;
+  level: IssueSeverity;
+  message: string;
+  category: IssueCategory;
+  fixable: boolean;
+}
+
+export interface InspectorIssue {
+  id: string;
+  severity: IssueSeverity;
+  title: string;
+  description: string;
+  field?: string;
+  autoFixable: boolean;
+  fixSuggestion?: string;
+  currentValue?: unknown;
+}
+
 export interface IIIFItem {
   "@context"?: string | string[];
   id: string;
@@ -30,28 +175,17 @@ export interface IIIFItem {
   annotations?: IIIFAnnotationPage[];
   behavior?: string[];
 
-  // TYPE_DEBT: homepage/logo inside provider are IIIF linking properties — spec-defined but
-  // complex. Cannot use unknown[] — consumers access .label/.id on elements directly.
-  // TODO(loop): define ProviderHomepage and ProviderLogo interfaces per IIIF 3.0 §7.
-  provider?: Array<{ id: string; type: "Agent"; label: Record<string, string[]>; homepage?: any[]; logo?: any[] }>;
-  homepage?: Array<{ id: string; type: "Text"; label: Record<string, string[]>; format?: string; language?: string[] }>;
+  provider?: IIIFProvider[];
+  homepage?: ProviderHomepage[];
   seeAlso?: Array<{ id: string; type: "Dataset" | string; format?: string; profile?: string; label?: Record<string, string[]> }>;
   rendering?: Array<{ id: string; type: "Text" | string; label: Record<string, string[]>; format?: string }>;
-  // TYPE_DEBT: IIIF services are polymorphic (Image API, Auth API, Search API, …).
-  // Cannot use unknown[] — consuming code (imageSourceResolver, iiif-bridge) accesses
-  // service.type / service.id directly without casting.
-  // TODO(loop): define a ServiceDescriptor discriminated union per IIIF 3.0 §7.2 and
-  // update all callers to narrow via type guards.
-  service?: any[];
+  service?: ServiceDescriptor[];
   viewingDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
   start?: { id: string; type: "Canvas" | "SpecificResource"; source?: string; selector?: Selector | Selector[] };
   supplementary?: { id: string; type: "AnnotationCollection" };
   partOf?: Array<{ id: string; type: string; label?: Record<string, string[]> }>;
 
-  // TYPE_DEBT: navPlace is GeoJSON Feature/FeatureCollection — no built-in IIIF type.
-  // Cannot use unknown — consumers (MapView) access navPlace.geometry.coordinates directly.
-  // TODO(loop): import @types/geojson and type as GeoJSON.Feature | GeoJSON.FeatureCollection.
-  navPlace?: any;
+  navPlace?: NavPlace;
   placeholderCanvas?: IIIFCanvas;
   accompanyingCanvas?: IIIFCanvas;
 
@@ -139,10 +273,7 @@ export interface IIIFExternalWebResource {
   height?: number;
   duration?: number;
   label?: Record<string, string[]>;
-  // TYPE_DEBT: same as IIIFItem.service — polymorphic IIIF services, accessed by property
-  // (service.type, service.id) throughout imageSourceResolver without narrowing.
-  // TODO(loop): unify with IIIFItem.service via ServiceDescriptor union.
-  service?: any[];
+  service?: ServiceDescriptor[];
 }
 
 export interface IIIFSpecificResource {

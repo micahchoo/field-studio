@@ -95,6 +95,7 @@
   let currentTime = $state(0);
   let duration = $state(0);
   let isPlaying = $state(false);
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture from muted prop alias
   let isMuted = $state(initialMuted);
   let volume = $state(1);
   let playbackRate = $state(1);

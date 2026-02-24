@@ -1,7 +1,9 @@
 # Storage Strategy Across All Deployment Targets
 
-> **Integrates with**: Web (GitHub Pages), Docker (Server), Tauri (Desktop)  
-> **Based on**: ADVANCED_STORAGE_STRATEGIES.md and STORAGE_LIMITS_SOLUTIONS.md
+> **STATUS: PLANNING.** Only the Web storage adapter (IndexedDB + OPFS) is implemented.
+> Docker and Tauri adapters are aspirational designs. The codebase is **Svelte 5** with Feature Slice Design (FSD).
+
+> **Integrates with**: Web (GitHub Pages), Docker (Server), Tauri (Desktop)
 
 ---
 
@@ -764,5 +766,5 @@ export const STORAGE_CONFIG = {
 
 ---
 
-*Document Version: 1.0*  
-*Integrates with: ADVANCED_STORAGE_STRATEGIES.md, STORAGE_LIMITS_SOLUTIONS.md*
+*Document Version: 1.1*
+*Last Updated: 2026-02-24*

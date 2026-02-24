@@ -1,5 +1,8 @@
 # Feature Parity Maintenance Across Deployment Targets
 
+> **STATUS: PLANNING.** Neither Docker nor Tauri deployment has been implemented.
+> The codebase is **Svelte 5** with Feature Slice Design (FSD). Code snippets below are aspirational designs.
+
 > **Applies to**: Web (GitHub Pages), Docker (Server), Tauri (Desktop)
 
 ---
@@ -10,8 +13,8 @@ This document outlines strategies for maintaining feature parity across three de
 
 ```
                     ┌─────────────────────────────────────┐
-                    │      Shared React Frontend          │
-                    │  (components/, hooks/, services/)   │
+                    │     Shared Svelte 5 Frontend         │
+                    │  (features/, widgets/, shared/)      │
                     └──────────────┬──────────────────────┘
                                    │
            ┌───────────────────────┼───────────────────────┐
@@ -521,19 +524,19 @@ VITE_API_BASE_URL=
 ```typescript
 // vite.config.ts
 import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const target = env.VITE_DEPLOYMENT_TARGET || 'web';
-  
+
   return {
     base: target === 'web' ? '/field-studio/' : '/',
     define: {
       __DEPLOYMENT_TARGET__: JSON.stringify(target),
     },
     plugins: [
-      react(),
+      svelte(),
       target === 'docker' && nodePolyfills(), // For server-side deps
     ].filter(Boolean),
   };
@@ -731,22 +734,24 @@ jobs:
 
 ### Graceful Degradation
 
-```typescript
-// components/ImportButton.tsx
-export function ImportButton() {
+```svelte
+<!-- features/ingest/ui/molecules/ImportButton.svelte -->
+<script lang="ts">
+  import { detectPlatform, getPlatformCapabilities } from '@/src/shared/services/platform';
+  import Button from '@/src/shared/ui/atoms/Button.svelte';
+  import Tooltip from '@/src/shared/ui/atoms/Tooltip.svelte';
+
   const platform = detectPlatform();
   const capabilities = getPlatformCapabilities(platform);
-  
-  if (!capabilities.fileSystem) {
-    return (
-      <Tooltip content="File import not available in this deployment">
-        <Button disabled>Import</Button>
-      </Tooltip>
-    );
-  }
-  
-  return <Button onClick={handleImport}>Import</Button>;
-}
+</script>
+
+{#if !capabilities.fileSystem}
+  <Tooltip content="File import not available in this deployment">
+    <Button disabled>Import</Button>
+  </Tooltip>
+{:else}
+  <Button onclick={handleImport}>Import</Button>
+{/if}
 ```
 
 ### Feature Flags
@@ -762,21 +767,12 @@ export const FEATURES = {
   AUTO_UPDATE: detectPlatform() === 'tauri',
 } as const;
 
-// Usage
-import { FEATURES } from '@/config/features';
-
-function SyncSettings() {
-  if (!FEATURES.P2P_SYNC && !FEATURES.SERVER_SYNC) {
-    return <p>Sync not available in this deployment</p>;
-  }
-  
-  return (
-    <div>
-      {FEATURES.P2P_SYNC && <WebRTCSyncSettings />}
-      {FEATURES.SERVER_SYNC && <ServerSyncSettings />}
-    </div>
-  );
-}
+// Usage in a Svelte component:
+// <script>
+//   import { FEATURES } from '@/src/shared/config/features';
+// </script>
+// {#if FEATURES.P2P_SYNC}<WebRTCSyncSettings />{/if}
+// {#if FEATURES.SERVER_SYNC}<ServerSyncSettings />{/if}
 ```
 
 ---
@@ -820,10 +816,8 @@ function SyncSettings() {
 
 - [docker-vs-tauri-comparison.md](./docker-vs-tauri-comparison.md) - Detailed deployment comparison
 - [storage-strategy-across-deployments.md](./storage-strategy-across-deployments.md) - Storage architecture details
-- [ADVANCED_STORAGE_STRATEGIES.md](../ADVANCED_STORAGE_STRATEGIES.md) - Advanced browser storage
-- [STORAGE_LIMITS_SOLUTIONS.md](../STORAGE_LIMITS_SOLUTIONS.md) - Storage limit mitigation
 
 ---
 
-*Document Version: 1.1*  
-*Last Updated: 2026-01-29*
+*Document Version: 1.2*
+*Last Updated: 2026-02-24*

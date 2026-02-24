@@ -30,8 +30,10 @@ import type {
   IIIFAnnotation,
   IIIFCanvas,
   IIIFCollection,
+  IIIFGenericService,
   IIIFItem,
   IIIFManifest,
+  ServiceDescriptor,
 } from '@/src/shared/types';
 import { isCanvas } from '@/src/shared/types';
 
@@ -95,13 +97,13 @@ const IIIF_CONFIG_STUB = {
 function createImageServiceReference(
   serviceId: string,
   profile: string,
-): Record<string, unknown> {
+): ServiceDescriptor {
   return {
-    id: serviceId,
     type: 'ImageService3',
+    id: serviceId,
     profile: `level${profile.replace('level', '')}`,
     protocol: IIIF_SPEC.IMAGE_3.PROTOCOL,
-  };
+  } satisfies IIIFGenericService;
 }
 
 // PSEUDO: Stub for isImageService3 check.

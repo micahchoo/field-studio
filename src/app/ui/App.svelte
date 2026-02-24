@@ -232,14 +232,8 @@
     return Object.values(validation.issues).flat();
   });
 
-  // Map to StatusBar's ValidationIssue shape (level/message vs severity/title)
-  const statusBarIssues = $derived.by((): StatusBarIssue[] =>
-    flatValidationIssues.map(issue => ({
-      id: issue.id,
-      level: issue.severity as 'error' | 'warning' | 'info',
-      message: issue.title,
-    }))
-  );
+  // StatusBar now uses the same ValidatorIssue shape
+  const statusBarIssues = $derived.by((): StatusBarIssue[] => flatValidationIssues);
 
   const validationIssuesMap = $derived(validation.issues);
 

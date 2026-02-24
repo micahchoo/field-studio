@@ -49,7 +49,9 @@
   // Cannot be $derived: these are plain (non-reactive) lets used inside Annotorious event
   // handlers. Making them $derived would trigger Svelte reactivity on every prop change
   // and cause unnecessary Annotorious re-inits.
+  // svelte-ignore state_referenced_locally -- intentional: callback-ref pattern for Annotorious event handler
   let onAnnotationCreateCurrent = onAnnotationCreate;
+  // svelte-ignore state_referenced_locally -- intentional: callback-ref pattern for Annotorious event handler
   let onAnnotationSelectCurrent = onAnnotationSelect;
   // eslint-disable-next-line @field-studio/no-effect-for-derived
   $effect(() => { onAnnotationCreateCurrent = onAnnotationCreate; });

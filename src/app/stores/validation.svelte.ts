@@ -28,15 +28,11 @@
  */
 
 // ──────────────────────────────────────────────
-// Types
+// Types — re-export from shared/types (canonical)
 // ──────────────────────────────────────────────
 
-export interface ValidationIssue {
-  id: string;
-  severity: 'error' | 'warning' | 'info';
-  title: string;
-  description: string;
-}
+import type { ValidatorIssue } from '@/src/shared/types';
+export type ValidationIssue = ValidatorIssue;
 
 // ──────────────────────────────────────────────
 // Store class
@@ -84,16 +80,13 @@ export class ValidationStore {
   }
 
   /**
-   * Count of issues with severity 'error'.
-   *
-   * Pseudocode:
-   *   Iterate all issues, count those with severity === 'error'
+   * Count of issues with level 'error'.
    */
   get errorCount(): number {
     let count = 0;
     for (const key of Object.keys(this.#issues)) {
       for (const issue of this.#issues[key]) {
-        if (issue.severity === 'error') count++;
+        if (issue.level === 'error') count++;
       }
     }
     return count;

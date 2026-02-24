@@ -369,6 +369,8 @@
             <div bind:this={secondContainerEl} class="absolute inset-0"></div>
           </div>
           <!-- Curtain handle -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
           <div
             class="absolute top-0 bottom-0 w-1 cursor-ew-resize z-10"
             style:left="{curtainPosition}%"

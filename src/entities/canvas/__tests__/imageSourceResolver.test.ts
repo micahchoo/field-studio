@@ -11,7 +11,7 @@ import {
   isSourceCleaned,
   type ResolvedImageSource,
 } from '../model/imageSourceResolver';
-import type { IIIFCanvas, IIIFExternalWebResource } from '@/src/shared/types';
+import type { IIIFCanvas, IIIFExternalWebResource, ServiceDescriptor } from '@/src/shared/types';
 
 // ============================================================================
 // Mocks
@@ -41,7 +41,7 @@ function makeCanvas(overrides: Partial<IIIFCanvas> = {}): IIIFCanvas {
   } as IIIFCanvas;
 }
 
-function makeCanvasWithImage(imageUrl: string, serviceOverride?: object): IIIFCanvas {
+function makeCanvasWithImage(imageUrl: string, serviceOverride?: ServiceDescriptor): IIIFCanvas {
   const body: IIIFExternalWebResource = {
     id: imageUrl,
     type: 'Image',

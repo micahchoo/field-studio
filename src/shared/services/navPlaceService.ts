@@ -10,43 +10,29 @@
 import { vaultLog } from './logger';
 
 // ============================================================================
-// Types
+// Types — re-exported from shared/types (single source of truth)
 // ============================================================================
 
-export interface NavPlace {
-  id?: string;
-  type: 'Feature' | 'FeatureCollection';
-  features?: GeoFeature[];
-  geometry?: GeoGeometry;
-  properties?: GeoProperties;
-}
+export type {
+  NavPlace,
+  GeoFeature,
+  GeoGeometry,
+  PointGeometry,
+  LineStringGeometry,
+  PolygonGeometry,
+  MultiPointGeometry,
+  MultiLineStringGeometry,
+  MultiPolygonGeometry,
+  GeometryCollection,
+  GeoProperties,
+} from '@/src/shared/types';
 
-export interface GeoFeature {
-  id?: string;
-  type: 'Feature';
-  geometry: GeoGeometry;
-  properties?: GeoProperties;
-}
-
-export type GeoGeometry =
-  | PointGeometry
-  | LineStringGeometry
-  | PolygonGeometry
-  | MultiPointGeometry
-  | MultiLineStringGeometry
-  | MultiPolygonGeometry
-  | GeometryCollection;
-
-export interface PointGeometry { type: 'Point'; coordinates: [number, number] | [number, number, number]; }
-export interface LineStringGeometry { type: 'LineString'; coordinates: Array<[number, number]>; }
-export interface PolygonGeometry { type: 'Polygon'; coordinates: Array<Array<[number, number]>>; }
-export interface MultiPointGeometry { type: 'MultiPoint'; coordinates: Array<[number, number]>; }
-export interface MultiLineStringGeometry { type: 'MultiLineString'; coordinates: Array<Array<[number, number]>>; }
-export interface MultiPolygonGeometry { type: 'MultiPolygon'; coordinates: Array<Array<Array<[number, number]>>>; }
-export interface GeometryCollection { type: 'GeometryCollection'; geometries: GeoGeometry[]; }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface GeoProperties { label?: string | Record<string, string[]>; summary?: string | Record<string, string[]>; [key: string]: any; }
+import type {
+  NavPlace,
+  GeoFeature,
+  GeoGeometry,
+  GeoProperties,
+} from '@/src/shared/types';
 
 export interface LatLng { lat: number; lng: number; }
 export interface LatLngBounds { north: number; south: number; east: number; west: number; }

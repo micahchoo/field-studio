@@ -37,8 +37,10 @@ import type {
   IIIFAnnotationBody,
   IIIFCanvas,
   IIIFExternalWebResource,
-  IIIFItem
+  IIIFItem,
+  ServiceDescriptor
 } from '@/src/shared/types';
+import { isImageService } from '@/src/shared/types';
 import type { ImageApiProfile } from '@/utils/iiifImageApi';
 
 // ============================================================================
@@ -197,14 +199,10 @@ export function getImageService(body: IIIFExternalWebResource): {
 } | null {
   if (!body.service) return null;
 
-  const services = Array.isArray(body.service) ? body.service : [body.service];
+  const services: ServiceDescriptor[] = Array.isArray(body.service) ? body.service : [body.service];
 
   for (const service of services) {
-    // Check for IIIF Image API service
-    const type = service.type || service['@type'];
-    if (type === 'ImageService3' || type === 'ImageService2' ||
-        type?.includes('ImageService')) {
-
+    if (isImageService(service)) {
       // Determine profile level
       let profile: ImageApiProfile = 'level2'; // Default to most capable
       const profileValue = service.profile;
@@ -220,7 +218,7 @@ export function getImageService(body: IIIFExternalWebResource): {
       }
 
       return {
-        id: service.id || service['@id'],
+        id: service.id || service['@id'] || '',
         profile,
         width: service.width,
         height: service.height,

@@ -87,7 +87,7 @@
 {#if childIds.length === 0}
   <!-- nothing -->
 {:else if collapsed}
-  <button
+  <button aria-label="Expand canvases"
     onclick={(e: MouseEvent) => { e.stopPropagation(); onToggleCollapse(); }}
     class="flex items-center gap-1 text-[10px] px-1 py-0.5 {toggleClass}"
   >
@@ -98,7 +98,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="mt-1" onclick={(e: MouseEvent) => e.stopPropagation()}>
-    <button
+    <button aria-label="Collapse canvases"
       onclick={onToggleCollapse}
       class="flex items-center gap-1 text-[10px] px-1 py-0.5 mb-1 {toggleClass}"
     >

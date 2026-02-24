@@ -90,7 +90,9 @@
   }: Props = $props();
 
   // -- Internal State --
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture from prop default
   let showLog = $state(showLogByDefault);
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture from prop default
   let showFiles = $state(showFilesByDefault);
 
   // -- Derived --

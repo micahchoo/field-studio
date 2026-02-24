@@ -79,7 +79,7 @@ describe('FilmstripNavigator', () => {
     });
     const footer = target.querySelector('footer');
     expect(footer).toBeTruthy();
-    expect(footer!.getAttribute('role')).toBe('navigation');
+    expect(footer!.getAttribute('role')).toBe('toolbar');
     expect(footer!.getAttribute('aria-label')).toBe('Canvas navigation');
   });
 

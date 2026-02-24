@@ -81,6 +81,7 @@
 </script>
 
 {#if totalItems > 1}
+  <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
   <footer
     class={cn(
       'shrink-0 flex items-center justify-between px-3 h-8 border-t-2',
@@ -89,7 +90,8 @@
       cx.text
     )}
     style:direction={isRTL ? 'rtl' : 'ltr'}
-    role="navigation"
+    role="toolbar"
+    tabindex="0"
     aria-label="Canvas navigation"
     onkeydown={handleKeyDown}
   >

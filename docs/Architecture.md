@@ -55,7 +55,7 @@ src/features/<name>/
 └── __tests__/   Unit + integration tests
 ```
 
-### 13 features
+### 12 features
 
 | Feature | Purpose |
 |---------|---------|
@@ -177,16 +177,16 @@ vault.dispatch(action)
 
 All vault mutations go through dispatched actions for history tracking and provenance.
 
-**26 action types** across 8 modules:
+**37 action types** across 8 handler modules (plus `types.ts` for the union definition and `validation.ts` for parameter checks):
 
 | Module | Actions |
 |--------|---------|
-| `metadata.ts` | UPDATE_LABEL, UPDATE_SUMMARY, UPDATE_METADATA, UPDATE_RIGHTS, UPDATE_NAV_DATE, UPDATE_BEHAVIOR, UPDATE_VIEWING_DIRECTION |
+| `metadata.ts` | UPDATE_LABEL, UPDATE_SUMMARY, UPDATE_METADATA, UPDATE_RIGHTS, UPDATE_NAV_DATE, UPDATE_BEHAVIOR, UPDATE_VIEWING_DIRECTION, BATCH_UPDATE_NAV_DATE, BATCH_UPDATE |
 | `canvas.ts` | ADD_CANVAS, REMOVE_CANVAS, REORDER_CANVASES, UPDATE_CANVAS_DIMENSIONS |
-| `annotation.ts` | ADD_ANNOTATION, REMOVE_ANNOTATION, UPDATE_ANNOTATION, CREATE_ANNOTATION_PAGE, UPDATE_ANNOTATION_PAGE_LABEL, MOVE_ANNOTATION_TO_PAGE |
-| `movement.ts` | MOVE_ITEM, REORDER_RANGE_ITEMS |
+| `annotation.ts` | ADD_ANNOTATION, REMOVE_ANNOTATION, UPDATE_ANNOTATION, CREATE_ANNOTATION_PAGE, UPDATE_ANNOTATION_PAGE_LABEL, MOVE_ANNOTATION_TO_PAGE, SET_ANNOTATION_PAGE_BEHAVIOR |
+| `movement.ts` | MOVE_ITEM, REORDER_RANGE_ITEMS, RELOAD_TREE |
 | `trash.ts` | MOVE_TO_TRASH, RESTORE_FROM_TRASH, EMPTY_TRASH, BATCH_RESTORE |
-| `range.ts` | ADD_RANGE, REMOVE_RANGE, ADD_NESTED_RANGE, ADD/REMOVE_CANVAS_TO_RANGE, UPDATE_RANGE_SUPPLEMENTARY |
+| `range.ts` | ADD_RANGE, REMOVE_RANGE, ADD_NESTED_RANGE, ADD_CANVAS_TO_RANGE, REMOVE_CANVAS_FROM_RANGE, UPDATE_RANGE_SUPPLEMENTARY |
 | `linking.ts` | UPDATE_LINKING_PROPERTY, UPDATE_REQUIRED_STATEMENT, UPDATE_START |
 | `board.ts` | CREATE_BOARD, UPDATE_BOARD_ITEM_POSITION, REMOVE_BOARD_ITEM |
 
@@ -349,7 +349,7 @@ npm run build         # Production build
 npm test              # 4,756 tests, 117 files
 npm run typecheck     # svelte-check: 0 errors, 29 warnings
 npm run typecheck:ts  # tsc --noEmit: 0 errors
-npm run lint          # ESLint: 0 errors, 240 warnings
+npm run lint          # ESLint: 0 errors, 80 warnings
 ```
 
 ### Test infrastructure

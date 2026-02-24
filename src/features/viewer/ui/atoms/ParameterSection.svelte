@@ -48,6 +48,7 @@
     children,
   }: Props = $props();
 
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture from defaultOpen prop
   let isOpen = $state(defaultOpen);
 
   const colorClasses: Record<SectionColor, { light: string; dark: string }> = {

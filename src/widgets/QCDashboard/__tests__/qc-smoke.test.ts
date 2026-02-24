@@ -2,8 +2,7 @@
  * QCDashboard — smoke tests
  *
  * Purpose: verify the quality-control dashboard mounts without crashing.
- * QCDashboard defines its own local ValidationIssue type (different from
- * the inspectorValidation one); the smoke test must supply the correct shape.
+ * Uses the canonical ValidatorIssue from shared/types.
  *
  * The healer functions (healIssue, applyHealToTree, safeHealAll) are imported
  * from validationHealer — mocked here so no IIIF side-effects occur on mount.
@@ -14,7 +13,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import QCDashboard from '../ui/QCDashboard.svelte';
-import type { IIIFItem } from '@/src/shared/types';
+import type { IIIFItem, ValidatorIssue } from '@/src/shared/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 // QCDashboard imports healer functions; mock them as no-ops so tests are pure.
@@ -26,21 +25,7 @@ vi.mock('@/src/entities/manifest/model/validation/validationHealer', () => ({
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
-type IssueSeverity = 'error' | 'warning' | 'info';
-type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
-
-interface QCIssue {
-  id: string;
-  itemId: string;
-  itemLabel: string;
-  level: IssueSeverity;
-  category: IssueCategory;
-  message: string;
-  fixable: boolean;
-  path?: string;
-}
-
-function makeIssue(overrides: Partial<QCIssue> = {}): QCIssue {
+function makeIssue(overrides: Partial<ValidatorIssue> = {}): ValidatorIssue {
   return {
     id: 'issue-1',
     itemId: 'canvas-1',
@@ -97,7 +82,7 @@ describe('QCDashboard smoke tests', () => {
   });
 
   it('mounts with populated issues map without crashing', () => {
-    const issuesMap: Record<string, QCIssue[]> = {
+    const issuesMap: Record<string, ValidatorIssue[]> = {
       'canvas-1': [
         makeIssue({ level: 'error', category: 'Identity', message: 'Missing @id' }),
         makeIssue({ id: 'issue-2', level: 'warning', category: 'Metadata', message: 'Missing label' }),
@@ -123,7 +108,7 @@ describe('QCDashboard smoke tests', () => {
   });
 
   it('mounts with fixable issues without crashing', () => {
-    const issuesMap: Record<string, QCIssue[]> = {
+    const issuesMap: Record<string, ValidatorIssue[]> = {
       'manifest-1': [
         makeIssue({ id: 'fix-1', itemId: 'manifest-1', itemLabel: 'Manifest', level: 'error', category: 'Structure', message: 'Fixable error', fixable: true }),
       ],

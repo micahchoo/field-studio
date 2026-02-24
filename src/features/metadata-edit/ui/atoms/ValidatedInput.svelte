@@ -50,6 +50,7 @@
   }: Props = $props();
 
   // --- Internal state ---
+  // svelte-ignore state_referenced_locally -- intentional: two-way bridge between prop and local editable state
   let innerValue = $state(value ?? '');
   let isFocused = $state(false);
   let showSuccess = $state(false);

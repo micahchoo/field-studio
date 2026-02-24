@@ -1,6 +1,11 @@
----                                                                                                                 
-  Field Studio — Complete UI Surface Audit                                                                            
-                                                                                                                      
+---
+> **STATUS: UPDATED for Svelte 5 (2026-02-24).** File paths and framework references corrected.
+> React patterns (memo, hooks, JSX) replaced with Svelte 5 equivalents ($state, $derived, $effect, $props).
+> Gap indicators reflect current codebase state.
+> Treat as a planning/audit artifact — ideal UX items are aspirational targets.
+
+  Field Studio — Complete UI Surface Audit
+
   How to Read This Audit                                                           
 
   Each surface is analyzed in two parts:
@@ -12,7 +17,7 @@
   ---
   1. SIDEBAR (Navigation)
 
-  File: src/widgets/NavigationSidebar/ui/organisms/Sidebar.tsx
+  File: src/widgets/NavigationSidebar/ui/organisms/Sidebar.svelte
 
   Current State
 
@@ -20,7 +25,7 @@
   - Project tree browser with expand/collapse, filter
   - Import (folder/URL), Export, Settings buttons
   - Field Mode toggle, abstraction level slider
-  - React.memo with custom comparison (root.id, selectedId, currentMode)
+  - Svelte 5 $derived reactive state (root.id, selectedId, currentMode)
   - Tree is recursive DOM (not virtualized)
 
   Ideal UX
@@ -42,8 +47,8 @@
   │ Breadcrumb        │ Show current path (Collection > Manifest  │ Nothing when          │ [GAP]                    │
   │ context           │ > Canvas) in collapsed header             │ collapsed             │                          │
   ├───────────────────┼───────────────────────────────────────────┼───────────────────────┼──────────────────────────┤
-  │ Quick actions     │ Right-click on tree node → context menu   │ No context menu on    │ [GAP]                    │
-  │                   │ (rename, delete, duplicate, move)         │ tree nodes            │                          │
+  │ Quick actions     │ Right-click on tree node → context menu   │ Context menu with     │ [OK]                     │
+  │                   │ (rename, delete, duplicate, move)         │ delete/duplicate/rename│                          │
   ├───────────────────┼───────────────────────────────────────────┼───────────────────────┼──────────────────────────┤
   │ Badge indicators  │ Validation error count, unsaved changes   │ None                  │ [GAP]                    │
   │                   │ dot, new items badge                      │                       │                          │
@@ -66,14 +71,14 @@
   ---
   2. ARCHIVE VIEW (Main Grid)
 
-  File: src/features/archive/ui/organisms/ArchiveView.tsx
+  File: src/features/archive/ui/organisms/ArchiveView.svelte
 
   Current State
 
   - Grid/list toggle with density controls (compact/comfortable/spacious)
   - Multi-select (Shift+Click, Cmd+Click)
   - Context menu with bulk actions
-  - Virtualized grid (useGridVirtualization, overscan=3)
+  - Virtualized grid with overscan=3
   - Drag-to-reorder with Alt+Arrow keyboard support
   - Filter input, sort controls
   - GuidedEmptyState for onboarding
@@ -128,7 +133,7 @@
   ---
   3. VIEWER VIEW (Canvas/Media Player)
 
-  File: src/features/viewer/ui/organisms/ViewerView.tsx
+  File: src/features/viewer/ui/organisms/ViewerView.svelte
 
   Current State
 
@@ -188,8 +193,8 @@
   ────────────────────────────────────────
   Element: Audio waveform
   Ideal: Visual waveform display with scrubbing
-  Current: Basic progress bar
-  Status: [GAP]
+  Current: WaveSurfer.js with timeline, annotation regions, playback controls (AudioWaveform.svelte)
+  Status: [OK]
   ────────────────────────────────────────
   Element: Video chapters
   Ideal: Range markers on timeline, chapter navigation
@@ -217,7 +222,7 @@
   ---
   4. INSPECTOR PANEL (Detail Editor)
 
-  File: src/features/metadata-edit/ui/organisms/Inspector.tsx
+  File: src/features/metadata-edit/ui/organisms/Inspector.svelte
 
   Current State
 
@@ -226,7 +231,7 @@
   - Validation panel with auto-fix
   - Annotation CRUD with time range support
   - Resizable panel (280-480px)
-  - React.memo with custom comparison excluding currentPlaybackTime
+  - Svelte 5 $derived reactive props (excludes currentPlaybackTime from re-renders)
 
   Ideal UX
   Element: Tab indicators
@@ -300,7 +305,7 @@
   ---
   5. METADATA VIEW (Spreadsheet)
 
-  File: src/features/metadata-edit/ui/organisms/MetadataView.tsx
+  File: src/features/metadata-edit/ui/organisms/MetadataView.svelte
 
   Current State
 
@@ -358,7 +363,7 @@
   ---
   6. BOARD VIEW (Visual Designer)
 
-  File: src/features/board-design/ui/organisms/BoardView.tsx
+  File: src/features/board-design/ui/organisms/BoardView.svelte
 
   Current State
 
@@ -439,7 +444,7 @@
   ---
   7. SEARCH VIEW
 
-  File: src/features/search/ui/organisms/SearchView.tsx
+  File: src/features/search/ui/organisms/SearchView.svelte
 
   Current State
 
@@ -506,7 +511,7 @@
   ---
   8. STRUCTURE TREE VIEW
 
-  File: src/features/structure-view/ui/organisms/StructureTreeView.tsx
+  File: src/features/structure-view/ui/organisms/StructureTreeView.svelte
 
   Current State
 
@@ -569,7 +574,7 @@
   ---
   9. MAP VIEW
 
-  File: src/features/map/ui/organisms/MapView.tsx
+  File: src/features/map/ui/organisms/MapView.svelte
 
   Current State
 
@@ -577,7 +582,7 @@
   - Hover tooltips with thumbnail preview
   - Cluster expansion on click
   - Zoom controls
-  - Client-side clustering via useMap() hook
+  - Client-side clustering via reactive map store
 
   Ideal UX
   ┌─────────────────┬────────────────────────────────────────────────────┬────────────────────┬──────────────────────┐
@@ -614,7 +619,7 @@
   ---
   10. TIMELINE VIEW
 
-  File: src/features/timeline/ui/organisms/TimelineView.tsx
+  File: src/features/timeline/ui/organisms/TimelineView.svelte
 
   Current State
 
@@ -676,7 +681,7 @@
   ---
   11. STAGING / INGEST WORKBENCH
 
-  Files: src/features/staging/ui/organisms/StagingView.tsx, StagingWorkbench.tsx
+  Files: src/features/staging/ui/organisms/StagingView.svelte, StagingWorkbench.svelte
 
   Current State
 
@@ -740,7 +745,7 @@
   ---
   12. QC DASHBOARD
 
-  File: src/widgets/QCDashboard/ui/QCDashboard.tsx
+  File: src/widgets/QCDashboard/ui/QCDashboard.svelte
 
   Current State
 
@@ -797,7 +802,7 @@
   ---
   13. COMMAND PALETTE
 
-  File: src/widgets/CommandPalette/ui/CommandPalette.tsx
+  File: src/widgets/CommandPalette/ui/CommandPalette.svelte
 
   Current State
 
@@ -827,7 +832,7 @@
   ---
   14. ONBOARDING / PERSONA SETTINGS
 
-  Files: src/widgets/OnboardingModal/ui/OnboardingModal.tsx, src/widgets/PersonaSettings/ui/PersonaSettings.tsx
+  Files: src/widgets/OnboardingModal/ui/OnboardingModal.svelte, src/widgets/PersonaSettings/ui/PersonaSettings.svelte
 
   Current State
 
@@ -863,7 +868,7 @@
   ---
   15. AUTH DIALOG
 
-  File: src/widgets/AuthDialog/ui/AuthDialog.tsx
+  File: src/widgets/AuthDialog/ui/AuthDialog.svelte
 
   Current State
 
@@ -896,7 +901,7 @@
   ---
   16. STATUS BAR
 
-  File: src/widgets/StatusBar/ui/organisms/StatusBar.tsx
+  File: src/widgets/StatusBar/ui/organisms/StatusBar.svelte
 
   Current State
 
@@ -927,8 +932,8 @@
 
   - Strict atomic design (atoms zero-logic, molecules minimal state)
   - Comprehensive ARIA roles, labels, keyboard handling
-  - useFocusTrap for modals, useKeyboardNav for lists
-  - useReducedMotion respects accessibility preferences
+  - Focus trap for modals ($effect + onMount), keyboard nav for lists (onkeydown handlers)
+  - prefers-reduced-motion media query for accessibility
   - Field Mode (high-contrast yellow/black) across all components
   - Theme system with CSS custom properties
   - Toast notifications with type-specific styling and auto-dismiss

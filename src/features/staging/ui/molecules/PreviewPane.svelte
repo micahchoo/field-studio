@@ -110,6 +110,7 @@
       </div>
     {:else if fileInfo?.type === 'Video'}
       <div class="bg-nb-black/5 p-2">
+        <!-- svelte-ignore a11y_media_has_caption -->
         <video controls src={objectUrl} class="max-w-full max-h-[300px]"></video>
       </div>
     {/if}

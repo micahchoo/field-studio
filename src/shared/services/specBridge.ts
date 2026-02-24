@@ -21,6 +21,7 @@
  * @see https://iiif.io/api/presentation/3.0/change-log/
  */
 
+import type { LanguageMap } from '@/src/shared/types';
 import { vaultLog } from './logger';
 
 // Compatibility adapter: logger.warn(category, msg) → vaultLog.warn(msg)

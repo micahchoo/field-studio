@@ -115,6 +115,7 @@
   let virtualFiles: VirtualFile[] = $state([]);
   let integrityIssues: ValidationIssue[] = $state([]);
 
+  // svelte-ignore state_referenced_locally -- intentional: initial-value capture, root used only for initial config title
   let canopyConfig: CanopyConfig = $state({
     title: root ? 'IIIF Collection' : 'IIIF Collection',
     baseUrl: '',

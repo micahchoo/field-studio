@@ -33,6 +33,7 @@
     fieldMode = false,
   }: Props = $props();
 
+  // svelte-ignore state_referenced_locally -- intentional: countdown init from duration prop
   let remaining = $state(duration);
 
   $effect(() => {

@@ -77,7 +77,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div bind:this={dropdownRef} class={cn('relative', className)} onkeydown={handleKeydown} role="group">
-  <button
+  <button aria-label={displayText}
     type="button"
     class={cn(
       'w-full px-4 py-2 border-2 flex items-center justify-between cursor-pointer',
@@ -97,7 +97,7 @@
       role="listbox"
     >
       {#each options as option (option.value)}
-        <button
+        <button aria-label={option.label}
           type="button"
           class={cn(
             'w-full px-4 py-2 text-left flex flex-col cursor-pointer border-0 bg-transparent',

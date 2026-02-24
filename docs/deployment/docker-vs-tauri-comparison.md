@@ -1,5 +1,8 @@
 # Deployment Strategy: Docker vs Tauri
 
+> **STATUS: PLANNING.** Neither Docker nor Tauri deployment has been implemented.
+> The codebase is **Svelte 5** with Feature Slice Design (FSD). React references below are artifacts of the original planning document.
+
 > **Project Context**: IIIF Field Archive Studio - A local-first, browser-based workbench for organizing, annotating, and connecting field research media using IIIF standards.
 
 ---
@@ -23,7 +26,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    CURRENT (Browser/GH Pages)               │
 ├─────────────────────────────────────────────────────────────┤
-│  Frontend: React + Vite + TypeScript                        │
+│  Frontend: Svelte 5 + Vite + TypeScript                      │
 │  Storage: IndexedDB (SHA-256 content-addressable)           │
 │  IIIF Server: Service Worker (sw.js)                        │
 │  Sync: Yjs WebRTC (P2P)                                     │
@@ -256,7 +259,7 @@ npx tauri init
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devUrl": "http://localhost:3000",
+    "devUrl": "http://localhost:5173",
     "frontendDist": "../dist"
   },
   "bundle": {
@@ -519,7 +522,7 @@ flatpak build-bundle repo field-studio.flatpak studio.field.iiif.archive
 
 ## Recommended Hybrid Path
 
-Given the project's **"vibe coded" experimental nature** and **local-first principles**:
+Given the project's **local-first architecture** and **Svelte 5 + FSD codebase**:
 
 1. **Start with Tauri** - Get desktop distribution with minimal code changes
 2. **Later add Docker** - If institutional hosting needs emerge, the IIIF manifests are standard and portable
@@ -532,10 +535,7 @@ The Tauri path respects the core architecture while solving real pain points (fi
 
 - [feature-parity-maintenance.md](./feature-parity-maintenance.md) - Maintaining feature parity across all three deployments
 - [storage-strategy-across-deployments.md](./storage-strategy-across-deployments.md) - Storage architecture for Web, Docker, and Tauri
-- [ADVANCED_STORAGE_STRATEGIES.md](../ADVANCED_STORAGE_STRATEGIES.md) - Advanced browser storage strategies
-- [STORAGE_LIMITS_SOLUTIONS.md](../STORAGE_LIMITS_SOLUTIONS.md) - Overcoming IndexedDB storage limits
-
 ---
 
-*Document Version: 1.1*
-*Last Updated: 2026-01-29*
+*Document Version: 1.2*
+*Last Updated: 2026-02-24*

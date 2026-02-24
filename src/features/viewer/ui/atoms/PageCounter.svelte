@@ -46,6 +46,7 @@
   }: Props = $props();
 
   let isEditing = $state(false);
+  // svelte-ignore state_referenced_locally -- intentional: two-way bridge, editValue synced from current via $effect
   let editValue = $state(current.toString());
 
   // Keep editValue in sync with current prop when not editing.

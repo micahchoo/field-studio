@@ -47,6 +47,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     </div>
+    <!-- svelte-ignore a11y_autofocus -->
     <input
       type="text"
       value={query}

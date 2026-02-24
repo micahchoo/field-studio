@@ -18,6 +18,7 @@ import type {
   IIIFAnnotation,
   IIIFAnnotationPage,
   IIIFCanvas,
+  IIIFGenericService,
   IIIFManifest,
 } from '@/src/shared/types';
 import type {
@@ -168,14 +169,14 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
   let viewport = { x: 0, y: 0, zoom: 1 };
 
   // Extract viewport from service block
-  const services = (manifest as IIIFManifest & { service?: Array<{ type: string; x?: number; y?: number; zoom?: number }> }).service;
-  if (services) {
-    const viewportService = services.find(s => s.type === 'BoardViewport');
+  if (manifest.service) {
+    const viewportService = manifest.service.find(s => s.type === 'BoardViewport');
     if (viewportService) {
+      const svc = viewportService as IIIFGenericService;
       viewport = {
-        x: viewportService.x || 0,
-        y: viewportService.y || 0,
-        zoom: viewportService.zoom || 1,
+        x: (svc.x as number) || 0,
+        y: (svc.y as number) || 0,
+        zoom: (svc.zoom as number) || 1,
       };
     }
   }
@@ -212,20 +213,21 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
 
   // Extract groups from structures (Ranges)
   const groups: BoardGroup[] = [];
-  const structures = (manifest as IIIFManifest & { structures?: Array<{ id: string; type: string; label?: Record<string, string[]>; items?: Array<{ id: string; type: string }>; service?: Array<{ type: string; color?: string }> }> }).structures;
+  const structures = manifest.structures;
   if (structures) {
     for (const structure of structures) {
       if (structure.type === 'Range') {
         const rangeLabel = structure.label?.en?.[0] || 'Group';
-        const rangeItemIds = (structure.items || [])
+        const rangeItemIds = ((structure.items || []) as Array<{ id: string; type: string }>)
           .map(ref => items.find(i => i.resourceId === ref.id)?.id)
           .filter((id): id is string => !!id);
-        const colorMeta = structure.service?.find(s => s.type === 'GroupMetadata');
+        const colorMeta = structure.service?.find(s => s.type === 'GroupMetadata') as IIIFGenericService | undefined;
+        const color = colorMeta?.color as string | undefined;
         groups.push({
           id: structure.id.split('/range/').pop() || structure.id,
           label: rangeLabel,
           itemIds: rangeItemIds,
-          ...(colorMeta?.color && { color: colorMeta.color }),
+          ...(color ? { color } : {}),
         });
       }
     }
