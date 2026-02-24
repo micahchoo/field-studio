@@ -118,8 +118,12 @@
       const targetNode = tree.findNode(targetId);
 
       if (draggedNode && targetNode && onUpdate && root) {
-        // @migration: Implement actual tree move using vault operations
-        console.debug(`Move ${draggedNode.type} to ${targetNode.type} position: ${position}`);
+        vault.dispatch({
+          type: 'MOVE_ITEM',
+          itemId: draggingId,
+          newParentId: targetId,
+          index: position === 'before' ? 0 : undefined,
+        });
       }
     }
 

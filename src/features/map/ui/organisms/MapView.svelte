@@ -28,7 +28,7 @@
   import { cn } from '@/src/shared/lib/cn';
   import { MapStore } from '@/src/features/map/stores/map.svelte';
   import type { GeoItem, Cluster } from '@/src/features/map/stores/map.svelte';
-  import type { IIIFItem } from '@/src/shared/types';
+  import { getChildEntities, isManifest, type IIIFItem } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
 
   interface Props {
@@ -72,16 +72,14 @@
 
   // Initialize map store from root's items (canvases with metadata)
   $effect(() => {
-    // @migration: root.items may be canvases or manifests; extract canvas-level metadata
-    const items = root.items ?? [];
-    const canvases = items
-      .filter((item: IIIFItem) => item.type === 'Canvas' || item.type === 'Manifest')
-      .flatMap((item: IIIFItem) => {
-        if (item.type === 'Canvas') return [item];
-        // For manifests, extract their child canvases
-        return item.items ?? [];
+    const children = getChildEntities(root);
+    const canvases = children
+      .filter((item) => item.type === 'Canvas' || item.type === 'Manifest')
+      .flatMap((item) => {
+        if (isManifest(item)) return getChildEntities(item);
+        return [item];
       })
-      .map((canvas: IIIFItem) => ({
+      .map((canvas) => ({
         id: canvas.id,
         label: getIIIFValue(canvas.label) || canvas.id,
         metadata: canvas.metadata?.map((m) => ({
@@ -309,7 +307,7 @@
               onblur={() => handleMarkerHover(null)}
               aria-label="{item.label} ({map.formatCoordinates(item.lat, item.lng)})"
             >
-              <!-- @migration: thumbnail URL would come from canvas thumbnail resolution -->
+              <!-- TODO(loop): Wire resolveHierarchicalThumbs for canvas thumbnail display -->
               <div
                 class={cn('w-full h-full flex items-center justify-center text-xs font-bold', cx.accent || 'bg-nb-cream text-nb-black')}
                 aria-hidden="true"

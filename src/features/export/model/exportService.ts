@@ -1,7 +1,7 @@
 
 import JSZip from 'jszip';
 import { uiLog } from '@/src/shared/services/logger';
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCollection, isManifest, LanguageMap } from '@/src/shared/types';
+import { getChildEntities, getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCollection, isManifest, LanguageMap } from '@/src/shared/types';
 import { validator } from '@/src/entities/manifest/model/validation/validator';
 import {
   createImageServiceReference,
@@ -284,12 +284,10 @@ class ExportService {
                 const newId = `${baseUrl}/iiif/${typeDir}/${idVal}.json`;
                 idMap.set(item.id, newId);
 
-                if (item.items) {
-                    item.items.forEach(child => {
-                        if (isCollection(child) || isManifest(child)) {
-                            buildIdMap(child as IIIFItem);
-                        }
-                    });
+                for (const child of getChildEntities(item)) {
+                    if (isCollection(child) || isManifest(child)) {
+                        buildIdMap(child);
+                    }
                 }
             };
             buildIdMap(root);
@@ -496,12 +494,10 @@ class ExportService {
             });
 
             // Recursively process child Collections and Manifests
-            if (originalItem.items) {
-                originalItem.items.forEach((origChild) => {
-                    if (isCollection(origChild) || isManifest(origChild)) {
-                        processItem(origChild as IIIFItem, origChild as IIIFItem);
-                    }
-                });
+            for (const origChild of getChildEntities(originalItem)) {
+                if (isCollection(origChild) || isManifest(origChild)) {
+                    processItem(origChild, origChild);
+                }
             }
         };
 
@@ -744,11 +740,11 @@ class ExportService {
                     }
                 });
             }
-            item.items?.forEach(child => {
+            for (const child of getChildEntities(item)) {
                 if (isCollection(child) || isManifest(child)) {
-                    collectFacets(child as IIIFItem);
+                    collectFacets(child);
                 }
-            });
+            }
         };
 
         collectFacets(root);

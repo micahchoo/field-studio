@@ -490,14 +490,14 @@ describe('applyMappings', () => {
 
   it('does not mutate the original root', () => {
     const root = createTestManifest(['image1.jpg']);
-    const originalLabel = JSON.parse(JSON.stringify(root.items![0].label));
+    const originalLabel = JSON.parse(JSON.stringify((root.items![0] as IIIFCanvas).label));
     const rows = [{ filename: 'image1.jpg', label: 'Changed' }];
     const mappings: CSVColumnMapping[] = [
       { csvColumn: 'label', iiifProperty: 'label', language: 'en' }
     ];
 
     service.applyMappings(root, rows, 'filename', mappings);
-    expect(root.items![0].label).toEqual(originalLabel);
+    expect((root.items![0] as IIIFCanvas).label).toEqual(originalLabel);
   });
 
   it('skips mapping values that are empty strings', () => {

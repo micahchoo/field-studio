@@ -237,13 +237,12 @@
     function updateSupplementaryInList(ranges: IIIFRange[]): IIIFRange[] {
       return ranges.map(range => {
         if (range.id === rangeId) {
-          const updated = { ...range } as Record<string, unknown>;
           if (supplementary) {
-            updated.supplementary = supplementary;
-          } else {
-            delete updated.supplementary;
+            return { ...range, supplementary };
           }
-          return updated as unknown as IIIFRange;
+          const { supplementary: _, ...rest } = range;
+          // eslint-disable-next-line @field-studio/prefer-type-guards -- destructure-omit: rest is IIIFRange minus supplementary, safe narrowing
+          return rest as IIIFRange;
         }
         if (range.items) {
           const nested = getNestedRanges(range.items);

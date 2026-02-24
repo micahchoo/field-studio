@@ -522,8 +522,10 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
       // Filter out invalid items or fix their types
       const validTypes = getValidItemTypes(healed.type);
       if (validTypes.length > 0 && healed.items) {
-        healed.items = healed.items.filter((item) => {
-          return item && validTypes.includes(item.type);
+        healed.items = healed.items.filter((item: unknown) => {
+          if (item == null || typeof item !== 'object') return false;
+          const typed = item as { type?: string };
+          return typed.type != null && validTypes.includes(typed.type);
         });
         return { success: true, updatedItem: healed, message: 'Removed items with invalid types' };
       }

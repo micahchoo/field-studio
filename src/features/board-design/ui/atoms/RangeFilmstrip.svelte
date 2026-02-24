@@ -20,16 +20,17 @@
   - onclick with stopPropagation
   - $derived for toggle class
 
-  @migration: resolveHierarchicalThumb not yet available in svelte-migration.
-  When available, import from utils/imageSourceResolver.
 -->
 <script lang="ts">
   import type { IIIFItem } from '@/src/shared/types';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
+  import { resolveHierarchicalThumbs } from '@/src/utils/imageSourceResolver';
 
-  // @migration: stub — resolveHierarchicalThumb
-  function resolveHierarchicalThumb(_item: IIIFItem, _size: number): string | null {
-    return _item._blobUrl || null;
+  // TYPE_DEBT: resolveHierarchicalThumbs expects IIIFCanvas | Record<string, unknown> but we pass IIIFItem.
+  function resolveHierarchicalThumb(item: IIIFItem, _size: number): string | null {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const thumbs = resolveHierarchicalThumbs(item as any, 1);
+    return thumbs.length > 0 ? thumbs[0] : (item._blobUrl || null);
   }
 
   // Tree walker to find a canvas by ID within the IIIF resource tree

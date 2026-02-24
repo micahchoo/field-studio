@@ -17,9 +17,8 @@
   import { toast } from '@/src/shared/stores/toast.svelte';
 
   import type { IIIFItem, ValidatorIssue, IssueCategory } from '@/src/shared/types';
-  import { getIIIFValue } from '@/src/shared/types';
+  import { getIIIFValue, isManifest } from '@/src/shared/types';
 
-  // @migration stub -- validation healer functions not yet migrated
   import {
     healIssue,
     applyHealToTree,
@@ -35,10 +34,6 @@
     findItemAndPath as findItemAndPathPure,
   } from '../lib/qcHelpers';
 
-  // ---------------------------------------------------------------------------
-  // Types — use canonical ValidatorIssue from shared/types
-  // ---------------------------------------------------------------------------
-  type ValidationIssue = ValidatorIssue;
 
   const CATEGORIES: { id: IssueCategory; icon: string; label: string }[] = [
     { id: 'Identity',  icon: 'fingerprint',   label: 'Identity & IDs' },
@@ -57,7 +52,7 @@
   // Props
   // ---------------------------------------------------------------------------
   interface Props {
-    issuesMap: Record<string, ValidationIssue[]>;
+    issuesMap: Record<string, ValidatorIssue[]>;
     totalItems: number;
     root: IIIFItem | null;
     onSelect: (id: string) => void;
@@ -86,7 +81,7 @@
   // ---------------------------------------------------------------------------
 
   /** Flatten all issues from the map into a single array */
-  const allIssues = $derived.by((): ValidationIssue[] => {
+  const allIssues = $derived.by((): ValidatorIssue[] => {
     return Object.values(issuesMap).flat();
   });
 
@@ -186,7 +181,7 @@
     selectedIssueId = null;
   }
 
-  function handleSelectIssue(issue: ValidationIssue): void {
+  function handleSelectIssue(issue: ValidatorIssue): void {
     selectedIssueId = issue.id;
   }
 
@@ -203,10 +198,9 @@
         Object.assign(node, updates);
         return true;
       }
-      const nodeWithStructures = node as IIIFItem & { structures?: IIIFItem[] };
-      const children = (node as unknown as Record<string, unknown>).items as IIIFItem[] | undefined;
-      const annotations = (node as unknown as Record<string, unknown>).annotations as IIIFItem[] | undefined;
-      const structures = nodeWithStructures.structures;
+      const children = node.items as IIIFItem[] | undefined;
+      const annotations = node.annotations;
+      const structures = isManifest(node) ? node.structures : undefined;
       const all = [...(children ?? []), ...(annotations ?? []), ...(structures ?? [])];
       for (const child of all) {
         if (traverse(child as IIIFItem)) return true;
@@ -217,7 +211,7 @@
     if (traverse(newRoot)) onUpdate(newRoot);
   }
 
-  function handleHeal(issue: ValidationIssue): void {
+  function handleHeal(issue: ValidatorIssue): void {
     if (!root) return;
 
     try {
@@ -619,10 +613,10 @@
                 <p class="break-all text-nb-green mb-2">{previewItem.id}</p>
                 <div class="flex gap-2 mt-4 pt-4 border-t border-white/10">
                   <span class="text-white/40">
-                    Children: {((previewItem as unknown as Record<string, unknown>).items as unknown[] | undefined)?.length ?? 0}
+                    Children: {previewItem.items?.length ?? 0}
                   </span>
                   <span class="text-white/40">
-                    Annotations: {((previewItem as unknown as Record<string, unknown>).annotations as unknown[] | undefined)?.length ?? 0}
+                    Annotations: {previewItem.annotations?.length ?? 0}
                   </span>
                 </div>
               </div>

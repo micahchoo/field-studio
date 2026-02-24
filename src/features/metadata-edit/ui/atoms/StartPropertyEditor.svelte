@@ -60,11 +60,11 @@
   );
 
   let hasTimeSupport = $derived(
-    selectedCanvas ? ((selectedCanvas as IIIFCanvas & { duration?: number }).duration ?? 0) > 0 : false
+    selectedCanvas ? (selectedCanvas.duration ?? 0) > 0 : false
   );
 
   let canvasDuration = $derived(
-    (selectedCanvas as (IIIFCanvas & { duration?: number }) | undefined)?.duration ?? 0
+    selectedCanvas?.duration ?? 0
   );
 
   function handleCanvasSelect(e: Event) {

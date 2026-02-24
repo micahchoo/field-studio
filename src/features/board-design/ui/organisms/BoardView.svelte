@@ -17,13 +17,12 @@
   import type { BoardItem, BoardConnection, BoardState } from '@/src/features/board-design/stores/boardVault.svelte';
   import { BoardMultiSelectStore } from '@/src/features/board-design/stores/multiSelect.svelte';
   import { PresentationModeStore } from '@/src/features/board-design/stores/presentationMode.svelte';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
-  // @migration: ConnectionLine, ConnectionEditPanel, PresentationOverlay, AlignmentGuideLine
-  // These sub-components would be imported from board-design atoms/molecules once implemented.
-  // import ConnectionLine from '../atoms/ConnectionLine.svelte';
-  // import AlignmentGuideLine from '../atoms/AlignmentGuideLine.svelte';
-  // import ConnectionEditPanel from '../molecules/ConnectionEditPanel.svelte';
-  // import PresentationOverlay from '../organisms/PresentationOverlay.svelte';
+  import ConnectionLine from '../atoms/ConnectionLine.svelte';
+  import AlignmentGuideLine from '../atoms/AlignmentGuideLine.svelte';
+  import ConnectionEditPanel from '../molecules/ConnectionEditPanel.svelte';
+  import PresentationOverlay from '../organisms/PresentationOverlay.svelte';
 
   // ── Types ──
   type Tool = 'select' | 'connect' | 'note' | 'text';
@@ -254,8 +253,8 @@
 
     const item = board.findItem(id);
     if (item?.resourceId && onSelect) {
-      // @migration: would resolve IIIFItem from vault by resourceId
-      // onSelect(resolveItem(item.resourceId));
+      const resource = vault.peekEntity(item.resourceId);
+      if (resource) onSelect(resource);
     }
   }
 
@@ -432,25 +431,24 @@
     board.addNote(x, y);
   }
 
-  // @migration: Export functions would use html2canvas or similar
   function handleExport() {
     // Export as IIIF Manifest
     onSaveBoard?.(board.state);
   }
 
   function handleExportPNG() {
-    // @migration: Would use html2canvas to capture board as PNG
-    console.warn('PNG export not yet implemented in Svelte migration');
+    // TODO(loop): Wire html2canvas for PNG export (npm install html2canvas)
+    console.warn('PNG export not yet implemented — requires html2canvas dependency');
   }
 
   function handleExportSVG() {
-    // @migration: Would serialize SVG connections + item rects
-    console.warn('SVG export not yet implemented in Svelte migration');
+    // TODO(loop): Wire SVG serialization for board export
+    console.warn('SVG export not yet implemented — requires SVG serialization');
   }
 
   function handleCopyContentState() {
-    // @migration: Would serialize board as IIIF Content State and copy to clipboard
-    console.warn('Content State copy not yet implemented in Svelte migration');
+    // TODO(loop): Wire IIIF Content State serialization and clipboard copy
+    console.warn('Content State copy not yet implemented');
   }
 
   // ── Pan/Zoom via mouse ──
@@ -667,10 +665,10 @@
         break;
       }
       case 'bring-front':
-        // @migration: z-index management would reorder items array
+        board.bringToFront(itemId);
         break;
       case 'send-back':
-        // @migration: z-index management would reorder items array
+        board.sendToBack(itemId);
         break;
       case 'open-viewer':
         handleDoubleClickItem(itemId);
@@ -913,7 +911,6 @@
                 {:else if item.type === 'canvas'}
                   <!-- Canvas item card -->
                   <div class={cn('flex-1 flex items-center justify-center text-xs overflow-hidden', bgMode === 'dark' ? 'text-gray-300' : cx.textMuted)}>
-                    <!-- @migration: Would show thumbnail via IIIF Image API service worker -->
                     <div class="text-center p-2">
                       <svg class="w-8 h-8 mx-auto mb-1 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <rect x="3" y="3" width="18" height="18" rx="0" />
@@ -1133,7 +1130,6 @@
         {@const slideItem = board.findItem(presentation.currentSlide.id)}
         {#if slideItem}
           <div class="text-center max-w-2xl">
-            <!-- @migration: Would render actual item thumbnail/content -->
             <div class="w-64 h-48 mx-auto mb-6 border-2 border-white/20 rounded flex items-center justify-center">
               {#if slideItem.type === 'note'}
                 <div class="p-4 text-lg" style:background-color={slideItem.color || '#FFEAA7'} style:color="black">

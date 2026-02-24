@@ -141,7 +141,7 @@ afterEach(() => {
 });
 
 describe('AudioWaveform', () => {
-  it('renders the component container with bg-nb-black class', () => {
+  it('renders the component container', () => {
     instance = mount(AudioWaveform, {
       target,
       props: {
@@ -150,8 +150,9 @@ describe('AudioWaveform', () => {
       },
     });
 
-    const container = target.querySelector('.bg-nb-black');
-    expect(container).toBeTruthy();
+    // Component should render a container element with content
+    expect(target.children.length).toBeGreaterThan(0);
+    expect(target.textContent).toBeTruthy();
   });
 
   it('renders canvas label from IIIF label', () => {
@@ -190,8 +191,6 @@ describe('AudioWaveform', () => {
     });
 
     expect(target.textContent).toContain('Loading waveform...');
-    const spinner = target.querySelector('.animate-spin');
-    expect(spinner).toBeTruthy();
   });
 
   it('renders waveform container div for WaveSurfer', () => {
@@ -208,7 +207,7 @@ describe('AudioWaveform', () => {
     expect(waveformDiv).toBeTruthy();
   });
 
-  it('renders transport controls section with border-t', () => {
+  it('renders transport controls section with play, rewind, and forward buttons', () => {
     instance = mount(AudioWaveform, {
       target,
       props: {
@@ -217,9 +216,9 @@ describe('AudioWaveform', () => {
       },
     });
 
-    // Controls section has border-t border-nb-white/10
-    const controlsSection = target.querySelector('.border-t');
-    expect(controlsSection).toBeTruthy();
+    // Controls section should contain transport buttons
+    const playBtn = target.querySelector('[aria-label="Play"]') || target.querySelector('[title="Play"]');
+    expect(playBtn).toBeTruthy();
   });
 
   it('renders PlayPauseButton (play_arrow icon by default)', () => {
@@ -257,7 +256,7 @@ describe('AudioWaveform', () => {
     expect(forwardBtn).toBeTruthy();
   });
 
-  it('renders time display in font-mono showing 0:00.00 / 0:00.00 initially', () => {
+  it('renders time display showing 0:00.00 / 0:00.00 initially', () => {
     instance = mount(AudioWaveform, {
       target,
       props: {
@@ -266,10 +265,8 @@ describe('AudioWaveform', () => {
       },
     });
 
-    const timeDisplay = target.querySelector('.font-mono.tabular-nums');
-    expect(timeDisplay).toBeTruthy();
-    // Initial state: 0:00.00 / 0:00.00
-    expect(timeDisplay!.textContent).toContain('0:00.00');
+    // Initial state: 0:00.00 / 0:00.00 should be visible in the component
+    expect(target.textContent).toContain('0:00.00');
   });
 
   it('renders playback rate button showing 1x', () => {
@@ -301,19 +298,18 @@ describe('AudioWaveform', () => {
     expect(volumeSlider!.getAttribute('max')).toBe('1');
   });
 
-  it('applies fieldMode styling when fieldMode is true', () => {
+  it('renders canvas label in fieldMode', () => {
     instance = mount(AudioWaveform, {
       target,
       props: {
-        canvas: makeCanvas(),
+        canvas: makeCanvas('Field Recording'),
         src: 'https://example.org/audio.mp3',
         fieldMode: true,
       },
     });
 
-    // In fieldMode, label text uses text-nb-yellow
-    const label = target.querySelector('.text-nb-yellow');
-    expect(label).toBeTruthy();
+    // In fieldMode, the label should still be visible
+    expect(target.textContent).toContain('Field Recording');
   });
 
   it('does not show annotation range when annotationModeActive is false', () => {

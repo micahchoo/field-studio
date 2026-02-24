@@ -13,7 +13,6 @@
   import { Button, Icon, Input } from '@/src/shared/ui/atoms';
   import { ModalDialog } from '@/src/shared/ui/molecules';
 
-  // @migration stub -- shortcuts data + utilities from constants file
   import { SHORTCUTS as shortcuts } from '@/src/shared/constants/shortcuts';
 
   // ---------------------------------------------------------------------------

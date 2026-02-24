@@ -1,6 +1,6 @@
 // All IIIFCanvas-specific casts removed: IIIFCanvas extends IIIFItem; summary, rights,
 // requiredStatement, navDate, annotations are all inherited from IIIFItem.
-import { type CSVColumnMapping, getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
+import { type CSVColumnMapping, getChildEntities, getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
 import { uiLog } from '@/src/shared/services/logger';
 import {
   createLanguageMap,
@@ -197,10 +197,8 @@ export class CSVImporterService {
       map.set(withoutExt, canvas);
       map.set(withoutExt.toLowerCase(), canvas);
     }
-    if (item.items) {
-      for (const child of item.items) {
-        this.collectCanvases(child, map);
-      }
+    for (const child of getChildEntities(item)) {
+      this.collectCanvases(child, map);
     }
   }
 
@@ -370,10 +368,8 @@ export class CSVImporterService {
     if (types.includes(item.type)) {
       result.push(item);
     }
-    if (item.items) {
-      for (const child of item.items) {
-        this.collectItems(child, result, types);
-      }
+    for (const child of getChildEntities(item)) {
+      this.collectItems(child, result, types);
     }
     if (types.includes('Annotation') && item.annotations) {
       for (const page of item.annotations) {
@@ -390,10 +386,8 @@ export class CSVImporterService {
     if (ids.has(item.id)) {
       result.push(item);
     }
-    if (item.items) {
-      for (const child of item.items) {
-        this.collectItemsById(child, result, ids);
-      }
+    for (const child of getChildEntities(item)) {
+      this.collectItemsById(child, result, ids);
     }
   }
 

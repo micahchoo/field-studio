@@ -30,9 +30,8 @@
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
-  // @migration: AnnotationToolPanel not yet migrated to Svelte
+  // TODO(loop): Replace placeholders with actual components once props are stabilized
   // import AnnotationToolPanel from '@/src/features/viewer/ui/organisms/AnnotationToolPanel.svelte';
-  // @migration: MetadataEditorPanel not yet migrated to Svelte
   // import MetadataEditorPanel from '@/src/features/metadata-edit/ui/organisms/MetadataEditorPanel.svelte';
 
   interface Props {
@@ -67,8 +66,7 @@
 <div class="flex flex-col h-full">
   <!-- Annotation Tool Panel from viewer feature (flex-1 for primary content) -->
   <div class="flex-1 min-h-0">
-    <!-- @migration: AnnotationToolPanel not yet migrated to Svelte.
-         Will render annotation drawing controls, shape selectors, motivation picker.
+    <!-- TODO(loop): Replace placeholder with AnnotationToolPanel component.
          Props: canvas, imageUrl, existingAnnotations, onCreateAnnotation, onClose,
                 cx subset { text, textMuted, active, surface } -->
     <div
@@ -89,8 +87,7 @@
   <!-- Metadata Editor Panel from metadata-edit feature (conditional, scrollable) -->
   {#if resource}
     <div class={cn('border-t max-h-80 overflow-auto', cx.border || 'border-nb-black/20')}>
-      <!-- @migration: MetadataEditorPanel not yet migrated to Svelte.
-           Will render editable metadata fields for the selected annotation resource.
+      <!-- TODO(loop): Replace placeholder with MetadataEditorPanel component.
            Props: resource, onUpdateResource, language, fieldMode, onClose,
                   cx subset { surface, text, accent, border, divider, headerBg,
                               textMuted, input, label, active } -->

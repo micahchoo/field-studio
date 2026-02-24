@@ -15,7 +15,6 @@
   import { ModalDialog } from '@/src/shared/ui/molecules';
   import { escapeHtml, fuzzyScore, fuzzyHighlightRanges, renderHighlighted } from '../lib/fuzzyMatch';
 
-  // @migration stub -- command history store (Svelte 5 runes store)
   import { commandHistory } from '@/src/shared/lib/hooks/commandHistory.svelte';
 
   // ---------------------------------------------------------------------------
@@ -86,7 +85,6 @@
 
   /** Recent + frequent commands from history store */
   const historyItems = $derived.by((): Command[] => {
-    // @migration -- commandHistory store provides recent commands + frequency map
     const recentEntries = commandHistory.recentCommands.slice(0, maxHistoryEntries);
     return recentEntries
       .map((entry) => availableCommands.find((c: Command) => c.id === entry.id))

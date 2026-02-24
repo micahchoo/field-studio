@@ -27,7 +27,7 @@
   import { cn } from '@/src/shared/lib/cn';
   import { TimelineStore } from '@/src/features/timeline/stores/timeline.svelte';
   import type { ZoomLevel, TimelineGroup, TimelineItem } from '@/src/features/timeline/stores/timeline.svelte';
-  import type { IIIFItem } from '@/src/shared/types';
+  import { getChildEntities, isManifest, type IIIFItem } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
 
   interface Props {
@@ -62,15 +62,14 @@
 
   // Initialize timeline store from root's canvases (items with navDate)
   $effect(() => {
-    // @migration: root.items may be canvases or manifests; extract canvas-level navDate
-    const items = root.items ?? [];
-    const canvases = items
-      .filter((item: IIIFItem) => item.type === 'Canvas' || item.type === 'Manifest')
-      .flatMap((item: IIIFItem) => {
-        if (item.type === 'Canvas') return [item];
-        return item.items ?? [];
+    const children = getChildEntities(root);
+    const canvases = children
+      .filter((item) => item.type === 'Canvas' || item.type === 'Manifest')
+      .flatMap((item) => {
+        if (isManifest(item)) return getChildEntities(item);
+        return [item];
       })
-      .map((canvas: IIIFItem) => ({
+      .map((canvas) => ({
         id: canvas.id,
         label: getIIIFValue(canvas.label) || canvas.id,
         navDate: canvas.navDate,
@@ -239,7 +238,7 @@
                     onclick={() => handleItemClick(item)}
                     aria-label="{item.label} — {timeline.formatShortDate(item.date)}"
                   >
-                    <!-- @migration: thumbnail would come from canvas thumbnail resolution -->
+                    <!-- TODO(loop): Wire resolveHierarchicalThumbs for canvas thumbnail display -->
                     <div
                       class={cn(
                         'w-full aspect-square flex items-center justify-center',

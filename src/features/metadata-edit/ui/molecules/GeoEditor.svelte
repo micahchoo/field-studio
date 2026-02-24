@@ -42,7 +42,7 @@
 
   const navPlaceService = {
      
-    getNavPlace: (item: any): NavPlace | null => (item as any).navPlace || null,
+    getNavPlace: (item: { navPlace?: NavPlace }): NavPlace | null => item.navPlace || null,
     toGeoJSON: (np: NavPlace): NavPlace => np,
     getBounds: (_np: NavPlace): { north: number; south: number; east: number; west: number } | null => null,
     createPointFeature: (lat: number, lng: number, props?: Record<string, unknown>): GeoFeature => ({

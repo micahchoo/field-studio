@@ -68,6 +68,11 @@ describe('SelectionStore', () => {
       store.select('a');
       expect(store.count).toBe(1);
     });
+
+    it('selects an empty array without error', () => {
+      store.select([]);
+      expect(store.count).toBe(0);
+    });
   });
 
   describe('set()', () => {
@@ -85,6 +90,11 @@ describe('SelectionStore', () => {
       store.select('a');
       store.set([]);
       expect(store.count).toBe(0);
+    });
+
+    it('deduplicates when set with duplicate ids', () => {
+      store.set(['a', 'a', 'b']);
+      expect(store.count).toBe(2);
     });
   });
 
@@ -131,6 +141,12 @@ describe('SelectionStore', () => {
       store.toggle('a');
       expect(store.isSelected('a')).toBe(false);
       expect(store.isSelected('b')).toBe(true);
+    });
+
+    it('toggling back and forth returns to original state', () => {
+      store.toggle('x');
+      store.toggle('x');
+      expect(store.isSelected('x')).toBe(false);
     });
   });
 
@@ -239,6 +255,20 @@ describe('DialogState', () => {
     d.toggle();
     expect(d.isOpen).toBe(false);
   });
+
+  it('open() is idempotent (calling twice stays open)', () => {
+    const d = new DialogState();
+    d.open();
+    d.open();
+    expect(d.isOpen).toBe(true);
+  });
+
+  it('close() is idempotent (calling twice stays closed)', () => {
+    const d = new DialogState(true);
+    d.close();
+    d.close();
+    expect(d.isOpen).toBe(false);
+  });
 });
 
 describe('DialogManagerStore (dialogs singleton)', () => {
@@ -300,6 +330,48 @@ describe('DialogManagerStore (dialogs singleton)', () => {
     // We verify by checking that the DialogState accepts initial=true.
     const d = new DialogState(true);
     expect(d.isOpen).toBe(true);
+  });
+
+  it('closeAll is safe to call when nothing is open', () => {
+    expect(() => dialogs.closeAll()).not.toThrow();
+  });
+
+  it('anyOpen returns false once all opened dialogs are closed', () => {
+    dialogs.exportDialog.open();
+    dialogs.exportDialog.close();
+    expect(dialogs.anyOpen).toBe(false);
+  });
+
+  it('anyOpen returns true when any one of many dialogs is still open', () => {
+    dialogs.exportDialog.open();
+    dialogs.qcDashboard.open();
+    dialogs.exportDialog.close();
+    // qcDashboard is still open
+    expect(dialogs.anyOpen).toBe(true);
+  });
+
+  it('all named dialogs have open/close/toggle methods', () => {
+    const expectedDialogs = [
+      'exportDialog',
+      'qcDashboard',
+      'onboardingModal',
+      'externalImport',
+      'batchEditor',
+      'personaSettings',
+      'commandPalette',
+      'keyboardShortcuts',
+      'authDialog',
+      'storageFullDialog',
+    ] as const;
+
+    for (const name of expectedDialogs) {
+      const dialog = dialogs[name];
+      expect(dialog).toBeDefined();
+      expect(typeof dialog.isOpen).toBe('boolean');
+      expect(typeof dialog.open).toBe('function');
+      expect(typeof dialog.close).toBe('function');
+      expect(typeof dialog.toggle).toBe('function');
+    }
   });
 });
 
@@ -1047,6 +1119,18 @@ describe('HistoryStore', () => {
       // With maxHistory=3, past is capped
       expect(h.pastLength).toBeLessThanOrEqual(3);
       expect(h.state).toBe(5);
+    });
+
+    it('verifies exact oldest reachable state after eviction', () => {
+      const h = new HistoryStore(0, 3);
+      h.update(1);
+      h.update(2);
+      h.update(3);
+      h.update(4);  // should evict oldest (0->1)
+      expect(h.pastLength).toBe(3);
+      h.undo(); h.undo(); h.undo();
+      expect(h.state).toBe(1);  // oldest in history now
+      expect(h.canUndo).toBe(false);
     });
   });
 

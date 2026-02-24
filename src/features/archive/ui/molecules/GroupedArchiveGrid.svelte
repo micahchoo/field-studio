@@ -25,7 +25,7 @@
   interface Props {
     groups: ManifestGroup[];
     isSelected: (id: string) => boolean;
-    onItemClick: (e: MouseEvent, canvas: IIIFCanvas) => void;
+    onItemClick: (e: MouseEvent | KeyboardEvent, canvas: IIIFCanvas) => void;
     onToggleSelect: (canvas: IIIFCanvas) => void;
     onContextMenu: (e: MouseEvent, canvas: IIIFCanvas) => void;
     validationIssues?: Map<string, unknown[]>;

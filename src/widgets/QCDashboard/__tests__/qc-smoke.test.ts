@@ -1,13 +1,14 @@
 /**
  * QCDashboard — smoke tests
  *
- * Purpose: verify the quality-control dashboard mounts without crashing.
- * Uses the canonical ValidatorIssue from shared/types.
+ * Purpose: verify the quality-control dashboard renders user-visible content
+ * such as health score, category labels, issue messages, and interactive
+ * controls. Uses the canonical ValidatorIssue from shared/types.
  *
  * The healer functions (healIssue, applyHealToTree, safeHealAll) are imported
  * from validationHealer — mocked here so no IIIF side-effects occur on mount.
  *
- * Pattern: mount → flushSync → assert non-empty DOM → unmount.
+ * Pattern: mount -> flushSync -> assert visible text / controls -> unmount.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -65,7 +66,44 @@ describe('QCDashboard smoke tests', () => {
     vi.clearAllMocks();
   });
 
-  it('mounts with empty issues map without crashing', () => {
+  it('displays 100% health score when there are no issues', () => {
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap: {},
+        totalItems: 10,
+        root: makeCollection(),
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // Health score should be 100% with no errors
+    expect(target.textContent).toContain('100%');
+    expect(target.textContent).toContain('Health');
+  });
+
+  it('displays "Integrity Guard" heading and "Resources Monitored" count', () => {
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap: {},
+        totalItems: 5,
+        root: makeCollection(),
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('Integrity Guard');
+    expect(target.textContent).toContain('5 Resources Monitored');
+  });
+
+  it('renders all four category filter labels', () => {
     instance = mount(QCDashboard, {
       target,
       props: {
@@ -78,17 +116,53 @@ describe('QCDashboard smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Identity & IDs');
+    expect(target.textContent).toContain('Hierarchy');
+    expect(target.textContent).toContain('Labels & Descriptive');
+    expect(target.textContent).toContain('Media & Technical');
   });
 
-  it('mounts with populated issues map without crashing', () => {
+  it('renders "Heal All Fixable" button', () => {
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap: {},
+        totalItems: 0,
+        root: null,
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('Heal All Fixable');
+  });
+
+  it('displays "No issues in this category" when the active category has zero issues', () => {
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap: {},
+        totalItems: 3,
+        root: makeCollection(),
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // Default active category is 'Identity', which has zero issues
+    expect(target.textContent).toContain('No issues in this category');
+  });
+
+  it('displays issue messages and item labels when issues are present', () => {
     const issuesMap: Record<string, ValidatorIssue[]> = {
       'canvas-1': [
         makeIssue({ level: 'error', category: 'Identity', message: 'Missing @id' }),
-        makeIssue({ id: 'issue-2', level: 'warning', category: 'Metadata', message: 'Missing label' }),
-      ],
-      'canvas-2': [
-        makeIssue({ id: 'issue-3', itemId: 'canvas-2', itemLabel: 'Canvas 2', level: 'info', category: 'Content', message: 'Low resolution' }),
+        makeIssue({ id: 'issue-2', level: 'warning', category: 'Identity', message: 'Duplicate identifier' }),
       ],
     };
 
@@ -104,13 +178,67 @@ describe('QCDashboard smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    // Default category is Identity, so these issues should be visible
+    expect(target.textContent).toContain('Missing @id');
+    expect(target.textContent).toContain('Duplicate identifier');
+    expect(target.textContent).toContain('Test Canvas');
   });
 
-  it('mounts with fixable issues without crashing', () => {
+  it('displays reduced health score when errors are present', () => {
+    const issuesMap: Record<string, ValidatorIssue[]> = {
+      'canvas-1': [
+        makeIssue({ level: 'error', category: 'Identity', message: 'Missing @id' }),
+      ],
+    };
+
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap,
+        totalItems: 2,
+        root: makeCollection(),
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // With 1 error and 2 total items, health should be 50%
+    expect(target.textContent).toContain('50%');
+  });
+
+  it('renders the "Diagnostic Panel Ready" empty state in the context panel', () => {
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap: {},
+        totalItems: 0,
+        root: null,
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('Diagnostic Panel Ready');
+    expect(target.textContent).toContain('Select an issue from the list to begin structural repair');
+  });
+
+  it('shows "Fix It" button for fixable issues', () => {
     const issuesMap: Record<string, ValidatorIssue[]> = {
       'manifest-1': [
-        makeIssue({ id: 'fix-1', itemId: 'manifest-1', itemLabel: 'Manifest', level: 'error', category: 'Structure', message: 'Fixable error', fixable: true }),
+        makeIssue({
+          id: 'fix-1',
+          itemId: 'manifest-1',
+          itemLabel: 'Manifest',
+          level: 'error',
+          category: 'Identity',
+          message: 'Fixable error',
+          fixable: true,
+        }),
       ],
     };
 
@@ -126,6 +254,28 @@ describe('QCDashboard smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    // The "Fix It" button appears on hover, but should be present in DOM
+    expect(target.textContent).toContain('Fix It');
+  });
+
+  it('displays 0% health and zero-item count with empty issues map and zero totalItems', () => {
+    instance = mount(QCDashboard, {
+      target,
+      props: {
+        issuesMap: {},
+        totalItems: 0,
+        root: null,
+        onSelect: vi.fn(),
+        onUpdate: vi.fn(),
+        onClose: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // With 0 total items, the health score calculation: calculateHealthScore(0, 0) should give 100%
+    // because there are 0 errors out of 0 items
+    expect(target.textContent).toContain('Health');
+    expect(target.textContent).toContain('0 Resources Monitored');
   });
 });

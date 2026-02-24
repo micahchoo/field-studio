@@ -17,8 +17,15 @@
   import { ModalDialog } from '@/src/shared/ui/molecules';
   import { toast } from '@/src/shared/stores/toast.svelte';
 
-  // @migration - these types will live in shared/types once auth-api.ts is created
   import type { AuthAccessService2 } from '@/src/shared/types/auth-api';
+  import {
+    detectProbeService,
+    findTokenService,
+    openAccessService,
+    requestToken,
+    probeResource,
+    authStatusFromProbe,
+  } from '@/src/shared/services/authFlowService';
   // AuthService is the general union; AuthDialog specifically handles access services
   type AuthService = AuthAccessService2;
 
@@ -132,12 +139,25 @@
    * Sends a HEAD/GET request to the probe service endpoint.
    */
   async function probeService(service: AuthService): Promise<ProbeResult> {
-    // @migration stub -- actual implementation will:
-    // 1. Find the probe service within service.service array
-    // 2. Fetch probe endpoint with credentials: 'include'
-    // 3. Parse response for status code + optional content-location
-    // 4. Return { status, contentLocation, errorMessage }
-    return { status: 401 };
+    const probeSvc = detectProbeService(service.service);
+    if (!probeSvc) {
+      return { status: 401, errorMessage: 'No probe service found' };
+    }
+
+    try {
+      const response = await probeResource(probeSvc.id);
+      const sub = response.substitute?.[0];
+      return {
+        status: response.status,
+        contentLocation: response.location?.id,
+        errorMessage: response.note?.en?.[0],
+        substitute: sub
+          ? { id: sub.id, width: sub.width, height: sub.height }
+          : undefined,
+      };
+    } catch (e: unknown) {
+      return { status: 0, errorMessage: e instanceof Error ? e.message : 'Probe request failed' };
+    }
   }
 
   /**
@@ -147,21 +167,26 @@
   async function fetchAccessToken(
     service: AuthService
   ): Promise<{ accessToken?: string; error?: string }> {
-    // @migration stub -- actual implementation will:
-    // 1. Find the token service within service.service array
-    // 2. Open token endpoint in hidden iframe or fetch with credentials
-    // 3. Listen for postMessage with token
-    // 4. Return { accessToken } or { error }
-    return { accessToken: undefined, error: 'Not implemented' };
+    const tokenSvc = findTokenService(service);
+    if (!tokenSvc) {
+      return { error: 'No token service found' };
+    }
+
+    try {
+      const tokenResp = await requestToken(tokenSvc);
+      return { accessToken: tokenResp.accessToken };
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Token exchange failed';
+      return { error: message };
+    }
   }
 
   /** Open a login window for the active auth profile */
   function openLoginWindow(service: AuthService): void {
-    // @migration stub -- actual implementation will:
-    // 1. window.open(service.id, '_blank', 'width=600,height=600')
-    // 2. Store window ref for polling/message listening
-    // 3. Set up postMessage listener for completion
-    const w = window.open(service.id, '_blank', 'width=600,height=600');
+    const handle = openAccessService(service);
+    // openAccessService returns { close, type } -- for 'window' type we need the
+    // actual window ref for polling. Fall back to window.open directly.
+    const w = window.open(service.id, '_blank', 'width=600,height=700');
     loginWindowRef = w;
   }
 
@@ -221,17 +246,23 @@
     isLoggingIn = true;
     flowState = 'loggingIn';
 
-    if (authProfile === 'external') {
-      // External: redirect user, then re-probe
-      openLoginWindow(activeService);
-      // @migration -- in real impl, poll loginWindowRef.closed or listen for postMessage
-      await handlePostLogin();
-    } else {
-      // Active: open login window
-      openLoginWindow(activeService);
-      // @migration -- in real impl, listen for postMessage or poll window.closed
-      await handlePostLogin();
-    }
+    openLoginWindow(activeService);
+
+    // Poll for login window close + listen for postMessage completion
+    await new Promise<void>((resolve) => {
+      const pollInterval = setInterval(() => {
+        if (loginWindowRef?.closed) {
+          clearInterval(pollInterval);
+          resolve();
+        }
+      }, 500);
+
+      // TODO(loop): Add postMessage listener for token exchange when auth
+      // service sends token directly via postMessage instead of cookie flow.
+      // For now, rely on window close detection followed by token exchange.
+    });
+
+    await handlePostLogin();
   }
 
   async function handlePostLogin(): Promise<void> {

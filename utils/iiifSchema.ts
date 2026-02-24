@@ -1532,8 +1532,11 @@ export function validateResource(resource: IIIFItem): string[] {
       // Validate each item's type if possible
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        if (item && item.type && !isValidItemType(type, item.type)) {
-          errors.push(`Item at index ${i} has invalid type '${item.type}' for parent type '${type}'`);
+        if (item != null && typeof item === 'object') {
+          const typed = item as { type?: string };
+          if (typed.type && !isValidItemType(type, typed.type)) {
+            errors.push(`Item at index ${i} has invalid type '${typed.type}' for parent type '${type}'`);
+          }
         }
       }
     }

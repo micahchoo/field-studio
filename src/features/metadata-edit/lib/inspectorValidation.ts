@@ -18,7 +18,7 @@
  *   const fixed = fixAll(manifest, result.autoFixableIssues);
  */
 
-import type { IIIFItem, InspectorIssue, IssueSeverity } from '@/src/shared/types';
+import { isManifest, type IIIFItem, type InspectorIssue, type IssueSeverity } from '@/src/shared/types';
 
 // ------------------------------------------------------------------
 // Types — re-exported from shared/types (canonical)
@@ -448,9 +448,8 @@ const rule15_behaviorMissingPrecondition: RuleFn = (resource, type, issues) => {
   if (!Array.isArray(behaviors)) return;
 
   // 'paged' on Manifest requires at least 2 canvases
-  if (behaviors.includes('paged') && type === 'Manifest') {
-    const items = resource.items ?? [];
-    if (items.length < 2) {
+  if (behaviors.includes('paged') && type === 'Manifest' && isManifest(resource)) {
+    if (resource.items.length < 2) {
       issues.push({
         id: 'behavior-missing-precondition-paged',
         severity: 'info',
@@ -463,10 +462,9 @@ const rule15_behaviorMissingPrecondition: RuleFn = (resource, type, issues) => {
   }
 
   // 'auto-advance' without duration on canvases
-  if (behaviors.includes('auto-advance') && type === 'Manifest') {
-    const items = resource.items ?? [];
-    const anyMissingDuration = items.some(
-      (item) => item.duration == null && item.type === 'Canvas',
+  if (behaviors.includes('auto-advance') && type === 'Manifest' && isManifest(resource)) {
+    const anyMissingDuration = resource.items.some(
+      (canvas) => canvas.duration == null,
     );
     if (anyMissingDuration) {
       issues.push({

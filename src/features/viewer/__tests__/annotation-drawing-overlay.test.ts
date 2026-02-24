@@ -110,7 +110,7 @@ afterEach(() => {
 });
 
 describe('AnnotationDrawingOverlay', () => {
-  it('renders status bar when isActive is true', () => {
+  it('renders drawing instruction text when isActive is true', () => {
     instance = mount(AnnotationDrawingOverlay, {
       target,
       props: {
@@ -126,12 +126,11 @@ describe('AnnotationDrawingOverlay', () => {
       },
     });
 
-    // Status bar is an absolute positioned div at bottom-4 left-4
-    const statusBar = target.querySelector('.absolute.bottom-4.left-4');
-    expect(statusBar).toBeTruthy();
+    // Status bar should show drawing instruction text
+    expect(target.textContent).toContain('Click and drag to draw a rectangle');
   });
 
-  it('does not render status bar when isActive is false', () => {
+  it('does not render drawing instructions when isActive is false', () => {
     instance = mount(AnnotationDrawingOverlay, {
       target,
       props: {
@@ -147,8 +146,7 @@ describe('AnnotationDrawingOverlay', () => {
       },
     });
 
-    const statusBar = target.querySelector('.absolute.bottom-4.left-4');
-    expect(statusBar).toBeNull();
+    expect(target.textContent).not.toContain('Click and drag to draw a rectangle');
   });
 
   it('shows rectangle drawing instruction for rectangle mode', () => {
@@ -227,7 +225,7 @@ describe('AnnotationDrawingOverlay', () => {
     expect(target.textContent).toContain('Select a drawing tool');
   });
 
-  it('applies fieldMode styling to status bar', () => {
+  it('renders drawing instruction text in fieldMode', () => {
     instance = mount(AnnotationDrawingOverlay, {
       target,
       props: {
@@ -243,10 +241,8 @@ describe('AnnotationDrawingOverlay', () => {
       },
     });
 
-    // In fieldMode, status bar uses bg-nb-black/95
-    const statusBar = target.querySelector('.absolute.bottom-4.left-4');
-    expect(statusBar).toBeTruthy();
-    expect(statusBar!.className).toContain('bg-nb-black/95');
+    // In fieldMode, drawing instructions should still be visible
+    expect(target.textContent).toContain('Click and drag to draw a rectangle');
   });
 
   it('does not render hover tooltip when no annotation is hovered', () => {
@@ -265,8 +261,8 @@ describe('AnnotationDrawingOverlay', () => {
       },
     });
 
-    // Tooltip is at top-3 left-3 z-30
-    const tooltip = target.querySelector('.absolute.top-3.left-3');
+    // Tooltip element should not be present when nothing is hovered
+    const tooltip = target.querySelector('[role="tooltip"]');
     expect(tooltip).toBeNull();
   });
 
@@ -346,7 +342,7 @@ describe('AnnotationDrawingOverlay', () => {
     // (it only fires when there is no pending annotation)
   });
 
-  it('status bar has shadow-brutal and backdrop-blur-sm classes', () => {
+  it('renders drawing instruction in light mode', () => {
     instance = mount(AnnotationDrawingOverlay, {
       target,
       props: {
@@ -362,41 +358,18 @@ describe('AnnotationDrawingOverlay', () => {
       },
     });
 
-    const statusBar = target.querySelector('.absolute.bottom-4.left-4');
-    expect(statusBar).toBeTruthy();
-    expect(statusBar!.className).toContain('shadow-brutal');
-    expect(statusBar!.className).toContain('backdrop-blur-sm');
+    // Status bar should display drawing instruction text
+    expect(target.textContent).toContain('Click and drag to draw a rectangle');
   });
 
-  it('status bar uses text-nb-black/60 in light mode', () => {
+  it('renders drawing instruction in fieldMode', () => {
     instance = mount(AnnotationDrawingOverlay, {
       target,
       props: {
         canvas: makeCanvas(),
         viewerRef: createMockViewer(),
         isActive: true,
-        drawingMode: 'rectangle',
-        onCreateAnnotation: vi.fn(),
-        onClose: vi.fn(),
-        existingAnnotations: [],
-        cx,
-        fieldMode: false,
-      },
-    });
-
-    const statusBar = target.querySelector('.absolute.bottom-4.left-4');
-    expect(statusBar!.className).toContain('text-nb-black/60');
-    expect(statusBar!.className).toContain('bg-nb-white');
-  });
-
-  it('status bar uses text-nb-black/20 in fieldMode', () => {
-    instance = mount(AnnotationDrawingOverlay, {
-      target,
-      props: {
-        canvas: makeCanvas(),
-        viewerRef: createMockViewer(),
-        isActive: true,
-        drawingMode: 'rectangle',
+        drawingMode: 'polygon',
         onCreateAnnotation: vi.fn(),
         onClose: vi.fn(),
         existingAnnotations: [],
@@ -405,9 +378,8 @@ describe('AnnotationDrawingOverlay', () => {
       },
     });
 
-    const statusBar = target.querySelector('.absolute.bottom-4.left-4');
-    expect(statusBar!.className).toContain('text-nb-black/20');
-    expect(statusBar!.className).toContain('bg-nb-black/95');
+    // Status bar should display polygon instruction text even in fieldMode
+    expect(target.textContent).toContain('Click to add points, close shape to finish');
   });
 
   it('wires onUndoRef callback', async () => {

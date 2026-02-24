@@ -67,10 +67,7 @@
     ) || []
   );
 
-  let supplementaryId = $derived((range as unknown as Record<string, unknown>).supplementary
-    ? ((range as unknown as Record<string, unknown>).supplementary as { id: string })?.id || ''
-    : ''
-  );
+  let supplementaryId = $derived(range.supplementary?.id || '');
 
   function handleToggleClick(e: MouseEvent) {
     e.stopPropagation();

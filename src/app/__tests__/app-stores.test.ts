@@ -323,10 +323,8 @@ describe('AutoSaveStore', () => {
 // 3. ValidationStore
 // ============================================================================
 
-import {
-  ValidationStore,
-  type ValidationIssue,
-} from '@/src/app/stores/validation.svelte';
+import { ValidationStore } from '@/src/app/stores/validation.svelte';
+import type { ValidatorIssue } from '@/src/shared/types';
 
 describe('ValidationStore', () => {
   let store: ValidationStore;
@@ -350,7 +348,7 @@ describe('ValidationStore', () => {
   });
 
   it('totalIssues counts across all entities', () => {
-    const issues: Record<string, ValidationIssue[]> = {
+    const issues: Record<string, ValidatorIssue[]> = {
       'canvas/1': [
         { id: 'v1', itemId: 'canvas/1', itemLabel: 'Canvas 1', level: 'error', message: 'Missing label', category: 'Metadata', fixable: false },
         { id: 'v2', itemId: 'canvas/1', itemLabel: 'Canvas 1', level: 'warning', message: 'No thumbnail', category: 'Content', fixable: false },
@@ -367,7 +365,7 @@ describe('ValidationStore', () => {
   });
 
   it('errorCount counts only level "error"', () => {
-    const issues: Record<string, ValidationIssue[]> = {
+    const issues: Record<string, ValidatorIssue[]> = {
       'manifest/1': [
         { id: 'v1', itemId: 'manifest/1', itemLabel: 'Manifest', level: 'error', message: 'Bad', category: 'Identity', fixable: false },
         { id: 'v2', itemId: 'manifest/1', itemLabel: 'Manifest', level: 'error', message: 'Also bad', category: 'Identity', fixable: false },

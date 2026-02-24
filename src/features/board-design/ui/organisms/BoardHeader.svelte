@@ -12,9 +12,6 @@
   import Row from '@/src/shared/ui/layout/primitives/Row.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
-  // @migration: IIIFItem used for selectedResource context
-  // import type { IIIFItem } from '@/src/shared/types';
-
   type Tool = 'select' | 'connect' | 'note' | 'text';
   type BgMode = 'grid' | 'dark' | 'light';
   type AlignType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';

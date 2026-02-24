@@ -426,7 +426,7 @@
   )}
   style:cursor={activeTool === 'select' ? 'default' : 'crosshair'}
   onclick={handleCanvasClick}
-  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCanvasClick(e as unknown as MouseEvent); }}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onSelectItem(null); selectedConnectionId = null; } }}
   onwheel={handleWheel}
   role="application"
   aria-label="Board canvas"

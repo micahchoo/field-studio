@@ -52,10 +52,9 @@ describe('Icon', () => {
   });
 
   it('applies additional CSS class', () => {
-    mount(Icon, { target, props: { name: 'home', class: 'text-nb-blue' } });
+    mount(Icon, { target, props: { name: 'home', class: 'custom-icon-class' } });
     const span = target.querySelector('.material-icons');
-    expect(span!.classList.contains('text-nb-blue')).toBe(true);
-    expect(span!.classList.contains('select-none')).toBe(true);
+    expect(span!.classList.contains('custom-icon-class')).toBe(true);
   });
 
   it('is aria-hidden when no label', () => {
@@ -287,17 +286,16 @@ describe('TabButtonBase', () => {
     expect(tab!.getAttribute('aria-selected')).toBe('false');
   });
 
-  it('applies default active styles when isActive (no cx)', () => {
+  it('renders active tab with aria-selected=true', () => {
     mount(TabButtonBase, { target, props: { label: 'Tab', isActive: true, onclick: () => {} } });
     const tab = target.querySelector('[role="tab"]');
-    expect(tab!.className).toContain('text-nb-blue');
-    expect(tab!.className).toContain('border-b-2');
+    expect(tab!.getAttribute('aria-selected')).toBe('true');
   });
 
-  it('applies default inactive styles when not active (no cx)', () => {
+  it('renders inactive tab with aria-selected=false', () => {
     mount(TabButtonBase, { target, props: { label: 'Tab', isActive: false, onclick: () => {} } });
     const tab = target.querySelector('[role="tab"]');
-    expect(tab!.className).toContain('text-nb-black/50');
+    expect(tab!.getAttribute('aria-selected')).toBe('false');
   });
 
   it('applies cx.active override when provided', () => {

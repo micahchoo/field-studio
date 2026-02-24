@@ -58,7 +58,7 @@
     return 'inside';
   }
 
-  function handleClick(e: MouseEvent) {
+  function handleClick(e: MouseEvent | KeyboardEvent) {
     e.stopPropagation();
     onSelect(node.id, e.metaKey || e.ctrlKey);
   }
@@ -134,7 +134,7 @@
     effectiveIsDropOver && canDrop && 'bg-nb-blue/10',
   )}
   onclick={handleClick}
-  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(e as unknown as MouseEvent); }}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(e); }}
   draggable="true"
   ondragstart={handleDragStart}
   ondragend={handleDragEnd}

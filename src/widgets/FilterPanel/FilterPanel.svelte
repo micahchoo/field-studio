@@ -30,12 +30,10 @@
     onViewChange?        -- Callback when tab changes
 -->
 <script lang="ts">
-  import type { IIIFItem } from '@/src/shared/types';
+  import type { IIIFItem, ValidatorIssue } from '@/src/shared/types';
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import { cn } from '@/src/shared/lib/cn';
-  // @migration: ValidationIssue type -- import from validator when wired
-  // import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
 
   // Both feature organisms are already migrated to Svelte
   import ArchiveView from '@/src/features/archive/ui/organisms/ArchiveView.svelte';
@@ -49,7 +47,7 @@
     onOpen: (item: IIIFItem) => void;
     onBatchEdit: (ids: string[]) => void;
     onUpdate?: (newRoot: IIIFItem) => void;
-    validationIssues?: Record<string, unknown[]>;
+    validationIssues?: Record<string, ValidatorIssue[]>;
     onReveal?: (id: string, mode: 'collections' | 'viewer' | 'archive') => void;
     onCatalogSelection?: (ids: string[]) => void;
     cx: ContextualClassNames;

@@ -486,7 +486,7 @@ describe('ComparisonViewer', () => {
     expect(resetSpy).toHaveBeenCalled();
   });
 
-  it('renders side-by-side layout with two panels', () => {
+  it('renders side-by-side layout with both canvas labels visible', () => {
     const comparison = new ComparisonStore();
     comparison.setMode('side-by-side');
 
@@ -502,14 +502,12 @@ describe('ComparisonViewer', () => {
       },
     });
 
-    // Side-by-side has a flex container with two halves
-    // The layout is .flex.h-full containing two .flex-1 divs
-    const flexOneDivs = target.querySelectorAll('.flex-1.relative');
-    // At least 2 flex-1 relative divs (primary + secondary panels)
-    expect(flexOneDivs.length).toBeGreaterThanOrEqual(2);
+    // Both canvas labels should be visible in side-by-side mode
+    expect(target.textContent).toContain('A: Painting A');
+    expect(target.textContent).toContain('B: Painting B');
   });
 
-  it('applies fieldMode styling with yellow accents', () => {
+  it('renders comparison controls in fieldMode', () => {
     const comparison = new ComparisonStore();
     comparison.setMode('side-by-side');
 
@@ -525,9 +523,12 @@ describe('ComparisonViewer', () => {
       },
     });
 
-    // In fieldMode, toolbar uses bg-nb-black/95 and border-nb-yellow/20
-    const toolbar = target.querySelector('.bg-nb-black\\/95');
-    expect(toolbar).toBeTruthy();
+    // In fieldMode, all comparison controls should still be rendered
+    expect(target.textContent).toContain('Compare');
+    expect(target.textContent).toContain('Sync');
+    const sideBtn = target.querySelector('[title="Side by side"]') ||
+                    target.querySelector('[aria-label="Side by side"]');
+    expect(sideBtn).toBeTruthy();
   });
 
   it('uses default label "Canvas B" when second canvas has no label', () => {

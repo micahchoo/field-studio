@@ -18,16 +18,16 @@ Exit criterion per phase is measurable; prose alone does not close a phase.
 
 ---
 
-## Baseline (2026-02-24, updated after Dead Code + Aria rounds)
+## Baseline (2026-02-24, updated after Phase 1 + Round 2)
 
 | Check | Result |
 |-------|--------|
 | `tsc --noEmit` | 0 errors |
-| `svelte-check` | 0 errors, 29 warnings |
-| `vitest` | 117 files, 4756 passing |
-| `eslint` | 0 errors, **80 warnings** (was 310 at migration; reduced via 6 TYPE_DEBT rounds + dead code + semantic-HTML + aria fixes) |
+| `svelte-check` | 0 errors, **0 warnings** (was 29; fixed via Round 1 type foundation) |
+| `vitest` | 118 files, **4770 passing** |
+| `eslint` | 0 errors, **53 warnings** (was 310→80→53; Round 1 type foundation + Round 2 unsafe cast elimination) |
 | `grep -rc @migration src/` | **85 markers** (non-actionable stubs — largest: ViewerView 25, BoardView 10, Sidebar 6, AuthDialog 6) |
-| Remaining `// TYPE_DEBT:` (actionable) | 5 structural items |
+| Remaining `// TYPE_DEBT:` (actionable) | **0 structural items** (all 5 resolved: Phase 1 + Phase 1.5) |
 | Workers implemented | 0 / 4 (all stubs) |
 | Deployment targets | 0 / 3 (web only) |
 
@@ -247,13 +247,13 @@ _Do not widen scope: `IIIFItem.items` is tracked in Phase 1.5._
 
 ### Exit criteria
 
-- [ ] `grep -r "service\?: any\[\]" src/shared/types` → 0 results
-- [ ] `grep -r "navPlace\?: any" src/shared/types` → 0 results
-- [ ] `grep -r "homepage\?: any" src/shared/types` → 0 results (provider)
-- [ ] `grep -r "logo\?: any" src/shared/types` → 0 results (provider)
-- [ ] Single canonical `ValidationIssue` type; all three consumers import from one location
-- [ ] `tsc --noEmit` 0 errors, `vitest` still green
-- [ ] ESLint `no-explicit-any` warning count ≤ current baseline (do not regress)
+- [x] `grep -r "service\?: any\[\]" src/shared/types` → 0 results ✅ `ServiceDescriptor` union
+- [x] `grep -r "navPlace\?: any" src/shared/types` → 0 results ✅ `NavPlace` GeoJSON type
+- [x] `grep -r "homepage\?: any" src/shared/types` → 0 results ✅ `ProviderHomepage` type
+- [x] `grep -r "logo\?: any" src/shared/types` → 0 results ✅ `ProviderLogo` type
+- [x] Single canonical `ValidationIssue` type; all three consumers import from one location ✅ `ValidatorIssue` + `InspectorIssue`
+- [x] `tsc --noEmit` 0 errors, `vitest` still green ✅ 0 errors, 4770 passing
+- [x] ESLint `no-explicit-any` warning count ≤ current baseline (do not regress) ✅ 80→53
 
 ### Tasks
 
@@ -608,16 +608,17 @@ Reference: `docs/deployment/feature-parity-maintenance.md § CI/CD Pipeline`
 
 ### Phase status
 
-| Phase | Status | `@migration` count | TYPE_DEBT delta | Workers |
-|-------|--------|--------------------|-----------------|---------|
-| Baseline | **current** | 85 | 5 structural | 0/4 |
-| D — Design system alignment | pending | — | — | — |
-| 1 — TYPE_DEBT structural | pending | — | 0 remaining | 0/4 |
-| 1.5 — items narrowing | deferred | — | — | — |
-| 2 — Workers | pending | — | — | 4/4 |
-| 3 — Service wiring | pending | ~35 | — | — |
-| 4 — UI wiring | pending | 0 | — | — |
-| 5 — Deployment | pending | — | — | — |
+| Phase | Status | `@migration` count | TYPE_DEBT delta | Workers | ESLint |
+|-------|--------|--------------------|-----------------|---------|--------|
+| Baseline | — | 85 | 5 structural | 0/4 | 80 |
+| D — Design system alignment | pending | — | — | — | — |
+| 1 — TYPE_DEBT structural | **✅ complete** | — | 4 resolved, 1 remaining | 0/4 | 80→53 |
+| 1.5 — items narrowing | **✅ complete** | — | last structural `any` → `unknown[]` | 0/4 | 53→52 |
+| R3 — UI wiring safety | **✅ complete** | 83 | — | 0/4 | 52→75 (23 migration-stub awareness) |
+| 2 — Workers | pending | — | — | 4/4 | — |
+| 3 — Service wiring | pending | ~35 | — | — | — |
+| 4 — UI wiring | pending | 0 | — | — | — |
+| 5 — Deployment | pending | — | — | — | — |
 
 ### Permanent blockers (will never be zero)
 
@@ -629,12 +630,12 @@ Reference: `docs/deployment/feature-parity-maintenance.md § CI/CD Pipeline`
 
 ### `TODO(loop)` survivors (3+ rounds)
 
-| Item | Rounds | Next action |
-|------|--------|-------------|
-| `ValidationIssue` unification | 6 | Phase 1.4 |
-| `ServiceDescriptor` union | 6 | Phase 1.1 |
-| `IIIFItem.navPlace` GeoJSON | 6 | Phase 1.2 |
-| `IIIFItem.items` base removal | 6 | Phase 1.5 (deferred) |
+| Item | Rounds | Status |
+|------|--------|--------|
+| `ValidationIssue` unification | 6 | ✅ Resolved (Round 1 — canonical `ValidatorIssue` + `InspectorIssue`) |
+| `ServiceDescriptor` union | 6 | ✅ Resolved (Round 1 — discriminated union with type guards) |
+| `IIIFItem.navPlace` GeoJSON | 6 | ✅ Resolved (Round 1 — `NavPlace` GeoJSON type) |
+| `IIIFItem.items` base removal | 6 | ✅ Resolved (Phase 1.5 — `any[]` → `unknown[]`, `getChildEntities()`, 25 sites fixed across 15 files) |
 
 ---
 
@@ -652,4 +653,4 @@ SYNC    → update STATE.md delta; update this file's Tracking table
 
 Exit condition for the whole roadmap: Tracking table shows all phases ✅, `@migration` count = 0, `tsc` clean, tests green, no stale docs.
 
-When all phases are ✅: write to memory, compact context if > 50% used.
+When phases are ✅: write to memory, compact context if > 50% used.

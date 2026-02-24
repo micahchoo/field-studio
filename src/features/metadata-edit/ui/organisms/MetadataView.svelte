@@ -16,7 +16,7 @@
   import { cn } from '@/src/shared/lib/cn';
   import { getIIIFValue } from '@/src/shared/types';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
-  import type { IIIFItem, AbstractionLevel } from '@/src/shared/types';
+  import { getChildEntities, type IIIFItem, type AbstractionLevel } from '@/src/shared/types';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -327,10 +327,11 @@
     }
 
     // Recurse into children
-    if (node.items && Array.isArray(node.items)) {
+    const children = getChildEntities(node);
+    if (children.length > 0) {
       return {
         ...node,
-        items: node.items.map((child: IIIFItem) => updateItemInTree(child, itemId, column, value)),
+        items: children.map((child) => updateItemInTree(child, itemId, column, value)),
       };
     }
 

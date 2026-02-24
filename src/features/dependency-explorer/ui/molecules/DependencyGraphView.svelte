@@ -22,20 +22,26 @@
     children: TreeNode[];
   }
 
+  /** Directory entry with files and subdirectories */
+  interface DirEntry {
+    __files: import('../../types').FileAnalysis[];
+    [key: string]: DirEntry | import('../../types').FileAnalysis[];
+  }
+
   function buildTree(
-    node: Record<string, unknown>,
+    node: Record<string, DirEntry>,
     path: string
   ): TreeNode[] {
     const result: TreeNode[] = [];
     for (const [key, value] of Object.entries(node)) {
       if (key === '__files') continue;
       const fullPath = path ? `${path}/${key}` : key;
-      const v = value as Record<string, unknown>;
+      const dir = value as DirEntry;
       result.push({
         key,
         fullPath,
-        files: (v.__files as import('../../types').FileAnalysis[]) || [],
-        children: buildTree(v, fullPath),
+        files: dir.__files || [],
+        children: buildTree(dir as Record<string, DirEntry>, fullPath),
       });
     }
     return result;
@@ -69,15 +75,15 @@
 
   /** Build nested directory tree from flat file list */
   let treeData = $derived.by(() => {
-    const root: Record<string, unknown> = {};
+    const root: Record<string, DirEntry> = {};
     for (const file of files) {
       const parts = file.directory.split('/');
-      let current = root as Record<string, Record<string, unknown>>;
+      let current: Record<string, DirEntry> = root;
       for (const part of parts) {
-        if (!current[part]) current[part] = { __files: [] };
-        current = current[part] as Record<string, Record<string, unknown>>;
+        if (!current[part]) current[part] = { __files: [] } as DirEntry;
+        current = current[part] as Record<string, DirEntry>;
       }
-      (current as unknown as { __files: FileAnalysis[] }).__files.push(file);
+      (current as DirEntry).__files.push(file);
     }
     return buildTree(root, '');
   });

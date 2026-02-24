@@ -63,7 +63,7 @@
 <script lang="ts">
   import { cn } from '@/src/shared/lib/cn';
   import { getIIIFValue } from '@/src/shared/types';
-  import type { IIIFItem } from '@/src/shared/types';
+  import { getChildEntities, type IIIFItem } from '@/src/shared/types';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
 
@@ -125,7 +125,7 @@
     const found: IIIFItem[] = [];
     function traverse(n: IIIFItem) {
       if (target.includes(n.id)) found.push(n);
-      if (n.items) n.items.forEach(traverse);
+      for (const child of getChildEntities(n)) traverse(child);
     }
     traverse(node);
     return found;

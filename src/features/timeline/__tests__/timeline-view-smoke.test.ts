@@ -1,11 +1,13 @@
 /**
  * TimelineView — smoke tests
  *
- * Purpose: verify the component mounts without crashing when given
- * realistic minimal props. TimelineView is pure Svelte (no external
- * date library in the rendering layer), so happy-dom is sufficient.
+ * Purpose: verify the component renders user-visible content: the "Timeline"
+ * heading, zoom level radio buttons (day/month/year), and the "No dated items"
+ * empty state when the collection has no temporal data.
  *
- * Pattern: mount → flushSync → assert non-empty DOM → unmount.
+ * TimelineView is pure Svelte (no external date library), so happy-dom is sufficient.
+ *
+ * Pattern: mount -> flushSync -> assert visible text / ARIA roles -> unmount.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -69,7 +71,7 @@ describe('TimelineView smoke tests', () => {
     vi.clearAllMocks();
   });
 
-  it('mounts with empty collection without crashing', () => {
+  it('renders the "Timeline" heading text', () => {
     instance = mount(TimelineView, {
       target,
       props: {
@@ -82,10 +84,70 @@ describe('TimelineView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Timeline');
   });
 
-  it('mounts with a dated manifest without crashing', () => {
+  it('renders zoom level radio buttons for day, month, and year', () => {
+    instance = mount(TimelineView, {
+      target,
+      props: {
+        root: makeCollection(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const radios = target.querySelectorAll('[role="radio"]');
+    const radioTexts = Array.from(radios).map((r) => r.textContent?.trim());
+
+    expect(radioTexts).toContain('day');
+    expect(radioTexts).toContain('month');
+    expect(radioTexts).toContain('year');
+  });
+
+  it('renders zoom level radiogroup with proper aria-label', () => {
+    instance = mount(TimelineView, {
+      target,
+      props: {
+        root: makeCollection(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const radiogroup = target.querySelector('[role="radiogroup"]');
+    expect(radiogroup).not.toBeNull();
+    expect(radiogroup?.getAttribute('aria-label')).toBe('Zoom level');
+  });
+
+  it('displays "No dated items" empty state for a collection with no temporal data', () => {
+    instance = mount(TimelineView, {
+      target,
+      props: {
+        root: makeCollection(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('No dated items');
+    expect(target.textContent).toContain('Add navDate to canvases to see them on the timeline.');
+  });
+
+  it('renders without crashing for a dated manifest and shows "Timeline" heading', () => {
     instance = mount(TimelineView, {
       target,
       props: {
@@ -98,10 +160,11 @@ describe('TimelineView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Timeline');
   });
 
-  it('mounts in field mode without crashing', () => {
+  it('renders in field mode without crashing and still shows Timeline heading', () => {
     instance = mount(TimelineView, {
       target,
       props: {
@@ -114,6 +177,40 @@ describe('TimelineView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Timeline');
+    expect(target.textContent).toContain('No dated items');
+  });
+
+  it('handles a collection with items that have no navDate gracefully', () => {
+    const collectionWithUndatedItems: IIIFItem = {
+      id: 'collection-no-dates',
+      type: 'Collection',
+      label: { en: ['Undated Collection'] },
+      items: [
+        {
+          id: 'canvas-no-date',
+          type: 'Canvas',
+          label: { en: ['Undated Canvas'] },
+          items: [],
+        },
+      ],
+    } as unknown as IIIFItem;
+
+    instance = mount(TimelineView, {
+      target,
+      props: {
+        root: collectionWithUndatedItems,
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // Canvases without navDate should still render timeline but with no dated items
+    expect(target.textContent).toContain('Timeline');
   });
 });

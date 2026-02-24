@@ -167,11 +167,10 @@ export interface IIIFItem {
   rights?: string;
   navDate?: string;
   thumbnail?: IIIFExternalWebResource[];
-  // TYPE_DEBT: typed as any[] because subtypes (IIIFCanvas, IIIFManifest, IIIFRange)
-  // each override with a narrower definition. Changing to unknown[] cascades into
-  // ~15 call sites that iterate items on the base IIIFItem type.
-  // TODO(loop): remove from base; let callers narrow via type guards (isCanvas, isManifest, …).
-  items?: any[];
+  // Phase 1.5: unknown[] because subtypes (IIIFCanvas, IIIFManifest, IIIFRange, IIIFCollection)
+  // each override with a narrower definition. Callers must narrow via type guards
+  // (isManifest, isCanvas, isCollection, isRange) or getChildEntities() before accessing elements.
+  items?: unknown[];
   annotations?: IIIFAnnotationPage[];
   behavior?: string[];
 
@@ -409,6 +408,25 @@ export function isCollection(item: IIIFItem | null | undefined): item is IIIFCol
 
 export function isRange(item: IIIFItem | null | undefined): item is IIIFRange {
   return item?.type === 'Range';
+}
+
+export function isAnnotationPage(item: { type?: string } | null | undefined): item is IIIFAnnotationPage {
+  return item?.type === 'AnnotationPage';
+}
+
+/**
+ * Get child IIIFItems for tree traversal.
+ * Narrows items based on the resource's type:
+ * - Manifest → IIIFCanvas[]
+ * - Collection → IIIFItem[]
+ * - Range → nested IIIFRange[] (filters out canvas/specific-resource references)
+ * - Canvas/other → [] (annotation pages are not IIIFItems)
+ */
+export function getChildEntities(item: IIIFItem): IIIFItem[] {
+  if (isManifest(item)) return item.items ?? [];
+  if (isCollection(item)) return item.items ?? [];
+  if (isRange(item)) return (item.items ?? []).filter((r): r is IIIFRange => 'type' in r && (r as { type: string }).type === 'Range');
+  return [];
 }
 
 /** Column mapping for CSV import */

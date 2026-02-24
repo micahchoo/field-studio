@@ -18,7 +18,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ingestTree } from '../iiifBuilder';
-import type { FileTree, IngestResult } from '@/src/shared/types';
+import type { FileTree, IIIFCanvas, IIIFItem, IngestResult } from '@/src/shared/types';
 
 // ─── Mock idb (storage.ts uses idb) ──────────────────────────────────────────
 
@@ -85,7 +85,7 @@ describe('ingestTree — flat directory → Manifest', () => {
     expect(result.success).toBe(true);
     expect(result.root?.type).toBe('Manifest');
     expect(result.root?.items).toHaveLength(2);
-    expect(result.root?.items?.[0].type).toBe('Canvas');
+    expect((result.root?.items?.[0] as IIIFCanvas).type).toBe('Canvas');
   });
 
   it('canvas has a painting annotation pointing to service worker URL', async () => {
@@ -133,7 +133,7 @@ describe('ingestTree — nested directories → Collection', () => {
     expect(result.success).toBe(true);
     expect(result.root?.type).toBe('Collection');
     expect(result.root?.items).toHaveLength(1);
-    expect(result.root?.items?.[0].type).toBe('Manifest');
+    expect((result.root?.items?.[0] as IIIFItem).type).toBe('Manifest');
   });
 
   it('collections nested 2 levels deep are processed recursively', async () => {

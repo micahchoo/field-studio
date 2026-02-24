@@ -132,9 +132,8 @@
   import PreviewPane from '../molecules/PreviewPane.svelte';
   import IngestProgressPanel from '../molecules/IngestProgressPanel.svelte';
   import MetadataTemplateExport from '../molecules/MetadataTemplateExport.svelte';
-  // @migration: BehaviorSelector and RightsSelector not yet migrated; import paths preserved
-  // import BehaviorSelector from '@/src/features/metadata-edit/ui/atoms/BehaviorSelector.svelte';
-  // import RightsSelector from '@/src/features/metadata-edit/ui/atoms/RightsSelector.svelte';
+  import BehaviorSelector from '@/src/features/metadata-edit/ui/atoms/BehaviorSelector.svelte';
+  import RightsSelector from '@/src/features/metadata-edit/ui/atoms/RightsSelector.svelte';
 
   // Placeholder cx for sub-components that require it
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';

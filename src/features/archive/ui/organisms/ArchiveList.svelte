@@ -28,12 +28,7 @@
   import { getFileDNA } from '@/src/features/archive/model';
   import { cn } from '@/src/shared/lib/cn';
 
-  // @migration: ValidationIssue type — use canonical location once unified
-  interface ValidationIssue {
-    level: 'error' | 'warning' | 'info';
-    message: string;
-    field?: string;
-  }
+  import type { ValidatorIssue } from '@/src/shared/types';
 
   // Column configuration
   const COLUMNS: { key: SortColumn; label: string; width: string; align?: 'left' | 'center' | 'right' }[] = [
@@ -56,7 +51,7 @@
     /** Check if an item is selected */
     isSelected: (id: string) => boolean;
     /** Click handler for an item */
-    onItemClick: (e: MouseEvent, asset: IIIFCanvas) => void;
+    onItemClick: (e: MouseEvent | KeyboardEvent, asset: IIIFCanvas) => void;
     /** Double-click handler */
     onItemDoubleClick?: (asset: IIIFCanvas) => void;
     /** Context menu handler */
@@ -86,7 +81,7 @@
     /** Callback when items are reordered */
     onReorder?: (fromIndex: number, toIndex: number) => void;
     /** Validation issues keyed by item ID */
-    validationIssues?: Record<string, ValidationIssue[]>;
+    validationIssues?: Record<string, ValidatorIssue[]>;
     /** Additional class */
     class?: string;
   }

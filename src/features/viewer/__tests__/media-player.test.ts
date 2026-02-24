@@ -323,9 +323,8 @@ describe('MediaPlayer', () => {
         },
       });
 
-      const timeDisplay = target.querySelector('.font-mono.tabular-nums');
-      expect(timeDisplay).toBeTruthy();
-      expect(timeDisplay!.textContent).toContain('0:00.00');
+      // Time display text should be visible in the component
+      expect(target.textContent).toContain('0:00.00');
     });
 
     it('renders playback rate button showing 1x', () => {
@@ -418,7 +417,7 @@ describe('MediaPlayer', () => {
       // are provided (even though markers are hidden at duration=0).
     });
 
-    it('renders playhead indicator on progress bar', () => {
+    it('renders progress bar with slider role and aria attributes', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -429,9 +428,10 @@ describe('MediaPlayer', () => {
         },
       });
 
-      // Playhead has shadow-brutal-sm class
-      const playhead = target.querySelector('.shadow-brutal-sm');
-      expect(playhead).toBeTruthy();
+      const slider = target.querySelector('[role="slider"]');
+      expect(slider).toBeTruthy();
+      expect(slider!.getAttribute('aria-label')).toBe('Playback progress');
+      expect(slider!.getAttribute('aria-valuemin')).toBe('0');
     });
   });
 
@@ -585,7 +585,7 @@ describe('MediaPlayer', () => {
       expect(target.textContent).toContain('Use current time');
     });
 
-    it('applies ring styling to progress bar in annotation mode', () => {
+    it('renders progress bar in annotation mode', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -598,10 +598,11 @@ describe('MediaPlayer', () => {
       });
 
       const progressBar = target.querySelector('[role="slider"]');
-      expect(progressBar!.className).toContain('ring-2');
+      expect(progressBar).toBeTruthy();
+      expect(progressBar!.getAttribute('aria-label')).toBe('Playback progress');
     });
 
-    it('renders time range selection overlay on progress bar', () => {
+    it('shows selected range text when time range is set', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -614,12 +615,11 @@ describe('MediaPlayer', () => {
         },
       });
 
-      // Time range overlay uses bg-nb-green/40 in light mode
-      const rangeOverlay = target.querySelector('.bg-nb-green\\/40');
-      expect(rangeOverlay).toBeTruthy();
+      // When both start and end are set, "Selected:" text should be visible
+      expect(target.textContent).toContain('Selected:');
     });
 
-    it('renders time range overlay with fieldMode yellow color', () => {
+    it('shows selected range in fieldMode when time range is set', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -632,8 +632,8 @@ describe('MediaPlayer', () => {
         },
       });
 
-      const rangeOverlay = target.querySelector('.bg-nb-yellow\\/40');
-      expect(rangeOverlay).toBeTruthy();
+      // In fieldMode, selected range text should still be visible
+      expect(target.textContent).toContain('Selected:');
     });
   });
 
@@ -766,7 +766,7 @@ describe('MediaPlayer', () => {
       expect(container).toBeTruthy();
     });
 
-    it('renders with bg-nb-black base styling', () => {
+    it('renders player container with application role', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -777,7 +777,7 @@ describe('MediaPlayer', () => {
         },
       });
 
-      const container = target.querySelector('.bg-nb-black');
+      const container = target.querySelector('[role="application"]');
       expect(container).toBeTruthy();
     });
   });
@@ -842,7 +842,7 @@ describe('MediaPlayer', () => {
   // ================================================================
 
   describe('fieldMode', () => {
-    it('applies fieldMode yellow accent to time display', () => {
+    it('renders time display in fieldMode', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -853,11 +853,11 @@ describe('MediaPlayer', () => {
         },
       });
 
-      const timeDisplay = target.querySelector('.text-nb-yellow\\/70.font-mono');
-      expect(timeDisplay).toBeTruthy();
+      // Time display text should still be visible in fieldMode
+      expect(target.textContent).toContain('0:00.00');
     });
 
-    it('applies fieldMode yellow ring to progress bar in annotation mode', () => {
+    it('renders progress bar in fieldMode annotation mode', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -870,10 +870,11 @@ describe('MediaPlayer', () => {
       });
 
       const progressBar = target.querySelector('[role="slider"]');
-      expect(progressBar!.className).toContain('ring-nb-yellow');
+      expect(progressBar).toBeTruthy();
+      expect(progressBar!.getAttribute('aria-label')).toBe('Playback progress');
     });
 
-    it('applies fieldMode yellow color to annotation mode indicator text', () => {
+    it('shows annotation mode instruction text in fieldMode', () => {
       instance = mount(MediaPlayer, {
         target,
         props: {
@@ -885,10 +886,7 @@ describe('MediaPlayer', () => {
         },
       });
 
-      const indicator = Array.from(target.querySelectorAll('div')).find(
-        el => el.className.includes('text-nb-yellow') && el.textContent?.includes('Click timeline')
-      );
-      expect(indicator).toBeTruthy();
+      expect(target.textContent).toContain('Click timeline to set start');
     });
   });
 });

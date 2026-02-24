@@ -6,7 +6,6 @@
 
 import componentPropsValidation from './rules/component-props-validation.js';
 import lifecycleRestrictions from './rules/lifecycle-restrictions.js';
-import templateConstraints from './rules/template-constraints.js';
 import maxLinesFeature from './rules/max-lines-feature.js';
 import noNativeHtmlInMolecules from './rules/no-native-html-in-molecules.js';
 import noSvelte4Patterns from './rules/no-svelte4-patterns.js';
@@ -19,6 +18,8 @@ import requireAriaForIconButtons from './rules/require-aria-for-icon-buttons.js'
 import noStateRawForPrimitives from './rules/no-state-raw-for-primitives.js';
 import viewerNoOsdInAtoms from './rules/viewer-no-osd-in-atoms.js';
 import noUnsafeTypeCastInProps from './rules/no-unsafe-type-cast-in-props.js';
+import preferTypeGuards from './rules/prefer-type-guards.js';
+import noMigrationStub from './rules/no-migration-stub.js';
 import exhaustiveSwitch from './rules/exhaustive-switch.js';
 
 const plugin = {
@@ -30,7 +31,6 @@ const plugin = {
     // FSD / Atomic Design
     'component-props-validation': componentPropsValidation,
     'lifecycle-restrictions': lifecycleRestrictions,
-    'template-constraints': templateConstraints,
     'max-lines-feature': maxLinesFeature,
     'no-native-html-in-molecules': noNativeHtmlInMolecules,
 
@@ -53,6 +53,10 @@ const plugin = {
 
     // Type safety
     'no-unsafe-type-cast-in-props': noUnsafeTypeCastInProps,
+    'prefer-type-guards': preferTypeGuards,
+
+    // Migration tracking
+    'no-migration-stub': noMigrationStub,
 
     // Exhaustiveness
     'exhaustive-switch': exhaustiveSwitch,
@@ -63,7 +67,6 @@ const plugin = {
       rules: {
         '@field-studio/component-props-validation': 'warn',
         '@field-studio/lifecycle-restrictions': 'error',
-        '@field-studio/template-constraints': 'error',
         '@field-studio/max-lines-feature': 'warn',
         '@field-studio/no-native-html-in-molecules': 'error',
         '@field-studio/no-svelte4-patterns': 'error',
@@ -76,6 +79,8 @@ const plugin = {
         '@field-studio/no-state-raw-for-primitives': 'warn',
         '@field-studio/viewer-no-osd-in-atoms': 'error',
         '@field-studio/no-unsafe-type-cast-in-props': 'warn',
+        '@field-studio/prefer-type-guards': 'warn',
+        '@field-studio/no-migration-stub': 'warn',
         '@field-studio/exhaustive-switch': 'warn',
       },
     },
@@ -84,7 +89,6 @@ const plugin = {
       rules: {
         '@field-studio/component-props-validation': 'error',
         '@field-studio/lifecycle-restrictions': 'error',
-        '@field-studio/template-constraints': 'error',
         '@field-studio/max-lines-feature': 'error',
         '@field-studio/no-native-html-in-molecules': 'error',
         '@field-studio/no-svelte4-patterns': 'error',
@@ -97,6 +101,8 @@ const plugin = {
         '@field-studio/no-state-raw-for-primitives': 'error',
         '@field-studio/viewer-no-osd-in-atoms': 'error',
         '@field-studio/no-unsafe-type-cast-in-props': 'error',
+        '@field-studio/prefer-type-guards': 'error',
+        '@field-studio/no-migration-stub': 'warn',
         '@field-studio/exhaustive-switch': 'error',
       },
     },

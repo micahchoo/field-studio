@@ -12,7 +12,7 @@
  * @module features/metadata-edit/model
  */
 
-import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
+import { getChildEntities, isCanvas, getIIIFValue, type IIIFItem } from '@/src/shared/types';
 
 /**
  * IIIF metadata pair structure
@@ -122,9 +122,24 @@ export const flattenIIIFItem = (
       });
     }
 
-    // Recurse into children
-    if ('items' in current && Array.isArray(current.items)) {
-      current.items.forEach((child) => flatten(child, depth + 1));
+    // Recurse into children — use getChildEntities for IIIFItem tree walking,
+    // plus direct items access for Canvas→AnnotationPage→Annotation traversal
+    // (getChildEntities skips those since AnnotationPages are not IIIFItems)
+    if (isCanvas(current)) {
+      for (const page of current.items ?? []) {
+        if (page && 'id' in page && 'type' in page) {
+          flatten(page as unknown as IIIFItem, depth + 1);
+          for (const anno of page.items ?? []) {
+            if (anno && 'id' in anno && 'type' in anno) {
+              flatten(anno as unknown as IIIFItem, depth + 1);
+            }
+          }
+        }
+      }
+    } else {
+      for (const child of getChildEntities(current)) {
+        flatten(child, depth + 1);
+      }
     }
   };
 

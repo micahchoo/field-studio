@@ -336,7 +336,7 @@
         return annotations.length > 0 ? { count: annotations.length } : {};
       case 'structure': {
         const rangeCount = resource && isManifest(resource)
-          ? (resource as IIIFManifest).structures?.length || 0
+          ? resource.structures?.length || 0
           : 0;
         return rangeCount > 0 ? { count: rangeCount } : {};
       }
@@ -519,11 +519,12 @@
 
         <!-- Structure Tab -->
         {#if tab === 'structure' && resource && isManifest(resource)}
+          {@const structureCount = resource.structures?.length || 0}
           <div role="tabpanel">
             <!-- TODO: migrate StructureTabPanel -->
             <div class={cn('p-3 border text-xs', fieldMode ? 'border-nb-yellow/30 text-nb-yellow/60' : 'border-nb-black/10 text-nb-black/50')}>
               StructureTabPanel placeholder -- pending migration.
-              {(resource as IIIFManifest).structures?.length || 0} range{((resource as IIIFManifest).structures?.length || 0) === 1 ? '' : 's'}
+              {structureCount} range{structureCount === 1 ? '' : 's'}
             </div>
           </div>
         {/if}

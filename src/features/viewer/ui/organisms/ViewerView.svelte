@@ -48,30 +48,19 @@
   import { AnnotationLayerStore } from '@/src/features/viewer/model/annotationLayers.svelte';
   import { MediaPlayerStore } from '@/src/features/viewer/stores/mediaPlayer.svelte';
 
-  // @migration: ViewerToolbar not yet migrated, using placeholder
-  // import ViewerToolbar from '../molecules/ViewerToolbar.svelte';
-  // @migration: ViewerContent not yet migrated, using placeholder
-  // import ViewerContent from '../molecules/ViewerContent.svelte';
-  // @migration: FilmstripNavigator not yet migrated, using placeholder
-  // import FilmstripNavigator from '../molecules/FilmstripNavigator.svelte';
-  // @migration: ImageFilterPanel not yet migrated, using placeholder
-  // import ImageFilterPanel from '../molecules/ImageFilterPanel.svelte';
-  // @migration: MeasurementOverlay not yet migrated, using placeholder
-  // import MeasurementOverlay from '../molecules/MeasurementOverlay.svelte';
-  // @migration: ComparisonViewer not yet migrated, using placeholder
-  // import ComparisonViewer from '../molecules/ComparisonViewer.svelte';
-  // @migration: AnnotationDrawingOverlay not yet migrated, using placeholder
-  // import AnnotationDrawingOverlay from '../molecules/AnnotationDrawingOverlay.svelte';
-  // @migration: AnnotationLayerPanel not yet migrated, using placeholder
-  // import AnnotationLayerPanel from '../molecules/AnnotationLayerPanel.svelte';
-  // @migration: ViewerWorkbench not yet migrated, using placeholder
-  // import ViewerWorkbench from '../molecules/ViewerWorkbench.svelte';
-  // @migration: ViewerPanels not yet migrated, using placeholder
-  // import ViewerPanels from '../molecules/ViewerPanels.svelte';
-  // @migration: KeyboardShortcutsModal not yet migrated, using placeholder
-  // import KeyboardShortcutsModal from '../molecules/KeyboardShortcutsModal.svelte';
-  // @migration: AudioWaveform not yet migrated, using placeholder
-  // import AudioWaveform from '../molecules/AudioWaveform.svelte';
+  import ViewerToolbar from '../molecules/ViewerToolbar.svelte';
+  import FilmstripNavigator from '../molecules/FilmstripNavigator.svelte';
+  import ImageFilterPanel from '../molecules/ImageFilterPanel.svelte';
+  import MeasurementOverlay from '../molecules/MeasurementOverlay.svelte';
+  import ComparisonViewer from '../molecules/ComparisonViewer.svelte';
+  import AnnotationDrawingOverlay from '../molecules/AnnotationDrawingOverlay.svelte';
+  import AnnotationLayerPanel from '../molecules/AnnotationLayerPanel.svelte';
+  import ViewerWorkbench from '../molecules/ViewerWorkbench.svelte';
+  import ViewerPanels from '../molecules/ViewerPanels.svelte';
+  import KeyboardShortcutsModal from '../molecules/KeyboardShortcutsModal.svelte';
+  import AudioWaveform from '../molecules/AudioWaveform.svelte';
+  import { storage } from '@/src/shared/services/storage';
+  import { contentStateService } from '@/src/shared/services/contentState';
 
   // ============================================================================
   // Types
@@ -694,8 +683,7 @@
     // Persist to storage asynchronously
     const updatedRoot = vault.export();
     if (updatedRoot) {
-      // @migration: storage.saveProject not yet wired
-      // storage.saveProject(updatedRoot);
+      storage.saveProject(updatedRoot);
     }
   }
 
@@ -774,8 +762,14 @@
   /** Copy IIIF Content State link to clipboard */
   function handleShareLink(): void {
     if (!item?.id || !manifest?.id) return;
-    // @migration: contentStateService not yet wired
-    // contentStateService.copyLink({ manifestId: manifest.id, canvasId: item.id });
+    const encoded = contentStateService.encode({
+      id: item.id,
+      type: 'Canvas',
+      partOf: [{ id: manifest.id, type: 'Manifest' }],
+    });
+    navigator.clipboard.writeText(encoded).catch(() => {
+      console.warn('[ViewerView] Failed to copy content state to clipboard');
+    });
   }
 
   /** Keyboard shortcuts for image viewer */
@@ -923,7 +917,6 @@
   >
     <!-- ================================================================== -->
     <!-- Toolbar                                                             -->
-    <!-- @migration: ViewerToolbar not yet migrated, using inline placeholder -->
     <!-- ================================================================== -->
     <div
       class={cn(
@@ -1099,10 +1092,7 @@
           aria-label={label || 'Canvas viewer'}
         ></div>
 
-        <!-- @migration: AnnotationDrawingOverlay not yet migrated -->
-        <!-- Placeholder: annotation drawing overlay would render here when showAnnotationTool is true -->
 
-        <!-- @migration: MeasurementOverlay not yet migrated -->
         {#if measurement.active}
           <div
             class="absolute inset-0 pointer-events-auto z-10"
@@ -1122,7 +1112,6 @@
       {:else if mediaType === 'audio'}
         <div class="flex-1 flex items-center justify-center p-4">
           {#if resolvedImageUrl}
-            <!-- @migration: AudioWaveform not yet migrated, using native audio -->
             <div class="w-full max-w-2xl">
               <audio
                 bind:this={videoRef}
@@ -1217,7 +1206,6 @@
 
       <!-- Image filter panel (side overlay) -->
       {#if mediaType === 'image' && showFilterPanel}
-        <!-- @migration: ImageFilterPanel not yet migrated, using inline placeholder -->
         <div
           class={cn(
             'absolute top-0 right-0 w-64 h-full border-l-4 p-3 z-20 overflow-y-auto',
@@ -1318,7 +1306,6 @@
 
       <!-- Comparison viewer overlay -->
       {#if mediaType === 'image' && comparison.isActive && secondComparisonCanvas}
-        <!-- @migration: ComparisonViewer not yet migrated, using placeholder -->
         <div
           class={cn(
             'absolute inset-0 z-15',
@@ -1339,7 +1326,6 @@
 
       <!-- Annotation layer panel -->
       {#if layers.layers.length > 0 && showLayerPanel}
-        <!-- @migration: AnnotationLayerPanel not yet migrated, using placeholder -->
         <div
           class={cn(
             'absolute top-0 left-0 w-56 h-full border-r-4 p-3 z-20 overflow-y-auto',
@@ -1392,7 +1378,6 @@
 
     <!-- ================================================================== -->
     <!-- Filmstrip Navigator (footer)                                        -->
-    <!-- @migration: FilmstripNavigator not yet migrated, using placeholder  -->
     <!-- ================================================================== -->
     {#if showFilmstrip}
       <div
@@ -1444,7 +1429,6 @@
 
     <!-- Workbench modal -->
     {#if showWorkbench}
-      <!-- @migration: ViewerWorkbench not yet migrated, using placeholder -->
       <div
         class="absolute inset-0 z-50 flex items-center justify-center bg-black/50"
         role="dialog"
@@ -1472,7 +1456,6 @@
 
     <!-- Search panel -->
     {#if showSearchPanel}
-      <!-- @migration: ViewerPanels not yet migrated, using placeholder -->
       <div
         class="absolute inset-0 z-50 flex items-center justify-center bg-black/50"
         role="dialog"
@@ -1500,7 +1483,6 @@
 
     <!-- Keyboard shortcuts modal -->
     {#if showKeyboardHelp}
-      <!-- @migration: KeyboardShortcutsModal not yet migrated, using placeholder -->
       <div
         class="absolute inset-0 z-50 flex items-center justify-center bg-black/50"
         role="dialog"

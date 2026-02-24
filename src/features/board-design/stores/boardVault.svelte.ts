@@ -473,6 +473,30 @@ export class BoardVaultStore {
     );
   }
 
+  /** Move an item to the end of the items array (visually on top) */
+  bringToFront(id: string): void {
+    const item = this.findItem(id);
+    if (!item) return;
+    this.#pushHistory();
+    this.#state = {
+      ...this.#state,
+      items: [...this.#state.items.filter(i => i.id !== id), item],
+    };
+    this.#markDirty();
+  }
+
+  /** Move an item to the start of the items array (visually behind) */
+  sendToBack(id: string): void {
+    const item = this.findItem(id);
+    if (!item) return;
+    this.#pushHistory();
+    this.#state = {
+      ...this.#state,
+      items: [item, ...this.#state.items.filter(i => i.id !== id)],
+    };
+    this.#markDirty();
+  }
+
   // ------------------------------------------------------------------
   // Private helpers
   // ------------------------------------------------------------------

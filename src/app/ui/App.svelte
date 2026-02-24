@@ -74,6 +74,7 @@
 
   // ── Types ──
   import type { IIIFItem, AbstractionLevel, FileTree } from '@/src/shared/types';
+  import { getIIIFValue } from '@/src/shared/types';
   import type { AuthService } from '@/src/shared/services/remoteLoader';
   // import type { ValidationIssue } from '@/src/app/stores/validation.svelte'; // used indirectly via validation store
 
@@ -81,12 +82,12 @@
   import { storage } from '@/src/shared/services/storage';
   import { contentStateService } from '@/src/shared/services/contentState';
   import { buildTree, ingestTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
+  import { validator } from '@/src/entities/manifest/model/validation/validator';
 
   // ── Widgets ──
   import PersonaSettings from '@/src/widgets/PersonaSettings/ui/PersonaSettings.svelte';
   import StatusBar from '@/src/widgets/StatusBar/ui/organisms/StatusBar.svelte';
   import ContextualHelp from '@/src/widgets/ContextualHelp/ui/ContextualHelp.svelte';
-  import type { ValidationIssue as StatusBarIssue } from '@/src/widgets/StatusBar/lib/statusBarHelpers';
 
   // ── Feature Dialogs ──
   import ExternalImportDialog from '@/src/features/ingest/ui/organisms/ExternalImportDialog.svelte';
@@ -233,7 +234,7 @@
   });
 
   // StatusBar now uses the same ValidatorIssue shape
-  const statusBarIssues = $derived.by((): StatusBarIssue[] => flatValidationIssues);
+  const statusBarIssues = $derived.by(() => flatValidationIssues);
 
   const validationIssuesMap = $derived(validation.issues);
 
@@ -366,9 +367,8 @@
   $effect(() => {
     const _state = vault.state;
     validation.scheduleValidation(() => {
-      // @migration: Wire validateTree(state) when validator is available
-      // return validateTree(_state);
-      return {};
+      const root = vault.export();
+      return validator.validateTree(root);
     });
     return () => validation.destroy();
   });
@@ -538,9 +538,20 @@
   }
 
   function handleBatchApply(ids: string[], updatesMap: Record<string, Partial<IIIFItem>>, renamePattern?: string) {
-    for (const id of ids) {
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
       const changes = { ...updatesMap[id] };
-      // @migration: Rename pattern support (requires getIIIFValue)
+
+      if (renamePattern) {
+        const entity = vault.getEntity(id);
+        const origLabel = entity ? getIIIFValue(entity.label) : '';
+        const idx = String(i + 1).padStart(3, '0');
+        const newLabel = renamePattern
+          .replace(/\{orig\}/g, origLabel)
+          .replace(/\{nnn\}/g, idx);
+        changes.label = { en: [newLabel] };
+      }
+
       vault.update(id, changes);
     }
     autoSave.markDirty();
@@ -898,13 +909,7 @@
             {selectedId}
             {selectedItem}
             {root}
-            validationIssuesMap={
-              // TYPE_DEBT: validation.issues is Record<string, store.ValidationIssue[]> but
-              // ViewRouter expects Record<string, validator.ValidationIssue[]>. The two
-              // ValidationIssue types differ (severity/title vs level/itemId/message/fixable).
-              // TODO(loop): unify ValidationIssue into shared/types and update the store.
-              validationIssuesMap as Record<string, any[]>
-            }
+            validationIssuesMap={validationIssuesMap}
             onSelect={(item) => handleSelect(item.id)}
             onSelectId={(id) => { if (id) handleSelectId(id); else selectedId = null; }}
             onUpdateItem={handleItemUpdate}
@@ -1015,11 +1020,7 @@
 
 {#if dialogs.qcDashboard.isOpen}
   <QCDashboard
-    issuesMap={
-      // TYPE_DEBT: same ValidationIssue mismatch as ViewRouter prop above.
-      // TODO(loop): unify ValidationIssue and remove both casts.
-      validationIssuesMap as any
-    }
+    issuesMap={validationIssuesMap}
     totalItems={root?.items?.length ?? 0}
     root={root}
     onSelect={handleQCSelect}

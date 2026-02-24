@@ -16,15 +16,15 @@
   // import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
   // import type { DetailedStorageEstimate } from '@/src/shared/services/storage';
 
+  import type { ValidatorIssue } from '@/src/shared/types';
   import {
     formatBytes,
     getStorageBarColor,
     countBySeverity,
-    type ValidationIssue as ValidationIssueBase,
   } from '../../lib/statusBarHelpers';
 
   // --- Stub types (replace with real imports) ---
-  interface ValidationIssue extends ValidationIssueBase {
+  interface StatusBarValidationIssue extends ValidatorIssue {
     path?: string;
   }
 
@@ -39,7 +39,7 @@
   interface Props {
     totalItems: number;
     selectedItem: IIIFItem | null;
-    validationIssues: ValidationIssue[];
+    validationIssues: StatusBarValidationIssue[];
     storageUsage: { usage: number; quota: number } | null;
     onOpenQC: () => void;
     saveStatus: 'saved' | 'saving' | 'error';

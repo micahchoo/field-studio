@@ -8,7 +8,7 @@
 <script lang="ts">
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import type { IIIFItem, IIIFCanvas } from '@/src/shared/types';
-  import { getIIIFValue } from '@/src/shared/types';
+  import { getIIIFValue, isCanvas } from '@/src/shared/types';
   import PaneLayout from '@/src/shared/ui/layout/composites/PaneLayout.svelte';
   import GuidanceEmptyState from '@/src/shared/ui/molecules/GuidanceEmptyState.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
@@ -17,7 +17,6 @@
   import ArchiveHeader from './ArchiveHeader.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
-  // @migration: These types would come from the archive feature model
   type ViewMode = 'grid' | 'list' | 'grouped';
   type SortMode = 'name' | 'date' | 'size';
   type SortDirection = 'asc' | 'desc';
@@ -246,12 +245,8 @@
           break;
         }
         case 'size': {
-          const sizeA = (a as IIIFCanvas).width && (a as IIIFCanvas).height
-            ? (a as IIIFCanvas).width * (a as IIIFCanvas).height
-            : 0;
-          const sizeB = (b as IIIFCanvas).width && (b as IIIFCanvas).height
-            ? (b as IIIFCanvas).width * (b as IIIFCanvas).height
-            : 0;
+          const sizeA = isCanvas(a) && a.width && a.height ? a.width * a.height : 0;
+          const sizeB = isCanvas(b) && b.width && b.height ? b.width * b.height : 0;
           cmp = sizeA - sizeB;
           break;
         }
@@ -296,7 +291,7 @@
   // ── Event Handlers ──
 
   /** Handle click with Shift/Ctrl modifier support for multi-selection */
-  function handleItemClick(e: MouseEvent, item: IIIFItem) {
+  function handleItemClick(e: MouseEvent | KeyboardEvent, item: IIIFItem) {
     if (e.shiftKey && activeItem) {
       // Range select: from activeItem to clicked item
       const startIdx = filteredCanvases.findIndex((c) => c.id === activeItem!.id);
@@ -394,7 +389,6 @@
   // ── Selection Bar Action Handlers ──
 
   function handleGroupIntoManifest() {
-    // @migration: Would create a new Manifest from selected canvases via onUpdate
     if (selectedIds.size === 0) return;
     const newRoot = JSON.parse(JSON.stringify(root)) as IIIFItem;
     const canvasesToMove: IIIFItem[] = [];
@@ -437,7 +431,7 @@
     onBatchEdit(Array.from(selectedIds));
   }
 
-  // @migration: Pipeline navigation handlers would integrate with app router
+  // TODO(loop): Pipeline navigation handlers would integrate with app router
   function handleOpenMap() {
     // Would switch to Map view with selected IDs
   }
@@ -610,9 +604,9 @@
                 <div class={cn('text-sm font-medium truncate', cx.text)} title={label}>
                   {label}
                 </div>
-                {#if (canvas as IIIFCanvas).width && (canvas as IIIFCanvas).height}
+                {#if isCanvas(canvas) && canvas.width && canvas.height}
                   <div class={cn('text-xs', cx.textMuted)}>
-                    {(canvas as IIIFCanvas).width} x {(canvas as IIIFCanvas).height}
+                    {canvas.width} x {canvas.height}
                   </div>
                 {/if}
               </div>
@@ -659,7 +653,7 @@
               oncontextmenu={(e) => handleContextMenu(e, canvas)}
               onkeydown={(e) => {
                 if (e.key === 'Enter') onOpen(canvas);
-                if (e.key === ' ') { e.preventDefault(); handleItemClick(e as unknown as MouseEvent, canvas); }
+                if (e.key === ' ') { e.preventDefault(); handleItemClick(e, canvas); }
               }}
               tabindex="0"
             >
@@ -747,8 +741,8 @@
                     <span class="font-medium">{label}</span>
                   </td>
                   <td class={cn('py-2 px-3 hidden md:table-cell', cx.textMuted)}>
-                    {#if (canvas as IIIFCanvas).width && (canvas as IIIFCanvas).height}
-                      {(canvas as IIIFCanvas).width} x {(canvas as IIIFCanvas).height}
+                    {#if isCanvas(canvas) && canvas.width && canvas.height}
+                      {canvas.width} x {canvas.height}
                     {:else}
                       --
                     {/if}
@@ -763,7 +757,6 @@
         </div>
       {:else if view === 'grouped'}
         <!-- Grouped view: group canvases by parent manifest -->
-        <!-- @migration: GroupedArchiveGrid component would be imported here -->
         <div class="p-6 pb-8">
           {#each groupCanvasesByManifest(root) as group (group.manifestId)}
             <div class="mb-6">
@@ -788,7 +781,7 @@
                       selected && (cx.selected || 'ring-2 ring-nb-blue')
                     )}
                     onclick={(e) => handleItemClick(e, canvas)}
-                    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleItemClick(e as unknown as MouseEvent, canvas); }}
+                    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleItemClick(e, canvas); }}
                     ondblclick={() => onOpen(canvas)}
                     oncontextmenu={(e) => handleContextMenu(e, canvas)}
                     tabindex="0"

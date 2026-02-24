@@ -1,11 +1,14 @@
 /**
  * MapView — smoke tests
  *
- * Purpose: verify the component mounts without crashing when given
- * realistic minimal props. MapView uses a pure CSS/div positioning
- * approach with no external map library, so happy-dom is sufficient.
+ * Purpose: verify the component renders user-visible content: the "Map"
+ * heading, zoom controls, and the "No geotagged items" empty state when
+ * the collection has no geo data. Tests both standard and field modes.
  *
- * Pattern: mount → flushSync → assert non-empty DOM → unmount.
+ * MapView uses a pure CSS/div positioning approach with no external map
+ * library, so happy-dom is sufficient.
+ *
+ * Pattern: mount -> flushSync -> assert visible text / ARIA roles -> unmount.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -59,7 +62,7 @@ describe('MapView smoke tests', () => {
     vi.clearAllMocks();
   });
 
-  it('mounts with empty collection without crashing', () => {
+  it('renders the "Map" heading text', () => {
     instance = mount(MapView, {
       target,
       props: {
@@ -73,10 +76,74 @@ describe('MapView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Map');
   });
 
-  it('mounts in advanced mode without crashing', () => {
+  it('renders zoom-in, reset, and zoom-out buttons with proper aria-labels', () => {
+    instance = mount(MapView, {
+      target,
+      props: {
+        root: makeCollection(),
+        cx,
+        fieldMode: false,
+        t,
+        isAdvanced: false,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const zoomIn = target.querySelector('[aria-label="Zoom in"]');
+    const zoomOut = target.querySelector('[aria-label="Zoom out"]');
+    const resetZoom = target.querySelector('[aria-label="Reset zoom"]');
+
+    expect(zoomIn).not.toBeNull();
+    expect(zoomOut).not.toBeNull();
+    expect(resetZoom).not.toBeNull();
+  });
+
+  it('displays "No geotagged items" empty state when collection has no geo data', () => {
+    instance = mount(MapView, {
+      target,
+      props: {
+        root: makeCollection(),
+        cx,
+        fieldMode: false,
+        t,
+        isAdvanced: false,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('No geotagged items');
+    expect(target.textContent).toContain('Add GPS coordinates to canvas metadata to see them on the map.');
+  });
+
+  it('renders "Reset" button text in the zoom controls', () => {
+    instance = mount(MapView, {
+      target,
+      props: {
+        root: makeCollection(),
+        cx,
+        fieldMode: false,
+        t,
+        isAdvanced: false,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const buttons = target.querySelectorAll('button');
+    const buttonTexts = Array.from(buttons).map((b) => b.textContent?.trim());
+    expect(buttonTexts).toContain('Reset');
+  });
+
+  it('renders in advanced mode without crashing and shows empty state', () => {
     instance = mount(MapView, {
       target,
       props: {
@@ -90,10 +157,12 @@ describe('MapView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    // With empty collection, even in advanced mode we see empty state
+    expect(target.textContent).toContain('No geotagged items');
   });
 
-  it('mounts in field mode without crashing', () => {
+  it('renders in field mode without crashing and still shows map heading', () => {
     instance = mount(MapView, {
       target,
       props: {
@@ -107,6 +176,34 @@ describe('MapView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Map');
+    expect(target.textContent).toContain('No geotagged items');
+  });
+
+  it('handles a manifest with no items (no canvases to extract geo data from)', () => {
+    const emptyManifest: IIIFItem = {
+      id: 'manifest-empty',
+      type: 'Manifest',
+      label: { en: ['Empty Manifest'] },
+      items: [],
+    } as unknown as IIIFItem;
+
+    instance = mount(MapView, {
+      target,
+      props: {
+        root: emptyManifest,
+        cx,
+        fieldMode: false,
+        t,
+        isAdvanced: false,
+        onSelect: vi.fn(),
+        onSwitchView: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // Should show empty state
+    expect(target.textContent).toContain('No geotagged items');
   });
 });

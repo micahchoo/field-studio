@@ -9,7 +9,7 @@
  * for repository ingest.
  */
 
-import { getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
+import { getChildEntities, getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
 
 // ============================================================================
@@ -493,10 +493,8 @@ class ArchivalPackageService {
       if (isCanvas(item)) {
         canvases.push(item);
       }
-      if (item.items) {
-        for (const child of item.items) {
-          traverse(child);
-        }
+      for (const child of getChildEntities(item)) {
+        traverse(child);
       }
     };
 

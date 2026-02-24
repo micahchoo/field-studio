@@ -18,7 +18,6 @@
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { IIIFItem } from '@/src/shared/types';
   import type { SearchResult, SearchIndexEntry } from '@/src/shared/types/search-api';
-  // @migration: buildIndexEntries imported from searchService; wiring depends on vault traversal
   import { buildIndexEntries } from '@/src/shared/services/searchService';
 
   // ---------------------------------------------------------------------------
@@ -162,7 +161,7 @@
   // ---------------------------------------------------------------------------
 
   function handleResultSelect(id: string) {
-    // @migration: usePipeline().searchToArchive(id) would set pipeline context here
+    // TODO(loop): usePipeline().searchToArchive(id) would set pipeline context here
     onSelect(id);
   }
 

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { IIIFItem } from '@/src/shared/types';
+import type { IIIFItem, IIIFManifest } from '@/src/shared/types';
 
 // ─── idb mock ────────────────────────────────────────────────────────────────
 // vi.mock() is hoisted; use vi.hoisted() so idbStores is ready when the
@@ -75,7 +75,7 @@ describe('StorageService', () => {
     expect(loaded).not.toBeNull();
     expect(loaded!.id).toBe(manifest.id);
     expect(loaded!.type).toBe('Manifest');
-    expect((loaded as any).label?.en?.[0]).toBe('My Collection');
+    expect((loaded as IIIFManifest).label?.en?.[0]).toBe('My Collection');
   });
 
   it('saveProject preserves nested items', async () => {
@@ -84,8 +84,9 @@ describe('StorageService', () => {
     });
     await storage.saveProject(manifest);
     const loaded = await storage.loadProject();
-    expect(loaded?.items).toHaveLength(1);
-    expect(loaded?.items?.[0].id).toBe('https://example.com/canvas/1');
+    const result = loaded as IIIFManifest;
+    expect(result?.items).toHaveLength(1);
+    expect(result?.items?.[0].id).toBe('https://example.com/canvas/1');
   });
 
   it('saveProject overwrites previous project', async () => {

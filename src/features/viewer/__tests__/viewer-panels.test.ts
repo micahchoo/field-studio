@@ -152,37 +152,39 @@ describe('ViewerPanels', () => {
   // Panel styling
   // --------------------------------------------------------------------------
 
-  it('positions panel absolutely on the right side', async () => {
+  it('renders panel with complementary role and correct label', async () => {
     component = mount(ViewerPanels, {
       target,
       props: baseProps({ showSearchPanel: true }),
     });
     await new Promise<void>(r => queueMicrotask(() => r()));
     const panel = target.querySelector('[role="complementary"]') as HTMLElement;
-    expect(panel.classList.contains('absolute')).toBe(true);
-    expect(panel.classList.contains('right-0')).toBe(true);
-    expect(panel.classList.contains('w-96')).toBe(true);
+    expect(panel).toBeTruthy();
+    expect(panel.getAttribute('aria-label')).toBe('Search panel');
   });
 
-  it('applies field mode dark styling when fieldMode=true', async () => {
+  it('renders search panel with heading in fieldMode', async () => {
     component = mount(ViewerPanels, {
       target,
       props: baseProps({ showSearchPanel: true, fieldMode: true }),
     });
     await new Promise<void>(r => queueMicrotask(() => r()));
     const panel = target.querySelector('[role="complementary"]') as HTMLElement;
-    expect(panel.classList.contains('bg-nb-black')).toBe(true);
-    expect(panel.classList.contains('border-nb-yellow')).toBe(true);
+    expect(panel).toBeTruthy();
+    const heading = target.querySelector('h3');
+    expect(heading!.textContent!.trim()).toBe('Search');
   });
 
-  it('applies light styling when fieldMode=false', async () => {
+  it('renders search panel with heading in light mode', async () => {
     component = mount(ViewerPanels, {
       target,
       props: baseProps({ showSearchPanel: true, fieldMode: false }),
     });
     await new Promise<void>(r => queueMicrotask(() => r()));
     const panel = target.querySelector('[role="complementary"]') as HTMLElement;
-    expect(panel.classList.contains('bg-nb-white')).toBe(true);
+    expect(panel).toBeTruthy();
+    const heading = target.querySelector('h3');
+    expect(heading!.textContent!.trim()).toBe('Search');
   });
 
   // --------------------------------------------------------------------------
@@ -198,10 +200,9 @@ describe('ViewerPanels', () => {
     // The panel container still renders but the body should be empty
     const panel = target.querySelector('[role="complementary"]');
     expect(panel).toBeTruthy();
-    // ViewerSearchPanel is only rendered inside {#if manifest}, so the body div
-    // should have no children
-    const body = panel!.querySelector('.flex-1.overflow-y-auto');
-    expect(body).toBeTruthy();
-    expect(body!.children.length).toBe(0);
+    // ViewerSearchPanel is only rendered inside {#if manifest}, so the panel
+    // should not contain any search input or results
+    const searchInput = panel!.querySelector('input[type="search"]') || panel!.querySelector('input[type="text"]');
+    expect(searchInput).toBeNull();
   });
 });

@@ -9,24 +9,15 @@
  * @module features/board-design/model
  */
 
-import { getIIIFValue, type IIIFItem, type IIIFManifest } from '@/src/shared/types';
+import { getIIIFValue, isCanvas, isCollection, isManifest, isRange, type IIIFItem, type IIIFManifest } from '@/src/shared/types';
+import { resolveHierarchicalThumbs } from '@/src/utils/imageSourceResolver';
 
-// @migration: stub — entity re-exports not available in svelte-migration
-// In React source these were: export { manifest, canvas } from '@/src/entities';
-// Consumers should import vault functions directly from entities/manifest/model/vault
-
-// @migration: stub — resolveHierarchicalThumb not available in svelte-migration
-// Original: import { resolveHierarchicalThumb } from '@/utils/imageSourceResolver';
+// TYPE_DEBT: resolveHierarchicalThumbs expects IIIFCanvas | Record<string, unknown> but we pass IIIFItem.
+// Wrapper for single-thumbnail resolution (board items need one URL, not array).
 function resolveHierarchicalThumb(resource: IIIFItem, _maxSize: number): string | null {
-  // @migration: stub — resolve thumbnail URL from IIIF resource
-  // In production this walks resource.thumbnail[], resource.items[0].items[0].body,
-  // and service descriptors to find the best available thumbnail URL.
-  // Returns null when no thumbnail is discoverable.
-  const thumb = resource.thumbnail;
-  if (thumb && Array.isArray(thumb) && thumb.length > 0) {
-    return (thumb[0] as { id?: string }).id || null;
-  }
-  return resource._blobUrl || null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const thumbs = resolveHierarchicalThumbs(resource as any, 1);
+  return thumbs.length > 0 ? thumbs[0] : (resource._blobUrl || null);
 }
 
 // ============================================================================
@@ -199,19 +190,15 @@ export const formatDuration = (seconds: number): string => {
 export const enrichBoardItemMeta = (resource: IIIFItem): BoardItemMeta => {
   const meta: BoardItemMeta = {};
 
-  if (resource.type === 'Canvas') {
+  if (isCanvas(resource)) {
     meta.contentType = detectContentType(resource);
-    const duration = (resource as IIIFItem & { duration?: number }).duration;
-    if (duration) meta.duration = duration;
-  } else if (resource.type === 'Manifest') {
-    const manifestItems = (resource as IIIFItem & { items?: IIIFItem[] }).items;
-    meta.canvasCount = manifestItems?.length || 0;
-  } else if (resource.type === 'Collection') {
-    const collectionItems = (resource as IIIFItem & { items?: IIIFItem[] }).items;
-    meta.itemCount = collectionItems?.length || 0;
-  } else if (resource.type === 'Range') {
-    const rangeItems = (resource as IIIFItem & { items?: Array<{ id: string }> }).items;
-    meta.rangeChildIds = rangeItems?.map(i => i.id) || [];
+    if (resource.duration) meta.duration = resource.duration;
+  } else if (isManifest(resource)) {
+    meta.canvasCount = resource.items?.length || 0;
+  } else if (isCollection(resource)) {
+    meta.itemCount = resource.items?.length || 0;
+  } else if (isRange(resource)) {
+    meta.rangeChildIds = resource.items?.map(i => i.id).filter((id): id is string => id !== undefined) || [];
     meta.rangeCollapsed = true;
   }
 

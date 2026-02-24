@@ -40,13 +40,14 @@
     IIIFAnnotationPage,
     NormalizedState,
   } from '@/src/shared/types';
+  import { isCanvas, isManifest } from '@/src/shared/types';
   // Both ViewHeader/types.ts and contextual-styles.ts define ContextualClassNames.
   // ViewHeader version has [key: string] index signature; contextual-styles requires surface/text/accent.
   // Import from contextual-styles (the stricter type) and cast to satisfy both consumers.
   import type { ContextualClassNames as StrictCx } from '@/src/shared/lib/contextual-styles';
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import type { AppSettings } from '@/src/shared/stores/appSettings.svelte';
-  import type { ValidationIssue } from '@/src/features/metadata-edit/lib/inspectorValidation';
+  import type { ValidatorIssue } from '@/src/shared/types';
   import type { AppMode } from '@/src/shared/stores/appMode.svelte';
 
   import { cn } from '@/src/shared/lib/cn';
@@ -126,7 +127,7 @@
     root: IIIFItem | null;
     onSelect?: (item: IIIFItem) => void;
     onSelectId?: (id: string | null) => void;
-    validationIssuesMap?: Record<string, ValidationIssue[]>;
+    validationIssuesMap?: Record<string, ValidatorIssue[]>;
     onUpdateRoot?: (newRoot: IIIFItem) => void;
     onUpdateItem?: (updates: Partial<IIIFItem>) => void;
     onBatchEdit?: (ids: string[]) => void;
@@ -158,15 +159,15 @@
 
   /** Recursively find the first Canvas in a tree, returning the canvas and its parent Manifest */
   function findFirstCanvas(node: IIIFItem): { canvas: IIIFCanvas | null; manifest: IIIFManifest | null } {
-    if (node.type === 'Canvas') {
-      return { canvas: node as IIIFCanvas, manifest: null };
+    if (isCanvas(node)) {
+      return { canvas: node, manifest: null };
     }
     if (node.items && Array.isArray(node.items)) {
       for (const item of node.items) {
         const result = findFirstCanvas(item as IIIFItem);
         if (result.canvas) {
-          if (node.type === 'Manifest') {
-            return { canvas: result.canvas, manifest: node as IIIFManifest };
+          if (isManifest(node)) {
+            return { canvas: result.canvas, manifest: node };
           }
           return result;
         }
@@ -190,7 +191,8 @@
   /** Detect media type from painting annotations on a canvas */
   function getCanvasMediaType(canvas: IIIFCanvas | IIIFItem | null): 'image' | 'video' | 'audio' | 'other' {
     if (!canvas) return 'other';
-    const items = (canvas as IIIFCanvas).items;
+    if (!isCanvas(canvas)) return 'other';
+    const items = canvas.items;
     if (!items || items.length === 0) return 'other';
 
     for (const page of items) {
@@ -249,7 +251,8 @@
     while (currentId) {
       const type = getEntityType(state, currentId);
       if (type === 'Manifest') {
-        return vaultGetEntity(state, currentId) as IIIFManifest | null;
+        const entity = vaultGetEntity(state, currentId);
+        return isManifest(entity) ? entity : null;
       }
       currentId = getParentId(state, currentId);
     }
@@ -275,8 +278,8 @@
 
     if (selectedId) {
       const found = vaultLookup(selectedId);
-      if (found?.type === 'Canvas') {
-        selectedCanvas = found as IIIFCanvas;
+      if (isCanvas(found)) {
+        selectedCanvas = found;
         parentManifest = getParentManifest(selectedId);
       }
     }
@@ -434,14 +437,10 @@
   // ============================================================================
 
   function handleBoardSave(boardState: unknown) {
-    // @migration: vault dispatch not yet migrated
-    // In the React source this receives a manifest-like object from BoardView.
-    // The BoardView Svelte stub expects onSaveBoard(state: BoardState).
-    // Reconcile types once BoardView + vault actions are fully migrated.
-    // vault.dispatch(actions.createBoard(boardState.id, ...));
-    // const updatedRoot = vault.export();
-    // if (updatedRoot) storage.saveProject(updatedRoot);
-    console.warn('[ViewRouter] Board save — vault actions not yet migrated', boardState);
+    // TODO(loop): Reconcile BoardView.BoardState with vault board actions.
+    // The React source receives a manifest-like object; the Svelte BoardView
+    // emits onSaveBoard(state: BoardState). Wire vault.dispatch once types align.
+    console.warn('[ViewRouter] Board save — vault board actions pending type reconciliation', boardState);
   }
 
   // ============================================================================

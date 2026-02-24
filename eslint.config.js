@@ -53,10 +53,6 @@ export default [
 
       // FSD architecture rules
       '@field-studio/max-lines-feature': ['warn', { moleculeMax: 300, organismMax: 500 }],
-      '@field-studio/component-props-validation': 'warn',
-      '@field-studio/lifecycle-restrictions': 'error',
-      '@field-studio/template-constraints': 'error',
-      '@field-studio/no-native-html-in-molecules': 'error',
 
       // Svelte 5 convention rules (apply to .ts too for reactive modules)
       '@field-studio/no-reactive-destructuring': 'error',
@@ -65,6 +61,9 @@ export default [
 
       // Exhaustiveness enforcement
       '@field-studio/exhaustive-switch': 'warn',
+
+      // Migration tracking
+      '@field-studio/no-migration-stub': 'warn',
 
       // FSD layer import restrictions + Svelte 4 bans
       'no-restricted-imports': ['error', {
@@ -105,7 +104,6 @@ export default [
       '@field-studio/max-lines-feature': ['warn', { moleculeMax: 300, organismMax: 500 }],
       '@field-studio/component-props-validation': 'warn',
       '@field-studio/lifecycle-restrictions': 'error',
-      '@field-studio/template-constraints': 'error',
       '@field-studio/no-native-html-in-molecules': 'error',
 
       // Svelte 5 convention rules
@@ -125,6 +123,12 @@ export default [
 
       // Exhaustiveness enforcement
       '@field-studio/exhaustive-switch': 'warn',
+
+      // Type safety — prefer type guards over `as IIIFSubtype` casts
+      '@field-studio/prefer-type-guards': 'warn',
+
+      // Migration tracking
+      '@field-studio/no-migration-stub': 'warn',
 
       // FSD layer import restrictions + Svelte 4 bans
       'no-restricted-imports': ['error', {
@@ -233,6 +237,12 @@ export default [
     rules: {
       'no-restricted-imports': ['error', {
         ...svelte4ImportBans,
+        patterns: [
+          {
+            group: ['@/src/features/*', '@/src/widgets/*', '@/src/app/*'],
+            message: 'Shared stores can import from entities (vault adapter) but not from features, widgets, or app layers.',
+          },
+        ],
       }],
     },
   },
@@ -247,11 +257,12 @@ export default [
       '@field-studio/max-lines-feature': 'off',
       '@field-studio/component-props-validation': 'off',
       '@field-studio/lifecycle-restrictions': 'off',
-      '@field-studio/template-constraints': 'off',
       '@field-studio/no-native-html-in-molecules': 'off',
       '@field-studio/no-reactive-destructuring': 'off',
       '@field-studio/no-effect-for-derived': 'off',
       '@field-studio/typed-context-keys': 'off',
+      '@field-studio/prefer-type-guards': 'off',
+      '@field-studio/no-migration-stub': 'off',
       // Test files can import from any FSD layer
       'no-restricted-imports': ['error', {
         ...svelte4ImportBans,

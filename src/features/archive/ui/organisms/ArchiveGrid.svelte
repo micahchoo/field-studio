@@ -31,12 +31,7 @@
   import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
   import { cn } from '@/src/shared/lib/cn';
 
-  // @migration: ValidationIssue type — use the canonical location once unified
-  interface ValidationIssue {
-    level: 'error' | 'warning' | 'info';
-    message: string;
-    field?: string;
-  }
+  import type { ValidatorIssue } from '@/src/shared/types';
 
   interface Props {
     /** Canvas items to render */
@@ -50,7 +45,7 @@
     /** Check if an item is selected */
     isSelected: (id: string) => boolean;
     /** Click handler for an item (normal selection) */
-    onItemClick: (e: MouseEvent, asset: IIIFCanvas) => void;
+    onItemClick: (e: MouseEvent | KeyboardEvent, asset: IIIFCanvas) => void;
     /** Toggle selection for multiselect (checkmark click) */
     onToggleSelect?: (id: string) => void;
     /** Context menu handler */
@@ -93,7 +88,7 @@
     /** IIIF viewingDirection from manifest */
     viewingDirection?: ViewingDirection;
     /** Validation issues keyed by item ID */
-    validationIssues?: Record<string, ValidationIssue[]>;
+    validationIssues?: Record<string, ValidatorIssue[]>;
     /** Open/activate handler (Enter key) */
     onOpen?: (id: string) => void;
     /** Lasso selection handler (multiple IDs selected) */
@@ -425,7 +420,7 @@
         ondragend={handleDragEnd}
         oncontextmenu={(e) => onContextMenu(e, asset.id)}
         onclick={(e) => onItemClick(e, asset)}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onItemClick(e as unknown as MouseEvent, asset); }}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onItemClick(e, asset); }}
         onmouseenter={(e) => handleHoverEnter(asset, e)}
         onmouseleave={handleHoverLeave}
         class={cn(
@@ -496,7 +491,7 @@
               {fieldMode}
             />
           {:else}
-            <!-- @migration: StackedThumbnail molecule needs Svelte translation -->
+            <!-- TODO(loop): Extract StackedThumbnail from BlurUpThumbnail for multi-thumb display -->
             <BlurUpThumbnail
               lowResUrl={lowResUrls[0] || ''}
               highResUrl={thumbUrls[0] || ''}

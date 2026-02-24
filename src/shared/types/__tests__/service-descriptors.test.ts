@@ -7,11 +7,18 @@ import {
   isImageService,
   isAuthService,
   isSearchService,
+  isAnnotationPage,
+  getChildEntities,
   type ServiceDescriptor,
   type IIIFImageService,
   type IIIFAuthService,
   type IIIFSearchService,
   type IIIFGenericService,
+  type IIIFItem,
+  type IIIFManifest,
+  type IIIFCollection,
+  type IIIFCanvas,
+  type IIIFRange,
 } from '@/src/shared/types';
 
 describe('ServiceDescriptor type guards', () => {
@@ -98,6 +105,82 @@ describe('ServiceDescriptor type guards', () => {
     it('rejects non-search services', () => {
       const svc: ServiceDescriptor = { type: 'AuthProbeService2', id: 'https://example.com/probe' };
       expect(isSearchService(svc)).toBe(false);
+    });
+  });
+
+  describe('isAnnotationPage', () => {
+    it('returns true for AnnotationPage type', () => {
+      expect(isAnnotationPage({ type: 'AnnotationPage' })).toBe(true);
+    });
+
+    it('returns false for other types', () => {
+      expect(isAnnotationPage({ type: 'Manifest' })).toBe(false);
+    });
+
+    it('returns false for null/undefined', () => {
+      expect(isAnnotationPage(null)).toBe(false);
+      expect(isAnnotationPage(undefined)).toBe(false);
+    });
+  });
+
+  describe('getChildEntities', () => {
+    it('returns canvases for a manifest', () => {
+      const manifest: IIIFManifest = {
+        id: 'm1', type: 'Manifest',
+        items: [{ id: 'c1', type: 'Canvas', width: 100, height: 100, items: [] }],
+      };
+      const children = getChildEntities(manifest);
+      expect(children).toHaveLength(1);
+      expect(children[0].id).toBe('c1');
+    });
+
+    it('returns members for a collection', () => {
+      const collection: IIIFCollection = {
+        id: 'col1', type: 'Collection',
+        items: [{ id: 'm1', type: 'Manifest', items: [] } as IIIFItem],
+      };
+      const children = getChildEntities(collection);
+      expect(children).toHaveLength(1);
+      expect(children[0].id).toBe('m1');
+    });
+
+    it('returns empty for a canvas (annotation pages are not IIIFItems)', () => {
+      const canvas: IIIFCanvas = {
+        id: 'c1', type: 'Canvas', width: 100, height: 100, items: [],
+      };
+      expect(getChildEntities(canvas)).toHaveLength(0);
+    });
+
+    it('returns only nested ranges, filtering out canvas references', () => {
+      const range: IIIFRange = {
+        id: 'r1', type: 'Range',
+        items: [
+          { id: 'c1', type: 'Canvas' },
+          { id: 'r2', type: 'Range', items: [] },
+        ],
+      };
+      const children = getChildEntities(range);
+      expect(children).toHaveLength(1);
+      expect(children[0].type).toBe('Range');
+    });
+
+    it('returns empty for unrecognized entity types', () => {
+      const item: IIIFItem = { id: 'x', type: 'AnnotationPage' };
+      expect(getChildEntities(item)).toHaveLength(0);
+    });
+
+    it('handles manifest with empty items array', () => {
+      const manifest: IIIFManifest = {
+        id: 'm1', type: 'Manifest', items: [],
+      };
+      expect(getChildEntities(manifest)).toHaveLength(0);
+    });
+
+    it('handles item with no items property', () => {
+      const item: IIIFItem = { id: 'x', type: 'Manifest' };
+      // isManifest returns true but items is undefined — getChildEntities must not crash
+      const children = getChildEntities(item);
+      expect(children).toHaveLength(0);
     });
   });
 

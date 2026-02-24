@@ -1,12 +1,12 @@
 /**
  * SearchView — smoke tests
  *
- * Purpose: verify the component mounts without throwing when given
- * realistic minimal props. Does NOT assert specific text or styling —
- * only guards against crashes (undefined property access, missing
- * store initialisation, etc.).
+ * Purpose: verify the component renders user-visible content: the "Search"
+ * heading, search input placeholder, filter pills, empty-state tips, and
+ * tip keywords. Tests both null-root and manifest-root scenarios, plus
+ * adversarial cases like missing root and field mode.
  *
- * Pattern: mount → flushSync → assert non-empty DOM → unmount.
+ * Pattern: mount -> flushSync -> assert visible text / ARIA roles -> unmount.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -67,7 +67,115 @@ describe('SearchView smoke tests', () => {
     vi.clearAllMocks();
   });
 
-  it('mounts with null root without crashing', () => {
+  it('renders the "Search" heading', () => {
+    instance = mount(SearchView, {
+      target,
+      props: {
+        root: makeManifest(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('Search');
+  });
+
+  it('renders the search input with placeholder text', () => {
+    instance = mount(SearchView, {
+      target,
+      props: {
+        root: makeManifest(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const searchInput = target.querySelector('input[placeholder*="Search"]');
+    expect(searchInput).not.toBeNull();
+  });
+
+  it('renders a search region with role="search"', () => {
+    instance = mount(SearchView, {
+      target,
+      props: {
+        root: makeManifest(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const searchRegion = target.querySelector('[role="search"]');
+    expect(searchRegion).not.toBeNull();
+  });
+
+  it('renders filter pills with radio role for All, Manifest, Canvas, and Annotation', () => {
+    instance = mount(SearchView, {
+      target,
+      props: {
+        root: makeManifest(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+      },
+    });
+    flushSync();
+
+    const radios = target.querySelectorAll('[role="radio"]');
+    const radioTexts = Array.from(radios).map((r) => r.textContent?.trim());
+    expect(radioTexts).toContain('All');
+    expect(radioTexts).toContain('Manifest');
+    expect(radioTexts).toContain('Canvas');
+    expect(radioTexts).toContain('Annotation');
+  });
+
+  it('renders the "Search Your Archive" empty-state heading when there is no query', () => {
+    instance = mount(SearchView, {
+      target,
+      props: {
+        root: makeManifest(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+      },
+    });
+    flushSync();
+
+    expect(target.textContent).toContain('Search Your Archive');
+    expect(target.textContent).toContain('Find items by name, metadata, or content');
+  });
+
+  it('renders search tip keywords when no query is active', () => {
+    instance = mount(SearchView, {
+      target,
+      props: {
+        root: makeManifest(),
+        cx,
+        fieldMode: false,
+        t,
+        onSelect: vi.fn(),
+      },
+    });
+    flushSync();
+
+    // Tips: sunset, archaeological site, 2017, portrait
+    expect(target.textContent).toContain('sunset');
+    expect(target.textContent).toContain('archaeological site');
+    expect(target.textContent).toContain('2017');
+    expect(target.textContent).toContain('portrait');
+  });
+
+  it('renders without crashing when root is null (empty archive)', () => {
     instance = mount(SearchView, {
       target,
       props: {
@@ -79,10 +187,13 @@ describe('SearchView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    // Should still show Search heading and empty state
+    expect(target.textContent).toContain('Search');
+    expect(target.textContent).toContain('Search Your Archive');
   });
 
-  it('mounts with a manifest root without crashing', () => {
+  it('renders filter pill radiogroup with proper aria-label', () => {
     instance = mount(SearchView, {
       target,
       props: {
@@ -91,14 +202,16 @@ describe('SearchView smoke tests', () => {
         fieldMode: false,
         t,
         onSelect: vi.fn(),
-        onRevealMap: vi.fn(),
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    const radiogroup = target.querySelector('[role="radiogroup"]');
+    expect(radiogroup).not.toBeNull();
+    expect(radiogroup?.getAttribute('aria-label')).toBe('Result type filter');
   });
 
-  it('mounts in field mode without crashing', () => {
+  it('renders in field mode without crashing and still shows Search heading', () => {
     instance = mount(SearchView, {
       target,
       props: {
@@ -110,6 +223,10 @@ describe('SearchView smoke tests', () => {
       },
     });
     flushSync();
-    expect(target.firstChild).not.toBeNull();
+
+    expect(target.textContent).toContain('Search');
+    // Filter pills should still be present
+    const radios = target.querySelectorAll('[role="radio"]');
+    expect(radios.length).toBe(4);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T19:00:27.692Z",
+  "generatedAt": "2026-02-24T20:07:03.979Z",
   "totalFiles": 234,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -174,6 +174,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "ValidatorIssue"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -195,8 +206,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 5861,
-      "lines": 175
+      "size": 5783,
+      "lines": 168
     },
     "src/entities/annotation/model/contentSearchService.ts": {
       "filePath": "src/entities/annotation/model/contentSearchService.ts",
@@ -727,9 +738,21 @@
             "IIIFAnnotationBody",
             "IIIFCanvas",
             "IIIFExternalWebResource",
-            "IIIFItem"
+            "IIIFItem",
+            "ServiceDescriptor"
           ],
           "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "isImageService"
+          ],
+          "isTypeImport": false,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -811,8 +834,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 17827,
-      "lines": 580
+      "size": 17765,
+      "lines": 578
     },
     "src/entities/canvas/model.ts": {
       "filePath": "src/entities/canvas/model.ts",
@@ -3172,6 +3195,18 @@
           "isInternalAlias": true
         },
         {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "ValidatorIssue",
+            "IssueCategory"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "@/utils/iiifSchema",
           "specifiers": [
             "validateResource"
@@ -3232,8 +3267,8 @@
       "dependents": [
         "src/entities/manifest/model/validation/validationHealer.ts"
       ],
-      "size": 15300,
-      "lines": 405
+      "size": 15184,
+      "lines": 397
     },
     "src/entities/manifest/model/vault/cloning.ts": {
       "filePath": "src/entities/manifest/model/vault/cloning.ts",
@@ -5334,6 +5369,7 @@
             "IIIFAnnotation",
             "IIIFAnnotationPage",
             "IIIFCanvas",
+            "IIIFGenericService",
             "IIIFManifest",
             ""
           ],
@@ -5389,8 +5425,8 @@
       "dependents": [
         "src/features/board-design/model/exporters.ts"
       ],
-      "size": 16292,
-      "lines": 472
+      "size": 16163,
+      "lines": 474
     },
     "src/features/board-design/model/index.ts": {
       "filePath": "src/features/board-design/model/index.ts",
@@ -7136,7 +7172,9 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
-            "IIIFItem"
+            "IIIFItem",
+            "InspectorIssue",
+            "IssueSeverity"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -7185,8 +7223,8 @@
         "src/features/metadata-edit/model/index.ts",
         "src/features/metadata-edit/model/index.ts"
       ],
-      "size": 29223,
-      "lines": 856
+      "size": 29113,
+      "lines": 846
     },
     "src/features/metadata-edit/model/index.ts": {
       "filePath": "src/features/metadata-edit/model/index.ts",
@@ -9586,8 +9624,10 @@
             "IIIFAnnotation",
             "IIIFCanvas",
             "IIIFCollection",
+            "IIIFGenericService",
             "IIIFItem",
             "IIIFManifest",
+            "ServiceDescriptor",
             ""
           ],
           "isTypeImport": true,
@@ -9651,8 +9691,8 @@
       "dependents": [
         "src/features/viewer/model/index.ts"
       ],
-      "size": 21300,
-      "lines": 627
+      "size": 21366,
+      "lines": 629
     },
     "src/features/viewer/stores/mediaPlayer.svelte.ts": {
       "filePath": "src/features/viewer/stores/mediaPlayer.svelte.ts",
@@ -14489,6 +14529,18 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "ServiceDescriptor",
+            "IIIFGenericService"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -14554,8 +14606,8 @@
       "dependents": [
         "src/shared/services/index.ts"
       ],
-      "size": 12695,
-      "lines": 419
+      "size": 12688,
+      "lines": 418
     },
     "src/shared/services/changeDiscoveryService.ts": {
       "filePath": "src/shared/services/changeDiscoveryService.ts",
@@ -15380,6 +15432,43 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "NavPlace",
+            "GeoFeature",
+            "GeoGeometry",
+            "GeoProperties",
+            ""
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "[re-export]:NavPlace",
+            "[re-export]:GeoFeature",
+            "[re-export]:GeoGeometry",
+            "[re-export]:PointGeometry",
+            "[re-export]:LineStringGeometry",
+            "[re-export]:PolygonGeometry",
+            "[re-export]:MultiPointGeometry",
+            "[re-export]:MultiLineStringGeometry",
+            "[re-export]:MultiPolygonGeometry",
+            "[re-export]:GeometryCollection",
+            "[re-export]:GeoProperties",
+            "[re-export]:"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -15439,6 +15528,11 @@
           "isTypeExport": true
         },
         {
+          "name": "",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "LatLng",
           "type": "named",
           "isTypeExport": true
@@ -15470,8 +15564,8 @@
       "dependents": [
         "src/shared/services/index.ts"
       ],
-      "size": 10559,
-      "lines": 283
+      "size": 9558,
+      "lines": 269
     },
     "src/shared/services/opfsStorage.ts": {
       "filePath": "src/shared/services/opfsStorage.ts",
@@ -15690,6 +15784,17 @@
       "extension": ".ts",
       "imports": [
         {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "LanguageMap"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
           "source": "./logger",
           "specifiers": [
             "vaultLog"
@@ -15744,8 +15849,8 @@
       "dependents": [
         "src/shared/services/index.ts"
       ],
-      "size": 23127,
-      "lines": 660
+      "size": 23182,
+      "lines": 661
     },
     "src/shared/services/storage.ts": {
       "filePath": "src/shared/services/storage.ts",
@@ -17684,6 +17789,136 @@
           "isTypeExport": true
         },
         {
+          "name": "IIIFImageService",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IIIFAuthService",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IIIFSearchService",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IIIFGenericService",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ServiceDescriptor",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "isImageService",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "isAuthService",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "isSearchService",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "NavPlace",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GeoFeature",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GeoGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "PointGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "LineStringGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "PolygonGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MultiPointGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MultiLineStringGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MultiPolygonGeometry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GeometryCollection",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GeoProperties",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ProviderHomepage",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ProviderLogo",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IIIFProvider",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IssueSeverity",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IssueCategory",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ValidatorIssue",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "InspectorIssue",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
           "name": "IIIFItem",
           "type": "named",
           "isTypeExport": true
@@ -17906,8 +18141,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 12952,
-      "lines": 404
+      "size": 16153,
+      "lines": 535
     },
     "src/shared/types/search-api.ts": {
       "filePath": "src/shared/types/search-api.ts",
@@ -20832,7 +21067,19 @@
       "fileName": "statusBarHelpers.ts",
       "directory": "src/widgets/StatusBar/lib",
       "extension": ".ts",
-      "imports": [],
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "ValidatorIssue"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
       "exports": [
         {
           "name": "ValidationIssue",
@@ -20857,8 +21104,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 2080,
-      "lines": 67
+      "size": 2121,
+      "lines": 64
     }
   },
   "externalDependencies": [
@@ -21039,9 +21286,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 662,
-    "totalExports": 1817,
-    "avgImportsPerFile": 2.8290598290598292,
+    "totalImports": 670,
+    "totalExports": 1844,
+    "avgImportsPerFile": 2.8632478632478633,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { cn } from '@/src/shared/lib/cn';
+  import Icon from '@/src/shared/ui/atoms/Icon.svelte';
 
   interface Props {
     label: string;
@@ -51,8 +52,7 @@
     className,
   )}
 >
-  <!-- @migration: Icon atom placeholder — using text for now -->
-  <span class={cn('text-lg', iconColor)} aria-hidden="true">{iconName}</span>
+  <Icon name={iconName} class={cn('text-lg', iconColor)} />
   <span class={cn(
     'flex-1 truncate text-sm font-medium',
     fieldMode ? 'text-nb-yellow' : 'text-nb-black/80',

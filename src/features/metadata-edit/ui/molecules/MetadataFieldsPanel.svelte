@@ -35,7 +35,7 @@
 <script lang="ts">
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { ValidationIssue } from '../../lib/inspectorValidation';
-  import { getIIIFValue, type IIIFItem, type IIIFManifest, isManifest } from '@/src/shared/types';
+  import { getIIIFValue, type IIIFItem, type IIIFManifest, isManifest, isCanvas } from '@/src/shared/types';
   import { BEHAVIOR_OPTIONS, getConflictingBehaviors } from '@/src/shared/constants/iiif';
   import { cn } from '@/src/shared/lib/cn';
 
@@ -135,7 +135,7 @@
     rightsValidation.status === 'invalid' || behaviorValidation.status === 'invalid' || navDateValidation.status === 'invalid'
   );
 
-  let hasNavPlace = $derived(!!(resource as unknown as Record<string, unknown>).navPlace);
+  let hasNavPlace = $derived(!!resource.navPlace);
 
   let metadataEntries = $derived(resource.metadata || []);
 
@@ -152,11 +152,12 @@
 
   function handleSuggestBehaviors() {
     if (!resource) return;
+    const asCanvas = isCanvas(resource) ? resource : null;
     const characteristics = {
-      hasDuration: !!(resource as unknown as Record<string, unknown>).duration,
-      hasPageSequence: isManifest(resource) && (resource as IIIFManifest).items?.length > 1,
-      hasWidth: !!(resource as unknown as Record<string, unknown>).width,
-      hasHeight: !!(resource as unknown as Record<string, unknown>).height,
+      hasDuration: !!asCanvas?.duration,
+      hasPageSequence: isManifest(resource) && resource.items?.length > 1,
+      hasWidth: !!asCanvas?.width,
+      hasHeight: !!asCanvas?.height,
     };
     const suggestions = suggestBehaviors(resource.type, characteristics);
     if (suggestions.length > 0) {

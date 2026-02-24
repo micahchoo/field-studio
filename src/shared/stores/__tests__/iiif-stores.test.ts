@@ -612,6 +612,57 @@ describe('ActivityLogStore', () => {
     });
   });
 
+  describe('watchStream / unwatchStream', () => {
+    const streamUrl = 'https://example.org/activity-stream.json';
+    const streamLabel = 'Test Stream';
+
+    it('adds a stream to watchedStreams', async () => {
+      await activityLog.watchStream(streamUrl, streamLabel);
+      expect(activityLog.watchedStreams.length).toBe(1);
+      expect(activityLog.watchedStreams[0].streamId).toBe(streamUrl);
+    });
+
+    it('does not add duplicate stream', async () => {
+      await activityLog.watchStream(streamUrl, streamLabel);
+      await activityLog.watchStream(streamUrl, streamLabel);
+      expect(activityLog.watchedStreams.length).toBe(1);
+    });
+
+    it('removes stream when unwatched', async () => {
+      await activityLog.watchStream(streamUrl, streamLabel);
+      await activityLog.unwatchStream(streamUrl);
+      expect(activityLog.watchedStreams.length).toBe(0);
+    });
+
+    it('unwatchStream on non-existent stream does not throw', async () => {
+      await expect(
+        activityLog.unwatchStream('https://example.org/unknown.json')
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe('destroy', () => {
+    it('does not throw when called with no active streams', () => {
+      expect(() => activityLog.destroy()).not.toThrow();
+    });
+
+    it('does not throw when called after watching streams', async () => {
+      await activityLog.watchStream('https://example.org/stream.json', 'S');
+      expect(() => activityLog.destroy()).not.toThrow();
+    });
+  });
+
+  describe('pendingCount', () => {
+    it('returns 0 initially', () => {
+      expect(activityLog.pendingCount).toBe(0);
+    });
+
+    it('reflects length of pendingRemoteActivities', () => {
+      activityLog.reset();
+      expect(activityLog.pendingCount).toBe(activityLog.pendingRemoteActivities.length);
+    });
+  });
+
   describe('reset', () => {
     it('clears all state', async () => {
       await activityLog.record('ADD_CANVAS', 'c1', 'Canvas', 'Test');
@@ -621,6 +672,11 @@ describe('ActivityLogStore', () => {
       expect(activityLog.watchedStreams).toEqual([]);
       expect(activityLog.isSyncing).toBe(false);
       expect(activityLog.syncError).toBeNull();
+    });
+
+    it('resets hasConflicts to false', () => {
+      activityLog.reset();
+      expect(activityLog.hasConflicts).toBe(false);
     });
   });
 });

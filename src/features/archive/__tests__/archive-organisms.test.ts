@@ -229,7 +229,7 @@ describe('ArchiveList — table with items', () => {
   it('shows validation dot for canvas with issues', () => {
     const canvas = makeCanvas('https://example.org/canvas/1');
     const validationIssues = {
-      'https://example.org/canvas/1': [{ level: 'error' as const, message: 'Missing label' }],
+      'https://example.org/canvas/1': [{ id: 'v1', itemId: 'https://example.org/canvas/1', itemLabel: 'Canvas 1', level: 'error' as const, message: 'Missing label', category: 'Metadata' as const, fixable: false }],
     };
     instance = mount(ArchiveList, {
       target,
@@ -239,12 +239,14 @@ describe('ArchiveList — table with items', () => {
     expect(dot).toBeTruthy();
   });
 
-  it('applies bg-nb-yellow/20 thead background in fieldMode', () => {
+  it('renders table header with column names in fieldMode', () => {
     const items = [makeCanvas('https://example.org/canvas/1')];
     instance = mount(ArchiveList, { target, props: { ...baseProps, items, fieldMode: true } });
     const thead = target.querySelector('thead');
     expect(thead).toBeTruthy();
-    expect(thead!.className).toContain('bg-nb-yellow/20');
+    // Column headers should still be visible in fieldMode
+    expect(target.textContent).toContain('Name');
+    expect(target.textContent).toContain('Type');
   });
 
   it('renders sort arrow icon on active column header', () => {

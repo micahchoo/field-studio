@@ -23,20 +23,8 @@
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
-  // @migration: guidanceService stub -- will be wired when service layer migrates
-  // import { guidance } from '@/src/shared/services/guidanceService';
-  // @migration: WELCOME_MESSAGES stub -- will be imported from shared constants
-  // import { WELCOME_MESSAGES } from '@/src/shared/constants/helpContent';
-
-  // Stub type for welcome message content
-  interface WelcomeContent {
-    title: string;
-    body: string;
-    tips?: string[];
-  }
-
-  // Stub constant -- replace with actual import when helpContent migrates
-  const WELCOME_MESSAGES: Record<string, WelcomeContent> = {};
+  import { guidance } from '@/src/shared/services/guidanceService';
+  import { WELCOME_MESSAGES } from '@/src/shared/constants/helpContent';
 
   interface Props {
     mode: string;

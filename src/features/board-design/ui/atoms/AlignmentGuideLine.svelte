@@ -18,8 +18,6 @@
   - {#each} for list rendering (replaces .map())
 -->
 <script lang="ts">
-  // @migration: AlignmentGuide type comes from useAlignmentGuides hook
-  // When the hook is migrated, import from there instead
   interface AlignmentGuide {
     type: 'horizontal' | 'vertical';
     position: number;

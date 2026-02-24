@@ -27,11 +27,9 @@
     type FlatTreeNode,
   } from '../../lib/sidebarHelpers';
 
-  // @migration stub -- structure-view feature not yet migrated
-  // These components will be Svelte 5 components once structure-view is migrated
-  // import { VirtualTreeList } from '@/src/features/structure-view/ui/organisms/VirtualTreeList.svelte';
-  // import { TreeSearchBar } from '@/src/features/structure-view/ui/atoms/TreeSearchBar.svelte';
-  // import { useStructureTree } from '@/src/features/structure-view/stores/structureTree.svelte';
+  // Structure-view components available for future decomposition
+  // import VirtualTreeList from '@/src/features/structure-view/ui/molecules/VirtualTreeList.svelte';
+  // import TreeSearchBar from '@/src/features/structure-view/ui/atoms/TreeSearchBar.svelte';
 
   // ---------------------------------------------------------------------------
   // Types
@@ -139,7 +137,7 @@
   let expandedIds: Set<string> = $state(new Set<string>());
 
   // Resizable panel state
-  // @migration -- useResizablePanel hook will be a Svelte 5 runes store
+  // TODO(loop): Extract into a useResizablePanel runes store
   let panelWidth: number = $state(260);
   let isCollapsed: boolean = $state(false);
   const COLLAPSE_THRESHOLD = 180;
@@ -188,7 +186,7 @@
   /**
    * Flatten the IIIF tree into a list of nodes with depth, respecting
    * expand/collapse state and search filter.
-   * @migration -- Replace with VirtualTreeList + useStructureTree once migrated
+   * TODO(loop): Replace with VirtualTreeList + useStructureTree for virtualized rendering
    */
   const flatTreeNodes = $derived.by((): FlatTreeNode[] => {
     return flattenTree(root, expandedIds, treeSearchQuery);
@@ -200,7 +198,7 @@
     let count = 0;
     function walk(item: IIIFItem): void {
       count++;
-      const children = (item as unknown as Record<string, unknown>).items as IIIFItem[] | undefined;
+      const children = item.items as IIIFItem[] | undefined;
       if (children) children.forEach(walk);
     }
     walk(root);
@@ -243,7 +241,7 @@
     if (!root) return;
     const all = new Set<string>();
     function walk(item: IIIFItem): void {
-      const children = (item as unknown as Record<string, unknown>).items as IIIFItem[] | undefined;
+      const children = item.items as IIIFItem[] | undefined;
       if (children && children.length > 0) {
         all.add(item.id);
         children.forEach(walk);
@@ -439,7 +437,6 @@
   });
 
   // Nav-pulse animation CSS class on view change
-  // @migration -- will trigger a brief CSS animation on the active nav item
   let navPulseView: ViewType | null = $state(null);
 
   $effect(() => {
@@ -603,7 +600,7 @@
         {/if}
 
         <!-- Tree search bar -->
-        <!-- @migration placeholder -- TreeSearchBar from structure-view feature -->
+        <!-- TODO(loop): Replace with TreeSearchBar from structure-view feature -->
         <div class="px-2 py-2 border-b border-theme-border/50">
           <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-theme-surface-raised">
             <Icon name="search" size={14} class="text-theme-text-muted shrink-0" />
@@ -654,7 +651,7 @@
 
         <!-- Tree body (scrollable) -->
         <div bind:this={treeContainerRef} class="flex-1 overflow-y-auto" role="tree">
-          <!-- @migration: Replace with <VirtualTreeList> once structure-view is migrated -->
+          <!-- TODO(loop): Replace with <VirtualTreeList> for virtualized rendering -->
           <!-- Current implementation: simple flat list rendering with expand/collapse -->
           <!-- <VirtualTreeList
             root={root}

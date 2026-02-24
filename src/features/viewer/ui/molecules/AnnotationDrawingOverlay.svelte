@@ -144,6 +144,7 @@
           adapter: W3CImageFormat(canvas.id),
           drawingEnabled: isActive,
           userSelectAction: isActive ? UserSelectAction.EDIT : UserSelectAction.SELECT,
+          // eslint-disable-next-line @field-studio/no-unsafe-type-cast-in-props -- Annotorious DrawingStyleExpression: library's conditional typing doesn't match constructed style object
           style: annotationStyle ? ({
             stroke: annotationStyle.color,
             strokeWidth: annotationStyle.strokeWidth,

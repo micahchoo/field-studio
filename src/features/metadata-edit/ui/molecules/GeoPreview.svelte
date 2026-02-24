@@ -10,11 +10,11 @@
 
   const navPlaceService = {
      
-    getNavPlace: (item: any) => (item as any).navPlace || null,
-     
-    toGeoJSON: (np: any) => np,
-     
-    getBounds: (_np: any): { north: number; south: number; east: number; west: number } | null => null,
+    getNavPlace: (item: { navPlace?: unknown }) => (item.navPlace as import('@/src/shared/types').NavPlace) || null,
+
+    toGeoJSON: (np: import('@/src/shared/types').NavPlace) => np,
+
+    getBounds: (_np: import('@/src/shared/types').NavPlace): { north: number; south: number; east: number; west: number } | null => null,
   };
 
   const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
