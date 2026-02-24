@@ -10,9 +10,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ---- Shared actions ----
-import { focusTrap, type FocusTrapParams } from '../focusTrap';
-import { keyboardNav, type KeyboardNavParams } from '../keyboardNav';
-import { clickOutside, type ClickOutsideParams } from '../clickOutside';
+import { focusTrap } from '../focusTrap';
+import { keyboardNav } from '../keyboardNav';
+import { clickOutside } from '../clickOutside';
 import { resizablePanel, type ResizablePanelParams } from '../resizablePanel';
 import { dragDrop, type DragDropParams } from '../dragDrop';
 import { panZoomGestures, type PanZoomParams } from '../panZoomGestures';
@@ -250,7 +250,7 @@ describe('focusTrap', () => {
 
   it('activates/deactivates via update()', () => {
     const container = createElement();
-    const buttons = createFocusableChildren(container, 3);
+    createFocusableChildren(container, 3);
     const onClose = vi.fn();
 
     const action = focusTrap(container, { onClose, active: false, autoFocus: false });
@@ -292,7 +292,7 @@ describe('focusTrap', () => {
     outer.focus();
 
     const container = createElement();
-    const buttons = createFocusableChildren(container, 2);
+    createFocusableChildren(container, 2);
     const onClose = vi.fn();
 
     const action = focusTrap(container, { onClose, active: true, autoFocus: false });
@@ -1848,7 +1848,7 @@ describe('canvasDrag', () => {
     }));
 
     if (onMoveItem.mock.calls.length > 0) {
-      const [id, x, y] = onMoveItem.mock.calls[onMoveItem.mock.calls.length - 1];
+      const [_id, x, y] = onMoveItem.mock.calls[onMoveItem.mock.calls.length - 1];
       // Values should be snapped to grid of 20
       expect(x % 20).toBe(0);
       expect(y % 20).toBe(0);

@@ -5,7 +5,7 @@
  * Covers selectors, helpers, layout algorithms, snapping, and IIIF export.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import {
   // Types
@@ -13,10 +13,6 @@ import {
   type BoardState,
   type Connection,
   type ConnectionType,
-  type AnchorSide,
-  type IIIFContentType,
-  type BoardItemMeta,
-  type BoardGroup,
   type LayoutArrangement,
   // Functions
   selectAllItems,
@@ -38,8 +34,7 @@ import {
   createInitialBoardState,
 } from '../model/index';
 
-import type { IIIFItem, IIIFManifest } from '@/src/shared/types';
-import { getIIIFValue } from '@/src/shared/types';
+import type { IIIFItem } from '@/src/shared/types';
 
 // ============================================================================
 // Test Helpers
@@ -858,7 +853,7 @@ describe('autoArrangeItems', () => {
         makeBoardItem({ id: 'p1' }),
         makeBoardItem({ id: 'p2' }),
       ];
-      const resultLTR = autoArrangeItems(items, 'paged', canvasSize, 'left-to-right');
+      const _resultLTR = autoArrangeItems(items, 'paged', canvasSize, 'left-to-right');
       const resultRTL = autoArrangeItems(items, 'paged', canvasSize, 'right-to-left');
 
       // In RTL, first item (index 0) of each pair should be on the right

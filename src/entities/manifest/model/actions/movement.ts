@@ -11,7 +11,6 @@ import {
   normalize,
   updateEntity
 } from '../vault';
-import type { IIIFItem } from '@/src/shared/types';
 import type { PropertyChange } from '@/src/shared/services/provenanceService';
 import {
   getRelationshipType,

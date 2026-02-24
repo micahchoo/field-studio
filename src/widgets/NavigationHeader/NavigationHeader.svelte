@@ -85,6 +85,7 @@
   // svelte-ignore state_referenced_locally -- intentional: filter is initial value, $effect handles sync
   let localFilter = $state(filter);
 
+  // eslint-disable-next-line @field-studio/no-effect-for-derived -- two-way binding: localFilter written by both prop sync and ArchiveHeader bind:filter
   $effect(() => {
     // Sync prop -> local when parent changes it
     localFilter = filter;

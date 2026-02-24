@@ -1106,6 +1106,7 @@
                 ? 'bg-transparent text-nb-yellow hover:bg-nb-yellow/10'
                 : 'bg-transparent text-nb-black hover:bg-nb-black/5'
             )}
+            aria-label={cmd.label}
             onclick={() => { cmd.onExecute(); dialogs.commandPalette.close(); }}
           >
             <Icon name={cmd.icon} class="text-base opacity-60" />

@@ -13,7 +13,6 @@ import {
   updateEntity
 } from '../vault';
 import type { IIIFItem, IIIFManifest, IIIFRange } from '@/src/shared/types';
-import type { PropertyChange } from '@/src/shared/services/provenanceService';
 
 /** Union of all valid range item types (IIIF 3.0 §5.8). */
 type RangeItem = IIIFRange['items'][number];

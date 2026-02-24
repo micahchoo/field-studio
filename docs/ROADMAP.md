@@ -1,7 +1,7 @@
 # Field Studio — Roadmap
 
 _Single source of truth for feature parity with the pre-migration React codebase._
-_Written: 2026-02-24. Update after each phase closes: overwrite metrics, mark phase ✅._
+_Updated: 2026-02-24. Update after each phase closes: overwrite metrics, mark phase ✅._
 
 ---
 
@@ -18,15 +18,15 @@ Exit criterion per phase is measurable; prose alone does not close a phase.
 
 ---
 
-## Baseline (2026-02-24)
+## Baseline (2026-02-24, updated after Dead Code + Aria rounds)
 
 | Check | Result |
 |-------|--------|
 | `tsc --noEmit` | 0 errors |
 | `svelte-check` | 0 errors, 29 warnings |
 | `vitest` | 117 files, 4756 passing |
-| `eslint` | 0 errors, 310 warnings |
-| `grep -rc @migration src/` | ~60 markers |
+| `eslint` | 0 errors, **240 warnings** (was 310 at migration; reduced via 6 TYPE_DEBT rounds + dead code + semantic-HTML) |
+| `grep -rc @migration src/` | **85 markers** (non-actionable stubs — largest: ViewerView 25, BoardView 10, Sidebar 6, AuthDialog 6) |
 | Remaining `// TYPE_DEBT:` (actionable) | 5 structural items |
 | Workers implemented | 0 / 4 (all stubs) |
 | Deployment targets | 0 / 3 (web only) |
@@ -610,7 +610,7 @@ Reference: `docs/deployment/feature-parity-maintenance.md § CI/CD Pipeline`
 
 | Phase | Status | `@migration` count | TYPE_DEBT delta | Workers |
 |-------|--------|--------------------|-----------------|---------|
-| Baseline | current | ~60 | 5 structural | 0/4 |
+| Baseline | **current** | 85 | 5 structural | 0/4 |
 | D — Design system alignment | pending | — | — | — |
 | 1 — TYPE_DEBT structural | pending | — | 0 remaining | 0/4 |
 | 1.5 — items narrowing | deferred | — | — | — |

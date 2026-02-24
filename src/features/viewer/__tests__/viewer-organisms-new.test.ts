@@ -5,7 +5,7 @@
  * AnnotationToolPanel, CanvasComposer, CanvasComposerPanel, PolygonAnnotationTool
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mount, unmount, flushSync } from 'svelte';
+import { mount, unmount } from 'svelte';
 
 // Mock heavy external dependencies
 vi.mock('openseadragon', () => ({ default: { Viewer: vi.fn() } }));
@@ -47,7 +47,7 @@ function makeCanvas(overrides: Partial<IIIFCanvas> = {}): IIIFCanvas {
   } as IIIFCanvas;
 }
 
-function makeAnnotation(id: string): IIIFAnnotation {
+function _makeAnnotation(id: string): IIIFAnnotation {
   return {
     id,
     type: 'Annotation',

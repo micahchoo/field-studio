@@ -436,6 +436,7 @@
                   'hover:bg-nb-black/5 transition-colors border-b border-nb-black/10 last:border-b-0',
                   fieldMode && 'hover:bg-yellow-100/50'
                 )}
+                aria-label={result.name}
                 onclick={() => selectSearchResult(result)}
               >
                 <span class="block font-semibold truncate">{result.name}</span>

@@ -96,7 +96,7 @@ export function viewportKeyboard(node: HTMLElement, params: ViewportKeyboardPara
     enableRotation = true,
     enableReset = true,
     panStep = 50,
-    rotationStep = 90,
+    rotationStep: _rotationStep = 90,
     onZoomIn,
     onZoomOut,
     onPan,
@@ -266,7 +266,7 @@ export function viewportKeyboard(node: HTMLElement, params: ViewportKeyboardPara
       enableRotation = newParams.enableRotation ?? true;
       enableReset = newParams.enableReset ?? true;
       panStep = newParams.panStep ?? 50;
-      rotationStep = newParams.rotationStep ?? 90;
+      _rotationStep = newParams.rotationStep ?? 90;
       onZoomIn = newParams.onZoomIn;
       onZoomOut = newParams.onZoomOut;
       onPan = newParams.onPan;

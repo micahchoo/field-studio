@@ -149,6 +149,7 @@
                 ? 'bg-nb-white/60 text-nb-black/70 shadow-sm'
                 : 'text-nb-black/50 hover:text-nb-black'
             )}
+            aria-label={tab.label}
             onclick={() => { viewMode = tab.id as ViewMode; }}
           >
             <Icon name={tab.icon} class="text-sm" />

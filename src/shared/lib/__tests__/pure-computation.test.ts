@@ -406,7 +406,6 @@ describe('iiifTraversal', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 import { calculateGridVirtualization } from '../hooks/gridVirtualization';
-import type { GridVirtualizationConfig } from '../hooks/gridVirtualization';
 
 describe('gridVirtualization', () => {
   describe('calculateGridVirtualization', () => {
@@ -844,7 +843,7 @@ import {
   isNonPaged,
   categorizeUnknownBehaviors,
 } from '@/src/features/viewer/lib/viewingBehavior';
-import type { BehaviorCanvas, ViewingBehavior } from '@/src/features/viewer/lib/viewingBehavior';
+import type { BehaviorCanvas } from '@/src/features/viewer/lib/viewingBehavior';
 
 describe('viewingBehavior', () => {
   describe('resolveViewingBehavior', () => {

@@ -10,8 +10,6 @@ import {
   createMinimalManifest,
   createMinimalCollection,
   createManifest,
-  createCanvas,
-  createSupplementingAnnotation,
   createFullTree,
 } from './fixtures';
 
@@ -303,7 +301,7 @@ describe('Vault.move()', () => {
     const manifest = createManifest({ canvasCount: 2 });
     const vault = new Vault(manifest);
     const canvas1 = manifest.items[0].id;
-    const canvas2 = manifest.items[1].id;
+    const _canvas2 = manifest.items[1].id;
 
     // We need a second parent. Add another manifest as child.
     const manifest2 = createManifest({ canvasCount: 0 });

@@ -10,7 +10,7 @@
  * @see https://iiif.io/api/presentation/3.0/#placeholdercanvas
  */
 
-import { IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFManifest, LanguageMap } from '@/src/shared/types';
+import { IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, LanguageMap } from '@/src/shared/types';
 import { IMAGE_QUALITY } from '@/src/shared/constants';
 
 // ============================================================================
@@ -199,7 +199,7 @@ class AVService {
       case 'loop':
         // Loop content to fill duration
         if (canvasDuration && canvasDuration > originalDuration) {
-          const loops = Math.ceil(canvasDuration / originalDuration);
+          const _loops = Math.ceil(canvasDuration / originalDuration);
           return {
             effectiveDuration: canvasDuration,
             startOffset: 0

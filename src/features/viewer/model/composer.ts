@@ -31,7 +31,6 @@
  *     applied in the component via use:panZoomGestures / use:viewportKeyboard
  */
 
-import type { IIIFCanvas, IIIFItem } from '@/src/shared/types';
 
 // Re-export PlacedResource from layerHistory for consumers of this module
 export type { PlacedResource } from '@/src/shared/lib/hooks/layerHistory.svelte';

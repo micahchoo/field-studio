@@ -255,6 +255,7 @@
 
     <!-- Annotate button -->
     <button
+      aria-label="Toggle annotation tool"
       type="button"
       onclick={onToggleAnnotationTool}
       title="Toggle annotation tool (A)"

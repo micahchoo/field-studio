@@ -1,5 +1,5 @@
 
-import { getIIIFValue, IIIFCanvas, IIIFManifest, IIIFRange } from '@/src/shared/types';
+import { getIIIFValue, IIIFManifest, IIIFRange } from '@/src/shared/types';
 
 export const autoStructureService = {
   /**
@@ -14,7 +14,7 @@ export const autoStructureService = {
     let currentRange: IIIFRange | null = null;
     let lastNum: number | null = null;
 
-    canvases.forEach((canvas, idx) => {
+    canvases.forEach((canvas) => {
         const label = getIIIFValue(canvas.label);
         const numMatch = label.match(/(\d+)/);
         const currentNum = numMatch ? parseInt(numMatch[1], 10) : null;

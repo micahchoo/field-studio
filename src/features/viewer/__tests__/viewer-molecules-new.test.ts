@@ -7,7 +7,7 @@
  * PagedViewer, TimeAnnotationOverlay
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mount, unmount, flushSync } from 'svelte';
+import { mount, unmount } from 'svelte';
 
 // Mock heavy external dependencies
 vi.mock('openseadragon', () => ({ default: { Viewer: vi.fn() } }));
@@ -230,7 +230,7 @@ describe('AnnotationForm', () => {
         cx,
       },
     });
-    const tagBtn = target.querySelector('[aria-pressed]') as HTMLButtonElement;
+    const _tagBtn = target.querySelector('[aria-pressed]') as HTMLButtonElement;
     // Click second button (Tag)
     const buttons = target.querySelectorAll('[role="group"] button');
     (buttons[1] as HTMLButtonElement).click();

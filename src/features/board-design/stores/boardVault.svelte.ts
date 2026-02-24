@@ -131,7 +131,7 @@ export class BoardVaultStore {
   }
 
   /** Create a new empty board with the given id */
-  createBoard(id: string, label?: string): void {
+  createBoard(id: string, _label?: string): void {
     this.#state = {
       id,
       items: [],

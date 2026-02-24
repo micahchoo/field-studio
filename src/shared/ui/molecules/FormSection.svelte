@@ -37,6 +37,7 @@
 
 <section class={cn(cx.surface || 'border-2 border-nb-black', 'overflow-hidden')}>
   <button
+    aria-label="Toggle {title}"
     type="button"
     class={cn(
       'w-full flex items-center gap-2 px-4 py-3 cursor-pointer border-0',

@@ -14,7 +14,7 @@ import {
   removeEntity,
   updateEntity
 } from '../vault';
-import type { IIIFItem, LanguageMap } from '@/src/shared/types';
+import type { IIIFItem } from '@/src/shared/types';
 import type { PropertyChange } from '@/src/shared/services/provenanceService';
 import { validateLanguageMap } from './validation';
 

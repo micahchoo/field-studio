@@ -66,6 +66,7 @@
   type="button"
   class={tagClass}
   {onclick}
+  aria-label={definition?.description ?? behavior}
   title={definition?.description ?? behavior}
 >
   <span>{displayLabel}</span>

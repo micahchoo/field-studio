@@ -109,6 +109,7 @@
         role="radio"
         aria-checked={isActive}
         {disabled}
+        aria-label={opt.label}
         onclick={() => onChange(opt.mode)}
         class={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 border text-left transition-nb',

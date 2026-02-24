@@ -672,6 +672,7 @@
 
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <button
+                  aria-label={node.label}
                   class={cn(
                     'w-full flex items-center gap-1.5 py-1 pr-2 text-left',
                     'text-xs transition-colors group',

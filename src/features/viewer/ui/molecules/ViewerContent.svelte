@@ -193,6 +193,7 @@
             <p class="text-xs font-mono uppercase tracking-wider opacity-60">Chapters</p>
             {#each chapters as chapter}
               <button
+                aria-label={chapter.label}
                 type="button"
                 class={cn(
                   'block w-full text-left px-2 py-1 text-sm font-mono transition-nb',

@@ -260,6 +260,7 @@
             type="button"
             class={menuItemBase}
             role="menuitem"
+            aria-label={menuItem.label}
             onclick={() => { menuItem.action(); }}
           >
             <Icon

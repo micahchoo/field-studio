@@ -406,11 +406,3 @@ export function getEntityLabelText(entity: IIIFItem): string {
   return lastSegment;
 }
 
-/**
- * Internal helper to build the breadcrumb path.
- * This is the same as getEntityPath but returns the intermediate result
- * format used internally by ancestor/path functions.
- */
-function buildBreadcrumbPath(state: NormalizedState, id: string): BreadcrumbSegment[] {
-  return getEntityPath(state, id);
-}

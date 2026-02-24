@@ -18,10 +18,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // 1. ImageFilterStore
 // ============================================================================
 
-import {
-  ImageFilterStore,
-  type ImageFilterState,
-} from '@/src/features/viewer/model/imageFilters.svelte';
+import { ImageFilterStore } from '@/src/features/viewer/model/imageFilters.svelte';
 
 describe('ImageFilterStore', () => {
   let store: ImageFilterStore;
@@ -148,10 +145,7 @@ describe('ImageFilterStore', () => {
 // 2. ComparisonStore
 // ============================================================================
 
-import {
-  ComparisonStore,
-  type ComparisonMode,
-} from '@/src/features/viewer/model/comparison.svelte';
+import { ComparisonStore } from '@/src/features/viewer/model/comparison.svelte';
 
 describe('ComparisonStore', () => {
   let store: ComparisonStore;
@@ -270,11 +264,7 @@ describe('ComparisonStore', () => {
 // 3. MeasurementStore
 // ============================================================================
 
-import {
-  MeasurementStore,
-  type MeasurementPoint,
-  type Measurement,
-} from '@/src/features/viewer/model/measurement.svelte';
+import { MeasurementStore } from '@/src/features/viewer/model/measurement.svelte';
 
 describe('MeasurementStore', () => {
   let store: MeasurementStore;
@@ -457,10 +447,7 @@ describe('MeasurementStore', () => {
 // 4. AnnotationLayerStore
 // ============================================================================
 
-import {
-  AnnotationLayerStore,
-  type AnnotationLayer,
-} from '@/src/features/viewer/model/annotationLayers.svelte';
+import { AnnotationLayerStore } from '@/src/features/viewer/model/annotationLayers.svelte';
 
 describe('AnnotationLayerStore', () => {
   let store: AnnotationLayerStore;

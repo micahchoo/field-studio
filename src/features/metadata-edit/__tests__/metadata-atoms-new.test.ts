@@ -10,7 +10,7 @@
  * - IIIF canvas / manifest mock data shapes
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // ============================================================================
 // Mock IIIF data helpers
@@ -28,7 +28,7 @@ function makeCanvas(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeManifest(canvases: ReturnType<typeof makeCanvas>[] = []) {
+function _makeManifest(canvases: ReturnType<typeof makeCanvas>[] = []) {
   return {
     id: 'https://example.org/manifest/1',
     type: 'Manifest' as const,

@@ -34,13 +34,12 @@ import { FEATURE_FLAGS } from '@/src/shared/constants';
 import { uiLog } from '@/src/shared/services/logger';
 
 import type {
-  IIIFAnnotation,
   IIIFAnnotationBody,
   IIIFCanvas,
   IIIFExternalWebResource,
   IIIFItem
 } from '@/src/shared/types';
-import type { ImageApiProfile, ImageServiceInfo } from '@/utils/iiifImageApi';
+import type { ImageApiProfile } from '@/utils/iiifImageApi';
 
 // ============================================================================
 // Feature Flag Check

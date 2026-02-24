@@ -18,7 +18,7 @@
  * @see https://iiif.io/api/annex/oai/#temporal-media - IIIF Temporal Annotation
  */
 
-import type { IIIFAnnotation, IIIFCanvas } from '@/src/shared/types';
+import type { IIIFAnnotation } from '@/src/shared/types';
 
 // ============================================================================
 // Point type (locally defined; matches shared/constants/viewport.Point)

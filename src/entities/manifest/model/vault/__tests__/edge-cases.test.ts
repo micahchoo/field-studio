@@ -7,20 +7,17 @@ import { normalize, createEmptyState } from '../normalization';
 import { denormalize } from '../denormalization';
 import { updateEntity, addEntity, removeEntity } from '../updates';
 import { moveEntityToTrash, restoreEntityFromTrash, emptyTrash } from '../trash';
-import { moveEntity, reorderChildren, insertChildAt, removeChild } from '../movement';
+import { moveEntity, reorderChildren } from '../movement';
 import { addToCollection, removeFromCollection, getCollectionMembers } from '../collections';
 import { getEntity, hasEntity, getChildIds, getParentId, getDescendants, getAncestors, getTotalEntityCount } from '../queries';
-import { deepCloneState } from '../cloning';
 import { Vault } from '../vault';
-import type { IIIFItem, IIIFManifest, IIIFCanvas, IIIFCollection, NormalizedState } from '@/src/shared/types';
+import type { IIIFItem, IIIFManifest } from '@/src/shared/types';
 import {
   resetIds,
   createMinimalManifest,
   createMinimalCollection,
   createManifest,
-  createCanvas,
   createFullTree,
-  createSupplementingAnnotation,
 } from './fixtures';
 
 beforeEach(() => resetIds());
@@ -164,7 +161,7 @@ describe('immutability guarantees', () => {
     const manifest = createManifest({ canvasCount: 2 });
     const state = normalize(manifest);
     const canvas1 = manifest.items[0].id;
-    const canvas2 = manifest.items[1].id;
+    const _canvas2 = manifest.items[1].id;
 
     // Add a second manifest to move to
     const manifest2 = createManifest({ canvasCount: 0 });

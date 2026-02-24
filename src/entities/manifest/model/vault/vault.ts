@@ -11,11 +11,11 @@
 import type { IIIFItem, IIIFManifest, NormalizedState, VaultSnapshot } from '@/src/shared/types';
 import { createEmptyState, normalize } from './normalization';
 import { denormalize } from './denormalization';
-import { getChildIds, getEntitiesByType, getEntity, getParentId } from './queries';
+import { getChildIds, getEntity, getParentId } from './queries';
 import { addToCollection, getCollectionMembers, getCollectionsContaining, getOrphanManifests, isOrphanManifest, removeFromCollection } from './collections';
 import { addEntity, removeEntity, updateEntity } from './updates';
 import { emptyTrash, moveEntityToTrash, restoreEntityFromTrash } from './trash';
-import { moveEntity, reorderChildren } from './movement';
+import { moveEntity } from './movement';
 
 /**
  * Vault class - Stateful wrapper for IIIF resource management

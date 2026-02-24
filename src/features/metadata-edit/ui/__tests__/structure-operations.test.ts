@@ -16,8 +16,6 @@ import type { IIIFRange, IIIFRangeReference } from '@/src/shared/types';
 // Local type alias
 // ------------------------------------------------------------------
 
-type RangeItem = IIIFRangeReference | IIIFRange;
-
 // ------------------------------------------------------------------
 // Functions under test (extracted from StructureTabPanel logic)
 // ------------------------------------------------------------------

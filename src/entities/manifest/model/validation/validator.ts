@@ -1,13 +1,5 @@
 import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
-import {
-  getRecommendedProperties,
-  IIIF_SCHEMA,
-  isBehaviorAllowed,
-  validateResource as schemaValidateResource,
-} from '@/utils/iiifSchema';
-
-
-import { isValidHttpUri } from '@/utils';
+import { validateResource as schemaValidateResource } from '@/utils/iiifSchema';
 import {
   doesInheritBehavior,
   findBehaviorConflicts,

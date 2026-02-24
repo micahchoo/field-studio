@@ -42,6 +42,7 @@
 
   // Sync external value changes into local state.
   // Cannot be $derived: localValue is also written by scheduleFlush (controlled input pattern).
+  // eslint-disable-next-line @field-studio/no-effect-for-derived -- two-way binding: localValue written by both prop sync and user input
   $effect(() => {
     localValue = value;
   });

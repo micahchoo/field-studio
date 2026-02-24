@@ -312,6 +312,7 @@
                         ? 'hover:bg-nb-black/80 text-nb-yellow/80 bg-transparent'
                         : 'hover:bg-nb-cream text-nb-black/80 bg-transparent'
                   )}
+                  aria-label={suggestion}
                   onclick={() => handleSelectSuggestion(suggestion)}
                   role="option"
                   aria-selected={i === autocompleteIndex}

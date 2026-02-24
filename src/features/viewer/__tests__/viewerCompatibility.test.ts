@@ -26,7 +26,6 @@ import {
   viewerCompatibility,
   type ViewerName,
   type CompatibilityReport,
-  type CompatibilityIssue,
 } from '@/src/features/viewer/model/viewerCompatibility';
 
 import type {
@@ -378,7 +377,7 @@ describe('checkCompatibility - scoring', () => {
 
   it('deducts 5 points per warning', () => {
     // Construct a report with a known single-warning scenario
-    const report: CompatibilityReport = {
+    const _report: CompatibilityReport = {
       timestamp: new Date().toISOString(),
       manifestId: 'test',
       overallScore: 0,

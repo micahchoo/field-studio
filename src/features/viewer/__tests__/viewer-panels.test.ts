@@ -9,7 +9,7 @@
  *   - Correct ARIA attributes on the panel
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mount, unmount, flushSync } from 'svelte';
+import { mount, unmount } from 'svelte';
 import ViewerPanels from '../ui/molecules/ViewerPanels.svelte';
 import type { IIIFManifest } from '@/src/shared/types';
 import { LIGHT_CLASSES } from '@/src/shared/lib/contextual-styles';

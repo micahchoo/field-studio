@@ -103,14 +103,14 @@
             {/if}
 
             {#if isEditing}
-              <button onclick={onCancel} class="flex items-center gap-1 text-xs px-2 py-1 border hover:opacity-70">
+              <button aria-label="Cancel editing" onclick={onCancel} class="flex items-center gap-1 text-xs px-2 py-1 border hover:opacity-70">
                 <span class="material-icons text-sm">close</span> Cancel
               </button>
-              <button onclick={onSave} class="flex items-center gap-1 text-xs px-2 py-1 bg-nb-black text-white hover:opacity-80">
+              <button aria-label="Save changes" onclick={onSave} class="flex items-center gap-1 text-xs px-2 py-1 bg-nb-black text-white hover:opacity-80">
                 <span class="material-icons text-sm">check</span> Save
               </button>
             {:else}
-              <button onclick={onEdit} class="flex items-center gap-1 text-xs px-2 py-1 border hover:opacity-70">
+              <button aria-label="Edit metadata" onclick={onEdit} class="flex items-center gap-1 text-xs px-2 py-1 border hover:opacity-70">
                 <span class="material-icons text-sm">edit</span> Edit
               </button>
             {/if}
@@ -136,7 +136,7 @@
         {@const groupInfo = groupLabels[group]}
         <div class={`border overflow-hidden ${fieldMode ? 'border-nb-black' : 'border-nb-black/20'}`}>
           <!-- Group header -->
-          <button
+          <button aria-label="Toggle group"
             onclick={() => toggleGroup(group)}
             class={`w-full flex items-center justify-between px-4 py-3 transition-nb ${fieldMode ? 'hover:bg-nb-black' : 'hover:bg-nb-white'} ${group === 'basic' ? (fieldMode ? 'bg-nb-black/50' : 'bg-nb-white') : ''}`}
           >

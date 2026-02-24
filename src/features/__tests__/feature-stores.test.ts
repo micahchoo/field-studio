@@ -676,7 +676,7 @@ describe('PresentationModeStore', () => {
 // 4. SearchStore
 // ============================================================================
 
-import { SearchStore, type SearchFilter } from '@/src/features/search/stores/search.svelte';
+import { SearchStore } from '@/src/features/search/stores/search.svelte';
 
 describe('SearchStore', () => {
   let search: SearchStore;
@@ -2011,7 +2011,7 @@ describe('StagingStateStore', () => {
     const id = staging.createCollection('Root');
     expect(staging.rootCollectionId).toBe(id);
 
-    const id2 = staging.createCollection('Second');
+    const _id2 = staging.createCollection('Second');
     expect(staging.rootCollectionId).toBe(id); // Still the first one
   });
 

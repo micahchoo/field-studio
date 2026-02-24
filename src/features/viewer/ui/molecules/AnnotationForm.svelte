@@ -68,6 +68,7 @@
         onclick={() => onMotivationChange(m.value)}
         aria-pressed={motivation === m.value}
         title={m.label}
+        aria-label={m.label}
       >
         <span class="material-symbols-outlined text-sm leading-none">{m.icon}</span>
         <span class="hidden sm:inline">{m.label}</span>

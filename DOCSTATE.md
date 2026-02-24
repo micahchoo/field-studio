@@ -8,16 +8,23 @@ _Updated: 2026-02-24. Single source of truth for doc health._
 
 | Doc | Audience | Status | Action |
 |-----|----------|--------|--------|
-| `README.md` | Developers | FIXED this round | Port, commands, architecture, framework |
-| `docs/AGENTS.md` | AI coding agents | FIXED this round | Full rewrite for Svelte 5 |
-| `docs/CLAUDE.md` | Claude Code | FIXED this round | Full rewrite for Svelte 5 |
-| `lint.md` | — | ARTIFACT | Should be deleted or gitignored — it's a raw ESLint dump, not a doc |
-| `docs/Architecture/*.md` | Developers | STALE | Pre-migration React architecture docs. Marked stale pending removal or replacement |
+| `README.md` | Developers | CURRENT | Fixed prev round: port, commands, architecture, framework |
+| `docs/AGENTS.md` | AI coding agents | CURRENT | Rewritten prev round for Svelte 5 |
+| `docs/CLAUDE.md` | Claude Code | CURRENT | Rewritten prev round for Svelte 5 |
+| `docs/Architecture.md` | Developers | **REPLACED this round** | Single consolidated file replaces 4 stale React docs |
+| `docs/Architecture/*.md` (4 files) | — | **STALE — superseded** | `Utils.md`, `UX.md`, `Utility.md`, `Underneath.md` — 100% pre-migration React. Superseded by `docs/Architecture.md`. Safe to delete. |
+| `docs/ROADMAP.md` | Developers | **UPDATED this round** | Baseline metrics corrected: ESLint 310→240, @migration 60→85 |
+| `lint.md` | — | ARTIFACT | Gitignored this round |
+| `STATE.md` | Developers | CURRENT | Migration log, accurate through Dead Code + Aria round |
 | `docs/feature planning/*.md` | — | PLANNING | Future planning artifacts — not user docs, leave as-is |
 | `docs/deployment/*.md` | Developers | UNVERIFIED | May still be accurate; not reviewed this round |
 | `docs/canopy/*.md` | Developers | UNVERIFIED | Canopy export reference; not reviewed this round |
 | `docs/iiiif apis/*.md` | Developers | EXTERNAL | IIIF spec copies — read-only references, no drift risk |
-| `STATE.md` | Developers | CURRENT | Migration log, accurate |
+| `docs/immich-api-docs/*.md` | Developers | EXTERNAL | Immich API reference — read-only, no drift risk |
+| `docs/Atomic System *.md` | — | STALE | Pre-migration React atomic design docs. Superseded by FSD. Safe to delete. |
+| `docs/ESLINT_ENHANCEMENTS.md` | Developers | UNVERIFIED | ESLint enhancement proposals — not reviewed this round |
+| `docs/Testing Suite based on Atomic .md` | — | STALE | Pre-migration React testing doc. Safe to delete. |
+| `docs/atomic-design-feature-audit.md` | — | STALE | Pre-migration audit. Safe to delete. |
 
 ---
 
@@ -36,7 +43,33 @@ _All gaps are TODO(loop) for next round when user-guide content is prioritized._
 
 ---
 
-## What Changed This Round (2026-02-24)
+## What Changed This Round (2026-02-24, doc sync round)
+
+### docs/Architecture.md — NEW (replaces 4 stale files)
+
+- Created single consolidated architecture document for the Svelte 5 FSD codebase
+- Covers: FSD structure, vault/NormalizedState internals, action system (26 types), service worker pipeline, storage (IDB + OPFS), 20 services catalog, 7-view routing, 15 widgets, validation, test infrastructure, known debt
+- Does not duplicate CLAUDE.md (which covers patterns and gotchas) — Architecture.md goes deeper on system design
+- Supersedes `docs/Architecture/{Utils,UX,Utility,Underneath}.md` (all 100% pre-migration React)
+
+### docs/ROADMAP.md — UPDATED
+
+- Baseline metrics corrected: `eslint` 310 → **240 warnings** (reduced via 6 TYPE_DEBT rounds, dead code cleanup, semantic-HTML conversion)
+- Baseline `@migration` count corrected: ~60 → **85 markers** (more accurate grep; these are non-actionable stubs in ViewerView, BoardView, Sidebar, AuthDialog)
+- Tracking table updated with current baseline count
+- All phase statuses unchanged (all still pending) — phases are accurately described
+
+### DOCSTATE.md — REWRITTEN
+
+- Architecture status: STALE → REPLACED (new consolidated `docs/Architecture.md`)
+- Added stale pre-migration docs to summary: `Atomic System*.md`, `Testing Suite*.md`, `atomic-design-feature-audit.md`
+- lint.md: confirmed gitignored
+- Updated gaps (unchanged — still waiting on user-guide round)
+- Updated next-round checklist
+
+---
+
+## Previous Round (2026-02-24, doc fix round)
 
 ### README.md
 - Removed 300-line React architecture ASCII diagram
@@ -60,18 +93,20 @@ _All gaps are TODO(loop) for next round when user-guide content is prioritized._
 - Removed React hook patterns
 - Correct vault usage (vault.dispatch not actions singleton)
 
-### lint.md
-- NOT deleted this round (destructive) but flagged here
-- Recommendation: add `lint.md` to `.gitignore`
-
 ---
 
 ## Drift Prevention
 
-**Rule added this round:** Any PR that changes `vite.config.ts` server port, adds/removes package.json scripts, or renames key src/ paths must update README.md and AGENTS.md in the same commit.
+**Rule (prev round):** Any PR that changes `vite.config.ts` server port, adds/removes package.json scripts, or renames key src/ paths must update README.md and AGENTS.md in the same commit.
 
-**Next round checklist:**
+**Rule (this round):** `docs/Architecture.md` is the canonical architecture doc. The 4 files in `docs/Architecture/` are superseded. Do not update them — update `docs/Architecture.md` instead. When a ROADMAP phase is completed, update both `docs/ROADMAP.md` tracking table and `STATE.md` phase metrics in the same commit.
+
+---
+
+## Next Round Checklist
+
+- [ ] Delete stale pre-migration docs: `docs/Architecture/{Utils,UX,Utility,Underneath}.md`, `docs/Atomic System*.md`, `docs/Testing Suite*.md`, `docs/atomic-design-feature-audit.md`
 - [ ] Write user guide: "Using Field Studio" (7 views, import, export, keyboard shortcuts)
-- [ ] Delete or gitignore `lint.md`
-- [ ] Review/archive `docs/Architecture/*.md` (4 pre-migration files, ~2000 lines)
 - [ ] Verify `docs/deployment/README.md` accuracy
+- [ ] Verify `docs/ESLINT_ENHANCEMENTS.md` accuracy
+- [ ] Review `docs/feature planning/uiuxstatus.md` against current UI state

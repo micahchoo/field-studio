@@ -265,6 +265,7 @@
     <!-- Validation errors/warnings -->
     {#if (errorCount + warningCount) > 0}
       <button
+        aria-label="Open QC Dashboard"
         type="button"
         class={cn(
           'flex items-center gap-1 cursor-pointer transition-nb px-2 py-0.5 border-2',

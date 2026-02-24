@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { normalize } from '../normalization';
 import { updateEntity, addEntity, removeEntity } from '../updates';
 import { getEntity, hasEntity, getChildIds, getParentId } from '../queries';
-import type { IIIFCanvas, IIIFItem, IIIFManifest } from '@/src/shared/types';
-import { resetIds, createMinimalManifest, createMinimalCollection, createManifest } from './fixtures';
+import type { IIIFCanvas, IIIFItem } from '@/src/shared/types';
+import { resetIds, createMinimalManifest } from './fixtures';
 
 beforeEach(() => resetIds());
 
@@ -21,7 +21,7 @@ describe('updateEntity', () => {
   it('preserves unmodified entities (structural sharing)', () => {
     const manifest = createMinimalManifest();
     const state = normalize(manifest);
-    const canvasId = manifest.items[0].id;
+    const _canvasId = manifest.items[0].id;
 
     const newState = updateEntity(state, manifest.id, { label: { en: ['Updated'] } });
 

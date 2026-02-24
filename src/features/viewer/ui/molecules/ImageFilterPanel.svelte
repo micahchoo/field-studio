@@ -85,6 +85,7 @@
 
 {#snippet toggleRow(label: string, icon: string, active: boolean, ontoggle: () => void)}
   <button
+    aria-label={label}
     type="button"
     onclick={ontoggle}
     class={cn(

@@ -33,12 +33,6 @@ const logger = {
 // Inlined utilities (adapted from @/utils for Svelte migration)
 // ============================================================================
 
-type LanguageMap = Record<string, string[]>;
-
-function createLanguageMap(value: string, lang = 'none'): LanguageMap {
-  return { [lang]: [value] };
-}
-
 const DEFAULT_VIEWING_DIRECTION = 'left-to-right';
 
 const IMAGE_API_PROTOCOL = 'http://iiif.io/api/image';
@@ -65,20 +59,6 @@ function isValidViewingDirection(dir: string): boolean {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isCanvas(item: any): boolean {
   return item && (item.type === 'Canvas' || item['@type'] === 'sc:Canvas');
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isImageService3(service: any): boolean {
-  return service && service.type === 'ImageService3';
-}
-
-function isValidHttpUri(uri: string): boolean {
-  try {
-    const url = new URL(uri);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 const IIIF_CONTEXT = 'http://iiif.io/api/presentation/3/context.json';

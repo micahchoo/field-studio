@@ -111,7 +111,7 @@ describe('ViewerWorkbench', () => {
     // With a canvas that has a direct body.id but no service, url is just the imageId.
     // If body had no id either, it would show the fallback text.
     // The body still has an id, so the img tag will render with that id as src.
-    const img = target.querySelector('img[alt="IIIF Image preview"]');
+    const _img = target.querySelector('img[alt="IIIF Image preview"]');
     // Even without service, if rawImageId exists the img element renders.
     // This test verifies the component renders without error regardless.
     expect(target.querySelector('[role="dialog"]')).toBeTruthy();

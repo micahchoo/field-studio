@@ -182,9 +182,9 @@ describe('activityLog.setRecording', () => {
 
 describe('activityLog.resolveConflict', () => {
   /** Inject a synthetic conflict for testing resolution */
-  function injectConflict(id: string) {
+  function _injectConflict(id: string) {
     // We access private state via cast — necessary for unit testing
-    const store = activityLog as unknown as {
+    const _store = activityLog as unknown as {
       _conflicts?: unknown[];
     };
     // Reset and inject a fake conflict by calling reset + patching

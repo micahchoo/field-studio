@@ -149,3 +149,36 @@ export function setUserIntentContext(value: UserIntentContext): void {
 export function getUserIntentContext(): UserIntentContext {
   return getContext<UserIntentContext>(USER_INTENT_KEY);
 }
+
+// ────────────────────────────────────────────────────────────────
+// Layout Contexts (component-scoped)
+// Used by PaneLayout, Split, SplitPanel
+// ────────────────────────────────────────────────────────────────
+
+export type PaneVariant = 'default' | 'canvas';
+
+export interface ReactiveValue<T> {
+  readonly value: T;
+}
+
+const PANE_VARIANT_KEY = Symbol('pane-variant');
+
+export function setPaneVariantContext(value: ReactiveValue<PaneVariant>): void {
+  setContext(PANE_VARIANT_KEY, value);
+}
+
+export function getPaneVariantContext(): ReactiveValue<PaneVariant> | undefined {
+  return getContext<ReactiveValue<PaneVariant>>(PANE_VARIANT_KEY);
+}
+
+export type SplitDirection = 'horizontal' | 'vertical';
+
+const SPLIT_DIRECTION_KEY = Symbol('split-direction');
+
+export function setSplitDirectionContext(value: ReactiveValue<SplitDirection>): void {
+  setContext(SPLIT_DIRECTION_KEY, value);
+}
+
+export function getSplitDirectionContext(): ReactiveValue<SplitDirection> {
+  return getContext<ReactiveValue<SplitDirection>>(SPLIT_DIRECTION_KEY);
+}

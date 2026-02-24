@@ -15,7 +15,6 @@
 
 import {
   emptyTrash,
-  getDescendants,
   getEntity,
   moveEntityToTrash,
   NormalizedState,
@@ -526,7 +525,7 @@ export class TrashService {
     const now = Date.now();
     const expirationThreshold = now - (this.config.retentionDays - 7) * 24 * 60 * 60 * 1000;
 
-    for (const [id, trashed] of entries) {
+    for (const [_id, trashed] of entries) {
       // Estimate size (rough approximation)
       totalSize += this.estimateEntitySize(trashed.entity);
 
@@ -609,7 +608,7 @@ export class TrashService {
 
     // Permanently delete expired items
     let currentState = state;
-    for (const id of expiredIds) {
+    for (const _id of expiredIds) {
       const result = emptyTrash(currentState);
       currentState = result.state;
     }

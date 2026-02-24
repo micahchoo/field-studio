@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { setContext } from 'svelte';
   import { cn } from '@/src/shared/lib/cn';
+  import { setPaneVariantContext } from '@/src/shared/stores/contexts';
 
   interface Props {
     variant?: 'default' | 'canvas';
@@ -27,7 +27,7 @@
     bodyClass = '',
   }: Props = $props();
 
-  setContext('pane-variant', { get value() { return variant; } });
+  setPaneVariantContext({ get value() { return variant; } });
 
   let shouldScroll = $derived(bodyScroll !== undefined ? bodyScroll : variant === 'default');
 </script>

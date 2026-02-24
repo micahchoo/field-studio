@@ -32,7 +32,7 @@ class ActivityStreamService {
     });
   }
 
-  recordUpdate(entityId: string, entityType: string, changes?: unknown): ActivityEntry {
+  recordUpdate(entityId: string, entityType: string, _changes?: unknown): ActivityEntry {
     return this.record({
       type: 'update',
       summary: `Updated ${entityType}`,

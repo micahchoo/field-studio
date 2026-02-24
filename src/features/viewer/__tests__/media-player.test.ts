@@ -86,7 +86,7 @@ function makeChapters(): ChapterMarker[] {
   ];
 }
 
-const cx = {} as any;
+const _cx = {} as any;
 
 let target: HTMLDivElement;
 let instance: Record<string, any>;
@@ -453,7 +453,7 @@ describe('MediaPlayer', () => {
       });
 
       // Chapter markers have group/ch class for hover behavior
-      const chapterMarkers = target.querySelectorAll('.group\\/ch');
+      const _chapterMarkers = target.querySelectorAll('.group\\/ch');
       // Chapters may not render if duration is 0 (due to {#if duration > 0} check)
       // With default duration=0, chapters are conditionally hidden
       // This is correct behavior -- chapters only display when media is loaded

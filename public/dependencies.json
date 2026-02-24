@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T09:42:51.613Z",
+  "generatedAt": "2026-02-24T17:49:29.011Z",
   "totalFiles": 234,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -2577,9 +2577,7 @@
         }
       ],
       "dependencies": [],
-      "dependents": [
-        "src/entities/manifest/model/builders/iiifBuilder.ts"
-      ],
+      "dependents": [],
       "size": 919,
       "lines": 35
     },
@@ -2590,20 +2588,8 @@
       "extension": ".ts",
       "imports": [
         {
-          "source": "@/src/shared/services/logger",
-          "specifiers": [
-            "storageLog"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
           "source": "@/src/shared/types",
           "specifiers": [
-            "FileStatus",
             "FileTree",
             "IIIFAnnotation",
             "IIIFAnnotationPage",
@@ -2621,7 +2607,6 @@
             "IngestReport",
             "IngestResult",
             "IngestStage",
-            "isCollection",
             "LegacyProgressCallback"
           ],
           "isTypeImport": false,
@@ -2644,21 +2629,14 @@
         {
           "source": "@/src/shared/constants",
           "specifiers": [
-            "DEFAULT_INGEST_PREFS",
-            "FEATURE_FLAGS",
-            "getDerivativePreset",
             "IIIF_CONFIG",
             "IIIF_SPEC",
-            "IMAGE_QUALITY",
             "isAudioFile",
             "isImageFile",
-            "isRasterImage",
             "isSvgFile",
             "isVideoFile",
             "MIME_TYPE_MAP",
-            "resolveFileFormat",
-            "USE_ENHANCED_PROGRESS",
-            "USE_WORKER_INGEST"
+            "resolveFileFormat"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -2678,47 +2656,9 @@
           "isInternalAlias": false
         },
         {
-          "source": "@/src/shared/services/metadataHarvester",
-          "specifiers": [
-            "extractMetadata"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "../ingest/tileWorker",
-          "specifiers": [
-            "generateDerivativeAsync",
-            "getTileWorkerPool"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "@/src/entities/canvas/model/fileIntegrity",
-          "specifiers": [
-            "fileIntegrity",
-            "HashLookupResult"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
           "source": "@/utils/iiifHierarchy",
           "specifiers": [
-            "generateId",
-            "getRelationshipType",
-            "isStandaloneType",
-            "isValidChildType"
+            "generateId"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -2729,57 +2669,9 @@
         {
           "source": "@/utils",
           "specifiers": [
-            "createImageServiceReference",
-            "DEFAULT_VIEWING_DIRECTION",
-            "getContentTypeFromFilename",
-            "getMimeTypeString",
-            "IMAGE_API_PROTOCOL",
-            "isImageMimeType",
-            "isTimeBasedMimeType",
-            "suggestBehaviors",
-            "validateResource"
+            "getMimeTypeString"
           ],
           "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "./fileLifecycle",
-          "specifiers": [
-            "getFileLifecycleManager"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "../ingest/ingestWorkerPool",
-          "specifiers": [
-            "getIngestWorkerPool",
-            "ingestTreeWithWorkers",
-            "IngestWorkerPool",
-            "PoolStats"
-          ],
-          "isTypeImport": false,
-          "isRelative": true,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": false
-        },
-        {
-          "source": "@/src/shared/workers",
-          "specifiers": [
-            "IngestCompleteMessage",
-            "IngestErrorMessage",
-            "IngestFileCompleteMessage",
-            "IngestProgressMessage",
-            "IngestWorkerResponse"
-          ],
-          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -2838,14 +2730,10 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [
-        "src/entities/manifest/model/ingest/tileWorker.ts",
-        "src/entities/manifest/model/builders/fileLifecycle.ts",
-        "src/entities/manifest/model/ingest/ingestWorkerPool.ts"
-      ],
+      "dependencies": [],
       "dependents": [],
-      "size": 27604,
-      "lines": 883
+      "size": 22663,
+      "lines": 719
     },
     "src/entities/manifest/model/ingest/ingestAnalyzer.ts": {
       "filePath": "src/entities/manifest/model/ingest/ingestAnalyzer.ts",
@@ -2966,9 +2854,7 @@
         }
       ],
       "dependencies": [],
-      "dependents": [
-        "src/entities/manifest/model/builders/iiifBuilder.ts"
-      ],
+      "dependents": [],
       "size": 1275,
       "lines": 43
     },
@@ -2996,9 +2882,7 @@
         }
       ],
       "dependencies": [],
-      "dependents": [
-        "src/entities/manifest/model/builders/iiifBuilder.ts"
-      ],
+      "dependents": [],
       "size": 594,
       "lines": 23
     },
@@ -21022,7 +20906,6 @@
   "internalAliases": [
     "@/src/app/stores/validation.svelte",
     "@/src/entities",
-    "@/src/entities/canvas/model/fileIntegrity",
     "@/src/entities/manifest/model/actions",
     "@/src/entities/manifest/model/validation/validator",
     "@/src/entities/manifest/model/vault",
@@ -21044,7 +20927,6 @@
     "@/src/shared/services/changeDiscoveryService",
     "@/src/shared/services/fieldRegistry",
     "@/src/shared/services/logger",
-    "@/src/shared/services/metadataHarvester",
     "@/src/shared/services/provenanceService",
     "@/src/shared/services/searchService",
     "@/src/shared/services/storage",
@@ -21065,7 +20947,6 @@
     "@/src/shared/types/image-pipeline",
     "@/src/shared/types/search-api",
     "@/src/shared/ui/molecules/ContextMenu",
-    "@/src/shared/workers",
     "@/utils",
     "@/utils/filenameUtils",
     "@/utils/iiifBehaviors",
@@ -21121,9 +21002,12 @@
     "src/entities/manifest/actions.ts",
     "src/entities/manifest/model/actions.ts",
     "src/entities/manifest/model/builders/autoStructure.ts",
+    "src/entities/manifest/model/builders/fileLifecycle.ts",
     "src/entities/manifest/model/builders/iiifBuilder.ts",
     "src/entities/manifest/model/ingest/ingestAnalyzer.ts",
     "src/entities/manifest/model/ingest/ingestState.ts",
+    "src/entities/manifest/model/ingest/ingestWorkerPool.ts",
+    "src/entities/manifest/model/ingest/tileWorker.ts",
     "src/entities/manifest/model/trash/trashService.ts",
     "src/entities/manifest/model/validation/validationHealer.ts",
     "src/entities/manifest/model/vaultSelectors.ts",
@@ -21184,9 +21068,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 673,
+    "totalImports": 666,
     "totalExports": 1810,
-    "avgImportsPerFile": 2.876068376068376,
+    "avgImportsPerFile": 2.8461538461538463,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

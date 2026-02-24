@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { getContext } from 'svelte';
   import { cn } from '@/src/shared/lib/cn';
+  import { getSplitDirectionContext } from '@/src/shared/stores/contexts';
   import { resizable, type ResizableParams } from '../actions/resizable';
 
   interface Props {
@@ -32,7 +32,8 @@
     children,
   }: Props = $props();
 
-  const direction = getContext<'horizontal' | 'vertical'>('split-direction');
+  const directionCtx = getSplitDirectionContext();
+  let direction = $derived(directionCtx.value);
 
   let resizableParams = $derived<ResizableParams>({
     id,

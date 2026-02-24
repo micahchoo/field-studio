@@ -28,8 +28,6 @@ import {
   ViewerStore,
   detectMediaType,
   extractAnnotations,
-  type MediaType,
-  type ScreenshotFormat,
 } from '@/src/features/viewer/model/viewer.svelte';
 
 import type {
@@ -1220,7 +1218,7 @@ describe('ViewerStore', () => {
     it('calls toBlob on the canvas element with correct format', async () => {
       const mockBlob = new Blob(['fake'], { type: 'image/png' });
       const mockCanvas = {
-        toBlob: vi.fn((cb: (blob: Blob | null) => void, format?: string, quality?: number) => {
+        toBlob: vi.fn((cb: (blob: Blob | null) => void, _format?: string, _quality?: number) => {
           cb(mockBlob);
         }),
       } as unknown as HTMLCanvasElement;

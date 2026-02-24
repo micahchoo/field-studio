@@ -124,6 +124,7 @@
             fieldMode ? 'hover:bg-nb-yellow/10' : 'hover:bg-nb-black/5',
             cx.divider ? `border-b ${cx.divider}` : 'border-b border-nb-black/10'
           )}
+          aria-label="Toggle {group.manifestLabel}"
           onclick={() => toggleCollapse(group.manifestId)}
           aria-expanded={!isCollapsed}
           aria-controls="group-{group.manifestId}"

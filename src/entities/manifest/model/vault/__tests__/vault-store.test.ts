@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { vault } from '@/src/shared/stores/vault.svelte';
 import type { IIIFItem, IIIFCollection } from '@/src/shared/types';
-import { resetIds, createMinimalManifest, createMinimalCollection, createFullTree } from './fixtures';
+import { resetIds, createMinimalManifest, createFullTree } from './fixtures';
 
 beforeEach(() => {
   resetIds();

@@ -12,16 +12,9 @@ import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants/core';
 import { IIIF_SPEC } from '@/src/shared/constants/iiif';
 import {
   COMMON_RIGHTS_URIS,
-  getMinimumTemplate,
-  getPropertyRequirement,
   getValidItemTypes,
-  isBehaviorAllowed,
-  isValidViewingDirection,
-  VIEWING_DIRECTIONS
 } from '@/utils/iiifSchema';
 import {
-  findBehaviorConflicts,
-  getDefaultBehavior,
   getDisjointSetForBehavior,
   getValidBehaviorsForType
 } from '@/utils/iiifBehaviors';
@@ -85,7 +78,7 @@ function safeClone<T>(obj: T): T | null {
     if (typeof structuredClone === 'function') {
       return structuredClone(obj);
     }
-  } catch (e) {
+  } catch {
     // structuredClone failed, fall through to JSON method
   }
 
@@ -212,13 +205,13 @@ function getDefaultRightsUri(): string {
  */
 function createMinimalProvider(item: IIIFItem): NonNullable<IIIFItem['provider']> {
   try {
-    const label = getIIIFValue(item.label) || 'Untitled Resource';
+    const _label = getIIIFValue(item.label) || 'Untitled Resource';
     return [{
       id: generateValidUri('http://archive.local/iiif/agent'),
       type: 'Agent',
       label: createLanguageMap('Unknown Institution', 'none')
     }];
-  } catch (e) {
+  } catch {
     return [{
       id: `http://archive.local/iiif/agent/${Date.now()}`,
       type: 'Agent',

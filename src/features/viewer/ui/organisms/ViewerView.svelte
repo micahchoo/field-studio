@@ -1142,6 +1142,7 @@
                   </p>
                   {#each chapters as chapter}
                     <button
+                      aria-label={chapter.label}
                       class={cn(
                         'block w-full text-left px-2 py-1 rounded text-sm font-mono hover:opacity-80',
                         cx.iconButton

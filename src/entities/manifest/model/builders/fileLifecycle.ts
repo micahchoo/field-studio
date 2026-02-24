@@ -19,11 +19,11 @@ export interface FileLifecycleManager {
  */
 export function getFileLifecycleManager(): FileLifecycleManager {
   return {
-    register(entityId: string, file: File, onRevoke?: () => void): void {
+    register(_entityId: string, _file: File, _onRevoke?: () => void): void {
       // No-op - file lifecycle tracking disabled
     },
 
-    unregister(entityId: string): void {
+    unregister(_entityId: string): void {
       // No-op
     },
 

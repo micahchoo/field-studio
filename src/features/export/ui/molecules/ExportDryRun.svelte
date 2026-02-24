@@ -102,6 +102,7 @@
                 ? 'hover:bg-nb-yellow/10 text-nb-yellow/60'
                 : 'hover:bg-nb-cream text-nb-black/60'
           )}
+          aria-label={f.path}
           onclick={() => { selectedFile = f; }}
         >
           <Icon

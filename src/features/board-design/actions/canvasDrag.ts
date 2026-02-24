@@ -254,7 +254,7 @@ export function canvasDrag(node: HTMLElement, params: CanvasDragParams) {
     }
   }
 
-  function handleMouseUp(e: MouseEvent) {
+  function handleMouseUp(_e: MouseEvent) {
     isDragging = false;
     dragItemId = null;
     multiDragStarts.clear();

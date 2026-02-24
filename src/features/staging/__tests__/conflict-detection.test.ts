@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { detectConflicts, type ConflictReport, type DuplicateEntry } from '../model/conflictDetection';
+import { detectConflicts } from '../model/conflictDetection';
 import type { FileTree } from '@/src/shared/types';
 
 // ============================================================================
@@ -182,7 +182,7 @@ describe('detectConflicts — path construction', () => {
   });
 
   it('root-level files without a parent path use just the filename', () => {
-    const treeA = makeTree('', ['shared.jpg']);
+    const _treeA = makeTree('', ['shared.jpg']);
     const dirB = makeTree('sub', ['shared.jpg']);
     const tree = makeTree('', [], new Map([['sub', dirB]]));
     // Add root-level files
