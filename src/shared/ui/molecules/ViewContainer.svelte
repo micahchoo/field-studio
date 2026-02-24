@@ -65,8 +65,6 @@
     </div>
 
   {:else}
-    <ErrorBoundary>
-      {#snippet children()}{@render children()}{/snippet}
-    </ErrorBoundary>
+    <ErrorBoundary {children} />
   {/if}
 </div>

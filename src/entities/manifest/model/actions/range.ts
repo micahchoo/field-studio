@@ -15,6 +15,9 @@ import {
 import type { IIIFItem, IIIFManifest, IIIFRange } from '@/src/shared/types';
 import type { PropertyChange } from '@/src/shared/services/provenanceService';
 
+/** Union of all valid range item types (IIIF 3.0 §5.8). */
+type RangeItem = IIIFRange['items'][number];
+
 export function handleRangeAction(state: NormalizedState, action: Action): ActionResult | null {
   switch (action.type) {
     case 'ADD_RANGE': {
@@ -102,9 +105,7 @@ export function handleRangeAction(state: NormalizedState, action: Action): Actio
 
       // Get current items (could be references or nested ranges)
       const currentItems = range.items || [];
-      const currentItemIds = currentItems.map((item: any) =>
-        typeof item === 'string' ? item : item.id
-      );
+      const currentItemIds = currentItems.map((item: RangeItem) => item.id ?? '');
 
       // Check if already in range
       if (currentItemIds.includes(action.canvasId)) {
@@ -138,10 +139,9 @@ export function handleRangeAction(state: NormalizedState, action: Action): Actio
       }
 
       const currentItems = range.items || [];
-      const newItems = currentItems.filter((item: any) => {
-        const itemId = typeof item === 'string' ? item : item.id;
-        return itemId !== action.canvasId;
-      });
+      const newItems = currentItems.filter((item: RangeItem) =>
+        (item.id ?? '') !== action.canvasId
+      );
 
       if (newItems.length === currentItems.length) {
         return { success: false, state, error: 'Canvas not found in range' };
@@ -165,9 +165,7 @@ export function handleRangeAction(state: NormalizedState, action: Action): Actio
       }
 
       const currentItems = range.items || [];
-      const currentIds = currentItems.map((item: any) =>
-        typeof item === 'string' ? item : item.id
-      );
+      const currentIds = currentItems.map((item: RangeItem) => item.id ?? '');
 
       // Validate the new order contains all current items
       if (currentIds.length !== action.order.length) {
@@ -182,10 +180,7 @@ export function handleRangeAction(state: NormalizedState, action: Action): Actio
       }
 
       // Build new items array in the specified order
-      const itemMap = new Map(currentItems.map((item: any) => [
-        typeof item === 'string' ? item : item.id,
-        item
-      ]));
+      const itemMap = new Map(currentItems.map((item: RangeItem) => [item.id ?? '', item]));
       const newItems = action.order.map(id => itemMap.get(id)!);
 
       const newState = updateEntity(state, action.rangeId, {

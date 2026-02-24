@@ -1,4 +1,10 @@
-import { getIIIFValue, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
+// TYPE_DEBT: This file contains ~60 `any` casts. Most arise from the "mutate a cloned
+// partial-IIIF-object" pattern: `const healed = safeClone(item) as any; healed.field = ...`
+// The correct fix is to introduce a `HealedIIIF = Partial<IIIFItem> & Record<string, unknown>`
+// type and route all mutations through it. The manualDeepClone helper also uses `any` for
+// the generic clone accumulator — those specific instances are improved below.
+// TODO(loop): Define HealedIIIF, replace all `as any` healing casts, add exhaustive-switch rule.
+import { getIIIFValue, IIIFExternalWebResource, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { vaultLog } from '@/src/shared/services/logger';
 import { ValidationIssue } from './validator';
 import { createLanguageMap, findNodeById, generateUUID, generateValidUri, normalizeUri } from '@/utils';
@@ -36,6 +42,27 @@ import {
  * - Technical fixes (viewingDirection, navDate, navPlace, format)
  * - Language map fixes (invalid label/summary format)
  */
+
+/**
+ * Mutable clone of an IIIFItem during healing.
+ * Adds Canvas/Manifest/Annotation fields that are valid IIIF but not on the base IIIFItem
+ * interface, plus a string index signature to allow setting/deleting any property without
+ * scattered `as any` casts.
+ */
+type HealedIIIF = IIIFItem
+  & Partial<{
+    /** Canvas-specific */
+    width: number;
+    height: number;
+    duration: number;
+    /** Manifest-specific */
+    structures: unknown[];
+    /** Content-resource-specific */
+    format: string;
+    /** Annotation-specific */
+    motivation: string;
+  }>
+  & Record<string, unknown>;
 
 export interface HealResult {
   success: boolean;
@@ -92,7 +119,7 @@ function manualDeepClone<T>(obj: T, seen = new WeakMap()): T | null {
 
   // Handle Array
   if (Array.isArray(obj)) {
-    const clone: any[] = [];
+    const clone: unknown[] = [];
     seen.set(obj, clone);
     for (let i = 0; i < obj.length; i++) {
       const clonedItem = manualDeepClone(obj[i], seen);
@@ -107,11 +134,11 @@ function manualDeepClone<T>(obj: T, seen = new WeakMap()): T | null {
   }
 
   // Handle Object
-  const clone: any = {};
+  const clone: Record<string, unknown> = {};
   seen.set(obj, clone);
   for (const key of Object.keys(obj)) {
     if (obj.hasOwnProperty(key)) {
-      const value = (obj as any)[key];
+      const value = (obj as Record<string, unknown>)[key];
       // Skip undefined values (they're not JSON serializable)
       if (value !== undefined) {
         const clonedValue = manualDeepClone(value, seen);
@@ -124,7 +151,8 @@ function manualDeepClone<T>(obj: T, seen = new WeakMap()): T | null {
       }
     }
   }
-  return clone;
+  // Safe: we know clone has the same shape as T (a generic object)
+  return clone as unknown as T;
 }
 
 // ============================================================================
@@ -134,7 +162,7 @@ function manualDeepClone<T>(obj: T, seen = new WeakMap()): T | null {
 /**
  * Ensure a value is a valid language map
  */
-function ensureLanguageMap(value: any, defaultValue: string, language: string = 'none'): Record<string, string[]> {
+function ensureLanguageMap(value: unknown, defaultValue: string, language: string = 'none'): Record<string, string[]> {
   if (!value) {
     return createLanguageMap(defaultValue, language);
   }
@@ -182,7 +210,7 @@ function getDefaultRightsUri(): string {
 /**
  * Create a minimal provider/agent structure
  */
-function createMinimalProvider(item: IIIFItem): any {
+function createMinimalProvider(item: IIIFItem): NonNullable<IIIFItem['provider']> {
   try {
     const label = getIIIFValue(item.label) || 'Untitled Resource';
     return [{
@@ -202,10 +230,10 @@ function createMinimalProvider(item: IIIFItem): any {
 /**
  * Create a minimal thumbnail reference
  */
-function createMinimalThumbnail(): any[] {
+function createMinimalThumbnail(): IIIFExternalWebResource[] {
   return [{
     id: 'http://archive.local/iiif/thumbnail/placeholder',
-    type: 'Image',
+    type: 'Image' as const,
     format: 'image/jpeg'
   }];
 }
@@ -316,6 +344,9 @@ export function healIssue(item: IIIFItem, issue: ValidationIssue): HealResult {
  * Internal healing logic - separated for better error isolation
  */
 function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
+  // Single cast — allows direct property access/mutation for Canvas/Manifest/Annotation
+  // sub-interface fields without per-site `as any`. See HealedIIIF definition above.
+  const h = healed as HealedIIIF;
   const msg = (issue.message || '').toLowerCase();
 
   // ==========================================================================
@@ -325,7 +356,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // Missing or invalid type
   if (msg.includes('missing required field: type') || msg.includes('type is required')) {
     if (!healed.type) {
-      (healed as any).type = 'ContentResource';
+      h.type = 'ContentResource' as IIIFItem['type'];
     }
     return { success: true, updatedItem: healed, message: 'Added default type' };
   }
@@ -394,7 +425,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // Summary fixes
   if (msg.includes('summary')) {
     const labelText = getIIIFValue(healed.label) || healed.type || 'resource';
-    (healed as any).summary = createLanguageMap(`Summary for ${labelText}`, 'none');
+    h.summary = createLanguageMap(`Summary for ${labelText}`, 'none');
     return { success: true, updatedItem: healed, message: 'Added placeholder summary' };
   }
 
@@ -406,10 +437,10 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   if (msg.includes('metadata')) {
     if (msg.includes('must have both label and value')) {
       // Fix malformed metadata entries
-      if (Array.isArray((healed as any).metadata)) {
-        (healed as any).metadata = (healed as any).metadata
-          .filter((entry: any) => entry && (entry.label || entry.value))
-          .map((entry: any) => ({
+      if (Array.isArray(h.metadata)) {
+        h.metadata = h.metadata
+          .filter((entry) => entry && (entry.label || entry.value))
+          .map((entry) => ({
             label: ensureLanguageMap(entry.label, 'Field', 'en'),
             value: ensureLanguageMap(entry.value, '', 'none')
           }));
@@ -418,8 +449,8 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
     }
 
     // Initialize empty metadata array
-    if (!(healed as any).metadata) {
-      (healed as any).metadata = [];
+    if (!h.metadata) {
+      h.metadata = [];
       return { success: true, updatedItem: healed, message: 'Initialized empty metadata array' };
     }
   }
@@ -432,26 +463,26 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   if (msg.includes('dimensions') || msg.includes('width') || msg.includes('height')) {
     if (isCanvas(healed)) {
       // If only one dimension is present, set the other to match
-      if ((healed as any).width && !(healed as any).height) {
-        (healed as any).height = (healed as any).width;
+      if (h.width && !h.height) {
+        h.height = h.width;
         return { success: true, updatedItem: healed, message: 'Set height to match width' };
       }
-      if ((healed as any).height && !(healed as any).width) {
-        (healed as any).width = (healed as any).height;
+      if (h.height && !h.width) {
+        h.width = h.height;
         return { success: true, updatedItem: healed, message: 'Set width to match height' };
       }
       // Set default dimensions
-      (healed as any).width = DEFAULT_INGEST_PREFS.defaultCanvasWidth;
-      (healed as any).height = DEFAULT_INGEST_PREFS.defaultCanvasHeight;
+      h.width = DEFAULT_INGEST_PREFS.defaultCanvasWidth;
+      h.height = DEFAULT_INGEST_PREFS.defaultCanvasHeight;
       return { success: true, updatedItem: healed, message: 'Set default canvas dimensions' };
     }
   }
 
   // Duration fixes
   if (msg.includes('duration')) {
-    if (isCanvas(healed) && !(healed as any).duration) {
+    if (isCanvas(healed) && !h.duration) {
       // Canvas with time-based content should have duration
-      (healed as any).duration = 0;
+      h.duration = 0;
       return { success: true, updatedItem: healed, message: 'Added zero duration (update manually)' };
     }
   }
@@ -498,7 +529,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
       // Filter out invalid items or fix their types
       const validTypes = getValidItemTypes(healed.type);
       if (validTypes.length > 0 && healed.items) {
-        healed.items = healed.items.filter((item: any) => {
+        healed.items = healed.items.filter((item) => {
           return item && validTypes.includes(item.type);
         });
         return { success: true, updatedItem: healed, message: 'Removed items with invalid types' };
@@ -512,13 +543,13 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   // Collection structures fix (structures not allowed on Collection)
   if (msg.includes('structures') && isCollection(healed)) {
-    delete (healed as any).structures;
+    delete h.structures;
     return { success: true, updatedItem: healed, message: 'Removed invalid structures property from Collection' };
   }
 
   // Structures on non-Manifest types
   if (msg.includes('structures') && healed.type !== 'Manifest') {
-    delete (healed as any).structures;
+    delete h.structures;
     return { success: true, updatedItem: healed, message: `Removed structures from ${healed.type}` };
   }
 
@@ -528,19 +559,19 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   // Rights fixes
   if (msg.includes('rights')) {
-    (healed as any).rights = getDefaultRightsUri();
+    h.rights = getDefaultRightsUri();
     return { success: true, updatedItem: healed, message: 'Added CC0 rights statement' };
   }
 
   // Required statement fixes
   if (msg.includes('requiredstatement') || msg.includes('required statement')) {
-    (healed as any).requiredStatement = createMinimalRequiredStatement();
+    h.requiredStatement = createMinimalRequiredStatement();
     return { success: true, updatedItem: healed, message: 'Added default required statement' };
   }
 
   // Provider fixes
   if (msg.includes('provider')) {
-    (healed as any).provider = createMinimalProvider(healed);
+    h.provider = createMinimalProvider(healed);
     return { success: true, updatedItem: healed, message: 'Added default provider' };
   }
 
@@ -552,9 +583,9 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   if (msg.includes('behavior not allowed') || msg.includes('not valid for')) {
     if (healed.behavior) {
       const validBehaviors = getValidBehaviorsForType(healed.type);
-      healed.behavior = healed.behavior.filter(b => validBehaviors.includes(b as any));
+      healed.behavior = healed.behavior.filter(b => (validBehaviors as string[]).includes(b));
       if (healed.behavior.length === 0) {
-        delete (healed as any).behavior;
+        delete h.behavior;
       }
       return { success: true, updatedItem: healed, message: 'Removed invalid behaviors for resource type' };
     }
@@ -591,11 +622,11 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   if (msg.includes('viewingdirection') || msg.includes('viewing direction')) {
     if (msg.includes('not allowed')) {
-      delete (healed as any).viewingDirection;
+      delete h.viewingDirection;
       return { success: true, updatedItem: healed, message: 'Removed viewingDirection from invalid resource type' };
     }
     if (msg.includes('invalid')) {
-      (healed as any).viewingDirection = 'left-to-right';
+      h.viewingDirection = 'left-to-right';
       return { success: true, updatedItem: healed, message: 'Set default viewingDirection to left-to-right' };
     }
   }
@@ -606,11 +637,11 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   if (msg.includes('navdate') || msg.includes('nav date')) {
     if (msg.includes('not allowed')) {
-      delete (healed as any).navDate;
+      delete h.navDate;
       return { success: true, updatedItem: healed, message: 'Removed navDate from invalid resource type' };
     }
     // Set to current date as placeholder
-    (healed as any).navDate = new Date().toISOString();
+    h.navDate = new Date().toISOString();
     return { success: true, updatedItem: healed, message: 'Set navDate to current date' };
   }
 
@@ -619,7 +650,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // ==========================================================================
 
   if (msg.includes('thumbnail')) {
-    (healed as any).thumbnail = createMinimalThumbnail();
+    h.thumbnail = createMinimalThumbnail();
     return { success: true, updatedItem: healed, message: 'Added placeholder thumbnail' };
   }
 
@@ -629,21 +660,21 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   if (msg.includes('format')) {
     if (msg.includes('not allowed')) {
-      delete (healed as any).format;
+      delete h.format;
       return { success: true, updatedItem: healed, message: 'Removed format from invalid resource type' };
     }
     // Set default format based on type
     const type = (healed.type || '').toLowerCase();
     if (type.includes('image')) {
-      (healed as any).format = 'image/jpeg';
+      h.format = 'image/jpeg';
     } else if (type.includes('video')) {
-      (healed as any).format = 'video/mp4';
+      h.format = 'video/mp4';
     } else if (type.includes('sound') || type.includes('audio')) {
-      (healed as any).format = 'audio/mp3';
+      h.format = 'audio/mp3';
     } else if (type.includes('text')) {
-      (healed as any).format = 'text/html';
+      h.format = 'text/html';
     } else {
-      (healed as any).format = 'application/octet-stream';
+      h.format = 'application/octet-stream';
     }
     return { success: true, updatedItem: healed, message: 'Added default format' };
   }
@@ -655,12 +686,12 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   if (msg.includes('@context') || msg.includes('context')) {
     if (msg.includes('must have') || msg.includes('missing')) {
       if (isCollection(healed) || isManifest(healed)) {
-        (healed as any)['@context'] = IIIF_SPEC.PRESENTATION_3.CONTEXT;
+        h['@context'] = IIIF_SPEC.PRESENTATION_3.CONTEXT;
         return { success: true, updatedItem: healed, message: 'Added IIIF Presentation API 3.0 context' };
       }
     }
     if (msg.includes('should only be on top-level')) {
-      delete (healed as any)['@context'];
+      delete h['@context'];
       return { success: true, updatedItem: healed, message: 'Removed @context from embedded resource' };
     }
   }
@@ -671,11 +702,11 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   if (msg.includes('motivation')) {
     if (msg.includes('not allowed')) {
-      delete (healed as any).motivation;
+      delete h.motivation;
       return { success: true, updatedItem: healed, message: 'Removed motivation from invalid resource type' };
     }
     if (msg.includes('invalid') || msg.includes('missing')) {
-      (healed as any).motivation = 'painting';
+      h.motivation = 'painting';
       return { success: true, updatedItem: healed, message: 'Set default motivation to painting' };
     }
   }
@@ -685,7 +716,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // ==========================================================================
 
   if (msg.includes('annotations') && msg.includes('not allowed')) {
-    delete (healed as any).annotations;
+    delete h.annotations;
     return { success: true, updatedItem: healed, message: 'Removed annotations from invalid resource type' };
   }
 
@@ -694,7 +725,7 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   // ==========================================================================
 
   if (msg.includes('service') && msg.includes('not allowed')) {
-    delete (healed as any).service;
+    delete h.service;
     return { success: true, updatedItem: healed, message: 'Removed service from invalid resource type' };
   }
 
@@ -706,8 +737,8 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
   const langMapFields = ['label', 'summary'];
   for (const field of langMapFields) {
     if (msg.includes(field) && msg.includes('must be a language map')) {
-      const currentValue = (healed as any)[field];
-      (healed as any)[field] = ensureLanguageMap(currentValue, field === 'label' ? 'Untitled' : '');
+      const currentValue = h[field];
+      h[field] = ensureLanguageMap(currentValue, field === 'label' ? 'Untitled' : '');
       return { success: true, updatedItem: healed, message: `Converted ${field} to valid language map` };
     }
   }
@@ -718,9 +749,9 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
 
   // For Image resources missing height/width
   if (msg.includes('image') && (msg.includes('height') || msg.includes('width'))) {
-    if ((healed as any).type === 'Image') {
-      if (!(healed as any).width) (healed as any).width = 1000;
-      if (!(healed as any).height) (healed as any).height = 800;
+    if (h.type === 'Image') {
+      if (!h.width) h.width = 1000;
+      if (!h.height) h.height = 800;
       return { success: true, updatedItem: healed, message: 'Added default image dimensions' };
     }
   }
@@ -743,11 +774,11 @@ function performHealing(healed: IIIFItem, issue: ValidationIssue): HealResult {
  * This function applies fixes sequentially, updating the item after each fix
  * to ensure subsequent fixes operate on the updated state.
  */
-export function healAllIssues(item: IIIFItem, issues: ValidationIssue[]): { item: IIIFItem; healed: number; failed: number; errors: string[] } {
+export function healAllIssues(item: IIIFItem, issues: ValidationIssue[]): { item: IIIFItem | null; healed: number; failed: number; errors: string[] } {
   // Defensive: Validate inputs
   if (!item) {
     vaultLog.error('[ValidationHealer] healAllIssues called with null item');
-    return { item: null as any, healed: 0, failed: 0, errors: ['Null item provided'] };
+    return { item: null, healed: 0, failed: 0, errors: ['Null item provided'] };
   }
 
   if (!Array.isArray(issues)) {
@@ -888,7 +919,7 @@ export function safeHealAll(item: IIIFItem, issues: ValidationIssue[]): HealResu
 
     return {
       success: true,
-      updatedItem: result.item,
+      updatedItem: result.item ?? item,
       message: `Healed ${result.healed} issues${result.failed > 0 ? `, ${result.failed} failed` : ''}`
     };
   } catch (error) {

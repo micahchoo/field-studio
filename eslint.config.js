@@ -63,6 +63,9 @@ export default [
       '@field-studio/no-effect-for-derived': 'warn',
       '@field-studio/typed-context-keys': 'warn',
 
+      // Exhaustiveness enforcement
+      '@field-studio/exhaustive-switch': 'warn',
+
       // FSD layer import restrictions + Svelte 4 bans
       'no-restricted-imports': ['error', {
         ...svelte4ImportBans,
@@ -116,6 +119,12 @@ export default [
       // Accessibility & best practices
       '@field-studio/require-aria-for-icon-buttons': 'warn',
       '@field-studio/no-state-raw-for-primitives': 'warn',
+
+      // Type safety at component boundaries
+      '@field-studio/no-unsafe-type-cast-in-props': 'warn',
+
+      // Exhaustiveness enforcement
+      '@field-studio/exhaustive-switch': 'warn',
 
       // FSD layer import restrictions + Svelte 4 bans
       'no-restricted-imports': ['error', {

@@ -716,7 +716,6 @@
                 {@const thumbnailUrl = getThumbnailUrl(canvas)}
                 {@const label = getLabel(canvas)}
                 <tr
-                  role="row"
                   aria-selected={selected}
                   class={cn(
                     'border-b cursor-pointer transition-nb',

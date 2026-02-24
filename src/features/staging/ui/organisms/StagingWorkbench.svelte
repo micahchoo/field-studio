@@ -97,7 +97,7 @@
 </script>
 
 <script lang="ts">
-  import type { AbstractionLevel, IIIFItem } from '@/src/shared/types';
+  import type { AbstractionLevel, IIIFItem, IngestProgress, IngestStage } from '@/src/shared/types';
   import type { IngestAnalysisResult } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
   import type { FlatFileTreeNode } from '../../model';
   import type { SourceManifests } from '@/src/entities/collection/model/stagingService';
@@ -501,6 +501,38 @@
 
   const aggregateProgress = $derived(ingestStore.aggregate);
 
+  /** Map IngestProgressStore → IngestProgress shape expected by IngestProgressPanel */
+  const ingestProgress = $derived.by((): IngestProgress | null => {
+    const agg = ingestStore.aggregate;
+    if (!agg.isActive && agg.totalOperations === 0) return null;
+    const ops = ingestStore.operations;
+    const activeOp = ops.find(o => o.status === 'running') ?? ops.find(o => o.status === 'paused') ?? ops[ops.length - 1];
+    const stageMap: Record<string, IngestStage> = {
+      running: 'processing', paused: 'processing', completed: 'complete',
+      failed: 'error', cancelled: 'cancelled', pending: 'scanning',
+    };
+    const stage: IngestStage = stageMap[activeOp?.status ?? ''] ?? 'processing';
+    const overallPct = Math.round((agg.overallProgress ?? 0) * 100);
+    return {
+      operationId: activeOp?.id ?? 'ingest',
+      stage,
+      stageProgress: overallPct,
+      filesTotal: agg.totalFiles,
+      filesCompleted: agg.completedFiles,
+      filesProcessing: ops.filter(o => o.status === 'running').length,
+      filesError: agg.failedFiles,
+      files: [],
+      speed: 0,
+      etaSeconds: Math.round((agg.estimatedTimeRemaining ?? 0) / 1000),
+      startedAt: activeOp?.startedAt ?? Date.now(),
+      updatedAt: Date.now(),
+      isPaused: ops.some(o => o.status === 'paused'),
+      isCancelled: ops.length > 0 && ops.every(o => o.status === 'cancelled'),
+      activityLog: ingestStore.log.map(e => ({ timestamp: e.timestamp, level: e.level, message: e.message })),
+      overallProgress: overallPct,
+    };
+  });
+
   // ============================================================================
   // Handlers
   // ============================================================================
@@ -847,7 +879,7 @@
   <div class="fixed inset-0 bg-nb-black/95 z-[500] flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
       <IngestProgressPanel
-        progress={ingestStore as unknown as import('@/src/shared/types').IngestProgress}
+        progress={ingestProgress}
         controls={{
           pause: () => {},
           resume: () => {},

@@ -24,6 +24,7 @@ import {
   computeFacets,
   queryRemoteSearch,
   fetchAutocompleteSuggestions,
+  parseSearchResponse,
 } from '@/src/shared/services/searchService';
 
 // ---------------------------------------------------------------------------
@@ -286,7 +287,6 @@ class SearchStore {
       });
       if (!resp.ok) throw new Error(`Failed: ${resp.status}`);
 
-      const { parseSearchResponse } = await import('@/src/shared/services/searchService');
       const page = await resp.json();
       const { results, nextPage } = parseSearchResponse(page);
 

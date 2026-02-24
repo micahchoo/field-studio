@@ -34,8 +34,8 @@ describe('getTypeIcon', () => {
     expect(getTypeIcon('Collection')).toBe('folder');
   });
 
-  it('returns "book-open" for Manifest', () => {
-    expect(getTypeIcon('Manifest')).toBe('book-open');
+  it('returns Material Icons "menu_book" for Manifest', () => {
+    expect(getTypeIcon('Manifest')).toBe('menu_book');
   });
 
   it('returns "image" for Canvas', () => {
@@ -46,10 +46,10 @@ describe('getTypeIcon', () => {
     expect(getTypeIcon('Range')).toBe('layers');
   });
 
-  it('returns "file" for unknown types', () => {
-    expect(getTypeIcon('Annotation')).toBe('file');
-    expect(getTypeIcon('')).toBe('file');
-    expect(getTypeIcon('SomethingElse')).toBe('file');
+  it('returns Material Icons "insert_drive_file" for unknown types', () => {
+    expect(getTypeIcon('Annotation')).toBe('insert_drive_file');
+    expect(getTypeIcon('')).toBe('insert_drive_file');
+    expect(getTypeIcon('SomethingElse')).toBe('insert_drive_file');
   });
 });
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T00:08:42.413Z",
+  "generatedAt": "2026-02-24T00:31:24.601Z",
   "totalFiles": 233,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -7001,8 +7001,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 59238,
-      "lines": 1525
+      "size": 59605,
+      "lines": 1532
     },
     "src/features/export/model/staticSiteExporter.ts": {
       "filePath": "src/features/export/model/staticSiteExporter.ts",
@@ -7010,6 +7010,17 @@
       "directory": "src/features/export/model",
       "extension": ".ts",
       "imports": [
+        {
+          "source": "isomorphic-dompurify",
+          "specifiers": [
+            "default:DOMPurify"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
         {
           "source": "@/src/shared/types",
           "specifiers": [
@@ -7125,8 +7136,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 30623,
-      "lines": 1041
+      "size": 30887,
+      "lines": 1044
     },
     "src/features/ingest/model/csvImporter.ts": {
       "filePath": "src/features/ingest/model/csvImporter.ts",
@@ -21041,9 +21052,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 665,
+    "totalImports": 666,
     "totalExports": 1804,
-    "avgImportsPerFile": 2.8540772532188843,
+    "avgImportsPerFile": 2.8583690987124464,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

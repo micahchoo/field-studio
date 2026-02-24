@@ -7,12 +7,18 @@
  * IIIF resource validation with 18 rules and auto-fix suggestions.
  * All functions are pure -- no side effects, no framework dependencies.
  *
+ * Public API signatures use `IIIFItem` (validateResource / fixIssue / fixAll / RuleFn).
+ * Remaining `any`: sanitizeLabelValue handles unknown LanguageMap shapes (see TYPE_DEBT there).
+ * getMetadataValues parameter kept as any[] for now — see TYPE_DEBT at definition site.
+ *
  * Usage:
  *   import { validateResource, fixIssue, fixAll } from './inspectorValidation';
  *   const result = validateResource(manifest, 'Manifest');
  *   if (!result.isValid) { ... }
  *   const fixed = fixAll(manifest, result.autoFixableIssues);
  */
+
+import type { IIIFItem } from '@/src/shared/types';
 
 // ------------------------------------------------------------------
 // Types
@@ -162,19 +168,13 @@ function reformatNavDate(value: string): string | null {
   return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
-/** Detect the resource type from the resource object */
-function detectType(resource: any, typeHint?: string): string {
-  if (typeHint) return typeHint;
-  if (resource.type) return resource.type;
-  // Heuristic fallbacks
-  if (resource.items && resource.items[0]?.type === 'Manifest') return 'Collection';
-  if (resource.items && resource.items[0]?.type === 'Canvas') return 'Manifest';
-  if (resource.width != null && resource.height != null) return 'Canvas';
-  return 'Unknown';
+/** Return the resource type, preferring an explicit typeHint over the item's own type field. */
+function detectType(resource: IIIFItem, typeHint?: string): string {
+  return typeHint ?? resource.type;
 }
 
 /** Get all string values from an IIIF metadata array */
-function getMetadataValues(metadata: any[]): Array<{ label: string; value: string; index: number }> {
+function getMetadataValues(metadata: NonNullable<IIIFItem['metadata']>): Array<{ label: string; value: string; index: number }> {
   const result: Array<{ label: string; value: string; index: number }> = [];
   for (let i = 0; i < metadata.length; i++) {
     const entry = metadata[i];
@@ -193,7 +193,7 @@ function getMetadataValues(metadata: any[]): Array<{ label: string; value: strin
 // documented 18-rule set.
 // ------------------------------------------------------------------
 
-type RuleFn = (resource: any, type: string, issues: ValidationIssue[]) => void;
+type RuleFn = (resource: IIIFItem, type: string, issues: ValidationIssue[]) => void;
 
 // Rule 1: missing-label (error)
 const rule01_missingLabel: RuleFn = (resource, _type, issues) => {
@@ -298,7 +298,9 @@ const rule06_missingViewingDirection: RuleFn = (resource, type, issues) => {
 // Rule 7: empty-collection (error) - no members
 const rule07_emptyCollection: RuleFn = (resource, type, issues) => {
   if (type !== 'Collection') return;
-  const items = resource.items ?? resource.members ?? [];
+  // `members` is a IIIF v2 Collection property not on IIIFItem; cast to access for compatibility
+  const members = (resource as unknown as Record<string, unknown>).members;
+  const items = resource.items ?? (Array.isArray(members) ? members : []);
   if (items.length === 0) {
     issues.push({
       id: 'empty-collection',
@@ -474,7 +476,7 @@ const rule15_behaviorMissingPrecondition: RuleFn = (resource, type, issues) => {
   if (behaviors.includes('auto-advance') && type === 'Manifest') {
     const items = resource.items ?? [];
     const anyMissingDuration = items.some(
-      (item: any) => item.duration == null && item.type === 'Canvas',
+      (item) => item.duration == null && item.type === 'Canvas',
     );
     if (anyMissingDuration) {
       issues.push({
@@ -648,7 +650,7 @@ const ALL_RULES: RuleFn[] = [
  * 17. unknown-rights-uri (info)
  * 18. unsafe-html-content (warning, auto-fix: sanitize)
  */
-export function validateResource(resource: any, type?: string): ValidationResult {
+export function validateResource(resource: IIIFItem | null | undefined, type?: string): ValidationResult {
   if (!resource) {
     return {
       issues: [],
@@ -688,7 +690,7 @@ export function validateResource(resource: any, type?: string): ValidationResult
  * Apply an auto-fix for a specific issue on a resource.
  * Returns the updated resource (immutable -- original is not modified).
  */
-export function fixIssue(resource: any, issue: ValidationIssue): any {
+export function fixIssue(resource: IIIFItem, issue: ValidationIssue): IIIFItem {
   if (!issue.autoFixable) return resource;
 
   const fixed = { ...resource };
@@ -698,7 +700,7 @@ export function fixIssue(resource: any, issue: ValidationIssue): any {
     case issue.id.startsWith('empty-metadata-'): {
       const index = parseInt(issue.id.replace('empty-metadata-', ''), 10);
       if (Array.isArray(fixed.metadata)) {
-        fixed.metadata = fixed.metadata.filter((_: any, i: number) => i !== index);
+        fixed.metadata = fixed.metadata.filter((_, i) => i !== index);
       }
       break;
     }
@@ -719,9 +721,11 @@ export function fixIssue(resource: any, issue: ValidationIssue): any {
 
     // Rule 12: invalid-navdate-format -- reformat to xsd:dateTime
     case issue.id === 'invalid-navdate-format': {
-      const reformatted = reformatNavDate(fixed.navDate);
-      if (reformatted) {
-        fixed.navDate = reformatted;
+      if (typeof fixed.navDate === 'string') {
+        const reformatted = reformatNavDate(fixed.navDate);
+        if (reformatted) {
+          fixed.navDate = reformatted;
+        }
       }
       break;
     }
@@ -759,7 +763,8 @@ export function fixIssue(resource: any, issue: ValidationIssue): any {
 
     // Rule 18: unsafe-html-content -- sanitize HTML
     case issue.id === 'unsafe-html-content-summary': {
-      fixed.summary = sanitizeLabelValue(fixed.summary);
+      // rule18 only fires when extractLabel(resource.summary) is non-empty, so summary is defined
+      fixed.summary = sanitizeLabelValue(fixed.summary!);
       break;
     }
     case issue.id.startsWith('unsafe-html-content-metadata-'): {
@@ -795,7 +800,7 @@ export function fixIssue(resource: any, issue: ValidationIssue): any {
  * Apply all auto-fixable issues at once.
  * Issues are applied sequentially; each fix operates on the result of the previous.
  */
-export function fixAll(resource: any, issues: ValidationIssue[]): any {
+export function fixAll(resource: IIIFItem, issues: ValidationIssue[]): IIIFItem {
   const fixable = issues.filter(i => i.autoFixable);
 
   // Sort by descending index for metadata removals so indices stay valid
@@ -821,9 +826,11 @@ export function fixAll(resource: any, issues: ValidationIssue[]): any {
  * Sanitize an IIIF language map value by stripping unsafe HTML.
  * Handles both { en: ['<html>'] } objects and plain strings.
  */
-function sanitizeLabelValue(value: any): any {
+// Generic so callers that pass Record<string,string[]> get Record<string,string[]> back.
+// The string branch is retained for defensive robustness against malformed data.
+function sanitizeLabelValue<T extends Record<string, string[]> | string>(value: T): T {
   if (typeof value === 'string') {
-    return stripUnsafeHtml(value);
+    return stripUnsafeHtml(value) as T;
   }
   if (typeof value === 'object' && value !== null) {
     const result: Record<string, string[]> = {};
@@ -836,7 +843,7 @@ function sanitizeLabelValue(value: any): any {
         result[lang] = strings as string[];
       }
     }
-    return result;
+    return result as T;
   }
   return value;
 }

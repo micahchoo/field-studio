@@ -36,6 +36,8 @@
 
 import { Vault } from '@/src/entities/manifest/model/vault';
 import type { NormalizedState, VaultSnapshot, IIIFItem } from '@/src/shared/types';
+import { reduce } from '@/src/entities/manifest/model/actions';
+import type { Action } from '@/src/entities/manifest/model/actions';
 
 class VaultStore {
   // ──────────────────────────────────────────────
@@ -134,6 +136,21 @@ class VaultStore {
   // Snapshot/Restore
   snapshot(): VaultSnapshot { return this.#vault.snapshot(); }
   restore(snap: VaultSnapshot): void { this.#vault.restore(snap); }
+
+  /**
+   * Dispatch an action through the reducer — applies action to normalized state.
+   * Returns true if the action succeeded.
+   * Use for annotation and board mutations that need the action system's logic.
+   */
+  dispatch(action: Action): boolean {
+    const currentState = this.#vault.getState();
+    const result = reduce(currentState, action);
+    if (result.success) {
+      this.restore({ state: result.state, timestamp: Date.now() });
+      return true;
+    }
+    return false;
+  }
 }
 
 /** Singleton vault store — import and use directly in any component */

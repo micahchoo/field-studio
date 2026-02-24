@@ -56,6 +56,7 @@
   import { terminology } from '@/src/shared/stores/terminology.svelte';
   import { getAnnotationContext } from '@/src/shared/stores/contexts';
   import type { AnnotationContext, TimeRange } from '@/src/shared/stores/contexts';
+  import { contentStateService } from '@/src/shared/services/contentState';
 
   import {
     getEntity as vaultGetEntity,
@@ -75,6 +76,9 @@
   import SearchView from '@/src/features/search/ui/organisms/SearchView.svelte';
   import MapView from '@/src/features/map/ui/organisms/MapView.svelte';
   import TimelineView from '@/src/features/timeline/ui/organisms/TimelineView.svelte';
+  import RequiredStatementBar from '@/src/widgets/RequiredStatementBar/ui/RequiredStatementBar.svelte';
+  import Inspector from '@/src/features/metadata-edit/ui/organisms/Inspector.svelte';
+  import { createTimeAnnotation } from '@/src/features/viewer/model/annotation';
 
   // ============================================================================
   // Contextual class constants — field mode vs normal
@@ -286,18 +290,21 @@
     return { canvas: selectedCanvas, manifest: parentManifest };
   });
 
-  /** Annotations from the currently selected canvas (for Inspector) */
+  /**
+   * Annotations from the currently selected canvas.
+   * Uses the denormalized canvas from viewerData so canvas.annotations is populated.
+   * selectedItem (from vault.getEntity) has annotations:[] — the stripped normalized form.
+   */
   const canvasAnnotations = $derived(
-    selectedItem?.type === 'Canvas'
-      ? getCanvasAnnotations(selectedItem as IIIFCanvas)
-      : []
+    viewerData.canvas ? getCanvasAnnotations(viewerData.canvas) : []
   );
 
-  /** Media type of the selected canvas */
+  /**
+   * Media type of the selected canvas.
+   * Uses the denormalized canvas so items[0].items[0].body is accessible.
+   */
   const selectedMediaType = $derived(
-    selectedItem?.type === 'Canvas'
-      ? getCanvasMediaType(selectedItem)
-      : 'other' as const
+    viewerData.canvas ? getCanvasMediaType(viewerData.canvas) : 'other' as const
   );
 
   /** Cascaded requiredStatement: canvas -> manifest -> undefined */
@@ -342,8 +349,7 @@
     contentStateTimer = setTimeout(() => {
       const manifestId = getParentManifest(selectedId!)?.id;
       if (manifestId) {
-        // @migration: contentStateService not yet migrated
-        // contentStateService.updateUrl({ manifestId, canvasId: selectedId });
+        contentStateService.updateUrl({ manifestId, canvasId: selectedId! });
       }
     }, 500);
 
@@ -377,18 +383,21 @@
     if (selectedMediaType === 'audio' || selectedMediaType === 'video') {
       // Time-based annotation — create directly via vault
       if (annotation.timeRange && annotation.annotationText.trim() && selectedItem?.id) {
-        // @migration: createTimeAnnotation + vault dispatch not yet migrated
-        // const anno = createTimeAnnotation(selectedItem.id, annotation.timeRange, annotation.annotationText, annotation.annotationMotivation);
-        // vault.dispatch(actions.addAnnotation(selectedItem.id, anno));
-        // const updatedRoot = vault.export();
-        // if (updatedRoot) storage.saveProject(updatedRoot);
-        console.warn('[ViewRouter] Time annotation save — vault actions not yet migrated');
+        const anno = createTimeAnnotation(
+          selectedItem.id,
+          annotation.timeRange,
+          annotation.annotationText,
+          annotation.annotationMotivation as 'commenting' | 'tagging' | 'describing'
+        );
+        vault.dispatch({
+          type: 'ADD_ANNOTATION',
+          canvasId: selectedItem.id,
+          annotation: anno as import('@/src/shared/types').IIIFAnnotation,
+        });
       }
     } else {
-      // Spatial annotation — delegate to viewer overlay via save ref
-      // @migration: annotationSaveRef pattern replaced by annotation context method
-      // annotation.annotationSaveRef?.();
-      console.warn('[ViewRouter] Spatial annotation save — ref pattern not yet migrated');
+      // Spatial annotation — commit via Annotorious overlay (registered in AnnotationContext)
+      annotation.triggerSave?.();
     }
     annotation.setAnnotationText('');
     annotation.setTimeRange(null);
@@ -396,8 +405,7 @@
 
   /** Clear current annotation drawing */
   function handleClearAnnotation() {
-    // @migration: annotationClearRef pattern replaced by annotation context method
-    // annotation.annotationClearRef?.();
+    annotation.triggerClear?.();
     annotation.setAnnotationText('');
     annotation.setTimeRange(null);
   }
@@ -405,22 +413,20 @@
   /** Delete an annotation by ID */
   function handleDeleteAnnotation(annotationId: string) {
     if (!selectedItem?.id) return;
-    // @migration: vault dispatch not yet migrated
-    // vault.dispatch(actions.removeAnnotation(selectedItem.id, annotationId));
-    // const updatedRoot = vault.export();
-    // if (updatedRoot) storage.saveProject(updatedRoot);
-    console.warn('[ViewRouter] Annotation delete — vault actions not yet migrated');
+    vault.dispatch({
+      type: 'REMOVE_ANNOTATION',
+      canvasId: selectedItem.id,
+      annotationId,
+    });
   }
 
   /** Edit an annotation's body text */
   function handleEditAnnotation(annotationId: string, newText: string) {
-    // @migration: vault dispatch not yet migrated
-    // vault.dispatch(actions.updateAnnotation(annotationId, {
-    //   body: { type: 'TextualBody', value: newText, format: 'text/plain' },
-    // }));
-    // const updatedRoot = vault.export();
-    // if (updatedRoot) storage.saveProject(updatedRoot);
-    console.warn('[ViewRouter] Annotation edit — vault actions not yet migrated');
+    vault.dispatch({
+      type: 'UPDATE_ANNOTATION',
+      annotationId,
+      updates: { body: { type: 'TextualBody', value: newText, format: 'text/plain' } },
+    });
   }
 
   // ============================================================================
@@ -456,7 +462,12 @@
   <!-- ARCHIVE: Split layout — filmstrip | viewer | inspector             -->
   <!-- ================================================================== -->
   <div class="view-enter flex-1 flex flex-col min-h-0">
-    <!-- @migration: RequiredStatementBar not yet migrated -->
+    <!-- RequiredStatementBar — cascaded from canvas/manifest -->
+    <RequiredStatementBar
+      requiredStatement={activeRequiredStatement}
+      {cx}
+      fieldMode={isFieldMode}
+    />
     <div class="flex-1 flex min-h-0">
       <!-- Left: Archive — filmstrip when viewer shown, full grid otherwise -->
       <div class={cn(
@@ -539,7 +550,7 @@
             <div class={cn('flex flex-col min-h-0 min-w-0', showInspectorPanel ? 'flex-1' : 'w-full')}>
               <svelte:boundary onerror={handleViewError}>
                 <ViewerView
-                  item={selectedItem as IIIFCanvas}
+                  item={viewerData.canvas}
                   manifest={viewerData.manifest}
                   onUpdate={(updates) => onUpdateItem?.(updates)}
                   {cx}
@@ -553,15 +564,31 @@
             <!-- Inspector Panel — archive-specific mount point -->
             {#if showInspectorPanel && settings}
               <div class="w-inspector shrink-0 min-h-0 overflow-hidden">
-                <!-- @migration: Inspector not yet migrated -->
-                <div class={cn('h-full border-l-2 p-4', cx.border, cx.pageBg)}>
-                  <div class={cn('text-sm font-mono uppercase tracking-wider mb-4', cx.textMuted)}>
-                    Inspector
-                  </div>
-                  <div class={cn('text-xs', cx.textMuted)}>
-                    Inspector component pending migration
-                  </div>
-                </div>
+                <Inspector
+                  resource={selectedItem}
+                  onUpdateResource={(updates) => onUpdateItem?.(updates)}
+                  {cx}
+                  fieldMode={isFieldMode}
+                  visible={showInspectorPanel}
+                  onClose={() => { showInspectorPanel = false; }}
+                  abstractionLevel={settings.abstractionLevel}
+                  annotations={canvasAnnotations}
+                  annotationModeActive={annotation.showAnnotationTool}
+                  annotationDrawingState={annotation.annotationDrawingState}
+                  annotationText={annotation.annotationText}
+                  onAnnotationTextChange={annotation.setAnnotationText}
+                  annotationMotivation={annotation.annotationMotivation as 'commenting' | 'tagging' | 'describing'}
+                  onAnnotationMotivationChange={annotation.setAnnotationMotivation}
+                  onSaveAnnotation={handleSaveAnnotation}
+                  onClearAnnotation={handleClearAnnotation}
+                  mediaType={selectedMediaType}
+                  timeRange={annotation.timeRange}
+                  currentPlaybackTime={annotation.currentPlaybackTime}
+                  forceTab={annotation.forceAnnotationsTab ? 'annotations' : undefined}
+                  onDeleteAnnotation={handleDeleteAnnotation}
+                  onEditAnnotation={handleEditAnnotation}
+                  selectedAnnotationId={selectedAnnotationId}
+                />
               </div>
             {/if}
           </div>
@@ -575,7 +602,12 @@
   <!-- VIEWER: Full viewer with optional filmstrip                        -->
   <!-- ================================================================== -->
   <div class="view-enter flex-1 flex flex-col min-h-0">
-    <!-- @migration: RequiredStatementBar not yet migrated -->
+    <!-- RequiredStatementBar — cascaded from canvas/manifest -->
+    <RequiredStatementBar
+      requiredStatement={activeRequiredStatement}
+      {cx}
+      fieldMode={isFieldMode}
+    />
     <svelte:boundary onerror={handleViewError}>
       <ViewerView
         item={viewerData.canvas}
@@ -629,26 +661,15 @@
       <!-- Board Inspector — shown when a board item is selected -->
       {#if boardSelectedItem && settings}
         <div class="w-[320px] shrink-0 min-h-0 overflow-hidden">
-          <!-- @migration: Inspector not yet migrated -->
-          <div class={cn('h-full border-l-2 p-4', cx.border, cx.pageBg)}>
-            <div class="flex items-center justify-between mb-4">
-              <span class={cn('text-sm font-mono uppercase tracking-wider', cx.textMuted)}>
-                Inspector
-              </span>
-              <Button
-                variant="ghost"
-                size="bare"
-                onclick={() => { boardSelectedId = null; onSelectId?.(null); }}
-                class={cn('p-1', cx.textMuted)}
-                title="Close"
-              >
-                <Icon name="close" class="text-sm" />
-              </Button>
-            </div>
-            <div class={cn('text-xs', cx.textMuted)}>
-              Inspector component pending migration
-            </div>
-          </div>
+          <Inspector
+            resource={boardSelectedItem}
+            onUpdateResource={(updates) => onUpdateItem?.(updates)}
+            {cx}
+            fieldMode={isFieldMode}
+            visible={!!boardSelectedItem}
+            onClose={() => { boardSelectedId = null; onSelectId?.(null); }}
+            abstractionLevel={settings.abstractionLevel}
+          />
         </div>
       {/if}
     </div>

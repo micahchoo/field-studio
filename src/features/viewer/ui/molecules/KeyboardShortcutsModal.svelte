@@ -4,102 +4,17 @@
   Layer: molecule (FSD features/viewer/ui/molecules)
 
   Displays a modal dialog with all available keyboard shortcuts organized by
-  media type. Static SHORTCUT_GROUPS in script module per Rule 2.F.
+  media type. Shortcut data lives in KeyboardShortcutsModal.constants.ts so it
+  can be imported by tests without mounting the component.
   Filters groups based on current mediaType prop.
 -->
-<script module lang="ts">
-  interface ShortcutEntry {
-    keys: string[];
-    description: string;
-  }
-
-  interface ShortcutGroup {
-    title: string;
-    mediaType: 'image' | 'media' | 'all';
-    shortcuts: ShortcutEntry[];
-  }
-
-  export const SHORTCUT_GROUPS: ShortcutGroup[] = [
-    {
-      title: 'Navigation',
-      mediaType: 'image',
-      shortcuts: [
-        { keys: ['W', '\u2191'], description: 'Pan up' },
-        { keys: ['S', '\u2193'], description: 'Pan down' },
-        { keys: ['A', '\u2190'], description: 'Pan left' },
-        { keys: ['D', '\u2192'], description: 'Pan right' },
-        { keys: ['0'], description: 'Reset view (home)' },
-      ],
-    },
-    {
-      title: 'Zoom',
-      mediaType: 'image',
-      shortcuts: [
-        { keys: ['+', '='], description: 'Zoom in' },
-        { keys: ['-', '_'], description: 'Zoom out' },
-        { keys: ['Double-click'], description: 'Zoom to point' },
-        { keys: ['Scroll'], description: 'Zoom in/out' },
-      ],
-    },
-    {
-      title: 'Rotation & Flip',
-      mediaType: 'image',
-      shortcuts: [
-        { keys: ['R'], description: 'Rotate clockwise 90\u00B0' },
-        { keys: ['Shift', 'R'], description: 'Rotate counter-clockwise 90\u00B0' },
-        { keys: ['F'], description: 'Flip horizontally' },
-      ],
-    },
-    {
-      title: 'Tools',
-      mediaType: 'image',
-      shortcuts: [
-        { keys: ['A'], description: 'Toggle annotation tool' },
-        { keys: ['M'], description: 'Toggle measurement tool' },
-        { keys: ['Esc'], description: 'Exit fullscreen / cancel drawing' },
-        { keys: ['Ctrl', 'Z'], description: 'Undo last annotation point' },
-        { keys: ['Enter'], description: 'Close polygon (when drawing)' },
-      ],
-    },
-    {
-      title: 'Playback',
-      mediaType: 'media',
-      shortcuts: [
-        { keys: ['Space', 'K'], description: 'Play / Pause' },
-        { keys: ['J'], description: 'Seek backward 5 seconds' },
-        { keys: ['L'], description: 'Seek forward 5 seconds' },
-        { keys: ['Home'], description: 'Seek to beginning' },
-        { keys: ['End'], description: 'Seek to end' },
-        { keys: ['0-9'], description: 'Seek to 0%-90%' },
-      ],
-    },
-    {
-      title: 'Volume & Speed',
-      mediaType: 'media',
-      shortcuts: [
-        { keys: ['\u2191'], description: 'Volume up' },
-        { keys: ['\u2193'], description: 'Volume down' },
-        { keys: ['M'], description: 'Toggle mute' },
-        { keys: ['<'], description: 'Decrease playback speed' },
-        { keys: ['>'], description: 'Increase playback speed' },
-      ],
-    },
-    {
-      title: 'General',
-      mediaType: 'all',
-      shortcuts: [
-        { keys: ['?'], description: 'Show / hide this help' },
-        { keys: ['Esc'], description: 'Exit fullscreen' },
-      ],
-    },
-  ];
-</script>
 
 <script lang="ts">
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import ModalDialog from '@/src/shared/ui/molecules/ModalDialog.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
+  import { SHORTCUT_GROUPS } from './KeyboardShortcutsModal.constants';
 
   interface Props {
     isOpen: boolean;

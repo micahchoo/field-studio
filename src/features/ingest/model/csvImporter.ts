@@ -1,3 +1,5 @@
+// All IIIFCanvas-specific casts removed: IIIFCanvas extends IIIFItem; summary, rights,
+// requiredStatement, navDate, annotations are all inherited from IIIFItem.
 import { type CSVColumnMapping, getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
 import { uiLog } from '@/src/shared/services/logger';
 import {
@@ -217,7 +219,7 @@ export class CSVImporterService {
     if (property === 'label') {
       canvas.label = createLanguageMap(value, language);
     } else if (property === 'summary') {
-      (canvas as any).summary = createLanguageMap(value, language);
+      canvas.summary = createLanguageMap(value, language);
     } else if (property === 'navDate') {
       const parsedDate = new Date(value);
       if (!isNaN(parsedDate.getTime())) {
@@ -229,7 +231,7 @@ export class CSVImporterService {
       if (value.startsWith('http') && !isValidRightsUri(value)) {
         uiLog.warn(`Rights URI "${value}" is not a known Creative Commons or Rights Statements URI`);
       }
-      (canvas as any).rights = value;
+      canvas.rights = value;
     } else if (property.startsWith('metadata.')) {
       const metaKey = property.replace('metadata.', '');
       if (!canvas.metadata) canvas.metadata = [];
@@ -248,16 +250,16 @@ export class CSVImporterService {
       }
     } else if (property.startsWith('requiredStatement.')) {
       const part = property.replace('requiredStatement.', '');
-      if (!(canvas as any).requiredStatement) {
-        (canvas as any).requiredStatement = {
+      if (!canvas.requiredStatement) {
+        canvas.requiredStatement = {
           label: createLanguageMap('Attribution', 'en'),
           value: createLanguageMap('', 'en')
         };
       }
       if (part === 'label') {
-        (canvas as any).requiredStatement.label = createLanguageMap(value, language);
+        canvas.requiredStatement.label = createLanguageMap(value, language);
       } else if (part === 'value') {
-        (canvas as any).requiredStatement.value = createLanguageMap(value, language);
+        canvas.requiredStatement.value = createLanguageMap(value, language);
       }
     }
   }
@@ -373,8 +375,8 @@ export class CSVImporterService {
         this.collectItems(child, result, types);
       }
     }
-    if (types.includes('Annotation') && (item as any).annotations) {
-      for (const page of (item as any).annotations) {
+    if (types.includes('Annotation') && item.annotations) {
+      for (const page of item.annotations) {
         if (page.items) {
           for (const anno of page.items) {
             result.push(anno);
@@ -404,13 +406,13 @@ export class CSVImporterService {
       return this.extractLanguageValue(item.label, language);
     }
     if (property === 'summary') {
-      return this.extractLanguageValue((item as any).summary, language);
+      return this.extractLanguageValue(item.summary, language);
     }
     if (property === 'navDate') {
-      return (item as any).navDate || '';
+      return item.navDate || '';
     }
     if (property === 'rights') {
-      return (item as any).rights || '';
+      return item.rights || '';
     }
     if (property.startsWith('metadata.')) {
       const metaKey = property.replace('metadata.', '').toLowerCase();
@@ -424,7 +426,7 @@ export class CSVImporterService {
       return '';
     }
     if (property.startsWith('requiredStatement.')) {
-      const rs = (item as any).requiredStatement;
+      const rs = item.requiredStatement;
       if (!rs) return '';
       const part = property.replace('requiredStatement.', '');
       if (part === 'label') {

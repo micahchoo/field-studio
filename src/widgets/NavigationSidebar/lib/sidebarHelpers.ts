@@ -26,14 +26,17 @@ export interface FlatTreeNode {
 // Icon mapping
 // ---------------------------------------------------------------------------
 
-/** Map an IIIF resource type to an icon name. */
+/**
+ * Map an IIIF resource type to a Material Icons ligature name.
+ * All names must use the underscore format required by the Material Icons font.
+ */
 export function getTypeIcon(type: string): string {
   switch (type) {
     case 'Collection': return 'folder';
-    case 'Manifest': return 'book-open';
+    case 'Manifest': return 'menu_book';
     case 'Canvas': return 'image';
     case 'Range': return 'layers';
-    default: return 'file';
+    default: return 'insert_drive_file';
   }
 }
 

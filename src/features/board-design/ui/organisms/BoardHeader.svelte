@@ -82,6 +82,9 @@
     onToggleInspector,
   }: Props = $props();
 
+  // Capture title prop before the `{#snippet title()}` in the template shadows the binding.
+  const titleText = $derived(title);
+
   // ── Local State: dropdown toggles ──
   let showLayoutMenu = $state(false);
   let showExportMenu = $state(false);
@@ -162,7 +165,7 @@
 <ViewHeader {cx} height="default">
   {#snippet title()}
     <span class={cn('font-mono uppercase text-sm font-semibold tracking-wider', cx.text)}>
-      {title}
+      {titleText}
     </span>
     <span class={cn('text-xs ml-2', cx.textMuted)}>
       {itemCount} items · {connectionCount} connections

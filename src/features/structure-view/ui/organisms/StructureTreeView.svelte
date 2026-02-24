@@ -20,6 +20,7 @@
 <script lang="ts">
   import { cn } from '@/src/shared/lib/cn';
   import type { IIIFItem } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
   import { StructureTreeStore } from '../../stores/structureTree.svelte';
   import { TreeSearchBar } from '../atoms';
   import type { DropPosition } from '../atoms/types';
@@ -126,10 +127,10 @@
   }
 
   function handleDoubleClick(id: string) {
-    const node = tree.findNode(id);
-    if (node && onOpen) {
-      onOpen(node as unknown as IIIFItem);
-    }
+    if (!onOpen) return;
+    // Look up the real IIIF entity — StructureNode is a UI-only view model, not IIIFItem
+    const entity = vault.peekEntity(id);
+    if (entity) onOpen(entity);
   }
 
   // ── Build a simplified NormalizedState from an IIIFItem tree ──

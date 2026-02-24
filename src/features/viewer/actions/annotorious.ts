@@ -23,6 +23,11 @@
  *   }} />
  */
 
+// TYPE_DEBT: ~14 `any` usages in this file. All arise from the Annotorious external library
+// (@annotorious/openseadragon) not shipping TypeScript declarations. The library is accessed
+// via globalThis.__annotorious__ at runtime to avoid hard bundler dependencies.
+// TODO(loop): Either add a local types/annotorious.d.ts with the W3C annotation shapes,
+// or switch to the newer @annotorious/core which ships types.
 import type { Action } from 'svelte/action';
 
 // ---------------------------------------------------------------------------

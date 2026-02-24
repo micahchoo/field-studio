@@ -325,9 +325,13 @@ export class ActionDispatcher {
 
     // Record in provenance (for certain actions)
     if (result.changes && result.changes.length > 0) {
-      const id = 'id' in action ? (action as any).id :
-                 'canvasId' in action ? (action as any).canvasId :
-                 'manifestId' in action ? (action as any).manifestId : null;
+      // Cast to record after narrowing via `in` checks — all matching action variants
+      // have string-typed id/canvasId/manifestId (verified in types.ts Action union).
+      const actionRec = action as Record<string, unknown>;
+      const id: string | null =
+        'id' in action ? (actionRec.id as string) :
+        'canvasId' in action ? (actionRec.canvasId as string) :
+        'manifestId' in action ? (actionRec.manifestId as string) : null;
 
       if (id) {
         provenanceService.recordUpdate(id, result.changes, action.type);

@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import type { IIIFItem } from '@/src/shared/types';
 import {
   validateResource,
   fixIssue,
@@ -19,7 +20,7 @@ import {
 // ------------------------------------------------------------------
 
 /** Minimal valid Manifest with no issues (except info-level) */
-function makeValidManifest(overrides: Record<string, unknown> = {}) {
+function makeValidManifest(overrides: Record<string, unknown> = {}): IIIFItem {
   return {
     id: 'https://example.org/manifest/1',
     type: 'Manifest',
@@ -34,11 +35,11 @@ function makeValidManifest(overrides: Record<string, unknown> = {}) {
       { id: 'https://example.org/canvas/1', type: 'Canvas', width: 1000, height: 1000 },
     ],
     ...overrides,
-  };
+  } as IIIFItem;
 }
 
 /** Minimal valid Canvas */
-function makeValidCanvas(overrides: Record<string, unknown> = {}) {
+function makeValidCanvas(overrides: Record<string, unknown> = {}): IIIFItem {
   return {
     id: 'https://example.org/canvas/1',
     type: 'Canvas',
@@ -46,11 +47,11 @@ function makeValidCanvas(overrides: Record<string, unknown> = {}) {
     width: 1000,
     height: 800,
     ...overrides,
-  };
+  } as IIIFItem;
 }
 
 /** Minimal valid Collection */
-function makeValidCollection(overrides: Record<string, unknown> = {}) {
+function makeValidCollection(overrides: Record<string, unknown> = {}): IIIFItem {
   return {
     id: 'https://example.org/collection/1',
     type: 'Collection',
@@ -62,17 +63,17 @@ function makeValidCollection(overrides: Record<string, unknown> = {}) {
       { id: 'https://example.org/manifest/1', type: 'Manifest' },
     ],
     ...overrides,
-  };
+  } as IIIFItem;
 }
 
 /** Minimal valid Range */
-function makeValidRange(overrides: Record<string, unknown> = {}) {
+function makeValidRange(overrides: Record<string, unknown> = {}): IIIFItem {
   return {
     id: 'https://example.org/range/1',
     type: 'Range',
     label: { en: ['Test Range'] },
     ...overrides,
-  };
+  } as IIIFItem;
 }
 
 /** Helper to find an issue by its id (or id prefix) in a validation result */
@@ -95,7 +96,7 @@ describe('validateResource', () => {
   // ----------------------------------------------------------------
   describe('Rule 1: missing-label', () => {
     it('flags a resource with no label', () => {
-      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest' }, 'Manifest');
+      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest' } as IIIFItem, 'Manifest');
       expect(hasIssue(result, 'missing-label')).toBe(true);
       const issue = findIssue(result, 'missing-label')!;
       expect(issue.severity).toBe('error');
@@ -104,12 +105,12 @@ describe('validateResource', () => {
     });
 
     it('flags a resource with an empty label object', () => {
-      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest', label: {} }, 'Manifest');
+      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest', label: {} } as IIIFItem, 'Manifest');
       expect(hasIssue(result, 'missing-label')).toBe(true);
     });
 
     it('flags a resource with a label containing only empty arrays', () => {
-      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest', label: { en: [] } }, 'Manifest');
+      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest', label: { en: [] } } as IIIFItem, 'Manifest');
       expect(hasIssue(result, 'missing-label')).toBe(true);
     });
 
@@ -120,7 +121,7 @@ describe('validateResource', () => {
 
     it('accepts a plain string label', () => {
       const result = validateResource(
-        { id: 'https://x.org/m', type: 'Manifest', label: 'Hello' },
+        { id: 'https://x.org/m', type: 'Manifest', label: 'Hello' } as unknown as IIIFItem,
         'Manifest',
       );
       expect(hasIssue(result, 'missing-label')).toBe(false);
@@ -152,7 +153,7 @@ describe('validateResource', () => {
   describe('Rule 3: short-label', () => {
     it('flags a label shorter than 3 characters', () => {
       const result = validateResource(
-        { id: 'https://x.org/m', type: 'Manifest', label: { en: ['AB'] } },
+        { id: 'https://x.org/m', type: 'Manifest', label: { en: ['AB'] } } as IIIFItem,
         'Manifest',
       );
       expect(hasIssue(result, 'short-label')).toBe(true);
@@ -163,7 +164,7 @@ describe('validateResource', () => {
 
     it('does not flag a label of exactly 3 characters', () => {
       const result = validateResource(
-        { id: 'https://x.org/m', type: 'Manifest', label: { en: ['ABC'] } },
+        { id: 'https://x.org/m', type: 'Manifest', label: { en: ['ABC'] } } as IIIFItem,
         'Manifest',
       );
       expect(hasIssue(result, 'short-label')).toBe(false);
@@ -171,7 +172,7 @@ describe('validateResource', () => {
 
     it('does not flag a missing label (handled by rule 1)', () => {
       const result = validateResource(
-        { id: 'https://x.org/m', type: 'Manifest' },
+        { id: 'https://x.org/m', type: 'Manifest' } as IIIFItem,
         'Manifest',
       );
       expect(hasIssue(result, 'short-label')).toBe(false);
@@ -420,7 +421,7 @@ describe('validateResource', () => {
   describe('Rule 10: missing-id', () => {
     it('flags a resource with no id', () => {
       const result = validateResource(
-        { type: 'Manifest', label: { en: ['Foo'] } },
+        { type: 'Manifest', label: { en: ['Foo'] } } as unknown as IIIFItem,
         'Manifest',
       );
       expect(hasIssue(result, 'missing-id')).toBe(true);
@@ -559,7 +560,7 @@ describe('validateResource', () => {
 
     it('does not run for unknown resource types with no valid set', () => {
       const result = validateResource(
-        { id: 'x', type: 'Unknown', behavior: ['foo'] },
+        { id: 'x', type: 'Unknown', behavior: ['foo'] } as unknown as IIIFItem,
         'Unknown',
       );
       expect(hasIssue(result, 'invalid-behavior-for-type')).toBe(false);
@@ -850,7 +851,7 @@ describe('validateResource', () => {
   describe('result aggregation', () => {
     it('counts errors, warnings, and info correctly', () => {
       // A resource with missing-label (error), missing-rights (warning), missing-summary (info)
-      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest', items: [] }, 'Manifest');
+      const result = validateResource({ id: 'https://x.org/m', type: 'Manifest', items: [] } as IIIFItem, 'Manifest');
       expect(result.errorCount).toBeGreaterThan(0);
       expect(result.warningCount).toBeGreaterThanOrEqual(0);
       expect(result.issues.length).toBe(
@@ -867,7 +868,7 @@ describe('validateResource', () => {
     it('isValid is false when there are errors', () => {
       // missing-id is an error
       const result = validateResource(
-        { type: 'Manifest', label: { en: ['Test'] }, items: [] },
+        { type: 'Manifest', label: { en: ['Test'] }, items: [] } as unknown as IIIFItem,
         'Manifest',
       );
       expect(result.isValid).toBe(false);
@@ -911,7 +912,7 @@ describe('validateResource', () => {
   describe('type detection', () => {
     it('uses explicit type hint when provided', () => {
       const result = validateResource(
-        { id: 'https://x.org/x', label: { en: ['Test'] }, items: [] },
+        { id: 'https://x.org/x', label: { en: ['Test'] }, items: [] } as unknown as IIIFItem,
         'Manifest',
       );
       // Should apply Manifest-specific rules (empty-manifest)
@@ -928,45 +929,48 @@ describe('validateResource', () => {
         summary: { en: ['Summary'] },
         rights: 'http://creativecommons.org/licenses/by/4.0/',
         viewingDirection: 'left-to-right',
-      });
+      } as IIIFItem);
       expect(hasIssue(result, 'empty-collection')).toBe(true);
       expect(hasIssue(result, 'empty-manifest')).toBe(false);
     });
 
-    it('uses heuristic: width+height = Canvas', () => {
+    it('does not trigger type-specific rules for Canvas type', () => {
       const result = validateResource({
         id: 'https://x.org/c',
+        type: 'Canvas',
         label: { en: ['Canvas'] },
         width: 100,
         height: 200,
-      });
+      } as IIIFItem);
       // Should not trigger Manifest/Collection specific rules
       expect(hasIssue(result, 'empty-manifest')).toBe(false);
       expect(hasIssue(result, 'empty-collection')).toBe(false);
     });
 
-    it('uses heuristic: items with Manifest children = Collection', () => {
+    it('Collection type with non-empty items does not trigger empty-collection', () => {
       const result = validateResource({
         id: 'https://x.org/col',
+        type: 'Collection',
         label: { en: ['Collection'] },
         summary: { en: ['Summary'] },
         rights: 'http://creativecommons.org/licenses/by/4.0/',
         viewingDirection: 'left-to-right',
         items: [{ type: 'Manifest' }],
-      });
+      } as IIIFItem);
       expect(hasIssue(result, 'empty-collection')).toBe(false);
       expect(hasIssue(result, 'empty-manifest')).toBe(false);
     });
 
-    it('uses heuristic: items with Canvas children = Manifest', () => {
+    it('Manifest type with non-empty items does not trigger empty-manifest', () => {
       const result = validateResource({
         id: 'https://x.org/m',
+        type: 'Manifest',
         label: { en: ['Manifest'] },
         summary: { en: ['Summary'] },
         rights: 'http://creativecommons.org/licenses/by/4.0/',
         viewingDirection: 'left-to-right',
         items: [{ type: 'Canvas' }],
-      });
+      } as IIIFItem);
       expect(hasIssue(result, 'empty-manifest')).toBe(false);
     });
   });
@@ -1012,8 +1016,8 @@ describe('fixIssue', () => {
       };
       const fixed = fixIssue(resource, issue);
       expect(fixed.metadata).toHaveLength(2);
-      expect(fixed.metadata[0].label).toEqual({ en: ['Author'] });
-      expect(fixed.metadata[1].label).toEqual({ en: ['Date'] });
+      expect(fixed.metadata![0].label).toEqual({ en: ['Author'] });
+      expect(fixed.metadata![1].label).toEqual({ en: ['Date'] });
     });
 
     it('does not mutate the original resource', () => {
@@ -1128,7 +1132,7 @@ describe('fixIssue', () => {
         type: 'Canvas',
         label: { en: ['C'] },
         behavior: ['facing-pages', 'paged', 'continuous'],
-      };
+      } as IIIFItem;
       const issue: ValidationIssue = {
         id: 'invalid-behavior-for-type',
         severity: 'warning',
@@ -1197,8 +1201,8 @@ describe('fixIssue', () => {
         autoFixable: true,
       };
       const fixed = fixIssue(resource, issue);
-      expect(fixed.summary.en[0]).toBe('Hello bad <b>world</b>');
-      expect(fixed.summary.en[0]).not.toContain('<script>');
+      expect(fixed.summary!.en[0]).toBe('Hello bad <b>world</b>');
+      expect(fixed.summary!.en[0]).not.toContain('<script>');
     });
 
     it('strips disallowed HTML from summary (plain string)', () => {
@@ -1230,7 +1234,7 @@ describe('fixIssue', () => {
         autoFixable: true,
       };
       const fixed = fixIssue(resource, issue);
-      expect(fixed.metadata[0].value.en[0]).toBe('bad <b>ok</b>');
+      expect(fixed.metadata![0].value.en[0]).toBe('bad <b>ok</b>');
     });
 
     it('strips disallowed HTML from requiredStatement value', () => {
@@ -1248,7 +1252,7 @@ describe('fixIssue', () => {
         autoFixable: true,
       };
       const fixed = fixIssue(resource, issue);
-      expect(fixed.requiredStatement.value.en[0]).toBe('Credit evil <i>ok</i>');
+      expect(fixed.requiredStatement!.value.en[0]).toBe('Credit evil <i>ok</i>');
     });
 
     it('does not mutate the original metadata array', () => {
@@ -1267,7 +1271,7 @@ describe('fixIssue', () => {
       // Original unchanged
       expect(originalMetadata[0].value.en[0]).toBe('<div>bad</div>');
       // Fixed version sanitized
-      expect(fixed.metadata[0].value.en[0]).toBe('bad');
+      expect(fixed.metadata![0].value.en[0]).toBe('bad');
     });
   });
 
@@ -1315,7 +1319,7 @@ describe('fixAll', () => {
     expect(fixed.viewingDirection).toBe('left-to-right');
     // empty-metadata-1 should be removed
     expect(fixed.metadata).toHaveLength(1);
-    expect(fixed.metadata[0].label).toEqual({ en: ['Author'] });
+    expect(fixed.metadata![0].label).toEqual({ en: ['Author'] });
   });
 
   it('handles metadata removal indices correctly (descending order)', () => {
@@ -1332,7 +1336,7 @@ describe('fixAll', () => {
 
     // Only the valid entry should remain
     expect(fixed.metadata).toHaveLength(1);
-    expect(fixed.metadata[0].label).toEqual({ en: ['X'] });
+    expect(fixed.metadata![0].label).toEqual({ en: ['X'] });
   });
 
   it('skips non-auto-fixable issues', () => {
@@ -1369,15 +1373,15 @@ describe('fixAll', () => {
       metadata: [
         { label: {}, value: {} },
       ],
-    };
+    } as IIIFItem;
     const result = validateResource(resource, 'Manifest');
     const fixed = fixAll(resource, result.issues);
 
     // non-https-id fixed
     expect(fixed.id).toBe('https://example.org/manifest');
     // unsafe-html-content-summary fixed
-    expect(fixed.summary.en[0]).not.toContain('<script>');
-    expect(fixed.summary.en[0]).toContain('<b>ok</b>');
+    expect(fixed.summary!.en[0]).not.toContain('<script>');
+    expect(fixed.summary!.en[0]).toContain('<b>ok</b>');
     // conflicting-behaviors fixed (keep auto-advance)
     expect(fixed.behavior).toContain('auto-advance');
     expect(fixed.behavior).not.toContain('no-auto-advance');
@@ -1425,7 +1429,7 @@ describe('edge cases', () => {
           { label: { en: ['X'] }, value: { en: ['<div>unsafe</div>'] } },
           { label: { en: ['x'] }, value: { en: ['dup'] } },
         ],
-      };
+      } as unknown as IIIFItem;
       const result = validateResource(badManifest, 'Manifest');
 
       expect(result.isValid).toBe(false);
@@ -1481,7 +1485,7 @@ describe('edge cases', () => {
         type: 'AnnotationPage',
         label: { en: ['Annotations'] },
         behavior: ['individuals'],
-      };
+      } as IIIFItem;
       const result = validateResource(ap, 'AnnotationPage');
       // AnnotationPage has no valid behaviors, so 'individuals' should be flagged
       expect(hasIssue(result, 'invalid-behavior-for-type')).toBe(true);
@@ -1510,7 +1514,7 @@ describe('edge cases', () => {
         metadata: [{ label: {}, value: {} }],
       });
       const originalId = resource.id;
-      const originalMetadataLength = resource.metadata.length;
+      const originalMetadataLength = resource.metadata!.length;
 
       const result = validateResource(resource, 'Manifest');
       fixAll(resource, result.issues);
@@ -1523,7 +1527,7 @@ describe('edge cases', () => {
   describe('label extraction edge cases', () => {
     it('handles a numeric label gracefully (not a string or object)', () => {
       const result = validateResource(
-        { id: 'https://x.org/m', type: 'Manifest', label: 12345 },
+        { id: 'https://x.org/m', type: 'Manifest', label: 12345 } as unknown as IIIFItem,
         'Manifest',
       );
       // extractLabel returns '' for non-string/non-object, so missing-label fires
@@ -1532,7 +1536,7 @@ describe('edge cases', () => {
 
     it('handles label with multiple languages', () => {
       const result = validateResource(
-        { id: 'https://x.org/m', type: 'Manifest', label: { en: ['English'], fr: ['French'] } },
+        { id: 'https://x.org/m', type: 'Manifest', label: { en: ['English'], fr: ['French'] } } as IIIFItem,
         'Manifest',
       );
       // Should pick the first language's first value

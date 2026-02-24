@@ -11,7 +11,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
-import KeyboardShortcutsModal, { SHORTCUT_GROUPS } from '../ui/molecules/KeyboardShortcutsModal.svelte';
+import KeyboardShortcutsModal from '../ui/molecules/KeyboardShortcutsModal.svelte';
+import { SHORTCUT_GROUPS } from '../ui/molecules/KeyboardShortcutsModal.constants';
 import { LIGHT_CLASSES } from '@/src/shared/lib/contextual-styles';
 
 const cx = LIGHT_CLASSES;

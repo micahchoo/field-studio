@@ -9,6 +9,7 @@
   // ---------------------------------------------------------------------------
   // Imports
   // ---------------------------------------------------------------------------
+  import { untrack } from 'svelte';
   import { cn } from '@/src/shared/lib/cn';
   import { Button, Icon } from '@/src/shared/ui/atoms';
   import { PanelLayout } from '@/src/shared/ui/layout';
@@ -61,14 +62,16 @@
     shortcut?: string;
   }
 
+  // Icon names must be Material Icons ligature names (underscore format).
+  // The app loads only the Material Icons font — Lucide/Feather names won't render.
   const NAV_ITEMS: NavItemDef[] = [
-    { type: 'archive',  icon: 'archive',   label: 'Archive',  shortcut: '1' },
-    { type: 'viewer',   icon: 'eye',       label: 'Viewer',   shortcut: '2' },
-    { type: 'boards',   icon: 'layout',    label: 'Boards',   shortcut: '3' },
-    { type: 'metadata', icon: 'file-text', label: 'Metadata', shortcut: '4' },
-    { type: 'search',   icon: 'search',    label: 'Search',   shortcut: '5' },
-    { type: 'map',      icon: 'map',       label: 'Map',      shortcut: '6' },
-    { type: 'timeline', icon: 'clock',     label: 'Timeline', shortcut: '7' },
+    { type: 'archive',  icon: 'archive',     label: 'Archive',  shortcut: '1' },
+    { type: 'viewer',   icon: 'visibility',  label: 'Viewer',   shortcut: '2' },
+    { type: 'boards',   icon: 'grid_view',   label: 'Boards',   shortcut: '3' },
+    { type: 'metadata', icon: 'description', label: 'Metadata', shortcut: '4' },
+    { type: 'search',   icon: 'search',      label: 'Search',   shortcut: '5' },
+    { type: 'map',      icon: 'map',         label: 'Map',      shortcut: '6' },
+    { type: 'timeline', icon: 'schedule',    label: 'Timeline', shortcut: '7' },
   ];
 
   // ---------------------------------------------------------------------------
@@ -388,19 +391,23 @@
     breadcrumbs = computeBreadcrumbs(root, selectedId);
   });
 
-  // Auto-expand path to selected item
+  // Auto-expand path to selected item.
+  // Use untrack() to read expandedIds without making it a reactive dependency —
+  // otherwise writing expandedIds re-triggers this very effect (infinite loop).
   $effect(() => {
-    if (selectedId && root) {
-      const pathItems = computeBreadcrumbs(root, selectedId);
-      if (pathItems.length > 1) {
-        const next = new Set(expandedIds);
-        // Expand all ancestors (not the leaf itself)
-        for (let i = 0; i < pathItems.length - 1; i++) {
-          next.add(pathItems[i].id);
-        }
-        expandedIds = next;
-      }
-    }
+    if (!selectedId || !root) return;
+    const pathItems = computeBreadcrumbs(root, selectedId);
+    if (pathItems.length <= 1) return;
+
+    const ancestorIds = pathItems.slice(0, -1).map((p) => p.id);
+    const current = untrack(() => expandedIds);
+
+    // Skip write if all ancestors are already expanded (avoids creating a new Set).
+    if (ancestorIds.every((id) => current.has(id))) return;
+
+    const next = new Set(current);
+    for (const id of ancestorIds) next.add(id);
+    expandedIds = next;
   });
 
   // ResizeObserver for tree container height
@@ -582,7 +589,7 @@
           <div class="flex items-center gap-1 px-3 py-1.5 border-b border-theme-border/50 overflow-x-auto text-xs">
             {#each breadcrumbs as crumb, idx}
               {#if idx > 0}
-                <Icon name="chevron-right" size={10} class="text-theme-text-muted shrink-0" />
+                <Icon name="chevron_right" size={10} class="text-theme-text-muted shrink-0" />
               {/if}
               <button
                 class={cn(
@@ -637,14 +644,14 @@
                 onclick={handleExpandAll}
                 title="Expand all"
               >
-                <Icon name="chevrons-down" size={12} />
+                <Icon name="expand_more" size={12} />
               </button>
               <button
                 class="p-0.5 text-theme-text-muted hover:text-theme-text transition-colors"
                 onclick={handleCollapseAll}
                 title="Collapse all"
               >
-                <Icon name="chevrons-up" size={12} />
+                <Icon name="expand_less" size={12} />
               </button>
             </div>
           </div>
@@ -697,7 +704,7 @@
                       aria-label={node.isExpanded ? 'Collapse' : 'Expand'}
                     >
                       <Icon
-                        name={node.isExpanded ? 'chevron-down' : 'chevron-right'}
+                        name={node.isExpanded ? 'expand_more' : 'chevron_right'}
                         size={12}
                       />
                     </span>

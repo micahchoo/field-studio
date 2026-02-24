@@ -18,6 +18,8 @@ import typedContextKeys from './rules/typed-context-keys.js';
 import requireAriaForIconButtons from './rules/require-aria-for-icon-buttons.js';
 import noStateRawForPrimitives from './rules/no-state-raw-for-primitives.js';
 import viewerNoOsdInAtoms from './rules/viewer-no-osd-in-atoms.js';
+import noUnsafeTypeCastInProps from './rules/no-unsafe-type-cast-in-props.js';
+import exhaustiveSwitch from './rules/exhaustive-switch.js';
 
 const plugin = {
   meta: {
@@ -48,6 +50,12 @@ const plugin = {
 
     // Architecture
     'viewer-no-osd-in-atoms': viewerNoOsdInAtoms,
+
+    // Type safety
+    'no-unsafe-type-cast-in-props': noUnsafeTypeCastInProps,
+
+    // Exhaustiveness
+    'exhaustive-switch': exhaustiveSwitch,
   },
   configs: {
     recommended: {
@@ -67,6 +75,8 @@ const plugin = {
         '@field-studio/require-aria-for-icon-buttons': 'warn',
         '@field-studio/no-state-raw-for-primitives': 'warn',
         '@field-studio/viewer-no-osd-in-atoms': 'error',
+        '@field-studio/no-unsafe-type-cast-in-props': 'warn',
+        '@field-studio/exhaustive-switch': 'warn',
       },
     },
     strict: {
@@ -86,6 +96,8 @@ const plugin = {
         '@field-studio/require-aria-for-icon-buttons': 'error',
         '@field-studio/no-state-raw-for-primitives': 'error',
         '@field-studio/viewer-no-osd-in-atoms': 'error',
+        '@field-studio/no-unsafe-type-cast-in-props': 'error',
+        '@field-studio/exhaustive-switch': 'error',
       },
     },
   },

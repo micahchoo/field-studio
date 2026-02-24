@@ -52,6 +52,7 @@
   import { activityLog } from '@/src/shared/stores/activityLog.svelte';
   // import { auth } from '@/src/shared/stores/auth.svelte'; // used when AuthDialog is migrated
   import { autoSave } from '@/src/app/stores/autoSave.svelte';
+  import { HistoryStore } from '@/src/shared/lib/hooks/history.svelte';
   import { validation } from '@/src/app/stores/validation.svelte';
   import { responsive } from '@/src/shared/actions/responsive.svelte';
   import { networkStatus } from '@/src/shared/actions/networkStatus.svelte';
@@ -72,14 +73,30 @@
   // import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles'; // used when cx is passed to child widgets
 
   // ── Types ──
-  import type { IIIFItem, AbstractionLevel } from '@/src/shared/types';
+  import type { IIIFItem, AbstractionLevel, FileTree } from '@/src/shared/types';
+  import type { AuthService } from '@/src/shared/services/remoteLoader';
   // import type { ValidationIssue } from '@/src/app/stores/validation.svelte'; // used indirectly via validation store
 
   // ── Services (imperative, not stores) ──
-  // @migration: These services are framework-agnostic, imported directly
-  // import { storage } from '@/src/shared/services/storage';
-  // import { contentStateService } from '@/src/shared/services/contentState';
-  // import { buildTree, ingestTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
+  import { storage } from '@/src/shared/services/storage';
+  import { contentStateService } from '@/src/shared/services/contentState';
+  import { buildTree, ingestTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
+
+  // ── Widgets ──
+  import PersonaSettings from '@/src/widgets/PersonaSettings/ui/PersonaSettings.svelte';
+  import StatusBar from '@/src/widgets/StatusBar/ui/organisms/StatusBar.svelte';
+  import ContextualHelp from '@/src/widgets/ContextualHelp/ui/ContextualHelp.svelte';
+  import type { ValidationIssue as StatusBarIssue } from '@/src/widgets/StatusBar/lib/statusBarHelpers';
+
+  // ── Feature Dialogs ──
+  import ExternalImportDialog from '@/src/features/ingest/ui/organisms/ExternalImportDialog.svelte';
+  import StagingWorkbench from '@/src/features/staging/ui/organisms/StagingWorkbench.svelte';
+  import ExportDialog from '@/src/features/export/ui/organisms/ExportDialog.svelte';
+  import QCDashboard from '@/src/widgets/QCDashboard/ui/QCDashboard.svelte';
+  import BatchEditor from '@/src/features/metadata-edit/ui/organisms/BatchEditor.svelte';
+  import AuthDialog from '@/src/widgets/AuthDialog/ui/AuthDialog.svelte';
+  import Sidebar from '@/src/widgets/NavigationSidebar/ui/organisms/Sidebar.svelte';
+  import Inspector from '@/src/features/metadata-edit/ui/organisms/Inspector.svelte';
 
   // ============================================================================
   // Action Labels — StatusBar last-action indicator
@@ -139,7 +156,7 @@
   let batchIds = $state<string[]>([]);
 
   // ── Staging / import ──
-  let stagingTree = $state<unknown | null>(null);
+  let stagingTree = $state<FileTree | null>(null);
 
   // ── Pipeline context ──
   let pipelineContext = $state<{
@@ -165,15 +182,15 @@
   // ── Auth ──
   let pendingAuth = $state<{
     resourceId: string;
-    authServices: unknown[];
+    authServices: AuthService[];
     retryFn?: () => void;
   } | null>(null);
 
   // ── History (undo/redo) ──
   let lastActionType = $state<string | null>(null);
-  // @migration: Wire HistoryStore instance when vault history integration is done
-  let canUndo = $state(false);
-  let canRedo = $state(false);
+  const history = new HistoryStore<IIIFItem | null>(null, 50);
+  const canUndo = $derived(history.canUndo);
+  const canRedo = $derived(history.canRedo);
 
   // ── File input ref ──
   let mainFileInputEl: HTMLInputElement | undefined = $state(undefined);
@@ -215,6 +232,15 @@
     return Object.values(validation.issues).flat();
   });
 
+  // Map to StatusBar's ValidationIssue shape (level/message vs severity/title)
+  const statusBarIssues = $derived.by((): StatusBarIssue[] =>
+    flatValidationIssues.map(issue => ({
+      id: issue.id,
+      level: issue.severity as 'error' | 'warning' | 'info',
+      message: issue.title,
+    }))
+  );
+
   const validationIssuesMap = $derived(validation.issues);
 
   // ============================================================================
@@ -236,6 +262,10 @@
   // Throttled playback time — avoid re-renders during media playback
   let lastPlaybackUpdateAt = 0;
 
+  // Imperative save/clear fns registered by the viewer overlay (Annotorious)
+  let _annotationSaveFn: (() => void) | null = null;
+  let _annotationClearFn: (() => void) | null = null;
+
   setAnnotationContext({
     get showAnnotationTool() { return showAnnotationTool; },
     get annotationText() { return annotationText; },
@@ -244,6 +274,8 @@
     get forceAnnotationsTab() { return forceAnnotationsTab; },
     get timeRange() { return timeRange; },
     get currentPlaybackTime() { return currentPlaybackTime; },
+    get triggerSave() { return _annotationSaveFn; },
+    get triggerClear() { return _annotationClearFn; },
     setAnnotationText: (text: string) => { annotationText = text; },
     setAnnotationMotivation: (m: AnnotationMotivation) => { annotationMotivation = m; },
     setAnnotationDrawingState: (s: AnnotationDrawingState) => { annotationDrawingState = s; },
@@ -259,6 +291,8 @@
         currentPlaybackTime = time;
       }
     },
+    registerSave: (fn: () => void) => { _annotationSaveFn = fn; },
+    registerClear: (fn: () => void) => { _annotationClearFn = fn; },
   });
 
   // ============================================================================
@@ -327,9 +361,8 @@
     if (autoSave.dirty) {
       autoSave.save(async () => {
         const r = vault.export();
-        // @migration: Wire storage.saveProject(r) when service is available
         if (r) {
-          // await storage.saveProject(r);
+          await storage.saveProject(r);
         }
       });
     }
@@ -452,10 +485,14 @@
     };
     window.addEventListener('popstate', handlePopState);
 
-    // Storage: load project, check for Content State URL, request persistent storage
-    // @migration: Wire storage.loadProject() when service is available
-    // storage.loadProject().then((proj) => { if (proj) vault.load(proj); });
-    // storage.requestPersistentStorage().catch(() => {});
+    // Storage: load project on startup
+    storage.loadProject().then((proj) => {
+      if (proj) {
+        vault.load(proj);
+        history.set(proj); // initialize history with loaded state
+      }
+    }).catch(() => {});
+    storage.requestPersistentStorage().catch(() => {});
 
     // Onboarding: already handled by dialogs store constructor
 
@@ -501,8 +538,9 @@
 
   function handleUpdateRoot(newRoot: IIIFItem) {
     vault.load(newRoot);
+    history.update(newRoot);
     autoSave.markDirty();
-    // @migration: Wire storage.saveProject(newRoot)
+    storage.saveProject(newRoot).catch(() => {});
   }
 
   function handleBatchApply(ids: string[], updatesMap: Record<string, Partial<IIIFItem>>, renamePattern?: string) {
@@ -516,8 +554,9 @@
 
   function handleBatchRollback(restoredRoot: IIIFItem) {
     vault.load(restoredRoot);
+    history.update(restoredRoot);
     autoSave.markDirty();
-    // @migration: Wire storage.saveProject(restoredRoot)
+    storage.saveProject(restoredRoot).catch(() => {});
   }
 
   function handleSelect(id: string) {
@@ -528,6 +567,11 @@
 
   function handleSelectId(id: string) {
     selectedId = id;
+  }
+
+  function handleQCSelect(id: string) {
+    selectedId = id;
+    dialogs.qcDashboard.close();
   }
 
   function handleBatchEdit(ids: string[]) {
@@ -555,23 +599,40 @@
   function handleFileInputChange(e: Event) {
     const input = e.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      // @migration: Wire buildTree(Array.from(input.files))
-      // stagingTree = buildTree(Array.from(input.files));
-      toast.show('File import not yet wired in Svelte migration', 'info');
+      stagingTree = buildTree(Array.from(input.files));
       input.value = '';
     }
   }
 
-  function handleAuthRequired(resourceId: string, authServices: unknown[], retryFn?: () => void) {
+  async function handleIngest(tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void): Promise<void> {
+    const result = await ingestTree(tree, merge ? root : null, {
+      onProgress: (p) => progressCallback(p.stage, p.overallProgress),
+    });
+    if (result.success && result.root) {
+      vault.load(result.root);
+      autoSave.markDirty();
+      stagingTree = null;
+      toast.show('Import complete.', 'success');
+    }
+  }
+
+  function handleExternalImport(item: IIIFItem) {
+    vault.load(item);
+    autoSave.markDirty();
+    dialogs.externalImport.close();
+    toast.show('Manifest imported.', 'success');
+  }
+
+  function handleAuthRequired(resourceId: string, authServices: AuthService[], retryFn?: () => void) {
     pendingAuth = { resourceId, authServices, retryFn };
     dialogs.authDialog.open();
   }
 
-  function handleAuthComplete(state: { status: string }) {
-    if (state.status === 'authenticated') {
+  function handleAuthComplete(state: 'authenticated' | 'degraded' | 'failed') {
+    if (state === 'authenticated') {
       toast.show('Authentication successful.', 'success');
       if (pendingAuth?.retryFn) pendingAuth.retryFn();
-    } else if (state.status === 'degraded') {
+    } else if (state === 'degraded') {
       toast.show('Limited access granted. Some content may be unavailable.', 'info');
     }
     dialogs.authDialog.close();
@@ -609,22 +670,37 @@
 
   function handleDeleteAnnotation(annotationId: string) {
     if (!selectedId) return;
-    // @migration: Wire vault.dispatch(actions.removeAnnotation(selectedId, annotationId))
-    vault.update(selectedId, {}); // placeholder
+    vault.dispatch({ type: 'REMOVE_ANNOTATION', canvasId: selectedId, annotationId });
     autoSave.markDirty();
   }
 
   function handleEditAnnotation(annotationId: string, newText: string) {
-    // @migration: Wire vault.dispatch(actions.updateAnnotation(annotationId, body))
+    vault.dispatch({
+      type: 'UPDATE_ANNOTATION',
+      annotationId,
+      updates: { body: { type: 'TextualBody' as const, value: newText, format: 'text/plain' } },
+    });
     autoSave.markDirty();
   }
 
   function handleUndo() {
-    // @migration: Wire history.undo() + vault.restore
+    if (!history.canUndo) return;
+    history.undo();
+    const prev = history.state;
+    if (prev) {
+      vault.load(prev);
+      autoSave.markDirty();
+    }
   }
 
   function handleRedo() {
-    // @migration: Wire history.redo() + vault.restore
+    if (!history.canRedo) return;
+    history.redo();
+    const next = history.state;
+    if (next) {
+      vault.load(next);
+      autoSave.markDirty();
+    }
   }
 
   // ── Content State drop handler ──
@@ -646,8 +722,15 @@
     isDragOver = false;
     const text = e.dataTransfer?.getData('text/plain') || e.dataTransfer?.getData('text/uri-list');
     if (!text) return;
-    // @migration: Wire contentStateService.parseFromUrl(text)
-    toast.show('Content State drop not yet wired in Svelte migration', 'info');
+    const viewport = contentStateService.parseFromUrl(text);
+    if (viewport) {
+      // Navigate to the dropped canvas/manifest
+      if (viewport.canvasId) {
+        selectedId = viewport.canvasId;
+      }
+    } else {
+      toast.show('Unrecognised drop — expected an IIIF Content State URL', 'info');
+    }
   }
 
   // ============================================================================
@@ -772,70 +855,26 @@
         </header>
       {/if}
 
-      <!-- Sidebar -->
-      <!-- @migration: Sidebar not yet migrated to Svelte -->
-      {#if showSidebar}
-        <aside
-          id="sidebar"
-          class={cn(
-            'flex flex-col border-r-4 overflow-hidden',
-            isMobile ? 'absolute inset-y-0 left-0 z-[200] w-72' : 'w-64',
-            fieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-cream border-nb-black'
-          )}
-          role="navigation"
-          aria-label="Sidebar navigation"
-        >
-          <div class={cn('flex items-center h-12 px-3 border-b-4', fieldMode ? 'border-nb-yellow' : 'border-nb-black')}>
-            <div class={cn('font-mono font-black tracking-tighter uppercase text-xs flex-1', fieldMode ? 'text-nb-yellow' : 'text-nb-black')}>
-              FIELD STUDIO
-            </div>
-            {#if isMobile}
-              <Button variant="ghost" size="bare" onclick={() => { showSidebar = false; }} aria-label="Close sidebar" class="p-1">
-                {#snippet children()}<Icon name="close" />{/snippet}
-              </Button>
-            {/if}
-          </div>
-          <nav class="flex-1 overflow-y-auto p-2">
-            <!-- @migration: NavigationSidebar widget goes here -->
-            <!-- Navigation items -->
-            {#each [
-              { id: 'archive' as AppMode, icon: 'inventory_2', label: 'Archive' },
-              { id: 'collections' as AppMode, icon: 'folder_special', label: 'Collections' },
-              { id: 'viewer' as AppMode, icon: 'visibility', label: 'Viewer' },
-              { id: 'metadata' as AppMode, icon: 'table_chart', label: 'Metadata' },
-              { id: 'boards' as AppMode, icon: 'dashboard', label: 'Boards' },
-              { id: 'search' as AppMode, icon: 'search', label: 'Search' },
-              { id: 'map' as AppMode, icon: 'map', label: 'Map' },
-              { id: 'timeline' as AppMode, icon: 'timeline', label: 'Timeline' },
-            ] as navItem (navItem.id)}
-              <button
-                type="button"
-                class={cn(
-                  'flex items-center gap-3 w-full px-3 py-2 text-left font-mono text-xs uppercase tracking-wider transition-all cursor-pointer border-0',
-                  mode === navItem.id
-                    ? (fieldMode ? 'bg-nb-yellow text-nb-black font-bold' : 'bg-nb-black text-nb-white font-bold')
-                    : (fieldMode ? 'text-nb-yellow/70 hover:text-nb-yellow hover:bg-nb-yellow/10' : 'text-nb-black/60 hover:text-nb-black hover:bg-nb-black/5'),
-                )}
-                onclick={() => { appMode.setMode(navItem.id); if (isMobile) showSidebar = false; }}
-              >
-                <Icon name={navItem.icon} class="text-lg" />
-                <span>{navItem.label}</span>
-              </button>
-            {/each}
-          </nav>
-          <div class={cn('border-t-4 p-2 flex gap-1', fieldMode ? 'border-nb-yellow' : 'border-nb-black')}>
-            <Button variant="ghost" size="bare" onclick={handleOpenImport} aria-label="Import files" class={cn('p-2 flex-1', fieldMode ? 'text-nb-yellow' : 'text-nb-black')}>
-              {#snippet children()}<Icon name="upload_file" />{/snippet}
-            </Button>
-            <Button variant="ghost" size="bare" onclick={() => dialogs.exportDialog.open()} aria-label="Export" class={cn('p-2 flex-1', fieldMode ? 'text-nb-yellow' : 'text-nb-black')}>
-              {#snippet children()}<Icon name="download" />{/snippet}
-            </Button>
-            <Button variant="ghost" size="bare" onclick={() => dialogs.personaSettings.open()} aria-label="Settings" class={cn('p-2 flex-1', fieldMode ? 'text-nb-yellow' : 'text-nb-black')}>
-              {#snippet children()}<Icon name="settings" />{/snippet}
-            </Button>
-          </div>
-        </aside>
-      {/if}
+      <!-- Sidebar — NavigationSidebar widget -->
+      <Sidebar
+        {root}
+        selectedId={selectedId}
+        viewType={mode as 'archive' | 'viewer' | 'boards' | 'metadata' | 'search' | 'map' | 'timeline'}
+        onSelect={(id) => handleSelect(id)}
+        onViewTypeChange={(m) => appMode.setMode(m as AppMode)}
+        onImport={handleOpenImport}
+        onExportTrigger={() => dialogs.exportDialog.open()}
+        onToggleFieldMode={() => appSettings.toggleFieldMode()}
+        visible={showSidebar}
+        onOpenExternalImport={() => dialogs.externalImport.open()}
+        onOpenSettings={() => dialogs.personaSettings.open()}
+        isMobile={isMobile}
+        onClose={() => { showSidebar = false; }}
+        abstractionLevel={appSettings.abstractionLevel}
+        onAbstractionLevelChange={handleAbstractionLevelChange}
+        fieldMode={fieldMode}
+        onStructureUpdate={handleUpdateRoot}
+      />
 
       <!-- Mobile sidebar backdrop -->
       {#if isMobile && showSidebar}
@@ -865,7 +904,13 @@
             {selectedId}
             {selectedItem}
             {root}
-            validationIssuesMap={validationIssuesMap as Record<string, any[]>}
+            validationIssuesMap={
+              // TYPE_DEBT: validation.issues is Record<string, store.ValidationIssue[]> but
+              // ViewRouter expects Record<string, validator.ValidationIssue[]>. The two
+              // ValidationIssue types differ (severity/title vs level/itemId/message/fixable).
+              // TODO(loop): unify ValidationIssue into shared/types and update the store.
+              validationIssuesMap as Record<string, any[]>
+            }
             onSelect={(item) => handleSelect(item.id)}
             onSelectId={(id) => { if (id) handleSelectId(id); else selectedId = null; }}
             onUpdateItem={handleItemUpdate}
@@ -887,130 +932,53 @@
           {/snippet}
         </svelte:boundary>
 
-        <!-- @migration: ContextualHelp widget goes here -->
+        <ContextualHelp {mode} isInspectorOpen={showInspector} {cx} />
       </main>
 
-      <!-- Inspector (non-archive/boards modes) -->
-      {#if mode !== 'archive' && mode !== 'boards' && showInspector && selectedId}
-        <!-- @migration: Inspector not yet migrated to Svelte -->
-        <aside
-          class={cn(
-            'w-80 flex flex-col border-l-4 overflow-hidden',
-            isMobile ? 'absolute inset-y-0 right-0 z-[200]' : '',
-            fieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-white border-nb-black'
-          )}
-          aria-label="Inspector panel"
-        >
-          <div class={cn('flex items-center h-12 px-3 border-b-4 justify-between', fieldMode ? 'border-nb-yellow' : 'border-nb-black')}>
-            <span class={cn('font-mono font-bold text-xs uppercase tracking-wider', fieldMode ? 'text-nb-yellow' : 'text-nb-black')}>
-              Inspector
-            </span>
-            <Button
-              variant="ghost"
-              size="bare"
-              onclick={() => { showInspector = false; if (mode !== 'viewer') selectedId = null; }}
-              aria-label="Close inspector"
-              class="p-1"
-            >
-              {#snippet children()}<Icon name="close" />{/snippet}
-            </Button>
-          </div>
-          <div class="flex-1 overflow-y-auto p-4">
-            <p class={cn('font-mono text-xs', fieldMode ? 'text-nb-yellow/70' : 'text-nb-black/60')}>
-              <!-- @migration: Inspector widget goes here -->
-              Selected: {selectedId}
-            </p>
-          </div>
-        </aside>
+      <!-- Inspector panel (non-archive/boards modes) -->
+      {#if mode !== 'archive' && mode !== 'boards'}
+        <Inspector
+          resource={selectedItem}
+          onUpdateResource={handleItemUpdate}
+          {cx}
+          fieldMode={fieldMode}
+          visible={showInspector && !!selectedId}
+          onClose={() => { showInspector = false; }}
+          isMobile={isMobile}
+          abstractionLevel={appSettings.abstractionLevel}
+          annotationModeActive={showAnnotationTool}
+          annotationDrawingState={annotationDrawingState}
+          annotationText={annotationText}
+          onAnnotationTextChange={(t) => { annotationText = t; }}
+          annotationMotivation={annotationMotivation as 'commenting' | 'tagging' | 'describing'}
+          onAnnotationMotivationChange={(m) => { annotationMotivation = m; }}
+          onDeleteAnnotation={handleDeleteAnnotation}
+          onEditAnnotation={handleEditAnnotation}
+          timeRange={timeRange}
+          currentPlaybackTime={currentPlaybackTime}
+          forceTab={forceAnnotationsTab ? 'annotations' : undefined}
+        />
       {/if}
   </div>
 
   {#snippet statusbar()}
     {#if !isMobile}
-      <!-- @migration: StatusBar widget goes here -->
-      <div
-        class={cn(
-          'flex items-center h-8 px-4 border-t-4 font-mono text-[10px] uppercase tracking-wider gap-4',
-          fieldMode ? 'bg-nb-black border-nb-yellow text-nb-yellow/70' : 'bg-nb-cream border-nb-black text-nb-black/60'
-        )}
-        role="status"
-      >
-        <!-- Item count -->
-        <span>{root?.items?.length ?? 0} items</span>
-
-        <!-- Validation badge -->
-        {#if validation.totalIssues > 0}
-          <button
-            type="button"
-            class={cn(
-              'flex items-center gap-1 cursor-pointer border-0 bg-transparent font-mono text-[10px] uppercase',
-              validation.errorCount > 0 ? 'text-nb-red' : 'text-nb-orange'
-            )}
-            onclick={() => dialogs.qcDashboard.open()}
-          >
-            <Icon name={validation.errorCount > 0 ? 'error' : 'warning'} class="text-xs" />
-            <span>{validation.totalIssues} issues</span>
-          </button>
-        {/if}
-
-        <!-- Save status -->
-        <span class={cn(
-          autoSave.saveStatus === 'error' ? 'text-nb-red' : '',
-          autoSave.saveStatus === 'saving' ? (fieldMode ? 'text-nb-yellow' : 'text-nb-blue') : ''
-        )}>
-          {autoSave.saveStatus === 'saved' ? 'Saved' : autoSave.saveStatus === 'saving' ? 'Saving...' : 'Save error'}
-        </span>
-
-        <!-- Spacer -->
-        <div class="flex-1"></div>
-
-        <!-- Network status -->
-        {#if !isOnline}
-          <span class="text-nb-orange flex items-center gap-1">
-            <Icon name="wifi_off" class="text-xs" />
-            Offline
-          </span>
-        {/if}
-
-        <!-- Storage usage -->
-        {#if storageUsage && storageUsage.quota > 0}
-          <span>
-            {Math.round((storageUsage.usage / storageUsage.quota) * 100)}% storage
-          </span>
-        {/if}
-
-        <!-- Undo/Redo -->
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            class={cn('p-0.5 border-0 bg-transparent cursor-pointer', !canUndo ? 'opacity-30' : '')}
-            onclick={handleUndo}
-            disabled={!canUndo}
-            aria-label="Undo"
-          >
-            <Icon name="undo" class="text-sm" />
-          </button>
-          <button
-            type="button"
-            class={cn('p-0.5 border-0 bg-transparent cursor-pointer', !canRedo ? 'opacity-30' : '')}
-            onclick={handleRedo}
-            disabled={!canRedo}
-            aria-label="Redo"
-          >
-            <Icon name="redo" class="text-sm" />
-          </button>
-        </div>
-
-        <!-- Keyboard shortcuts -->
-        <button
-          type="button"
-          class="p-0.5 border-0 bg-transparent cursor-pointer opacity-60 hover:opacity-100"
-          onclick={() => dialogs.keyboardShortcuts.open()}
-          aria-label="Keyboard shortcuts"
-        >
-          <Icon name="keyboard" class="text-sm" />
-        </button>
-      </div>
+      <StatusBar
+        totalItems={root?.items?.length ?? 0}
+        selectedItem={selectedItem}
+        validationIssues={statusBarIssues}
+        {storageUsage}
+        onOpenQC={() => dialogs.qcDashboard.open()}
+        saveStatus={autoSave.saveStatus}
+        {canUndo}
+        {canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        lastActionLabel={lastActionType}
+        isOnline={isOnline}
+        activityCount={activityCount}
+        onOpenKeyboardShortcuts={() => dialogs.keyboardShortcuts.open()}
+      />
     {/if}
   {/snippet}
 </ScreenLayout>
@@ -1019,43 +987,54 @@
 <!-- Dialog Overlays (conditionally rendered outside layout)                       -->
 <!-- ============================================================================ -->
 
-<!-- @migration: StagingWorkbench not yet migrated -->
 {#if stagingTree}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">StagingWorkbench placeholder</p>
-      <Button variant="secondary" size="sm" onclick={() => { stagingTree = null; }}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <svelte:boundary>
+    <StagingWorkbench
+      initialTree={stagingTree}
+      existingRoot={root}
+      onIngest={handleIngest}
+      onCancel={() => { stagingTree = null; }}
+      abstractionLevel={appSettings.abstractionLevel}
+    />
+    {#snippet failed(error)}
+      <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60">
+        <div class={cn('p-8 border-4 max-w-md text-center', fieldMode ? 'bg-nb-black border-nb-yellow text-nb-yellow' : 'bg-nb-white border-nb-black text-nb-black')}>
+          <p class="font-mono font-bold text-sm uppercase mb-2">Import Error</p>
+          <p class="font-mono text-xs opacity-70 mb-4">{error instanceof Error ? error.message : 'An unexpected error occurred during import.'}</p>
+          <button type="button" class={cn('font-mono text-xs px-4 py-2 border-2', fieldMode ? 'border-nb-yellow text-nb-yellow' : 'border-nb-black text-nb-black')} onclick={() => { stagingTree = null; }}>
+            Close
+          </button>
+        </div>
+      </div>
+    {/snippet}
+  </svelte:boundary>
 {/if}
 
-<!-- @migration: ExportDialog not yet migrated -->
 {#if dialogs.exportDialog.isOpen && root}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">ExportDialog placeholder</p>
-      <Button variant="secondary" size="sm" onclick={() => dialogs.exportDialog.close()}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <ExportDialog
+    {root}
+    onClose={() => dialogs.exportDialog.close()}
+    {cx}
+    fieldMode={fieldMode}
+  />
 {/if}
 
-<!-- @migration: QCDashboard not yet migrated -->
 {#if dialogs.qcDashboard.isOpen}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">QCDashboard placeholder</p>
-      <Button variant="secondary" size="sm" onclick={() => dialogs.qcDashboard.close()}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <QCDashboard
+    issuesMap={
+      // TYPE_DEBT: same ValidationIssue mismatch as ViewRouter prop above.
+      // TODO(loop): unify ValidationIssue and remove both casts.
+      validationIssuesMap as any
+    }
+    totalItems={root?.items?.length ?? 0}
+    root={root}
+    onSelect={handleQCSelect}
+    onUpdate={handleUpdateRoot}
+    onClose={() => dialogs.qcDashboard.close()}
+  />
 {/if}
 
-<!-- @migration: OnboardingModal not yet migrated -->
+<!-- OnboardingModal (inline implementation) -->
 {#if dialogs.onboardingModal.isOpen}
   <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
     <div class="bg-nb-white border-4 border-nb-black p-8 max-w-md text-center">
@@ -1076,43 +1055,34 @@
   </div>
 {/if}
 
-<!-- @migration: ExternalImportDialog not yet migrated -->
 {#if dialogs.externalImport.isOpen}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">ExternalImportDialog placeholder</p>
-      <Button variant="secondary" size="sm" onclick={() => dialogs.externalImport.close()}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <ExternalImportDialog
+    onImport={handleExternalImport}
+    onClose={() => dialogs.externalImport.close()}
+    onAuthRequired={handleAuthRequired}
+    {fieldMode}
+  />
 {/if}
 
-<!-- @migration: BatchEditor not yet migrated -->
 {#if dialogs.batchEditor.isOpen && root}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">BatchEditor placeholder ({batchIds.length} items)</p>
-      <Button variant="secondary" size="sm" onclick={() => dialogs.batchEditor.close()}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <BatchEditor
+    ids={batchIds}
+    root={root}
+    onApply={handleBatchApply}
+    onClose={() => dialogs.batchEditor.close()}
+    onRollback={handleBatchRollback}
+  />
 {/if}
 
-<!-- @migration: PersonaSettings not yet migrated -->
 {#if dialogs.personaSettings.isOpen}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">PersonaSettings placeholder</p>
-      <Button variant="secondary" size="sm" onclick={() => dialogs.personaSettings.close()}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <PersonaSettings
+    settings={appSettings.settings}
+    onUpdate={(s) => appSettings.update(s)}
+    onClose={() => dialogs.personaSettings.close()}
+  />
 {/if}
 
-<!-- @migration: CommandPalette not yet migrated -->
+<!-- Command Palette -->
 {#if dialogs.commandPalette.isOpen}
   <div class="fixed inset-0 z-[3000] flex items-start justify-center pt-[20vh] bg-black/50">
     <div class={cn('w-full max-w-lg border-4 shadow-brutal', fieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-white border-nb-black')}>
@@ -1160,7 +1130,7 @@
   </div>
 {/if}
 
-<!-- @migration: KeyboardShortcutsOverlay not yet migrated -->
+<!-- Keyboard Shortcuts Overlay -->
 {#if dialogs.keyboardShortcuts.isOpen}
   <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
     <div class={cn('max-w-md w-full border-4 p-6', fieldMode ? 'bg-nb-black border-nb-yellow' : 'bg-nb-white border-nb-black')}>
@@ -1180,19 +1150,16 @@
   </div>
 {/if}
 
-<!-- @migration: AuthDialog not yet migrated -->
 {#if dialogs.authDialog.isOpen && pendingAuth}
-  <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
-    <div class="bg-nb-white border-4 border-nb-black p-8 max-w-lg">
-      <p class="font-mono text-sm">AuthDialog placeholder for resource: {pendingAuth.resourceId}</p>
-      <Button variant="secondary" size="sm" onclick={handleAuthClose}>
-        {#snippet children()}Close{/snippet}
-      </Button>
-    </div>
-  </div>
+  <AuthDialog
+    authServices={pendingAuth.authServices}
+    resourceId={pendingAuth.resourceId}
+    onComplete={handleAuthComplete}
+    onClose={handleAuthClose}
+  />
 {/if}
 
-<!-- @migration: StorageFullDialog not yet migrated -->
+<!-- Storage Full Dialog -->
 {#if dialogs.storageFullDialog.isOpen}
   <div class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
     <div class="bg-nb-white border-4 border-nb-red p-8 max-w-md text-center">

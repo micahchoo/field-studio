@@ -4,12 +4,15 @@
  * Transforms Field Studio projects into self-contained static websites
  * that can be deployed to GitHub Pages, S3, Netlify, or any static host.
  *
+ * All unnecessary `(item/manifest/collection/page as any)` casts removed: IIIFManifest and
+ * IIIFCollection extend IIIFItem (summary is inherited); IIIFAnnotationPage.items is typed.
+ * getPaintingAnnotation now returns IIIFAnnotation | null.
  *
  * @see ARCHITECTURE_INSPIRATION.md - "Static-First Infrastructure (Wax)"
  */
 
 import DOMPurify from 'isomorphic-dompurify';
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection } from '@/src/shared/types';
+import { getIIIFValue, IIIFAnnotation, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
 import { searchService } from '@/src/shared/services/searchService';
 import { DEFAULT_SEARCH_CONFIG, fieldRegistry } from '@/src/shared/services/fieldRegistry';
@@ -277,7 +280,7 @@ class StaticSiteExporter {
         pid,
         order: index,
         label,
-        summary: getIIIFValue((item as any).summary) || '',
+        summary: getIIIFValue(item.summary) || '',
         thumbnail: `img/derivatives/iiif/${pid}/full/${cfg.thumbnailWidth},/0/default.jpg`,
         full: `img/derivatives/iiif/${pid}/full/${cfg.fullWidth},/0/default.jpg`,
         manifest: `iiif/${this.getParentManifestSlug(item)}/manifest.json`,
@@ -299,8 +302,8 @@ class StaticSiteExporter {
       lines.push(`- pid: "${pid}"`);
       lines.push(`  label: "${this.escapeYaml(label)}"`);
 
-      if ((item as any).summary) {
-        const summary = getIIIFValue((item as any).summary);
+      if (item.summary) {
+        const summary = getIIIFValue(item.summary);
         if (summary) {
           lines.push(`  summary: "${this.escapeYaml(summary)}"`);
         }
@@ -326,7 +329,7 @@ class StaticSiteExporter {
   private generateItemPage(item: IIIFItem, cfg: StaticSiteConfig): string {
     const pid = this.slugify(item.id);
     const label = getIIIFValue(item.label) || 'Untitled';
-    const summary = getIIIFValue((item as any).summary) || '';
+    const summary = getIIIFValue(item.summary) || '';
 
     // Build metadata table
     let metadataHtml = '';
@@ -509,7 +512,7 @@ class StaticSiteExporter {
         ...canvas,
         items: canvas.items?.map(page => ({
           ...page,
-          items: (page as any).items?.map((anno: any) => ({
+          items: page.items?.map((anno) => ({
             ...anno,
             body: anno.body ? {
               ...(typeof anno.body === 'object' ? anno.body : { id: anno.body }),
@@ -526,7 +529,7 @@ class StaticSiteExporter {
       id: `${cfg.baseUrl}/iiif/${slug}/manifest.json`,
       type: 'Manifest',
       label: manifest.label,
-      summary: (manifest as any).summary,
+      summary: manifest.summary,
       metadata: manifest.metadata,
       items: manifest.items?.map((item: IIIFItem) =>
         isCanvas(item) ? rewriteCanvas(item as IIIFCanvas) : item
@@ -547,7 +550,7 @@ class StaticSiteExporter {
       id: `${cfg.baseUrl}/iiif/collection.json`,
       type: 'Collection',
       label: collection.label || { en: [cfg.title] },
-      summary: (collection as any).summary,
+      summary: collection.summary,
       items: manifests.map(m => ({
         id: `${cfg.baseUrl}/iiif/${this.slugify(m.id)}/manifest.json`,
         type: 'Manifest',
@@ -999,10 +1002,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
       .trim();
   }
 
-  private getPaintingAnnotation(canvas: IIIFCanvas): any {
+  private getPaintingAnnotation(canvas: IIIFCanvas): IIIFAnnotation | null {
     const page = canvas.items?.[0];
-    if (!page || !(page as any).items) return null;
-    return (page as any).items.find((a: any) => isPaintingMotivation(a.motivation));
+    if (!page) return null;
+    return page.items.find((a) => isPaintingMotivation(a.motivation)) ?? null;
   }
 
   private getParentManifestSlug(item: IIIFItem): string {

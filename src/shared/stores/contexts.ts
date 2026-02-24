@@ -46,6 +46,13 @@ export interface AnnotationContext {
   setTimeRange: (range: TimeRange | null) => void;
   handleAnnotationToolToggle: (active: boolean) => void;
   handlePlaybackTimeChange: (time: number) => void;
+
+  // Imperative triggers — registered by the viewer overlay (Annotorious)
+  // null until a viewer mounts and registers its own handler
+  triggerSave: (() => void) | null;
+  triggerClear: (() => void) | null;
+  registerSave: (fn: () => void) => void;
+  registerClear: (fn: () => void) => void;
 }
 
 const ANNOTATION_KEY = Symbol('annotation-state');
@@ -54,8 +61,29 @@ export function setAnnotationContext(value: AnnotationContext): void {
   setContext(ANNOTATION_KEY, value);
 }
 
+/** No-op fallback used when context is missing (e.g. unit tests outside App provider) */
+const NULL_ANNOTATION_CONTEXT: AnnotationContext = {
+  get showAnnotationTool() { return false; },
+  get annotationText() { return ''; },
+  get annotationMotivation(): AnnotationMotivation { return 'commenting'; },
+  get annotationDrawingState(): AnnotationDrawingState { return { pointCount: 0, isDrawing: false, canSave: false }; },
+  get forceAnnotationsTab() { return false; },
+  get timeRange() { return null; },
+  get currentPlaybackTime() { return 0; },
+  setAnnotationText: () => {},
+  setAnnotationMotivation: () => {},
+  setAnnotationDrawingState: () => {},
+  setTimeRange: () => {},
+  handleAnnotationToolToggle: () => {},
+  handlePlaybackTimeChange: () => {},
+  triggerSave: null,
+  triggerClear: null,
+  registerSave: () => {},
+  registerClear: () => {},
+};
+
 export function getAnnotationContext(): AnnotationContext {
-  return getContext<AnnotationContext>(ANNOTATION_KEY);
+  return getContext<AnnotationContext>(ANNOTATION_KEY) ?? NULL_ANNOTATION_CONTEXT;
 }
 
 // ────────────────────────────────────────────────────────────────

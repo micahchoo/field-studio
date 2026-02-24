@@ -29,6 +29,7 @@
     IIIFCanvas,
     IIIFManifest,
     IIIFAnnotation,
+    IIIFAnnotationBody,
     IIIFAnnotationPage,
     IIIFRange,
     IIIFRangeReference,
@@ -40,6 +41,7 @@
   import { getIIIFValue } from '@/src/shared/types';
   import { cn } from '@/src/shared/lib/cn';
   import { vault } from '@/src/shared/stores/vault.svelte';
+  import { actions } from '@/src/entities/manifest/model/actions';
   import { ImageFilterStore } from '@/src/features/viewer/model/imageFilters.svelte';
   import { MeasurementStore } from '@/src/features/viewer/model/measurement.svelte';
   import { ComparisonStore } from '@/src/features/viewer/model/comparison.svelte';
@@ -275,9 +277,13 @@
     return 'other';
   }
 
-  const paintingBody = $derived.by(() => {
+  /** Painting body with common fields for media-type detection and URL resolution */
+  type PaintingBody = { id?: string; type?: string; format?: string; value?: string };
+
+  const paintingBody = $derived.by((): PaintingBody | null => {
     if (!item?.items?.[0]?.items?.[0]) return null;
-    return item.items[0].items[0].body as any;
+    const body = item.items[0].items[0].body as IIIFAnnotationBody | IIIFAnnotationBody[];
+    return (Array.isArray(body) ? body[0] : body) as PaintingBody;
   });
 
   const mediaType = $derived.by((): MediaType => {
@@ -685,8 +691,8 @@
       return;
     }
 
-    // Add annotation via vault store
-    vault.add(annotation as any, item.id);
+    // Add annotation via vault dispatch (correct API for IIIFAnnotation entities)
+    vault.dispatch(actions.addAnnotation(item.id, annotation));
 
     // Persist to storage asynchronously
     const updatedRoot = vault.export();
@@ -737,7 +743,7 @@
       id: `anno-spatial-${Date.now()}`,
       type: 'Annotation',
       motivation: 'commenting',
-      body: { type: 'TextualBody', value: '', format: 'text/plain' } as any,
+      body: { type: 'TextualBody' as const, value: '', format: 'text/plain' },
       target: targetSelector,
     };
 
@@ -1071,7 +1077,7 @@
         onclick={handleToggleFullscreen}
         title={t('Fullscreen')}
         aria-label="Toggle fullscreen"
-      >{isFullscreen ? '&#10006;' : '&#9974;'}</button>
+      >{isFullscreen ? '✖' : '⛶'}</button>
 
       <button
         class={cn('p-1 rounded', cx.iconButton)}

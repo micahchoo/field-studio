@@ -81,12 +81,10 @@
   import { validateResource, fixIssue, fixAll } from '../../lib/inspectorValidation';
   import type { ValidationIssue } from '../../lib/inspectorValidation';
 
-  // Sub-components: MetadataFieldsPanel exists as stub; others are TODO placeholders
-  // <!-- @migration: not yet migrated -->
-  // import MetadataFieldsPanel from '../molecules/MetadataFieldsPanel.svelte';
-  // import AnnotationCreateForm from '../atoms/AnnotationCreateForm.svelte';
-  // import AnnotationsTabPanel from '../molecules/AnnotationsTabPanel.svelte';
-  // import StructureTabPanel from '../molecules/StructureTabPanel.svelte';
+  import MetadataFieldsPanel from '../molecules/MetadataFieldsPanel.svelte';
+  import AnnotationCreateForm from '../atoms/AnnotationCreateForm.svelte';
+  import AnnotationsTabPanel from '../molecules/AnnotationsTabPanel.svelte';
+  import StructureTabPanel from '../molecules/StructureTabPanel.svelte';
   // import ShareButton from '../atoms/ShareButton.svelte';
 
   // ---------------------------------------------------------------------------
@@ -245,6 +243,58 @@
     const fixed = fixAll(resource, validationResult.autoFixableIssues);
     if (fixed) onUpdateResource(fixed);
   }
+
+  // ---------------------------------------------------------------------------
+  // MetadataFieldsPanel helpers
+  // ---------------------------------------------------------------------------
+
+  const availableMetadataProperties = [
+    'Title', 'Creator', 'Date', 'Description', 'Subject',
+    'Rights', 'Source', 'Type', 'Format', 'Identifier',
+    'Language', 'Coverage', 'Publisher', 'Contributor', 'Relation',
+  ];
+
+  function metadataFixIssue(issueId: string): Partial<import('@/src/shared/types').IIIFItem> | null {
+    const issue = validationIssues.find(i => i.id === issueId);
+    if (!issue || !resource) return null;
+    return fixIssue(resource, issue);
+  }
+
+  function metadataFixAll(): Partial<import('@/src/shared/types').IIIFItem> | null {
+    if (!resource) return null;
+    return fixAll(resource, validationResult.autoFixableIssues);
+  }
+
+  function handleUpdateField(index: number, key: string, value: string) {
+    if (!resource) return;
+    const metadata = [...(resource.metadata || [])];
+    if (!metadata[index]) return;
+    if (key === 'label') {
+      metadata[index] = { ...metadata[index], label: { none: [value] } };
+    } else {
+      metadata[index] = { ...metadata[index], value: { none: [value] } };
+    }
+    onUpdateResource({ metadata });
+  }
+
+  function handleAddField(property: string) {
+    if (!resource) return;
+    const metadata = [...(resource.metadata || [])];
+    metadata.push({ label: { none: [property] }, value: { none: [''] } });
+    onUpdateResource({ metadata });
+  }
+
+  function handleRemoveField(index: number) {
+    if (!resource) return;
+    const metadata = [...(resource.metadata || [])];
+    metadata.splice(index, 1);
+    onUpdateResource({ metadata });
+  }
+
+  const imageUrl = $derived(
+    (resource as import('@/src/shared/types').IIIFItem & { thumbnail?: Array<{ id: string }> })
+      ?.thumbnail?.[0]?.id ?? null
+  );
 
   // ---------------------------------------------------------------------------
   // Derived display values
@@ -410,20 +460,28 @@
       {#snippet body()}
         <!-- Metadata Tab -->
         {#if tab === 'metadata'}
-          <!-- TODO: migrate MetadataFieldsPanel -->
           <div role="tabpanel" class="space-y-4">
-            <div class={cn('p-3 border text-xs', fieldMode ? 'border-nb-yellow/30 text-nb-yellow/60' : 'border-nb-black/10 text-nb-black/50')}>
-              MetadataFieldsPanel placeholder -- pending migration.
-              Resource: {resource.type} "{label}"
-              {#if validationIssues.length > 0}
-                <div class="mt-2">
-                  {validationIssues.length} validation issue{validationIssues.length === 1 ? '' : 's'}
-                  {#if validationResult.autoFixableIssues.length > 0}
-                    ({validationResult.autoFixableIssues.length} auto-fixable)
-                  {/if}
-                </div>
-              {/if}
-            </div>
+            <MetadataFieldsPanel
+              {resource}
+              onUpdateResource={onUpdateResource}
+              {language}
+              {fieldMode}
+              {cx}
+              {label}
+              {summary}
+              imageUrl={imageUrl}
+              validationIssues={validationIssues}
+              fixIssue={metadataFixIssue}
+              fixAll={metadataFixAll}
+              labelValidation={labelValidation}
+              summaryValidation={summaryValidation}
+              getFieldValidation={getFieldValidation}
+              updateField={handleUpdateField}
+              addField={handleAddField}
+              removeField={handleRemoveField}
+              availableProperties={availableMetadataProperties}
+              t={(key) => key}
+            />
           </div>
         {/if}
 

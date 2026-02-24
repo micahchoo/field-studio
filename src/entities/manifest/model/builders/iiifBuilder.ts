@@ -38,7 +38,7 @@ import {
   createImageServiceReference,
   DEFAULT_VIEWING_DIRECTION,
   getContentTypeFromFilename,
-  getMimeType,
+  getMimeTypeString,
   IMAGE_API_PROTOCOL,
   isImageMimeType,
   isTimeBasedMimeType,
@@ -308,54 +308,320 @@ function countMediaFiles(node: FileTree): number {
 }
 
 // ============================================================================
-// Heavy Ingest Functions (Stubbed)
+// Core Ingest: processNodeIngest
 // ============================================================================
 
-// TODO: Migrate processNode - Legacy ingest processor (~388 lines)
-// Handles Manifest/Collection type detection, YAML metadata, sidecar detection,
-// asset storage, image dimension reading, derivative generation, and file integrity checks.
-// See React source lines 1095-1482
+/** Make a URL-safe slug from a file/directory name */
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\.[^.]+$/, '')        // strip extension
+    .replace(/[^a-z0-9]+/g, '-')   // non-alphanumeric → dash
+    .replace(/^-|-$/g, '')          // trim leading/trailing dashes
+    || 'item';
+}
 
-// TODO: Migrate processNodeWithProgress - Enhanced ingest with progress tracking (~445 lines)
-// Same as processNode but with granular IngestProgress updates, cancellation support,
-// and pause/resume capability.
-// See React source lines 649-1093
+/** Detect whether a file is a media (painting) file */
+function isPaintingFile(fileName: string): boolean {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  const entry = MIME_TYPE_MAP[ext];
+  return entry?.motivation === 'painting';
+}
 
-// TODO: Migrate ingestWithWorkers - Worker-based parallel ingest (~60 lines)
-// Delegates to ingestWorkerPool for multi-threaded file processing.
-// See React source lines 404-463
+/** Detect whether a file is a YAML sidecar */
+function isYamlSidecar(fileName: string): boolean {
+  return fileName === 'info.yml' || fileName === 'info.yaml';
+}
 
-// TODO: Migrate worker message handlers (~100 lines)
-// handleWorkerProgress, handleWorkerFileComplete, handleWorkerComplete, handleWorkerError
-// See React source lines 303-399
+/**
+ * Build canvas ID for a file inside a manifest.
+ * Format: {manifestId}/canvas/{index}
+ */
+function canvasId(manifestId: string, index: number): string {
+  return `${manifestId}/canvas/${index}`;
+}
 
-// TODO: Migrate tile generation queue (~90 lines)
-// Background tile pre-generation after ingest completes.
-// See React source lines 465-518
+/**
+ * Build the asset serving URL for a stored file.
+ * The Service Worker intercepts /iiif/image/{id} and /iiif/media/{id}.{ext}
+ * to serve blobs from IndexedDB.
+ */
+function assetServingUrl(baseUrl: string, assetId: string, isImage: boolean, ext: string): string {
+  if (isImage) return `${baseUrl}/image/${assetId}`;
+  return `${baseUrl}/media/${assetId}.${ext}`;
+}
 
-// TODO: Migrate SVG parsing and rasterization (~95 lines)
-// parseSvgDimensions, rasterizeSvg, generateDerivative
-// See React source lines 522-621
+/**
+ * Build a stable asset ID from a manifest ID and file name.
+ * Used as the key in storage.saveAsset().
+ */
+function buildAssetId(manifestId: string, fileName: string): string {
+  const slug = manifestId.split('/').pop() ?? 'item';
+  const safe = fileName.replace(/[^a-zA-Z0-9._-]/g, '');
+  return `${slug}-${safe}`;
+}
+
+/**
+ * Determine if a FileTree node should become a Collection or Manifest.
+ * Hierarchy (highest to lowest priority):
+ *  1. Explicit iiifIntent annotation from user
+ *  2. Name starts with '_' → Collection
+ *  3. No media files → Collection (empty/metadata-only directories)
+ *  4. Has subdirectories → Collection
+ *  5. Has media files, no subdirs → Manifest
+ *  6. Default → Collection
+ */
+function resolveNodeType(node: FileTree): 'Collection' | 'Manifest' {
+  if (node.iiifIntent === 'Collection') return 'Collection';
+  if (node.iiifIntent === 'Manifest') return 'Manifest';
+  if (node.name.startsWith('_')) return 'Collection';
+  const hasSubdirs = node.directories.size > 0;
+  const mediaFileCount = Array.from(node.files.keys()).filter(isPaintingFile).length;
+  if (mediaFileCount === 0) return 'Collection';
+  if (hasSubdirs) return 'Collection';
+  return 'Manifest';
+}
+
+/**
+ * Recursively process a FileTree node into an IIIFItem.
+ * Sequential (no workers). Suitable for use on the main thread.
+ */
+async function processNodeIngest(
+  node: FileTree,
+  baseUrl: string,
+  report: IngestReport,
+  progress: IngestProgress,
+  options: IngestProgressOptions
+): Promise<{ item: IIIFItem; progress: IngestProgress }> {
+  checkCancellation(options.signal);
+
+  const nodeType = resolveNodeType(node);
+
+  // ── Read YAML sidecar for label/metadata ──────────────────────────────────
+  let label: Record<string, string[]> = { none: [node.name] };
+  const ymlFile = Array.from(node.files.entries()).find(([n]) => isYamlSidecar(n))?.[1];
+  if (ymlFile) {
+    try {
+      const text = await ymlFile.text();
+      const meta = load(text) as Record<string, unknown>;
+      if (meta && typeof meta.label === 'string') {
+        label = { none: [meta.label] };
+      } else if (meta && typeof meta.label === 'object' && meta.label !== null) {
+        label = meta.label as Record<string, string[]>;
+      }
+    } catch {
+      /* malformed YAML — use filename as label */
+    }
+  }
+
+  // ── MANIFEST path ─────────────────────────────────────────────────────────
+  if (nodeType === 'Manifest') {
+    const manifestId = generateId('Manifest', baseUrl);
+    const manifest = createManifest({ id: manifestId, label });
+
+    const mediaFiles = Array.from(node.files.entries()).filter(([n]) => isPaintingFile(n));
+    let canvasIndex = 0;
+
+    for (const [fileName, file] of mediaFiles) {
+      checkCancellation(options.signal);
+
+      const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+      const mimeType = getMimeTypeString(fileName);
+      const isImg = isImageFile(fileName) || isSvgFile(fileName);
+      const assetId = buildAssetId(manifestId, fileName);
+
+      // Store the file blob in IndexedDB for service worker serving
+      try {
+        await storage.saveAsset(assetId, file);
+      } catch {
+        report.errors.push({ file: fileName, error: 'Asset storage failed' });
+        progress = addLogEntry(progress, `Failed to store asset: ${fileName}`, 'error');
+        continue;
+      }
+
+      // Default dimensions — image dimensions require DOM/worker; use safe defaults
+      const width = isImg ? 1000 : 0;
+      const height = isImg ? 1000 : 0;
+      const duration = (!isImg && (isVideoFile(fileName) || isAudioFile(fileName))) ? undefined : undefined;
+
+      const servingUrl = assetServingUrl(baseUrl, assetId, isImg, ext);
+      const cId = canvasId(manifestId, canvasIndex);
+
+      const canvas = createCanvas({ id: cId, label: { none: [fileName] }, width, height, duration });
+
+      // Painting annotation
+      const annoPageId = `${cId}/page/1`;
+      const annoId = `${cId}/annotation/1`;
+      const annotation = createAnnotation({
+        id: annoId,
+        motivation: 'painting' as IIIFMotivation,
+        target: cId,
+        body: { id: servingUrl, type: isImg ? 'Image' : (isVideoFile(fileName) ? 'Video' : 'Sound'), format: mimeType },
+      });
+      const annoPage = createAnnotationPage({ id: annoPageId, items: [annotation] });
+      canvas.items = [annoPage as unknown as IIIFAnnotationPage];
+
+      // Supplementing text sidecar (.txt with same base name)
+      const baseName = fileName.replace(/\.[^.]+$/, '');
+      const sidecarFile = node.files.get(`${baseName}.txt`) ?? node.files.get(`${baseName}.srt`);
+      if (sidecarFile) {
+        const sidecarText = await sidecarFile.text();
+        const sidecarAnno = createAnnotation({
+          id: `${cId}/annotation/sidecar`,
+          motivation: 'supplementing' as IIIFMotivation,
+          target: cId,
+          body: { type: 'TextualBody', value: sidecarText, format: 'text/plain' },
+        });
+        const sidecarPage = createAnnotationPage({ id: `${cId}/page/sidecar`, items: [sidecarAnno] });
+        (canvas as unknown as Record<string, unknown>).annotations = [sidecarPage];
+      }
+
+      manifest.items!.push(canvas as unknown as IIIFCanvas);
+      canvasIndex++;
+
+      // Update progress
+      const fileInfo: IngestFileInfo = {
+        id: assetId,
+        name: fileName,
+        size: file.size,
+        type: mimeType,
+        status: 'completed',
+        progress: 100,
+        entityId: cId,
+      };
+      const overall = Math.round((canvasIndex / mediaFiles.length) * 100);
+      progress = {
+        ...progress,
+        filesCompleted: progress.filesCompleted + 1,
+        files: [...progress.files, fileInfo],
+        overallProgress: overall,
+        updatedAt: Date.now(),
+      };
+      options.onProgress?.(progress);
+    }
+
+    report.canvasesCreated = (report.canvasesCreated ?? 0) + canvasIndex;
+    report.manifestsCreated = (report.manifestsCreated ?? 0) + 1;
+    return { item: manifest as unknown as IIIFItem, progress };
+  }
+
+  // ── COLLECTION path ───────────────────────────────────────────────────────
+  const collectionId = generateId('Collection', baseUrl);
+  const collection = createCollection({ id: collectionId, label });
+
+  // Recurse into subdirectories
+  for (const childNode of node.directories.values()) {
+    checkCancellation(options.signal);
+    const { item: childItem, progress: p2 } = await processNodeIngest(
+      childNode, baseUrl, report, progress, options
+    );
+    progress = p2;
+    (collection.items as IIIFItem[]).push(childItem);
+  }
+
+  // Loose media files at collection level → wrap in a "Files" manifest
+  const looseMedia = Array.from(node.files.entries()).filter(([n]) => isPaintingFile(n));
+  if (looseMedia.length > 0) {
+    const looseNode: FileTree = {
+      name: `${node.name} (files)`,
+      path: node.path,
+      files: new Map(looseMedia),
+      directories: new Map(),
+    };
+    const { item: looseManifest, progress: p3 } = await processNodeIngest(
+      looseNode, baseUrl, report, progress, options
+    );
+    progress = p3;
+    (collection.items as IIIFItem[]).push(looseManifest);
+  }
+
+  report.collectionsCreated = (report.collectionsCreated ?? 0) + 1;
+  return { item: collection as unknown as IIIFItem, progress };
+}
 
 // ============================================================================
-// Ingest Entry Points (Stubbed with signatures)
+// Ingest Entry Points
 // ============================================================================
 
 /**
- * Ingest a file tree with enhanced progress tracking
- * Supports both legacy callback and new enhanced progress options
- *
- * TODO: Full implementation requires migrating processNode, processNodeWithProgress,
- * ingestWithWorkers, tile generation queue, and all helper functions above.
+ * Ingest a file tree with enhanced progress tracking.
+ * Sequential (main-thread) implementation — fast enough for < 500 files.
+ * For large batches, enable USE_WORKER_INGEST for parallel worker-based processing.
  */
 export const ingestTree = async (
   tree: FileTree,
   existingRoot: IIIFItem | null = null,
   progressInput?: LegacyProgressCallback | IngestProgressOptions
 ): Promise<IngestResult> => {
-  // TODO: Implement full ingest pipeline
-  // See React source lines 1488-1677 for complete implementation
-  throw new Error('ingestTree not yet migrated to Svelte. See iiifBuilder.ts TODO comments.');
+  // Resolve progress options
+  const isLegacy = typeof progressInput === 'function';
+  const options: IngestProgressOptions = isLegacy
+    ? { onProgress: undefined }
+    : (progressInput ?? {});
+  const legacyCb = isLegacy ? progressInput : undefined;
+
+  const totalFiles = countMediaFiles(tree);
+  const operationId = `ingest-${Date.now()}`;
+  const report: IngestReport = {
+    summary: {
+      filesTotal: totalFiles,
+      filesCompleted: 0,
+      filesError: 0,
+      filesSkipped: 0,
+      durationSeconds: 0,
+      averageSpeed: 0,
+      wasCancelled: false,
+    },
+    errors: [],
+    warnings: [],
+    manifestsCreated: 0,
+    collectionsCreated: 0,
+    canvasesCreated: 0,
+    filesProcessed: 0,
+  };
+
+  let progress = createInitialProgress(operationId, totalFiles);
+  progress = updateStage(progress, 'scanning');
+  options.onProgress?.(progress);
+
+  const baseUrl = IIIF_CONFIG.BASE_URL.DEFAULT;
+
+  try {
+    progress = updateStage(progress, 'processing');
+    options.onProgress?.(progress);
+
+    const { item: newRoot, progress: finalProgress } = await processNodeIngest(
+      tree, baseUrl, report, progress, options
+    );
+    progress = finalProgress;
+
+    // If merging with an existing root Collection, append items
+    if (existingRoot && existingRoot.type === 'Collection') {
+      const merged = { ...existingRoot };
+      if (newRoot.type === 'Collection') {
+        // Flatten: spread new collection's items into existing
+        merged.items = [...(merged.items ?? []), ...(newRoot.items ?? [])];
+      } else {
+        // Append new manifest/item directly
+        merged.items = [...(merged.items ?? []), newRoot];
+      }
+      progress = updateStage(progress, 'complete', 100);
+      report.summary = createProgressSummary(progress);
+      legacyCb?.('complete', 100);
+      return { success: true, root: merged, report };
+    }
+
+    progress = updateStage(progress, 'complete', 100);
+    report.summary = createProgressSummary(progress);
+    legacyCb?.('complete', 100);
+    return { success: true, root: newRoot, report };
+
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown ingest error';
+    progress = updateStage(progress, 'error');
+    legacyCb?.(message, 0);
+    return { success: false, error: message, report };
+  }
 };
 
 /**

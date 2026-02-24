@@ -22,20 +22,36 @@ export interface IIIFItem {
   rights?: string;
   navDate?: string;
   thumbnail?: IIIFExternalWebResource[];
+  // TYPE_DEBT: typed as any[] because subtypes (IIIFCanvas, IIIFManifest, IIIFRange)
+  // each override with a narrower definition. Changing to unknown[] cascades into
+  // ~15 call sites that iterate items on the base IIIFItem type.
+  // TODO(loop): remove from base; let callers narrow via type guards (isCanvas, isManifest, …).
   items?: any[];
   annotations?: IIIFAnnotationPage[];
   behavior?: string[];
 
+  // TYPE_DEBT: homepage/logo inside provider are IIIF linking properties — spec-defined but
+  // complex. Cannot use unknown[] — consumers access .label/.id on elements directly.
+  // TODO(loop): define ProviderHomepage and ProviderLogo interfaces per IIIF 3.0 §7.
   provider?: Array<{ id: string; type: "Agent"; label: Record<string, string[]>; homepage?: any[]; logo?: any[] }>;
   homepage?: Array<{ id: string; type: "Text"; label: Record<string, string[]>; format?: string; language?: string[] }>;
   seeAlso?: Array<{ id: string; type: "Dataset" | string; format?: string; profile?: string; label?: Record<string, string[]> }>;
   rendering?: Array<{ id: string; type: "Text" | string; label: Record<string, string[]>; format?: string }>;
+  // TYPE_DEBT: IIIF services are polymorphic (Image API, Auth API, Search API, …).
+  // Cannot use unknown[] — consuming code (imageSourceResolver, iiif-bridge) accesses
+  // service.type / service.id directly without casting.
+  // TODO(loop): define a ServiceDescriptor discriminated union per IIIF 3.0 §7.2 and
+  // update all callers to narrow via type guards.
   service?: any[];
   viewingDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
-  start?: { id: string; type: "Canvas" | "SpecificResource"; source?: string; selector?: any };
+  start?: { id: string; type: "Canvas" | "SpecificResource"; source?: string; selector?: Selector | Selector[] };
   supplementary?: { id: string; type: "AnnotationCollection" };
   partOf?: Array<{ id: string; type: string; label?: Record<string, string[]> }>;
 
+  // TYPE_DEBT: navPlace is GeoJSON Feature/FeatureCollection — no built-in IIIF type.
+  // Cannot use unknown — consumers (MapView) access navPlace.geometry.coordinates directly.
+  // TODO(loop): import @types/geojson and type as GeoJSON.Feature | GeoJSON.FeatureCollection.
+  navPlace?: any;
   placeholderCanvas?: IIIFCanvas;
   accompanyingCanvas?: IIIFCanvas;
 
@@ -123,6 +139,9 @@ export interface IIIFExternalWebResource {
   height?: number;
   duration?: number;
   label?: Record<string, string[]>;
+  // TYPE_DEBT: same as IIIFItem.service — polymorphic IIIF services, accessed by property
+  // (service.type, service.id) throughout imageSourceResolver without narrowing.
+  // TODO(loop): unify with IIIFItem.service via ServiceDescriptor union.
   service?: any[];
 }
 
@@ -358,4 +377,27 @@ export interface FileWithBlob {
   name: string;
   type: string;
   size: number;
+}
+
+// ============================================================================
+// Result<T, E> — explicit success/failure type (replaces throwing or as any)
+// ============================================================================
+
+/**
+ * Discriminated union for typed success/failure.
+ * Use instead of throwing or returning undefined:
+ *   function parse(s: string): Result<number>
+ *   const r = parse(s);
+ *   if (r.ok) { use(r.value); } else { log(r.error); }
+ */
+export type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
+export function ok<T>(value: T): Result<T, never> {
+  return { ok: true, value };
+}
+
+export function err<E = Error>(error: E): Result<never, E> {
+  return { ok: false, error };
 }

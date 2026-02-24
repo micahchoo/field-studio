@@ -32,10 +32,9 @@
   import ViewingDirectionSelector from '../atoms/ViewingDirectionSelector.svelte';
   import BehaviorSelector from '../atoms/BehaviorSelector.svelte';
   import BehaviorTag from '../atoms/BehaviorTag.svelte';
-  // TODO: Migrate from shared molecules -- these do not yet exist in the Svelte migration
-  // import LinkListEditor from '@/src/shared/ui/molecules/LinkListEditor.svelte';
-  // import AgentEditor from '@/src/shared/ui/molecules/AgentEditor.svelte';
-  // import StartPropertyEditor from '../atoms/StartPropertyEditor.svelte';
+  import AgentEditor from '@/src/shared/ui/molecules/AgentEditor.svelte';
+  import LinkListEditor from '@/src/shared/ui/molecules/LinkListEditor.svelte';
+  import StartPropertyEditor from '../atoms/StartPropertyEditor.svelte';
   import { BEHAVIOR_OPTIONS, getConflictingBehaviors } from '@/src/shared/constants/iiif';
 
   interface Props {
@@ -302,7 +301,6 @@
   <!-- === LINKING PROPERTIES (Standard+ level) === -->
   <div class={cn('space-y-6', sectionBorderClasses)}>
     <!-- Provider -->
-    <!-- TODO: AgentEditor not yet migrated -->
     <div>
       <PropertyLabel
         label="Provider"
@@ -310,13 +308,15 @@
         {fieldMode}
         {cx}
       />
-      <p class={cn('text-xs italic', fieldMode ? 'text-nb-black/30' : 'text-nb-black/40')}>
-        AgentEditor component not yet migrated to Svelte.
-      </p>
+      <AgentEditor
+        value={(resource.provider || []) as import('@/src/shared/ui/molecules/AgentEditor.svelte').AgentItem[]}
+        onChange={(agents) => onUpdateResource({ provider: agents as typeof resource.provider })}
+        {cx}
+        {fieldMode}
+      />
     </div>
 
     <!-- Homepage -->
-    <!-- TODO: LinkListEditor not yet migrated -->
     <div>
       <PropertyLabel
         label="Homepage"
@@ -324,13 +324,16 @@
         {fieldMode}
         {cx}
       />
-      <p class={cn('text-xs italic', fieldMode ? 'text-nb-black/30' : 'text-nb-black/40')}>
-        LinkListEditor component not yet migrated to Svelte.
-      </p>
+      <LinkListEditor
+        value={(resource.homepage || []) as import('@/src/shared/ui/molecules/LinkListEditor.svelte').LinkItem[]}
+        onChange={(links) => onUpdateResource({ homepage: links as typeof resource.homepage })}
+        resourceType="homepage"
+        {fieldMode}
+        {cx}
+      />
     </div>
 
     <!-- Rendering (Downloads) -->
-    <!-- TODO: LinkListEditor not yet migrated -->
     <div>
       <PropertyLabel
         label="Rendering"
@@ -338,13 +341,16 @@
         {fieldMode}
         {cx}
       />
-      <p class={cn('text-xs italic', fieldMode ? 'text-nb-black/30' : 'text-nb-black/40')}>
-        LinkListEditor component not yet migrated to Svelte.
-      </p>
+      <LinkListEditor
+        value={(resource.rendering || []) as import('@/src/shared/ui/molecules/LinkListEditor.svelte').LinkItem[]}
+        onChange={(links) => onUpdateResource({ rendering: links as typeof resource.rendering })}
+        resourceType="rendering"
+        {fieldMode}
+        {cx}
+      />
     </div>
 
     <!-- See Also -->
-    <!-- TODO: LinkListEditor not yet migrated -->
     <div>
       <PropertyLabel
         label="See Also"
@@ -352,9 +358,13 @@
         {fieldMode}
         {cx}
       />
-      <p class={cn('text-xs italic', fieldMode ? 'text-nb-black/30' : 'text-nb-black/40')}>
-        LinkListEditor component not yet migrated to Svelte.
-      </p>
+      <LinkListEditor
+        value={(resource.seeAlso || []) as import('@/src/shared/ui/molecules/LinkListEditor.svelte').LinkItem[]}
+        onChange={(links) => onUpdateResource({ seeAlso: links as typeof resource.seeAlso })}
+        resourceType="seeAlso"
+        {fieldMode}
+        {cx}
+      />
     </div>
 
     <!-- Required Statement -->
@@ -387,7 +397,6 @@
 
     <!-- Start Canvas (Manifests only) -->
     {#if isManifest && canvases.length > 0}
-      <!-- TODO: StartPropertyEditor not yet migrated -->
       <div>
         <PropertyLabel
           label="Start Canvas"
@@ -395,9 +404,12 @@
           {fieldMode}
           {cx}
         />
-        <p class={cn('text-xs italic', fieldMode ? 'text-nb-black/30' : 'text-nb-black/40')}>
-          StartPropertyEditor component not yet migrated to Svelte.
-        </p>
+        <StartPropertyEditor
+          value={resource.start as import('../atoms/StartPropertyEditor.svelte').StartValue | undefined}
+          {canvases}
+          onChange={(start) => onUpdateResource({ start: start as typeof resource.start })}
+          {fieldMode}
+        />
       </div>
     {/if}
   </div>

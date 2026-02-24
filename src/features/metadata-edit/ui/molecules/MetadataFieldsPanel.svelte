@@ -52,6 +52,7 @@
   import PropertyLabel, { type ValidationState } from '../atoms/PropertyLabel.svelte';
   import ViewingDirectionSelector from '../atoms/ViewingDirectionSelector.svelte';
   import LocationPickerModal from './LocationPickerModal.svelte';
+  import GeoEditor from './GeoEditor.svelte';
 
   // TODO: Migrate from @/utils/iiifSchema
   function isPropertyAllowed(_type: string, _field: string): boolean { return true; }
@@ -530,11 +531,11 @@
           </Button>
         </div>
         <div class={cn('border overflow-hidden', fieldMode ? 'border-nb-yellow/30' : 'border-nb-black/20')}>
-          <!-- TODO: GeoEditor not yet migrated to Svelte -->
-          <div class="h-[150px] flex items-center justify-center text-xs text-nb-black/40 bg-nb-cream">
-            <Icon name="place" class="text-2xl mr-2" />
-            GeoEditor (pending migration)
-          </div>
+          <GeoEditor
+            item={resource}
+            onChange={(navPlace) => onUpdateResource({ navPlace: navPlace as Partial<IIIFItem>['navPlace'] })}
+            {fieldMode}
+          />
         </div>
       {/snippet}
     </FormSection>
