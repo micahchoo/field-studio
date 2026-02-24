@@ -414,9 +414,10 @@ class StaticSiteExporter {
     const paintingAnno = this.getPaintingAnnotation(canvas);
     if (!paintingAnno) return files;
 
-    const imageId = typeof paintingAnno.body === 'string'
-      ? paintingAnno.body
-      : (paintingAnno.body as any)?.id;
+    const rawBody = Array.isArray(paintingAnno.body) ? paintingAnno.body[0] : paintingAnno.body;
+    const imageId = typeof rawBody === 'string'
+      ? rawBody
+      : (rawBody && 'id' in rawBody ? rawBody.id : undefined);
 
     if (!imageId) return files;
 

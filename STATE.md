@@ -3,6 +3,75 @@
 _Single source of truth for the Svelte 5 migration plan._
 _Updated after every phase loop. See [plan](docs/migration-plan.md) for background._
 
+## Current Phase: TYPE_DEBT Round 5 ✅ COMPLETE
+
+### Metrics (post TYPE_DEBT Round 5)
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **327 warnings** (was 344; 17 fewer) |
+
+### TYPE_DEBT Round 5 — Changes Made
+**`debouncedCallback.ts` — 4 `any` via CallbackFn type alias:**
+- `T extends (...args: any[]) => any` × 2 → extracted to `type CallbackFn = (...args: any[]) => any`
+  with single `eslint-disable-next-line` (standard TS callable-bound idiom; `Parameters<T>` requires it)
+- Interface + function generic now use `T extends CallbackFn` — no `any` visible in callers.
+
+**`avService.ts` — 4 `any` removed:**
+- Imported `IIIFAnnotationPage` from `@/src/shared/types`
+- `PlaceholderCanvas.items?: any[]` → `IIIFAnnotationPage[]`
+- `AccompanyingCanvas.items?: any[]` → `IIIFAnnotationPage[]`
+- `generateSyncPoints` body access: `(body[0] as any)?.value` / `(body as any)?.value`
+  → `bodyItem = Array.isArray(body) ? body[0] : body` + `'value' in bodyItem ? bodyItem.value : ''`
+- `createAccompanyingCanvas`: added `as const` on `type: 'Annotation'`, `motivation: 'supplementing'`, `type: 'TextualBody'` — fixes new tsc errors introduced by typed items array.
+
+**`fileIntegrity.ts` — 4 `any` in inline IDB stubs removed:**
+- Replaced inline `interface IDBPDatabase<T>` stub + `declare function openDB` with real `import { openDB, type IDBPDatabase, type DBSchema } from 'idb'`
+- `fileIntegrity.test.ts` updated: replaced `globalThis.openDB` injection with `vi.mock('idb', ...)` (same pattern as `storage.test.ts`).
+
+**`imageSourceResolver.ts` — 3 `any` suppressed with TYPE_DEBT comments:**
+- All 3 `as any` are consequences of `IIIFItem.items?: any[]` and the union `IIIFCanvas | Record<string,unknown>` parameter.
+- Added `// TYPE_DEBT:` + `// eslint-disable-next-line` at each site explaining the root cause.
+
+**Deferred:**
+- `annotorious.ts` (14) + `waveform.ts` (9): External libs, no @types — stays TYPE_DEBT-bannered
+- `exportService.ts` (9): Next candidate
+- `shared/types/index.ts` (6): items/service/navPlace/provider.homepage/provider.logo — structural TYPE_DEBT
+- `svelte-shims.d.ts` (2): Framework shims — intentional `any`
+
+---
+
+## Current Phase: TYPE_DEBT Round 4 ✅ COMPLETE
+
+### Metrics (post TYPE_DEBT Round 4)
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **344 warnings** (was 350; 6 fewer — `validator.ts` all `any` removed) |
+
+### TYPE_DEBT Round 4 — Changes Made
+**`validator.ts` — all 6 `any` instances removed:**
+- `traverse()` inner closure: `(item as any).items || (item as any).annotations || (item as any).structures`
+  → `item.items ?? item.annotations` + guard `isManifest(item) ? (item as IIIFManifest).structures ?? [] : []`
+  — `item.items` is already `any[]` (TYPE_DEBT on base type); `item.annotations` is `IIIFAnnotationPage[]`; structures accessed via `isManifest` guard.
+- `children.forEach((child: any) => ...)` → `(child)` — type inferred from children array; explicit `child as IIIFItem` on `traverse()` call.
+- Canvas painting check: `raw.items?.some((p: any) => p.items?.some((a: any) => a.motivation === 'painting'))`
+  → `raw.items?.some((p) => p.items?.some((a) => a.motivation === 'painting'))`
+  — `p: IIIFAnnotationPage`, `a: IIIFAnnotation`, `motivation: IIIFMotivation | IIIFMotivation[]`; comparison compiles because `IIIFMotivation` includes `string`.
+
+**Deferred (still TYPE_DEBT marked):**
+- `shared/types/index.ts`: `provider.homepage?: any[]` / `provider.logo?: any[]` — needs `ProviderHomepage` interface
+- ValidationIssue type unification (3 incompatible shapes: healer severity/title, validator level/message/fixable, QCDashboard)
+- `IIIFItem.service?: any[]` — needs `ServiceDescriptor` discriminated union
+- `IIIFItem.navPlace?: any` — needs GeoJSON type
+- `IIIFItem.items?: any[]` — needs removal from base; callers narrow via `isCanvas`/`isManifest` guards
+
+---
+
 ## Current Phase: TYPE_DEBT Round 3 ✅ COMPLETE
 
 ### Metrics (post TYPE_DEBT Round 3)

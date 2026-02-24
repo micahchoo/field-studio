@@ -1,411 +1,423 @@
-# Field Studio - AI Agent Documentation
+# Field Studio — Agent Guide
 
-> **⚠️ Disclaimer**: This project is **vibe coded** - the architecture reflects an experimental proof-of-concept state.
-
-## Project Overview
-
-**Field Studio** is a local-first, browser-based workbench for organizing, annotating, and connecting field research media using [IIIF (International Image Interoperability Framework)](https://iiif.io/) standards. It bridges the gap between messy field data (raw photos, recordings, notes) and structured archival objects.
-
-### Key Characteristics
-
-- **Local-First**: All data stored in browser's IndexedDB. No server uploads.
-- **Personal IIIF Ecosystem**: Includes internal IIIF Image API 3.0 server via Service Workers
-- **Standards-Driven**: Complies with IIIF Presentation API 3.0 and W3C Web Annotation specifications
-- **Browser-Based**: Runs entirely in the browser with offline capabilities
+> For AI coding agents working on this codebase. Covers navigation, patterns, and pitfalls.
+> React source is archived. Root `src/` is Svelte 5.
 
 ---
 
-## Technology Stack
+## Overview
+
+Field Studio is a local-first, browser-based workbench for organizing, annotating, and connecting field research media using IIIF standards. All data lives in browser IndexedDB. No server.
+
+**Current state (as of Feb 24, 2026):**
+- Svelte 5 + TypeScript — React migration complete, React source archived
+- `tsc --noEmit`: 0 errors
+- `svelte-check`: 0 errors, 29 warnings
+- ESLint: 0 errors, 344 warnings
+- Tests: 117 files, 4756 passing
+
+---
+
+## Tech Stack
 
 | Category | Technology |
-|----------|------------|
-| **Framework** | React 19.2.3 + TypeScript 5.8.2 |
-| **Build Tool** | Vite 6.4.1 |
-| **Styling** | Tailwind CSS (via CDN) |
-| **State Management** | Custom normalized state ("Vault" pattern) + React Context |
-| **Storage** | IndexedDB via `idb` library |
-| **Search** | FlexSearch 0.7.31 |
-| **Maps** | Leaflet 1.9.4 |
-| **IIIF Viewer** | OpenSeadragon 4.1.0 |
-| **Icons** | Material Icons (Google Fonts) |
-| **i18n** | i18next + react-i18next (feature-flagged) |
+|---|---|
+| Framework | Svelte 5 + TypeScript 5.8 |
+| Build | Vite (dev default: localhost:5173) |
+| Styling | Tailwind CSS |
+| State | Custom normalized Vault + Svelte 5 reactive stores |
+| Storage | IndexedDB via `idb` v8 |
+| Tests | Vitest + happy-dom 20.7 |
+| Search | FlexSearch |
+| Maps | Leaflet |
+| IIIF Viewer | OpenSeadragon |
 
 ---
 
-## Project Structure
+## Project Structure (FSD)
 
 ```
-field-studio/
-├── components/           # 80+ React components
-│   ├── staging/         # Staging workbench components
-│   └── views/           # Main view components (Archive, Board, etc.)
-├── services/            # 39 business logic services
-│   ├── vault.ts         # Normalized state management (1,309 lines)
-│   ├── actions.ts       # Action-driven mutation system (783 lines)
-│   ├── storage.ts       # IndexedDB abstraction
-│   ├── iiifBuilder.ts   # IIIF manifest generation
-│   ├── validator.ts     # IIIF validation
+src/
+├── shared/
+│   ├── types/index.ts          — all IIIF + app types
+│   ├── stores/                 — reactive stores (*.svelte.ts)
+│   │   └── vault.svelte.ts     — main entity store
+│   ├── services/
+│   │   └── storage.ts          — IndexedDB (saveProject/loadProject/saveAsset/getAsset)
+│   ├── ui/
+│   │   ├── atoms/              — primitive components
+│   │   ├── molecules/          — composed UI, max 300 lines
+│   │   ├── organisms/          — complex UI, max 500 lines
+│   │   ├── layout/             — Stack, Row, Scroll, Fill, PaneLayout, etc.
+│   │   └── providers/          — ThemeRoot, etc.
+│   ├── config/
+│   │   └── themes/             — token types + built-in themes
+│   └── lib/
+│       ├── hooks/              — useTheme, useResizablePanel, etc.
+│       └── theme-bus.ts
+│
+├── entities/
+│   ├── manifest/model/
+│   │   ├── vault/              — pure vault operations (types, queries, updates, trash, movement)
+│   │   ├── actions/            — 26 action types
+│   │   └── validation/
+│   │       └── validator.ts
+│   ├── canvas/
+│   ├── collection/
+│   └── annotation/
+│
+├── features/
+│   ├── archive/
+│   ├── board-design/
+│   ├── export/
+│   ├── ingest/
+│   ├── map/
+│   ├── metadata-edit/
+│   ├── search/
+│   ├── staging/
+│   ├── timeline/
+│   └── viewer/
+│
+├── widgets/                    — 15 cross-feature components
+│   ├── NavigationSidebar/
+│   ├── Inspector/
+│   ├── CommandPalette/
+│   ├── StatusBar/
+│   ├── QCDashboard/
 │   └── ...
-├── hooks/               # 28 custom React hooks
-│   ├── useIIIFEntity.tsx   # Vault state management
-│   ├── useVaultSelectors.ts # Memoized selectors
-│   └── ...
-├── utils/               # 17 utility modules
-│   ├── iiifSchema.ts    # IIIF property schemas
-│   ├── iiifHierarchy.ts # Parent-child relationships
-│   └── ...
-├── workers/             # Web Workers
-│   ├── ingest.worker.ts # File ingestion worker
-│   └── validation.worker.ts
-├── public/              # Static assets
-│   └── sw.js            # Service Worker (IIIF Image API server)
-├── types.ts             # TypeScript type definitions
-├── constants.ts         # App constants & feature flags
-├── designSystem.ts      # Visual design system
-├── App.tsx              # Main application component
-└── index.tsx            # Entry point + SW registration
+│
+└── app/
+    ├── ui/
+    │   ├── App.svelte           — shell, HistoryStore, undo/redo, auto-save
+    │   ├── ViewRouter.svelte    — routes views 1-7
+    │   └── BaseTemplate.svelte
+    └── stores/
+```
+
+**Path alias:** `@` maps to the project root (`.`). Use `@/src/...` for all imports.
+
+---
+
+## The 7 Views
+
+| # | View | Key shortcut |
+|---|---|---|
+| 1 | Archive | `1` |
+| 2 | Viewer | `2` |
+| 3 | Boards | `3` |
+| 4 | Metadata | `4` |
+| 5 | Search | `5` |
+| 6 | Map | `6` |
+| 7 | Timeline | `7` |
+
+Command palette: `Cmd+K`. Views are routed in `src/app/ui/ViewRouter.svelte`.
+
+---
+
+## State Management
+
+### Vault (entity store)
+
+The vault is a normalized flat store. Entities are keyed by ID for O(1) lookups. Parent-child relationships are tracked as reference lists, not nested objects.
+
+**Reactive store:** `src/shared/stores/vault.svelte.ts`
+**Pure operations:** `src/entities/manifest/model/vault/`
+**Actions:** `src/entities/manifest/model/actions/` (26 action types)
+
+**Always dispatch actions. Never mutate vault state directly.**
+
+```typescript
+import { vault } from '@/src/shared/stores/vault.svelte';
+import { actions } from '@/src/entities/manifest/model/actions';
+
+// Correct
+vault.dispatch(actions.updateLabel({ id, label }));
+
+// Wrong — will not trigger reactivity and breaks undo history
+vault.state.entities.Manifest[id].label = newLabel;
+```
+
+### Undo / Redo
+
+`HistoryStore` lives in `App.svelte`. Users trigger it with `Cmd+Z` / `Cmd+Shift+Z`. Do not build your own undo stack.
+
+### Other stores
+
+Svelte 5 class-based reactive stores in `src/shared/stores/*.svelte.ts`. Use `()` and `` inside them.
+
+---
+
+## Svelte 5 Patterns
+
+### Core reactivity
+
+```svelte
+<script lang=ts>
+  // State
+  let count = (0);
+
+  // Derived (simple expression)
+  const doubled = (count * 2);
+
+  // Derived (complex / needs block)
+  const filtered = .by(() => items.filter(x => x.active));
+
+  // Props
+  const { label, onClose }: { label: string; onClose: () => void } = ();
+
+  // Bindable prop
+  let { value = () }: { value: string } = ();
+
+  // Side effects
+  (() => {
+    externalLib.init(container);
+    return () => externalLib.destroy();
+  });
+</script>
+```
+
+### Callback props, not event dispatcher
+
+```svelte
+<!-- Correct -->
+<script lang=ts>
+  const { onSelect }: { onSelect: (id: string) => void } = ();
+</script>
+<button onclick={() => onSelect(item.id)}>Select</button>
+
+<!-- Wrong — createEventDispatcher is Svelte 4 -->
+```
+
+### Snippet slots instead of React children
+
+```svelte
+<!-- Parent defines content with snippets -->
+<MyComponent>
+  {#snippet header()}
+    <h2>Title</h2>
+  {/snippet}
+</MyComponent>
+
+<!-- Component receives it -->
+<script lang=ts>
+  import type { Snippet } from 'svelte';
+  const { header, children }: { header?: Snippet; children?: Snippet } = ();
+</script>
+{@render header?.()}
+{@render children?.()}
+```
+
+### Effect depth bug (reads + writes same state)
+
+An `` that reads and writes the same reactive variable will loop. Fix with `untrack()`:
+
+```typescript
+// Wrong — infinite loop
+(() => {
+  if (someCondition) expandedIds.add(id); // reads and writes expandedIds
+});
+
+// Correct
+import { untrack } from 'svelte';
+(() => {
+  const current = untrack(() => expandedIds);
+  if (someCondition && !current.has(id)) expandedIds.add(id);
+});
+```
+
+### Snippet / prop shadow bug
+
+`{#snippet name()}` in the template shadows any same-named variable from `<script>`, including props.
+
+```svelte
+<!-- Wrong — {title} inside the snippet refers to the snippet itself, not the prop -->
+<script lang=ts>
+  const { title }: { title: string } = ();
+</script>
+{#snippet title()}<span>{title}</span>{/snippet}
+
+<!-- Correct — alias the prop before the template -->
+<script lang=ts>
+  const { title }: { title: string } = ();
+  const titleText = (title);
+</script>
+{#snippet title()}<span>{titleText}</span>{/snippet}
 ```
 
 ---
 
-## Build & Development Commands
+## Layout System
+
+Use layout primitives from `src/shared/ui/layout/`, not raw `div` nesting.
+
+```svelte
+import { PaneLayout, Stack, Row, Scroll } from '@/src/shared/ui/layout';
+
+<!-- PaneLayout is the most common view shell -->
+<PaneLayout variant=default>
+  <PaneLayout.Header>...</PaneLayout.Header>
+  <PaneLayout.SubBar>...</PaneLayout.SubBar>
+  <PaneLayout.Body>...</PaneLayout.Body>
+  <PaneLayout.Footer>...</PaneLayout.Footer>
+</PaneLayout>
+```
+
+`variant=canvas` makes the body `overflow-hidden` (for Map, Board, Viewer).
+`variant=default` makes the body `overflow-y-auto` (for Archive, Search, etc.).
+
+---
+
+## ESLint Custom Rules
+
+18 custom rules live in `eslint-rules/`. Breaking them shows as lint errors.
+
+| Rule | What it enforces |
+|---|---|
+| `max-lines-feature` | molecules <= 300 lines, organisms <= 500 lines |
+| `no-native-html-in-molecules` | use atoms: `Select`, `TextArea`, `Slider` — not `<select>`, `<textarea>`, `<input type=range>` |
+| `no-svelte4-patterns` | no legacy Svelte 4 syntax |
+| `lifecycle-restrictions` | DOM-init libs (Annotorious, WaveSurfer) must use `` + eslint-disable comment |
+| `require-aria-for-icon-buttons` | icon-only buttons need `aria-label` |
+| `typed-context-keys` | Svelte context keys must be typed symbols |
+| `component-props-validation` | all molecules require optional `cx?` + `fieldMode?` |
+| `no-reactive-destructuring` | don't destructure reactive state |
+| `no-effect-for-derived` | use `` not `` for computed values |
+| `exhaustive-switch` | switch on discriminated unions must be exhaustive |
+
+---
+
+## TypeScript Notes
+
+### TYPE_DEBT comments
+
+Some `any` usages are intentional and annotated with `// TYPE_DEBT:`. Do not remove them without fixing all callers.
+
+| Location | Why it stays `any` |
+|---|---|
+| `IIIFItem.service?: any[]` | `imageSourceResolver` accesses `.type`/`.id` directly; needs `ServiceDescriptor` union first |
+| `IIIFItem.items?: any[]` | 15+ call sites iterate base `IIIFItem.items` without subtype cast |
+
+### `<script module>` exports are invisible to tsc
+
+Named exports from `<script module>` in `.svelte` files are not seen by `tsc --noEmit`. If you need constants or types exported from a Svelte file to be type-checked, extract them to a sibling `.ts` file.
+
+---
+
+## Storage
+
+**DB name:** `biiif-archive-db`
+
+| Store | Contents |
+|---|---|
+| `files` | Original uploads, SHA-256 keyed |
+| `derivatives` | Thumbnails, tile pyramids |
+| `project` | IIIF tree JSON |
+| `tiles` | Image tile blobs |
+| `checkpoints` | Named save states |
+
+Service: `src/shared/services/storage.ts`
+
+---
+
+## Service Worker
+
+`public/sw.js` implements IIIF Image API 3.0 Level 2.
+
+- Tile URL pattern: `/tiles/{assetId}/{level}/{x}_{y}.jpg`
+- Only works in secure context (localhost or HTTPS)
+- Caching: Cache API -> IndexedDB -> generate on demand
+
+---
+
+## Commands
 
 ```bash
-# Install dependencies
-npm install
+# Development
+npm run dev              # Vite dev server (localhost:5173)
+npm run build            # Production build -> dist/
+npm run preview          # Preview production build
 
-# Development server (http://localhost:3000)
-npm run dev
+# Type checking
+npm run typecheck        # svelte-check (Svelte + TS)
+npm run typecheck:ts     # tsc --noEmit (TS only)
 
-# Production build (outputs to dist/)
-npm run build
+# Linting
+npm run lint             # ESLint — check only
+npm run lint:fix         # ESLint — auto-fix
 
-# Preview production build locally
-npm run preview
-
-# Lint TypeScript/React files
-npm run lint
-
-# Lint and auto-fix issues
-npm run lint:fix
+# Tests
+npm test                 # Run all tests once
+npm run test:watch       # Watch mode
 ```
 
----
-
-## Architecture Patterns
-
-### 1. Vault Pattern (Normalized State Management)
-
-Located in `services/vault.ts`, implements the Digirati Manifest Editor pattern:
-
-- **Entities stored flat** by type and ID (O(1) lookups)
-- **References maintain hierarchy** (parent → child IDs)
-- **Reverse references** for child → parent lookups
-- **Collection membership** tracked separately (many-to-many)
-- **Extension preservation** for vendor-specific properties
-
-```typescript
-// Key data structures
-interface NormalizedState {
-  entities: {
-    Collection: Record<string, IIIFCollection>;
-    Manifest: Record<string, IIIFManifest>;
-    Canvas: Record<string, IIIFCanvas>;
-    // ...
-  };
-  references: Record<string, string[]>;      // parent → children
-  reverseRefs: Record<string, string>;        // child → parent
-  collectionMembers: Record<string, string[]>; // Collection → members
-  // ...
-}
-```
-
-### 2. Action System (Action-Driven Mutations)
-
-Located in `services/actions.ts`:
-
-- 17 action types (UPDATE_LABEL, ADD_CANVAS, BATCH_UPDATE, etc.)
-- Pre-mutation validation
-- Undo/redo history (100-entry limit)
-- Provenance tracking via `provenanceService`
-
-### 3. Service Worker as IIIF Image Server
-
-Located in `public/sw.js`:
-
-- Implements IIIF Image API 3.0 Level 2
-- Tile URL pattern: `/tiles/{assetId}/{level}/{x}_{y}.jpg`
-- Caching strategy: Cache API → IndexedDB → Generate
-- 500MB LRU cache limit
-
-### 4. IndexedDB Storage Schema
-
-```typescript
-// Stores (from services/storage.ts)
-const DB_NAME = 'biiif-archive-db';
-const FILES_STORE = 'files';           // Original uploads (SHA-256 keyed)
-const DERIVATIVES_STORE = 'derivatives'; // Thumbnails, tile pyramids
-const PROJECT_STORE = 'project';       // IIIF tree JSON
-const TILES_STORE = 'tiles';           // Image tile blobs
-const CHECKPOINTS_STORE = 'checkpoints'; // Named save states
-```
-
----
-
-## Code Style Guidelines
-
-### ESLint Configuration (eslint.config.js)
-
-- **TypeScript**: Strict rules with `@typescript-eslint`
-- **React**: Hooks rules enforced
-- **Naming Convention**: Enforced patterns for handlers
-  - Event handlers: `onChange`, `onAction`, `onUpdate`, `onExecute`
-  - Standard DOM handlers allowed: `onClick`, `onSubmit`, `onKeyDown`, etc.
-- **No console.log** in production (warn level, allows warn/error/info)
-
-### File Naming Conventions
-
-- Components: PascalCase (`ExportDialog.tsx`)
-- Services: camelCase (`iiifBuilder.ts`)
-- Hooks: camelCase with `use` prefix (`useVault.ts`)
-- Utils: camelCase (`iiifSchema.ts`)
-
-### Import Path Aliases
-
-```typescript
-// tsconfig.json paths configuration
-"@/*": ["./*"]
-
-// Usage
-import { storage } from '@/services/storage';
-```
-
----
-
-## Feature Flags
-
-Located in `constants.ts` - toggle experimental features:
-
-```typescript
-export const FEATURE_FLAGS = {
-  USE_NEW_STAGING: true,           // Two-pane staging workbench
-  USE_ACCESSIBLE_FOCUS: true,      // WCAG 2.1 AA focus indicators
-  USE_IMMER_CLONING: false,        // Immer for state cloning
-  USE_WORKER_SEARCH: false,        // Web Worker search indexing
-  USE_PROGRESSIVE_DISCLOSURE: false, // 3-mode UI simplification
-  USE_SIMPLIFIED_UI: false,        // Consolidated view modes
-  USE_KEYBOARD_DND: false,         // Keyboard drag & drop
-  USE_I18N: false,                 // Internationalization
-};
-```
-
----
-
-## Key Services Reference
-
-| Service | Purpose |
-|---------|---------|
-| `vault.ts` | Normalized state storage, entity CRUD |
-| `actions.ts` | Validated mutations, undo/redo |
-| `storage.ts` | IndexedDB operations |
-| `iiifBuilder.ts` | IIIF manifest/collection construction |
-| `validator.ts` | IIIF spec compliance validation |
-| `exportService.ts` | Bundle export, static site generation |
-| `searchService.ts` | FlexSearch indexing and querying |
-| `tileWorker.ts` | Image tile pyramid generation |
-| `authService.ts` | IIIF Auth 2.0 flow handling |
-
----
-
-## Component Categories
-
-### View Components (`components/views/`)
-- `ArchiveView.tsx` - Grid/list browsing
-- `BoardView.tsx` - Infinite canvas spatial view
-- `Viewer.tsx` - OpenSeadragon deep zoom
-- `MetadataSpreadsheet.tsx` - Tabular metadata editing
-- `SearchView.tsx` - Search results
-
-### Staging Components (`components/staging/`)
-- `StagingWorkbench.tsx` - Two-pane ingest interface
-- `SourcePane.tsx` - File sequence detection
-- `ArchivePane.tsx` - Collection organization
-
-### Shared UI Components
-- `Sidebar.tsx` - Navigation tree
-- `Inspector.tsx` - Metadata editor panel
-- `CommandPalette.tsx` - Cmd+K quick actions
-- `Toast.tsx` - Notification system
-
----
-
-## Hook Patterns
-
-### Vault Hooks (`hooks/useIIIFEntity.tsx`)
-
-```typescript
-// Primary hook for state access
-const { state, dispatch, loadRoot, exportRoot } = useVault();
-
-// Bulk operations with undo support
-const { batchUpdate } = useBulkOperations();
-
-// History management
-const { undo, redo, canUndo, canRedo } = useHistory();
-```
-
-### Selector Hooks (`hooks/useVaultSelectors.ts`)
-
-Memoized derived state selectors:
-- `useEntityLabel(id)` - Get entity label
-- `useEntityChildren(id)` - Get child entities
-- `useEntityAncestors(id)` - Get breadcrumb path
-- `useEntitiesByType(type)` - Filter by entity type
-
----
-
-## Deployment
-
-### GitHub Pages (Configured)
-
-1. Push to `main` branch triggers deployment
-2. GitHub Actions workflow (`.github/workflows/deploy.yml`):
-   - Node 20 + npm ci
-   - `npm run build`
-   - Upload `dist/` artifact
-   - Deploy to GitHub Pages
-
-### Build Configuration (vite.config.ts)
-
-```typescript
-base: '/field-studio/',  // GitHub Pages subdirectory
-server: { port: 3000 },
-worker: { format: 'es' }, // ES modules for workers
-```
-
----
-
-## Security Considerations
-
-### Content Security Policy (index.html)
-
-```html
-<meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  img-src * blob: data:;
-  connect-src *;
-  script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com ...;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ...;
-  worker-src 'self' blob:;
-">
-```
-
-### XSS Protections
-
-- `dompurify` for HTML sanitization
-- `sanitizeAnnotationBody()` in utils/sanitization.ts
-- Global error handlers sanitize messages before DOM insertion
-
-### Data Privacy
-
-- All data remains in browser (IndexedDB)
-- No external API calls except for:
-  - External IIIF manifest imports (user-initiated)
-  - CDN resources (Tailwind, Leaflet, OpenSeadragon)
-
----
-
-## Development Notes
-
-### Required Context
-
-The application requires these providers in `index.tsx`:
-
-```typescript
-<VaultProvider>      {/* State management */}
-  <ToastProvider>    {/* Notifications */}
-    <App />
-  </ToastProvider>
-</VaultProvider>
-```
-
-### Service Worker Requirements
-
-- Must run in **Secure Context** (localhost or HTTPS)
-- Handles IIIF tile requests at `/tiles/*`
-- Communicates with main thread via `MessageChannel`
-
-### Storage Quota Handling
-
-- 90% usage = warning toast
-- 95% usage = critical error
-- Auto-save interval configurable (default: 30 seconds)
-
----
-
-## Testing
-
-**Current State**: No automated test suite is configured.
-
-For manual testing:
-1. Run `npm run dev`
-2. Test file ingestion with various image formats
-3. Verify IIIF manifest export/import roundtrip
-4. Check Service Worker tile serving in Application tab
+Run `typecheck`, `typecheck:ts`, `lint`, and `npm test` before considering any change complete.
 
 ---
 
 ## Common Tasks
 
-### Adding a New Component
+### Add a new view
 
-1. Create file in appropriate `components/` subdirectory
-2. Use PascalCase naming
-3. Import types from `@/types`
-4. Use `useToast()` for user feedback
-5. Add to relevant index exports if shared
+1. Create `src/features/<name>/ui/<Name>View.svelte`
+2. Use `PaneLayout` as the shell
+3. Add a route case to `src/app/ui/ViewRouter.svelte`
+4. Add a nav item to `src/widgets/NavigationSidebar/`
 
-### Adding a New Service
+### Add a new entity action
 
-1. Create file in `services/` with camelCase name
-2. Export singleton instance or factory function
-3. Document in service header JSDoc
-4. Add to `services/index.ts` exports
+1. Add action type + creator to `src/entities/manifest/model/actions/`
+2. Add reducer case in `src/entities/manifest/model/vault/updates.ts`
+3. Call via `vault.dispatch(actions.yourAction(...))`
+4. Write a test in the nearest `*.test.ts` file
 
-### Adding a New Hook
+### Add a new widget
 
-1. Create file in `hooks/` with `use` prefix
-2. Export type interfaces for return values
-3. Add to `hooks/index.ts` with category comment
-4. Document dependencies and usage patterns
+1. Create `src/widgets/<Name>/`
+2. Entry point: `src/widgets/<Name>/index.ts`
+3. UI in `src/widgets/<Name>/ui/`
+4. Max organism size: 500 lines — split into sub-components if larger
+5. Expose callback props, not events
 
----
+### Add a test
 
-## Troubleshooting
+Test files: `src/**/*.test.ts` (no `.tsx`, no `.test.svelte`)
 
-### Images Not Loading
+```typescript
+// src/features/export/model/myService.test.ts
+import { describe, it, expect, vi } from 'vitest';
 
-- Check Service Worker registration in DevTools Application tab
-- Verify secure context (HTTPS or localhost)
-- Check IndexedDB for tile data
+describe('myService', () => {
+  it('does the thing', () => {
+    expect(myFn(input)).toEqual(expected);
+  });
+});
+```
 
-### Build Failures
+For IndexedDB: mock with `vi.hoisted()` + an in-memory `Map`. See `src/shared/services/storage.test.ts` for the pattern. Do not use `fake-indexeddb`.
 
-- Ensure Node.js v20+
-- Clear `node_modules` and `npm install`
-- Check for TypeScript errors: `npm run lint`
-
-### Storage Issues
-
-- Check browser storage quota in DevTools
-- Export data before clearing site data
-- Use `storage.getEstimate()` to check usage
+Test setup file: `src/test-setup.ts`
 
 ---
 
-## External Resources
+## Pitfalls
+
+| Pitfall | What to do instead |
+|---|---|
+| Mutating vault state directly | Always `vault.dispatch(action)` |
+| Using React hooks (`useState`, `useEffect`, etc.) | Use Svelte 5 equivalents (`$state`, `$effect`) |
+| Using `createEventDispatcher` | Use callback props (`onClose`, `onSelect`) |
+| Writing `$effect` that reads + writes same state | Wrap the read with `untrack()` |
+| Naming a snippet the same as a prop | Alias the prop: `const nameText = $derived(name)` |
+| Removing a `TYPE_DEBT` `any` without fixing callers | Read the comment; fix callers first or leave it |
+| Exporting constants from `<script module>` and expecting tsc to see them | Extract to a sibling `.ts` file |
+| Using `<select>`, `<textarea>`, `<input type=range>` in molecules | Use `Select`, `TextArea`, `Slider` atoms |
+| Adding a long file to molecules/organisms without splitting | Molecules <= 300 lines, organisms <= 500 lines |
+| Building own undo stack | Use the `HistoryStore` in `App.svelte` |
+
+---
+
+## External Standards
 
 - [IIIF Presentation API 3.0](https://iiif.io/api/presentation/3.0/)
 - [IIIF Image API 3.0](https://iiif.io/api/image/3.0/)
 - [W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/)
-- [OpenSeadragon Documentation](https://openseadragon.github.io/docs/)

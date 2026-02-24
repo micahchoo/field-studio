@@ -517,8 +517,9 @@ class ArchivalPackageService {
     size: number;
   } | null> {
     // Check for _fileRef (local file)
-    if ((canvas as any)._fileRef) {
-      const file = (canvas as any)._fileRef as File;
+    const canvasRecord = canvas as unknown as Record<string, unknown>;
+    if (canvasRecord._fileRef) {
+      const file = canvasRecord._fileRef as File;
       const content = file;
       const digest = await this.computeDigest(content, algorithm);
       return {
@@ -534,7 +535,7 @@ class ArchivalPackageService {
     if (!paintingAnno?.body) return null;
 
     const body = Array.isArray(paintingAnno.body) ? paintingAnno.body[0] : paintingAnno.body;
-    const mediaId = typeof body === 'string' ? body : (body as any)?.id;
+    const mediaId = typeof body === 'string' ? body : ('id' in body ? body.id : undefined);
 
     if (!mediaId) return null;
 

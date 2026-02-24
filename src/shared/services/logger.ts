@@ -18,7 +18,7 @@ function createLogger(prefix: string): Logger {
     debug: (msg: string, ...args: unknown[]) => {
       try {
         // @ts-ignore -- import.meta.env available at runtime in Vite
-        if (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) {
+        if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
           console.debug(`[${prefix}]`, msg, ...args);
         }
       } catch {

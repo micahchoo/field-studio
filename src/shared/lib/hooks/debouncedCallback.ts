@@ -11,13 +11,17 @@
  * In Svelte, use onDestroy or $effect cleanup.
  */
 
-export interface DebouncedFn<T extends (...args: any[]) => any> {
+// Standard TypeScript generic callable constraint — narrower bounds break Parameters<T>/ReturnType<T>.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CallbackFn = (...args: any[]) => any;
+
+export interface DebouncedFn<T extends CallbackFn> {
   (...args: Parameters<T>): void;
   cancel(): void;
   flush(): void;
 }
 
-export function createDebouncedCallback<T extends (...args: any[]) => any>(
+export function createDebouncedCallback<T extends CallbackFn>(
   callback: T,
   delay: number
 ): DebouncedFn<T> {

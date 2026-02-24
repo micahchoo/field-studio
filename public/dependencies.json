@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-24T00:31:24.601Z",
-  "totalFiles": 233,
+  "generatedAt": "2026-02-24T08:25:32.705Z",
+  "totalFiles": 234,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
       "filePath": "src/app/stores/annotationState.svelte.ts",
@@ -1861,8 +1861,8 @@
       "dependents": [
         "src/entities/manifest/model/actions.ts"
       ],
-      "size": 24405,
-      "lines": 709
+      "size": 24663,
+      "lines": 713
     },
     "src/entities/manifest/model/actions/linking.ts": {
       "filePath": "src/entities/manifest/model/actions/linking.ts",
@@ -2249,8 +2249,8 @@
       "dependents": [
         "src/entities/manifest/model/actions/index.ts"
       ],
-      "size": 8177,
-      "lines": 244
+      "size": 8102,
+      "lines": 239
     },
     "src/entities/manifest/model/actions/trash.ts": {
       "filePath": "src/entities/manifest/model/actions/trash.ts",
@@ -2731,7 +2731,7 @@
             "createImageServiceReference",
             "DEFAULT_VIEWING_DIRECTION",
             "getContentTypeFromFilename",
-            "getMimeType",
+            "getMimeTypeString",
             "IMAGE_API_PROTOCOL",
             "isImageMimeType",
             "isTimeBasedMimeType",
@@ -2843,8 +2843,8 @@
         "src/entities/manifest/model/ingest/ingestWorkerPool.ts"
       ],
       "dependents": [],
-      "size": 17892,
-      "lines": 617
+      "size": 27584,
+      "lines": 883
     },
     "src/entities/manifest/model/ingest/ingestAnalyzer.ts": {
       "filePath": "src/entities/manifest/model/ingest/ingestAnalyzer.ts",
@@ -3144,6 +3144,7 @@
           "source": "@/src/shared/types",
           "specifiers": [
             "getIIIFValue",
+            "IIIFExternalWebResource",
             "IIIFItem",
             "isCanvas",
             "isCollection",
@@ -3292,8 +3293,8 @@
         "src/entities/manifest/model/validation/validator.ts"
       ],
       "dependents": [],
-      "size": 40259,
-      "lines": 1053
+      "size": 41166,
+      "lines": 1084
     },
     "src/entities/manifest/model/validation/validator.ts": {
       "filePath": "src/entities/manifest/model/validation/validator.ts",
@@ -7025,6 +7026,7 @@
           "source": "@/src/shared/types",
           "specifiers": [
             "getIIIFValue",
+            "IIIFAnnotation",
             "IIIFCanvas",
             "IIIFCollection",
             "IIIFItem",
@@ -7136,8 +7138,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 30887,
-      "lines": 1044
+      "size": 31068,
+      "lines": 1047
     },
     "src/features/ingest/model/csvImporter.ts": {
       "filePath": "src/features/ingest/model/csvImporter.ts",
@@ -7241,8 +7243,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 17391,
-      "lines": 519
+      "size": 17447,
+      "lines": 521
     },
     "src/features/map/stores/map.svelte.ts": {
       "filePath": "src/features/map/stores/map.svelte.ts",
@@ -7295,6 +7297,17 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFItem"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -7337,8 +7350,8 @@
         "src/features/metadata-edit/model/index.ts",
         "src/features/metadata-edit/model/index.ts"
       ],
-      "size": 28534,
-      "lines": 849
+      "size": 29223,
+      "lines": 856
     },
     "src/features/metadata-edit/model/index.ts": {
       "filePath": "src/features/metadata-edit/model/index.ts",
@@ -8464,8 +8477,8 @@
       "dependents": [
         "src/features/viewer/model/index.ts"
       ],
-      "size": 17125,
-      "lines": 540
+      "size": 17545,
+      "lines": 545
     },
     "src/features/viewer/actions/waveform.ts": {
       "filePath": "src/features/viewer/actions/waveform.ts",
@@ -10375,6 +10388,34 @@
       "size": 2442,
       "lines": 44
     },
+    "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts": {
+      "filePath": "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts",
+      "fileName": "KeyboardShortcutsModal.constants.ts",
+      "directory": "src/features/viewer/ui/molecules",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "ShortcutEntry",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ShortcutGroup",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "SHORTCUT_GROUPS",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 2787,
+      "lines": 92
+    },
     "src/features/viewer/ui/molecules/index.ts": {
       "filePath": "src/features/viewer/ui/molecules/index.ts",
       "fileName": "index.ts",
@@ -10910,13 +10951,24 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./app.css",
+          "specifiers": [
+            "[side-effect]"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [],
       "dependencies": [],
       "dependents": [],
-      "size": 161,
-      "lines": 8
+      "size": 504,
+      "lines": 18
     },
     "src/shared/actions/clickOutside.ts": {
       "filePath": "src/shared/actions/clickOutside.ts",
@@ -15400,6 +15452,7 @@
         "src/shared/services/navPlaceService.ts",
         "src/shared/services/opfsStorage.ts",
         "src/shared/services/specBridge.ts",
+        "src/shared/services/storage.ts",
         "src/shared/services/virtualManifestFactory.ts"
       ],
       "size": 1270,
@@ -15866,7 +15919,42 @@
       "fileName": "storage.ts",
       "directory": "src/shared/services",
       "extension": ".ts",
-      "imports": [],
+      "imports": [
+        {
+          "source": "idb",
+          "specifiers": [
+            "openDB",
+            "type IDBPDatabase"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": true,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFItem"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "./logger",
+          "specifiers": [
+            "storageLog"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
       "exports": [
         {
           "name": "storage",
@@ -15874,10 +15962,12 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [],
+      "dependencies": [
+        "src/shared/services/logger.ts"
+      ],
       "dependents": [],
-      "size": 710,
-      "lines": 24
+      "size": 6423,
+      "lines": 197
     },
     "src/shared/services/tilePipeline.ts": {
       "filePath": "src/shared/services/tilePipeline.ts",
@@ -16379,8 +16469,8 @@
         "src/shared/stores/index.ts",
         "src/shared/stores/index.ts"
       ],
-      "size": 4439,
-      "lines": 124
+      "size": 5625,
+      "lines": 152
     },
     "src/shared/stores/dialogs.svelte.ts": {
       "filePath": "src/shared/stores/dialogs.svelte.ts",
@@ -17100,18 +17190,8 @@
             "computeFacets",
             "queryRemoteSearch",
             "fetchAutocompleteSuggestions",
+            "parseSearchResponse",
             ""
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "@/src/shared/services/searchService",
-          "specifiers": [
-            "[dynamic]"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -17142,7 +17222,7 @@
         "src/shared/stores/index.ts",
         "src/shared/stores/index.ts"
       ],
-      "size": 12243,
+      "size": 12175,
       "lines": 354
     },
     "src/shared/stores/selection.svelte.ts": {
@@ -17416,6 +17496,28 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/actions",
+          "specifiers": [
+            "reduce"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/actions",
+          "specifiers": [
+            "Action"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
         }
       ],
       "exports": [
@@ -17429,8 +17531,8 @@
       "dependents": [
         "src/shared/stores/index.ts"
       ],
-      "size": 6464,
-      "lines": 141
+      "size": 7095,
+      "lines": 158
     },
     "src/shared/types/auth-api.ts": {
       "filePath": "src/shared/types/auth-api.ts",
@@ -17917,12 +18019,27 @@
           "name": "FileWithBlob",
           "type": "named",
           "isTypeExport": true
+        },
+        {
+          "name": "Result",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ok",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "err",
+          "type": "named",
+          "isTypeExport": false
         }
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 10662,
-      "lines": 362
+      "size": 12952,
+      "lines": 404
     },
     "src/shared/types/search-api.ts": {
       "filePath": "src/shared/types/search-api.ts",
@@ -20773,8 +20890,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 4764,
-      "lines": 159
+      "size": 4880,
+      "lines": 162
     },
     "src/widgets/QCDashboard/lib/qcHelpers.ts": {
       "filePath": "src/widgets/QCDashboard/lib/qcHelpers.ts",
@@ -21016,6 +21133,7 @@
     "src/features/structure-view/lib/highlightHelpers.ts",
     "src/features/structure-view/stores/structureTree.svelte.ts",
     "src/features/timeline/stores/timeline.svelte.ts",
+    "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts",
     "src/main.ts",
     "src/shared/config/design-tokens.ts",
     "src/shared/constants/core.ts",
@@ -21052,9 +21170,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 666,
-    "totalExports": 1804,
-    "avgImportsPerFile": 2.8583690987124464,
+    "totalImports": 672,
+    "totalExports": 1810,
+    "avgImportsPerFile": 2.871794871794872,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",
@@ -21062,7 +21180,7 @@
       },
       {
         "file": "src/shared/services/logger.ts",
-        "count": 8
+        "count": 9
       },
       {
         "file": "src/shared/config/themes/types.ts",

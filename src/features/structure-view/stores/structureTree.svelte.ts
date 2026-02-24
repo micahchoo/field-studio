@@ -40,6 +40,16 @@ export interface TreeStats {
   maxDepth: number;
 }
 
+/** Minimal vault entity shape accessed by buildFromVault */
+type VaultEntity = { id?: string; label?: unknown };
+
+/** Expected shape of the vault NormalizedState passed to buildFromVault */
+type VaultState = {
+  entities?: Record<string, Record<string, VaultEntity>>;
+  typeIndex?: Record<string, string>;
+  references?: Record<string, string[]>;
+};
+
 // ------------------------------------------------------------------
 // Store
 // ------------------------------------------------------------------

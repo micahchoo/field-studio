@@ -1,318 +1,85 @@
-# Field Studio - IIIF archive making tool
+# Field Studio — IIIF Archive Workbench
 
 A local-first, browser-based workbench for organizing, annotating, and connecting field research media using IIIF standards.
 
-## ⚠️ Disclaimer: Vibe Coded
-This project is **vibe coded**, the architecture reflects an experimental POC
+## Disclaimer: Vibe Coded
+
+This project is **vibe coded** — the architecture reflects an experimental proof of concept. Use accordingly.
 
 ## Overview
-It bridges the gap between messy field data (raw photos, recordings, notes) and structured archival objects.
 
-- **Local-First:** All data is stored in your browser's IndexedDB. No files are uploaded to a server.
-- **Personal IIIF Ecosystem:** Includes an internal IIIF Image API 3.0 server (via Service Workers), a Presentation API 3.0 manifest editor, and a W3C Web Annotation environment.
-- **Spatial Thinking:** Use the "Board" view to map relationships between items on an infinite canvas.
-- **Standards-Driven:** Built from the ground up to comply with IIIF and W3C Web Annotation specifications.
+Field Studio bridges the gap between messy field data (raw photos, recordings, notes) and structured archival objects.
 
-## 🚀 Getting Started
+- **Local-First:** All data lives in your browser's IndexedDB. Nothing is uploaded to a server.
+- **Personal IIIF Ecosystem:** Includes an internal IIIF Image API 3.0 server (via Service Worker), a Presentation API 3.0 manifest editor, and a W3C Web Annotation environment.
+- **Spatial Thinking:** Use the Boards view to map relationships between items on an infinite canvas.
+- **Standards-Driven:** Built to comply with IIIF Presentation API 3.0 and W3C Web Annotation specifications.
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v20 or later recommended)
-- [npm](https://www.npmjs.com/)
+## Prerequisites
 
-### Local Development
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/micahchoo/field-studio.git
-   cd field-studio
+- [Node.js](https://nodejs.org/) v20 or later
+- npm
 
-   ```
+## Getting Started
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-
-4. **Access the app:**
-   Open `http://localhost:3000` in your browser.
-
-**Note:** The application relies on Service Workers (`sw.js`) to serve IIIF image tiles. Ensure you are in a **Secure Context** (localhost or HTTPS). If images fail to load, check the "Service Workers" section in your browser's DevTools Application tab.
-
-### Available Commands
-
-**Development:**
 ```bash
-npm run dev              # Start dev server on http://localhost:3000
-npm run build            # Production build
-npm run preview          # Preview production build
+git clone https://github.com/micahchoo/field-studio.git
+cd field-studio
+npm install
+npm run dev
 ```
 
-**Testing:**
+Open `http://localhost:5173` in your browser.
+
+> The app uses a Service Worker (`public/sw.js`) to serve IIIF image tiles. It requires a **secure context** (localhost or HTTPS). If images fail to load, check the Service Workers panel in your browser's DevTools.
+
+## Available Commands
+
 ```bash
-npm test                 # Run all tests once
-npm run test:watch       # Watch mode (best for development)
-npm run test:ui          # Interactive UI for tests
-npm run test:coverage    # Generate coverage report
+npm run dev           # Start dev server (http://localhost:5173)
+npm run build         # Production build
+npm run preview       # Preview production build
+npm test              # Run all tests once
+npm run test:watch    # Run tests in watch mode
+npm run typecheck     # svelte-check (type check Svelte files)
+npm run typecheck:ts  # tsc --noEmit
+npm run lint          # Check for linting errors
+npm run lint:fix      # Auto-fix linting errors
 ```
 
-**Linting:**
-```bash
-npm run lint             # Check for linting errors
-npm run lint:fix         # Auto-fix linting errors
+## Architecture
+
+**Framework:** Svelte 5 + TypeScript, Vite, Tailwind CSS
+
+**Pattern:** [Feature Slice Design (FSD)](https://feature-sliced.design/)
+
+```
+src/
+├── shared/     — UI atoms/molecules, services, hooks, stores, types
+├── entities/   — manifest, canvas, collection, annotation domain logic
+├── features/   — archive, board-design, export, ingest, map, metadata-edit, search, staging, timeline, viewer
+├── widgets/    — cross-feature panels (NavigationSidebar, Inspector, CommandPalette, StatusBar, QCDashboard)
+└── app/        — App.svelte, ViewRouter.svelte, stores
 ```
 
-### Extending the Studio
+**7 views:**
 
+| # | View | Description |
+|---|------|-------------|
+| 1 | Archive | Grid/list browser with filtering and drag-to-reorder |
+| 2 | Viewer | Deep zoom image viewer (OpenSeadragon) + audio/video player |
+| 3 | Boards | Infinite canvas for spatial connections |
+| 4 | Metadata | Spreadsheet-style metadata editor |
+| 5 | Search | Full-text search across all items |
+| 6 | Map | Geographic browsing via Leaflet |
+| 7 | Timeline | Chronological ordering |
 
-## 📦 Deployment
-The studio is ready for GitHub Pages. 
-1. Push your changes to the `main` branch.
-2. Enable GitHub Actions in your repo settings (**Settings > Pages > Build and deployment > Source: GitHub Actions**).
-3. The site will be available at `https://<username>.github.io/biiif-web-studio/`.
+**State management:** Vault (normalized entity store) + Svelte 5 reactive stores
 
+**Storage:** IndexedDB (local-first, no server required)
 
-# Architecture
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                            IIIF FIELD ARCHIVE STUDIO v3.0.0                                      │
-│                         Browser-Based IIIF Archive Workbench                                    │
-├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                  │
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │                              PRESENTATION LAYER (80+ Components)                         │    │
-│  │  ┌─────────────────────────────────────────────────────────────────────────────────┐    │    │
-│  │  │                                VIEW ROUTES                                      │    │    │
-│  │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐          │    │    │
-│  │  │  │  Archive │  │Structure │  │ Catalog  │  │ Boards   │  │  Viewer  │          │    │    │
-│  │  │  │   View   │  │   View   │  │   View   │  │   View   │  │   View   │          │    │    │
-│  │  │  │ Grid/List│  │   Tree   │  │Spreadsheet│  │  Canvas  │  │ OpenSea- │          │    │    │
-│  │  │  │   +      │  │   +      │  │    +     │  │   +      │  │ dragon   │          │    │    │
-│  │  │  │ Filter   │  │ DnD Reorder│ │  Filter  │  │  Cards   │  │  DeepZoom│          │    │    │
-│  │  │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘          │    │    │
-│  │  │       └─────────────┴─────────────┴─────────────┴─────────────────┘             │    │    │
-│  │  │                                                                                 │    │    │
-│  │  │  ┌─────────────────────────────────────────────────────────────────────────┐   │    │    │
-│  │  │  │                           STAGING UI                                    │   │    │    │
-│  │  │  │  ┌─────────────────────┐        ┌─────────────────────┐                  │   │    │    │
-│  │  │  │  │    Source Pane      │   ↔    │    Archive Pane     │                  │   │    │    │
-│  │  │  │  │  • File sequences   │   ↕    │  • Collections      │                  │   │    │    │
-│  │  │  │  │  • Auto-detect      │ Drag   │  • Manifests        │                  │   │    │    │
-│  │  │  │  │  • Pattern grouping │ Drop   │  • Hierarchical     │                  │   │    │    │
-│  │  │  │  └─────────────────────┘        └─────────────────────┘                  │   │    │    │
-│  │  │  └─────────────────────────────────────────────────────────────────────────┘   │    │    │
-│  │  │                                                                                 │    │    │
-│  │  │  ┌─────────────────────────────────────────────────────────────────────────┐   │    │    │
-│  │  │  │                         SHARED UI COMPONENTS                              │   │    │    │
-│  │  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │   │    │    │
-│  │  │  │  │  Sidebar │ │  Inspector│ │ Command  │ │   Toast  │ │   Modal  │       │   │    │    │
-│  │  │  │  │   Tree   │ │   Panel   │ │ Palette  │ │  System  │ │  Dialogs │       │   │    │    │
-│  │  │  │  │Navigation│ │Metadata   │ │  (Cmd+K) │ │          │ │          │       │   │    │    │
-│  │  │  │  │  +       │ │Editor     │ │          │ │  Success │ │ Confirm  │       │   │    │    │
-│  │  │  │  │ Filter   │ │  +       │ │  Fuzzy   │ │  Error   │ │  Alert   │       │   │    │    │
-│  │  │  │  │  +       │ │ Validation│ │  Search  │ │  Info    │ │  Form    │       │   │    │    │
-│  │  │  │  │ DnD      │ │  +       │ │  History │ │  Warning │ │          │       │   │    │    │
-│  │  │  │  │          │ │ GeoEditor │ │          │ │          │ │          │       │   │    │    │
-│  │  │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘       │   │    │    │
-│  │  │  └─────────────────────────────────────────────────────────────────────────┘   │    │    │
-│  │  └─────────────────────────────────────────────────────────────────────────────────┘    │    │
-│  │                                          │                                               │    │
-│  │                                          ▼                                               │    │
-│  │  ┌─────────────────────────────────────────────────────────────────────────────────┐    │    │
-│  │  │                     CUSTOM HOOKS (27 hooks)                                       │    │    │
-│  │  │  ┌─────────────────┬─────────────────┬─────────────────┬───────────────────────┐│    │    │
-│  │  │  │ STATE           │ UI BEHAVIOR     │ IIIF/DATA       │ PERFORMANCE           ││    │    │
-│  │  │  │ ─────────────── │ ─────────────── │ ─────────────── │ ───────────────────   ││    │    │
-│  │  │  │ useIIIFEntity   │ useDialogState  │ useIIIFTraversal│ useVirtualization     ││    │    │
-│  │  │  │ useVaultState   │ useResizablePanel│ useVaultSelectors│ useTreeVirtualization││    │    │
-│  │  │  │ useSharedSelect │ useResponsive   │ useBreadcrumb   │ useDebouncedCallback  ││    │    │
-│  │  │  │ useHistory      │ useFocusTrap    │                 │ useReducedMotion      ││    │    │
-│  │  │  │ useURLState     │ usePanZoomGestures│               │                       ││    │    │
-│  │  │  └─────────────────┴─────────────────┴─────────────────┴───────────────────────┘│    │    │
-│  │  └─────────────────────────────────────────────────────────────────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
-│                                             │                                                    │
-│                                             ▼                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │                         STATE MANAGEMENT LAYER                                          │    │
-│  │                                                                                         │    │
-│  │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │    │
-│  │  │  VAULT (Normalized State) - services/vault.ts (1,309 lines)                     │   │    │
-│  │  │  ═══════════════════════════════════════════════════════════════════════════   │   │    │
-│  │  │                                                                                 │   │    │
-│  │  │  Entities:                                                                      │   │    │
-│  │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐               │   │    │
-│  │  │  │ Collections │ │  Manifests  │ │   Canvases  │ │    Ranges   │               │   │    │
-│  │  │  │  (Map)      │ │   (Map)     │ │   (Map)     │ │   (Map)     │               │   │    │
-│  │  │  │  id → obj   │ │  id → obj   │ │  id → obj   │ │  id → obj   │               │   │    │
-│  │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘               │   │    │
-│  │  │                                                                                 │   │    │
-│  │  │  Indexes:                                                                       │   │    │
-│  │  │  • references: Record<string, string[]>    // Parent → children IDs            │   │    │
-│  │  │  • reverseRefs: Record<string, string>     // Child → parent ID                │   │    │
-│  │  │  • collectionMembers: Record<string, string[]> // Multi-parent refs            │   │    │
-│  │  │  • typeIndex: Record<string, EntityType>   // O(1) type lookups                │   │    │
-│  │  │  • extensions: Record<string, Record>      // Vendor property preservation     │   │    │
-│  │  │                                                                                 │   │    │
-│  │  │  Operations:                                                                    │   │    │
-│  │  │  • normalize(tree) → NormalizedState                                           │   │    │
-│  │  │  • denormalize(state) → IIIFTree                                               │   │    │
-│  │  │  • updateEntity(id, updates) → O(1) immutable update                           │   │    │
-│  │  │  • getEntity(id) → O(1) lookup via typeIndex                                   │   │    │
-│  │  │                                                                                 │   │    │
-│  │  │  Features:                                                                      │   │    │
-│  │  │  • Immer integration for efficient cloning (USE_IMMER_CLONING flag)            │   │    │
-│  │  │  • structuredClone with JSON fallback                                          │   │    │
-│  │  │  • Extension preservation for round-tripping vendor properties                 │   │    │
-│  │  │  • Batch updates for performance                                               │   │    │
-│  │  └─────────────────────────────────────────────────────────────────────────────────┘   │    │
-│  │                                          │                                              │    │
-│  │                                          ▼                                              │    │
-│  │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │    │
-│  │  │  ACTION SYSTEM - services/actions.ts (783 lines)                                │   │    │
-│  │  │  ═══════════════════════════════════════════════════════════════════════════   │   │    │
-│  │  │                                                                                 │   │    │
-│  │  │  17 Action Types:                                                               │   │    │
-│  │  │  ┌─────────────────────┬────────────────────────────────────────────────────────┐│   │    │
-│  │  │  │ Entity Updates      │ UPDATE_LABEL, UPDATE_REQUIRED_STATEMENT,              ││   │    │
-│  │  │  │                     │ UPDATE_METADATA, UPDATE_BEHAVIORS, SET_VIEWING_DIR    ││   │    │
-│  │  │  ├─────────────────────┼────────────────────────────────────────────────────────┤│   │    │
-│  │  │  │ Structure Changes   │ ADD_CANVAS, REORDER_CANVASES, MOVE_ITEM,              ││   │    │
-│  │  │  │                     │ REMOVE_ITEM                                           ││   │    │
-│  │  │  ├─────────────────────┼────────────────────────────────────────────────────────┤│   │    │
-│  │  │  │ Batch Operations    │ BATCH_UPDATE (atomic multi-entity updates)            ││   │    │
-│  │  │  ├─────────────────────┼────────────────────────────────────────────────────────┤│   │    │
-│  │  │  │ Range Management    │ ADD_RANGE, REMOVE_RANGE, REORDER_RANGE_ITEMS          ││   │    │
-│  │  │  ├─────────────────────┼────────────────────────────────────────────────────────┤│   │    │
-│  │  │  │ Tree Operations     │ RELOAD_TREE (full replace), SET_ROOT                  ││   │    │
-│  │  │  ├─────────────────────┼────────────────────────────────────────────────────────┤│   │    │
-│  │  │  │ History             │ UNDO, REDO                                            ││   │    │
-│  │  │  └─────────────────────┴────────────────────────────────────────────────────────┘│   │    │
-│  │  │                                                                                 │   │    │
-│  │  │  Action Flow:                                                                   │   │    │
-│  │  │  User Action → Dispatcher.validate() → Dispatcher.execute() → Reducer → Vault   │   │    │
-│  │  │                        ↓                                                           │   │    │
-│  │  │              ActionHistory.push() (100-entry limit)                               │   │    │
-│  │  │                        ↓                                                           │   │    │
-│  │  │              Subscribers notified → React re-render                               │   │    │
-│  │  └─────────────────────────────────────────────────────────────────────────────────┘   │    │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
-│                                             │                                                    │
-│                                             ▼                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │                         SERVICE LAYER (32 services)                                      │    │
-│  │                                                                                          │    │
-│  │  ┌──────────────────┬──────────────────┬──────────────────┬──────────────────┐          │    │
-│  │  │   CORE IIIF      │   VALIDATION     │     SEARCH       │    EXPORT        │          │    │
-│  │  │ ──────────────── │ ──────────────── │ ──────────────── │ ──────────────── │          │    │
-│  │  │ iiifBuilder.ts   │ validator.ts     │ searchService.ts │ exportService.ts │          │    │
-│  │  │  • Manifest gen  │  • Tree-aware    │  • FlexSearch    │  • IIIF Bundle   │          │    │
-│  │  │  • Collection    │  • Issue cats    │  • Web Worker    │  • Static Site   │          │    │
-│  │  │    construction  │  • Fix suggestions│  • Autocomplete │  • GitHub Pages  │          │    │
-│  │  │  • Annotation    │                  │  • Lunr.js exp   │  • Canopy exp    │          │    │
-│  │  │    creation      │ validationHealer │                  │                  │          │    │
-│  │  │                  │  • Auto-fix      │ contentSearch    │ csvImporter.ts   │          │    │
-│  │  │ iiifParser.ts    │  • Safe batch    │  • OCR/TXT anno  │  • Import/export │          │    │
-│  │  │  • v2/v3 parse   │  • Error boundaries│   indexing     │  • Column detect │          │    │
-│  │  │  • Spec bridge   │                  │                  │  • Batch apply   │          │    │
-│  │  └──────────────────┴──────────────────┴──────────────────┴──────────────────┘          │    │
-│  │                                                                                          │    │
-│  │  ┌──────────────────┬──────────────────┬──────────────────┬──────────────────┐          │    │
-│  │  │   IMAGE/TILES    │   AUTH/SYNC      │   METADATA       │   STRUCTURE      │          │    │
-│  │  │ ──────────────── │ ──────────────── │ ──────────────── │ ──────────────── │          │    │
-│  │  │ tileWorker.ts    │ authService.ts   │ metadataHarvester│ autoStructure.ts │          │    │
-│  │  │  • Web Worker    │  • IIIF Auth 2.0 │  • EXIF extract  │  • Pattern match │          │    │
-│  │  │  • Tile pyramid  │  • Token flow    │  • GPS extract   │  • Auto-group    │          │    │
-│  │  │  • Canvas API    │  • Probe-first   │                  │  • Range create  │          │    │
-│  │  │                  │                  │ metadataTemplate │                  │          │    │
-│  │  │ imagePipeline/   │ sync/            │  • CSV templates │ stagingService.ts│          │    │
-│  │  │  canvasPipeline  │  crdtAdapter.ts  │  • Smart detect  │  • Layout org    │          │    │
-│  │  │  tileCalculator  │  • Yjs bridge    │                  │  • Manifest org  │          │    │
-│  │  │                  │  syncProvider.ts │                  │                  │          │    │
-│  │  │ imageSourceResol │  • Bidirectional │                  │ virtualManifest  │          │    │
-│  │  │  • URL fallback  │    sync          │                  │ Factory.ts       │          │    │
-│  │  │  • Service info  │                  │                  │  • Raw file →    │          │    │
-│  │  │                  │                  │                  │    Manifest      │          │    │
-│  │  └──────────────────┴──────────────────┴──────────────────┴──────────────────┘          │    │
-│  │                                                                                          │    │
-│  │  ┌──────────────────┬──────────────────┬──────────────────┬──────────────────┐          │    │
-│  │  │   CONTENT STATE  │   PROVENANCE     │   VIEWER COMPAT  │   MISC SERVICES  │          │    │
-│  │  │ ──────────────── │ ──────────────── │ ──────────────── │ ──────────────── │          │    │
-│  │  │ contentState.ts  │ provenanceService│ viewerCompatibili│ navPlaceService  │          │    │
-│  │  │  • URL encoding  │  • Change track  │ ty.ts            │  • Geospatial    │          │    │
-│  │  │  • Deep linking  │  • PREMIS exp    │  • Mirador test  │    metadata      │          │    │
-│  │  │  • Share views   │  • Audit trail   │  • UV test       │                  │          │    │
-│  │  │                  │                  │  • Annona test   │ activityStream.ts│          │    │
-│  │  │ selectors.ts     │                  │  • Clover test   │  • Change Discov │          │    │
-│  │  │  • IIIF Selectors│                  │                  │    API 1.0       │          │    │
-│  │  └──────────────────┴──────────────────┴──────────────────┴──────────────────┘          │    │
-│  │                                                                                          │    │
-│  │  Additional Services:                                                                    │    │
-│  │  • fileIntegrity.ts - SHA-256 deduplication                                              │    │
-│  │  • ingestAnalyzer.ts - Two-pass folder analysis                                          │    │
-│  │  • ingestState.ts - Checkpoint/resume system                                             │    │
-│  │  • remoteLoader.ts - External IIIF fetching                                              │    │
-│  │  • guidanceService.ts - Onboarding/help tracking                                         │    │
-│  │  • avService.ts - Audio/video support                                                    │    │
-│  │  • archivalPackageService.ts - OCFL, BagIt exports                                       │    │
-│  │  • staticSiteExporter.ts - WAX/Canopy generation                                         │    │
-│  │  • specBridge.ts - IIIF v2→v3 conversion                                                 │    │
-│  │  • fieldRegistry.ts - Unified field configuration                                        │    │
-│  │  • logger.ts - Centralized logging                                                       │    │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
-│                                             │                                                    │
-│                                             ▼                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │                      STORAGE LAYER (IndexedDB)                                           │    │
-│  │                                                                                          │    │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐                   │    │
-│  │  │  files   │  │derivatives│ │ project  │  │checkpoints│ │  tiles   │                   │    │
-│  │  │          │  │          │  │          │  │          │  │          │                   │    │
-│  │  │ Original │  │ Tile     │  │ IIIF     │  │ Named    │  │ Image    │                   │    │
-│  │  │ uploads  │  │ pyramids │  │ tree     │  │ saves    │  │ tiles    │                   │    │
-│  │  │ (SHA-256)│  │ (v2,v3,  │  │ (JSON)   │  │ (JSON)   │  │ (Blob)   │                   │    │
-│  │  │          │  │  static) │  │          │  │          │  │          │                   │    │
-│  │  │ Key: hash│  │ Key: id  │  │ Key:     │  │ Key:     │  │ Key:     │                   │    │
-│  │  │          │  │          │  │ 'current'│  │ name     │  │ composite│                   │    │
-│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘                   │    │
-│  │                                                                                          │    │
-│  │  Storage Features:                                                                       │    │
-│  │  • SHA-256 content-addressable storage (automatic deduplication)                         │    │
-│  │  • Derivative versioning with parent-child relationships                                 │    │
-│  │  • Checkpoint rollback system (named save states)                                        │    │
-│  │  • Quota monitoring (90% warning, 95% critical thresholds)                               │    │
-│  │  • Background cleanup of orphaned tiles                                                  │    │
-│  │  • Graceful degradation when storage limits exceeded                                     │    │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
-│                                             │                                                    │
-│                                             ▼                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │                      SERVICE WORKER (sw.js - 701 lines)                                  │    │
-│  │  ═══════════════════════════════════════════════════════════════                        │    │
-│  │                                                                                          │    │
-│  │  ┌─────────────────────────────────────────────────────────────────────────────────┐    │    │
-│  │  │  IIIF IMAGE API 3.0 LEVEL 2 SERVER                                                │    │    │
-│  │  │                                                                                   │    │    │
-│  │  │  Capabilities:                                                                    │    │    │
-│  │  │  • Tile serving: /tiles/{assetId}/{level}/{x}_{y}.jpg                             │    │    │
-│  │  │  • Info.json generation: /tiles/{assetId}/info.json                               │    │    │
-│  │  │  • Dynamic image processing via OffscreenCanvas                                   │    │    │
-│  │  │  • Region extraction: pct:x,y,w,h or pixel coords                                 │    │    │
-│  │  │  • Size transformation: w,, ,h, w,h, pct:n                                        │    │    │
-│  │  │  • Rotation support: 0° (simplified for performance)                              │    │    │
-│  │  │  • Quality: default, color                                                        │    │    │
-│  │  │  • Format: jpg, png                                                               │    │    │
-│  │  │                                                                                   │    │    │
-│  │  │  Caching Strategy (500MB LRU):                                                    │    │    │
-│  │  │  1. Check Cache API first (fast path)                                             │    │    │
-│  │  │  2. Fall back to IndexedDB via MessageChannel                                     │    │    │
-│  │  │  3. Generate from source if needed (Web Worker)                                   │    │    │
-│  │  │  4. Populate Cache API for future requests                                        │    │    │
-│  │  │  5. LRU eviction when 500MB limit exceeded                                        │    │    │
-│  │  └─────────────────────────────────────────────────────────────────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
-│                                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+**Service Worker:** IIIF Image API 3.0 Level 2 (rotation, mirroring, grayscale, region crops, PNG/WebP)
+
+## Deployment
+
+This project is set up for [GitHub Pages](https://pages.github.com/) deployment. The production build generates a static site that can be served from any static host. Push to the `gh-pages` branch or configure GitHub Pages to deploy from `main` after running `npm run build`.

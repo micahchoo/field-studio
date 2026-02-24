@@ -845,7 +845,7 @@ interface ValidationResult {
 /** Validate a IIIF resource structure */
 export function validateIIIFResource(resource: unknown): ValidationResult {
   const errors: string[] = [];
-  const r = resource as any;
+  const r = resource as Record<string, unknown>;
 
   // Check required fields
   if (!r.id) {

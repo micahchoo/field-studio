@@ -1,18 +1,20 @@
 /**
  * Tests for fileIntegrity.ts
  *
- * fileIntegrity.ts declares `openDB` as a global (not a real module import)
- * and constructs the FileIntegrityService singleton at module load time.
- * We must inject a `openDB` stub onto `globalThis` BEFORE the module is
- * imported so that the constructor does not throw.
+ * fileIntegrity.ts imports openDB from 'idb' and constructs the
+ * FileIntegrityService singleton at module load time.
+ * We mock the 'idb' module (same pattern as storage.test.ts) so the
+ * constructor does not call real IndexedDB (not available in happy-dom).
  *
  * Pure exported functions (calculateHash, calculateHashWithProgress) are
  * tested with the real Web Crypto API, which is available in happy-dom.
  */
 
-// ─── 1. Hoist the openDB stub so it runs before any import ──────────────────
-const { mockOpenDB } = vi.hoisted(() => {
-  const mockDb = {
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// ─── idb mock — must come before any import of fileIntegrity ─────────────────
+vi.mock('idb', () => ({
+  openDB: vi.fn().mockResolvedValue({
     get: vi.fn().mockResolvedValue(undefined),
     put: vi.fn().mockResolvedValue('ok'),
     delete: vi.fn().mockResolvedValue(undefined),
@@ -21,15 +23,8 @@ const { mockOpenDB } = vi.hoisted(() => {
     getAllKeys: vi.fn().mockResolvedValue([]),
     objectStoreNames: { contains: vi.fn().mockReturnValue(true) },
     createObjectStore: vi.fn(),
-  };
-  const mockOpenDB = vi.fn().mockResolvedValue(mockDb);
-  // Inject as a global so the `declare function openDB` usage resolves
-  (globalThis as any).openDB = mockOpenDB;
-  return { mockOpenDB };
-});
-
-// ─── 2. Now we can safely import from the module ────────────────────────────
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+  }),
+}));
 import { calculateHash, calculateHashWithProgress } from '../model/fileIntegrity';
 
 // ============================================================================

@@ -1,389 +1,285 @@
-# CLAUDE.md
+# CLAUDE.md — Field Studio
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Field Studio is a **local-first, browser-based IIIF archive workbench**. All data lives in the browser's IndexedDB — no server, no uploads.
 
-## Project Overview
+**Framework:** Svelte 5 + TypeScript + Vite + Tailwind CSS
+**Architecture:** Feature Slice Design (FSD)
+**Tests:** Vitest + happy-dom (117 files, 4756 passing)
 
-Field Studio is a **local-first, browser-based IIIF (International Image Interoperability Framework) archive workbench** for organizing, annotating, and connecting field research media. All data is stored in the browser's IndexedDB with no server uploads.
+---
 
-**Important:** This is a vibe-coded experimental POC with non-standard architecture patterns.
+## Commands
 
-## Common Commands
-
-### Development
 ```bash
-npm run dev              # Start dev server on http://localhost:3000
-npm run build            # Production build
-npm run preview          # Preview production build
+npm run dev           # http://localhost:5173
+npm run build
+npm run preview
+npm test              # run all tests once
+npm run test:watch    # watch mode
+npm run typecheck     # svelte-check (Svelte type errors)
+npm run typecheck:ts  # tsc --noEmit
+npm run lint          # ESLint (0 errors target)
+npm run lint:fix      # auto-fix
 ```
 
-### Testing
-```bash
-npm test                 # Run all tests once
-npm run test:watch       # Watch mode (best for development)
-npm run test:ui          # Interactive UI for tests
-npm run test:coverage    # Generate coverage report
-npm run test:debug       # Debug tests with inspector
+Run one test file: `npm test vault.test.ts`
+
+---
+
+## Project Structure
+
+```
+src/
+├── shared/
+│   ├── types/index.ts              ← all IIIF types (IIIFItem, IIIFManifest, etc.)
+│   ├── stores/vault.svelte.ts      ← reactive vault store (use this for dispatch)
+│   ├── stores/appMode.svelte.ts    ← current view (archive | viewer | boards | ...)
+│   ├── stores/dialogs.svelte.ts    ← dialog open/close state
+│   ├── services/storage.ts         ← IndexedDB (saveProject/loadProject/saveAsset)
+│   ├── services/contentState.ts    ← IIIF Content State (URL sharing)
+│   └── ui/
+│       ├── atoms/                  ← Button, Icon, Input, Select, TextArea, Slider
+│       ├── molecules/              ← composite UI (ViewHeader, Toast, etc.)
+│       └── layout/                 ← PaneLayout, ScreenLayout, Stack, Row, Split
+│
+├── entities/
+│   └── manifest/model/
+│       ├── vault/                  ← normalize, denormalize, queries, updates
+│       ├── actions/                ← 26 action creators (addCanvas, updateLabel, etc.)
+│       └── builders/iiifBuilder.ts ← ingestTree, buildTree
+│
+├── features/
+│   ├── archive/                    ← grid/list browser
+│   ├── viewer/                     ← OpenSeadragon + audio/video + annotations
+│   ├── board-design/               ← infinite canvas
+│   ├── metadata-edit/              ← spreadsheet editor + BatchEditor
+│   ├── search/                     ← FlexSearch
+│   ├── map/                        ← Leaflet geographic view
+│   ├── timeline/                   ← chronological view
+│   ├── ingest/                     ← folder import + external IIIF import
+│   └── export/                     ← IIIF bundle, static site, OCFL, BagIt
+│
+├── widgets/
+│   ├── NavigationSidebar/          ← left nav + tree
+│   ├── Inspector/                  ← right metadata panel
+│   ├── CommandPalette/             ← Cmd+K
+│   ├── StatusBar/                  ← bottom bar
+│   ├── QCDashboard/               ← validation overview
+│   └── ...                        ← 15 widgets total
+│
+└── app/
+    ├── ui/App.svelte               ← root: global keyboard, dialogs, auto-save
+    ├── ui/ViewRouter.svelte        ← renders active view
+    └── stores/                     ← autoSave, validation
 ```
 
-Run a specific test file:
-```bash
-npm test vault.test.ts
-```
+**Path alias:** `@` → project root (`.`)
+Example: `import { storage } from '@/src/shared/services/storage'`
 
-### Linting
-```bash
-npm run lint             # Check for linting errors
-npm run lint:fix         # Auto-fix linting errors
-```
+---
 
-## Architecture Overview
+## State Management
 
-### Core State Management: Vault Pattern
+### Vault — the only state that matters
 
-The app uses a **normalized state management pattern** (inspired by Digirati Manifest Editor) called the "Vault":
+The vault holds all IIIF entities (Collections, Manifests, Canvases, Ranges, Annotations) in a normalized flat store.
 
-- **Location:** `services/vault.ts` (1,309 lines)
-- **Pattern:** Flat entity storage with relationship indexes (not nested trees)
-- **Entities:** Collections, Manifests, Canvases, Ranges, AnnotationPages, Annotations
-- **Key Operations:**
-  - `normalize(tree)` - Convert IIIF tree to flat entities
-  - `denormalize(state)` - Reconstruct tree for export
-  - `updateEntity(id, updates)` - O(1) immutable updates via Immer
-  - `getEntity(id)` - O(1) lookup via typeIndex
+**Always dispatch actions — never mutate directly.**
 
-**Critical:** Never manually manipulate vault state. Always use the action system.
-
-### Action System
-
-- **Location:** `services/actions.ts` (783 lines)
-- **Pattern:** Dispatcher validates → executes → updates vault → notifies subscribers
-- **17 Action Types:** UPDATE_LABEL, ADD_CANVAS, REORDER_CANVASES, BATCH_UPDATE, etc.
-- **History:** 100-entry undo/redo stack with automatic pruning
-
-**Usage:**
 ```typescript
-import { actions } from './services/actions';
+import { vault } from '@/src/shared/stores/vault.svelte';
+import { actions } from '@/src/entities/manifest/model/actions';
 
-// Update an entity
-actions.updateLabel(entityId, { en: ['New Label'] });
+// Read
+const root = vault.state.root;
+const canvas = vault.getEntity(canvasId);
 
-// Batch update multiple entities
-actions.batchUpdate([
-  { type: 'UPDATE_LABEL', id: 'entity1', label: {...} },
-  { type: 'ADD_CANVAS', manifestId: 'manifest1', canvas: {...} }
-]);
+// Write — dispatch an action
+vault.dispatch(actions.updateLabel(entityId, { en: ['New title'] }));
+vault.dispatch(actions.addCanvas(manifestId, canvasData));
 
-// Undo/redo
-actions.undo();
-actions.redo();
+// Undo/redo — wired in App.svelte (Cmd+Z / Cmd+Shift+Z)
 ```
 
-### Storage Layer (IndexedDB)
+### Svelte stores
 
-**Database:** `biiif-archive-db`
+All app-level state lives in `src/shared/stores/*.svelte.ts` as class-based reactive stores:
 
-**Stores:**
-- `files` - Original uploads (SHA-256 content-addressed, auto-deduplication)
-- `derivatives` - Tile pyramids (v2, v3, static variants)
-- `project` - IIIF tree as JSON (key: 'current')
-- `checkpoints` - Named save states for rollback
-- `tiles` - Image tile blobs (500MB LRU cache)
-- `tileManifests` - Tile pyramid metadata
-
-**Key Features:**
-- SHA-256 deduplication (identical files stored once)
-- Quota monitoring (90% warning, 95% critical)
-- Checkpoint rollback system
-- Background cleanup of orphaned tiles
-
-### Service Worker (IIIF Image API)
-
-- **Location:** `public/sw.js` (701 lines)
-- **Implementation:** IIIF Image API 3.0 Level 2 server
-- **Capabilities:**
-  - Tile serving: `/tiles/{assetId}/{level}/{x}_{y}.jpg`
-  - Info.json generation: `/tiles/{assetId}/info.json`
-  - Dynamic image processing via OffscreenCanvas
-  - Region extraction, size transformation, rotation support
-
-**Caching Strategy:**
-1. Check Cache API first
-2. Fall back to IndexedDB
-3. Generate from source if needed
-4. Populate cache (500MB LRU eviction)
-
-**Important:** Service workers only work in secure contexts (localhost or HTTPS).
-
-### Component Architecture
-
-**68 Components** organized by feature:
-- **Views:** Archive, Structure, Catalog, Boards, Viewer
-- **Staging:** Two-pane source/archive workbench with drag-drop
-- **Shared:** Sidebar, Inspector, CommandPalette (Cmd+K), Toast, Modal
-
-**27 Custom Hooks** for state/UI:
-- State: `useIIIFEntity`, `useVaultState`, `useHistory`
-- UI: `useDialogState`, `useResponsivePanel`, `useFocusTrap`
-- IIIF: `useIIIFTraversal`, `useBreadcrumb`
-- Performance: `useVirtualization`, `useDebouncedCallback`
-
-### Key Services (42 total)
-
-**IIIF Core:**
-- `iiifBuilder.ts` - Manifest/Collection/Annotation construction
-- `iiifParser.ts` - v2/v3 parsing and spec bridging
-- `validator.ts` - Tree-aware validation with fix suggestions
-- `validationHealer.ts` - Auto-fix common issues
-
-**Image Processing:**
-- `imagePipeline/` - Canvas pipeline, tile calculator
-- `imageSourceResolver.ts` - URL fallback, service info resolution
-- `tileWorker.ts` - Web Worker for tile pyramid generation
-
-**Search:**
-- `searchService.ts` - FlexSearch with Web Worker
-- `contentSearchService.ts` - OCR/text annotation indexing
-
-**Export:**
-- `exportService.ts` - IIIF Bundle, static site generation
-- `archivalPackageService.ts` - OCFL, BagIt exports
-- `staticSiteExporter.ts` - WAX/Canopy generation
-
-**Metadata:**
-- `metadataHarvester.ts` - EXIF/GPS extraction
-- `metadataTemplate.ts` - CSV templates, smart detection
-
-**Structure:**
-- `autoStructure.ts` - Pattern matching, auto-grouping
-- `stagingService.ts` - Layout organization
-- `virtualManifestFactory.ts` - Raw file → Manifest conversion
-
-**Auth/Sync:**
-- `authService.ts` - IIIF Auth 2.0 with token flow
-- `sync/crdtAdapter.ts` - Yjs CRDT bridge (experimental)
-
-## Configuration Files
-
-### Vite (`vite.config.ts`)
-- Base path: `/field-studio/` (for GitHub Pages)
-- Dev server: `http://localhost:3000` (host: 0.0.0.0)
-- Path alias: `@` → project root
-- Workers: ES format, separate chunks for caching
-
-### Vitest (`vitest.config.ts`)
-- Environment: happy-dom (lightweight DOM)
-- Setup: `src/test/setup.ts`
-- Path alias: `@` → `./src` (note: different from Vite!)
-- Coverage: v8 provider with text/html/lcov reports
-
-### TypeScript (`tsconfig.json`)
-- Target: ESNext
-- Module: ESNext
-- JSX: react-jsx
-- No path aliases defined (uses Vite's resolver)
-
-### ESLint (`eslint.config.js`)
-**Custom Rules:**
-- Prop naming convention: `onChange`, `onAction`, `onUpdate`, `onExecute`
-- Restricted syntax: Event handlers must follow naming standards
-- TypeScript: warn on `any`, unused vars, non-null assertions
-- React: enforce hooks rules, exhaustive-deps warnings
-
-## Development Patterns
-
-### Testing Patterns
-
-**Test Structure:**
 ```typescript
-import { describe, it, expect } from 'vitest';
+import { appMode } from '@/src/shared/stores/appMode.svelte';
+appMode.setMode('archive');  // navigate to Archive view
 
-describe('ComponentName', () => {
-  it('should do specific thing', () => {
-    // Arrange
-    const input = setupInput();
+import { dialogs } from '@/src/shared/stores/dialogs.svelte';
+dialogs.exportDialog.open();
+```
 
-    // Act
-    const result = functionUnderTest(input);
+---
 
-    // Assert
-    expect(result).toBe(expected);
+## Svelte 5 Patterns
+
+This project uses Svelte 5 runes exclusively. No Svelte 4 patterns.
+
+```svelte
+<script lang="ts">
+  // Props
+  let { label, onClose }: { label: string; onClose: () => void } = $props();
+
+  // State
+  let count = $state(0);
+
+  // Derived
+  let doubled = $derived(count * 2);
+  let heavy = $derived.by(() => expensiveCalc(count));
+
+  // Effects
+  $effect(() => {
+    document.title = label;
+    return () => { /* cleanup */ };
   });
+</script>
+```
+
+**Snippet slots** replace React children:
+```svelte
+<!-- Parent passes snippet -->
+<Card>{#snippet header()}Title{/snippet}</Card>
+
+<!-- Child renders it -->
+{@render header?.()}
+```
+
+**Callback props** replace createEventDispatcher:
+```svelte
+<!-- Instead of dispatch('close') -->
+onClose?.();
+```
+
+---
+
+## Critical Gotchas
+
+### Snippet/prop shadow
+`{#snippet name()}` in a template shadows any `name` variable from `<script>`, including props.
+
+```svelte
+<!-- BROKEN: title inside snippet refers to the snippet function itself -->
+<script>
+  let { title } = $props();
+</script>
+{#snippet title()}{title}{/snippet}  <!-- ⚠️ infinite recursion -->
+
+<!-- FIX: alias before template -->
+<script>
+  let { title } = $props();
+  const titleText = $derived(title);  // capture before shadow
+</script>
+{#snippet title()}{titleText}{/snippet}  <!-- ✅ -->
+```
+
+### Effect depth exceeded
+A `$effect` that reads and writes the same reactive state loops infinitely.
+
+```typescript
+// BROKEN
+$effect(() => {
+  expandedIds = new Set(expandedIds);  // new Set = new reference = re-trigger
+});
+
+// FIX: read with untrack, guard the write
+import { untrack } from 'svelte';
+$effect(() => {
+  const current = untrack(() => expandedIds);
+  const next = computeNext(current);
+  if (setsEqual(current, next)) return;  // guard
+  expandedIds = next;
 });
 ```
 
-**Component Testing:**
+### IDB mock in tests
+`vi.mock()` is hoisted before variable declarations. Use `vi.hoisted()`:
+
 ```typescript
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-
-it('should handle user interaction', async () => {
-  const user = userEvent.setup();
-  render(<Component />);
-
-  await user.click(screen.getByRole('button'));
-
-  expect(screen.getByText(/success/i)).toBeInTheDocument();
-});
+const mockDb = vi.hoisted(() => new Map<string, unknown>());
+vi.mock('idb', () => ({
+  openDB: vi.fn(() => ({ get: (k) => mockDb.get(k), put: (k,v) => mockDb.set(k,v) }))
+}));
 ```
 
-**Mocking IndexedDB:**
+### TYPE_DEBT comments
+`// TYPE_DEBT:` marks intentional `any` usages where the fix requires structural changes.
+Do not remove them without fixing all callers. Key ones:
+- `IIIFItem.service?: any[]` — needs `ServiceDescriptor` union; imageSourceResolver accesses `.type`/`.id`
+- `IIIFItem.items?: any[]` — 15+ call sites iterate without narrowing
+- `IIIFItem.navPlace?: any` — needs GeoJSON type
+
+---
+
+## ESLint Custom Rules
+
+18 custom rules in `eslint-rules/`. Key ones:
+
+| Rule | What it prevents |
+|------|-----------------|
+| `max-lines-feature` | molecules > 300 lines, organisms > 500 lines |
+| `no-native-html-in-molecules` | `<select>`, `<textarea>`, `<input type="range">` — use atoms instead |
+| `no-svelte4-patterns` | legacy Svelte 4 syntax |
+| `lifecycle-restrictions` | DOM-init libs must use `$effect` (Annotorious, WaveSurfer) |
+| `require-aria-for-icon-buttons` | icon-only buttons need `aria-label` |
+| `typed-context-keys` | context keys must be typed symbols |
+
+---
+
+## Adding a Feature
+
+1. Create `src/features/<name>/` with `ui/`, `model/`, `__tests__/`
+2. UI components: atoms in `ui/atoms/`, molecules in `ui/molecules/`, organisms in `ui/organisms/`
+3. State: add to vault actions if it's IIIF data; use a local `$state()` if it's UI-only
+4. Wire into `ViewRouter.svelte` if it's a new view; add to `NAV_ITEMS` in `Sidebar.svelte`
+5. Write tests in `__tests__/*.test.ts` — no `.tsx`, no `.test.svelte`
+
+## Adding a Widget
+
+1. Create `src/widgets/<Name>/ui/<Name>.svelte`
+2. Import and wire in `App.svelte` (for dialogs) or `ViewRouter.svelte` (for panels)
+3. Respect molecule/organism line limits
+
+---
+
+## Storage & Service Worker
+
+**Storage (IndexedDB):**
 ```typescript
-// Tests use fake-indexeddb for storage operations
-import 'fake-indexeddb/auto';
-```
-
-**Test Files:** Located in `src/test/__tests__/`
-- 15 test files covering ~3,800 lines
-- See `src/test/README.md` for detailed patterns
-
-### Feature Flags (`constants.ts`)
-
-```typescript
-export const FEATURE_FLAGS = {
-  USE_IMMER_CLONING: true,          // Use Immer for vault cloning (faster)
-  USE_WORKER_SEARCH: true,          // Web Worker for search (non-blocking)
-  ENABLE_EXPERIMENTAL_SYNC: false,  // Yjs collaborative editing
-  ENABLE_CANOPY_EXPORT: false,      // Static site generation
-};
-```
-
-### Abstraction Levels (Progressive Disclosure)
-
-The UI supports 3 complexity levels:
-- **Simple:** Basic labels, minimal technical IDs, essential actions
-- **Standard:** Full labels, some technical info, common workflows
-- **Advanced:** Raw IIIF JSON, all actions, technical details
-
-Controlled via `useAbstractionLevel()` hook and `AbstractionLevelToggle` component.
-
-### Event Handler Naming
-
-**Enforced by ESLint:**
-- Use `onChange` for state changes
-- Use `onAction` for user actions (clicks, submits)
-- Use `onUpdate` for entity updates
-- Use `onExecute` for command execution
-- Standard DOM handlers: `onClick`, `onSubmit`, `onKeyDown`, etc.
-
-## Critical Patterns
-
-### Vault Updates (DO)
-```typescript
-// ✅ CORRECT: Use action system
-import { actions } from './services/actions';
-actions.updateLabel(id, { en: ['New Label'] });
-```
-
-### Vault Updates (DON'T)
-```typescript
-// ❌ WRONG: Direct state mutation
-state.manifests.set(id, { ...manifest, label: newLabel });
-```
-
-### Storage Access
-```typescript
-// Always use storage service
-import { storage } from './services/storage';
-
-// Save project state
+import { storage } from '@/src/shared/services/storage';
 await storage.saveProject(iiifTree);
-
-// Load project state
 const tree = await storage.loadProject();
-
-// File operations (content-addressed)
-const hash = await storage.saveFile(blob);
-const blob = await storage.getFile(hash);
+const hash = await storage.saveAsset(blob);
+const blob = await storage.getAsset(hash);
 ```
 
-### IIIF Construction
+**Service Worker** (`public/sw.js`): IIIF Image API 3.0 Level 2. Serves `/tiles/{assetId}/...`.
+Only works in secure context (localhost or HTTPS). Must be registered (done in `main.ts`).
+
+---
+
+## Validation
+
 ```typescript
-import { buildTree, ingestTree } from './services/iiifBuilder';
+import { validator } from '@/src/entities/manifest/model/validation/validator';
+import { validationHealer } from '@/src/entities/manifest/model/validation/validationHealer';
 
-// Build from file tree
-const { root, report } = await buildTree(fileTree, options);
-
-// Ingest into vault
-await ingestTree(root);
-```
-
-### Validation
-```typescript
-import { validator } from './services/validator';
-
-// Validate entire tree
 const issues = validator.validateTree(root);
-
-// Auto-heal common issues
-import { validationHealer } from './services/validationHealer';
-const fixed = validationHealer.healTree(root);
+const fixed = validationHealer.healAllIssues(item);
 ```
 
-## Web Workers
-
-**Workers:** `workers/ingest.worker.ts`, `workers/validation.worker.ts`, `workers/searchIndexer.ts`
-
-**Build Config:** Workers bundled as separate ES modules with hash-based naming for caching.
-
-**Usage Pattern:**
-```typescript
-const worker = new Worker(new URL('./workers/example.worker.ts', import.meta.url), {
-  type: 'module'
-});
-
-worker.postMessage({ type: 'START', payload: data });
-worker.onmessage = (e) => {
-  if (e.data.type === 'COMPLETE') {
-    console.log('Result:', e.data.result);
-  }
-};
-```
-
-## Deployment
-
-**Target:** GitHub Pages (static hosting)
-
-**Build Output:**
-- Base path: `/field-studio/`
-- Service worker registered at root
-- IIIF manifests served from `/tiles/` route
-
-**Important:** Service workers require HTTPS in production (localhost works for dev).
+---
 
 ## Troubleshooting
 
-### Service Worker Not Loading
-1. Check browser DevTools → Application → Service Workers
-2. Ensure running on localhost or HTTPS
-3. Clear cache and hard reload
-4. Re-register service worker
-
-### IndexedDB Quota Exceeded
-- Check `storage.estimateQuota()` for usage
-- Cleanup orphaned tiles with `storage.cleanupOrphanedTiles()`
-- Delete old checkpoints with `storage.deleteCheckpoint(name)`
-
-### Vault State Corruption
-- Load last checkpoint: `storage.loadCheckpoint(name)`
-- Export current state: `exportRoot()`
-- Validate tree: `validator.validateTree(root)`
-
-### Test Path Resolution Issues
-- Vitest uses `@` → `./src`
-- Vite uses `@` → `.` (project root)
-- Use relative paths in tests when importing from project root
-
-### Worker Build Failures
-- Ensure workers use `import.meta.url` for dynamic imports
-- Check `vite.config.ts` worker rollup config
-- Workers must be ES modules (`type: 'module'`)
-
-## Additional Documentation
-
-- **Testing Guide:** `src/test/README.md`
-- **Architecture Details:** See ASCII diagram in `README.md` (lines 56-295)
-- **IIIF Specs:**
-  - Presentation API 3.0: https://iiif.io/api/presentation/3.0/
-  - Image API 3.0: https://iiif.io/api/image/3.0/
-  - Web Annotation: https://www.w3.org/TR/annotation-model/
+| Symptom | Fix |
+|---------|-----|
+| Images not loading | Check SW registered: DevTools → Application → Service Workers |
+| `effect_update_depth_exceeded` | `$effect` reads+writes same state — use `untrack()` |
+| `invalid_snippet_arguments` | Snippet name shadows prop — use alias pattern above |
+| tsc errors in `.svelte` module exports | Extract to sibling `.ts` file |
+| Tests fail with IDB errors | Use `vi.hoisted()` mock pattern |
+| `JSON.parse` error on startup | `storage.loadProject()` returned `"undefined"` string — guard before parse |

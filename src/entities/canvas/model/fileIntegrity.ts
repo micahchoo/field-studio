@@ -10,19 +10,7 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Content-Addressable Storage (Hashing)" pattern
  */
 
-// Inline IDB types - replace with `import { DBSchema, IDBPDatabase, openDB } from 'idb'` when idb is installed
-interface IDBPDatabase<T> {
-  get(storeName: string, key: string): Promise<any>;
-  put(storeName: string, value: any, key: string): Promise<string>;
-  delete(storeName: string, key: string): Promise<void>;
-  clear(storeName: string): Promise<void>;
-  getAll(storeName: string): Promise<any[]>;
-  getAllKeys(storeName: string): Promise<string[]>;
-  objectStoreNames: DOMStringList;
-  createObjectStore(name: string): IDBObjectStore;
-}
-interface DBSchema {}
-declare function openDB<T>(name: string, version: number, options: any): Promise<IDBPDatabase<T>>;
+import { openDB, type IDBPDatabase, type DBSchema } from 'idb';
 
 // ============================================================================
 // Types

@@ -10,7 +10,7 @@
  * @see https://iiif.io/api/presentation/3.0/#placeholdercanvas
  */
 
-import { IIIFAnnotation, IIIFCanvas, IIIFManifest, LanguageMap } from '@/src/shared/types';
+import { IIIFAnnotation, IIIFAnnotationPage, IIIFCanvas, IIIFManifest, LanguageMap } from '@/src/shared/types';
 import { IMAGE_QUALITY } from '@/src/shared/constants';
 
 // ============================================================================
@@ -31,7 +31,7 @@ export interface PlaceholderCanvas {
   type: 'Canvas';
   width?: number;
   height?: number;
-  items?: any[]; // Annotation pages with placeholder content
+  items?: IIIFAnnotationPage[];
 }
 
 export interface AccompanyingCanvas {
@@ -41,7 +41,7 @@ export interface AccompanyingCanvas {
   width?: number;
   height?: number;
   duration?: number;
-  items?: any[]; // Annotation pages with accompanying content
+  items?: IIIFAnnotationPage[];
 }
 
 export type TimeMode = 'trim' | 'scale' | 'loop';
@@ -134,7 +134,8 @@ class AVService {
     if (!annotation.body) return null;
 
     const body = Array.isArray(annotation.body) ? annotation.body[0] : annotation.body;
-    return typeof body === 'string' ? body : body?.id || null;
+    // IIIFTextualBody has no id; narrow to ExternalWebResource/Choice via 'id' in guard
+    return typeof body === 'string' ? body : ('id' in body ? body.id : null) || null;
   }
 
   /**
@@ -238,13 +239,12 @@ class AVService {
 
       const startTime = parseFloat(timeMatch[1]);
 
-      // Get text content from body
+      // Get text content from body — IIIFAnnotationBody = TextualBody | ExternalWebResource | Choice
       const {body} = annotation;
-      const text = typeof body === 'string'
-        ? body
-        : Array.isArray(body)
-          ? (body[0] as any)?.value || ''
-          : (body as any)?.value || '';
+      const bodyItem = Array.isArray(body) ? body[0] : body;
+      const text = typeof bodyItem === 'string'
+        ? bodyItem
+        : ('value' in bodyItem ? bodyItem.value : '') ?? '';
 
       syncPoints.push({
         mainTime: startTime,
@@ -322,12 +322,12 @@ class AVService {
       text: string;
     }>
   ): AccompanyingCanvas {
-    const items = annotations.map((anno, index) => ({
+    const items: IIIFAnnotation[] = annotations.map((anno, index) => ({
       id: `${canvasId}/accompanying/anno/${index}`,
-      type: 'Annotation',
-      motivation: 'supplementing',
+      type: 'Annotation' as const,
+      motivation: 'supplementing' as const,
       body: {
-        type: 'TextualBody',
+        type: 'TextualBody' as const,
         value: anno.text,
         format: 'text/plain'
       },

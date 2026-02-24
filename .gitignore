@@ -193,6 +193,8 @@ _archived
 
 # Svelte migration sandbox
 svelte-migration/
+# Build/run artifacts that are not docs
+lint.md
 # ----------------------------------------------------------------------
 # End of .gitignore
 # ----------------------------------------------------------------------

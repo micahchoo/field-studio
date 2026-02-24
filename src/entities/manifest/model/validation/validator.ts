@@ -64,9 +64,12 @@ export class ValidationService {
               issueMap[item.id] = (issueMap[item.id] || []).concat(issues);
           }
 
-          const children = (item as any).items || (item as any).annotations || (item as any).structures || [];
-          children.forEach((child: any) => {
-              if (child && typeof child === 'object') traverse(child, item, item.type);
+          // item.items is any[] (IIIFItem TYPE_DEBT); annotations is IIIFAnnotationPage[];
+          // structures is Manifest-specific — access via type guard to avoid as-any.
+          const structureItems = isManifest(item) ? (item as IIIFManifest).structures ?? [] : [];
+          const children = item.items ?? item.annotations ?? structureItems;
+          children.forEach((child) => {
+              if (child && typeof child === 'object') traverse(child as IIIFItem, item, item.type);
           });
       };
 
@@ -189,7 +192,7 @@ export class ValidationService {
     // Canvas-specific: check for painting content
     if (isCanvas(item)) {
         const raw = item as IIIFCanvas;
-        const hasPainting = raw.items?.some((p: any) => p.items?.some((a: any) => a.motivation === 'painting'));
+        const hasPainting = raw.items?.some((p) => p.items?.some((a) => a.motivation === 'painting'));
         if (!hasPainting) {
             addIssue('warning', 'Content', 'Canvas has no "painting" content. It will appear blank.');
         }
