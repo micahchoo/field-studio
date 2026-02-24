@@ -1,6 +1,5 @@
 <!--
   ViewerWorkbench — IIIF Image API parameter workbench modal
-  React source: src/features/viewer/ui/molecules/ViewerWorkbench.tsx (197 lines)
   Layer: molecule (FSD features/viewer/ui/molecules)
 
   Full-screen modal for building and previewing IIIF Image API 3.0 URLs.
@@ -15,25 +14,6 @@
     quality: string;
     format: string;
   }
-
-  type RegionMode = 'full' | 'square' | 'pct' | 'pixel';
-  type SizeMode = 'max' | 'pct' | 'w' | 'h' | 'wh' | 'bestfit';
-
-  const REGION_PRESETS = [
-    { value: 'full', label: 'Full', description: 'Entire image' },
-    { value: 'square', label: 'Square', description: 'Centered square crop' },
-    { value: 'pixel', label: 'Pixels', description: 'x,y,w,h in pixels' },
-    { value: 'pct', label: 'Percent', description: 'Percent-based region' },
-  ] as const;
-
-  const SIZE_PRESETS = [
-    { value: 'max', label: 'Max', description: 'Maximum available size' },
-    { value: 'pct', label: 'Percent', description: 'Scale by percentage' },
-    { value: 'w', label: 'Width', description: 'Width only, auto height' },
-    { value: 'h', label: 'Height', description: 'Height only, auto width' },
-    { value: 'wh', label: 'Exact', description: 'Exact width,height' },
-    { value: 'bestfit', label: 'Best Fit', description: 'Fit within dimensions' },
-  ] as const;
 
   const QUALITY_OPTIONS = [
     { value: 'default', label: 'Default', description: 'Recommended quality' },
@@ -51,17 +31,16 @@
 </script>
 
 <script lang="ts">
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- Rotation slider requires native range input for IIIF Image API parameter control */
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import type { IIIFCanvas } from '@/src/shared/types';
+  import type { RegionMode, SizeMode, RegionCoords, SizeValues } from '../atoms/WorkbenchParameterControls.svelte';
   import { cn } from '@/src/shared/lib/cn';
-  import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import PreviewHeader from '../atoms/PreviewHeader.svelte';
-  import PresetSelector from '../atoms/PresetSelector.svelte';
   import QualitySelector from '../atoms/QualitySelector.svelte';
   import FormatSelector from '../atoms/FormatSelector.svelte';
   import WorkbenchFooter from '../atoms/WorkbenchFooter.svelte';
+  import WorkbenchParameterControls from '../atoms/WorkbenchParameterControls.svelte';
 
   interface Props {
     canvas: IIIFCanvas;
@@ -72,18 +51,14 @@
   }
 
   let {
-    canvas,
-    onApply,
-    onClose,
-    cx: _cx,
-    fieldMode = false,
+    canvas, onApply, onClose, cx: _cx, fieldMode = false,
   }: Props = $props();
 
   // Local UI state
   let regionMode = $state<RegionMode>('full');
   let sizeMode = $state<SizeMode>('max');
-  let regionCoords = $state({ x: 0, y: 0, w: 100, h: 100 });
-  let sizeVal = $state({ w: 1000, h: 1000, pct: 100 });
+  let regionCoords = $state<RegionCoords>({ x: 0, y: 0, w: 100, h: 100 });
+  let sizeVal = $state<SizeValues>({ w: 1000, h: 1000, pct: 100 });
   let rotationDeg = $state(0);
   let mirrored = $state(false);
   let upscale = $state(false);
@@ -120,11 +95,9 @@
     else if (sizeMode === 'bestfit') s = `${up}!${sizeVal.w},${sizeVal.h}`;
 
     return {
-      region: r,
-      size: s,
+      region: r, size: s,
       rotation: mirrored ? `!${rotationDeg}` : rotationDeg.toString(),
-      quality,
-      format,
+      quality, format,
     };
   });
 
@@ -135,25 +108,34 @@
   );
 
   function handleReset() {
-    regionMode = 'full';
-    sizeMode = 'max';
+    regionMode = 'full'; sizeMode = 'max';
     regionCoords = { x: 0, y: 0, w: 100, h: 100 };
     sizeVal = { w: 1000, h: 1000, pct: 100 };
-    rotationDeg = 0;
-    mirrored = false;
-    upscale = false;
-    quality = 'default';
-    format = 'jpg';
+    rotationDeg = 0; mirrored = false; upscale = false;
+    quality = 'default'; format = 'jpg';
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') onClose();
-  }
+  function handleKeydown(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
 
   let bgClass = $derived(fieldMode ? 'bg-nb-black' : 'bg-nb-white');
   let borderClass = $derived(fieldMode ? 'border-nb-black' : 'border-nb-black/20');
   let textClass = $derived(fieldMode ? 'text-white' : 'text-nb-black');
   let mutedClass = $derived(fieldMode ? 'text-white/50' : 'text-nb-black/50');
+
+  function tabClass(tab: 'params' | 'code'): string {
+    const base = 'flex-1 px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-nb';
+    if (activeTab === tab) {
+      return cn(base, fieldMode
+        ? 'bg-nb-yellow/20 text-nb-yellow border-b-2 border-nb-yellow'
+        : 'bg-nb-blue/10 text-nb-blue border-b-2 border-nb-blue');
+    }
+    return cn(base, fieldMode ? 'text-white/40 hover:text-white/60' : 'text-nb-black/40 hover:text-nb-black/60');
+  }
+
+  let codeBlockClass = $derived(cn(
+    'p-3 text-xs font-mono overflow-x-auto border',
+    fieldMode ? 'bg-nb-black border-nb-yellow/20 text-nb-yellow/80' : 'bg-nb-cream border-nb-black/10 text-nb-black/80'
+  ));
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -175,7 +157,6 @@
     <!-- Left: Preview -->
     <div class="flex-1 bg-nb-black relative flex flex-col overflow-hidden">
       <PreviewHeader {fieldMode} />
-      <!-- Image preview -->
       <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-nb-black">
         {#if url}
           <img
@@ -188,7 +169,6 @@
           <div class="text-white/30 text-sm font-mono">No image service available</div>
         {/if}
       </div>
-      <!-- URL bar -->
       <div class={cn(
         'px-4 py-2 border-t font-mono text-xs truncate',
         fieldMode ? 'border-nb-yellow/30 bg-nb-black text-nb-yellow/60' : 'border-nb-black/20 bg-nb-cream text-nb-black/60'
@@ -199,204 +179,30 @@
 
     <!-- Right: Controls -->
     <div class={cn('w-96 flex flex-col border-l', bgClass, borderClass)}>
-      <!-- Tab bar -->
       <div class={cn('flex border-b', borderClass)}>
-        <button
-          type="button"
-          class={cn(
-            'flex-1 px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-nb',
-            activeTab === 'params'
-              ? fieldMode ? 'bg-nb-yellow/20 text-nb-yellow border-b-2 border-nb-yellow' : 'bg-nb-blue/10 text-nb-blue border-b-2 border-nb-blue'
-              : fieldMode ? 'text-white/40 hover:text-white/60' : 'text-nb-black/40 hover:text-nb-black/60'
-          )}
-          onclick={() => activeTab = 'params'}
-        >
-          <Icon name="tune" class="text-sm mr-1" />
-          Parameters
+        <button type="button" class={tabClass('params')} onclick={() => activeTab = 'params'}>
+          <Icon name="tune" class="text-sm mr-1" /> Parameters
         </button>
-        <button
-          type="button"
-          class={cn(
-            'flex-1 px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-nb',
-            activeTab === 'code'
-              ? fieldMode ? 'bg-nb-yellow/20 text-nb-yellow border-b-2 border-nb-yellow' : 'bg-nb-blue/10 text-nb-blue border-b-2 border-nb-blue'
-              : fieldMode ? 'text-white/40 hover:text-white/60' : 'text-nb-black/40 hover:text-nb-black/60'
-          )}
-          onclick={() => activeTab = 'code'}
-        >
-          <Icon name="code" class="text-sm mr-1" />
-          Code
+        <button type="button" class={tabClass('code')} onclick={() => activeTab = 'code'}>
+          <Icon name="code" class="text-sm mr-1" /> Code
         </button>
       </div>
 
       <div class="flex-1 overflow-y-auto">
         {#if activeTab === 'params'}
           <div class="p-4 space-y-6">
-            <!-- Region -->
-            <fieldset class="space-y-2">
-              <legend class={cn('text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-1', textClass)}>
-                <Icon name="crop" class="text-sm text-green-500" />
-                Region
-              </legend>
-              <p class={cn('text-[10px]', mutedClass)}>
-                {REGION_PRESETS.find(p => p.value === regionMode)?.description}
-              </p>
-              <PresetSelector
-                options={REGION_PRESETS.map(p => ({ value: p.value, label: p.label, description: p.description }))}
-                value={regionMode}
-                onChange={(v) => regionMode = v as RegionMode}
-                {fieldMode}
-              />
-              {#if regionMode !== 'full' && regionMode !== 'square'}
-                <div class="grid grid-cols-4 gap-2 mt-2">
-                  {#each [
-                    { key: 'x', label: 'X' },
-                    { key: 'y', label: 'Y' },
-                    { key: 'w', label: regionMode === 'pct' ? 'W %' : 'Width' },
-                    { key: 'h', label: regionMode === 'pct' ? 'H %' : 'Height' },
-                  ] as field}
-                    <label class={cn('text-[10px] font-mono', mutedClass)}>
-                      {field.label}
-                      <input
-                        type="number"
-                        value={regionCoords[field.key as keyof typeof regionCoords]}
-                        oninput={(e) => {
-                          const val = parseInt((e.target as HTMLInputElement).value) || 0;
-                          regionCoords = { ...regionCoords, [field.key]: val };
-                        }}
-                        class={cn(
-                          'w-full px-2 py-1 text-xs font-mono border mt-0.5',
-                          fieldMode ? 'bg-nb-black border-nb-yellow/30 text-nb-yellow' : 'bg-nb-white border-nb-black/20 text-nb-black'
-                        )}
-                      />
-                    </label>
-                  {/each}
-                </div>
-              {/if}
-            </fieldset>
-
-            <!-- Size -->
-            <fieldset class="space-y-2">
-              <legend class={cn('text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-1', textClass)}>
-                <Icon name="aspect_ratio" class="text-sm text-blue-500" />
-                Size
-              </legend>
-              <p class={cn('text-[10px]', mutedClass)}>
-                {SIZE_PRESETS.find(p => p.value === sizeMode)?.description}
-              </p>
-              <div class="flex gap-2 items-center">
-                <label class={cn('flex items-center gap-1 text-[10px]', mutedClass)}>
-                  <input type="checkbox" bind:checked={upscale} />
-                  Upscale (^)
-                </label>
-                <PresetSelector
-                  options={SIZE_PRESETS.map(p => ({ value: p.value, label: p.label, description: p.description }))}
-                  value={sizeMode}
-                  onChange={(v) => sizeMode = v as SizeMode}
-                  {fieldMode}
-                />
-              </div>
-              {#if sizeMode === 'pct'}
-                <div class="mt-2">
-                  <label class={cn('text-[10px] font-mono', mutedClass)}>
-                    Percent
-                    <input
-                      type="number"
-                      min="1"
-                      max="200"
-                      value={sizeVal.pct}
-                      oninput={(e) => {
-                        const val = parseInt((e.target as HTMLInputElement).value) || 100;
-                        sizeVal = { ...sizeVal, pct: val };
-                      }}
-                      class={cn(
-                        'w-20 px-2 py-1 text-xs font-mono border ml-1',
-                        fieldMode ? 'bg-nb-black border-nb-yellow/30 text-nb-yellow' : 'bg-nb-white border-nb-black/20 text-nb-black'
-                      )}
-                    />
-                  </label>
-                </div>
-              {:else if sizeMode !== 'max'}
-                <div class="flex gap-2 mt-2">
-                  {#if sizeMode !== 'h'}
-                    <label class={cn('text-[10px] font-mono', mutedClass)}>
-                      Width
-                      <input
-                        type="number"
-                        value={sizeVal.w}
-                        oninput={(e) => {
-                          const val = parseInt((e.target as HTMLInputElement).value) || 0;
-                          sizeVal = { ...sizeVal, w: val };
-                        }}
-                        class={cn(
-                          'w-20 px-2 py-1 text-xs font-mono border ml-1',
-                          fieldMode ? 'bg-nb-black border-nb-yellow/30 text-nb-yellow' : 'bg-nb-white border-nb-black/20 text-nb-black'
-                        )}
-                      />
-                    </label>
-                  {/if}
-                  {#if sizeMode !== 'w'}
-                    <label class={cn('text-[10px] font-mono', mutedClass)}>
-                      Height
-                      <input
-                        type="number"
-                        value={sizeVal.h}
-                        oninput={(e) => {
-                          const val = parseInt((e.target as HTMLInputElement).value) || 0;
-                          sizeVal = { ...sizeVal, h: val };
-                        }}
-                        class={cn(
-                          'w-20 px-2 py-1 text-xs font-mono border ml-1',
-                          fieldMode ? 'bg-nb-black border-nb-yellow/30 text-nb-yellow' : 'bg-nb-white border-nb-black/20 text-nb-black'
-                        )}
-                      />
-                    </label>
-                  {/if}
-                </div>
-              {/if}
-            </fieldset>
-
-            <!-- Rotation -->
-            <fieldset class="space-y-2">
-              <legend class={cn('text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-1', textClass)}>
-                <Icon name="rotate_right" class="text-sm text-orange-500" />
-                Rotation
-              </legend>
-              <div class="flex items-center gap-2">
-                <div class="flex gap-1">
-                  {#each [0, 90, 180, 270] as deg}
-                    <button
-                      type="button"
-                      class={cn(
-                        'px-2 py-1 text-xs font-mono border transition-nb',
-                        rotationDeg === deg
-                          ? fieldMode ? 'bg-nb-yellow text-black border-nb-yellow' : 'bg-nb-blue text-white border-nb-blue'
-                          : fieldMode ? 'border-nb-yellow/30 text-nb-yellow/60 hover:bg-nb-yellow/10' : 'border-nb-black/20 text-nb-black/60 hover:bg-nb-black/5'
-                      )}
-                      onclick={() => rotationDeg = deg}
-                    >
-                      {deg}&deg;
-                    </button>
-                  {/each}
-                </div>
-                <label class={cn('flex items-center gap-1 text-[10px]', mutedClass)}>
-                  <input type="checkbox" bind:checked={mirrored} />
-                  Mirror (!)
-                </label>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="359"
-                bind:value={rotationDeg}
-                class={cn(
-                  'w-full h-1.5 appearance-none cursor-pointer',
-                  fieldMode ? 'accent-nb-yellow bg-nb-yellow/20' : 'accent-nb-blue bg-nb-black/10'
-                )}
-                aria-label="Rotation degrees"
-              />
-              <div class={cn('text-[10px] font-mono text-center', mutedClass)}>{rotationDeg}&deg;</div>
-            </fieldset>
+            <WorkbenchParameterControls
+              {regionMode} {sizeMode} {regionCoords} {sizeVal}
+              {rotationDeg} {mirrored} {upscale}
+              onRegionModeChange={(m) => regionMode = m}
+              onSizeModeChange={(m) => sizeMode = m}
+              onRegionCoordsChange={(c) => regionCoords = c}
+              onSizeValChange={(v) => sizeVal = v}
+              onRotationDegChange={(d) => rotationDeg = d}
+              onMirroredChange={(m) => mirrored = m}
+              onUpscaleChange={(u) => upscale = u}
+              {fieldMode}
+            />
 
             <!-- Quality & Format -->
             <div class="grid grid-cols-2 gap-4">
@@ -427,28 +233,18 @@
             </div>
           </div>
         {:else}
-          <!-- Code tab -->
           <div class="p-4 space-y-4">
             <div class="space-y-1">
               <span class={cn('text-[10px] font-mono font-bold uppercase tracking-wider', mutedClass)}>cURL</span>
-              <pre class={cn(
-                'p-3 text-xs font-mono overflow-x-auto border',
-                fieldMode ? 'bg-nb-black border-nb-yellow/20 text-nb-yellow/80' : 'bg-nb-cream border-nb-black/10 text-nb-black/80'
-              )}>{`curl -X GET "${url}"`}</pre>
+              <pre class={codeBlockClass}>{`curl -X GET "${url}"`}</pre>
             </div>
             <div class="space-y-1">
               <span class={cn('text-[10px] font-mono font-bold uppercase tracking-wider', mutedClass)}>HTML</span>
-              <pre class={cn(
-                'p-3 text-xs font-mono overflow-x-auto border',
-                fieldMode ? 'bg-nb-black border-nb-yellow/20 text-nb-yellow/80' : 'bg-nb-cream border-nb-black/10 text-nb-black/80'
-              )}>{`<img src="${url}" alt="IIIF Image" loading="lazy" />`}</pre>
+              <pre class={codeBlockClass}>{`<img src="${url}" alt="IIIF Image" loading="lazy" />`}</pre>
             </div>
             <div class="space-y-1">
               <span class={cn('text-[10px] font-mono font-bold uppercase tracking-wider', mutedClass)}>Full URL</span>
-              <pre class={cn(
-                'p-3 text-xs font-mono overflow-x-auto border break-all whitespace-pre-wrap',
-                fieldMode ? 'bg-nb-black border-nb-yellow/20 text-nb-yellow/80' : 'bg-nb-cream border-nb-black/10 text-nb-black/80'
-              )}>{url}</pre>
+              <pre class={cn(codeBlockClass, 'break-all whitespace-pre-wrap')}>{url}</pre>
             </div>
           </div>
         {/if}

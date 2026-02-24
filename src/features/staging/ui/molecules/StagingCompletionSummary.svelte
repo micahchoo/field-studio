@@ -6,7 +6,7 @@
   Extracted from StagingWorkbench organism.
 -->
 <script lang="ts">
-  import type { IngestUndoRecord } from '../organisms/StagingWorkbench.svelte';
+  import type { IngestUndoRecord } from '../../model/stagingWorkbenchHelpers';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';

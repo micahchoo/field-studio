@@ -13,93 +13,20 @@
   - Ingest with progress tracking + completion summary
   - CSV import, conflict detection, unsupported files, analysis summary
 -->
-<script module lang="ts">
-  import type { FileTree } from '@/src/shared/types';
-  import type { IngestPreviewNode } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
-  import type { NodeAnnotations } from '../../model';
-  import { MIME_TYPE_MAP } from '@/src/shared/constants/image';
-
-  // ── Types ──
-
-  export interface UnsupportedFile {
-    path: string;
-    name: string;
-    ext: string;
-  }
-
-  export interface IngestUndoRecord {
-    operationId: string;
-    timestamp: number;
-    createdEntityIds: string[];
-    manifestsCreated: number;
-    collectionsCreated: number;
-    canvasesCreated: number;
-    filesProcessed: number;
-  }
-
-  // ── Pure helper functions ──
-
-  /** Collect all files with unsupported extensions from a FileTree */
-  export function collectUnsupportedFiles(tree: FileTree, parentPath: string): UnsupportedFile[] {
-    const result: UnsupportedFile[] = [];
-    for (const [fileName] of tree.files) {
-      const ext = fileName.split('.').pop()?.toLowerCase() || '';
-      if (!MIME_TYPE_MAP[ext]) {
-        const filePath = parentPath ? `${parentPath}/${fileName}` : fileName;
-        result.push({ path: filePath, name: fileName, ext });
-      }
-    }
-    for (const dir of tree.directories.values()) {
-      result.push(...collectUnsupportedFiles(dir, dir.path));
-    }
-    return result;
-  }
-
-  /** Unique unsupported extensions, sorted */
-  export function getUniqueUnsupportedExts(files: UnsupportedFile[]): string[] {
-    return [...new Set(files.map(f => f.ext))].sort();
-  }
-
-  /** Find an IngestPreviewNode by path in the analysis tree (depth-first) */
-  export function findAnalysisNode(root: IngestPreviewNode | undefined, path: string): IngestPreviewNode | undefined {
-    if (!root) return undefined;
-    if (root.path === path) return root;
-    for (const child of root.children) {
-      const found = findAnalysisNode(child, path);
-      if (found) return found;
-    }
-    return undefined;
-  }
-
-  /** Build initial annotations map from analysis results */
-  export function buildAnnotationsFromAnalysis(node: IngestPreviewNode): Map<string, NodeAnnotations> {
-    const map = new Map<string, NodeAnnotations>();
-    const walk = (n: IngestPreviewNode) => {
-      if (n.proposedType === 'Excluded') {
-        map.set(n.path, { excluded: true });
-      } else {
-        const intent = n.proposedType as 'Collection' | 'Manifest';
-        if (n.confidence >= 0.7) {
-          map.set(n.path, { iiifIntent: intent });
-        }
-      }
-      for (const child of n.children) walk(child);
-    };
-    walk(node);
-    return map;
-  }
-</script>
-
 <script lang="ts">
-  import type { AbstractionLevel, IIIFItem } from '@/src/shared/types';
+  import type { AbstractionLevel, FileTree, IIIFItem } from '@/src/shared/types';
   import type { IngestAnalysisResult } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
-  import type { FlatFileTreeNode } from '../../model';
+  import type { FlatFileTreeNode, NodeAnnotations } from '../../model';
   import type { SourceManifests } from '@/src/entities/collection/model/stagingService';
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
+  import type { IngestUndoRecord, UnsupportedFile } from '../../model/stagingWorkbenchHelpers';
   import { applyAnnotationsToTree, buildDirectoryMenuSections, buildFileMenuSections, buildCollectionMenuSections } from '../../model';
   import { detectConflicts } from '../../model/conflictDetection';
   import { StagingCollections } from '../../model/StagingCollections.svelte';
-  import { processCsvImport, mapIngestProgress, buildAnalysisSummary } from '../../model/stagingWorkbenchHelpers';
+  import {
+    collectUnsupportedFiles, getUniqueUnsupportedExts, findAnalysisNode,
+    buildAnnotationsFromAnalysis, processCsvImport, mapIngestProgress, buildAnalysisSummary,
+  } from '../../model/stagingWorkbenchHelpers';
   import { analyzeForIngest } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
   import { buildSourceManifests } from '@/src/entities/collection/model/stagingService';
   import { FEATURE_FLAGS, USE_WORKER_INGEST } from '@/src/shared/constants';
@@ -428,7 +355,7 @@
   <ModalDialog bind:open={modalOpen} title="Import Complete" size="lg" onClose={handleModalClose} cx={defaultCx}>
     {#snippet children()}
       <StagingCompletionSummary
-        summary={completionSummary}
+        summary={completionSummary!}
         onUndo={() => { try { sessionStorage.removeItem('ingest-undo'); } catch { /* */ } completionSummary = null; }}
         onNavigate={onCancel}
       />

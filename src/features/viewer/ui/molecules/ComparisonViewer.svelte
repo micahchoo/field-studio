@@ -24,7 +24,6 @@
   import { Icon } from '@/src/shared/ui/atoms';
   import ComparisonModeSelector from '../atoms/ComparisonModeSelector.svelte';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
-  import type { ComparisonMode } from '../../model/comparison.svelte';
   import type { ComparisonStore } from '../../model/comparison.svelte';
   import type { IIIFCanvas } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';

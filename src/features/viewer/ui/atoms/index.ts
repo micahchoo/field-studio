@@ -41,3 +41,18 @@ export { default as UpscaleToggle } from './UpscaleToggle.svelte';
 export { default as UrlBar } from './UrlBar.svelte';
 export { default as ViewerModeSwitcher } from './ViewerModeSwitcher.svelte';
 export { default as VolumeControl } from './VolumeControl.svelte';
+
+/**
+ * Atoms extracted during decomposition pass:
+ */
+export { default as AudioControls } from './AudioControls.svelte';
+export { default as ChapterMarkers } from './ChapterMarkers.svelte';
+export { default as ComparisonModeSelector } from './ComparisonModeSelector.svelte';
+export { default as MediaControlBar } from './MediaControlBar.svelte';
+export { default as MediaProgressBar } from './MediaProgressBar.svelte';
+export { default as PlayerControls } from './PlayerControls.svelte';
+export { default as SearchResultItem } from './SearchResultItem.svelte';
+export { default as SpatialAnnotationOverlay } from './SpatialAnnotationOverlay.svelte';
+export { default as ViewerFilmstrip } from './ViewerFilmstrip.svelte';
+export { default as ViewerToolbarActions } from './ViewerToolbarActions.svelte';
+export { default as WorkbenchParameterControls } from './WorkbenchParameterControls.svelte';

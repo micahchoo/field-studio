@@ -7,9 +7,9 @@
   Extracted from StagingWorkbench organism.
 -->
 <script lang="ts">
-  import type { UnsupportedFile } from '../organisms/StagingWorkbench.svelte';
+  import type { UnsupportedFile } from '../../model/stagingWorkbenchHelpers';
   import type { IngestAnalysisResult } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
-  import type { ConflictResult } from '../../model/conflictDetection';
+  import type { ConflictReport } from '../../model/conflictDetection';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
@@ -25,7 +25,7 @@
     unsupportedExpanded: boolean;
     onToggleUnsupportedExpanded: () => void;
     onDismissUnsupported: () => void;
-    conflicts: ConflictResult;
+    conflicts: ConflictReport;
     conflictDismissed: boolean;
     onConflictExclude: (path: string) => void;
     onDismissConflict: () => void;

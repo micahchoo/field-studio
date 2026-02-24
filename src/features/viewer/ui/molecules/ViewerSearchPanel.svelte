@@ -69,7 +69,6 @@
     onFetchSuggestions,
   }: Props = $props();
 
-  // Internal state
   let query = $state('');
   let localQuery = $state('');
   let results = $state<SearchResult[]>([]);
@@ -81,123 +80,55 @@
   let selectedIndex = $state(-1);
   let suggestionTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
-  // Derived styling
   let bgClass = $derived(fieldMode ? 'bg-nb-black' : 'bg-nb-white');
-  let textClass = $derived(fieldMode ? 'text-white' : 'text-nb-black');
   let borderClass = $derived(fieldMode ? 'border-nb-black' : 'border-nb-black/20');
   let mutedTextClass = $derived(fieldMode ? 'text-nb-black/40' : 'text-nb-black/50');
 
-  // Group results by canvas
   let groupedResults = $derived.by(() => {
     const groups: Record<string, SearchResult[]> = {};
-    for (const result of results) {
-      if (!groups[result.canvasId]) {
-        groups[result.canvasId] = [];
-      }
-      groups[result.canvasId].push(result);
-    }
+    for (const r of results) { (groups[r.canvasId] ??= []).push(r); }
     return groups;
   });
 
-  // Perform search
   async function performSearch(searchQuery: string) {
-    if (!searchService || !searchQuery.trim()) {
-      results = [];
-      total = 0;
-      onResultsChange?.([]);
-      return;
-    }
-
-    loading = true;
-    error = null;
-
+    if (!searchService || !searchQuery.trim()) { results = []; total = 0; onResultsChange?.([]); return; }
+    loading = true; error = null;
     try {
-      const searchResults = await onSearch(searchQuery);
-      results = searchResults;
-      total = searchResults.length;
-      onResultsChange?.(searchResults);
+      const r = await onSearch(searchQuery);
+      results = r; total = r.length; onResultsChange?.(r);
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'Search failed';
-      error = errorMessage;
-      results = [];
-      total = 0;
-    } finally {
-      loading = false;
-    }
+      error = e instanceof Error ? e.message : 'Search failed'; results = []; total = 0;
+    } finally { loading = false; }
   }
 
-  // Fetch autocomplete suggestions
   async function fetchSuggestions(input: string) {
-    if (!onFetchSuggestions || input.length < 2) {
-      suggestions = [];
-      return;
-    }
-
-    try {
-      const response = await onFetchSuggestions(input);
-      suggestions = response;
-      showSuggestions = true;
-    } catch {
-      suggestions = [];
-    }
+    if (!onFetchSuggestions || input.length < 2) { suggestions = []; return; }
+    try { suggestions = await onFetchSuggestions(input); showSuggestions = true; } catch { suggestions = []; }
   }
 
-  // Handle input changes with debounced suggestions
   function handleInputChange(e: Event) {
     const value = (e.target as HTMLInputElement).value;
-    localQuery = value;
-    query = value;
-    selectedIndex = -1;
-
-    // Debounce suggestions
+    localQuery = value; query = value; selectedIndex = -1;
     if (suggestionTimeoutId) clearTimeout(suggestionTimeoutId);
-    suggestionTimeoutId = setTimeout(() => {
-      fetchSuggestions(value);
-    }, 200);
+    suggestionTimeoutId = setTimeout(() => fetchSuggestions(value), 200);
   }
 
-  // Handle form submission
-  function handleSubmit(e: Event) {
-    e.preventDefault();
-    showSuggestions = false;
-    performSearch(query);
-  }
+  function handleSubmit(e: Event) { e.preventDefault(); showSuggestions = false; performSearch(query); }
 
-  // Select a suggestion
   function selectSuggestion(term: { value: string }) {
-    localQuery = term.value;
-    query = term.value;
-    showSuggestions = false;
-    performSearch(term.value);
+    localQuery = term.value; query = term.value; showSuggestions = false; performSearch(term.value);
   }
 
-  // Keyboard navigation for autocomplete
   function handleKeyDown(e: KeyboardEvent) {
     if (!showSuggestions || suggestions.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      selectedIndex = Math.max(selectedIndex - 1, -1);
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      e.preventDefault();
-      selectSuggestion(suggestions[selectedIndex]);
-    } else if (e.key === 'Escape') {
-      showSuggestions = false;
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIndex = Math.max(selectedIndex - 1, -1); }
+    else if (e.key === 'Enter' && selectedIndex >= 0) { e.preventDefault(); selectSuggestion(suggestions[selectedIndex]); }
+    else if (e.key === 'Escape') { showSuggestions = false; }
   }
 
-  // Clear search
   function clearSearch() {
-    query = '';
-    localQuery = '';
-    results = [];
-    suggestions = [];
-    total = 0;
-    error = null;
-    onResultsChange?.([]);
+    query = ''; localQuery = ''; results = []; suggestions = []; total = 0; error = null; onResultsChange?.([]);
   }
 
 </script>
@@ -343,7 +274,7 @@
                       : 'hover:bg-nb-white text-nb-black/80'
                   )}
                 >
-                  {@render searchResultItem(result, query)}
+                  <SearchResultItem {result} {query} {fieldMode} />
                 </button>
               {/each}
             </div>

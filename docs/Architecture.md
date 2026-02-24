@@ -389,6 +389,133 @@ Key rules: `max-lines-feature` (molecule 300 / organism 500), `no-native-html-in
 
 Largest: ViewerView (25), BoardView (10), Sidebar (6), AuthDialog (6).
 
+### UI Shadow Exercise (2026-02-24)
+
+Comprehensive first-time-user walkthrough of all 7 views, staging, export, and cross-feature widgets. Every claim traced to file:line.
+
+#### DEAD END (no obvious action)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| Board — Connect tool | `connectingFrom` set locally but passed as `null` to renderer; `onCompleteConnection` prop does not exist. No connection is ever created. | `BoardCanvasInteractive.svelte:191–194`, `BoardView.svelte:324` |
+| Board — Text tool | Tool `T` activates but no handler in `handleCanvasPointerDown`. Clicking canvas does nothing. | `BoardCanvasInteractive.svelte:130–139` |
+| Board — Save/Persist | `handleBoardSave` only `console.warn`s. All board state lost on refresh or view switch. | `ViewRouter.svelte:439–445` |
+| Board — Export menu | All three exports (IIIF, PNG, SVG) are stubs with `console.warn`. No file downloaded. | `BoardView.svelte:204–214` |
+| Viewer — Annotation drawing | `AnnotationDrawingOverlay` imported but never rendered. `use:annotorious` never applied. Annotation button activates with no effect. | `ViewerView.svelte:56, 1086–1094` |
+| Viewer — AV annotation | `MediaPlayer.svelte` (custom player with time-range annotation, transcripts) never mounted. `ViewerView` uses native `<audio>`/`<video>` only. Time annotation always null. | `ViewerView.svelte:1111–1187`, `ViewRouter.svelte:385–407` |
+| Archive — Reorder (drag) | `ArchiveGrid.svelte` (with drag-drop) never mounted. `ArchiveGridView.svelte` (actually used) has no drag handlers. Only undiscoverable Alt+Arrow keyboard reorder works. | `ArchiveGridView.svelte:42–104`, `ArchiveGrid.svelte:268–303` |
+| Archive — "View on Map" | Button calls `handleOpenMap()` which is an empty no-op function. | `ArchiveView.svelte:284–285` |
+| Archive — "Compose on Board" | Button calls `handleComposeOnBoard()` which is an empty no-op function. | `ArchiveView.svelte:285–286` |
+| Export — All formats | All 4 export services are stubs. Dry-run always shows "Valid" (zero checks). Close button hidden at `step='exporting'`. | `ExportDialog.svelte:149–200, 243` |
+| Export — No project | Export button does nothing when `root` is null. No disabled state or tooltip. | `App.svelte:1012` |
+| CommandPalette widget | Full widget never imported. App.svelte uses inline fallback with no search, no keyboard nav, no section grouping. | `App.svelte:1081–1127` |
+| Sidebar — Context menu | `onRenameItem`/`onDeleteItem`/`onDuplicateItem` not passed from App. Menu shows only "Navigate". | `App.svelte:864–882` |
+| Map/Timeline — Empty states | No actionable buttons to add data. User stranded unless they know to navigate elsewhere. | `MapView.svelte:227–235`, `TimelineView.svelte:179–187` |
+| AnnotationToolbar | Entire drawing UI is a placeholder div with dev text. `onCreateAnnotation` never called. | `AnnotationToolbar.svelte:71–85` |
+| GeoEditor — Geocode | `navPlaceService.geocode()` always returns `[]`. Location search never works. | `navPlaceService.ts:55` |
+| Staging — Analysis error | No dismiss button during error phase; modal title stays "Analyzing Content..." | `StagingWorkbench.svelte:221, 784` |
+| Inspector — Annotation/Structure tabs | Both are placeholder divs with migration text. No create/edit/delete capability. | `Inspector.svelte:502–529` |
+
+#### SILENT FAIL (error caught, not shown)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| App — Storage load | `.catch(() => {})` swallows `loadProject()` errors. User sees empty state as if no project saved. | `App.svelte:488` |
+| Viewer — OSD missing | `console.error` if OpenSeadragon absent. User sees blank canvas, no error message. | `ViewerView.svelte:431–434` |
+| Viewer — OSD load fail | 2 retries with no error state rendered on final failure. | `ViewerView.svelte:522–529` |
+| Viewer — Clipboard | Clipboard API failure silently falls back to download. Share link `.catch` logs warning only. | `ViewerView.svelte:645–658, 763–773` |
+| Annotorious global | `globalThis.__annotorious__` check returns silently if absent. Annotation button rendered with no backing lib. | `annotorious.ts:366–371` |
+| Board — Auto-save | Save callback `console.warn`s and returns. `isDirty` flag resets to false — UI shows "Saved". | `boardVault.svelte.ts:446–447` |
+| Search — Remote errors | `search.error` populated on remote failure but never read or rendered in SearchView. | `search.svelte.ts:272` |
+| Map — navPlace ignored | IIIF 3.0 `navPlace` GeoJSON field completely ignored. Only free-text metadata parsed. | `map.svelte.ts:116–169` |
+| Map — Coordinate parse | Failed coordinate parsing silently skips canvas. No indication to user. | `map.svelte.ts:145–157` |
+| Timeline — navDate parse | `new Date(navDate)` rejects partial dates ("2017-03", "circa 1200"). Items silently dropped. | `timeline.svelte.ts:108–118` |
+| GeoEditor — Invalid GeoJSON | Emits `{ type: 'Feature', features }` — invalid GeoJSON. Will fail in any compliant viewer. | `GeoEditor.svelte:142` |
+| Staging — Ingest error | Outer `catch` calls `uiLog.error()` only. Full-screen overlay disappears with no error shown. | `StagingWorkbench.svelte:745–747` |
+| Auth — Double window | Both `openAccessService()` and `window.open()` called. May open two login windows. | `AuthDialog.svelte:187–189` |
+| Export — Dry run | Empty `try {}` body. Always shows "Spec Compliance: Valid" from zero checks. | `ExportDialog.svelte:149–156` |
+
+#### NO FEEDBACK (state changes invisibly)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| Archive — Empty tree | `extractCanvases` returns `[]` if tree has only Collections/Manifests. Empty state says "Import photos" despite content existing. | `ArchiveView.svelte:138–150` |
+| Archive — No virtualization | `ArchiveGridView` renders all items in single `{#each}`. No loading indicator for large sets. | `ArchiveGridView.svelte:42–104` |
+| Archive — Group created | New manifest named "Selection Bundle" with no rename prompt, no toast. | `ArchiveView.svelte:277` |
+| Board — Drag label | Dropped item gets `label: undefined`; card shows generic "Canvas" text. | `BoardItemRenderer.svelte:91` |
+| Board — Connection label | Labels only visible in advanced mode. Normal users enter labels that never display. | `BoardConnectionRenderer.svelte:98–111` |
+| Board — Presentation | `PresentationOverlay` expects `BoardItem` but receives `SlideItem` (only `id`+`label`). Images/notes/metadata never display. | `BoardView.svelte:411`, `PresentationOverlay.svelte:84–122` |
+| Search — Indexing spinner | `isIndexing` set true→false synchronously. Spinner frame never painted. | `search.svelte.ts:123–127` |
+| Map/Timeline/Search — Selection | Clicking items sets `selectedId` in App but no visual selection state in the view itself. | `MapView.svelte:293–319`, `TimelineView.svelte:229–269` |
+| Map — Zoom limits | No disabled state on zoom buttons at min/max zoom. Button clicks silently do nothing. | `map.svelte.ts:176–187` |
+| CommandPalette — Escape | Escape doesn't close inline palette. No click-outside handler on backdrop. | `App.svelte:745–778, 1082` |
+| Export — All paths | No download ever occurs. No indication to user that services are stubs. | `ExportDialog.svelte:149–200` |
+| Metadata — Non-editable cells | Click on ID/Type column does nothing. No cursor change or tooltip indicating read-only. | `MetadataView.svelte:274–277` |
+| Staging — CSV errors | "No data rows" / "No filename column" messages never auto-clear. | `StagingWorkbench.svelte:603, 609` |
+
+#### ASSUMPTION (jargon, unlabelled inputs)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| Archive — "pipeline" | Subtitle "Select items to access pipeline" — jargon for first-time users. | `ArchiveHeader.svelte:134` |
+| Map — No basemap | Flat gradient with grid. No geographic context, coastlines, or country names. User cannot verify positions. | `map.svelte.ts:228–250` |
+| Map — Coordinate keywords | Free-text metadata labels matched by substring ("gps", "position", "coordinate"). User has no control. | `map.svelte.ts:129–142` |
+| Map — Hint text | Says "Add GPS coordinates" but doesn't specify which field name, format, or that `navPlace` is ignored. | `MapView.svelte:233` |
+| Metadata — IIIF tabs | "Items" means Canvases; "Collections"/"Manifests" are IIIF terms with no explanations. | `MetadataView.svelte:68–79` |
+| Metadata — Save button | Data already committed per-keystroke via `onUpdate`. "Save Changes" only clears a flag. | `MetadataView.svelte:269–272` |
+| Board — Group label | All groups get hardcoded label "Group" with no rename UI. | `BoardView.svelte:139` |
+| Board — Connection types | Vault store and model module define different connection type enums. Never reconciled. | `boardVault.svelte.ts:36–43` vs `model/index.ts:29–35` |
+| Staging — IIIF terminology | Analysis banner uses "manifests"/"collections" in simple mode with no explanation. | `StagingBanners.svelte:121–124` |
+| Staging — `window.prompt()` | Collection rename uses OS-level prompt dialog, breaking app UI conventions. | `StagingWorkbench.svelte:480` |
+| AnnotationToolbar placeholder | Dev text "Needs drawing state wiring from parent context" rendered in production DOM. | `AnnotationToolbar.svelte:79–83` |
+
+#### RACE (stale data, flash states)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| App — Root delay | 200ms debounce between vault load and `root = vault.export()`. Flash of empty state on refresh. | `App.svelte:213–222` |
+| Archive — Multi-select | Ctrl/Shift-click updates local `selectedIds` without calling `onSelect`. Viewer shows stale item. | `ArchiveView.svelte:220–227` |
+| Map — Clustering | Clusters computed at fixed 800x600. Actual container size may differ. Markers overlap or gap. | `map.svelte.ts:379`, `MapView.svelte:51–52` |
+| Search — Index rebuild | Any vault update re-runs `rebuildIndex`, clearing results mid-query. | `search.svelte.ts:123–128`, `SearchView.svelte:92–99` |
+| Timeline — Vault update | Vault change re-runs `loadFromCanvases`, resetting expanded/collapsed state. | `TimelineView.svelte:64–79` |
+| Metadata — Column shift | Filtering can add/remove columns mid-session as matching items change. | `MetadataView.svelte:107–120` |
+| GeoEditor — Leaflet unmount | Async Leaflet import may complete after component unmounts, creating zombie map. | `GeoEditor.svelte:67–95` |
+| Staging — Auto-close | 3-second timer closes workbench regardless of user interaction. | `StagingWorkbench.svelte:736–739` |
+
+#### NAV TRAP (loses state)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| Map/Timeline/Search — View switch | Stores re-instantiated on each mount. Pan, zoom, query, collapsed groups all reset. | `MapView.svelte:47`, `TimelineView.svelte:45` |
+| Search — Result click | `onSelect` forces `appMode.setMode('archive')`. Query and scroll lost with no back nav. | `ViewRouter.svelte:703–704` |
+| Viewer — URL state | `showViewerPanel` not encoded in URL. Back button cannot restore panel open/closed state. | `App.svelte:471–479` |
+| Metadata — View switch | `hasUnsavedChanges` lost on unmount. No in-app warning (only `beforeunload` for page close). | `MetadataView.svelte:138–146` |
+| Staging — Undo import | "Undo" re-shows workbench but vault already mutated. Re-importing would double-import. | `StagingCompletionSummary.svelte:56` |
+
+#### HIDDEN REQ (validation only on submit)
+
+| Flow | Description | Location |
+|------|-------------|----------|
+| Search — Min length | Requires 2+ chars. Single char silently shows empty state, indistinguishable from no query. | `search.svelte.ts:178` |
+| Archive — Group selection | Requires 2+ selected items. Single-item `G` press silently does nothing. | `BoardView.svelte:139` |
+| Staging — Folder only | `webkitdirectory` attribute with no UI hint that only folders accepted. | `App.svelte:815` |
+| Staging — CSV columns | Expected headers (`label`, `rights`, `navdate`) not documented anywhere in UI. | `StagingWorkbench.svelte:641–651` |
+| Export — Cmd+E | Shortcut shown in command palette but not handled in `handleKeyDown`. Does nothing. | `App.svelte:789` vs `745–778` |
+| Metadata — Tab at last column | Tab on last editable column exits edit mode instead of advancing to next row. | `MetadataView.svelte:241–245` |
+
+#### Summary by category
+
+| Category | Count |
+|----------|-------|
+| DEAD END | 18 |
+| SILENT FAIL | 14 |
+| NO FEEDBACK | 13 |
+| ASSUMPTION | 11 |
+| RACE | 8 |
+| NAV TRAP | 5 |
+| HIDDEN REQ | 6 |
+| **Total** | **75** |
+
 ---
 
 ## Deployment

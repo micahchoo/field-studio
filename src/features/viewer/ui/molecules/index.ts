@@ -29,3 +29,12 @@ export { default as ViewerPanels } from './ViewerPanels.svelte';
 export { default as ViewerSearchPanel } from './ViewerSearchPanel.svelte';
 export { default as ViewerToolbar } from './ViewerToolbar.svelte';
 export { default as ViewerWorkbench } from './ViewerWorkbench.svelte';
+
+/**
+ * Molecules extracted during decomposition pass:
+ */
+export { default as TranscriptPanel } from './TranscriptPanel.svelte';
+export { default as ViewerContentArea } from './ViewerContentArea.svelte';
+export { default as ViewerInlineToolbar } from './ViewerInlineToolbar.svelte';
+export { default as ViewerModals } from './ViewerModals.svelte';
+export { default as ViewerOverlayPanels } from './ViewerOverlayPanels.svelte';

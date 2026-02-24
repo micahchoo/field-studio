@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-24T21:27:48.997Z",
-  "totalFiles": 234,
+  "generatedAt": "2026-02-24T22:01:35.359Z",
+  "totalFiles": 241,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
       "filePath": "src/app/stores/annotationState.svelte.ts",
@@ -3167,7 +3167,7 @@
         "src/entities/manifest/model/validation/validator.ts"
       ],
       "dependents": [],
-      "size": 41140,
+      "size": 41154,
       "lines": 1079
     },
     "src/entities/manifest/model/validation/validator.ts": {
@@ -5302,6 +5302,53 @@
       "size": 2771,
       "lines": 93
     },
+    "src/features/board-design/model/boardLayout.ts": {
+      "filePath": "src/features/board-design/model/boardLayout.ts",
+      "fileName": "boardLayout.ts",
+      "directory": "src/features/board-design/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "../stores/boardVault.svelte",
+          "specifiers": [
+            "BoardItem"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "AlignType",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "MoveCommand",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "computeAlignment",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "computeAutoArrange",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/board-design/stores/boardVault.svelte.ts"
+      ],
+      "dependents": [],
+      "size": 3517,
+      "lines": 112
+    },
     "src/features/board-design/model/exporters.ts": {
       "filePath": "src/features/board-design/model/exporters.ts",
       "fileName": "exporters.ts",
@@ -5600,7 +5647,7 @@
         "src/features/board-design/model/exporters.ts",
         "src/features/board-design/model/iiif-bridge.ts"
       ],
-      "size": 18307,
+      "size": 18366,
       "lines": 609
     },
     "src/features/board-design/stores/boardVault.svelte.ts": {
@@ -5632,7 +5679,9 @@
         }
       ],
       "dependencies": [],
-      "dependents": [],
+      "dependents": [
+        "src/features/board-design/model/boardLayout.ts"
+      ],
       "size": 16001,
       "lines": 548
     },
@@ -6011,6 +6060,50 @@
       "extension": ".ts",
       "imports": [
         {
+          "source": "./BoardCanvasInteractive.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BoardConnectionEditDialog.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BoardConnectionRenderer.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BoardContextMenu.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
           "source": "./BoardControls.svelte",
           "specifiers": [
             "[re-export]:default"
@@ -6033,7 +6126,29 @@
           "isInternalAlias": false
         },
         {
+          "source": "./BoardItemRenderer.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
           "source": "./BoardNodeLayer.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BoardToolbar.svelte",
           "specifiers": [
             "[re-export]:default"
           ],
@@ -6107,12 +6222,42 @@
           "name": "default",
           "type": "named",
           "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
         }
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 436,
-      "lines": 7
+      "size": 912,
+      "lines": 13
     },
     "src/features/board-design/ui/organisms/index.ts": {
       "filePath": "src/features/board-design/ui/organisms/index.ts",
@@ -6994,6 +7139,116 @@
       "size": 31168,
       "lines": 1048
     },
+    "src/features/export/ui/molecules/index.ts": {
+      "filePath": "src/features/export/ui/molecules/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/features/export/ui/molecules",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./ExportArchivalConfigPanel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ExportCanopyConfigPanel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ExportDryRun.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ExportFormatSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ExportOptionsPanel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ExportProgressDisplay.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 484,
+      "lines": 7
+    },
     "src/features/ingest/model/csvImporter.ts": {
       "filePath": "src/features/ingest/model/csvImporter.ts",
       "fileName": "csvImporter.ts",
@@ -7210,6 +7465,69 @@
       "size": 29099,
       "lines": 844
     },
+    "src/features/metadata-edit/lib/navPlaceService.ts": {
+      "filePath": "src/features/metadata-edit/lib/navPlaceService.ts",
+      "fileName": "navPlaceService.ts",
+      "directory": "src/features/metadata-edit/lib",
+      "extension": ".ts",
+      "imports": [],
+      "exports": [
+        {
+          "name": "NavPlace",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GeoFeature",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "GeocodedLocation",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "LatLng",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "DrawMode",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "TILE_URL",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "TILE_ATTRIBUTION",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "DEFAULT_CENTER",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "DEFAULT_ZOOM",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "navPlaceService",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 2007,
+      "lines": 59
+    },
     "src/features/metadata-edit/model/index.ts": {
       "filePath": "src/features/metadata-edit/model/index.ts",
       "fileName": "index.ts",
@@ -7362,6 +7680,708 @@
       "dependents": [],
       "size": 11309,
       "lines": 381
+    },
+    "src/features/metadata-edit/ui/atoms/index.ts": {
+      "filePath": "src/features/metadata-edit/ui/atoms/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/features/metadata-edit/ui/atoms",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./AccompanyingCanvasEditor.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AnnotationCreateForm.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AnnotationItem.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AutoMapButton.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BehaviorSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./BehaviorTag.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ColumnSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./DebouncedField.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./EmptyProperties.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./FileDropZone.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./FilePreview.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ImportSummary.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./LanguageTag.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./LocationPicker.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MappingRow.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MetadataTab.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MetadataTextField.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PlaceholderCanvasEditor.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PropertyInput.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PropertyLabel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PropertySelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./RangeTreeItem.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./RightsBadge.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./RightsSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ShareButton.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./StartPropertyEditor.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./TechnicalProperty.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./TimeModeSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidatedField.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidatedInput.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationBadge.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationDot.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationFixAction.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewingDirectionSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./AdvancedPropertiesSection.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./GeoEditorStatusBar.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./GeoEditorToolbar.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./LinkingPropertiesSection.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MetadataFieldRenderer.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./OtherMetadataCard.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./RangeTreeList.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./RightsTechnicalSection.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ValidationIssuesBar.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 3303,
+      "lines": 53
     },
     "src/features/search/stores/search.svelte.ts": {
       "filePath": "src/features/search/stores/search.svelte.ts",
@@ -7578,6 +8598,39 @@
       "size": 808,
       "lines": 12
     },
+    "src/features/staging/model/StagingCollections.svelte.ts": {
+      "filePath": "src/features/staging/model/StagingCollections.svelte.ts",
+      "fileName": "StagingCollections.svelte.ts",
+      "directory": "src/features/staging/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "../stores/stagingState.svelte",
+          "specifiers": [
+            "ArchiveNode",
+            "ArchiveLayout"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "StagingCollections",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/staging/stores/stagingState.svelte.ts"
+      ],
+      "dependents": [],
+      "size": 2178,
+      "lines": 72
+    },
     "src/features/staging/model/conflictDetection.ts": {
       "filePath": "src/features/staging/model/conflictDetection.ts",
       "fileName": "conflictDetection.ts",
@@ -7793,9 +8846,151 @@
         }
       ],
       "dependencies": [],
-      "dependents": [],
+      "dependents": [
+        "src/features/staging/model/stagingWorkbenchHelpers.ts"
+      ],
       "size": 23492,
       "lines": 776
+    },
+    "src/features/staging/model/stagingWorkbenchHelpers.ts": {
+      "filePath": "src/features/staging/model/stagingWorkbenchHelpers.ts",
+      "fileName": "stagingWorkbenchHelpers.ts",
+      "directory": "src/features/staging/model",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "FileTree",
+            "IngestProgress",
+            "IngestStage"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/entities/manifest/model/ingest/ingestAnalyzer",
+          "specifiers": [
+            "IngestPreviewNode",
+            "IngestAnalysisResult"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "./index",
+          "specifiers": [
+            "NodeAnnotations"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "@/src/shared/lib/hooks/ingestProgress.svelte",
+          "specifiers": [
+            "IngestProgressStore"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/constants/image",
+          "specifiers": [
+            "MIME_TYPE_MAP"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/features/ingest/model/csvImporter",
+          "specifiers": [
+            "csvImporter"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "UnsupportedFile",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "IngestUndoRecord",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "collectUnsupportedFiles",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "getUniqueUnsupportedExts",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "findAnalysisNode",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "buildAnnotationsFromAnalysis",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "CsvImportResult",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "processCsvImport",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "mapIngestProgress",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "AnalysisSummaryResult",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "buildAnalysisSummary",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [
+        "src/features/staging/model/index.ts"
+      ],
+      "dependents": [],
+      "size": 9083,
+      "lines": 249
     },
     "src/features/staging/stores/stagingState.svelte.ts": {
       "filePath": "src/features/staging/stores/stagingState.svelte.ts",
@@ -7880,7 +9075,9 @@
       "dependencies": [
         "src/features/staging/model/conflictDetection.ts"
       ],
-      "dependents": [],
+      "dependents": [
+        "src/features/staging/model/StagingCollections.svelte.ts"
+      ],
       "size": 19625,
       "lines": 682
     },
@@ -8336,8 +9533,8 @@
       "dependents": [
         "src/features/viewer/model/index.ts"
       ],
-      "size": 17545,
-      "lines": 545
+      "size": 17506,
+      "lines": 544
     },
     "src/features/viewer/actions/waveform.ts": {
       "filePath": "src/features/viewer/actions/waveform.ts",
@@ -10677,6 +11874,131 @@
       "dependents": [],
       "size": 1955,
       "lines": 32
+    },
+    "src/features/viewer/ui/molecules/mediaPlayerHelpers.ts": {
+      "filePath": "src/features/viewer/ui/molecules/mediaPlayerHelpers.ts",
+      "fileName": "mediaPlayerHelpers.ts",
+      "directory": "src/features/viewer/ui/molecules",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFCanvas"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "PlaceholderInfo",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "SyncPoint",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "TimeModeResult",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "extractPlaceholderCanvas",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "extractAccompanyingCanvas",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "extractTimeMode",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "extractSyncPoints",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "findCurrentSyncPoint",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "getSpatialCoords",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "computeSpatialRegion",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "MediaKeyboardActions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "createKeyboardHandler",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "MediaSessionActions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "setupMediaSession",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "getMediaErrorMessage",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ChapterMarker",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "findNextChapter",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "findPrevChapterTime",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "TimeRangeInput",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "computeTimeRangeClick",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 9704,
+      "lines": 281
     },
     "src/features/viewer/ui/organisms/index.ts": {
       "filePath": "src/features/viewer/ui/organisms/index.ts",
@@ -21119,17 +22441,21 @@
     "@/src/app/stores/validation.svelte",
     "@/src/entities",
     "@/src/entities/manifest/model/actions",
+    "@/src/entities/manifest/model/ingest/ingestAnalyzer",
     "@/src/entities/manifest/model/validation/validator",
     "@/src/entities/manifest/model/vault",
     "@/src/entities/manifest/model/vaultSelectors",
     "@/src/features/dependency-explorer",
+    "@/src/features/ingest/model/csvImporter",
     "@/src/shared/config/themes",
     "@/src/shared/config/themes/types",
     "@/src/shared/constants",
     "@/src/shared/constants/canopyTemplates",
     "@/src/shared/constants/core",
     "@/src/shared/constants/iiif",
+    "@/src/shared/constants/image",
     "@/src/shared/lib/contextual-styles",
+    "@/src/shared/lib/hooks/ingestProgress.svelte",
     "@/src/shared/lib/hooks/layerHistory.svelte",
     "@/src/shared/lib/hooks/terminology",
     "@/src/shared/lib/jsonPatch",
@@ -21229,8 +22555,8 @@
     "src/features/board-design/actions/canvasDrag.ts",
     "src/features/board-design/actions/rubberBandSelect.ts",
     "src/features/board-design/lib/alignmentGuides.ts",
+    "src/features/board-design/model/boardLayout.ts",
     "src/features/board-design/model/exporters.ts",
-    "src/features/board-design/stores/boardVault.svelte.ts",
     "src/features/board-design/stores/multiSelect.svelte.ts",
     "src/features/board-design/stores/presentationMode.svelte.ts",
     "src/features/export/model/archivalPackageService.ts",
@@ -21238,12 +22564,15 @@
     "src/features/export/model/staticSiteExporter.ts",
     "src/features/ingest/model/csvImporter.ts",
     "src/features/map/stores/map.svelte.ts",
+    "src/features/metadata-edit/lib/navPlaceService.ts",
     "src/features/search/stores/search.svelte.ts",
-    "src/features/staging/stores/stagingState.svelte.ts",
+    "src/features/staging/model/StagingCollections.svelte.ts",
+    "src/features/staging/model/stagingWorkbenchHelpers.ts",
     "src/features/structure-view/lib/highlightHelpers.ts",
     "src/features/structure-view/stores/structureTree.svelte.ts",
     "src/features/timeline/stores/timeline.svelte.ts",
     "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts",
+    "src/features/viewer/ui/molecules/mediaPlayerHelpers.ts",
     "src/main.ts",
     "src/shared/config/design-tokens.ts",
     "src/shared/constants/core.ts",
@@ -21281,9 +22610,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 669,
-    "totalExports": 1844,
-    "avgImportsPerFile": 2.858974358974359,
+    "totalImports": 733,
+    "totalExports": 1945,
+    "avgImportsPerFile": 3.04149377593361,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",
