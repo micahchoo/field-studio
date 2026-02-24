@@ -3,6 +3,51 @@
 _Single source of truth for the Svelte 5 migration plan._
 _Updated after every phase loop. See [plan](docs/migration-plan.md) for background._
 
+## Current Phase: TYPE_DEBT Round 6 ✅ COMPLETE
+
+### Metrics (post TYPE_DEBT Round 6)
+| Check | Result |
+|-------|--------|
+| `npx tsc --noEmit` | **0 errors** |
+| `npx svelte-check` | 0 errors, 29 warnings |
+| `npm run test` | 117 files, **4756 tests passing** |
+| `npm run lint` | 0 errors, **310 warnings** (was 327; 17 fewer) |
+
+### TYPE_DEBT Round 6 — Changes Made
+**`exportService.ts` — 8 explicit `any` removed:**
+- `rewriteIds(obj: any): any` → `(obj: unknown): unknown`; `result: any` → `Record<string, unknown>`; `Object.entries(obj as Record<string, unknown>)`
+- `(originalItem as any).items?.[idx]` → `originalItem.items?.[idx]` (items is `any[]` on IIIFItem)
+- `(root as any).summary` → `root.summary` (summary is direct field on IIIFItem)
+- `extractIIIFValue(val: any)` → `(val: LanguageMap | undefined)` + added `LanguageMap` to import
+- `info: any` → `Record<string, unknown>`
+- `child: any` and `thumb: any` in JSON.parse callbacks: eslint-disabled + TYPE_DEBT comment (any.map() callbacks can't infer param type without explicit annotation)
+
+**`archivalPackageService.ts` — 3 explicit `any` removed:**
+- `(canvas as any)._fileRef` (×2) → `const canvasRecord = canvas as unknown as Record<string, unknown>; canvasRecord._fileRef`
+- `(body as any)?.id` → `'id' in body ? body.id : undefined` (narrows IIIFAnnotationBody to ExternalWebResource)
+
+**`structureTree.svelte.ts` — 2 explicit `any` removed:**
+- Defined `VaultEntity = { id?: string; label?: unknown }` and `VaultState` types before the class
+- `buildFromVault(state: any)` → `buildFromVault(state: VaultState)`
+- `entities: Record<string, Record<string, any>>` → `Record<string, Record<string, VaultEntity>>` (via safe cast from `unknown`)
+
+**`logger.ts` — 1 explicit `any` removed:**
+- `(import.meta as any).env?.DEV` → `import.meta.env?.DEV` (already under `@ts-ignore` directive)
+
+**`staticSiteExporter.ts` — 1 explicit `any` removed:**
+- `(paintingAnno.body as any)?.id` → `rawBody = Array.isArray(...) ? [0] : single; 'id' in rawBody ? rawBody.id : undefined`
+
+**`iiifBuilder.ts` — 1 explicit `any` removed:**
+- `resource as any` → `resource as Record<string, unknown>` (function validates shape via runtime checks)
+
+**Blocked (properly annotated):**
+- `annotorious.ts` (14) + `waveform.ts` (9): external libs, no @types
+- `shared/types/index.ts` (6): items/service/navPlace structural debt
+- `svelte-shims.d.ts` (2): framework shim
+- `technical-tab-wiring.test.ts` (2): test file callbacks
+
+---
+
 ## Current Phase: TYPE_DEBT Round 5 ✅ COMPLETE
 
 ### Metrics (post TYPE_DEBT Round 5)

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T08:25:32.705Z",
+  "generatedAt": "2026-02-24T08:51:16.497Z",
   "totalFiles": 234,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -572,6 +572,7 @@
           "source": "@/src/shared/types",
           "specifiers": [
             "IIIFAnnotation",
+            "IIIFAnnotationPage",
             "IIIFCanvas",
             "IIIFManifest",
             "LanguageMap"
@@ -643,7 +644,7 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 14132,
+      "size": 14334,
       "lines": 514
     },
     "src/entities/canvas/model/fileIntegrity.ts": {
@@ -655,11 +656,11 @@
         {
           "source": "idb",
           "specifiers": [
-            "DBSchema",
-            "IDBPDatabase",
-            "openDB"
+            "openDB",
+            "type IDBPDatabase",
+            "type DBSchema"
           ],
-          "isTypeImport": false,
+          "isTypeImport": true,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": true,
@@ -690,8 +691,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 12391,
-      "lines": 431
+      "size": 11788,
+      "lines": 419
     },
     "src/entities/canvas/model/imageSourceResolver.ts": {
       "filePath": "src/entities/canvas/model/imageSourceResolver.ts",
@@ -2843,7 +2844,7 @@
         "src/entities/manifest/model/ingest/ingestWorkerPool.ts"
       ],
       "dependents": [],
-      "size": 27584,
+      "size": 27604,
       "lines": 883
     },
     "src/entities/manifest/model/ingest/ingestAnalyzer.ts": {
@@ -3396,8 +3397,8 @@
       "dependents": [
         "src/entities/manifest/model/validation/validationHealer.ts"
       ],
-      "size": 15170,
-      "lines": 410
+      "size": 15411,
+      "lines": 413
     },
     "src/entities/manifest/model/vault/cloning.ts": {
       "filePath": "src/entities/manifest/model/vault/cloning.ts",
@@ -6846,8 +6847,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 18139,
-      "lines": 632
+      "size": 18223,
+      "lines": 633
     },
     "src/features/export/model/exportService.ts": {
       "filePath": "src/features/export/model/exportService.ts",
@@ -7138,8 +7139,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 31068,
-      "lines": 1047
+      "size": 31168,
+      "lines": 1048
     },
     "src/features/ingest/model/csvImporter.ts": {
       "filePath": "src/features/ingest/model/csvImporter.ts",
@@ -8083,8 +8084,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 19122,
-      "lines": 586
+      "size": 19418,
+      "lines": 595
     },
     "src/features/structure-view/ui/atoms/index.ts": {
       "filePath": "src/features/structure-view/ui/atoms/index.ts",
@@ -13439,8 +13440,8 @@
       "dependents": [
         "src/shared/lib/hooks/index.ts"
       ],
-      "size": 2939,
-      "lines": 122
+      "size": 3126,
+      "lines": 126
     },
     "src/shared/lib/hooks/gridVirtualization.ts": {
       "filePath": "src/shared/lib/hooks/gridVirtualization.ts",
@@ -15455,7 +15456,7 @@
         "src/shared/services/storage.ts",
         "src/shared/services/virtualManifestFactory.ts"
       ],
-      "size": 1270,
+      "size": 1261,
       "lines": 36
     },
     "src/shared/services/metadataHarvester.ts": {
@@ -20753,8 +20754,8 @@
       "dependents": [
         "src/features/board-design/model/index.ts"
       ],
-      "size": 1599,
-      "lines": 59
+      "size": 2230,
+      "lines": 66
     },
     "src/widgets/CommandPalette/lib/fuzzyMatch.ts": {
       "filePath": "src/widgets/CommandPalette/lib/fuzzyMatch.ts",

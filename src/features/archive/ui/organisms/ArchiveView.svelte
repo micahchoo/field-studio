@@ -285,6 +285,9 @@
 
   /** Get thumbnail URL for a canvas */
   function getThumbnailUrl(item: IIIFItem): string {
+    // _blobUrl is set during ingest for locally loaded files
+    if (item._blobUrl) return item._blobUrl;
+    // Fall back to IIIF thumbnail property
     const thumb = item.thumbnail?.[0];
     return thumb?.id || '';
   }

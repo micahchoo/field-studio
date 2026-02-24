@@ -157,6 +157,8 @@ class NavPlaceService {
             extractFromGeometry(geom);
           }
           break;
+        default:
+          break;
       }
     };
 

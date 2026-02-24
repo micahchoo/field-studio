@@ -156,7 +156,7 @@
   const SWIPE_THRESHOLD = 80;
 
   // Breadcrumb state
-  let breadcrumbs: { id: string; label: string }[] = $state([]);
+  const breadcrumbs = $derived(computeBreadcrumbs(root, selectedId));
 
   // ---------------------------------------------------------------------------
   // Derived
@@ -385,11 +385,6 @@
   // ---------------------------------------------------------------------------
   // Effects
   // ---------------------------------------------------------------------------
-
-  // Update breadcrumbs when selectedId changes
-  $effect(() => {
-    breadcrumbs = computeBreadcrumbs(root, selectedId);
-  });
 
   // Auto-expand path to selected item.
   // Use untrack() to read expandedIds without making it a reactive dependency —

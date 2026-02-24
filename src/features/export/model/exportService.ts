@@ -1,7 +1,7 @@
 
 import JSZip from 'jszip';
 import { uiLog } from '@/src/shared/services/logger';
-import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCollection, isManifest } from '@/src/shared/types';
+import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCollection, isManifest, LanguageMap } from '@/src/shared/types';
 import { validator } from '@/src/entities/manifest/model/validation/validator';
 import {
   createImageServiceReference,
@@ -296,7 +296,7 @@ class ExportService {
         }
 
         // Helper to rewrite all IDs in a JSON structure
-        const rewriteIds = (obj: any, manifestIdVal: string): any => {
+        const rewriteIds = (obj: unknown, manifestIdVal: string): unknown => {
             if (obj === null || obj === undefined) return obj;
             if (typeof obj !== 'object') return obj;
 
@@ -304,8 +304,8 @@ class ExportService {
                 return obj.map(item => rewriteIds(item, manifestIdVal));
             }
 
-            const result: any = {};
-            for (const [key, value] of Object.entries(obj)) {
+            const result: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
                 if (key === 'id' && typeof value === 'string') {
                     // Check if this ID is in our map
                     if (idMap.has(value)) {
@@ -355,6 +355,8 @@ class ExportService {
             }
 
             if (processedItem.items) {
+                // TYPE_DEBT: processedItem from JSON.parse(any); no typed overload for any[].map()
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 processedItem.items = processedItem.items.map((child: any, idx: number) => {
                     if (isCollection(child) || isManifest(child)) {
                         // For Collections: replace embedded content with reference only
@@ -376,7 +378,7 @@ class ExportService {
                         }
                     } else if (child.type === 'Canvas') {
                         // Process canvas content and assets
-                        const origCanvas = (originalItem as any).items?.[idx] as IIIFCanvas;
+                        const origCanvas = originalItem.items?.[idx] as IIIFCanvas;
                         const processedCanvas = options.format === 'canopy'
                             ? rewriteIds(child, idVal)
                             : JSON.parse(JSON.stringify(child));
@@ -463,6 +465,8 @@ class ExportService {
                                 const thumbWidth = 150;
                                 const aspectRatio = (origCanvas?.height || 2000) / (origCanvas?.width || 2000);
                                 const thumbHeight = Math.floor(thumbWidth * aspectRatio);
+                                // TYPE_DEBT: processedCanvas from JSON.parse(any); thumb inferred from any[]
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 processedCanvas.thumbnail = processedCanvas.thumbnail.map((thumb: any) => ({
                                     ...thumb,
                                     id: options.format === 'canopy'
@@ -789,7 +793,7 @@ class ExportService {
     private generateContentFiles(root: IIIFItem, config: CanopyConfig): VirtualFile[] {
         const files: VirtualFile[] = [];
         const {title} = config;
-        const description = this.extractIIIFValue((root as any).summary) || `A IIIF collection featuring ${this.countManifests(root)} items.`;
+        const description = this.extractIIIFValue(root.summary) || `A IIIF collection featuring ${this.countManifests(root)} items.`;
 
         // Generate homepage content/index.mdx
         // Include Featured component if user has selected featured items
@@ -910,7 +914,7 @@ This collection contains **${manifestCount} items** organized by metadata includ
      * Helper to extract value from IIIF InternationalString
      * Uses centralized getIIIFValue utility from types for consistency
      */
-    private extractIIIFValue(val: any): string {
+    private extractIIIFValue(val: LanguageMap | undefined): string {
         // Use the centralized utility function from types module
         return getIIIFValue(val, 'none') || getIIIFValue(val, 'en') || '';
     }
@@ -1184,7 +1188,7 @@ ${featuredInfo}
         extraFeatures.push('sizeByWh'); // We pre-generate specific w,h sizes
 
         // Generate info.json with full IIIF Image API 3.0 compliance
-        const info: any = {
+        const info: Record<string, unknown> = {
             '@context': IIIF_SPEC.IMAGE_3.CONTEXT,
             id: basePath,
             type: 'ImageService3',

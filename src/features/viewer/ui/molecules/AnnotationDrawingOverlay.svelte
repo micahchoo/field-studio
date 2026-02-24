@@ -105,7 +105,11 @@
   // Annotorious instance (non-reactive to avoid proxy overhead on complex lib object)
   let anno: any = null;
 
-  // Stable ref for onAnnotationSelected to avoid re-init loops
+  // Stable ref for onAnnotationSelected to avoid re-init loops.
+  // eslint-disable-next-line @field-studio/no-effect-for-derived
+  // Cannot be $derived: onAnnotationSelectedCurrent is a plain (non-reactive) let used as
+  // a callback ref inside Annotorious event handlers — making it $derived would add Svelte
+  // reactivity overhead and trigger unnecessary Annotorious re-inits.
   let onAnnotationSelectedCurrent = onAnnotationSelected;
   $effect(() => { onAnnotationSelectedCurrent = onAnnotationSelected; });
 

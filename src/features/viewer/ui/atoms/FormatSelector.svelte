@@ -55,8 +55,11 @@
       : { ...LIGHT_CLASSES, ...cx } as ContextualClassNames
   );
 
-  /** Sync two-way binding → callback bridge */
+  /** Sync two-way binding → callback bridge.
+   * Cannot be $derived: boundValue is bound to <select> (bind:value) and must be writable.
+   * First effect syncs parent prop → local; second fires onChange when user changes the select. */
   let boundValue = $state(value);
+  // eslint-disable-next-line @field-studio/no-effect-for-derived
   $effect(() => { boundValue = value; });
   $effect(() => { if (boundValue !== value) onChange(boundValue); });
 </script>

@@ -45,10 +45,15 @@
   let containerEl: HTMLDivElement | undefined = $state(undefined);
   let anno: any = null;
 
-  // Stable refs for callbacks to avoid re-init loops
+  // Stable refs for callbacks to avoid re-init loops.
+  // Cannot be $derived: these are plain (non-reactive) lets used inside Annotorious event
+  // handlers. Making them $derived would trigger Svelte reactivity on every prop change
+  // and cause unnecessary Annotorious re-inits.
   let onAnnotationCreateCurrent = onAnnotationCreate;
   let onAnnotationSelectCurrent = onAnnotationSelect;
+  // eslint-disable-next-line @field-studio/no-effect-for-derived
   $effect(() => { onAnnotationCreateCurrent = onAnnotationCreate; });
+  // eslint-disable-next-line @field-studio/no-effect-for-derived
   $effect(() => { onAnnotationSelectCurrent = onAnnotationSelect; });
 
   // Init Annotorious when viewer is ready

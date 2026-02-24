@@ -40,7 +40,9 @@
   let localValue = $state(value);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  // Sync external value changes into local state
+  // Sync external value changes into local state.
+  // eslint-disable-next-line @field-studio/no-effect-for-derived
+  // Cannot be $derived: localValue is also written by scheduleFlush (controlled input pattern).
   $effect(() => {
     localValue = value;
   });

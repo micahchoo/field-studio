@@ -349,6 +349,8 @@
         items.forEach(i => board.moveItem(i.id, i.x, avgY - i.height / 2));
         break;
       }
+      default:
+        break;
     }
   }
 

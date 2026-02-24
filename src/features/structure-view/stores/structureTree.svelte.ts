@@ -45,7 +45,8 @@ type VaultEntity = { id?: string; label?: unknown };
 
 /** Expected shape of the vault NormalizedState passed to buildFromVault */
 type VaultState = {
-  entities?: Record<string, Record<string, VaultEntity>>;
+  /** Outer key: entity type; inner key: entity id; value: entity object */
+  entities?: Record<string, Record<string, unknown>>;
   typeIndex?: Record<string, string>;
   references?: Record<string, string[]>;
 };
@@ -91,19 +92,19 @@ export class StructureTreeStore {
 
   /**
    * Build the tree from a vault NormalizedState.
-   * Accepts `any` to decouple from the specific NormalizedState type.
    *
    * Expected shape on `state`:
    *   state.entities      -- { [type]: { [id]: entity } }
    *   state.typeIndex      -- { [id]: type }
    *   state.references     -- { [id]: childId[] }
    */
-  buildFromVault(state: any, rootId: string): void {
+  buildFromVault(state: VaultState, rootId: string): void {
     const nodes = new Map<string, StructureNode>();
     const childIndex = new Map<string, string[]>();
 
     const typeIndex: Record<string, string> = state.typeIndex ?? {};
-    const entities: Record<string, Record<string, any>> = state.entities ?? {};
+    // Cast: buildSimpleState returns Record<string,Record<string,unknown>>; entities are IIIFItems
+    const entities = (state.entities ?? {}) as Record<string, Record<string, VaultEntity>>;
     const references: Record<string, string[]> = state.references ?? {};
 
     // Recursive tree builder

@@ -123,8 +123,17 @@ class StorageService {
         const text = await stored.text();
         // Guard: JSON.stringify(undefined) produces the string "undefined", which
         // JSON.parse rejects with "unexpected character at line 1 column 1".
-        if (!text || text === 'undefined' || text === 'null') return null;
-        return JSON.parse(text) as IIIFItem;
+        // Guard: also reject gzip/binary blobs from the old React version
+        // (their .text() starts with the gzip magic byte \x1f, not '{')
+        if (!text || text === 'undefined' || text === 'null' || !text.startsWith('{')) return null;
+        try {
+          return JSON.parse(text) as IIIFItem;
+        } catch {
+          // Blob passes the '{' guard but is still invalid JSON (e.g. partial write,
+          // binary data that happens to start with '{'). Discard it silently.
+          storageLog.warn('[StorageService] Stored project blob is not valid JSON — discarding');
+          return null;
+        }
       }
 
       // Legacy uncompressed object (React v1 format)

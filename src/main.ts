@@ -2,6 +2,10 @@ import { mount } from 'svelte';
 import App from './app/ui/App.svelte';
 import './app.css';
 
+// Make OpenSeadragon available as a global so ViewerView and Annotorious can find it
+import OpenSeadragon from 'openseadragon';
+(globalThis as unknown as Record<string, unknown>).OpenSeadragon = OpenSeadragon;
+
 // Register service worker for asset serving (/image/* and /media/* routes)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

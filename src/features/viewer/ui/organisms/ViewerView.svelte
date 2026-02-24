@@ -205,7 +205,6 @@
   let zoomLevel = $state(100);
   let rotation = $state(0);
   let isFlipped = $state(false);
-  let osdReady = $state(0);
 
   // OSD viewer instance -- stored outside $state per §7 (external lib)
   let osdViewer: any;
@@ -520,8 +519,6 @@
         debugMode: false,
         crossOriginPolicy: 'Anonymous',
       });
-
-      osdReady = osdReady + 1;
 
       // Track zoom level changes
       osdViewer.addHandler('zoom', () => {
