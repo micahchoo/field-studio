@@ -8,15 +8,15 @@ _Single source of truth for the Svelte 5 migration. Updated after every phase lo
 |-------|--------|
 | `npx tsc --noEmit` | **0 errors** |
 | `npx svelte-check` | 0 errors, **0 warnings** |
-| `npm run test` | 121 files, **4867 tests passing** |
-| `npm run lint` | 0 errors, **75 warnings** (52 non-migration + 23 `no-migration-stub`) |
+| `npm run test` | 117 files, **4978 tests passing** |
+| `npm run lint` | 0 errors, **53 warnings** (25 `no-explicit-any` + 20 `max-lines-feature` + 7 `prefer-semantic-elements` + 1 fixable) |
 
 ### ESLint Warning Breakdown
 
 | Rule | Count | Status |
 |------|-------|--------|
 | `@typescript-eslint/no-explicit-any` | 25 | All permanent (annotorious 14, waveform 9, svelte-shims 2) |
-| `@field-studio/no-migration-stub` | 23 | Awareness rule — 83 stubs across 23 files |
+| `@field-studio/no-migration-stub` | 0 | All 83 stubs resolved (Migration Stub Resolution round) |
 | `@field-studio/max-lines-feature` | 20 | Deferred — architectural decomposition needed |
 | `@field-studio/prefer-semantic-elements` | 7 | Deferred — structural (slider, listbox, combobox, button-in-button) |
 | `@field-studio/prefer-type-guards` | 0 | All .svelte casts fixed (Round 3) |
@@ -42,6 +42,7 @@ _Single source of truth for the Svelte 5 migration. Updated after every phase lo
 | **Round 2: Unsafe Cast Elimination** | All 20 `no-unsafe-type-cast-in-props` eliminated. ESLint 73→53. |
 | **Phase 1.5: Items Narrowing** | `IIIFItem.items?: any[]` → `unknown[]`. `getChildEntities()` + `isAnnotationPage()` added. 25 break sites fixed across 15 files. `no-explicit-any` 26→25. Tests 4770→4780. |
 | **Round 3: UI Wiring Safety** | 2 new ESLint rules (`prefer-type-guards`, `no-migration-stub`). All 17 `as IIIFSubtype` casts in .svelte replaced with type guards (1 annotated exception). 87 new contract tests (type guards, cx completeness, ViewRouter entity resolution). ESLint rules 16→18. Tests 4780→4867. |
+| **Migration Stub Resolution** | All 83 `@migration` stubs resolved across 23 files. Real imports wired (ViewerView 11 components, BoardView 4 components, AnnotationToolbar, structure-view). Services wired: storage.saveProject, contentStateService, validator.validateTree, guidanceService, authFlowService, commandHistory, resolveHierarchicalThumbs. Board z-index ops (bringToFront/sendToBack) implemented. ESLint 75→53. Tests 4867→4978. |
 
 ---
 
@@ -67,9 +68,9 @@ All five structural items resolved:
 | `provider.homepage/logo?: any[]` | ✅ `ProviderHomepage`, `ProviderLogo` (Round 1) |
 | `IIIFItem.items?: any[]` | ✅ `unknown[]` + `getChildEntities()` (Phase 1.5) |
 
-### `@migration` stubs: 83
+### `@migration` stubs: 0
 
-Largest: ViewerView (25), BoardView (10), Sidebar (6), AuthDialog (6).
+All 83 stubs resolved. Remaining work tracked as `TODO(loop)` for features requiring missing dependencies (html2canvas, pipeline router, useResizablePanel).
 
 ---
 

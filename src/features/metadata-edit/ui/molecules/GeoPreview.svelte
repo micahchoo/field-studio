@@ -6,19 +6,7 @@
   Separated from GeoEditor per Svelte one-component-per-file rule.
 -->
 <script module lang="ts">
-  /* ── Stubbed navPlaceService (shared with GeoEditor) ── */
-
-  const navPlaceService = {
-     
-    getNavPlace: (item: { navPlace?: unknown }) => (item.navPlace as import('@/src/shared/types').NavPlace) || null,
-
-    toGeoJSON: (np: import('@/src/shared/types').NavPlace) => np,
-
-    getBounds: (_np: import('@/src/shared/types').NavPlace): { north: number; south: number; east: number; west: number } | null => null,
-  };
-
-  const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors';
+  import { navPlaceService, TILE_URL, TILE_ATTRIBUTION } from '../../lib/navPlaceService';
 </script>
 
 <script lang="ts">

@@ -27,12 +27,10 @@
 
 <script lang="ts">
   /* eslint-disable @field-studio/lifecycle-restrictions -- WaveSurfer.js integration requires $effect lifecycle hooks to init/sync external library */
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- Volume slider requires native range input for audio control */
   import { onMount } from 'svelte';
   import { cn } from '@/src/shared/lib/cn';
   import { Icon } from '@/src/shared/ui/atoms';
-  import IconButton from '@/src/shared/ui/molecules/IconButton.svelte';
-  import PlayPauseButton from '@/src/features/viewer/ui/atoms/PlayPauseButton.svelte';
+  import AudioControls from '../atoms/AudioControls.svelte';
   import { formatTimeForDisplay, getAnnotationTimeRange, isTimeBasedAnnotation } from '../../model/annotation';
   import { getIIIFValue } from '@/src/shared/types';
 
@@ -87,149 +85,69 @@
   let canvasLabel = $derived(getIIIFValue(canvas.label) || 'Audio');
 
   // --- Controls ---
+  function togglePlayPause() { ws?.playPause(); }
+  function seekTo(time: number) { if (ws && duration > 0) ws.seekTo(time / duration); }
+  function handleRewind() { seekTo(Math.max(0, currentTime - 10)); }
+  function handleForward() { seekTo(Math.min(duration, currentTime + 10)); }
+  function handleVolumeChange(vol: number) { volume = vol; ws?.setVolume(vol); }
+  function handlePlaybackRateChange(rate: number) { playbackRate = rate; ws?.setPlaybackRate(rate); }
 
-  function togglePlayPause() {
-    ws?.playPause();
-  }
-
-  function seekTo(time: number) {
-    if (ws && duration > 0) {
-      ws.seekTo(time / duration);
-    }
-  }
-
-  function handleRewind() {
-    seekTo(Math.max(0, currentTime - 10));
-  }
-
-  function handleForward() {
-    seekTo(Math.min(duration, currentTime + 10));
-  }
-
-  function handleVolumeChange(vol: number) {
-    volume = vol;
-    ws?.setVolume(vol);
-  }
-
-  function handlePlaybackRateChange(rate: number) {
-    playbackRate = rate;
-    ws?.setPlaybackRate(rate);
-  }
-
-  // --- WaveSurfer init ---
-
-  onMount(() => {
-    // The $effect below handles init once waveformEl and src are ready
-    return () => {
-      if (ws) {
-        ws.destroy();
-        ws = null;
-        regionsPlugin = null;
-      }
-    };
-  });
+  function destroyWaveSurfer() { if (ws) { ws.destroy(); ws = null; regionsPlugin = null; } }
+  onMount(() => destroyWaveSurfer);
 
   // Initialize WaveSurfer when container and src are available
   $effect(() => {
     if (!waveformEl || !src) return;
-
-    // Destroy previous instance
-    if (ws) {
-      ws.destroy();
-      ws = null;
-      regionsPlugin = null;
-    }
-
+    destroyWaveSurfer();
     isLoading = true;
     isReady = false;
 
-    // Dynamic import to keep WaveSurfer out of the main bundle
     (async () => {
-      const WaveSurfer = (await import('wavesurfer.js')).default;
-      const RegionsPlugin = (await import('wavesurfer.js/dist/plugins/regions.js')).default;
-      const TimelinePlugin = (await import('wavesurfer.js/dist/plugins/timeline.js')).default;
-      const HoverPlugin = (await import('wavesurfer.js/dist/plugins/hover.js')).default;
-
-      if (!waveformEl) return; // check after async
+      const [{ default: WaveSurfer }, { default: RegionsPlugin }, { default: TimelinePlugin }, { default: HoverPlugin }] = await Promise.all([
+        import('wavesurfer.js'),
+        import('wavesurfer.js/dist/plugins/regions.js'),
+        import('wavesurfer.js/dist/plugins/timeline.js'),
+        import('wavesurfer.js/dist/plugins/hover.js'),
+      ]);
+      if (!waveformEl) return;
 
       const regions = RegionsPlugin.create();
       regionsPlugin = regions;
-
       const plugins: any[] = [regions];
-
-      if (timelineEl) {
-        plugins.push(TimelinePlugin.create({ container: timelineEl }));
-      }
-
+      if (timelineEl) plugins.push(TimelinePlugin.create({ container: timelineEl }));
       plugins.push(HoverPlugin.create({
-        lineColor: fieldMode ? '#eab308' : '#22c55e',
-        lineWidth: 2,
-        labelBackground: fieldMode ? '#000' : '#333',
-        labelColor: '#fff',
-        labelSize: '11px',
+        lineColor: fieldMode ? '#eab308' : '#22c55e', lineWidth: 2,
+        labelBackground: fieldMode ? '#000' : '#333', labelColor: '#fff', labelSize: '11px',
       }));
 
       const instance = WaveSurfer.create({
-        container: waveformEl,
-        url: src,
+        container: waveformEl, url: src,
         waveColor: fieldMode ? '#eab308' : '#64748b',
         progressColor: fieldMode ? '#fbbf24' : '#22c55e',
         cursorColor: fieldMode ? '#fbbf24' : '#3b82f6',
-        cursorWidth: 2,
-        barWidth: 2,
-        barGap: 1,
-        barRadius: 2,
-        height: 'auto',
-        normalize: true,
-        plugins,
+        cursorWidth: 2, barWidth: 2, barGap: 1, barRadius: 2,
+        height: 'auto', normalize: true, plugins,
       });
-
       ws = instance;
 
-      instance.on('ready', () => {
-        isReady = true;
-        isLoading = false;
-        duration = instance.getDuration();
-      });
-
-      instance.on('loading', () => {
-        isLoading = true;
-      });
-
+      instance.on('ready', () => { isReady = true; isLoading = false; duration = instance.getDuration(); });
+      instance.on('loading', () => { isLoading = true; });
       instance.on('timeupdate', (time: number) => {
         const now = Date.now();
-        if (now - lastTimeUpdate > 250) {
-          lastTimeUpdate = now;
-          currentTime = time;
-          onTimeUpdate?.(time);
-        }
+        if (now - lastTimeUpdate > 250) { lastTimeUpdate = now; currentTime = time; onTimeUpdate?.(time); }
       });
-
       instance.on('play', () => { isPlaying = true; });
       instance.on('pause', () => { isPlaying = false; });
       instance.on('finish', () => { isPlaying = false; });
 
-      // Region creation events
-      regions.on('region-created', (region: any) => {
-        if (region.id?.startsWith('user-')) {
-          onTimeRangeChange?.({ start: region.start, end: region.end });
-        }
-      });
-
-      regions.on('region-updated', (region: any) => {
-        if (region.id?.startsWith('user-')) {
-          onTimeRangeChange?.({ start: region.start, end: region.end });
-        }
-      });
+      function handleRegionChange(region: any) {
+        if (region.id?.startsWith('user-')) onTimeRangeChange?.({ start: region.start, end: region.end });
+      }
+      regions.on('region-created', handleRegionChange);
+      regions.on('region-updated', handleRegionChange);
     })();
 
-    return () => {
-      if (ws) {
-        ws.destroy();
-        ws = null;
-        regionsPlugin = null;
-      }
-    };
+    return destroyWaveSurfer;
   });
 
   // Enable/disable region creation for annotation mode
@@ -338,70 +256,17 @@
     </div>
   {/if}
 
-  <!-- Controls -->
-  <div class="p-4 border-t border-nb-white/10">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <!-- Left group -->
-      <div class="flex items-center gap-1">
-        <PlayPauseButton {isPlaying} onToggle={togglePlayPause} {fieldMode} />
-        <IconButton
-          icon="replay_10"
-          label="Rewind 10s"
-          onclick={handleRewind}
-          size="sm"
-          class="!text-white hover:!text-nb-blue"
-        />
-        <IconButton
-          icon="forward_10"
-          label="Forward 10s"
-          onclick={handleForward}
-          size="sm"
-          class="!text-white hover:!text-nb-blue"
-        />
-        <span class={cn(
-          'text-xs font-mono tabular-nums ml-1',
-          fieldMode ? 'text-nb-yellow/70' : 'text-nb-white/60'
-        )}>
-          {formatTimeForDisplay(currentTime)} / {formatTimeForDisplay(duration)}
-        </span>
-      </div>
-
-      <!-- Right group -->
-      <div class="flex items-center gap-2">
-        <!-- Playback rate -->
-        <button
-          onclick={() => {
-            const rates = [0.5, 0.75, 1, 1.25, 1.5, 2];
-            const idx = rates.indexOf(playbackRate);
-            const nextRate = rates[(idx + 1) % rates.length];
-            handlePlaybackRateChange(nextRate);
-          }}
-          class={cn(
-            'text-xs font-mono px-1.5 py-0.5',
-            fieldMode ? 'text-nb-yellow/70 hover:text-nb-yellow' : 'text-nb-white/60 hover:text-nb-white'
-          )}
-          title="Playback speed"
-        >
-          {playbackRate}x
-        </button>
-
-        <!-- Volume -->
-        <div class="flex items-center gap-1">
-          <Icon
-            name={volume === 0 ? 'volume_off' : volume < 0.5 ? 'volume_down' : 'volume_up'}
-            class={cn('text-sm', fieldMode ? 'text-nb-yellow/60' : 'text-nb-white/40')}
-          />
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volume}
-            oninput={(e) => handleVolumeChange(Number((e.target as HTMLInputElement).value))}
-            class="w-16 h-1 accent-current"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  <AudioControls
+    {isPlaying}
+    {currentTime}
+    {duration}
+    {playbackRate}
+    {volume}
+    onTogglePlayPause={togglePlayPause}
+    onRewind={handleRewind}
+    onForward={handleForward}
+    onPlaybackRateChange={handlePlaybackRateChange}
+    onVolumeChange={handleVolumeChange}
+    {fieldMode}
+  />
 </div>

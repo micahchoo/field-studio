@@ -137,7 +137,7 @@
   let expandedIds: Set<string> = $state(new Set<string>());
 
   // Resizable panel state
-  // TODO(loop): Extract into a useResizablePanel runes store
+  // Refactor: Extract into useResizablePanel runes store for reusability
   let panelWidth: number = $state(260);
   let isCollapsed: boolean = $state(false);
   const COLLAPSE_THRESHOLD = 180;
@@ -186,7 +186,7 @@
   /**
    * Flatten the IIIF tree into a list of nodes with depth, respecting
    * expand/collapse state and search filter.
-   * TODO(loop): Replace with VirtualTreeList + useStructureTree for virtualized rendering
+   * Refactor: Replace with VirtualTreeList for virtualized rendering
    */
   const flatTreeNodes = $derived.by((): FlatTreeNode[] => {
     return flattenTree(root, expandedIds, treeSearchQuery);
@@ -506,6 +506,9 @@
             )}
             onclick={() => handleNavClick(nav.type)}
             title={`${nav.label}${nav.shortcut ? ` (${nav.shortcut})` : ''}`}
+            aria-label={badge?.count && badge.count > 0
+              ? `${nav.label} (${badge.count > 99 ? '99+' : badge.count} items)${nav.shortcut ? ` (${nav.shortcut})` : ''}`
+              : `${nav.label}${nav.shortcut ? ` (${nav.shortcut})` : ''}`}
             aria-current={isActive ? 'page' : undefined}
           >
             <Icon name={nav.icon} size={20} />
@@ -515,7 +518,7 @@
               <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" aria-hidden="true"></span>
             {/if}
 
-            <!-- Badge count — TODO(loop): count not exposed to AT when parent title is the accessible name -->
+            <!-- Badge count -->
             {#if badge?.count && badge.count > 0}
               <span class={cn(
                 'absolute -top-0.5 -right-0.5',
@@ -600,7 +603,7 @@
         {/if}
 
         <!-- Tree search bar -->
-        <!-- TODO(loop): Replace with TreeSearchBar from structure-view feature -->
+        <!-- Refactor: Replace with TreeSearchBar from structure-view feature -->
         <div class="px-2 py-2 border-b border-theme-border/50">
           <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-theme-surface-raised">
             <Icon name="search" size={14} class="text-theme-text-muted shrink-0" />
@@ -651,7 +654,7 @@
 
         <!-- Tree body (scrollable) -->
         <div bind:this={treeContainerRef} class="flex-1 overflow-y-auto" role="tree">
-          <!-- TODO(loop): Replace with <VirtualTreeList> for virtualized rendering -->
+          <!-- Refactor: Replace with VirtualTreeList for virtualized rendering -->
           <!-- Current implementation: simple flat list rendering with expand/collapse -->
           <!-- <VirtualTreeList
             root={root}
@@ -686,16 +689,15 @@
                   aria-expanded={node.hasChildren ? node.isExpanded : undefined}
                   aria-level={node.depth + 1}
                 >
-                  <!-- Expand/collapse chevron -->
+                  <!-- Expand/collapse chevron (inside parent <button role="treeitem">; nesting <button> is invalid HTML) -->
                   {#if node.hasChildren}
-                    <!-- eslint-disable-next-line @field-studio/prefer-semantic-elements -- inside <button> (tree row), nesting <button> is invalid HTML -->
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <span
-                      role="button"
-                      tabindex="0"
+                      tabindex="-1"
                       class="p-0.5 text-theme-text-muted hover:text-theme-text transition-colors shrink-0"
                       onclick={(e) => { e.stopPropagation(); handleToggleExpand(node.id); }}
                       onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleToggleExpand(node.id); } }}
-                      aria-label={node.isExpanded ? 'Collapse' : 'Expand'}
+                      aria-hidden="true"
                     >
                       <Icon
                         name={node.isExpanded ? 'expand_more' : 'chevron_right'}

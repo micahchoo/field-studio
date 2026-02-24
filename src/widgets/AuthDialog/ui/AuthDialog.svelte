@@ -248,18 +248,31 @@
 
     openLoginWindow(activeService);
 
-    // Poll for login window close + listen for postMessage completion
+    // Wait for login completion via either window close polling or postMessage
     await new Promise<void>((resolve) => {
+      let resolved = false;
+      function cleanup() {
+        if (resolved) return;
+        resolved = true;
+        clearInterval(pollInterval);
+        window.removeEventListener('message', onMessage);
+        resolve();
+      }
+
       const pollInterval = setInterval(() => {
-        if (loginWindowRef?.closed) {
-          clearInterval(pollInterval);
-          resolve();
-        }
+        if (loginWindowRef?.closed) cleanup();
       }, 500);
 
-      // TODO(loop): Add postMessage listener for token exchange when auth
-      // service sends token directly via postMessage instead of cookie flow.
-      // For now, rely on window close detection followed by token exchange.
+      // IIIF Auth API 2.0: the auth window may send an access token via postMessage
+      function onMessage(event: MessageEvent) {
+        if (!activeService) return;
+        const serviceOrigin = new URL(activeService.id).origin;
+        if (event.origin !== serviceOrigin) return;
+        if (event.data?.messageId || event.data?.accessToken) {
+          cleanup();
+        }
+      }
+      window.addEventListener('message', onMessage);
     });
 
     await handlePostLogin();

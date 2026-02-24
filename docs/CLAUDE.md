@@ -26,7 +26,6 @@ Encode contracts, not implementations.
 - **≥1 adversarial case per file**: empty, max, malformed, concurrent.
 - **Names = spec**: `rejects negative quantities` not `test_3`.
 - **Don't test compiler guarantees.**
-- **UI**: assert user-visible outcomes only. Never DOM structure or component internals.
 
 ## Lint
 
@@ -34,8 +33,18 @@ Bug fix → can a **project-wide** rule prevent this **category** everywhere? Ye
 
 ## Docs (when applicable)
 
-One task per doc. Structure: does → how → expect → troubleshoot. User's words. Walk it as a new user. Changed in app → changed in docs same round. Delete docs that restate types.
+One task per doc: does → how → expect → troubleshoot. User's words. Walk it as a new user. Changed in app → changed in docs same round. Delete docs that restate types.
 
 ## UI (when applicable)
 
-Trace render → data source. Wire types end-to-end. Lint for: missing props, unhandled loading/error, stale subscriptions.
+**Wiring**: Trace render → data source. Wire types end-to-end. Lint for: missing props, unhandled loading/error, stale subscriptions.
+
+**Shadow**: Walk every user-facing flow through the code as a first-time user. Don't suggest fixes — report what the user experiences.
+
+- For each flow: what renders first → what can the user do → trace handler → state → re-render → what if they do nothing → what if they do it wrong.
+- Happy path first, then sad, then weird (back button, refresh, double-click, slow network). Branch on roles/flags → walk each.
+- Flag: DEAD END (no obvious action) · SILENT FAIL (error caught, not shown) · NO FEEDBACK (state changes invisibly) · ASSUMPTION (jargon, unlabelled inputs) · RACE (stale data, flash states) · NAV TRAP (loses state) · HIDDEN REQ (validation only on submit).
+- Every claim → file:line. Every flag → can a test or lint rule catch it permanently? Add it.
+- Report per flow in STATE.md: entry, steps, issues with category and location.
+
+**UI tests**: Assert user-visible outcomes only. Never DOM structure, CSS classes, or component internals.

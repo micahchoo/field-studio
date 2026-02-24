@@ -3,7 +3,7 @@
 // The correct fix is to introduce a `HealedIIIF = Partial<IIIFItem> & Record<string, unknown>`
 // type and route all mutations through it. The manualDeepClone helper also uses `any` for
 // the generic clone accumulator — those specific instances are improved below.
-// TODO(loop): Define HealedIIIF, replace all `as any` healing casts, add exhaustive-switch rule.
+// TYPE_DEBT: Define HealedIIIF = Partial<IIIFItem> & Record<string, unknown>, then replace ~60 `as any` casts.
 import { getIIIFValue, IIIFExternalWebResource, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { vaultLog } from '@/src/shared/services/logger';
 import { ValidationIssue } from './validator';

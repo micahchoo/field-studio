@@ -21,12 +21,22 @@
   - Keyboard handling done at BoardView level via presentation.handleKeyboard()
 -->
 <script lang="ts">
-  import type { BoardItem } from '../../model';
+  import type { SlideItem } from '../../stores/presentationMode.svelte';
+  import type { BoardItem as StoreBoardItem } from '../../stores/boardVault.svelte';
+  import type { BoardItem as ModelBoardItem } from '../../model';
   import { formatDuration } from '../../model';
+
+  /** Union of store + model BoardItem fields that PresentationOverlay may display.
+   *  At runtime, findItem returns the store's BoardItem. The model's extended fields
+   *  (blobUrl, meta, isNote, annotation) will be present once the model layer is
+   *  integrated with the store; until then they are safely undefined-guarded. */
+  type ResolvedItem = StoreBoardItem & Partial<Pick<ModelBoardItem, 'blobUrl' | 'isNote' | 'annotation' | 'meta'>>;
 
   interface Props {
     /** Current slide item (null = not in presentation mode) */
-    currentItem: BoardItem | null;
+    currentItem: SlideItem | null;
+    /** Lookup function to resolve full board item details for display */
+    findItem?: (id: string) => ResolvedItem | undefined;
     /** Zero-based index of current slide */
     currentIndex: number;
     /** Total number of slides */
@@ -47,6 +57,7 @@
 
   let {
     currentItem,
+    findItem,
     currentIndex,
     totalSlides,
     isAutoAdvancing,
@@ -58,7 +69,9 @@
   }: Props = $props();
 
   // ── Derived ──
-  let meta = $derived(currentItem?.meta);
+  // Resolve the full BoardItem (with blobUrl, meta, etc.) from the slide's id
+  let resolved = $derived(currentItem && findItem ? findItem(currentItem.id) : undefined);
+  let meta = $derived(resolved?.meta);
 </script>
 
 {#if currentItem}
@@ -81,22 +94,22 @@
       <div class="max-w-4xl w-full flex flex-col items-center gap-6">
 
         <!-- Thumbnail or placeholder -->
-        {#if currentItem.blobUrl}
+        {#if resolved?.blobUrl}
           <img
-            src={currentItem.blobUrl}
-            alt={currentItem.label}
+            src={resolved.blobUrl}
+            alt={currentItem.label ?? currentItem.id}
             class="max-h-[60vh] max-w-full object-contain shadow-brutal border-2 border-nb-white/20"
           />
         {:else}
           <div class="w-64 h-48 bg-nb-black/80 border-2 border-nb-white/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-5xl text-nb-white/20">
-              {currentItem.isNote ? 'sticky_note_2' : 'image'}
+              {resolved?.isNote ? 'sticky_note_2' : 'image'}
             </span>
           </div>
         {/if}
 
         <!-- Label -->
-        <h2 class="text-2xl font-bold text-nb-white text-center">{currentItem.label}</h2>
+        <h2 class="text-2xl font-bold text-nb-white text-center">{currentItem.label ?? currentItem.id}</h2>
 
         <!-- Metadata line -->
         <div class="flex items-center gap-4 text-sm text-nb-white/50">
@@ -115,9 +128,9 @@
         </div>
 
         <!-- Note content (if this slide is a note) -->
-        {#if currentItem.isNote && currentItem.annotation}
+        {#if resolved?.isNote && resolved.annotation}
           <p class="text-lg text-nb-white/70 max-w-2xl text-center leading-relaxed">
-            {currentItem.annotation}
+            {resolved.annotation}
           </p>
         {/if}
       </div>

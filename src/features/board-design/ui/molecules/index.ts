@@ -1,6 +1,12 @@
+export { default as BoardCanvasInteractive } from './BoardCanvasInteractive.svelte';
+export { default as BoardConnectionEditDialog } from './BoardConnectionEditDialog.svelte';
+export { default as BoardConnectionRenderer } from './BoardConnectionRenderer.svelte';
+export { default as BoardContextMenu } from './BoardContextMenu.svelte';
 export { default as BoardControls } from './BoardControls.svelte';
 export { default as BoardDesignPanel } from './BoardDesignPanel.svelte';
+export { default as BoardItemRenderer } from './BoardItemRenderer.svelte';
 export { default as BoardNodeLayer } from './BoardNodeLayer.svelte';
+export { default as BoardToolbar } from './BoardToolbar.svelte';
 export { default as ConnectionEditPanel } from './ConnectionEditPanel.svelte';
 export { default as ConnectionLayer } from './ConnectionLayer.svelte';
 export { default as TemplateItemPicker } from './TemplateItemPicker.svelte';

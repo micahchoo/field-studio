@@ -8,7 +8,7 @@
     - Stacks two feature organisms vertically:
       1. AnnotationToolPanel (from features/viewer) -- annotation drawing/creation
       2. MetadataEditorPanel (from features/metadata-edit) -- resource metadata editing
-    - Both sub-components are NOT YET MIGRATED to Svelte; styled placeholder boxes used.
+    - MetadataEditorPanel is wired; AnnotationToolPanel placeholder pending drawing-state wiring.
     - Receives cx and fieldMode via props from parent template.
     - Widget exists strictly between Organisms and Pages per FSD rules.
 
@@ -30,9 +30,7 @@
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
-  // TODO(loop): Replace placeholders with actual components once props are stabilized
-  // import AnnotationToolPanel from '@/src/features/viewer/ui/organisms/AnnotationToolPanel.svelte';
-  // import MetadataEditorPanel from '@/src/features/metadata-edit/ui/organisms/MetadataEditorPanel.svelte';
+  import MetadataEditorPanel from '@/src/features/metadata-edit/ui/organisms/MetadataEditorPanel.svelte';
 
   interface Props {
     canvas: IIIFCanvas;
@@ -64,11 +62,13 @@
 </script>
 
 <div class="flex flex-col h-full">
-  <!-- Annotation Tool Panel from viewer feature (flex-1 for primary content) -->
+  <!-- Annotation Tool Panel from viewer feature (flex-1 for primary content)
+       Wire: AnnotationToolPanel needs drawing-state props (drawingMode, isDrawing, pointCount,
+       canSave, text, motivation) and callbacks (onModeChange, onTextChange, onMotivationChange,
+       onSave, onUndo, onClear) that this widget does not manage. The widget's interface provides
+       high-level canvas/imageUrl/onCreateAnnotation but the panel expects low-level drawing state.
+       Wire when parent context provides drawing state, or add local state management here. -->
   <div class="flex-1 min-h-0">
-    <!-- TODO(loop): Replace placeholder with AnnotationToolPanel component.
-         Props: canvas, imageUrl, existingAnnotations, onCreateAnnotation, onClose,
-                cx subset { text, textMuted, active, surface } -->
     <div
       class={cn(
         'flex flex-col items-center justify-center h-full gap-2 border-2 border-dashed rounded',
@@ -80,30 +80,21 @@
     >
       <Icon name="draw" class="text-2xl opacity-40" />
       <span class="font-mono uppercase tracking-wide">AnnotationToolPanel</span>
-      <span class="text-[10px] opacity-60">Pending migration from features/viewer</span>
+      <span class="text-[10px] opacity-60">Needs drawing state wiring from parent context</span>
     </div>
   </div>
 
   <!-- Metadata Editor Panel from metadata-edit feature (conditional, scrollable) -->
   {#if resource}
     <div class={cn('border-t max-h-80 overflow-auto', cx.border || 'border-nb-black/20')}>
-      <!-- TODO(loop): Replace placeholder with MetadataEditorPanel component.
-           Props: resource, onUpdateResource, language, fieldMode, onClose,
-                  cx subset { surface, text, accent, border, divider, headerBg,
-                              textMuted, input, label, active } -->
-      <div
-        class={cn(
-          'flex flex-col items-center justify-center h-24 gap-1 border-2 border-dashed rounded m-2',
-          'text-xs',
-          cx.border || 'border-nb-black/15',
-          cx.textMuted || 'text-nb-black/40'
-        )}
-        data-placeholder="MetadataEditorPanel"
-      >
-        <Icon name="edit_note" class="text-lg opacity-40" />
-        <span class="font-mono uppercase tracking-wide">MetadataEditorPanel</span>
-        <span class="text-[10px] opacity-60">Pending migration from features/metadata-edit</span>
-      </div>
+      <MetadataEditorPanel
+        {resource}
+        onUpdateResource={onUpdateResource}
+        {language}
+        {cx}
+        {fieldMode}
+        onClose={onClose}
+      />
     </div>
   {/if}
 </div>

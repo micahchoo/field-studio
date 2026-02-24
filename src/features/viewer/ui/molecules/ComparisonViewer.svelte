@@ -20,11 +20,11 @@
 
 <script lang="ts">
   /* eslint-disable @field-studio/lifecycle-restrictions -- OSD secondary viewer lifecycle requires $effect for getBoundingClientRect and viewport sync */
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- Opacity slider requires native range input for comparison overlay */
   import { cn } from '@/src/shared/lib/cn';
-  import { Button, Icon } from '@/src/shared/ui/atoms';
-  import IconButton from '@/src/shared/ui/molecules/IconButton.svelte';
+  import { Icon } from '@/src/shared/ui/atoms';
+  import ComparisonModeSelector from '../atoms/ComparisonModeSelector.svelte';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
+  import type { ComparisonMode } from '../../model/comparison.svelte';
   import type { ComparisonStore } from '../../model/comparison.svelte';
   import type { IIIFCanvas } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
@@ -64,8 +64,6 @@
   // Derived labels
   let primaryLabel = $derived(getIIIFValue(primaryCanvas.label) || 'Canvas A');
   let secondLabel = $derived(secondCanvas ? getIIIFValue(secondCanvas.label) || 'Canvas B' : 'Canvas B');
-  let accentColor = $derived(fieldMode ? 'text-nb-yellow' : 'text-nb-blue');
-
   // --- Secondary OSD viewer lifecycle ---
 
   $effect(() => {
@@ -163,35 +161,22 @@
 
   let isSyncing = false;
 
+  function createSyncHandler(source: any, target: any) {
+    return () => {
+      if (isSyncing || !source?.viewport || !target?.viewport) return;
+      isSyncing = true;
+      try {
+        target.viewport.zoomTo(source.viewport.getZoom(), undefined, true);
+        target.viewport.panTo(source.viewport.getCenter(), true);
+      } catch { /* ignore */ }
+      requestAnimationFrame(() => { isSyncing = false; });
+    };
+  }
+
   function setupViewportSync() {
     if (!primaryViewerRef || !secondViewer) return;
-
-    const syncPrimaryToSecond = () => {
-      if (isSyncing || !secondViewer?.viewport || !primaryViewerRef?.viewport) return;
-      isSyncing = true;
-      try {
-        const zoom = primaryViewerRef.viewport.getZoom();
-        const center = primaryViewerRef.viewport.getCenter();
-        secondViewer.viewport.zoomTo(zoom, undefined, true);
-        secondViewer.viewport.panTo(center, true);
-      } catch { /* ignore */ }
-      requestAnimationFrame(() => { isSyncing = false; });
-    };
-
-    const syncSecondToPrimary = () => {
-      if (isSyncing || !secondViewer?.viewport || !primaryViewerRef?.viewport) return;
-      isSyncing = true;
-      try {
-        const zoom = secondViewer.viewport.getZoom();
-        const center = secondViewer.viewport.getCenter();
-        primaryViewerRef.viewport.zoomTo(zoom, undefined, true);
-        primaryViewerRef.viewport.panTo(center, true);
-      } catch { /* ignore */ }
-      requestAnimationFrame(() => { isSyncing = false; });
-    };
-
-    primaryViewerRef.addHandler('viewport-change', syncPrimaryToSecond);
-    secondViewer.addHandler('viewport-change', syncSecondToPrimary);
+    primaryViewerRef.addHandler('viewport-change', createSyncHandler(primaryViewerRef, secondViewer));
+    secondViewer.addHandler('viewport-change', createSyncHandler(secondViewer, primaryViewerRef));
   }
 
   // Re-setup sync when toggled
@@ -225,16 +210,8 @@
     };
   });
 
-  // --- Mode selector ---
-
-  function handleModeChange(newMode: ComparisonMode) {
-    comparison.setMode(newMode);
-  }
-
-  function handleOpacityChange(e: Event) {
-    comparison.setOverlayOpacity(parseInt((e.target as HTMLInputElement).value) / 100);
-  }
-
+  function handleModeChange(newMode: ComparisonMode) { comparison.setMode(newMode); }
+  function handleOpacityChange(e: Event) { comparison.setOverlayOpacity(parseInt((e.target as HTMLInputElement).value) / 100); }
   function handleClose() {
     comparison.reset();
     if (secondViewer) {
@@ -249,89 +226,14 @@
 
 {#if mode !== 'off' && secondCanvas}
   <div class="absolute inset-0 z-30 flex flex-col">
-    <!-- Comparison toolbar -->
-    <div class={cn(
-      'h-10 flex items-center justify-between px-3 border-b shrink-0',
-      fieldMode ? 'bg-nb-black/95 border-nb-yellow/20' : 'bg-nb-white border-nb-black/10'
-    )}>
-      <div class="flex items-center gap-3">
-        <span class={cn('text-xs font-semibold', accentColor)}>
-          <Icon name="compare" class="text-sm mr-1" />
-          Compare
-        </span>
-
-        <!-- Mode selector -->
-        <div class="flex items-center gap-1">
-          <IconButton
-            icon="view_column"
-            label="Side by side"
-            onclick={() => handleModeChange('side-by-side')}
-            size="sm"
-            class={cn(mode === 'side-by-side' && 'bg-nb-blue/20')}
-          />
-          <IconButton
-            icon="layers"
-            label="Overlay"
-            onclick={() => handleModeChange('overlay')}
-            size="sm"
-            class={cn(mode === 'overlay' && 'bg-nb-blue/20')}
-          />
-          <IconButton
-            icon="vertical_split"
-            label="Curtain"
-            onclick={() => handleModeChange('curtain')}
-            size="sm"
-            class={cn(mode === 'curtain' && 'bg-nb-blue/20')}
-          />
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <!-- Overlay opacity slider -->
-        {#if mode === 'overlay'}
-          <div class="flex items-center gap-1.5">
-            <span class={cn('text-[10px]', fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40')}>
-              Opacity
-            </span>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={Math.round(overlayOpacity * 100)}
-              oninput={handleOpacityChange}
-              class="w-20 h-1 accent-current"
-            />
-            <span class={cn('text-[10px] font-mono w-7', fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40')}>
-              {Math.round(overlayOpacity * 100)}%
-            </span>
-          </div>
-        {/if}
-
-        <!-- Sync toggle -->
-        <Button
-          variant={syncViewports ? 'primary' : 'ghost'}
-          size="sm"
-          onclick={() => comparison.toggleSyncViewports()}
-        >
-          <Icon name="sync" class="text-xs mr-0.5" />
-          <span class="text-[10px]">Sync</span>
-        </Button>
-
-        <!-- Close comparison -->
-        <Button variant="ghost" size="sm" onclick={handleClose}>
-          <Icon name="close" class="text-sm" />
-        </Button>
-      </div>
-    </div>
-
-    <!-- Canvas labels -->
-    <div class={cn(
-      'flex items-center justify-between px-3 py-1 text-[10px] font-mono',
-      fieldMode ? 'bg-nb-black/80 text-nb-yellow/50' : 'bg-nb-black/5 text-nb-black/40'
-    )}>
-      <span>A: {primaryLabel}</span>
-      <span>B: {secondLabel}</span>
-    </div>
+    <ComparisonModeSelector
+      {mode} {overlayOpacity} {syncViewports} {primaryLabel} {secondLabel}
+      onModeChange={handleModeChange}
+      onOpacityChange={handleOpacityChange}
+      onToggleSync={() => comparison.toggleSyncViewports()}
+      onClose={handleClose}
+      {fieldMode}
+    />
 
     <!-- Comparison content -->
     <div class="flex-1 relative min-h-0">

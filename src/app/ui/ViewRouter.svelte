@@ -437,9 +437,10 @@
   // ============================================================================
 
   function handleBoardSave(boardState: unknown) {
-    // TODO(loop): Reconcile BoardView.BoardState with vault board actions.
-    // The React source receives a manifest-like object; the Svelte BoardView
-    // emits onSaveBoard(state: BoardState). Wire vault.dispatch once types align.
+    // Architecture: BoardView emits the full BoardState object, but vault board actions
+    // are per-item (UPDATE_BOARD_ITEM_POSITION, REMOVE_BOARD_ITEM). A reconciliation
+    // layer would diff the previous state against boardState and dispatch individual
+    // actions. Deferred until BoardView stabilizes its save contract.
     console.warn('[ViewRouter] Board save — vault board actions pending type reconciliation', boardState);
   }
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T20:07:03.979Z",
+  "generatedAt": "2026-02-24T21:27:48.997Z",
   "totalFiles": 234,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -3167,8 +3167,8 @@
         "src/entities/manifest/model/validation/validator.ts"
       ],
       "dependents": [],
-      "size": 40995,
-      "lines": 1077
+      "size": 41140,
+      "lines": 1079
     },
     "src/entities/manifest/model/validation/validator.ts": {
       "filePath": "src/entities/manifest/model/validation/validator.ts",
@@ -5438,6 +5438,10 @@
           "source": "@/src/shared/types",
           "specifiers": [
             "getIIIFValue",
+            "isCanvas",
+            "isCollection",
+            "isManifest",
+            "isRange",
             "type IIIFItem",
             "type IIIFManifest"
           ],
@@ -5448,21 +5452,9 @@
           "isInternalAlias": true
         },
         {
-          "source": "@/utils/imageSourceResolver",
+          "source": "@/src/utils/imageSourceResolver",
           "specifiers": [
-            "resolveHierarchicalThumb"
-          ],
-          "isTypeImport": false,
-          "isRelative": false,
-          "isAbsolute": false,
-          "isExternal": false,
-          "isInternalAlias": true
-        },
-        {
-          "source": "@/src/entities",
-          "specifiers": [
-            "[re-export]:manifest",
-            "[re-export]:canvas"
+            "resolveHierarchicalThumbs"
           ],
           "isTypeImport": false,
           "isRelative": false,
@@ -5472,16 +5464,6 @@
         }
       ],
       "exports": [
-        {
-          "name": "manifest",
-          "type": "named",
-          "isTypeExport": false
-        },
-        {
-          "name": "canvas",
-          "type": "named",
-          "isTypeExport": false
-        },
         {
           "name": "AnchorSide",
           "type": "named",
@@ -5613,15 +5595,13 @@
           "isTypeExport": false
         }
       ],
-      "dependencies": [
-        "src/utils/imageSourceResolver.ts"
-      ],
+      "dependencies": [],
       "dependents": [
         "src/features/board-design/model/exporters.ts",
         "src/features/board-design/model/iiif-bridge.ts"
       ],
-      "size": 18969,
-      "lines": 622
+      "size": 18307,
+      "lines": 609
     },
     "src/features/board-design/stores/boardVault.svelte.ts": {
       "filePath": "src/features/board-design/stores/boardVault.svelte.ts",
@@ -5653,8 +5633,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 15333,
-      "lines": 524
+      "size": 16001,
+      "lines": 548
     },
     "src/features/board-design/stores/multiSelect.svelte.ts": {
       "filePath": "src/features/board-design/stores/multiSelect.svelte.ts",
@@ -6618,6 +6598,7 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
+            "getChildEntities",
             "getIIIFValue",
             "IIIFCanvas",
             "IIIFItem",
@@ -6716,8 +6697,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 18223,
-      "lines": 633
+      "size": 18215,
+      "lines": 631
     },
     "src/features/export/model/exportService.ts": {
       "filePath": "src/features/export/model/exportService.ts",
@@ -6750,6 +6731,7 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
+            "getChildEntities",
             "getIIIFValue",
             "IIIFCanvas",
             "IIIFCollection",
@@ -6873,8 +6855,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 60079,
-      "lines": 1536
+      "size": 59944,
+      "lines": 1532
     },
     "src/features/export/model/staticSiteExporter.ts": {
       "filePath": "src/features/export/model/staticSiteExporter.ts",
@@ -7022,6 +7004,7 @@
           "source": "@/src/shared/types",
           "specifiers": [
             "type CSVColumnMapping",
+            "getChildEntities",
             "getIIIFValue",
             "IIIFCanvas",
             "IIIFItem",
@@ -7114,8 +7097,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 17447,
-      "lines": 521
+      "size": 17399,
+      "lines": 515
     },
     "src/features/map/stores/map.svelte.ts": {
       "filePath": "src/features/map/stores/map.svelte.ts",
@@ -7172,9 +7155,10 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
-            "IIIFItem",
-            "InspectorIssue",
-            "IssueSeverity"
+            "isManifest",
+            "type IIIFItem",
+            "type InspectorIssue",
+            "type IssueSeverity"
           ],
           "isTypeImport": true,
           "isRelative": false,
@@ -7223,8 +7207,8 @@
         "src/features/metadata-edit/model/index.ts",
         "src/features/metadata-edit/model/index.ts"
       ],
-      "size": 29113,
-      "lines": 846
+      "size": 29099,
+      "lines": 844
     },
     "src/features/metadata-edit/model/index.ts": {
       "filePath": "src/features/metadata-edit/model/index.ts",
@@ -7235,6 +7219,8 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
+            "getChildEntities",
+            "isCanvas",
             "getIIIFValue",
             "type IIIFItem"
           ],
@@ -7374,8 +7360,8 @@
         "src/features/metadata-edit/lib/inspectorValidation.ts"
       ],
       "dependents": [],
-      "size": 10682,
-      "lines": 366
+      "size": 11309,
+      "lines": 381
     },
     "src/features/search/stores/search.svelte.ts": {
       "filePath": "src/features/search/stores/search.svelte.ts",
@@ -18064,6 +18050,16 @@
           "isTypeExport": false
         },
         {
+          "name": "isAnnotationPage",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "getChildEntities",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
           "name": "CSVColumnMapping",
           "type": "named",
           "isTypeExport": true
@@ -18141,8 +18137,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 16153,
-      "lines": 535
+      "size": 16875,
+      "lines": 553
     },
     "src/shared/types/search-api.ts": {
       "filePath": "src/shared/types/search-api.ts",
@@ -20853,9 +20849,7 @@
         }
       ],
       "dependencies": [],
-      "dependents": [
-        "src/features/board-design/model/index.ts"
-      ],
+      "dependents": [],
       "size": 2230,
       "lines": 66
     },
@@ -21165,13 +21159,13 @@
     "@/src/shared/types/image-pipeline",
     "@/src/shared/types/search-api",
     "@/src/shared/ui/molecules/ContextMenu",
+    "@/src/utils/imageSourceResolver",
     "@/utils",
     "@/utils/filenameUtils",
     "@/utils/iiifBehaviors",
     "@/utils/iiifHierarchy",
     "@/utils/iiifImageApi",
-    "@/utils/iiifSchema",
-    "@/utils/imageSourceResolver"
+    "@/utils/iiifSchema"
   ],
   "circularDependencies": [
     [
@@ -21279,6 +21273,7 @@
     "src/shared/types/search-api.ts",
     "src/shared/ui/molecules/ContextMenu.ts",
     "src/test-setup.ts",
+    "src/utils/imageSourceResolver.ts",
     "src/widgets/CommandPalette/lib/fuzzyMatch.ts",
     "src/widgets/KeyboardShortcuts/lib/shortcutHelpers.ts",
     "src/widgets/NavigationSidebar/lib/sidebarHelpers.ts",
@@ -21286,9 +21281,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 670,
+    "totalImports": 669,
     "totalExports": 1844,
-    "avgImportsPerFile": 2.8632478632478633,
+    "avgImportsPerFile": 2.858974358974359,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

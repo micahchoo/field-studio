@@ -270,12 +270,6 @@
   <div
     class={cn('flex flex-col max-h-[60vh]')}
     onkeydown={handleKeydown}
-    role="combobox"
-    aria-expanded={isOpen}
-    aria-haspopup="listbox"
-    aria-controls="command-list"
-    aria-label="Command palette"
-    tabindex="0"
   >
 
     <!-- ================================================================= -->
@@ -294,8 +288,12 @@
           'placeholder:text-theme-text-muted',
           'outline-none border-none'
         )}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
         aria-autocomplete="list"
         aria-controls="command-list"
+        aria-label="Command palette"
         autocomplete="off"
         autocorrect="off"
         spellcheck="false"

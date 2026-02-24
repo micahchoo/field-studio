@@ -63,6 +63,11 @@ const rule = {
             items: { type: 'string' },
             default: [],
           },
+          ignoreRoles: {
+            type: 'array',
+            items: { type: 'string' },
+            default: [],
+          },
         },
         additionalProperties: false,
       },
@@ -77,6 +82,7 @@ const rule = {
     const options = context.options[0] || {};
     const additionalRoles = options.additionalRoles || {};
     const ignoreElements = options.ignoreElements || [];
+    const ignoreRoles = options.ignoreRoles || [];
     const allRoles = { ...INTERACTIVE_ROLES, ...additionalRoles };
 
     const filename = context.getFilename();
@@ -120,6 +126,9 @@ const rule = {
         // Check if the role is in our interactive roles map
         const replacement = allRoles[roleValue];
         if (!replacement) return;
+
+        // Skip roles explicitly ignored in config
+        if (ignoreRoles.includes(roleValue)) return;
 
         context.report({
           node,

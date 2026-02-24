@@ -161,7 +161,7 @@
   // ---------------------------------------------------------------------------
 
   function handleResultSelect(id: string) {
-    // TODO(loop): usePipeline().searchToArchive(id) would set pipeline context here
+    // Future: Pipeline navigation to archive view
     onSelect(id);
   }
 

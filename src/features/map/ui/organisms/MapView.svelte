@@ -307,7 +307,9 @@
               onblur={() => handleMarkerHover(null)}
               aria-label="{item.label} ({map.formatCoordinates(item.lat, item.lng)})"
             >
-              <!-- TODO(loop): Wire resolveHierarchicalThumbs for canvas thumbnail display -->
+              <!-- Thumbnail display: GeoItem only carries lat/lng/label/canvasId — resolveHierarchicalThumbs
+                   needs the full IIIFCanvas entity with thumbnail[] or items[]. Wire when MapStore
+                   preserves canvas references or accepts pre-resolved thumbnail URLs. -->
               <div
                 class={cn('w-full h-full flex items-center justify-center text-xs font-bold', cx.accent || 'bg-nb-cream text-nb-black')}
                 aria-hidden="true"

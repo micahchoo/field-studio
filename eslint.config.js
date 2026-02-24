@@ -109,7 +109,10 @@ export default [
       // Svelte 5 convention rules
       '@field-studio/no-svelte4-patterns': 'error',
       '@field-studio/no-tailwind-interpolation': 'warn',
-      '@field-studio/prefer-semantic-elements': 'warn',
+      '@field-studio/prefer-semantic-elements': ['warn', {
+        ignoreElements: ['li'], // <li role="option"> inside <ul role="listbox"> is correct ARIA listbox pattern
+        ignoreRoles: ['slider', 'option'], // custom sliders/options with child elements cannot use native <input>/<option>
+      }],
       '@field-studio/no-reactive-destructuring': 'error',
       '@field-studio/no-effect-for-derived': 'warn',
       '@field-studio/typed-context-keys': 'warn',

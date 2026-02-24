@@ -29,8 +29,7 @@
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import Divider from '@/src/shared/ui/atoms/Divider.svelte';
   import ZoomControl from '@/src/shared/ui/atoms/ZoomControl.svelte';
-  import AnnotationColorPicker from '../atoms/AnnotationColorPicker.svelte';
-  import StrokeWidthSelect from '../atoms/StrokeWidthSelect.svelte';
+  import ViewerToolbarActions from '../atoms/ViewerToolbarActions.svelte';
 
   interface Props {
     label: string;
@@ -91,61 +90,19 @@
   }
 
   let {
-    label,
-    mediaType,
-    zoomLevel,
-    rotation = 0,
-    isFlipped = false,
-    showNavigator = true,
-    annotationCount,
-    hasSearchService,
-    canDownload,
-    isFullscreen,
-    showSearchPanel,
-    showWorkbench,
-    showComposer,
-    showAnnotationTool,
-    hasMultipleCanvases,
-    showFilmstrip,
-    viewerReady,
-    onZoomIn,
-    onZoomOut,
-    onResetView,
-    onRotateCW,
-    onRotateCCW,
-    onFlipHorizontal,
-    onTakeScreenshot,
-    onToggleNavigator,
-    onToggleKeyboardHelp,
-    onToggleSearch,
-    onToggleWorkbench,
-    onToggleComposer,
-    onToggleAnnotationTool,
-    onAnnotationModeChange,
-    onAnnotationUndo,
-    onAnnotationRedo,
-    onAnnotationClear,
-    onToggleMetadata,
-    onDownload,
-    onToggleFullscreen,
-    onToggleFilmstrip,
-    cx,
-    fieldMode,
-    annotationDrawingMode,
-    annotationStyle,
-    onAnnotationStyleChange,
-    showFilterPanel,
-    filtersActive,
-    onToggleFilterPanel,
-    showMeasurement,
-    onToggleMeasurement,
-    showComparison,
-    onToggleComparison,
-    showLayers,
-    onToggleLayers,
-    layerCount,
-    onShareLink,
-    onSwitchView,
+    label, mediaType, zoomLevel, rotation = 0, isFlipped = false, showNavigator = true,
+    annotationCount, hasSearchService, canDownload, isFullscreen,
+    showSearchPanel, showWorkbench, showComposer, showAnnotationTool,
+    hasMultipleCanvases, showFilmstrip, viewerReady,
+    onZoomIn, onZoomOut, onResetView, onRotateCW, onRotateCCW, onFlipHorizontal,
+    onTakeScreenshot, onToggleNavigator, onToggleKeyboardHelp,
+    onToggleSearch, onToggleWorkbench, onToggleComposer, onToggleAnnotationTool,
+    onAnnotationModeChange, onAnnotationUndo, onAnnotationRedo, onAnnotationClear,
+    onToggleMetadata, onDownload, onToggleFullscreen, onToggleFilmstrip,
+    cx, fieldMode, annotationDrawingMode, annotationStyle, onAnnotationStyleChange,
+    showFilterPanel, filtersActive, onToggleFilterPanel,
+    showMeasurement, onToggleMeasurement, showComparison, onToggleComparison,
+    showLayers, onToggleLayers, layerCount, onShareLink, onSwitchView,
   }: Props = $props();
 
   let iconName = $derived(
@@ -277,37 +234,12 @@
 
     <!-- Drawing mode buttons - images only when annotation active -->
     {#if showAnnotationTool && mediaType === 'image' && onAnnotationModeChange}
-      <Divider direction="vertical" cx={cx} class="h-6 mx-1" />
-      <div class="flex items-center gap-0.5" role="group" aria-label="Drawing mode">
-        {@render iconBtn('pentagon', 'Polygon', () => onAnnotationModeChange('polygon'), annotationDrawingMode === 'polygon')}
-        {@render iconBtn('crop_square', 'Rectangle', () => onAnnotationModeChange('rectangle'), annotationDrawingMode === 'rectangle')}
-        {@render iconBtn('draw', 'Freehand', () => onAnnotationModeChange('freehand'), annotationDrawingMode === 'freehand')}
-      </div>
-      {#if onAnnotationStyleChange && annotationStyle}
-        <Divider direction="vertical" cx={cx} class="h-6 mx-1" />
-        <AnnotationColorPicker
-          value={annotationStyle.color || '#22c55e'}
-          onChange={(color) => onAnnotationStyleChange({ ...annotationStyle, color })}
-          {fieldMode}
-        />
-        <StrokeWidthSelect
-          value={annotationStyle.strokeWidth ?? 2}
-          onChange={(strokeWidth) => onAnnotationStyleChange({ ...annotationStyle, strokeWidth })}
-          color={annotationStyle.color || '#22c55e'}
-          {fieldMode}
-        />
-      {/if}
-      <div class="flex items-center gap-0.5" role="group" aria-label="Annotation actions">
-        {#if onAnnotationUndo}
-          {@render iconBtn('undo', 'Undo', onAnnotationUndo, false, false, 'Undo (Ctrl+Z)')}
-        {/if}
-        {#if onAnnotationRedo}
-          {@render iconBtn('redo', 'Redo', onAnnotationRedo, false, false, 'Redo (Ctrl+Shift+Z)')}
-        {/if}
-        {#if onAnnotationClear}
-          {@render iconBtn('delete_outline', 'Clear', onAnnotationClear, false)}
-        {/if}
-      </div>
+      <ViewerToolbarActions
+        {annotationDrawingMode} {annotationStyle}
+        {onAnnotationModeChange} {onAnnotationStyleChange}
+        {onAnnotationUndo} {onAnnotationRedo} {onAnnotationClear}
+        {cx} {fieldMode}
+      />
     {/if}
 
     <!-- Image tools: filter, measurement, comparison, screenshot -->

@@ -21,10 +21,9 @@
 <script lang="ts">
   import type { IIIFCanvas } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
-  import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
-  import BlurUpThumbnail from '../molecules/BlurUpThumbnail.svelte';
   import HoverPreviewCard from '../molecules/HoverPreviewCard.svelte';
+  import ArchiveGridItem from '../molecules/ArchiveGridItem.svelte';
   import { gridLassoSelect, type LassoRect } from '../../actions/gridLassoSelect';
   import { resolveHierarchicalThumbs } from '@/utils/imageSourceResolver';
   import { getFileDNA, type FileDNA } from '@/src/features/archive/model';
@@ -399,19 +398,15 @@
   <!-- Grid -->
   <div class={cn('grid', DENSITY_CLASSES[density], gridColsClass)} style={directionStyle}>
     {#each visibleItems as asset, visualIndex (asset.id)}
-      {@const selected = isSelected(asset.id)}
       {@const itemIndex = visibleRange.start + visualIndex}
-      {@const isDragging = draggedIndex === itemIndex}
-      {@const isDropTarget = dropTargetIndex === itemIndex && draggedIndex !== null && draggedIndex !== itemIndex}
-      {@const isFocused = focusedId === asset.id}
       {@const { dna, thumbUrls, lowResUrls, config } = getItemData(asset)}
       <div
         data-grid-item
         data-item-id={asset.id}
         data-nav-id={asset.id}
-        tabindex={isFocused ? 0 : -1}
+        tabindex={focusedId === asset.id ? 0 : -1}
         role="gridcell"
-        aria-selected={selected}
+        aria-selected={isSelected(asset.id)}
         draggable={reorderEnabled && !!onReorder}
         ondragstart={(e) => handleDragStart(e, itemIndex)}
         ondragover={(e) => handleDragOver(e, itemIndex)}
@@ -423,152 +418,25 @@
         onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onItemClick(e, asset); }}
         onmouseenter={(e) => handleHoverEnter(asset, e)}
         onmouseleave={handleHoverLeave}
-        class={cn(
-          'group relative transition-nb outline-none',
-          PADDING_CLASSES[density],
-          reorderEnabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
-          isDragging && 'opacity-50 scale-95',
-          isDropTarget && (
-            fieldMode
-              ? 'ring-2 ring-nb-yellow ring-offset-2 ring-offset-black'
-              : 'ring-2 ring-nb-blue ring-offset-2'
-          ),
-          isFocused && !isDropTarget && (
-            fieldMode
-              ? 'ring-2 ring-offset-1 ring-nb-yellow'
-              : 'ring-2 ring-offset-1 ring-nb-blue'
-          ),
-          selected
-            ? 'bg-nb-orange/20 border-2 border-nb-orange shadow-brutal-sm'
-            : 'bg-nb-black border border-nb-black/20 hover:shadow-brutal hover:border-nb-black/20'
-        )}
       >
-        <!-- Thumbnail area -->
-        <div class="aspect-square overflow-hidden flex items-center justify-center mb-2 relative bg-nb-black">
-          <!-- Selection overlay -->
-          {#if selected}
-            <div class="absolute inset-0 bg-nb-orange/10 z-10 pointer-events-none"></div>
-          {/if}
-
-          <!-- Validation status dot -->
-          {#if validationIssues?.[asset.id]}
-            {@const issues = validationIssues[asset.id]}
-            <div class="absolute top-2 left-2 z-20" title={`${issues.length} issue(s)`}>
-              <div class={cn(
-                'w-2.5 h-2.5 rounded-full shadow-brutal-sm',
-                issues.some(i => i.level === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
-              )}></div>
-            </div>
-          {/if}
-
-          <!-- Checkmark button for multiselect -->
-          <Button
-            variant="ghost"
-            size="bare"
-            onclick={(e) => { e.stopPropagation(); onToggleSelect?.(asset.id); }}
-            class={cn(
-              'absolute top-2 right-2 z-20 w-6 h-6 flex items-center justify-center transition-nb shadow-brutal-sm cursor-pointer',
-              selected
-                ? fieldMode
-                  ? 'bg-nb-yellow text-white scale-100'
-                  : 'bg-nb-orange text-white scale-100'
-                : 'bg-nb-white/90 text-nb-black/40 scale-0 group-hover:scale-100 hover:bg-nb-cream'
-            )}
-            title={selected ? 'Deselect' : 'Select (add to selection)'}
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-          </Button>
-
-          <!-- Thumbnail image -->
-          {#if thumbUrls.length <= 1}
-            <BlurUpThumbnail
-              lowResUrl={lowResUrls[0] || ''}
-              highResUrl={thumbUrls[0] || ''}
-              fallbackIcon={config?.icon || 'image'}
-              {cx}
-              {fieldMode}
-            />
-          {:else}
-            <!-- TODO(loop): Extract StackedThumbnail from BlurUpThumbnail for multi-thumb display -->
-            <BlurUpThumbnail
-              lowResUrl={lowResUrls[0] || ''}
-              highResUrl={thumbUrls[0] || ''}
-              fallbackIcon={config?.icon || 'image'}
-              {cx}
-              {fieldMode}
-            />
-          {/if}
-
-          <!-- Metadata badges with tooltips -->
-          <div class="absolute bottom-2 right-2 flex gap-1">
-            {#if dna.hasTime}
-              <Button
-                variant="ghost"
-                size="bare"
-                class="w-5 h-5 bg-nb-orange text-white flex items-center justify-center shadow-brutal-sm hover:bg-nb-orange transition-nb"
-                onmouseenter={(e: MouseEvent) => { badgeTooltip = { text: 'Has date/time metadata', x: e.clientX, y: e.clientY }; }}
-                onmouseleave={() => { badgeTooltip = null; }}
-                title="Has Time metadata"
-              >
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </Button>
-            {/if}
-            {#if dna.hasLocation}
-              <Button
-                variant="ghost"
-                size="bare"
-                class="w-5 h-5 bg-nb-green text-white flex items-center justify-center shadow-brutal-sm hover:bg-nb-green transition-nb"
-                onmouseenter={(e: MouseEvent) => { badgeTooltip = { text: 'Has GPS location data', x: e.clientX, y: e.clientY }; }}
-                onmouseleave={() => { badgeTooltip = null; }}
-                title="Has GPS metadata"
-              >
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                </svg>
-              </Button>
-            {/if}
-            {#if dna.hasDevice}
-              <Button
-                variant="ghost"
-                size="bare"
-                class="w-5 h-5 bg-sky-500 text-white flex items-center justify-center shadow-brutal-sm hover:bg-sky-600 transition-nb"
-                onmouseenter={(e: MouseEvent) => { badgeTooltip = { text: 'Has camera/device info', x: e.clientX, y: e.clientY }; }}
-                onmouseleave={() => { badgeTooltip = null; }}
-                title="Has Device metadata"
-              >
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                </svg>
-              </Button>
-            {/if}
-            {#if asset.rights}
-              <Button
-                variant="ghost"
-                size="bare"
-                class="w-5 h-5 bg-nb-purple text-white flex items-center justify-center shadow-brutal-sm hover:bg-nb-purple/80 transition-nb"
-                onmouseenter={(e: MouseEvent) => { badgeTooltip = { text: `Rights: ${asset.rights}`, x: e.clientX, y: e.clientY }; }}
-                onmouseleave={() => { badgeTooltip = null; }}
-                title={`Rights: ${asset.rights}`}
-              >
-                <Icon name="copyright" class="text-[10px]" />
-              </Button>
-            {/if}
-          </div>
-        </div>
-
-        <!-- Filename label -->
-        <div class="px-1 min-w-0 h-6 flex items-center">
-          <div
-            class="text-nb-xs font-medium truncate text-nb-black"
-            title={getIIIFValue(asset.label)}
-          >
-            {getIIIFValue(asset.label)}
-          </div>
-        </div>
+        <ArchiveGridItem
+          {asset}
+          selected={isSelected(asset.id)}
+          isFocused={focusedId === asset.id}
+          isDragging={draggedIndex === itemIndex}
+          isDropTarget={dropTargetIndex === itemIndex && draggedIndex !== null && draggedIndex !== itemIndex}
+          {dna}
+          thumbUrl={thumbUrls[0] || ''}
+          lowResUrl={lowResUrls[0] || ''}
+          fallbackIcon={config?.icon || 'image'}
+          {density}
+          {reorderEnabled}
+          {fieldMode}
+          {cx}
+          issues={validationIssues?.[asset.id]}
+          {onToggleSelect}
+          onBadgeTooltip={(t) => { badgeTooltip = t; }}
+        />
       </div>
     {/each}
   </div>

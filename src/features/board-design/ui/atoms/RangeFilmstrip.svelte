@@ -28,8 +28,7 @@
 
   // TYPE_DEBT: resolveHierarchicalThumbs expects IIIFCanvas | Record<string, unknown> but we pass IIIFItem.
   function resolveHierarchicalThumb(item: IIIFItem, _size: number): string | null {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const thumbs = resolveHierarchicalThumbs(item as any, 1);
+    const thumbs = resolveHierarchicalThumbs(item as any, 1); // TYPE_DEBT: signature mismatch
     return thumbs.length > 0 ? thumbs[0] : (item._blobUrl || null);
   }
 

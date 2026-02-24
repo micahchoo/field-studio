@@ -15,7 +15,7 @@ import { resolveHierarchicalThumbs } from '@/src/utils/imageSourceResolver';
 // TYPE_DEBT: resolveHierarchicalThumbs expects IIIFCanvas | Record<string, unknown> but we pass IIIFItem.
 // Wrapper for single-thumbnail resolution (board items need one URL, not array).
 function resolveHierarchicalThumb(resource: IIIFItem, _maxSize: number): string | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TYPE_DEBT: resolveHierarchicalThumbs signature mismatch
   const thumbs = resolveHierarchicalThumbs(resource as any, 1);
   return thumbs.length > 0 ? thumbs[0] : (resource._blobUrl || null);
 }

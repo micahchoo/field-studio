@@ -238,7 +238,9 @@
                     onclick={() => handleItemClick(item)}
                     aria-label="{item.label} — {timeline.formatShortDate(item.date)}"
                   >
-                    <!-- TODO(loop): Wire resolveHierarchicalThumbs for canvas thumbnail display -->
+                    <!-- Thumbnail display: TimelineItem only carries date/label/canvasId — resolveHierarchicalThumbs
+                         needs the full IIIFCanvas entity with thumbnail[] or items[]. Wire when TimelineStore
+                         preserves canvas references or accepts pre-resolved thumbnail URLs. -->
                     <div
                       class={cn(
                         'w-full aspect-square flex items-center justify-center',

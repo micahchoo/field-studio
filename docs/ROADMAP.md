@@ -615,9 +615,10 @@ Reference: `docs/deployment/feature-parity-maintenance.md § CI/CD Pipeline`
 | 1 — TYPE_DEBT structural | **✅ complete** | — | 4 resolved, 1 remaining | 0/4 | 80→53 |
 | 1.5 — items narrowing | **✅ complete** | — | last structural `any` → `unknown[]` | 0/4 | 53→52 |
 | R3 — UI wiring safety | **✅ complete** | 83 | — | 0/4 | 52→75 (23 migration-stub awareness) |
+| Stub resolution | **✅ complete** | 83→0 | +2 TYPE_DEBT (imageSourceResolver casts) | 0/4 | 75→53 |
 | 2 — Workers | pending | — | — | 4/4 | — |
-| 3 — Service wiring | pending | ~35 | — | — | — |
-| 4 — UI wiring | pending | 0 | — | — | — |
+| 3 — Service wiring | **✅ complete** | 0 | — | — | — |
+| 4 — UI wiring | **✅ complete** | 0 | — | — | — |
 | 5 — Deployment | pending | — | — | — | — |
 
 ### Permanent blockers (will never be zero)
