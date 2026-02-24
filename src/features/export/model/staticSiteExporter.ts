@@ -8,6 +8,7 @@
  * @see ARCHITECTURE_INSPIRATION.md - "Static-First Infrastructure (Wax)"
  */
 
+import DOMPurify from 'isomorphic-dompurify';
 import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
 import { searchService } from '@/src/shared/services/searchService';
@@ -983,14 +984,16 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
   private escapeYaml(str: string | undefined | null): string {
     if (!str) return '';
-    return String(str).replace(/"/g, '\\"').replace(/\n/g, ' ');
+    // Escape backslash first, then quote, then normalize newlines
+    return String(str).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ');
   }
 
   private normalizeForSearch(str: string | undefined | null): string {
     if (!str) return '';
-    return String(str)
+    // Use DOMPurify to safely strip HTML before indexing
+    const stripped = String(DOMPurify.sanitize(String(str), { ALLOWED_TAGS: [], KEEP_CONTENT: true }));
+    return stripped
       .toLowerCase()
-      .replace(/<[^>]+>/g, '')
       .replace(/[^\w\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();

@@ -18,7 +18,7 @@ export const SCRIPT_PATTERN =
  * Event handler pattern - matches onerror, onclick, etc.
  */
 export const EVENT_HANDLER_PATTERN =
-  /\s*on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*) /gi;
+  /\s*on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi;
 
 /**
  * Control character pattern (except common whitespace)

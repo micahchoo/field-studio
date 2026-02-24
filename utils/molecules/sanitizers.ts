@@ -1,10 +1,10 @@
 /**
  * HTML and content sanitization molecules
- * Depends on: atoms/text, atoms/regex
+ * Depends on: atoms/text
  */
 
+import DOMPurify from 'isomorphic-dompurify';
 import { escapeHTML, stripTags } from '../atoms/text';
-import { SCRIPT_PATTERN, EVENT_HANDLER_PATTERN } from '../atoms/regex';
 
 /**
  * Sanitizer configuration options
@@ -25,7 +25,7 @@ const DEFAULT_HTML_CONFIG: SanitizeConfig = {
 };
 
 /**
- * Sanitize HTML content
+ * Sanitize HTML content using DOMPurify
  * Removes dangerous tags and attributes while preserving safe formatting
  */
 export function sanitizeHTML(
@@ -36,29 +36,17 @@ export function sanitizeHTML(
     return '';
   }
 
-  let sanitized = html;
-
-  // Remove script tags first (most dangerous)
-  sanitized = sanitized.replace(SCRIPT_PATTERN, '');
-
-  // Remove event handlers
-  sanitized = sanitized.replace(EVENT_HANDLER_PATTERN, '');
-
-  // If stripAll, remove all tags
   if (config.stripAll) {
-    return stripTags(sanitized);
+    return stripTags(html);
   }
 
-  // TODO: Implement tag/attribute filtering based on config
-  // For now, use simple regex-based approach
-  const allowedTags = config.allowedTags || [];
-  const allowedAttrs = config.allowedAttributes || [];
-
-  // Remove style attributes and on* handlers
-  sanitized = sanitized.replace(/\s*style\s*=\s*"[^"]*"/gi, '');
-  sanitized = sanitized.replace(/\s*on\w+\s*=\s*"[^"]*"/gi, '');
-
-  return sanitized;
+  return String(DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: config.allowedTags ?? DEFAULT_HTML_CONFIG.allowedTags ?? [],
+    ALLOWED_ATTR: config.allowedAttributes ?? DEFAULT_HTML_CONFIG.allowedAttributes ?? [],
+    KEEP_CONTENT: true,
+    ALLOW_DATA_ATTR: false,
+    FORBID_ATTR: ['style', 'onerror', 'onload', 'onclick'],
+  }));
 }
 
 /**
@@ -134,7 +122,7 @@ export function containsDangerousContent(content: string): boolean {
     return false;
   }
 
-  const hasScriptTags = SCRIPT_PATTERN.test(content);
+  const hasScriptTags = /<script[^>]*>[\s\S]*?<\/script>|<script[^>]*\/>/i.test(content);
   const hasEventHandlers = /\s(on\w+)\s*=/i.test(content);
   const hasJsProtocol = /javascript:/i.test(content);
   const hasDataUri = /data:text\/html/i.test(content);
@@ -143,20 +131,17 @@ export function containsDangerousContent(content: string): boolean {
 }
 
 /**
- * Sanitize SVG content
+ * Sanitize SVG content using DOMPurify
  */
 export function sanitizeSVG(svg: string): string {
   if (!svg) {
     return '';
   }
 
-  // Remove script tags
-  let sanitized = svg.replace(SCRIPT_PATTERN, '');
-
-  // Remove event handlers
-  sanitized = sanitized.replace(EVENT_HANDLER_PATTERN, '');
-
-  return sanitized;
+  return String(DOMPurify.sanitize(svg, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    ADD_TAGS: ['use', 'svg'],
+  }));
 }
 
 /**
@@ -173,11 +158,11 @@ export function sanitizeAttribute(value: string): string {
   // Escape dangerous characters
   return (
     withoutTags
-      // eslint-disable-next-line quotes
-      .replace(/"/g, '"')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;')
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
       .replace(/`/g, '&#x60;')
       .replace(/\0/g, '')
   );

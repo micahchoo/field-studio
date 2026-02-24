@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-23T23:01:51.302Z",
+  "generatedAt": "2026-02-24T00:08:42.413Z",
   "totalFiles": 233,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -2483,7 +2483,7 @@
         "src/entities/manifest/model/actions/linking.ts",
         "src/entities/manifest/model/actions/metadata.ts"
       ],
-      "size": 1977,
+      "size": 1938,
       "lines": 71
     },
     "src/entities/manifest/model/actions.ts": {
@@ -3292,7 +3292,7 @@
         "src/entities/manifest/model/validation/validator.ts"
       ],
       "dependents": [],
-      "size": 40252,
+      "size": 40259,
       "lines": 1053
     },
     "src/entities/manifest/model/validation/validator.ts": {
@@ -3326,9 +3326,9 @@
             "IIIF_SCHEMA",
             "isBehaviorAllowed",
             "validateResource",
-            "type SchemaError"
+            ""
           ],
-          "isTypeImport": true,
+          "isTypeImport": false,
           "isRelative": false,
           "isAbsolute": false,
           "isExternal": false,
@@ -3395,7 +3395,7 @@
       "dependents": [
         "src/entities/manifest/model/validation/validationHealer.ts"
       ],
-      "size": 15274,
+      "size": 15170,
       "lines": 410
     },
     "src/entities/manifest/model/vault/cloning.ts": {
@@ -12920,8 +12920,8 @@
         "src/shared/constants/iiif.ts",
         "src/shared/constants/image.ts"
       ],
-      "size": 8856,
-      "lines": 191
+      "size": 9159,
+      "lines": 199
     },
     "src/shared/constants/metadata.ts": {
       "filePath": "src/shared/constants/metadata.ts",
@@ -16198,7 +16198,7 @@
         "src/shared/stores/index.ts",
         "src/shared/stores/index.ts"
       ],
-      "size": 4698,
+      "size": 4638,
       "lines": 161
     },
     "src/shared/stores/auth.svelte.ts": {
@@ -17843,6 +17843,11 @@
           "isTypeExport": false
         },
         {
+          "name": "isRange",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
           "name": "CSVColumnMapping",
           "type": "named",
           "isTypeExport": true
@@ -17905,8 +17910,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 10546,
-      "lines": 358
+      "size": 10662,
+      "lines": 362
     },
     "src/shared/types/search-api.ts": {
       "filePath": "src/shared/types/search-api.ts",
@@ -21037,7 +21042,7 @@
   ],
   "stats": {
     "totalImports": 665,
-    "totalExports": 1803,
+    "totalExports": 1804,
     "avgImportsPerFile": 2.8540772532188843,
     "mostImported": [
       {

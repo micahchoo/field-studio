@@ -342,10 +342,11 @@ export function sanitizeAttribute(value: unknown): string {
   // Remove dangerous characters that could break out of attributes
   // Quotes, angle brackets, backticks, and null bytes
   const sanitized = withoutTags
-    .replace(/"/g, '"')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .replace(/`/g, '&#x60;')
     .replace(/\0/g, '');
   

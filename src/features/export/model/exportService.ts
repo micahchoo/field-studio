@@ -1103,8 +1103,14 @@ ${featuredInfo}
         // 3. Compress
         const zip = new JSZip();
         files.forEach(f => {
-            // Sanitize path: reject traversal sequences
-            const safePath = f.path.replace(/\.\.\//g, '').replace(/\.\.\\/g, '');
+            // Sanitize path: prevent directory traversal
+            const safePath = f.path
+                .replace(/\\/g, '/')          // normalize Windows separators
+                .replace(/^\/+/, '')          // strip leading slashes
+                .split('/')
+                .filter(seg => seg !== '..' && seg !== '.' && seg.length > 0)
+                .join('/');
+            if (!safePath) return;            // skip empty/invalid paths
             zip.file(safePath, f.content);
         });
 
@@ -1236,11 +1242,12 @@ ${featuredInfo}
         // Sanitize values for safe HTML embedding
         const sanitizeHtmlAttr = (str: string): string => {
             return str
-                .replace(/&/g, '&')
-                .replace(/</g, '<')
-                .replace(/>/g, '>')
-                .replace(/"/g, '"')
-                .replace(/'/g, '&#x27;');
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;')
+                .replace(/`/g, '&#x60;');
         };
 
         const safeTitle = sanitizeHtmlAttr(title);

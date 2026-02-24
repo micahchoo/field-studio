@@ -1,7 +1,9 @@
 /**
  * Text manipulation primitives
- * Zero dependencies - can be imported by any layer
  */
+
+// Use isomorphic-dompurify for compatibility with both browser and Node/test environments
+import DOMPurify from 'isomorphic-dompurify';
 
 /**
  * Escape HTML special characters to prevent XSS
@@ -29,7 +31,7 @@ export function stripTags(html: string): string {
   if (!html) {
     return '';
   }
-  return html.replace(/<[^>]*>/g, '');
+  return String(DOMPurify.sanitize(html, { ALLOWED_TAGS: [], KEEP_CONTENT: true }));
 }
 
 /**

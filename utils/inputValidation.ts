@@ -5,6 +5,8 @@
  * Prevents XSS, injection attacks, and ensures data integrity.
  */
 
+import DOMPurify from 'isomorphic-dompurify';
+
 export interface ValidationOptions {
   /** Maximum allowed length for the input */
   maxLength?: number;
@@ -48,22 +50,6 @@ const DEFAULT_OPTIONS: Required<Omit<ValidationOptions, 'pattern' | 'patternMess
 };
 
 /**
- * HTML tag regex pattern
- * Matches common HTML tags including script, style, and event handlers
- */
-const HTML_TAG_PATTERN = /<[^>]*>/gi;
-
-/**
- * Script tag pattern (more aggressive)
- */
-const SCRIPT_PATTERN = /<script[^>]*>[\s\S]*?<\/script>|<script[^>]*\/>/gi;
-
-/**
- * Event handler pattern (onerror, onclick, etc.)
- */
-const EVENT_HANDLER_PATTERN = /\s*on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi;
-
-/**
  * Control character pattern (except common whitespace)
  */
 const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g;
@@ -82,15 +68,16 @@ export function sanitizeInput(value: string, options?: ValidationOptions): strin
 
   let sanitized = value;
 
-  // Remove script tags first (most dangerous)
-  sanitized = sanitized.replace(SCRIPT_PATTERN, '');
-
-  // Remove event handlers
-  sanitized = sanitized.replace(EVENT_HANDLER_PATTERN, '');
-
-  // Remove all HTML tags unless explicitly allowed
+  // Strip or sanitize HTML using DOMPurify
   if (!options?.allowHtml) {
-    sanitized = sanitized.replace(HTML_TAG_PATTERN, '');
+    sanitized = String(DOMPurify.sanitize(sanitized, { ALLOWED_TAGS: [], KEEP_CONTENT: true }));
+  } else {
+    sanitized = String(DOMPurify.sanitize(sanitized, {
+      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
+      ALLOWED_ATTR: ['href', 'target'],
+      KEEP_CONTENT: true,
+      ALLOW_DATA_ATTR: false,
+    }));
   }
 
   // Remove control characters
