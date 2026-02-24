@@ -389,6 +389,67 @@ Key rules: `max-lines-feature` (molecule 300 / organism 500), `no-native-html-in
 
 Largest: ViewerView (25), BoardView (10), Sidebar (6), AuthDialog (6).
 
+### Feature Completion Audit (2026-02-24)
+
+Systematic audit of all claimed features against actual UI wiring. Every feature directory exists and renders, but functional completeness varies significantly.
+
+#### Fully Functional
+
+| Feature | Notes |
+|---------|-------|
+| `ingest` | File upload, manifest parsing, virtual manifest creation all work |
+| `search` | Full-text local search works; minor UX gaps (error not rendered, indexing spinner invisible) |
+| `staging` | CSV validation, source tree, conflict resolution work; 3-sec auto-close is annoying but functional |
+| `metadata-edit` | Spreadsheet editing, column extraction, per-keystroke save work |
+| `archive` | Grid/list/filmstrip render; selection, filtering, keyboard reorder work |
+
+#### Partially Functional — render but missing core advertised capabilities
+
+| Feature | What works | What's broken/missing |
+|---------|-----------|----------------------|
+| `viewer` | OSD deep zoom | Annotation drawing overlay **never rendered**; `MediaPlayer` (audio/video with transcripts) **never mounted** — native `<audio>`/`<video>` used instead |
+| `map` | Equirectangular projection, clustering | `navPlaceService.geocode()` always returns `[]`; IIIF `navPlace` GeoJSON **ignored**; bare gradient instead of real basemap |
+| `timeline` | Groups by zoom level, minimap | `new Date(navDate)` **rejects partial dates** ("2017-03", "circa 1200"); items silently dropped |
+| `metadata-edit` (Inspector tabs) | Core spreadsheet works | Annotation + Structure tabs are **placeholder divs** with migration text |
+| `NavigationSidebar` | 7 nav items, tree renders | Context menu only shows "Navigate"; rename/delete/duplicate **not passed from App** |
+
+#### Broken / Stubbed — UI shell exists, core functionality non-operational
+
+| Feature | Status |
+|---------|--------|
+| `board-design` | `connectingFrom` always passed as `null` → connections never created; text tool has no handler; save only `console.warn`s; all 3 exports stub |
+| `export` | All 5 handlers stubbed (dry-run, final, canopy, activity-log, archival); services exist but **UI never calls them**; no file download ever occurs; dry-run empty `try{}` always shows "Valid" |
+| `CommandPalette` | Full widget **never imported**; inline fallback has no search/grouping; Escape doesn't close it |
+
+#### Not Wired — directories exist, no UI integration
+
+| Feature | Status |
+|---------|--------|
+| `structure-view` | Components exist but imports **commented out** in Sidebar |
+| `dependency-explorer` | Only `types.ts` + `index.ts`; model/store/ui dirs empty |
+
+#### Cross-cutting dead ends
+
+| Issue | Location |
+|-------|----------|
+| Archive "View on Map" / "Compose on Board" buttons → **empty no-op handlers** | `ArchiveView.svelte:284–286` |
+| `AnnotationToolbar` → placeholder div with dev text in production DOM | `AnnotationToolbar.svelte:79–83` |
+| `Cmd+E` (Export shortcut) shown in palette but **not in `handleKeyDown`** | `App.svelte:789 vs 745–778` |
+| Storage load errors swallowed: `.catch(() => {})` | `App.svelte:488` |
+| Map/Timeline/Search stores re-instantiated on mount → state **lost on view switch** | `MapView.svelte:47`, `TimelineView.svelte:45` |
+| Search result click forces archive mode → **query and scroll lost, no back nav** | `ViewRouter.svelte:703–704` |
+| Staging "Undo" re-shows workbench but vault already mutated → would **double-import** | `StagingCompletionSummary.svelte:56` |
+
+#### Summary
+
+| Category | Count |
+|----------|-------|
+| Fully functional | 5 |
+| Partially functional | 5 |
+| Broken / stubbed | 3 |
+| Not wired | 2 |
+| **Total claimed** | **15** |
+
 ### UI Shadow Exercise (2026-02-24)
 
 Comprehensive first-time-user walkthrough of all 7 views, staging, export, and cross-feature widgets. Every claim traced to file:line.

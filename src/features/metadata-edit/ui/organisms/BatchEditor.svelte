@@ -66,6 +66,8 @@
   import { getChildEntities, type IIIFItem } from '@/src/shared/types';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import Select from '@/src/shared/ui/atoms/Select.svelte';
+  import TextArea from '@/src/shared/ui/atoms/TextArea.svelte';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -337,12 +339,12 @@
               >
                 Common Summary
               </label>
-              <textarea
+              <TextArea
                 id="batch-summary-input"
                 bind:value={sharedSummary}
-                class="w-full p-3 bg-nb-white outline-none text-sm min-h-[100px] border border-nb-black/20 focus:border-iiif-blue"
+                class="p-3 bg-nb-white outline-none text-sm min-h-[100px] border border-nb-black/20 focus:border-iiif-blue"
                 placeholder="Common Summary..."
-              ></textarea>
+              />
             </div>
 
             <!-- Custom fields -->
@@ -426,15 +428,15 @@
                     oninput={(e) => updateMappingGroup(i, (e.currentTarget as HTMLInputElement).value)}
                     class="w-16 p-2 border border-nb-black/20 text-xs outline-none"
                   />
-                  <select
+                  <Select
                     value={mapping.property}
-                    onchange={(e) => updateMappingProperty(i, (e.currentTarget as HTMLSelectElement).value)}
+                    onchange={(e) => updateMappingProperty(i, (e.target as HTMLSelectElement).value)}
                     class="flex-1 p-2 border border-nb-black/20 text-xs outline-none"
                   >
                     {#each IIIF_PROPERTY_SUGGESTIONS as prop (prop)}
                       <option value={prop}>{prop}</option>
                     {/each}
-                  </select>
+                  </Select>
                   <Button
                     variant="ghost"
                     size="bare"

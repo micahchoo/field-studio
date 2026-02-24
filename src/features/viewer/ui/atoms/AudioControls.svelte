@@ -87,7 +87,6 @@
       >
         {playbackRate}x
       </button>
-      <!-- eslint-disable-next-line @field-studio/no-native-html-in-molecules -- atom: native range input for volume -->
       <div class="flex items-center gap-1">
         <Icon
           name={volume === 0 ? 'volume_off' : volume < 0.5 ? 'volume_down' : 'volume_up'}

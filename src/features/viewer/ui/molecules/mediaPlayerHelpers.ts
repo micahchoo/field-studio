@@ -8,7 +8,7 @@
  * - Sync points from accompanying canvas
  */
 
-import type { IIIFCanvas } from '@/src/shared/types';
+import type { IIIFAnnotationPage, IIIFCanvas } from '@/src/shared/types';
 
 export interface PlaceholderInfo {
   id: string;
@@ -29,14 +29,13 @@ export type TimeModeResult =
 /** Extract placeholder canvas thumbnail from IIIF AV canvas */
 export function extractPlaceholderCanvas(canvas: IIIFCanvas): PlaceholderInfo | null {
   try {
-    const avCanvas = canvas as any;
-    const pc = avCanvas.placeholderCanvas;
+    const pc = canvas.placeholderCanvas;
     if (!pc) return null;
-    const items = pc.items || [];
-    for (const page of items) {
-      for (const anno of (page as any).items || []) {
+    const pages: IIIFAnnotationPage[] = pc.items || [];
+    for (const page of pages) {
+      for (const anno of page.items || []) {
         const body = Array.isArray(anno.body) ? anno.body[0] : anno.body;
-        if (body?.id) return { id: pc.id, thumbnail: body.id };
+        if ('id' in body && body.id) return { id: pc.id, thumbnail: body.id };
       }
     }
     return null;
@@ -46,9 +45,9 @@ export function extractPlaceholderCanvas(canvas: IIIFCanvas): PlaceholderInfo | 
 }
 
 /** Extract accompanying canvas from IIIF AV canvas */
-export function extractAccompanyingCanvas(canvas: IIIFCanvas): any | null {
+export function extractAccompanyingCanvas(canvas: IIIFCanvas): IIIFCanvas | null {
   try {
-    return (canvas as any).accompanyingCanvas ?? null;
+    return canvas.accompanyingCanvas ?? null;
   } catch {
     return null;
   }
@@ -57,7 +56,7 @@ export function extractAccompanyingCanvas(canvas: IIIFCanvas): any | null {
 /** Extract timeMode behavior from IIIF AV canvas */
 export function extractTimeMode(canvas: IIIFCanvas, duration: number): TimeModeResult {
   try {
-    const behavior = (canvas as any).behavior;
+    const behavior = canvas.behavior;
     if (!behavior) return null;
     const behaviors = Array.isArray(behavior) ? behavior : [behavior];
     for (const b of behaviors) {
@@ -73,17 +72,22 @@ export function extractTimeMode(canvas: IIIFCanvas, duration: number): TimeModeR
 }
 
 /** Extract sync points from accompanying canvas annotations */
-export function extractSyncPoints(accompanyingCanvas: any): SyncPoint[] {
+export function extractSyncPoints(accompanyingCanvas: IIIFCanvas | null): SyncPoint[] {
   if (!accompanyingCanvas) return [];
   try {
-    const annos = accompanyingCanvas.annotations || accompanyingCanvas.items || [];
+    const pages: IIIFAnnotationPage[] = accompanyingCanvas.annotations || accompanyingCanvas.items || [];
     const points: SyncPoint[] = [];
-    for (const page of annos) {
-      for (const anno of (page as any).items || []) {
+    for (const page of pages) {
+      for (const anno of page.items || []) {
         const body = Array.isArray(anno.body) ? anno.body[0] : anno.body;
-        const text = body?.value || '';
+        const text = 'value' in body ? body.value || '' : '';
         const target = anno.target;
-        const source = typeof target === 'string' ? target : target?.source;
+        let source: string | undefined;
+        if (typeof target === 'string') {
+          source = target;
+        } else if (!Array.isArray(target) && 'source' in target) {
+          source = typeof target.source === 'string' ? target.source : target.source.id;
+        }
         if (typeof source === 'string' && source.includes('#t=')) {
           const match = source.match(/#t=(\d+(?:\.\d+)?)/);
           if (match) {

@@ -11,7 +11,6 @@
 -->
 
 <script lang="ts">
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- Filter panel uses native range inputs for brightness/contrast/saturation sliders */
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { ImageFilterStore } from '@/src/features/viewer/model/imageFilters.svelte';
   import type { AnnotationLayerStore } from '@/src/features/viewer/model/annotationLayers.svelte';
@@ -19,6 +18,7 @@
   import type { IIIFCanvas } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
   import { cn } from '@/src/shared/lib/cn';
+  import RangeInput from '@/src/shared/ui/atoms/RangeInput.svelte';
 
   interface Props {
     filters: ImageFilterStore;
@@ -61,21 +61,21 @@
 
     <label class={cn('block mb-2', cx.text)}>
       <span class="text-xs font-mono uppercase tracking-wider">{t('Brightness')}</span>
-      <input type="range" min="0" max="200" value={filters.brightness}
+      <RangeInput min={0} max={200} value={filters.brightness}
         oninput={(e) => filters.setBrightness(parseInt((e.target as HTMLInputElement).value))}
         class="w-full mt-1" />
     </label>
 
     <label class={cn('block mb-2', cx.text)}>
       <span class="text-xs font-mono uppercase tracking-wider">{t('Contrast')}</span>
-      <input type="range" min="0" max="200" value={filters.contrast}
+      <RangeInput min={0} max={200} value={filters.contrast}
         oninput={(e) => filters.setContrast(parseInt((e.target as HTMLInputElement).value))}
         class="w-full mt-1" />
     </label>
 
     <label class={cn('block mb-2', cx.text)}>
       <span class="text-xs font-mono uppercase tracking-wider">{t('Saturation')}</span>
-      <input type="range" min="0" max="200" value={filters.saturation}
+      <RangeInput min={0} max={200} value={filters.saturation}
         oninput={(e) => filters.setSaturation(parseInt((e.target as HTMLInputElement).value))}
         class="w-full mt-1" />
     </label>

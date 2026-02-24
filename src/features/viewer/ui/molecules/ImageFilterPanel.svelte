@@ -14,11 +14,11 @@
 </script>
 
 <script lang="ts">
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- Brightness/contrast sliders require native range inputs */
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import { cn } from '@/src/shared/lib/cn';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import RangeInput from '@/src/shared/ui/atoms/RangeInput.svelte';
 
   interface Props {
     filters: ImageFilterState;
@@ -68,8 +68,7 @@
         {formatValue(value)}
       </span>
     </div>
-    <input
-      type="range"
+    <RangeInput
       {min}
       {max}
       {value}

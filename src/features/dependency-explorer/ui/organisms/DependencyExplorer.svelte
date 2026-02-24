@@ -20,6 +20,7 @@
   import { formatBytes } from '../../lib/markdownFormatters';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import Select from '@/src/shared/ui/atoms/Select.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
   // Molecule panels
@@ -192,9 +193,9 @@
       </div>
 
       <!-- Filter Type -->
-      <select
+      <Select
         value={store.filterType}
-        onchange={(e) => store.setFilter(e.currentTarget.value as FilterType)}
+        onchange={(e) => store.setFilter((e.target as HTMLSelectElement).value as FilterType)}
         class="px-3 py-1.5 text-sm border border-nb-black/20 bg-nb-white text-nb-black"
       >
         <option value="all">All Files</option>
@@ -203,7 +204,7 @@
         <option value="utils">Utils</option>
         <option value="services">Services</option>
         <option value="types">Types</option>
-      </select>
+      </Select>
 
       <!-- External Toggle -->
       <label class="flex items-center gap-2 text-sm text-nb-black/50 cursor-pointer">

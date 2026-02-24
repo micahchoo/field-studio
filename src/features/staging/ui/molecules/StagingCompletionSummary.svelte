@@ -19,7 +19,7 @@
     fieldMode?: boolean;
   }
 
-  let { summary, onUndo, onNavigate }: Props = $props();
+  let { summary, onUndo, onNavigate, cx, fieldMode }: Props = $props();
 </script>
 
 <div class="space-y-4">

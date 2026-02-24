@@ -8,12 +8,12 @@
   count, opacity slider (expandable), and visibility toggle.
 -->
 <script lang="ts">
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- Layer opacity slider requires native range input */
   import type { AnnotationLayer } from '../../model/annotationLayers.svelte';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import { cn } from '@/src/shared/lib/cn';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import RangeInput from '@/src/shared/ui/atoms/RangeInput.svelte';
 
   interface Props {
     layers: AnnotationLayer[];
@@ -211,10 +211,9 @@
                 )}>
                   Opacity
                 </span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
+                <RangeInput
+                  min={0}
+                  max={100}
                   value={Math.round(layer.opacity * 100)}
                   oninput={(e) => handleOpacityChange(layer.id, e)}
                   class="flex-1 h-1 accent-current"

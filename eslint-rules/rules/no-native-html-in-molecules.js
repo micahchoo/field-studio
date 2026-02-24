@@ -51,8 +51,10 @@ const rule = {
 
     const isFeatureMolecule = /features\/[^\/]+\/ui\/molecules\//.test(filename);
     const isSharedMolecule = /shared\/ui\/molecules\//.test(filename);
+    const isFeatureOrganism = /features\/[^\/]+\/ui\/organisms\//.test(filename);
+    const isSharedOrganism = /shared\/ui\/organisms\//.test(filename);
 
-    if (!isFeatureMolecule && !isSharedMolecule) {
+    if (!isFeatureMolecule && !isSharedMolecule && !isFeatureOrganism && !isSharedOrganism) {
       return {};
     }
 

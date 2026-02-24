@@ -23,6 +23,7 @@
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { CanopyConfig, ImageApiOptions } from '../../model/exportService';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import Select from '@/src/shared/ui/atoms/Select.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
   interface Props {
@@ -106,27 +107,27 @@
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label for="field-accent-color" class="text-xs text-nb-black/50 block mb-1">Accent Color</label>
-        <select id="field-accent-color"
+        <Select id="field-accent-color"
           value={canopyConfig.theme.accentColor}
-          onchange={(e) => onCanopyConfigChange({ ...canopyConfig, theme: { ...canopyConfig.theme, accentColor: e.currentTarget.value } })}
-          class="w-full border p-2 text-sm capitalize"
+          onchange={(e) => onCanopyConfigChange({ ...canopyConfig, theme: { ...canopyConfig.theme, accentColor: (e.target as HTMLSelectElement).value } })}
+          class="border p-2 text-sm capitalize"
         >
           {#each ACCENT_COLORS as c}
             <option value={c}>{c}</option>
           {/each}
-        </select>
+        </Select>
       </div>
       <div>
         <label for="field-bg-tone" class="text-xs text-nb-black/50 block mb-1">Background Tone</label>
-        <select id="field-bg-tone"
+        <Select id="field-bg-tone"
           value={canopyConfig.theme.grayColor}
-          onchange={(e) => onCanopyConfigChange({ ...canopyConfig, theme: { ...canopyConfig.theme, grayColor: e.currentTarget.value } })}
-          class="w-full border p-2 text-sm capitalize"
+          onchange={(e) => onCanopyConfigChange({ ...canopyConfig, theme: { ...canopyConfig.theme, grayColor: (e.target as HTMLSelectElement).value } })}
+          class="border p-2 text-sm capitalize"
         >
           {#each GRAY_COLORS as c}
             <option value={c}>{c}</option>
           {/each}
-        </select>
+        </Select>
       </div>
     </div>
   </div>
@@ -161,9 +162,9 @@
       </label>
       <div class="flex items-center gap-2 bg-nb-white p-3 border border-nb-black/20">
         <div class="flex-1"><span class="text-sm text-nb-black/80">Tile Size</span><p class="text-[10px] text-nb-black/40">Deep zoom tiles</p></div>
-        <select value={imageApiOptions.tileSize || 512} onchange={(e) => onImageApiOptionsChange({ ...imageApiOptions, tileSize: parseInt(e.currentTarget.value) })} class="border p-1 text-sm w-20">
-          <option value={256}>256</option><option value={512}>512</option><option value={1024}>1024</option>
-        </select>
+        <Select value={String(imageApiOptions.tileSize || 512)} onchange={(e) => onImageApiOptionsChange({ ...imageApiOptions, tileSize: parseInt((e.target as HTMLSelectElement).value) })} class="p-1 text-sm w-20">
+          <option value="256">256</option><option value="512">512</option><option value="1024">1024</option>
+        </Select>
       </div>
     </div>
   </div>

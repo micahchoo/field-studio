@@ -10,6 +10,7 @@
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { BoardConnection } from '@/src/features/board-design/stores/boardVault.svelte';
   import { cn } from '@/src/shared/lib/cn';
+  import Select from '@/src/shared/ui/atoms/Select.svelte';
 
   interface Props {
     connection: BoardConnection;
@@ -47,8 +48,8 @@
     <div class="space-y-3">
       <div>
         <label for="field-conn-type" class={cn('block text-xs font-medium mb-1', cx.textMuted)}>Type</label>
-        <select id="field-conn-type"
-          class={cn('w-full px-2 py-1.5 text-sm border-2 rounded', cx.border || 'border-nb-black', cx.surface || 'bg-white')}
+        <Select id="field-conn-type"
+          class={cn('px-2 py-1.5 text-sm border-2 rounded', cx.border || 'border-nb-black', cx.surface || 'bg-white')}
           value={connection.type}
           onchange={(e) => {
             const target = e.target as HTMLSelectElement;
@@ -59,7 +60,7 @@
           <option value="reference">Reference</option>
           <option value="supplement">Supplement</option>
           <option value="custom">Custom</option>
-        </select>
+        </Select>
       </div>
       <div>
         <label for="field-conn-label" class={cn('block text-xs font-medium mb-1', cx.textMuted)}>Label</label>

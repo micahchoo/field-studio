@@ -9,6 +9,7 @@
 -->
 <script lang="ts">
   import type { BoardItem, BoardConnection } from '@/src/features/board-design/stores/boardVault.svelte';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
 
   interface Props {
     connections: BoardConnection[];
@@ -19,6 +20,7 @@
     editingConnection: string | null;
     findItem: (id: string) => BoardItem | undefined;
     onEditConnection: (id: string) => void;
+    cx?: Partial<ContextualClassNames>;
   }
 
   let {
@@ -30,6 +32,7 @@
     editingConnection,
     findItem,
     onEditConnection,
+    cx,
   }: Props = $props();
 
   function connectionPath(fromItem: BoardItem | undefined, toItem: BoardItem | undefined): string {

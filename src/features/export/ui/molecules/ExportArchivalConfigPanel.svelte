@@ -10,6 +10,8 @@
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { ArchivalPackageOptions } from '../../model/archivalPackageService';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import Select from '@/src/shared/ui/atoms/Select.svelte';
+  import TextArea from '@/src/shared/ui/atoms/TextArea.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
   interface Props {
@@ -35,15 +37,15 @@
   <div class="grid grid-cols-2 gap-4">
     <div>
       <label for="field-digest-algo" class="block text-sm font-bold text-nb-black/80 mb-1">Digest Algorithm</label>
-      <select
+      <Select
         id="field-digest-algo"
         value={archivalConfig.digestAlgorithm}
-        onchange={(e) => onArchivalConfigChange({ ...archivalConfig, digestAlgorithm: e.currentTarget.value as 'sha256' | 'sha512' })}
-        class="w-full border p-2 text-sm"
+        onchange={(e) => onArchivalConfigChange({ ...archivalConfig, digestAlgorithm: (e.target as HTMLSelectElement).value as 'sha256' | 'sha512' })}
+        class="border p-2 text-sm"
       >
         <option value="sha256">SHA-256 (Recommended)</option>
         <option value="sha512">SHA-512</option>
-      </select>
+      </Select>
     </div>
     <div>
       <label for="field-organization" class="block text-sm font-bold text-nb-black/80 mb-1">Organization</label>
@@ -57,11 +59,11 @@
 
   <div>
     <label for="field-description" class="block text-sm font-bold text-nb-black/80 mb-1">Description</label>
-    <textarea id="field-description"
+    <TextArea id="field-description"
       value={archivalConfig.description ?? ''}
-      oninput={(e) => onArchivalConfigChange({ ...archivalConfig, description: e.currentTarget.value })}
-      class="w-full border p-2 text-sm" rows="2" placeholder="Description of this archival package..."
-    ></textarea>
+      oninput={(e) => onArchivalConfigChange({ ...archivalConfig, description: (e.target as HTMLTextAreaElement).value })}
+      class="border p-2 text-sm" rows={2} placeholder="Description of this archival package..."
+    />
   </div>
 
   <div class="grid grid-cols-2 gap-4">

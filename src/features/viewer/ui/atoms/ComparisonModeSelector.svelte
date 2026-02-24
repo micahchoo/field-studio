@@ -65,7 +65,6 @@
 
   <div class="flex items-center gap-2">
     {#if mode === 'overlay'}
-      <!-- eslint-disable-next-line @field-studio/no-native-html-in-molecules -- atom: native range input for opacity -->
       <div class="flex items-center gap-1.5">
         <span class={cn('text-[10px]', fieldMode ? 'text-nb-yellow/60' : 'text-nb-black/40')}>Opacity</span>
         <input type="range" min="0" max="100" value={Math.round(overlayOpacity * 100)} oninput={onOpacityChange} class="w-20 h-1 accent-current" />

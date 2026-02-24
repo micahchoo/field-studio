@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-24T22:01:35.359Z",
-  "totalFiles": 241,
+  "generatedAt": "2026-02-24T22:23:11.210Z",
+  "totalFiles": 245,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
       "filePath": "src/app/stores/annotationState.svelte.ts",
@@ -5057,12 +5057,108 @@
       "size": 665,
       "lines": 30
     },
+    "src/features/archive/ui/atoms/index.ts": {
+      "filePath": "src/features/archive/ui/atoms/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/features/archive/ui/atoms",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./ArchiveEmptyState.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 75,
+      "lines": 2
+    },
     "src/features/archive/ui/molecules/index.ts": {
       "filePath": "src/features/archive/ui/molecules/index.ts",
       "fileName": "index.ts",
       "directory": "src/features/archive/ui/molecules",
       "extension": ".ts",
       "imports": [
+        {
+          "source": "./ArchiveContextMenu.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ArchiveFilmstrip.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ArchiveGridItem.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ArchiveGridView.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ArchiveGroupedView.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ArchiveListView.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
         {
           "source": "./BlurUpThumbnail.svelte",
           "specifiers": [
@@ -5128,12 +5224,42 @@
           "name": "default",
           "type": "named",
           "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
         }
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 302,
-      "lines": 5
+      "size": 742,
+      "lines": 11
     },
     "src/features/archive/ui/organisms/index.ts": {
       "filePath": "src/features/archive/ui/organisms/index.ts",
@@ -9081,6 +9207,258 @@
       "size": 19625,
       "lines": 682
     },
+    "src/features/staging/ui/atoms/index.ts": {
+      "filePath": "src/features/staging/ui/atoms/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/features/staging/ui/atoms",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./ArchiveCollectionNode.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ArchivePaneHeader.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./FileTreeNode.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./IngestFileList.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./IngestStats.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 355,
+      "lines": 6
+    },
+    "src/features/staging/ui/molecules/index.ts": {
+      "filePath": "src/features/staging/ui/molecules/index.ts",
+      "fileName": "index.ts",
+      "directory": "src/features/staging/ui/molecules",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "./ArchivePane.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ConflictPanel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./IngestProgressPanel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MetadataTemplateExport.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PreviewPane.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./SourceTreePane.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./StagingBanners.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./StagingCompletionSummary.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./StagingModals.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 651,
+      "lines": 10
+    },
     "src/features/structure-view/lib/highlightHelpers.ts": {
       "filePath": "src/features/structure-view/lib/highlightHelpers.ts",
       "fileName": "highlightHelpers.ts",
@@ -11264,9 +11642,185 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./AudioControls.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ChapterMarkers.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ComparisonModeSelector.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MediaControlBar.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./MediaProgressBar.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./PlayerControls.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./SearchResultItem.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./SpatialAnnotationOverlay.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewerFilmstrip.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewerToolbarActions.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./WorkbenchParameterControls.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
         {
           "name": "default",
           "type": "named",
@@ -11430,8 +11984,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 2442,
-      "lines": 44
+      "size": 3338,
+      "lines": 59
     },
     "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts": {
       "filePath": "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts",
@@ -11741,9 +12295,89 @@
           "isAbsolute": false,
           "isExternal": false,
           "isInternalAlias": false
+        },
+        {
+          "source": "./TranscriptPanel.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewerContentArea.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewerInlineToolbar.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewerModals.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./ViewerOverlayPanels.svelte",
+          "specifiers": [
+            "[re-export]:default"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
         }
       ],
       "exports": [
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "default",
+          "type": "named",
+          "isTypeExport": false
+        },
         {
           "name": "default",
           "type": "named",
@@ -11872,8 +12506,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 1955,
-      "lines": 32
+      "size": 2383,
+      "lines": 41
     },
     "src/features/viewer/ui/molecules/mediaPlayerHelpers.ts": {
       "filePath": "src/features/viewer/ui/molecules/mediaPlayerHelpers.ts",
@@ -12093,6 +12727,110 @@
       "dependents": [],
       "size": 501,
       "lines": 12
+    },
+    "src/features/viewer/ui/organisms/viewerViewHelpers.ts": {
+      "filePath": "src/features/viewer/ui/organisms/viewerViewHelpers.ts",
+      "fileName": "viewerViewHelpers.ts",
+      "directory": "src/features/viewer/ui/organisms",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "IIIFManifest",
+            "IIIFRange",
+            "IIIFRangeReference",
+            ""
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types",
+          "specifiers": [
+            "getIIIFValue"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "MediaType",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ScreenshotFormat",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "SpatialDrawingMode",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "AnnotationStyleOptions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ChapterMarker",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "PaintingBody",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "detectMediaType",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "OsdConfig",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "initializeOsd",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "destroyOsdViewer",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "extractChapters",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "ImageKeyboardActions",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "handleImageKeyDown",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 8267,
+      "lines": 291
     },
     "src/main.ts": {
       "filePath": "src/main.ts",
@@ -22573,6 +23311,7 @@
     "src/features/timeline/stores/timeline.svelte.ts",
     "src/features/viewer/ui/molecules/KeyboardShortcutsModal.constants.ts",
     "src/features/viewer/ui/molecules/mediaPlayerHelpers.ts",
+    "src/features/viewer/ui/organisms/viewerViewHelpers.ts",
     "src/main.ts",
     "src/shared/config/design-tokens.ts",
     "src/shared/constants/core.ts",
@@ -22610,9 +23349,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 733,
-    "totalExports": 1945,
-    "avgImportsPerFile": 3.04149377593361,
+    "totalImports": 772,
+    "totalExports": 1995,
+    "avgImportsPerFile": 3.1510204081632653,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

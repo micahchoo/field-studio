@@ -34,6 +34,8 @@
     onCloseBehavior,
     onCloseRights,
     onCloseNavDate,
+    cx,
+    fieldMode,
   }: Props = $props();
 </script>
 

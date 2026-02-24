@@ -5,7 +5,7 @@
   Extracted from ArchiveView organism.
 -->
 <script lang="ts">
-  import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
+  import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import { cn } from '@/src/shared/lib/cn';
 
@@ -32,6 +32,7 @@
     onGroupIntoManifest,
     onEditMetadata,
     onClose,
+    cx,
   }: Props = $props();
 
   const menuItemClass = $derived(cn(

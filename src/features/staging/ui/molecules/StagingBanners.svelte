@@ -54,6 +54,8 @@
     showPreview,
     onTogglePreview,
     onReanalyze,
+    cx,
+    fieldMode,
   }: Props = $props();
 </script>
 

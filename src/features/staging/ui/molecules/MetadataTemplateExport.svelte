@@ -14,7 +14,6 @@
   - cx/fieldMode theming
 -->
 <script lang="ts">
-  /* eslint-disable @field-studio/no-native-html-in-molecules -- native <select> used for simple language picker; SelectField atom doesn't support option iteration */
   import type { SourceManifests } from '@/src/entities/collection/model/stagingService';
   import { SUPPORTED_LANGUAGES } from '@/src/shared/constants';
   import {
@@ -27,6 +26,7 @@
   import { cn } from '@/src/shared/lib/cn';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
+  import Select from '@/src/shared/ui/atoms/Select.svelte';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
 
   interface Props {
@@ -168,16 +168,16 @@
             <label for="field-export-language" class="block text-[10px] font-bold text-nb-black/50 uppercase tracking-wider mb-2">
               Default Language
             </label>
-            <select id="field-export-language"
+            <Select id="field-export-language"
               bind:value={language}
-              class="w-full px-3 py-2 text-sm bg-nb-white border border-nb-black/20 outline-none focus:border-nb-blue"
+              class="px-3 py-2 text-sm bg-nb-white border border-nb-black/20 outline-none focus:border-nb-blue"
             >
               {#each SUPPORTED_LANGUAGES as lang (lang.code)}
                 <option value={lang.code}>
                   {lang.label} ({lang.code})
                 </option>
               {/each}
-            </select>
+            </Select>
           </div>
 
           <!-- Include instructions -->
