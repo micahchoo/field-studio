@@ -58,6 +58,9 @@
   import { getAnnotationContext } from '@/src/shared/stores/contexts';
   import type { AnnotationContext, TimeRange } from '@/src/shared/stores/contexts';
   import { contentStateService } from '@/src/shared/services/contentState';
+  import { viewRegistry } from '@/src/shared/stores/viewRegistry.svelte';
+  import { ArchiveViewState } from '@/src/features/archive/stores/archiveViewState.svelte';
+  import { appModeToViewId } from '@/src/shared/types/viewProtocol';
 
   import {
     getEntity as vaultGetEntity,
@@ -231,6 +234,10 @@
   // Content State URL sync timer
   let contentStateTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // ── ViewRegistry: Archive provider (§0.1) ──
+  const archiveViewState = new ArchiveViewState();
+  viewRegistry.register(archiveViewState);
+
   // ============================================================================
   // Vault Lookup — O(1) entity access with Canvas denormalization
   // ============================================================================
@@ -337,6 +344,14 @@
   $effect(() => {
     if (appMode.mode === 'structure') {
       appMode.setMode('archive');
+    }
+  });
+
+  // Sync appMode → ViewRegistry active view (§0.1)
+  $effect(() => {
+    const viewId = appModeToViewId(appMode.mode);
+    if (viewId) {
+      viewRegistry.setActiveView(viewId);
     }
   });
 
