@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TYPE_DEBT: no @types/wavesurfer.js available */
 /**
  * Waveform -- DOM behavior action (Category 3)
  *

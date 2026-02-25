@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-24T22:23:11.210Z",
+  "generatedAt": "2026-02-24T22:36:29.800Z",
   "totalFiles": 245,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
@@ -12518,6 +12518,7 @@
         {
           "source": "@/src/shared/types",
           "specifiers": [
+            "IIIFAnnotationPage",
             "IIIFCanvas"
           ],
           "isTypeImport": true,
@@ -12631,8 +12632,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 9704,
-      "lines": 281
+      "size": 9950,
+      "lines": 285
     },
     "src/features/viewer/ui/organisms/index.ts": {
       "filePath": "src/features/viewer/ui/organisms/index.ts",
@@ -12829,8 +12830,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 8267,
-      "lines": 291
+      "size": 8702,
+      "lines": 299
     },
     "src/main.ts": {
       "filePath": "src/main.ts",

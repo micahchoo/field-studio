@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TYPE_DEBT: no @types/annotorious available */
 /**
  * Annotorious -- DOM behavior action (Category 3)
  *

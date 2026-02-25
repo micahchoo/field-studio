@@ -40,6 +40,13 @@ export interface PaintingBody {
   value?: string;
 }
 
+// TYPE_DEBT: no @types/openseadragon — minimal type aliases for OSD API surface used here
+type OsdConstructor = (options: Record<string, unknown>) => OsdViewer;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type OsdViewer = any; // TYPE_DEBT: openseadragon viewer instance
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type OsdTileSource = any; // TYPE_DEBT: openseadragon tile source config
+
 // ============================================================================
 // Media type detection
 // ============================================================================
@@ -60,11 +67,11 @@ export function detectMediaType(typeHint: string): MediaType {
 
 export interface OsdConfig {
   container: HTMLDivElement;
-  tileSource: any;
+  tileSource: OsdTileSource;
   onZoomChange: (zoom: number) => void;
 }
 
-export function initializeOsd(OSD: any, config: OsdConfig): any {
+export function initializeOsd(OSD: OsdConstructor, config: OsdConfig): OsdViewer {
   const viewer = OSD({
     element: config.container,
     prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
@@ -119,7 +126,7 @@ export function initializeOsd(OSD: any, config: OsdConfig): any {
   return viewer;
 }
 
-export function destroyOsdViewer(viewer: any): void {
+export function destroyOsdViewer(viewer: OsdViewer): void {
   if (!viewer) return;
   try {
     viewer.removeAllHandlers();
@@ -134,7 +141,7 @@ export function destroyOsdViewer(viewer: any): void {
 // ============================================================================
 
 export async function captureScreenshot(
-  osdViewer: any,
+  osdViewer: OsdViewer,
   format: ScreenshotFormat = 'image/png',
   action: 'download' | 'clipboard' = 'download'
 ): Promise<void> {
