@@ -550,3 +550,7 @@ export function ok<T>(value: T): Result<T, never> {
 export function err<E = Error>(error: E): Result<never, E> {
   return { ok: false, error };
 }
+
+// ViewBus protocol (§0.1)
+export type { ViewId, ViewSnapshot, ViewFilters, ViewStateProvider } from './viewProtocol';
+export { appModeToViewId } from './viewProtocol';
