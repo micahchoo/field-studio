@@ -15,7 +15,7 @@ Field Studio is:
 * **A system where *actions generate future data, not ephemeral events*.**
 
 Every view makes things *more intelligible* — not just *visible*.
-Selections, annotations, states, and views are all **preserved, shared, and replayable**.
+Selections, annotations, and states are all **preserved and shared**. Views are **reproducible** — given the same vault state and workspace snapshot, any view can be reconstructed exactly. Full temporal replay (action log scrubbing, session recording) is a future aspiration that builds on the P2P sync infrastructure (see [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) §C2).
 
 Integration is not an afterthought — it’s the *defining product experience*.
 
@@ -120,13 +120,13 @@ Forensic inspection and annotation with spatial precision.
 
 **Thick Affordances:**
 
-* Click‑to‑annotate (no “add mode”)
-* Momentum navigation with zoom + rotation
-* Annotation layers with opacity (no binary toggles)
+* Explicit annotation mode with one‑shot default — after creating one annotation, auto‑return to pan/zoom. Shift+drag accelerator for quick rectangle annotation without entering annotation mode. “Keep tool” toggle for batch work. (See [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) §B2.)
+* Momentum navigation with zoom + rotation (scroll always zooms, even in annotation mode)
+* Annotation layers with per‑layer opacity sliders (0–100%) and visibility toggles
 * Deep zoom with tiling pipeline (via local image API)
 
 **What the user *feels*:**
-This view is *intimately connected* to the material — like a light table in a lab.
+This view is *intimately connected* to the material — like a light table in a lab. Annotation friction is near‑zero for experienced users (Shift+drag) and explicit for newcomers (toolbar mode switch).
 
 **Integration to Whole:**
 
@@ -264,13 +264,13 @@ Content State is precisely the *interchange format* for view contexts. ([iiif.io
 
 Undo is not UI undo — it’s **knowledge rollback**.
 
-It should:
+**Scope** (per [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) §A5):
 
-* undo vault mutations
-* restore view states where appropriate
-* preserve selection and context
+* Undo covers **vault mutations only** — metadata edits, annotation creation/deletion, structural changes, canvas reordering
+* View state (zoom, pan, filters, panel config) and selection are **excluded** from undo history — they are ephemeral context, not knowledge
+* A separate **navigation stack** (Alt+Left/Right) provides "go back to where I was" for canvas/view navigation — like VS Code’s cursor undo (Ctrl+U)
 
-This makes exploration *safe* and *trustworthy*.
+This makes exploration *safe* and *trustworthy* without padding the undo stack with viewport changes.
 
 ---
 
@@ -286,36 +286,13 @@ Annotations feed Board structures, Search hits, Narrative tracks, and Viewer lay
 
 ---
 
-## **7. Reality‑Aligned Refactor Plan**
+## **7. Implementation Plan**
 
-### **7.1 Implement ViewBus**
-
-* hoist view state into global reactive registry
-* drop local reinits on mount
-
-### **7.2 Canonical Annotation Pipeline**
-
-* render annotation overlays in Viewer
-* index into search
-* enable filtering
-
-### **7.3 navPlace Pipeline**
-
-* ingest real navPlace metadata
-* integrate geo graph
-
-### **7.4 Timeline Fuzzy Dates**
-
-* use robust EDTF parsing
-
-### **7.5 Export & ContentState**
-
-* UI triggers for export
-* content state for share/tracking
+The detailed phased implementation plan, with architectural decisions, sequencing, and success criteria, lives in [ROADMAP.md](./ROADMAP.md). Architectural rationale for each decision is in [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md).
 
 ---
 
-## **8. Updated Success Metrics**
+## **8. Success Metrics**
 
 **Holistic & Cross‑View Measures**
 
@@ -340,12 +317,9 @@ Annotations feed Board structures, Search hits, Narrative tracks, and Viewer lay
 * Interfaces show material reality
 * Text + grids + sharpness
 
-Here’s a **visual UI interaction flow**, presented textually with clear stages and transitions, showing how *cross‑view context* and *selections* can propagate in Field Studio as a cohesive workbench. This builds on the idea that each view is a **lens on the same canonical vault**, and that *Content State* (IIIF Content State API 1.0) is the formal exportable format for a specific visual + data view of an object.([iiif.io][1])
-
 ---
 
-# 📌 Field Studio — Cross‑View Interaction Flow
-
+# Appendix: Cross‑View Interaction Flow
 
 ## **1. Start — Global Selection in Archive**
 
@@ -560,18 +534,10 @@ Your visual + semantic context becomes *interchangeable data*.
 * ViewState captures *intent*, not just UI state
 * Export uses IIIF Content State semantics for portability([iiif.io][1])
 ---
-Absolutely — here are **three Mermaid diagrams** based on your system and requests:
 
-1. **A swimlane diagram showing view responsibilities by user action**
-2. **A state diagram of selection/filter states**
-3. **A variant that incorporates *IIIF terminology* (e.g., *Manifest*, *Canvas*, *Content State JSON*)**
-4. **A variant that considers *decoupled controlled vocabularies* (vocabulary system varies independently of any view)**
+# Appendix: Mermaid Diagrams
 
-These use **Mermaid syntax** and are suitable to paste into a renderer like mermaid.live or an editor that supports Mermaid diagrams.
-
----
-
-## 1️⃣ Swimlane — View Responsibilities by User Action
+## Swimlane — View Responsibilities by User Action
 
 ```mermaid
 flowchart TB
@@ -623,7 +589,7 @@ flowchart TB
 
 ---
 
-## 2️⃣ State Diagram — Selection & Filters
+## State Diagram — Selection & Filters
 
 This models the *finite state machine* of selection and filters, where states change according to user actions or view context.
 
@@ -653,7 +619,7 @@ stateDiagram-v2
 
 ---
 
-## 3️⃣ Variant with **IIIF Terminology**
+## IIIF Terminology Variant
 
 ```mermaid
 flowchart LR
@@ -703,59 +669,4 @@ flowchart LR
 
 ---
 
-## 4️⃣ Variant with **Decoupled Vocabulary System**
-
-This treats *vocabulary* as a separate subsystem that informs metadata, search, and filters independently:
-
-```mermaid
-flowchart TB
-  subgraph VOC["Vocabulary System"]
-    fieldDef[Field Definitions]
-    controlledTerms[Controlled Terms]
-  end
-
-  subgraph META["Metadata View"]
-    editMeta[Edit metadata fields]
-    metadataUpdated[Metadata Updated]
-  end
-
-  subgraph SEARCH["Search View"]
-    searchQuery[User Query]
-    searchHits[Search Hits]
-  end
-
-  subgraph ARCH["Archive / Selection"]
-    itemSel[Item Selection]
-  end
-
-  subgraph TIM["Timeline Filter"]
-    tfilter[Temporal Filter]
-  end
-
-  subgraph MAP["Spatial Filter"]
-    sfilter[Spatial Filter]
-  end
-
-  VOC --> META
-  META --> searchHits
-  searchHits --> ARCH
-  ARCH --> tfilter
-  ARCH --> sfilter
-  tfilter --> VOC
-  sfilter --> VOC
-```
-
-**What it shows:**
-
-* Vocabulary definitions *inform Metadata editing*
-* Metadata changes update search and selection
-* Filters propagate back to Vocabulary context (facets, meaning grouping)
-* Vocabulary system is decoupled yet *informs every view’s interpretation*
-
----
-
-### 💡 Diagrammatic Notes
-
-* Mermaid diagrams use simple textual syntax for states and transitions([Mermaid][2])
-* State diagrams model *behavioral states* (e.g., selection → filtered → annotated)
-* Flowcharts model *responsibility roles and context propagation*
+_Vocabulary system architecture is documented separately in [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) §C1._

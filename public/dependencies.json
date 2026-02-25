@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-24T22:36:29.800Z",
-  "totalFiles": 245,
+  "generatedAt": "2026-02-25T04:40:16.181Z",
+  "totalFiles": 248,
   "files": {
     "src/app/stores/annotationState.svelte.ts": {
       "filePath": "src/app/stores/annotationState.svelte.ts",
@@ -5057,6 +5057,55 @@
       "size": 665,
       "lines": 30
     },
+    "src/features/archive/stores/archiveViewState.svelte.ts": {
+      "filePath": "src/features/archive/stores/archiveViewState.svelte.ts",
+      "fileName": "archiveViewState.svelte.ts",
+      "directory": "src/features/archive/stores",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/types/viewProtocol",
+          "specifiers": [
+            "ViewId",
+            "ViewSnapshot",
+            "ViewFilters",
+            "ViewStateProvider",
+            ""
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ArchiveViewMode",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ArchiveSortBy",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ArchiveSortDirection",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ArchiveViewState",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 7138,
+      "lines": 204
+    },
     "src/features/archive/ui/atoms/index.ts": {
       "filePath": "src/features/archive/ui/atoms/index.ts",
       "fileName": "index.ts",
@@ -9911,8 +9960,8 @@
       "dependents": [
         "src/features/viewer/model/index.ts"
       ],
-      "size": 17506,
-      "lines": 544
+      "size": 17608,
+      "lines": 545
     },
     "src/features/viewer/actions/waveform.ts": {
       "filePath": "src/features/viewer/actions/waveform.ts",
@@ -9996,8 +10045,8 @@
       "dependents": [
         "src/features/viewer/model/index.ts"
       ],
-      "size": 11946,
-      "lines": 396
+      "size": 12050,
+      "lines": 397
     },
     "src/features/viewer/lib/viewingBehavior.ts": {
       "filePath": "src/features/viewer/lib/viewingBehavior.ts",
@@ -12830,8 +12879,8 @@
       ],
       "dependencies": [],
       "dependents": [],
-      "size": 8702,
-      "lines": 299
+      "size": 8736,
+      "lines": 298
     },
     "src/main.ts": {
       "filePath": "src/main.ts",
@@ -19554,6 +19603,53 @@
       "size": 7095,
       "lines": 158
     },
+    "src/shared/stores/viewRegistry.svelte.ts": {
+      "filePath": "src/shared/stores/viewRegistry.svelte.ts",
+      "fileName": "viewRegistry.svelte.ts",
+      "directory": "src/shared/stores",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/stores/viewRegistry.svelte",
+          "specifiers": [
+            "viewRegistry"
+          ],
+          "isTypeImport": false,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        },
+        {
+          "source": "@/src/shared/types/viewProtocol",
+          "specifiers": [
+            "ViewId",
+            "ViewStateProvider"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewRegistry",
+          "type": "named",
+          "isTypeExport": false
+        },
+        {
+          "name": "viewRegistry",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [],
+      "size": 2871,
+      "lines": 88
+    },
     "src/shared/types/auth-api.ts": {
       "filePath": "src/shared/types/auth-api.ts",
       "fileName": "auth-api.ts",
@@ -19818,7 +19914,33 @@
       "fileName": "index.ts",
       "directory": "src/shared/types",
       "extension": ".ts",
-      "imports": [],
+      "imports": [
+        {
+          "source": "./viewProtocol",
+          "specifiers": [
+            "[re-export]:ViewId",
+            "[re-export]:ViewSnapshot",
+            "[re-export]:ViewFilters",
+            "[re-export]:ViewStateProvider"
+          ],
+          "isTypeImport": true,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        },
+        {
+          "source": "./viewProtocol",
+          "specifiers": [
+            "[re-export]:appModeToViewId"
+          ],
+          "isTypeImport": false,
+          "isRelative": true,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": false
+        }
+      ],
       "exports": [
         {
           "name": "IIIFMotivation",
@@ -20194,12 +20316,40 @@
           "name": "err",
           "type": "named",
           "isTypeExport": false
+        },
+        {
+          "name": "ViewId",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewSnapshot",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewFilters",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewStateProvider",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "appModeToViewId",
+          "type": "named",
+          "isTypeExport": false
         }
       ],
-      "dependencies": [],
+      "dependencies": [
+        "src/shared/types/viewProtocol.ts",
+        "src/shared/types/viewProtocol.ts"
+      ],
       "dependents": [],
-      "size": 16875,
-      "lines": 553
+      "size": 17046,
+      "lines": 557
     },
     "src/shared/types/search-api.ts": {
       "filePath": "src/shared/types/search-api.ts",
@@ -20308,6 +20458,59 @@
       "dependents": [],
       "size": 6169,
       "lines": 218
+    },
+    "src/shared/types/viewProtocol.ts": {
+      "filePath": "src/shared/types/viewProtocol.ts",
+      "fileName": "viewProtocol.ts",
+      "directory": "src/shared/types",
+      "extension": ".ts",
+      "imports": [
+        {
+          "source": "@/src/shared/stores/appMode.svelte",
+          "specifiers": [
+            "AppMode"
+          ],
+          "isTypeImport": true,
+          "isRelative": false,
+          "isAbsolute": false,
+          "isExternal": false,
+          "isInternalAlias": true
+        }
+      ],
+      "exports": [
+        {
+          "name": "ViewId",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewSnapshot",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewFilters",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "ViewStateProvider",
+          "type": "named",
+          "isTypeExport": true
+        },
+        {
+          "name": "appModeToViewId",
+          "type": "named",
+          "isTypeExport": false
+        }
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/shared/types/index.ts",
+        "src/shared/types/index.ts"
+      ],
+      "size": 3567,
+      "lines": 81
     },
     "src/shared/ui/atoms/index.ts": {
       "filePath": "src/shared/ui/atoms/index.ts",
@@ -23218,11 +23421,13 @@
     "@/src/shared/stores/theme.svelte",
     "@/src/shared/stores/toast.svelte",
     "@/src/shared/stores/vault.svelte",
+    "@/src/shared/stores/viewRegistry.svelte",
     "@/src/shared/types",
     "@/src/shared/types/auth-api",
     "@/src/shared/types/change-discovery",
     "@/src/shared/types/image-pipeline",
     "@/src/shared/types/search-api",
+    "@/src/shared/types/viewProtocol",
     "@/src/shared/ui/molecules/ContextMenu",
     "@/src/utils/imageSourceResolver",
     "@/utils",
@@ -23291,6 +23496,7 @@
     "src/entities/manifest/model.ts",
     "src/features/archive/actions/gridLassoSelect.ts",
     "src/features/archive/lib/viewingDirection.ts",
+    "src/features/archive/stores/archiveViewState.svelte.ts",
     "src/features/board-design/actions/canvasDrag.ts",
     "src/features/board-design/actions/rubberBandSelect.ts",
     "src/features/board-design/lib/alignmentGuides.ts",
@@ -23336,6 +23542,7 @@
     "src/shared/stores/persistedTab.svelte.ts",
     "src/shared/stores/pipeline.svelte.ts",
     "src/shared/stores/selection.svelte.ts",
+    "src/shared/stores/viewRegistry.svelte.ts",
     "src/shared/types/auth-api.ts",
     "src/shared/types/change-discovery.ts",
     "src/shared/types/image-pipeline.ts",
@@ -23350,9 +23557,9 @@
     "src/widgets/StatusBar/lib/statusBarHelpers.ts"
   ],
   "stats": {
-    "totalImports": 772,
-    "totalExports": 1995,
-    "avgImportsPerFile": 3.1510204081632653,
+    "totalImports": 778,
+    "totalExports": 2011,
+    "avgImportsPerFile": 3.1370967741935485,
     "mostImported": [
       {
         "file": "src/entities/manifest/model/actions/types.ts",

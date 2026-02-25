@@ -6,12 +6,12 @@
 
 ORIENT → BUILD → TEST → RECTIFY → SYNC. No skipping.
 
-- ORIENT: Read STATE.md. Read ARCHITECTURE.md/ROADMAP.md on phase transitions or gaps.
-- BUILD: Implement.
-- TEST: Write/update tests.
-- RECTIFY: Lint, type-check, fix.
-- SYNC: Overwrite STATE.md (status, delta, gaps). Update ROADMAP/ARCHITECTURE only on structural changes.
-- Exit: zero gaps, clean types, green tests, no pending migrations.
+- **ORIENT**: Read STATE.md (metrics). Run `mulch prime` (domain knowledge) — or `mulch prime --files <paths>` when scoped to specific files. Read ROADMAP.md on phase transitions or gaps.
+- **BUILD**: Implement.
+- **TEST**: Write/update tests.
+- **RECTIFY**: Lint, type-check, fix.
+- **SYNC**: Overwrite STATE.md metrics (run all checks, record numbers). Run `mulch learn` to see what changed, then `mulch record <domain>` for any new convention, pattern, failure, or decision discovered during the session. Update ROADMAP/ARCHITECTURE only on structural changes.
+- **Exit**: zero gaps, clean types, green tests, no pending migrations.
 
 ## Types
 
