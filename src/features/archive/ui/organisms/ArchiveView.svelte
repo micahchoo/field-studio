@@ -20,6 +20,8 @@
   import ArchiveListView from '../molecules/ArchiveListView.svelte';
   import ArchiveGroupedView from '../molecules/ArchiveGroupedView.svelte';
   import { cn } from '@/src/shared/lib/cn';
+  import { viewRegistry } from '@/src/shared/stores/viewRegistry.svelte';
+  import type { ArchiveViewState } from '@/src/features/archive/stores/archiveViewState.svelte';
 
   type ViewMode = 'grid' | 'list' | 'grouped';
   type SortMode = 'name' | 'date' | 'size';
@@ -63,21 +65,34 @@
     onOpenExternalImport,
   }: Props = $props();
 
-  // ── Local State ──
-  let view = $state<ViewMode>(loadViewMode());
+  // ── ViewRegistry state (§0.1) ──
+  const archiveState = viewRegistry.get('archive') as ArchiveViewState;
+
+  // Seed viewMode from localStorage on first mount (if still default)
+  if (archiveState.viewMode === 'grid') {
+    const stored = loadViewMode();
+    if (stored !== 'grid') archiveState.setViewMode(stored);
+  }
+
+  // Derived reads from archiveState (survive view switches)
+  const view = $derived(archiveState.viewMode);
+  const filter = $derived(archiveState.filter);
+  const sortBy = $derived(archiveState.sortBy);
+  const sortDirection = $derived(archiveState.sortDirection);
+  const groupByManifest = $derived(archiveState.groupByManifest);
+  const selectedIds = $derived(archiveState.selection as ReadonlySet<string> & Set<string>);
+
+  // Local-only state (transient UI, not preserved across view switches)
   let filterInput = $state('');
-  let filter = $state('');
-  let sortBy = $state<SortMode>('name');
-  let sortDirection = $state<SortDirection>('asc');
-  let groupByManifest = $state(false);
-  let activeItem = $state<IIIFItem | null>(null);
   let contextMenu = $state<{ x: number; y: number; item: IIIFItem } | null>(null);
-  let selectedIds = $state(new Set<string>());
+
+  // activeItem derived from archiveState.activeItemId + canvases
+  // (defined after canvases $derived below)
 
   // ── Debounced filter ──
   $effect(() => {
     const value = filterInput;
-    const timer = setTimeout(() => { filter = value; }, 300);
+    const timer = setTimeout(() => { archiveState.setFilter(value); }, 300);
     return () => clearTimeout(timer);
   });
 
@@ -89,22 +104,31 @@
   const selectionHasGPS = $derived(checkSelectionHasGPS(selectedIds, canvases));
   const reorderEnabled = $derived(!filmstripMode && !showViewerPanel);
 
+  // activeItem: derived from archiveState.activeItemId
+  const activeItem = $derived(
+    archiveState.activeItemId
+      ? canvases.find((c) => c.id === archiveState.activeItemId) ?? null
+      : null
+  );
+
   // ── Effects ──
 
+  // Persist viewMode to localStorage
   $effect(() => {
     try { localStorage.setItem('archive-view-mode', view); } catch { /* unavailable */ }
   });
 
+  // Sync activeItemId when selection changes
   $effect(() => {
     if (selectedIds.size === 1) {
       const id = Array.from(selectedIds)[0];
-      activeItem = canvases.find((c) => c.id === id) ?? null;
+      archiveState.setActiveItemId(id);
     } else if (selectedIds.size > 1) {
-      if (!activeItem || !selectedIds.has(activeItem.id)) {
-        activeItem = canvases.find((c) => c.id === Array.from(selectedIds)[0]) ?? null;
+      if (!archiveState.activeItemId || !selectedIds.has(archiveState.activeItemId)) {
+        archiveState.setActiveItemId(Array.from(selectedIds)[0] ?? null);
       }
     } else {
-      activeItem = null;
+      archiveState.setActiveItemId(null);
     }
   });
 
@@ -213,23 +237,20 @@
       const endIdx = filteredCanvases.findIndex((c) => c.id === item.id);
       if (startIdx !== -1 && endIdx !== -1) {
         const [lo, hi] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
-        const newSet = new Set(selectedIds);
-        for (let i = lo; i <= hi; i++) newSet.add(filteredCanvases[i].id);
-        selectedIds = newSet;
+        const rangeIds = filteredCanvases.slice(lo, hi + 1).map(c => c.id);
+        archiveState.selectRange(rangeIds);
       }
     } else if (e.ctrlKey || e.metaKey) {
-      const newSet = new Set(selectedIds);
-      if (newSet.has(item.id)) newSet.delete(item.id); else newSet.add(item.id);
-      selectedIds = newSet;
+      archiveState.toggleSelection(item.id);
     } else {
-      selectedIds = new Set([item.id]);
+      archiveState.setSelection(new Set([item.id]));
       onSelect(item);
     }
   }
 
   function handleContextMenu(e: MouseEvent, item: IIIFItem) {
     e.preventDefault();
-    if (!selectedIds.has(item.id)) selectedIds = new Set([item.id]);
+    if (!selectedIds.has(item.id)) archiveState.setSelection(new Set([item.id]));
     contextMenu = { x: e.clientX, y: e.clientY, item };
   }
 
@@ -276,7 +297,7 @@
     if (!newRoot.items) newRoot.items = [];
     newRoot.items.push({ id: manifestId, type: 'Manifest', label: { en: ['Selection Bundle'] }, items: canvasesToMove });
     onUpdate(newRoot);
-    selectedIds = new Set([manifestId]);
+    archiveState.setSelection(new Set([manifestId]));
   }
 
   function handleEditMetadata() { onBatchEdit(Array.from(selectedIds)); }
@@ -319,16 +340,16 @@
           {fieldMode}
           bind:filter={filterInput}
           {view}
-          onViewChange={(v) => (view = v)}
+          onViewChange={(v) => archiveState.setViewMode(v)}
           {sortBy}
-          onSortChange={(v) => (sortBy = v)}
+          onSortChange={(v) => archiveState.setSortBy(v)}
           {sortDirection}
-          onSortDirectionChange={(v) => (sortDirection = v)}
+          onSortDirectionChange={(v) => archiveState.setSortDirection(v)}
           {groupByManifest}
-          onToggleGroupByManifest={() => (groupByManifest = !groupByManifest)}
+          onToggleGroupByManifest={() => archiveState.setGroupByManifest(!groupByManifest)}
           selectedCount={selectedIds.size}
           {selectionHasGPS}
-          onClearSelection={() => { selectedIds = new Set(); }}
+          onClearSelection={() => archiveState.clearSelection()}
           onGroupIntoManifest={handleGroupIntoManifest}
           onOpenMap={handleOpenMap}
           onEditMetadata={handleEditMetadata}
@@ -424,10 +445,7 @@
       {fieldMode}
       onOpen={() => { onOpen(contextMenu!.item); contextMenu = null; }}
       onToggleSelect={() => {
-        const newSet = new Set(selectedIds);
-        if (newSet.has(contextMenu!.item.id)) newSet.delete(contextMenu!.item.id);
-        else newSet.add(contextMenu!.item.id);
-        selectedIds = newSet;
+        archiveState.toggleSelection(contextMenu!.item.id);
         contextMenu = null;
       }}
       onGroupIntoManifest={handleGroupIntoManifest}
