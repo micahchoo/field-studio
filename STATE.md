@@ -8,7 +8,7 @@ _Ephemeral metrics snapshot. Updated after every session. For accumulated knowle
 |-------|--------|
 | `npx tsc --noEmit` | **0 errors** |
 | `npx svelte-check` | 0 errors, **2 warnings** (pre-existing a11y) |
-| `npm run test` | 117 files, **4978 tests passing** |
+| `npm run test` | 120 files, **5055 tests passing** |
 | `npm run lint` | **0 errors, 0 warnings** |
 
 ## Permanent TYPE_DEBT (external libs — suppressed via eslint-disable)
@@ -23,7 +23,10 @@ _Ephemeral metrics snapshot. Updated after every session. For accumulated knowle
 
 _Overwrite this section each session with: what changed, what phase item was completed, any new gaps._
 
-- Evaluated Vision.md and ROADMAP.md alignment
-- Resolved 8 gaps across Vision.md, ROADMAP.md, DESIGN_DECISIONS.md
-- Added blinker principles for LLM-driven development to ROADMAP.md
-- Migrated accumulated knowledge from STATE.md to mulch
+- **Completed: Phase 0.1 ViewBus** — ViewStateProvider protocol + ViewRegistry + ArchiveViewState exemplar
+- New files: `viewProtocol.ts`, `viewRegistry.svelte.ts`, `archiveViewState.svelte.ts` + 3 test files (77 new tests)
+- Modified: `ViewRouter.svelte` (registry wiring + active view sync), `ArchiveView.svelte` (reads/writes from registry)
+- Archive state (filter, sort, viewMode, selection) now survives view switches via ViewRegistry
+- Re-exported ViewBus types from `shared/types/index.ts`
+- Selection Bus (§0.2) can now read `viewRegistry.activeSelection` as starting point
+- No new TYPE_DEBT introduced
