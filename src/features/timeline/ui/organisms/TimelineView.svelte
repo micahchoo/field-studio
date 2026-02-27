@@ -27,11 +27,11 @@
   import { cn } from '@/src/shared/lib/cn';
   import { TimelineStore } from '@/src/features/timeline/stores/timeline.svelte';
   import type { ZoomLevel, TimelineGroup, TimelineItem } from '@/src/features/timeline/stores/timeline.svelte';
-  import { getChildEntities, isManifest, type IIIFItem } from '@/src/shared/types';
+  import type { IIIFItem, EntityType } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
   interface Props {
-    root: IIIFItem;
     cx: ContextualClassNames;
     fieldMode: boolean;
     t: (key: string, fallback?: string) => string;
@@ -39,7 +39,7 @@
     onSwitchView: (mode: string) => void;
   }
 
-  let { root, cx, fieldMode, t, onSelect, onSwitchView }: Props = $props();
+  let { cx, fieldMode, t, onSelect, onSwitchView }: Props = $props();
 
   // ── Feature Store ──
   const timeline = new TimelineStore();
@@ -60,22 +60,15 @@
 
   // ── Effects ──
 
-  // Initialize timeline store from root's canvases (items with navDate)
+  // Initialize timeline store from vault canvases
   $effect(() => {
-    const children = getChildEntities(root);
-    const canvases = children
-      .filter((item) => item.type === 'Canvas' || item.type === 'Manifest')
-      .flatMap((item) => {
-        if (isManifest(item)) return getChildEntities(item);
-        return [item];
-      })
-      .map((canvas) => ({
-        id: canvas.id,
-        label: getIIIFValue(canvas.label) || canvas.id,
-        navDate: canvas.navDate,
-      }));
-
-    timeline.loadFromCanvases(canvases);
+    const canvases = vault.getEntitiesByType('Canvas' as EntityType);
+    const timelineItems = canvases.map((canvas) => ({
+      id: canvas.id,
+      label: getIIIFValue(canvas.label) || canvas.id,
+      navDate: canvas.navDate,
+    }));
+    timeline.loadFromCanvases(timelineItems);
   });
 
   // ── Handlers ──

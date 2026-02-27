@@ -35,7 +35,7 @@
  */
 
 import { Vault } from '@/src/entities/manifest/model/vault';
-import type { NormalizedState, VaultSnapshot, IIIFItem } from '@/src/shared/types';
+import type { NormalizedState, VaultSnapshot, IIIFItem, EntityType } from '@/src/shared/types';
 import { reduce, ActionHistory } from '@/src/entities/manifest/model/actions';
 import type { Action } from '@/src/entities/manifest/model/actions';
 
@@ -87,6 +87,28 @@ class VaultStore {
   /** Get child IDs — reactive */
   getChildIds(id: string): string[] {
     return this.#raw.references[id] || [];
+  }
+
+  /** Get all entities of a type — reactive */
+  getEntitiesByType(type: EntityType): IIIFItem[] {
+    const store = this.#raw.entities[type] as Record<string, IIIFItem> | undefined;
+    return store ? Object.values(store) : [];
+  }
+
+  /** Get parent entity ID — reactive */
+  getParentId(id: string): string | null {
+    return this.#raw.reverseRefs[id] || null;
+  }
+
+  /** Get ancestor IDs from parent to root — reactive */
+  getAncestors(id: string): string[] {
+    const ancestors: string[] = [];
+    let currentId = this.#raw.reverseRefs[id];
+    while (currentId) {
+      ancestors.push(currentId);
+      currentId = this.#raw.reverseRefs[currentId];
+    }
+    return ancestors;
   }
 
   // ──────────────────────────────────────────────

@@ -16,16 +16,15 @@
   import { cn } from '@/src/shared/lib/cn';
   import { search } from '@/src/shared/stores';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
-  import type { IIIFItem } from '@/src/shared/types';
   import type { SearchResult, SearchIndexEntry } from '@/src/shared/types/search-api';
   import { buildIndexEntries } from '@/src/shared/services/searchService';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
   // ---------------------------------------------------------------------------
   // Props
   // ---------------------------------------------------------------------------
 
   interface SearchViewProps {
-    root: IIIFItem | null;
     cx: ContextualClassNames;
     fieldMode: boolean;
     t: (key: string) => string;
@@ -34,7 +33,6 @@
   }
 
   let {
-    root,
     cx,
     fieldMode,
     t,
@@ -88,13 +86,24 @@
   // Effects
   // ---------------------------------------------------------------------------
 
-  // Build search index when root changes
+  // Build search index from vault entities
   $effect(() => {
-    if (!root) {
+    const state = vault.state;
+    if (!state.rootId) {
       search.clearIndex();
       return;
     }
-    const entries = collectIndexEntries(root);
+    const allIds = Object.keys(state.typeIndex);
+    const entries: SearchIndexEntry[] = [];
+    for (const id of allIds) {
+      const entity = vault.getEntity(id);
+      if (!entity) continue;
+      entries.push(...buildIndexEntries(entity.id, entity.type, {
+        label: entity.label,
+        summary: entity.summary,
+        metadata: entity.metadata,
+      }));
+    }
     search.rebuildIndex(entries);
   });
 
@@ -116,31 +125,6 @@
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  /** Recursively collect search index entries from the IIIF tree */
-  function collectIndexEntries(item: IIIFItem): SearchIndexEntry[] {
-    const entries: SearchIndexEntry[] = [];
-
-    entries.push(...buildIndexEntries(
-      item.id,
-      item.type,
-      {
-        label: item.label,
-        summary: item.summary,
-        metadata: item.metadata,
-      },
-    ));
-
-    if (item.items && Array.isArray(item.items)) {
-      for (const child of item.items) {
-        if (child && typeof child === 'object' && 'id' in child) {
-          entries.push(...collectIndexEntries(child as IIIFItem));
-        }
-      }
-    }
-
-    return entries;
-  }
 
   function getResultCountText(count: number): string {
     return `${count} result${count === 1 ? '' : 's'}`;

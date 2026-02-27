@@ -28,11 +28,12 @@
   import { cn } from '@/src/shared/lib/cn';
   import { MapStore } from '@/src/features/map/stores/map.svelte';
   import type { GeoItem, Cluster } from '@/src/features/map/stores/map.svelte';
-  import { getChildEntities, isManifest, type IIIFItem } from '@/src/shared/types';
+  import type { IIIFItem } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
+  import type { EntityType } from '@/src/shared/types';
 
   interface Props {
-    root: IIIFItem;
     cx: ContextualClassNames;
     fieldMode: boolean;
     t: (key: string, fallback?: string) => string;
@@ -41,7 +42,7 @@
     onSwitchView: (mode: string) => void;
   }
 
-  let { root, cx, fieldMode, t, isAdvanced, onSelect, onSwitchView }: Props = $props();
+  let { cx, fieldMode, t, isAdvanced, onSelect, onSwitchView }: Props = $props();
 
   // ── Feature Store ──
   const map = new MapStore();
@@ -70,25 +71,18 @@
 
   // ── Effects ──
 
-  // Initialize map store from root's items (canvases with metadata)
+  // Initialize map store from vault canvases
   $effect(() => {
-    const children = getChildEntities(root);
-    const canvases = children
-      .filter((item) => item.type === 'Canvas' || item.type === 'Manifest')
-      .flatMap((item) => {
-        if (isManifest(item)) return getChildEntities(item);
-        return [item];
-      })
-      .map((canvas) => ({
-        id: canvas.id,
-        label: getIIIFValue(canvas.label) || canvas.id,
-        metadata: canvas.metadata?.map((m) => ({
-          label: getIIIFValue(m.label),
-          value: getIIIFValue(m.value),
-        })),
-      }));
-
-    map.loadFromManifest(canvases);
+    const canvases = vault.getEntitiesByType('Canvas' as EntityType);
+    const mapItems = canvases.map((canvas) => ({
+      id: canvas.id,
+      label: getIIIFValue(canvas.label) || canvas.id,
+      metadata: canvas.metadata?.map((m) => ({
+        label: getIIIFValue(m.label),
+        value: getIIIFValue(m.value),
+      })),
+    }));
+    map.loadFromManifest(mapItems);
   });
 
   // Observe container size for pixel projection accuracy

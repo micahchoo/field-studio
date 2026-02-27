@@ -712,7 +712,6 @@
   <div class="view-enter flex-1 flex flex-col min-h-0">
     <svelte:boundary onerror={handleViewError}>
       <SearchView
-        {root}
         onSelect={(id) => {
           onSelectId?.(id);
           appMode.setMode('archive');
@@ -734,9 +733,8 @@
   <!-- ================================================================== -->
   <div class="view-enter flex-1 flex flex-col min-h-0">
     <svelte:boundary onerror={handleViewError}>
-      {#if root}
+      {#if vault.rootId}
         <MapView
-          {root}
           onSelect={(item) => onSelectId?.(item.id)}
           {cx}
           fieldMode={isFieldMode}
@@ -754,9 +752,8 @@
   <!-- ================================================================== -->
   <div class="view-enter flex-1 flex flex-col min-h-0">
     <svelte:boundary onerror={handleViewError}>
-      {#if root}
+      {#if vault.rootId}
         <TimelineView
-          {root}
           onSelect={(item) => onSelectId?.(item.id)}
           {cx}
           fieldMode={isFieldMode}
