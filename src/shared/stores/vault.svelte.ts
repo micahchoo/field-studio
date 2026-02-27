@@ -26,8 +26,8 @@
  *
  *   // Mutations (trigger reactive updates)
  *   vault.load(root)
- *   vault.update(id, changes)
- *   vault.moveToTrash(id)
+ *   vault.dispatch(action)
+ *   vault.undo() / vault.redo()
  *
  * WARNING: Do NOT destructure the vault object — it breaks reactivity:
  *   const { state } = vault;  // ❌ captures value, not signal
@@ -110,8 +110,7 @@ class VaultStore {
   peekParent(id: string): string | null { return this.#vault.getParent(id); }
 
   // ──────────────────────────────────────────────
-  // Mutations — delegate to framework-agnostic Vault,
-  // which triggers subscribe → updates #raw → reactive cascade
+  // Mutations — all writes go through load() or dispatch()
   // ──────────────────────────────────────────────
 
   load(root: IIIFItem): void {
@@ -125,25 +124,12 @@ class VaultStore {
     );
   }
   export(): IIIFItem | null { return this.#vault.export(); }
-  update(id: string, updates: Partial<IIIFItem>): void { this.#vault.update(id, updates); }
-  add(entity: IIIFItem, parentId: string): void { this.#vault.add(entity, parentId); }
-  remove(id: string, opts?: { permanent?: boolean }): void { this.#vault.remove(id, opts); }
-  moveToTrash(id: string): void { this.#vault.moveToTrash(id); }
-  restoreFromTrash(id: string, opts?: { parentId?: string; index?: number }): void {
-    this.#vault.restoreFromTrash(id, opts);
-  }
-  emptyTrash(): void { this.#vault.emptyTrash(); }
-  move(id: string, newParentId: string, index?: number): void {
-    this.#vault.move(id, newParentId, index);
-  }
 
-  // Collections
-  addToCollection(collId: string, resId: string): void { this.#vault.addToCollection(collId, resId); }
-  removeFromCollection(collId: string, resId: string): void { this.#vault.removeFromCollection(collId, resId); }
+  // Read-only collection queries
   getCollectionMembers(collId: string): string[] { return this.#vault.getCollectionMembers(collId); }
   getCollectionsContaining(resId: string): string[] { return this.#vault.getCollectionsContaining(resId); }
 
-  // Snapshot/Restore
+  // Snapshot/Restore (used internally by dispatch/undo/redo)
   snapshot(): VaultSnapshot { return this.#vault.snapshot(); }
   restore(snap: VaultSnapshot): void { this.#vault.restore(snap); }
 
