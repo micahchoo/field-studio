@@ -52,7 +52,6 @@
   import { activityLog } from '@/src/shared/stores/activityLog.svelte';
   // import { auth } from '@/src/shared/stores/auth.svelte'; // used when AuthDialog is migrated
   import { autoSave } from '@/src/app/stores/autoSave.svelte';
-  import { HistoryStore } from '@/src/shared/lib/hooks/history.svelte';
   import { validation } from '@/src/app/stores/validation.svelte';
   import { responsive } from '@/src/shared/actions/responsive.svelte';
   import { networkStatus } from '@/src/shared/actions/networkStatus.svelte';
@@ -187,11 +186,9 @@
     retryFn?: () => void;
   } | null>(null);
 
-  // ── History (undo/redo) ──
-  let lastActionType = $state<string | null>(null);
-  const history = new HistoryStore<IIIFItem | null>(null, 50);
-  const canUndo = $derived(history.canUndo);
-  const canRedo = $derived(history.canRedo);
+  // ── History (undo/redo) — delegated to vault.undo/redo (ActionHistory) ──
+  const canUndo = $derived(vault.canUndo);
+  const canRedo = $derived(vault.canRedo);
 
   // ── File input ref ──
   let mainFileInputEl: HTMLInputElement | undefined = $state(undefined);
@@ -480,7 +477,6 @@
     storage.loadProject().then((proj) => {
       if (proj) {
         vault.load(proj);
-        history.set(proj); // initialize history with loaded state
       }
     }).catch(() => {});
     storage.requestPersistentStorage().catch(() => {});
@@ -529,7 +525,6 @@
 
   function handleUpdateRoot(newRoot: IIIFItem) {
     vault.load(newRoot);
-    history.update(newRoot);
     autoSave.markDirty();
     storage.saveProject(newRoot).catch(() => {});
   }
@@ -556,7 +551,6 @@
 
   function handleBatchRollback(restoredRoot: IIIFItem) {
     vault.load(restoredRoot);
-    history.update(restoredRoot);
     autoSave.markDirty();
     storage.saveProject(restoredRoot).catch(() => {});
   }
@@ -686,23 +680,15 @@
   }
 
   function handleUndo() {
-    if (!history.canUndo) return;
-    history.undo();
-    const prev = history.state;
-    if (prev) {
-      vault.load(prev);
-      autoSave.markDirty();
-    }
+    if (!vault.canUndo) return;
+    vault.undo();
+    autoSave.markDirty();
   }
 
   function handleRedo() {
-    if (!history.canRedo) return;
-    history.redo();
-    const next = history.state;
-    if (next) {
-      vault.load(next);
-      autoSave.markDirty();
-    }
+    if (!vault.canRedo) return;
+    vault.redo();
+    autoSave.markDirty();
   }
 
   // ── Content State drop handler ──
@@ -970,7 +956,6 @@
         {canRedo}
         onUndo={handleUndo}
         onRedo={handleRedo}
-        lastActionLabel={lastActionType}
         isOnline={isOnline}
         activityCount={activityCount}
         onOpenKeyboardShortcuts={() => dialogs.keyboardShortcuts.open()}
