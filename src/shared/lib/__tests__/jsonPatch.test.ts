@@ -392,7 +392,7 @@ describe('jsonPatch', () => {
 
     it('applies add at 3-segment path', () => {
       const obj = {
-        entities: { Canvas: { c1: { id: 'c1' } }, Manifest: {} },
+        entities: { Canvas: { c1: { id: 'c1' } } as Record<string, unknown>, Manifest: {} },
         rootId: null,
       };
       const newCanvas = { id: 'c2', label: 'New' };
@@ -422,7 +422,7 @@ describe('jsonPatch', () => {
 
     it('applies add at 2-segment path (new bucket)', () => {
       const obj = {
-        entities: { Canvas: {}, Manifest: {} },
+        entities: { Canvas: {}, Manifest: {} } as Record<string, Record<string, unknown>>,
         rootId: null,
       };
       const annotationBucket = { a1: { id: 'a1', body: 'hello' } };
