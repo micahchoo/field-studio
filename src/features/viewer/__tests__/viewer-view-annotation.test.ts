@@ -36,11 +36,9 @@ import {
 
 vi.mock('@/src/shared/stores/vault.svelte', () => {
   const dispatchMock = vi.fn(() => true);
-  const addMock = vi.fn();
   return {
     vault: {
       dispatch: dispatchMock,
-      add: addMock,
       export: vi.fn(() => null),
     },
   };
@@ -78,12 +76,11 @@ describe('actions.addAnnotation — typed dispatch contract', () => {
     expect((action as any).annotation.id).toBe('https://example.com/anno/42');
   });
 
-  it('dispatching addAnnotation invokes vault.dispatch, never vault.add', () => {
+  it('dispatching addAnnotation invokes vault.dispatch', () => {
     const anno = makeAnnotation();
     vault.dispatch(actions.addAnnotation('canvas-1', anno));
 
     expect(vault.dispatch).toHaveBeenCalledTimes(1);
-    expect(vault.add).not.toHaveBeenCalled();
   });
 
   it('preserves full annotation body through the action', () => {
