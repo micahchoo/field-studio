@@ -12,7 +12,9 @@
   import { cn } from '@/src/shared/lib/cn';
   import { getIIIFValue } from '@/src/shared/types';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
-  import { getChildEntities, type IIIFItem, type AbstractionLevel } from '@/src/shared/types';
+  import type { IIIFItem, AbstractionLevel } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
+  import { actions } from '@/src/entities/manifest/model/actions';
   import MetadataSpreadsheetTable from '../molecules/MetadataSpreadsheetTable.svelte';
   import type { ColumnDef, ColumnGroup, FlatItem } from '../molecules/MetadataSpreadsheetTable.svelte';
 
@@ -21,17 +23,15 @@
   // ---------------------------------------------------------------------------
 
   interface MetadataViewProps {
-    root: IIIFItem | null;
     cx: ContextualClassNames;
     fieldMode: boolean;
-    onUpdate: (updatedRoot: IIIFItem) => void;
     filterIds?: string[] | null;
     onClearFilter?: () => void;
     abstractionLevel?: AbstractionLevel;
   }
 
   let {
-    root, cx, fieldMode, onUpdate,
+    cx, fieldMode,
     filterIds = null, onClearFilter,
     abstractionLevel = 'standard',
   }: MetadataViewProps = $props();
@@ -83,8 +83,20 @@
   // ---------------------------------------------------------------------------
 
   const allItems = $derived.by((): FlatItem[] => {
-    if (!root) return [];
-    return flattenTree(root, activeTab);
+    if (!vault.rootId) return [];
+    const state = vault.state;
+    const allIds = Object.keys(state.typeIndex);
+    const items: FlatItem[] = [];
+    for (const id of allIds) {
+      const entity = vault.getEntity(id);
+      if (!entity) continue;
+      const shouldInclude =
+        activeTab === 'All' ? ['Collection', 'Manifest', 'Canvas'].includes(entity.type)
+        : activeTab === 'All Entities' ? true
+        : entity.type === activeTab;
+      if (shouldInclude) items.push(flattenItem(entity));
+    }
+    return items;
   });
 
   const idFilteredItems = $derived.by((): FlatItem[] => {
@@ -149,25 +161,6 @@
   // Tree Helpers
   // ---------------------------------------------------------------------------
 
-  function flattenTree(item: IIIFItem, tab: ResourceTab): FlatItem[] {
-    const results: FlatItem[] = [];
-    collectItems(item, results, tab);
-    return results;
-  }
-
-  function collectItems(item: IIIFItem, out: FlatItem[], tab: ResourceTab): void {
-    const shouldInclude =
-      tab === 'All' ? ['Collection', 'Manifest', 'Canvas'].includes(item.type)
-      : tab === 'All Entities' ? true
-      : item.type === tab;
-    if (shouldInclude) out.push(flattenItem(item));
-    if (item.items && Array.isArray(item.items)) {
-      for (const child of item.items) {
-        if (child && typeof child === 'object' && 'id' in child) collectItems(child as IIIFItem, out, tab);
-      }
-    }
-  }
-
   function flattenItem(item: IIIFItem): FlatItem {
     const metadataMap: Record<string, string> = {};
     if (item.metadata) {
@@ -201,30 +194,27 @@
   // ---------------------------------------------------------------------------
 
   function handleCellEdit(itemId: string, column: string, value: string) {
-    if (!root) return;
+    if (!vault.rootId) return;
     hasUnsavedChanges = true;
-    onUpdate(updateItemInTree(root, itemId, column, value));
-  }
 
-  function updateItemInTree(node: IIIFItem, itemId: string, column: string, value: string): IIIFItem {
-    if (node.id === itemId) {
-      const updated = { ...node };
-      if (column === 'label') updated.label = { en: [value] };
-      else if (column === 'summary') updated.summary = { en: [value] };
-      else if (column === 'rights') updated.rights = value || undefined;
-      else if (column === 'navDate') updated.navDate = value || undefined;
-      else {
-        const metadata = [...(updated.metadata || [])];
-        const existingIndex = metadata.findIndex((m) => getIIIFValue(m.label).toLowerCase() === column.toLowerCase());
-        if (existingIndex >= 0) metadata[existingIndex] = { label: { en: [column] }, value: { en: [value] } };
-        else if (value) metadata.push({ label: { en: [column] }, value: { en: [value] } });
-        updated.metadata = metadata;
-      }
-      return updated;
+    if (column === 'label') {
+      vault.dispatch({ type: 'UPDATE_LABEL', id: itemId, label: { en: [value] } });
+    } else if (column === 'summary') {
+      vault.dispatch({ type: 'UPDATE_SUMMARY', id: itemId, summary: { en: [value] } });
+    } else if (column === 'rights') {
+      vault.dispatch({ type: 'UPDATE_RIGHTS', id: itemId, rights: value || '' });
+    } else if (column === 'navDate') {
+      vault.dispatch({ type: 'UPDATE_NAV_DATE', id: itemId, navDate: value || undefined });
+    } else {
+      // Custom metadata field
+      const entity = vault.getEntity(itemId);
+      if (!entity) return;
+      const metadata = [...(entity.metadata || [])];
+      const existingIndex = metadata.findIndex((m) => getIIIFValue(m.label).toLowerCase() === column.toLowerCase());
+      if (existingIndex >= 0) metadata[existingIndex] = { label: { en: [column] }, value: { en: [value] } };
+      else if (value) metadata.push({ label: { en: [column] }, value: { en: [value] } });
+      vault.dispatch({ type: 'UPDATE_METADATA', id: itemId, metadata });
     }
-    const children = getChildEntities(node);
-    if (children.length > 0) return { ...node, items: children.map((child) => updateItemInTree(child, itemId, column, value)) };
-    return node;
   }
 
   function handleCellKeyDown(e: KeyboardEvent, itemId: string, column: string) {
@@ -267,7 +257,6 @@
   }
 
   function handleSave() {
-    if (root) onUpdate(root);
     hasUnsavedChanges = false;
   }
 
@@ -332,7 +321,7 @@
   {/snippet}
 
   {#snippet body()}
-    {#if !root}
+    {#if !vault.rootId}
       <div class={cn('flex items-center justify-center h-full p-8', cx.surface)}>
         <div class={cn('text-center', fieldMode ? 'text-nb-yellow/40' : 'text-nb-black/60')}>
           <div class={cn('w-16 h-16 mx-auto mb-4 flex items-center justify-center', fieldMode ? 'bg-nb-yellow/10' : 'bg-nb-cream')}>

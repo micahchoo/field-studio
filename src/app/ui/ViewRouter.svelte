@@ -696,10 +696,8 @@
   <div class="view-enter flex-1 flex flex-col min-h-0">
     <svelte:boundary onerror={handleViewError}>
       <MetadataView
-        {root}
         {cx}
         fieldMode={isFieldMode}
-        onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
         abstractionLevel={settings?.abstractionLevel}
       />
     </svelte:boundary>
