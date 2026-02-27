@@ -22,6 +22,13 @@ export interface FlatTreeNode {
   isExpanded: boolean;
 }
 
+/** Vault accessor callbacks for normalized state traversal */
+export interface VaultAccessors {
+  getEntity: (id: string) => IIIFItem | null;
+  getChildIds: (id: string) => string[];
+  getAncestors: (id: string) => string[];
+}
+
 // ---------------------------------------------------------------------------
 // Icon mapping
 // ---------------------------------------------------------------------------
@@ -41,74 +48,62 @@ export function getTypeIcon(type: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Descendant search
+// Descendant search (normalized)
 // ---------------------------------------------------------------------------
 
 /**
- * Check whether any item in `items` (or their descendants) has a label
+ * Check whether any entity in `ids` (or their descendants) has a label
  * matching `query` (case-insensitive).
  */
-export function hasDescendantMatch(items: IIIFItem[], query: string): boolean {
+export function hasDescendantMatch(
+  ids: string[],
+  accessors: VaultAccessors,
+  query: string,
+): boolean {
   const lowerQuery = query.toLowerCase();
 
-  for (const item of items) {
-    const label = getIIIFValue(item.label) || item.type || item.id;
+  for (const id of ids) {
+    const entity = accessors.getEntity(id);
+    if (!entity) continue;
+    const label = getIIIFValue(entity.label) || entity.type || entity.id;
     if (label.toLowerCase().includes(lowerQuery)) return true;
 
-    const children = item.items as IIIFItem[] | undefined;
-    if (children && hasDescendantMatch(children, query)) return true;
+    const childIds = accessors.getChildIds(id);
+    if (childIds.length > 0 && hasDescendantMatch(childIds, accessors, query)) return true;
   }
   return false;
 }
 
 // ---------------------------------------------------------------------------
-// Breadcrumbs
+// Breadcrumbs (normalized)
 // ---------------------------------------------------------------------------
 
 /**
- * Build a breadcrumb path from `root` down to the item whose id equals
- * `targetId`. Returns an empty array when root is null or the target
- * is not found.
+ * Build a breadcrumb path from root down to `targetId` using vault ancestors.
  */
 export function computeBreadcrumbs(
-  root: IIIFItem | null,
-  targetId: string,
+  targetId: string | null,
+  accessors: VaultAccessors,
 ): { id: string; label: string }[] {
-  if (!root) return [];
+  if (!targetId) return [];
 
-  const path: { id: string; label: string }[] = [];
+  const entity = accessors.getEntity(targetId);
+  if (!entity) return [];
 
-  function walk(
-    node: IIIFItem,
-    trail: { id: string; label: string }[],
-  ): boolean {
-    const nodeLabel = getIIIFValue(node.label) || node.type || node.id;
-    const currentTrail = [...trail, { id: node.id, label: nodeLabel }];
-
-    if (node.id === targetId) {
-      path.push(...currentTrail);
-      return true;
-    }
-
-    const children = node.items as IIIFItem[] | undefined;
-    if (children) {
-      for (const child of children) {
-        if (walk(child, currentTrail)) return true;
-      }
-    }
-    return false;
-  }
-
-  walk(root, []);
+  const ancestorIds = accessors.getAncestors(targetId);
+  const path = [...ancestorIds.reverse(), targetId].map(id => {
+    const e = accessors.getEntity(id);
+    return { id, label: e ? (getIIIFValue(e.label) || e.type || e.id) : id };
+  });
   return path;
 }
 
 // ---------------------------------------------------------------------------
-// Tree flattening
+// Tree flattening (normalized)
 // ---------------------------------------------------------------------------
 
 /**
- * Flatten an IIIF item tree into a depth-first list of `FlatTreeNode`
+ * Flatten the IIIF entity tree into a depth-first list of `FlatTreeNode`
  * objects, respecting expand/collapse state and an optional search filter.
  *
  * When a search `query` is provided, only nodes whose label matches
@@ -116,33 +111,37 @@ export function computeBreadcrumbs(
  * matching ancestors are always shown regardless of expand state.
  */
 export function flattenTree(
-  root: IIIFItem | null,
+  rootId: string | null,
+  accessors: VaultAccessors,
   expandedIds: Set<string>,
   query: string,
 ): FlatTreeNode[] {
-  if (!root) return [];
+  if (!rootId) return [];
 
   const nodes: FlatTreeNode[] = [];
   const lowerQuery = query.toLowerCase().trim();
 
-  function walk(item: IIIFItem, depth: number): void {
-    const label = getIIIFValue(item.label) || item.type || item.id;
-    const children = item.items as IIIFItem[] | undefined;
-    const hasChildren = Array.isArray(children) && children.length > 0;
-    const isExpanded = expandedIds.has(item.id);
+  function walk(id: string, depth: number): void {
+    const entity = accessors.getEntity(id);
+    if (!entity) return;
+
+    const label = getIIIFValue(entity.label) || entity.type || entity.id;
+    const childIds = accessors.getChildIds(id);
+    const hasChildren = childIds.length > 0;
+    const isExpanded = expandedIds.has(id);
 
     // When searching, skip nodes that neither match nor have matching descendants
     if (lowerQuery) {
       const matchesSelf = label.toLowerCase().includes(lowerQuery);
-      const hasMatchingDescendant = hasChildren && hasDescendantMatch(children!, lowerQuery);
+      const hasMatchingDescendant = hasChildren && hasDescendantMatch(childIds, accessors, lowerQuery);
 
       if (!matchesSelf && !hasMatchingDescendant) return;
     }
 
     nodes.push({
-      id: item.id,
+      id,
       label,
-      type: item.type,
+      type: entity.type,
       depth,
       hasChildren,
       isExpanded,
@@ -150,12 +149,12 @@ export function flattenTree(
 
     // Recurse into children if expanded, or if searching and has matches
     if (hasChildren && (isExpanded || lowerQuery)) {
-      for (const child of children!) {
-        walk(child, depth + 1);
+      for (const childId of childIds) {
+        walk(childId, depth + 1);
       }
     }
   }
 
-  walk(root, 0);
+  walk(rootId, 0);
   return nodes;
 }

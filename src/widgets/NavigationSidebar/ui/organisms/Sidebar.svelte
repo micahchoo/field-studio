@@ -16,15 +16,15 @@
   import { toast } from '@/src/shared/stores/toast.svelte';
   import { appSettings } from '@/src/shared/stores/appSettings.svelte';
 
-  import type { IIIFItem, AbstractionLevel } from '@/src/shared/types';
-  import { getIIIFValue } from '@/src/shared/types';
+  import type { AbstractionLevel } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
   import {
     getTypeIcon,
-    hasDescendantMatch,
-    computeBreadcrumbs as computeBreadcrumbsPure,
+    computeBreadcrumbs as computeBreadcrumbsNormalized,
     flattenTree,
     type FlatTreeNode,
+    type VaultAccessors,
   } from '../../lib/sidebarHelpers';
 
   // Structure-view components available for future decomposition
@@ -76,7 +76,6 @@
   // Props
   // ---------------------------------------------------------------------------
   interface Props {
-    root: IIIFItem | null;
     selectedId: string | null;
     viewType: ViewType;
     onSelect: (id: string) => void;
@@ -84,7 +83,6 @@
     onImport: () => void;
     onExportTrigger: () => void;
     onToggleFieldMode: () => void;
-    onStructureUpdate?: (newRoot: IIIFItem) => void;
     visible: boolean;
     onOpenExternalImport?: () => void;
     onOpenSettings?: () => void;
@@ -101,7 +99,6 @@
   }
 
   let {
-    root,
     selectedId,
     viewType,
     onSelect,
@@ -109,7 +106,6 @@
     onImport,
     onExportTrigger,
     onToggleFieldMode,
-    onStructureUpdate,
     visible,
     onOpenExternalImport,
     onOpenSettings,
@@ -153,8 +149,15 @@
   let isSwiping: boolean = $state(false);
   const SWIPE_THRESHOLD = 80;
 
+  // Vault accessors for normalized tree traversal
+  const vaultAccessors: VaultAccessors = {
+    getEntity: (id: string) => vault.getEntity(id),
+    getChildIds: (id: string) => vault.getChildIds(id),
+    getAncestors: (id: string) => vault.getAncestors(id),
+  };
+
   // Breadcrumb state
-  const breadcrumbs = $derived(computeBreadcrumbs(root, selectedId));
+  const breadcrumbs = $derived(computeBreadcrumbsNormalized(selectedId, vaultAccessors));
 
   // ---------------------------------------------------------------------------
   // Derived
@@ -189,39 +192,18 @@
    * Refactor: Replace with VirtualTreeList for virtualized rendering
    */
   const flatTreeNodes = $derived.by((): FlatTreeNode[] => {
-    return flattenTree(root, expandedIds, treeSearchQuery);
+    return flattenTree(vault.rootId, vaultAccessors, expandedIds, treeSearchQuery);
   });
 
   /** Count of total items in tree */
-  const treeItemCount = $derived.by((): number => {
-    if (!root) return 0;
-    let count = 0;
-    function walk(item: IIIFItem): void {
-      count++;
-      const children = item.items as IIIFItem[] | undefined;
-      if (children) children.forEach(walk);
-    }
-    walk(root);
-    return count;
-  });
+  const treeItemCount = $derived(
+    vault.rootId ? Object.keys(vault.state.typeIndex).length : 0
+  );
 
   /** Count of filtered matches */
   const matchCount = $derived(
     treeSearchQuery.trim() ? flatTreeNodes.length : 0
   );
-
-  // ---------------------------------------------------------------------------
-  // Breadcrumb computation
-  // ---------------------------------------------------------------------------
-
-  /** Build breadcrumb path from root to selectedId */
-  function computeBreadcrumbs(
-    item: IIIFItem | null,
-    targetId: string | null
-  ): { id: string; label: string }[] {
-    if (!item || !targetId) return [];
-    return computeBreadcrumbsPure(item, targetId);
-  }
 
   // ---------------------------------------------------------------------------
   // Tree handlers
@@ -238,16 +220,12 @@
   }
 
   function handleExpandAll(): void {
-    if (!root) return;
+    if (!vault.rootId) return;
     const all = new Set<string>();
-    function walk(item: IIIFItem): void {
-      const children = item.items as IIIFItem[] | undefined;
-      if (children && children.length > 0) {
-        all.add(item.id);
-        children.forEach(walk);
-      }
+    const state = vault.state;
+    for (const [id, childIds] of Object.entries(state.references)) {
+      if (childIds.length > 0) all.add(id);
     }
-    walk(root);
     expandedIds = all;
   }
 
@@ -388,8 +366,8 @@
   // Use untrack() to read expandedIds without making it a reactive dependency —
   // otherwise writing expandedIds re-triggers this very effect (infinite loop).
   $effect(() => {
-    if (!selectedId || !root) return;
-    const pathItems = computeBreadcrumbs(root, selectedId);
+    if (!selectedId || !vault.rootId) return;
+    const pathItems = computeBreadcrumbsNormalized(selectedId, vaultAccessors);
     if (pathItems.length <= 1) return;
 
     const ancestorIds = pathItems.slice(0, -1).map((p) => p.id);
@@ -628,7 +606,7 @@
         </div>
 
         <!-- Tree header with expand/collapse all -->
-        {#if root}
+        {#if vault.rootId}
           <div class="flex items-center justify-between px-3 py-1.5 border-b border-theme-border/30">
             <span class="text-[10px] font-semibold uppercase tracking-wider text-theme-text-muted">
               Archive
@@ -657,14 +635,13 @@
           <!-- Refactor: Replace with VirtualTreeList for virtualized rendering -->
           <!-- Current implementation: simple flat list rendering with expand/collapse -->
           <!-- <VirtualTreeList
-            root={root}
             selectedId={selectedId}
             filterQuery={treeSearchQuery}
             containerHeight={treeContainerHeight}
             onSelect={onSelect}
             onContextMenu={handleContextMenu}
           /> -->
-          {#if root}
+          {#if vault.rootId}
             <div class="py-1">
               {#each flatTreeNodes as node (node.id)}
                 {@const isSelected = node.id === selectedId}

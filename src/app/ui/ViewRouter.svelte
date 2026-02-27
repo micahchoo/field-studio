@@ -127,11 +127,9 @@
   interface Props {
     selectedId: string | null;
     selectedItem?: IIIFItem | null;
-    root: IIIFItem | null;
     onSelect?: (item: IIIFItem) => void;
     onSelectId?: (id: string | null) => void;
     validationIssuesMap?: Record<string, TreeValidationIssue[]>;
-    onUpdateRoot?: (newRoot: IIIFItem) => void;
     onUpdateItem?: (updates: Partial<IIIFItem>) => void;
     onBatchEdit?: (ids: string[]) => void;
     onCatalogSelection?: (ids: string[]) => void;
@@ -143,11 +141,9 @@
   let {
     selectedId,
     selectedItem = null,
-    root,
     onSelect,
     onSelectId,
     validationIssuesMap = {},
-    onUpdateRoot,
     onUpdateItem,
     onBatchEdit,
     onCatalogSelection,
@@ -159,25 +155,6 @@
   // ============================================================================
   // Helpers — pure functions for IIIF entity traversal
   // ============================================================================
-
-  /** Recursively find the first Canvas in a tree, returning the canvas and its parent Manifest */
-  function findFirstCanvas(node: IIIFItem): { canvas: IIIFCanvas | null; manifest: IIIFManifest | null } {
-    if (isCanvas(node)) {
-      return { canvas: node, manifest: null };
-    }
-    if (node.items && Array.isArray(node.items)) {
-      for (const item of node.items) {
-        const result = findFirstCanvas(item as IIIFItem);
-        if (result.canvas) {
-          if (isManifest(node)) {
-            return { canvas: result.canvas, manifest: node };
-          }
-          return result;
-        }
-      }
-    }
-    return { canvas: null, manifest: null };
-  }
 
   /** Flatten annotations from canvas.annotations pages into a single array */
   function getCanvasAnnotations(canvas: IIIFCanvas | null): IIIFAnnotation[] {
@@ -278,7 +255,7 @@
 
   /** Resolve viewer data: canvas + parent manifest for current selection */
   const viewerData = $derived.by(() => {
-    if (!root) return { canvas: null as IIIFCanvas | null, manifest: null as IIIFManifest | null };
+    if (!vault.rootId) return { canvas: null as IIIFCanvas | null, manifest: null as IIIFManifest | null };
 
     let selectedCanvas: IIIFCanvas | null = null;
     let parentManifest: IIIFManifest | null = null;
@@ -292,9 +269,16 @@
     }
 
     if (!selectedCanvas) {
-      const result = findFirstCanvas(root);
-      selectedCanvas = result.canvas;
-      parentManifest = result.manifest;
+      // Find first canvas via vault queries instead of tree walk
+      const canvases = vault.getEntitiesByType('Canvas' as import('@/src/shared/types').EntityType);
+      if (canvases.length > 0) {
+        selectedCanvas = canvases[0] as IIIFCanvas;
+        const pId = vault.getParentId(canvases[0].id);
+        if (pId) {
+          const parent = vault.getEntity(pId);
+          if (parent && isManifest(parent)) parentManifest = parent as IIIFManifest;
+        }
+      }
     }
 
     return { canvas: selectedCanvas, manifest: parentManifest };

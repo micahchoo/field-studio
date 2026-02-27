@@ -9,6 +9,7 @@ import {
   hasDescendantMatch,
   computeBreadcrumbs,
   flattenTree,
+  type VaultAccessors,
 } from '../lib/sidebarHelpers';
 
 // ---------------------------------------------------------------------------
@@ -22,6 +23,45 @@ function makeItem(id: string, type: string, items?: IIIFItem[]): IIIFItem {
     type: type as IIIFItem['type'],
     label: { en: [id] },
     ...(items ? { items } : {}),
+  };
+}
+
+/**
+ * Build VaultAccessors from a denormalized tree for testing.
+ * Walks the tree and builds entity/child/parent maps.
+ */
+function buildAccessors(root: IIIFItem | null): VaultAccessors & { rootId: string | null } {
+  const entities = new Map<string, IIIFItem>();
+  const childMap = new Map<string, string[]>();
+  const parentMap = new Map<string, string>();
+
+  function walk(item: IIIFItem, parentId?: string): void {
+    entities.set(item.id, item);
+    if (parentId) parentMap.set(item.id, parentId);
+    const children = item.items as IIIFItem[] | undefined;
+    if (children) {
+      childMap.set(item.id, children.map(c => c.id));
+      for (const child of children) walk(child, item.id);
+    } else {
+      childMap.set(item.id, []);
+    }
+  }
+
+  if (root) walk(root);
+
+  return {
+    rootId: root?.id ?? null,
+    getEntity: (id: string) => entities.get(id) ?? null,
+    getChildIds: (id: string) => childMap.get(id) ?? [],
+    getAncestors: (id: string) => {
+      const ancestors: string[] = [];
+      let cur = parentMap.get(id);
+      while (cur) {
+        ancestors.push(cur);
+        cur = parentMap.get(cur);
+      }
+      return ancestors;
+    },
   };
 }
 
@@ -59,39 +99,47 @@ describe('getTypeIcon', () => {
 
 describe('hasDescendantMatch', () => {
   it('returns true for a direct label match', () => {
-    const items = [makeItem('photo-1', 'Canvas')];
-    expect(hasDescendantMatch(items, 'photo')).toBe(true);
+    const root = makeItem('root', 'Collection', [makeItem('photo-1', 'Canvas')]);
+    const a = buildAccessors(root);
+    expect(hasDescendantMatch(['photo-1'], a, 'photo')).toBe(true);
   });
 
   it('returns true for a descendant match', () => {
     const child = makeItem('medieval-page', 'Canvas');
     const parent = makeItem('book', 'Manifest', [child]);
-    expect(hasDescendantMatch([parent], 'medieval')).toBe(true);
+    const root = makeItem('root', 'Collection', [parent]);
+    const a = buildAccessors(root);
+    expect(hasDescendantMatch(['book'], a, 'medieval')).toBe(true);
   });
 
   it('returns false when nothing matches', () => {
-    const items = [
+    const root = makeItem('root', 'Collection', [
       makeItem('alpha', 'Canvas'),
       makeItem('beta', 'Canvas'),
-    ];
-    expect(hasDescendantMatch(items, 'gamma')).toBe(false);
+    ]);
+    const a = buildAccessors(root);
+    expect(hasDescendantMatch(['alpha', 'beta'], a, 'gamma')).toBe(false);
   });
 
   it('matches through deep nesting', () => {
     const leaf = makeItem('deep-match', 'Canvas');
     const mid = makeItem('mid', 'Range', [leaf]);
     const top = makeItem('top', 'Manifest', [mid]);
-    expect(hasDescendantMatch([top], 'deep-match')).toBe(true);
+    const root = makeItem('root', 'Collection', [top]);
+    const a = buildAccessors(root);
+    expect(hasDescendantMatch(['top'], a, 'deep-match')).toBe(true);
   });
 
-  it('returns false for empty items array', () => {
-    expect(hasDescendantMatch([], 'anything')).toBe(false);
+  it('returns false for empty ids array', () => {
+    const a = buildAccessors(null);
+    expect(hasDescendantMatch([], a, 'anything')).toBe(false);
   });
 
   it('is case-insensitive', () => {
-    const items = [makeItem('Medieval Folio', 'Canvas')];
-    expect(hasDescendantMatch(items, 'medieval folio')).toBe(true);
-    expect(hasDescendantMatch(items, 'MEDIEVAL')).toBe(true);
+    const root = makeItem('root', 'Collection', [makeItem('Medieval Folio', 'Canvas')]);
+    const a = buildAccessors(root);
+    expect(hasDescendantMatch(['Medieval Folio'], a, 'medieval folio')).toBe(true);
+    expect(hasDescendantMatch(['Medieval Folio'], a, 'MEDIEVAL')).toBe(true);
   });
 });
 
@@ -100,13 +148,15 @@ describe('hasDescendantMatch', () => {
 // ===========================================================================
 
 describe('computeBreadcrumbs', () => {
-  it('returns an empty array when root is null', () => {
-    expect(computeBreadcrumbs(null, 'x')).toEqual([]);
+  it('returns an empty array when targetId is null', () => {
+    const a = buildAccessors(null);
+    expect(computeBreadcrumbs(null, a)).toEqual([]);
   });
 
   it('returns a single-element path when root is the target', () => {
     const root = makeItem('root', 'Collection');
-    const result = computeBreadcrumbs(root, 'root');
+    const a = buildAccessors(root);
+    const result = computeBreadcrumbs('root', a);
     expect(result).toEqual([{ id: 'root', label: 'root' }]);
   });
 
@@ -114,8 +164,9 @@ describe('computeBreadcrumbs', () => {
     const child = makeItem('c', 'Canvas');
     const manifest = makeItem('m', 'Manifest', [child]);
     const root = makeItem('r', 'Collection', [manifest]);
+    const a = buildAccessors(root);
 
-    const result = computeBreadcrumbs(root, 'c');
+    const result = computeBreadcrumbs('c', a);
     expect(result).toEqual([
       { id: 'r', label: 'r' },
       { id: 'm', label: 'm' },
@@ -127,7 +178,8 @@ describe('computeBreadcrumbs', () => {
     const root = makeItem('root', 'Collection', [
       makeItem('a', 'Manifest'),
     ]);
-    expect(computeBreadcrumbs(root, 'missing')).toEqual([]);
+    const a = buildAccessors(root);
+    expect(computeBreadcrumbs('missing', a)).toEqual([]);
   });
 });
 
@@ -136,13 +188,15 @@ describe('computeBreadcrumbs', () => {
 // ===========================================================================
 
 describe('flattenTree', () => {
-  it('returns an empty array for null root', () => {
-    expect(flattenTree(null, new Set(), '')).toEqual([]);
+  it('returns an empty array for null rootId', () => {
+    const a = buildAccessors(null);
+    expect(flattenTree(null, a, new Set(), '')).toEqual([]);
   });
 
   it('returns a single node for a leaf item', () => {
     const root = makeItem('only', 'Canvas');
-    const nodes = flattenTree(root, new Set(), '');
+    const a = buildAccessors(root);
+    const nodes = flattenTree('only', a, new Set(), '');
     expect(nodes).toHaveLength(1);
     expect(nodes[0]).toEqual({
       id: 'only',
@@ -159,9 +213,10 @@ describe('flattenTree', () => {
     const c2 = makeItem('c2', 'Canvas');
     const m = makeItem('m', 'Manifest', [c1, c2]);
     const root = makeItem('root', 'Collection', [m]);
+    const a = buildAccessors(root);
 
     const expanded = new Set(['root', 'm']);
-    const nodes = flattenTree(root, expanded, '');
+    const nodes = flattenTree('root', a, expanded, '');
 
     expect(nodes).toHaveLength(4);
     expect(nodes.map((n) => n.id)).toEqual(['root', 'm', 'c1', 'c2']);
@@ -176,10 +231,11 @@ describe('flattenTree', () => {
     const c2 = makeItem('c2', 'Canvas');
     const m = makeItem('m', 'Manifest', [c1, c2]);
     const root = makeItem('root', 'Collection', [m]);
+    const a = buildAccessors(root);
 
     // root is expanded but m is not — c1, c2 should be hidden
     const expanded = new Set(['root']);
-    const nodes = flattenTree(root, expanded, '');
+    const nodes = flattenTree('root', a, expanded, '');
 
     expect(nodes).toHaveLength(2);
     expect(nodes.map((n) => n.id)).toEqual(['root', 'm']);
@@ -192,9 +248,10 @@ describe('flattenTree', () => {
     const target = makeItem('target-leaf', 'Canvas');
     const parent = makeItem('parent', 'Manifest', [target]);
     const root = makeItem('root', 'Collection', [parent]);
+    const a = buildAccessors(root);
 
     // Not expanded — search should force children open
-    const nodes = flattenTree(root, new Set(), 'target-leaf');
+    const nodes = flattenTree('root', a, new Set(), 'target-leaf');
 
     // root and parent shown as ancestors, target-leaf shown as match
     expect(nodes).toHaveLength(3);
@@ -207,8 +264,9 @@ describe('flattenTree', () => {
     const branchA = makeItem('branch-a', 'Manifest', [match]);
     const branchB = makeItem('branch-b', 'Manifest', [noMatch]);
     const root = makeItem('root', 'Collection', [branchA, branchB]);
+    const a = buildAccessors(root);
 
-    const nodes = flattenTree(root, new Set(), 'match-me');
+    const nodes = flattenTree('root', a, new Set(), 'match-me');
 
     const ids = nodes.map((n) => n.id);
     expect(ids).toContain('branch-a');
@@ -223,8 +281,9 @@ describe('flattenTree', () => {
       makeItem('a', 'Manifest'),
       makeItem('b', 'Canvas'),
     ]);
+    const a = buildAccessors(root);
 
-    const nodes = flattenTree(root, new Set(), 'zzzzz');
+    const nodes = flattenTree('root', a, new Set(), 'zzzzz');
     expect(nodes).toEqual([]);
   });
 });

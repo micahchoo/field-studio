@@ -15,6 +15,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import BatchEditor from '../ui/organisms/BatchEditor.svelte';
 import type { IIIFItem } from '@/src/shared/types';
+import { vault } from '@/src/shared/stores/vault.svelte';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ describe('BatchEditor smoke tests', () => {
     target = document.createElement('div');
     document.body.appendChild(target);
     instance = undefined;
+    vault.load(makeManifest());
   });
 
   afterEach(() => {
@@ -70,7 +72,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -86,7 +87,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -104,7 +104,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1', 'canvas-2'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -121,7 +120,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -140,7 +138,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -158,7 +155,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -176,7 +172,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -192,7 +187,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -207,7 +201,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['canvas-1', 'canvas-2', 'canvas-3'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -225,7 +218,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: [],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },
@@ -244,7 +236,6 @@ describe('BatchEditor smoke tests', () => {
       target,
       props: {
         ids: ['nonexistent-id-1', 'nonexistent-id-2'],
-        root: makeManifest(),
         onApply: vi.fn(),
         onClose: vi.fn(),
       },

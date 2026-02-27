@@ -62,8 +62,8 @@
 
 <script lang="ts">
   import { cn } from '@/src/shared/lib/cn';
-  import { getIIIFValue } from '@/src/shared/types';
-  import { getChildEntities, type IIIFItem } from '@/src/shared/types';
+  import { getIIIFValue, type IIIFItem } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
   import Select from '@/src/shared/ui/atoms/Select.svelte';
@@ -75,7 +75,6 @@
 
   interface Props {
     ids: string[];
-    root: IIIFItem;
     onApply: (
       ids: string[],
       updates: Record<string, Partial<IIIFItem>>,
@@ -85,7 +84,7 @@
     onRollback?: (root: IIIFItem) => void;
   }
 
-  let { ids, root, onApply, onClose, onRollback }: Props = $props();
+  let { ids, onApply, onClose, onRollback }: Props = $props();
 
   // ---------------------------------------------------------------------------
   // Tab + snapshot state
@@ -123,17 +122,7 @@
   // Derived: selected items from tree
   // ---------------------------------------------------------------------------
 
-  function collectSelectedItems(node: IIIFItem, target: string[]): IIIFItem[] {
-    const found: IIIFItem[] = [];
-    function traverse(n: IIIFItem) {
-      if (target.includes(n.id)) found.push(n);
-      for (const child of getChildEntities(n)) traverse(child);
-    }
-    traverse(node);
-    return found;
-  }
-
-  let selectedItems = $derived(collectSelectedItems(root, ids));
+  let selectedItems = $derived(ids.map(id => vault.getEntity(id)).filter(Boolean) as IIIFItem[]);
 
   // ---------------------------------------------------------------------------
   // Pattern results (only computed in patterns tab)
@@ -164,7 +153,7 @@
   // ---------------------------------------------------------------------------
 
   function handleApply() {
-    const snapshotSaved = saveBatchSnapshot(root, ids.length);
+    const snapshotSaved = saveBatchSnapshot(vault.export(), ids.length);
     if (snapshotSaved) {
       existingSnapshot = loadBatchSnapshot();
     }

@@ -57,16 +57,19 @@
   import ExportOptionsPanel from '../molecules/ExportOptionsPanel.svelte';
   import ExportProgressDisplay from '../molecules/ExportProgressDisplay.svelte';
   import { cn } from '@/src/shared/lib/cn';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
   // ── Props ──
   interface Props {
-    root: IIIFItem | null;
     onClose: () => void;
     cx: ContextualClassNames;
     fieldMode: boolean;
   }
 
-  let { root, onClose, cx, fieldMode }: Props = $props();
+  let { onClose, cx, fieldMode }: Props = $props();
+
+  // Compute root on-demand for export (not in render loop)
+  const root = $derived(vault.export());
 
   // ── State ──
   let step: ExportStep = $state('config');

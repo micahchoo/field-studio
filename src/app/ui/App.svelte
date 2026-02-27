@@ -172,22 +172,6 @@
   const isOnline = $derived(networkStatus.isOnline);
   const cx = $derived(theme.cx);
 
-  // Debounced root denormalization: rebuilds the tree 200ms after vault changes
-  let root = $state<IIIFItem | null>(null);
-  let exportTimer: ReturnType<typeof setTimeout> | null = null;
-
-  $effect(() => {
-    // Track vault state to trigger re-export
-    const _state = vault.state;
-    if (exportTimer) clearTimeout(exportTimer);
-    exportTimer = setTimeout(() => {
-      root = vault.export();
-    }, 200);
-    return () => {
-      if (exportTimer) clearTimeout(exportTimer);
-    };
-  });
-
   // Selected item: O(1) lookup via vault normalized state
   const selectedItem = $derived.by((): IIIFItem | null => {
     if (!selectedId) return null;
@@ -492,12 +476,6 @@
     autoSave.markDirty();
   }
 
-  function handleUpdateRoot(newRoot: IIIFItem) {
-    vault.load(newRoot);
-    autoSave.markDirty();
-    storage.saveProject(newRoot).catch(() => {});
-  }
-
   function handleBatchApply(ids: string[], updatesMap: Record<string, Partial<IIIFItem>>, renamePattern?: string) {
     const updates: Array<{ id: string; changes: Partial<IIIFItem> }> = [];
     for (let i = 0; i < ids.length; i++) {
@@ -572,7 +550,7 @@
   }
 
   async function handleIngest(tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void): Promise<void> {
-    const result = await ingestTree(tree, merge ? root : null, {
+    const result = await ingestTree(tree, merge ? vault.export() : null, {
       onProgress: (p) => progressCallback(p.stage, p.overallProgress),
     });
     if (result.success && result.root) {
@@ -816,7 +794,6 @@
 
       <!-- Sidebar — NavigationSidebar widget -->
       <Sidebar
-        {root}
         selectedId={selectedId}
         viewType={mode as 'archive' | 'viewer' | 'boards' | 'metadata' | 'search' | 'map' | 'timeline'}
         onSelect={(id) => handleSelect(id)}
@@ -832,7 +809,6 @@
         abstractionLevel={appSettings.abstractionLevel}
         onAbstractionLevelChange={handleAbstractionLevelChange}
         fieldMode={fieldMode}
-        onStructureUpdate={handleUpdateRoot}
       />
 
       <!-- Mobile sidebar backdrop -->
@@ -862,12 +838,10 @@
           <ViewRouter
             {selectedId}
             {selectedItem}
-            {root}
             validationIssuesMap={validationIssuesMap}
             onSelect={(item) => handleSelect(item.id)}
             onSelectId={(id) => { if (id) handleSelectId(id); else selectedId = null; }}
             onUpdateItem={handleItemUpdate}
-            onUpdateRoot={handleUpdateRoot}
             onBatchEdit={handleBatchEdit}
             onOpenImport={handleOpenImport}
             onOpenExternalImport={() => dialogs.externalImport.open()}
@@ -917,7 +891,7 @@
   {#snippet statusbar()}
     {#if !isMobile}
       <StatusBar
-        totalItems={root?.items?.length ?? 0}
+        totalItems={vault.rootId ? vault.getChildIds(vault.rootId).length : 0}
         selectedItem={selectedItem}
         validationIssues={flatValidationIssues}
         {storageUsage}
@@ -943,7 +917,6 @@
   <svelte:boundary>
     <StagingWorkbench
       initialTree={stagingTree}
-      existingRoot={root}
       onIngest={handleIngest}
       onCancel={() => { stagingTree = null; }}
       abstractionLevel={appSettings.abstractionLevel}
@@ -962,9 +935,8 @@
   </svelte:boundary>
 {/if}
 
-{#if dialogs.exportDialog.isOpen && root}
+{#if dialogs.exportDialog.isOpen && vault.rootId}
   <ExportDialog
-    {root}
     onClose={() => dialogs.exportDialog.close()}
     {cx}
     fieldMode={fieldMode}
@@ -974,10 +946,8 @@
 {#if dialogs.qcDashboard.isOpen}
   <QCDashboard
     issuesMap={validationIssuesMap}
-    totalItems={root?.items?.length ?? 0}
-    root={root}
+    totalItems={vault.rootId ? vault.getChildIds(vault.rootId).length : 0}
     onSelect={handleQCSelect}
-    onUpdate={handleUpdateRoot}
     onClose={() => dialogs.qcDashboard.close()}
   />
 {/if}
@@ -1012,10 +982,9 @@
   />
 {/if}
 
-{#if dialogs.batchEditor.isOpen && root}
+{#if dialogs.batchEditor.isOpen && vault.rootId}
   <BatchEditor
     ids={batchIds}
-    root={root}
     onApply={handleBatchApply}
     onClose={() => dialogs.batchEditor.close()}
     onRollback={handleBatchRollback}

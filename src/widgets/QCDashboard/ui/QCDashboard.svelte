@@ -17,21 +17,16 @@
   import { toast } from '@/src/shared/stores/toast.svelte';
 
   import type { IIIFItem, TreeValidationIssue, IssueCategory } from '@/src/shared/types';
-  import { getIIIFValue, isManifest } from '@/src/shared/types';
+  import { getIIIFValue } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
   import {
     healIssue,
-    applyHealToTree,
     safeHealAll,
   } from '@/src/entities/manifest/model/validation/validationHealer';
 
   import {
     calculateHealthScore,
-    getHealthColor,
-    getHealthBgColor,
-    getSeverityClasses,
-    findItemById,
-    findItemAndPath as findItemAndPathPure,
   } from '../lib/qcHelpers';
 
 
@@ -54,18 +49,14 @@
   interface Props {
     issuesMap: Record<string, TreeValidationIssue[]>;
     totalItems: number;
-    root: IIIFItem | null;
     onSelect: (id: string) => void;
-    onUpdate: (newRoot: IIIFItem) => void;
     onClose: () => void;
   }
 
   let {
     issuesMap,
     totalItems,
-    root,
     onSelect,
-    onUpdate,
     onClose,
   }: Props = $props();
 
@@ -113,25 +104,24 @@
   });
 
   // ---------------------------------------------------------------------------
-  // Item lookup with path (cached via Map)
+  // Item lookup with path (via vault normalized state)
   // ---------------------------------------------------------------------------
-  let findCache = $state(new Map<string, { item: IIIFItem | null; path: { id: string; label: string; type: string }[] }>());
 
-  // Clear cache when root changes
-  $effect(() => {
-    if (root) {
-      findCache = new Map();
-    }
-  });
-
-  /** Recursively find item + build hierarchy path (cached) */
+  /** Find item + build hierarchy path using vault queries */
   function findItemAndPath(id: string): { item: IIIFItem | null; path: { id: string; label: string; type: string }[] } {
-    const cached = findCache.get(id);
-    if (cached) return cached;
+    const item = vault.getEntity(id);
+    if (!item) return { item: null, path: [] };
 
-    const result = findItemAndPathPure(root, id);
-    findCache.set(id, result);
-    return result;
+    const ancestorIds = vault.getAncestors(id);
+    const path = [...ancestorIds.reverse(), id].map(aid => {
+      const e = vault.getEntity(aid);
+      return {
+        id: aid,
+        label: e ? (getIIIFValue(e.label) || e.type || aid) : aid,
+        type: e?.type ?? 'Unknown',
+      };
+    });
+    return { item, path };
   }
 
   /** Preview item and path for selected issue */
@@ -186,44 +176,20 @@
   }
 
   function handleUpdateItem(itemId: string, updates: Partial<IIIFItem>): void {
-    if (!root) return;
-    const newRoot = JSON.parse(JSON.stringify(root)) as IIIFItem;
-    const visited = new Set<string>();
-
-    function traverse(node: IIIFItem): boolean {
-      if (visited.has(node.id)) return false;
-      visited.add(node.id);
-
-      if (node.id === itemId) {
-        Object.assign(node, updates);
-        return true;
-      }
-      const children = node.items as IIIFItem[] | undefined;
-      const annotations = node.annotations;
-      const structures = isManifest(node) ? node.structures : undefined;
-      const all = [...(children ?? []), ...(annotations ?? []), ...(structures ?? [])];
-      for (const child of all) {
-        if (traverse(child as IIIFItem)) return true;
-      }
-      return false;
-    }
-
-    if (traverse(newRoot)) onUpdate(newRoot);
+    if (!vault.rootId) return;
+    vault.dispatch({ type: 'BATCH_UPDATE', updates: [{ id: itemId, changes: updates }] });
   }
 
   function handleHeal(issue: TreeValidationIssue): void {
-    if (!root) return;
+    if (!vault.rootId) return;
 
     try {
-      const { item: targetItem } = findItemAndPath(issue.itemId);
+      const targetItem = vault.getEntity(issue.itemId);
       if (!targetItem) return;
 
       const result = healIssue(targetItem, issue);
       if (result.success && result.updatedItem) {
-        const newRoot = applyHealToTree(root, issue.itemId, result.updatedItem);
-        if (newRoot) {
-          onUpdate(newRoot);
-        }
+        vault.dispatch({ type: 'BATCH_UPDATE', updates: [{ id: issue.itemId, changes: result.updatedItem }] });
       }
     } catch (e: unknown) {
       toast.error(`Fix failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
@@ -231,35 +197,30 @@
   }
 
   function handleHealAllFixable(): void {
-    if (!root) return;
+    if (!vault.rootId) return;
 
     const fixable = categoryIssues.filter((i) => i.fixable);
     if (fixable.length === 0) return;
 
-    let currentRoot = root;
-    let healedCount = 0;
+    const batchUpdates: Array<{ id: string; changes: Partial<IIIFItem> }> = [];
 
     for (const issue of fixable) {
       try {
-        const { item: targetItem } = findItemAndPath(issue.itemId);
+        const targetItem = vault.getEntity(issue.itemId);
         if (!targetItem) continue;
 
         const result = safeHealAll(targetItem, [issue]);
         if (result.success && result.updatedItem) {
-          const newRoot = applyHealToTree(currentRoot, issue.itemId, result.updatedItem);
-          if (newRoot) {
-            currentRoot = newRoot;
-            healedCount++;
-          }
+          batchUpdates.push({ id: issue.itemId, changes: result.updatedItem });
         }
       } catch {
         // Skip failed items in batch
       }
     }
 
-    if (healedCount > 0) {
-      onUpdate(currentRoot);
-      toast.success(`Fixed ${healedCount} issues`);
+    if (batchUpdates.length > 0) {
+      vault.dispatch({ type: 'BATCH_UPDATE', updates: batchUpdates });
+      toast.success(`Fixed ${batchUpdates.length} issues`);
     }
   }
 

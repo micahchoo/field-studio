@@ -33,6 +33,7 @@
   // TODO: Web Worker ingest pipeline (future)
   import { uiLog } from '@/src/shared/services/logger';
   import { terminology } from '@/src/shared/stores';
+  import { vault } from '@/src/shared/stores/vault.svelte';
   import { IngestProgressStore } from '@/src/shared/lib/hooks/ingestProgress.svelte';
 
   import ModalDialog from '@/src/shared/ui/molecules/ModalDialog.svelte';
@@ -54,13 +55,15 @@
 
   interface Props {
     initialTree: FileTree;
-    existingRoot: IIIFItem | null;
     onIngest: (tree: FileTree, merge: boolean, progressCallback: (msg: string, pct: number) => void) => void | Promise<void>;
     onCancel: () => void;
     abstractionLevel?: AbstractionLevel;
   }
 
-  let { initialTree, existingRoot, onIngest, onCancel, abstractionLevel = 'standard' }: Props = $props();
+  let { initialTree, onIngest, onCancel, abstractionLevel = 'standard' }: Props = $props();
+
+  // Compute existingRoot on-demand from vault (not in render loop)
+  const existingRoot = $derived(vault.rootId ? vault.export() : null);
 
   // ── Phase 1: Loading / Analysis ──
 
