@@ -82,6 +82,7 @@
   import { contentStateService } from '@/src/shared/services/contentState';
   import { buildTree, ingestTree } from '@/src/entities/manifest/model/builders/iiifBuilder';
   import { validator } from '@/src/entities/manifest/model/validation/validator';
+  import { actions } from '@/src/entities/manifest/model/actions';
 
   // ── Widgets ──
   import PersonaSettings from '@/src/widgets/PersonaSettings/ui/PersonaSettings.svelte';
@@ -519,7 +520,7 @@
 
   function handleItemUpdate(updates: Partial<IIIFItem>) {
     if (!selectedId) return;
-    vault.update(selectedId, updates);
+    vault.dispatch(actions.batchUpdate([{ id: selectedId, changes: updates }]));
     autoSave.markDirty();
   }
 
@@ -530,6 +531,7 @@
   }
 
   function handleBatchApply(ids: string[], updatesMap: Record<string, Partial<IIIFItem>>, renamePattern?: string) {
+    const updates: Array<{ id: string; changes: Partial<IIIFItem> }> = [];
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const changes = { ...updatesMap[id] };
@@ -544,8 +546,9 @@
         changes.label = { en: [newLabel] };
       }
 
-      vault.update(id, changes);
+      updates.push({ id, changes });
     }
+    vault.dispatch(actions.batchUpdate(updates));
     autoSave.markDirty();
   }
 
