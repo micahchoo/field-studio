@@ -28,7 +28,7 @@
   import { getFileDNA } from '@/src/features/archive/model';
   import { cn } from '@/src/shared/lib/cn';
 
-  import type { ValidatorIssue } from '@/src/shared/types';
+  import type { TreeValidationIssue } from '@/src/shared/types';
 
   // Column configuration
   const COLUMNS: { key: SortColumn; label: string; width: string; align?: 'left' | 'center' | 'right' }[] = [
@@ -81,7 +81,7 @@
     /** Callback when items are reordered */
     onReorder?: (fromIndex: number, toIndex: number) => void;
     /** Validation issues keyed by item ID */
-    validationIssues?: Record<string, ValidatorIssue[]>;
+    validationIssues?: Record<string, TreeValidationIssue[]>;
     /** Additional class */
     class?: string;
   }
@@ -343,7 +343,7 @@
                   <div
                     class={cn(
                       'w-2 h-2 rounded-full shrink-0',
-                      issues.some(i => i.level === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
+                      issues.some(i => i.severity === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
                     )}
                     title={`${issues.length} issue(s)`}
                   ></div>

@@ -31,8 +31,8 @@
 // Types — re-export from shared/types (canonical)
 // ──────────────────────────────────────────────
 
-import type { ValidatorIssue } from '@/src/shared/types';
-export type ValidationIssue = ValidatorIssue;
+import type { TreeValidationIssue } from '@/src/shared/types';
+type ValidationIssue = TreeValidationIssue;
 
 // ──────────────────────────────────────────────
 // Store class
@@ -80,13 +80,13 @@ export class ValidationStore {
   }
 
   /**
-   * Count of issues with level 'error'.
+   * Count of issues with severity 'error'.
    */
   get errorCount(): number {
     let count = 0;
     for (const key of Object.keys(this.#issues)) {
       for (const issue of this.#issues[key]) {
-        if (issue.level === 'error') count++;
+        if (issue.severity === 'error') count++;
       }
     }
     return count;

@@ -30,7 +30,7 @@
   import { RESOURCE_TYPE_CONFIG } from '@/src/shared/constants';
   import { cn } from '@/src/shared/lib/cn';
 
-  import type { ValidatorIssue } from '@/src/shared/types';
+  import type { TreeValidationIssue } from '@/src/shared/types';
 
   interface Props {
     /** Canvas items to render */
@@ -87,7 +87,7 @@
     /** IIIF viewingDirection from manifest */
     viewingDirection?: ViewingDirection;
     /** Validation issues keyed by item ID */
-    validationIssues?: Record<string, ValidatorIssue[]>;
+    validationIssues?: Record<string, TreeValidationIssue[]>;
     /** Open/activate handler (Enter key) */
     onOpen?: (id: string) => void;
     /** Lasso selection handler (multiple IDs selected) */

@@ -374,7 +374,5 @@ export const detectChanges = (
 export { validateResource, fixIssue, fixAll } from '../lib/inspectorValidation';
 
 export type {
-  ValidationIssue,
   ValidationResult,
-  ValidationSeverity,
 } from '../lib/inspectorValidation';

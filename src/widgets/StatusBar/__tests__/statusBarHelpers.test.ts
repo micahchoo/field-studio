@@ -85,38 +85,38 @@ describe('countBySeverity', () => {
 
   it('counts all errors', () => {
     const issues = [
-      { level: 'error' },
-      { level: 'error' },
-      { level: 'error' },
+      { severity: 'error' },
+      { severity: 'error' },
+      { severity: 'error' },
     ];
     expect(countBySeverity(issues)).toEqual({ errorCount: 3, warningCount: 0 });
   });
 
   it('counts all warnings', () => {
     const issues = [
-      { level: 'warning' },
-      { level: 'warning' },
+      { severity: 'warning' },
+      { severity: 'warning' },
     ];
     expect(countBySeverity(issues)).toEqual({ errorCount: 0, warningCount: 2 });
   });
 
   it('counts a mix of errors and warnings', () => {
     const issues = [
-      { level: 'error' },
-      { level: 'warning' },
-      { level: 'error' },
-      { level: 'warning' },
-      { level: 'warning' },
+      { severity: 'error' },
+      { severity: 'warning' },
+      { severity: 'error' },
+      { severity: 'warning' },
+      { severity: 'warning' },
     ];
     expect(countBySeverity(issues)).toEqual({ errorCount: 2, warningCount: 3 });
   });
 
   it('does not count info-level items', () => {
     const issues = [
-      { level: 'error' },
-      { level: 'info' },
-      { level: 'warning' },
-      { level: 'info' },
+      { severity: 'error' },
+      { severity: 'info' },
+      { severity: 'warning' },
+      { severity: 'info' },
     ];
     expect(countBySeverity(issues)).toEqual({ errorCount: 1, warningCount: 1 });
   });

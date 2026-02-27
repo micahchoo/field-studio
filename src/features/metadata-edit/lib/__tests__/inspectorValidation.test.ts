@@ -984,6 +984,7 @@ describe('fixIssue', () => {
   it('returns the resource unchanged for non-auto-fixable issues', () => {
     const resource = makeValidManifest();
     const issue: ValidationIssue = {
+      kind: 'field',
       id: 'missing-label',
       severity: 'error',
       title: 'Missing label',
@@ -1007,6 +1008,7 @@ describe('fixIssue', () => {
         ],
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'empty-metadata-1',
         severity: 'warning',
         title: 'Empty metadata entry',
@@ -1025,6 +1027,7 @@ describe('fixIssue', () => {
         metadata: [{ label: {}, value: {} }],
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'empty-metadata-0',
         severity: 'warning',
         title: 'Empty metadata entry',
@@ -1045,6 +1048,7 @@ describe('fixIssue', () => {
       const resource = makeValidManifest();
       delete (resource as any).viewingDirection;
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'missing-viewing-direction',
         severity: 'info',
         title: 'Missing viewing direction',
@@ -1063,6 +1067,7 @@ describe('fixIssue', () => {
     it('upgrades http:// to https://', () => {
       const resource = makeValidManifest({ id: 'http://example.org/manifest/1' });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'non-https-id',
         severity: 'warning',
         title: 'Non-HTTPS resource ID',
@@ -1077,6 +1082,7 @@ describe('fixIssue', () => {
     it('does not touch already https:// ids', () => {
       const resource = makeValidManifest({ id: 'https://example.org/m' });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'non-https-id',
         severity: 'warning',
         title: '',
@@ -1095,6 +1101,7 @@ describe('fixIssue', () => {
     it('reformats a parseable but non-xsd:dateTime navDate', () => {
       const resource = makeValidManifest({ navDate: '2024-01-15' });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'invalid-navdate-format',
         severity: 'error',
         title: 'Invalid navDate format',
@@ -1110,6 +1117,7 @@ describe('fixIssue', () => {
     it('leaves navDate unchanged if completely unparseable', () => {
       const resource = makeValidManifest({ navDate: 'not-a-date' });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'invalid-navdate-format',
         severity: 'error',
         title: 'Invalid navDate format',
@@ -1134,6 +1142,7 @@ describe('fixIssue', () => {
         behavior: ['facing-pages', 'paged', 'continuous'],
       } as IIIFItem;
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'invalid-behavior-for-type',
         severity: 'warning',
         title: 'Invalid behavior',
@@ -1155,6 +1164,7 @@ describe('fixIssue', () => {
         behavior: ['continuous', 'individuals', 'auto-advance'],
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'conflicting-behaviors-continuous-individuals',
         severity: 'warning',
         title: 'Conflicting behaviors',
@@ -1174,6 +1184,7 @@ describe('fixIssue', () => {
         behavior: ['auto-advance', 'no-auto-advance'],
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'conflicting-behaviors-auto-advance-no-auto-advance',
         severity: 'warning',
         title: 'Conflicting behaviors',
@@ -1194,6 +1205,7 @@ describe('fixIssue', () => {
         summary: { en: ['Hello <script>bad</script> <b>world</b>'] },
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'unsafe-html-content-summary',
         severity: 'warning',
         title: 'Potentially unsafe HTML in summary',
@@ -1210,6 +1222,7 @@ describe('fixIssue', () => {
         summary: 'Hello <div>oops</div> <em>ok</em>',
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'unsafe-html-content-summary',
         severity: 'warning',
         title: 'Potentially unsafe HTML in summary',
@@ -1227,6 +1240,7 @@ describe('fixIssue', () => {
         ],
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'unsafe-html-content-metadata-0',
         severity: 'warning',
         title: 'Potentially unsafe HTML',
@@ -1245,6 +1259,7 @@ describe('fixIssue', () => {
         },
       });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'unsafe-html-content-requiredStatement',
         severity: 'warning',
         title: 'Potentially unsafe HTML',
@@ -1261,6 +1276,7 @@ describe('fixIssue', () => {
       ];
       const resource = makeValidManifest({ metadata: originalMetadata });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'unsafe-html-content-metadata-0',
         severity: 'warning',
         title: '',
@@ -1282,6 +1298,7 @@ describe('fixIssue', () => {
     it('returns a shallow copy without changes for an unknown fixable id', () => {
       const resource = makeValidManifest();
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'some-unknown-rule-id',
         severity: 'warning',
         title: 'Unknown',
@@ -1343,6 +1360,7 @@ describe('fixAll', () => {
     const resource = makeValidManifest();
     const issues: ValidationIssue[] = [
       {
+        kind: 'field',
         id: 'missing-label',
         severity: 'error',
         title: 'Missing label',
@@ -1496,6 +1514,7 @@ describe('edge cases', () => {
     it('fixIssue returns a new object (shallow copy)', () => {
       const resource = makeValidManifest({ id: 'http://example.org/m' });
       const issue: ValidationIssue = {
+        kind: 'field',
         id: 'non-https-id',
         severity: 'warning',
         title: '',

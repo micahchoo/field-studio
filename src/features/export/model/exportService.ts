@@ -1090,7 +1090,7 @@ ${featuredInfo}
         if (!options.ignoreErrors) {
             onProgress({ status: 'Airtight Validation...', percent: 5 });
             const issueMap = validator.validateTree(root);
-            const hasErrors = Object.values(issueMap).some(list => list.some(i => i.level === 'error'));
+            const hasErrors = Object.values(issueMap).some(list => list.some(i => i.severity === 'error'));
             if (hasErrors) {
                 throw new Error("Archive Integrity Failed. Resolve critical errors in Dry Run or use 'Ignore Errors' mode.");
             }

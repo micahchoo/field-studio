@@ -3,7 +3,7 @@
  *
  * Purpose: verify the quality-control dashboard renders user-visible content
  * such as health score, category labels, issue messages, and interactive
- * controls. Uses the canonical ValidatorIssue from shared/types.
+ * controls. Uses the canonical TreeValidationIssue from shared/types.
  *
  * The healer functions (healIssue, applyHealToTree, safeHealAll) are imported
  * from validationHealer — mocked here so no IIIF side-effects occur on mount.
@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import QCDashboard from '../ui/QCDashboard.svelte';
-import type { IIIFItem, ValidatorIssue } from '@/src/shared/types';
+import type { IIIFItem, TreeValidationIssue } from '@/src/shared/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 // QCDashboard imports healer functions; mock them as no-ops so tests are pure.
@@ -26,12 +26,13 @@ vi.mock('@/src/entities/manifest/model/validation/validationHealer', () => ({
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
-function makeIssue(overrides: Partial<ValidatorIssue> = {}): ValidatorIssue {
+function makeIssue(overrides: Partial<TreeValidationIssue> = {}): TreeValidationIssue {
   return {
     id: 'issue-1',
     itemId: 'canvas-1',
     itemLabel: 'Test Canvas',
-    level: 'warning',
+    severity: 'warning',
+    kind: 'tree',
     category: 'Metadata',
     message: 'Missing label',
     fixable: false,
@@ -159,10 +160,10 @@ describe('QCDashboard smoke tests', () => {
   });
 
   it('displays issue messages and item labels when issues are present', () => {
-    const issuesMap: Record<string, ValidatorIssue[]> = {
+    const issuesMap: Record<string, TreeValidationIssue[]> = {
       'canvas-1': [
-        makeIssue({ level: 'error', category: 'Identity', message: 'Missing @id' }),
-        makeIssue({ id: 'issue-2', level: 'warning', category: 'Identity', message: 'Duplicate identifier' }),
+        makeIssue({ severity: 'error', category: 'Identity', message: 'Missing @id' }),
+        makeIssue({ id: 'issue-2', severity: 'warning', category: 'Identity', message: 'Duplicate identifier' }),
       ],
     };
 
@@ -186,9 +187,9 @@ describe('QCDashboard smoke tests', () => {
   });
 
   it('displays reduced health score when errors are present', () => {
-    const issuesMap: Record<string, ValidatorIssue[]> = {
+    const issuesMap: Record<string, TreeValidationIssue[]> = {
       'canvas-1': [
-        makeIssue({ level: 'error', category: 'Identity', message: 'Missing @id' }),
+        makeIssue({ severity: 'error', category: 'Identity', message: 'Missing @id' }),
       ],
     };
 
@@ -228,13 +229,13 @@ describe('QCDashboard smoke tests', () => {
   });
 
   it('shows "Fix It" button for fixable issues', () => {
-    const issuesMap: Record<string, ValidatorIssue[]> = {
+    const issuesMap: Record<string, TreeValidationIssue[]> = {
       'manifest-1': [
         makeIssue({
           id: 'fix-1',
           itemId: 'manifest-1',
           itemLabel: 'Manifest',
-          level: 'error',
+          severity: 'error',
           category: 'Identity',
           message: 'Fixable error',
           fixable: true,

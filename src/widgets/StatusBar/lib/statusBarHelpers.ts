@@ -6,13 +6,6 @@
  */
 
 // ---------------------------------------------------------------------------
-// Types — re-exported from shared/types (canonical)
-// ---------------------------------------------------------------------------
-
-import type { ValidatorIssue } from '@/src/shared/types';
-export type ValidationIssue = ValidatorIssue;
-
-// ---------------------------------------------------------------------------
 // Functions
 // ---------------------------------------------------------------------------
 
@@ -48,16 +41,16 @@ export function getStorageBarColor(percent: number): string {
 
 /**
  * Count validation issues by severity, returning separate totals for
- * errors and warnings. Items with level 'info' are not counted.
+ * errors and warnings. Items with severity 'info' are not counted.
  */
 export function countBySeverity(
-  issues: { level: string }[],
+  issues: { severity: string }[],
 ): { errorCount: number; warningCount: number } {
   let errorCount = 0;
   let warningCount = 0;
   for (const issue of issues) {
-    if (issue.level === 'error') errorCount++;
-    else if (issue.level === 'warning') warningCount++;
+    if (issue.severity === 'error') errorCount++;
+    else if (issue.severity === 'warning') warningCount++;
   }
   return { errorCount, warningCount };
 }

@@ -129,32 +129,37 @@ export interface IIIFProvider {
 }
 
 // ============================================================================
-// Validation types — canonical shapes
+// Validation types — discriminated union (V6)
 // ============================================================================
 
 export type IssueSeverity = 'error' | 'warning' | 'info';
 export type IssueCategory = 'Identity' | 'Structure' | 'Metadata' | 'Content';
 
-export interface ValidatorIssue {
+interface ValidationIssueBase {
   id: string;
+  severity: IssueSeverity;
+  category?: IssueCategory;
+}
+
+export interface TreeValidationIssue extends ValidationIssueBase {
+  kind: 'tree';
   itemId: string;
   itemLabel: string;
-  level: IssueSeverity;
   message: string;
-  category: IssueCategory;
   fixable: boolean;
 }
 
-export interface InspectorIssue {
-  id: string;
-  severity: IssueSeverity;
+export interface FieldValidationIssue extends ValidationIssueBase {
+  kind: 'field';
+  field?: string;
   title: string;
   description: string;
-  field?: string;
   autoFixable: boolean;
   fixSuggestion?: string;
   currentValue?: unknown;
 }
+
+export type ValidationIssue = TreeValidationIssue | FieldValidationIssue;
 
 export interface IIIFItem {
   "@context"?: string | string[];

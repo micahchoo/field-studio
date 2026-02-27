@@ -324,7 +324,7 @@ describe('AutoSaveStore', () => {
 // ============================================================================
 
 import { ValidationStore } from '@/src/app/stores/validation.svelte';
-import type { ValidatorIssue } from '@/src/shared/types';
+import type { TreeValidationIssue } from '@/src/shared/types';
 
 describe('ValidationStore', () => {
   let store: ValidationStore;
@@ -348,13 +348,13 @@ describe('ValidationStore', () => {
   });
 
   it('totalIssues counts across all entities', () => {
-    const issues: Record<string, ValidatorIssue[]> = {
+    const issues: Record<string, TreeValidationIssue[]> = {
       'canvas/1': [
-        { id: 'v1', itemId: 'canvas/1', itemLabel: 'Canvas 1', level: 'error', message: 'Missing label', category: 'Metadata', fixable: false },
-        { id: 'v2', itemId: 'canvas/1', itemLabel: 'Canvas 1', level: 'warning', message: 'No thumbnail', category: 'Content', fixable: false },
+        { id: 'v1', itemId: 'canvas/1', itemLabel: 'Canvas 1', severity: 'error', kind: 'tree', message: 'Missing label', category: 'Metadata', fixable: false },
+        { id: 'v2', itemId: 'canvas/1', itemLabel: 'Canvas 1', severity: 'warning', kind: 'tree', message: 'No thumbnail', category: 'Content', fixable: false },
       ],
       'canvas/2': [
-        { id: 'v3', itemId: 'canvas/2', itemLabel: 'Canvas 2', level: 'info', message: 'Suggestion', category: 'Metadata', fixable: false },
+        { id: 'v3', itemId: 'canvas/2', itemLabel: 'Canvas 2', severity: 'info', kind: 'tree', message: 'Suggestion', category: 'Metadata', fixable: false },
       ],
     };
 
@@ -364,13 +364,13 @@ describe('ValidationStore', () => {
     expect(store.totalIssues).toBe(3);
   });
 
-  it('errorCount counts only level "error"', () => {
-    const issues: Record<string, ValidatorIssue[]> = {
+  it('errorCount counts only severity "error"', () => {
+    const issues: Record<string, TreeValidationIssue[]> = {
       'manifest/1': [
-        { id: 'v1', itemId: 'manifest/1', itemLabel: 'Manifest', level: 'error', message: 'Bad', category: 'Identity', fixable: false },
-        { id: 'v2', itemId: 'manifest/1', itemLabel: 'Manifest', level: 'error', message: 'Also bad', category: 'Identity', fixable: false },
-        { id: 'v3', itemId: 'manifest/1', itemLabel: 'Manifest', level: 'warning', message: 'Meh', category: 'Metadata', fixable: false },
-        { id: 'v4', itemId: 'manifest/1', itemLabel: 'Manifest', level: 'info', message: 'FYI', category: 'Metadata', fixable: false },
+        { id: 'v1', itemId: 'manifest/1', itemLabel: 'Manifest', severity: 'error', kind: 'tree', message: 'Bad', category: 'Identity', fixable: false },
+        { id: 'v2', itemId: 'manifest/1', itemLabel: 'Manifest', severity: 'error', kind: 'tree', message: 'Also bad', category: 'Identity', fixable: false },
+        { id: 'v3', itemId: 'manifest/1', itemLabel: 'Manifest', severity: 'warning', kind: 'tree', message: 'Meh', category: 'Metadata', fixable: false },
+        { id: 'v4', itemId: 'manifest/1', itemLabel: 'Manifest', severity: 'info', kind: 'tree', message: 'FYI', category: 'Metadata', fixable: false },
       ],
     };
 
@@ -398,7 +398,7 @@ describe('ValidationStore', () => {
     const fn1 = vi.fn().mockReturnValue({ 'a': [] });
     const fn2 = vi.fn().mockReturnValue({ 'b': [] });
     const fn3 = vi.fn().mockReturnValue({
-      'c': [{ id: 'v1', itemId: 'c', itemLabel: 'C', level: 'error' as const, message: 'E', category: 'Identity' as const, fixable: false }],
+      'c': [{ id: 'v1', itemId: 'c', itemLabel: 'C', severity: 'error' as const, kind: 'tree' as const, message: 'E', category: 'Identity' as const, fixable: false }],
     });
 
     store.scheduleValidation(fn1);
@@ -436,14 +436,14 @@ describe('ValidationStore', () => {
   it('clear() empties issues and cancels pending validation', () => {
     // First, set some issues
     store.scheduleValidation(() => ({
-      'x': [{ id: 'v1', itemId: 'x', itemLabel: 'X', level: 'error', message: 'E', category: 'Identity' as const, fixable: false }],
+      'x': [{ id: 'v1', itemId: 'x', itemLabel: 'X', severity: 'error', kind: 'tree' as const, message: 'E', category: 'Identity' as const, fixable: false }],
     }));
     vi.advanceTimersByTime(100);
     expect(store.totalIssues).toBe(1);
 
     // Schedule a new validation, then clear before it fires
     store.scheduleValidation(() => ({
-      'y': [{ id: 'v2', itemId: 'y', itemLabel: 'Y', level: 'error', message: 'E2', category: 'Identity' as const, fixable: false }],
+      'y': [{ id: 'v2', itemId: 'y', itemLabel: 'Y', severity: 'error', kind: 'tree' as const, message: 'E2', category: 'Identity' as const, fixable: false }],
     }));
 
     store.clear();
@@ -469,7 +469,7 @@ describe('ValidationStore', () => {
   it('scheduleValidation catches errors in validateFn and keeps previous issues', () => {
     // First, set some issues
     store.scheduleValidation(() => ({
-      'a': [{ id: 'v1', itemId: 'a', itemLabel: 'A', level: 'warning', message: 'W', category: 'Metadata' as const, fixable: false }],
+      'a': [{ id: 'v1', itemId: 'a', itemLabel: 'A', severity: 'warning', kind: 'tree' as const, message: 'W', category: 'Metadata' as const, fixable: false }],
     }));
     vi.advanceTimersByTime(100);
     expect(store.totalIssues).toBe(1);

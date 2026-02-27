@@ -6,7 +6,7 @@
 // TYPE_DEBT: Define HealedIIIF = Partial<IIIFItem> & Record<string, unknown>, then replace ~60 `as any` casts.
 import { getIIIFValue, IIIFExternalWebResource, IIIFItem, isCanvas, isCollection, isManifest } from '@/src/shared/types';
 import { vaultLog } from '@/src/shared/services/logger';
-import { ValidationIssue } from './validator';
+import type { TreeValidationIssue as ValidationIssue } from '@/src/shared/types';
 import { createLanguageMap, findNodeById, generateUUID, generateValidUri, normalizeUri } from '@/utils';
 import { DEFAULT_INGEST_PREFS } from '@/src/shared/constants/core';
 import { IIIF_SPEC } from '@/src/shared/constants/iiif';
@@ -1060,8 +1060,8 @@ export function getHealingPriority(issues: ValidationIssue[]): ValidationIssue[]
     if (!b) return -1;
 
     // Errors before warnings
-    if (a.level !== b.level) {
-      return a.level === 'error' ? -1 : 1;
+    if (a.severity !== b.severity) {
+      return a.severity === 'error' ? -1 : 1;
     }
     // Fixable before non-fixable
     if (a.fixable !== b.fixable) {

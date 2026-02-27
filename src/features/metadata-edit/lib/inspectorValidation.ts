@@ -18,14 +18,13 @@
  *   const fixed = fixAll(manifest, result.autoFixableIssues);
  */
 
-import { isManifest, type IIIFItem, type InspectorIssue, type IssueSeverity } from '@/src/shared/types';
+import { isManifest, type IIIFItem, type FieldValidationIssue } from '@/src/shared/types';
 
 // ------------------------------------------------------------------
 // Types — re-exported from shared/types (canonical)
 // ------------------------------------------------------------------
 
-export type ValidationSeverity = IssueSeverity;
-export type ValidationIssue = InspectorIssue;
+export type ValidationIssue = FieldValidationIssue;
 
 export interface ValidationResult {
   issues: ValidationIssue[];
@@ -190,6 +189,7 @@ const rule01_missingLabel: RuleFn = (resource, _type, issues) => {
   const label = extractLabel(resource.label);
   if (!label) {
     issues.push({
+      kind: 'field',
       id: 'missing-label',
       severity: 'error',
       title: 'Missing label',
@@ -204,6 +204,7 @@ const rule01_missingLabel: RuleFn = (resource, _type, issues) => {
 const rule02_missingRights: RuleFn = (resource, _type, issues) => {
   if (!resource.rights) {
     issues.push({
+      kind: 'field',
       id: 'missing-rights',
       severity: 'warning',
       title: 'Missing rights statement',
@@ -219,6 +220,7 @@ const rule03_shortLabel: RuleFn = (resource, _type, issues) => {
   const label = extractLabel(resource.label);
   if (label && label.length < 3) {
     issues.push({
+      kind: 'field',
       id: 'short-label',
       severity: 'warning',
       title: 'Very short label',
@@ -235,6 +237,7 @@ const rule04_missingSummary: RuleFn = (resource, _type, issues) => {
   const summary = extractLabel(resource.summary);
   if (!summary) {
     issues.push({
+      kind: 'field',
       id: 'missing-summary',
       severity: 'info',
       title: 'Missing summary',
@@ -256,6 +259,7 @@ const rule05_emptyMetadata: RuleFn = (resource, _type, issues) => {
     const value = extractLabel(entry?.value);
     if (!label && !value) {
       issues.push({
+        kind: 'field',
         id: `empty-metadata-${i}`,
         severity: 'warning',
         title: 'Empty metadata entry',
@@ -274,6 +278,7 @@ const rule06_missingViewingDirection: RuleFn = (resource, type, issues) => {
   if (type !== 'Manifest' && type !== 'Collection') return;
   if (!resource.viewingDirection) {
     issues.push({
+      kind: 'field',
       id: 'missing-viewing-direction',
       severity: 'info',
       title: 'Missing viewing direction',
@@ -293,6 +298,7 @@ const rule07_emptyCollection: RuleFn = (resource, type, issues) => {
   const items = resource.items ?? (Array.isArray(members) ? members : []);
   if (items.length === 0) {
     issues.push({
+      kind: 'field',
       id: 'empty-collection',
       severity: 'error',
       title: 'Empty collection',
@@ -309,6 +315,7 @@ const rule08_emptyManifest: RuleFn = (resource, type, issues) => {
   const items = resource.items ?? [];
   if (items.length === 0) {
     issues.push({
+      kind: 'field',
       id: 'empty-manifest',
       severity: 'error',
       title: 'Empty manifest',
@@ -337,6 +344,7 @@ const rule09_duplicateMetadataLabels: RuleFn = (resource, _type, issues) => {
   for (const [label, indices] of labelCounts) {
     if (indices.length > 1) {
       issues.push({
+        kind: 'field',
         id: `duplicate-metadata-labels-${label}`,
         severity: 'warning',
         title: 'Duplicate metadata labels',
@@ -353,6 +361,7 @@ const rule09_duplicateMetadataLabels: RuleFn = (resource, _type, issues) => {
 const rule10_missingId: RuleFn = (resource, _type, issues) => {
   if (!resource.id) {
     issues.push({
+      kind: 'field',
       id: 'missing-id',
       severity: 'error',
       title: 'Missing resource ID',
@@ -367,6 +376,7 @@ const rule10_missingId: RuleFn = (resource, _type, issues) => {
 const rule11_nonHttpsId: RuleFn = (resource, _type, issues) => {
   if (typeof resource.id === 'string' && resource.id.startsWith('http://')) {
     issues.push({
+      kind: 'field',
       id: 'non-https-id',
       severity: 'warning',
       title: 'Non-HTTPS resource ID',
@@ -386,6 +396,7 @@ const rule12_invalidNavDateFormat: RuleFn = (resource, _type, issues) => {
   if (!isValidNavDate(resource.navDate)) {
     const reformatted = reformatNavDate(resource.navDate);
     issues.push({
+      kind: 'field',
       id: 'invalid-navdate-format',
       severity: 'error',
       title: 'Invalid navDate format',
@@ -408,6 +419,7 @@ const rule13_invalidBehaviorForType: RuleFn = (resource, type, issues) => {
   const invalid = behaviors.filter((b: string) => !valid.includes(b));
   if (invalid.length > 0) {
     issues.push({
+      kind: 'field',
       id: 'invalid-behavior-for-type',
       severity: 'warning',
       title: 'Invalid behavior for resource type',
@@ -429,6 +441,7 @@ const rule14_conflictingBehaviors: RuleFn = (resource, _type, issues) => {
     const present = behaviors.filter((b: string) => group.includes(b));
     if (present.length > 1) {
       issues.push({
+        kind: 'field',
         id: `conflicting-behaviors-${present.join('-')}`,
         severity: 'warning',
         title: 'Conflicting behaviors',
@@ -451,6 +464,7 @@ const rule15_behaviorMissingPrecondition: RuleFn = (resource, type, issues) => {
   if (behaviors.includes('paged') && type === 'Manifest' && isManifest(resource)) {
     if (resource.items.length < 2) {
       issues.push({
+        kind: 'field',
         id: 'behavior-missing-precondition-paged',
         severity: 'info',
         title: 'Paged behavior with too few canvases',
@@ -468,6 +482,7 @@ const rule15_behaviorMissingPrecondition: RuleFn = (resource, type, issues) => {
     );
     if (anyMissingDuration) {
       issues.push({
+        kind: 'field',
         id: 'behavior-missing-precondition-auto-advance',
         severity: 'info',
         title: 'Auto-advance without canvas durations',
@@ -488,6 +503,7 @@ const rule16_invalidRightsUri: RuleFn = (resource, _type, issues) => {
   // Must be a URI
   if (!uri.startsWith('http://') && !uri.startsWith('https://')) {
     issues.push({
+      kind: 'field',
       id: 'invalid-rights-uri',
       severity: 'error',
       title: 'Invalid rights URI',
@@ -510,6 +526,7 @@ const rule17_unknownRightsUri: RuleFn = (resource, _type, issues) => {
     !ALL_VALID_RIGHTS.has(uri)
   ) {
     issues.push({
+      kind: 'field',
       id: 'unknown-rights-uri',
       severity: 'info',
       title: 'Unknown rights URI',
@@ -530,6 +547,7 @@ const rule18_unsafeHtmlContent: RuleFn = (resource, _type, issues) => {
     const sanitized = stripUnsafeHtml(summary);
     if (sanitized !== summary) {
       issues.push({
+        kind: 'field',
         id: 'unsafe-html-content-summary',
         severity: 'warning',
         title: 'Potentially unsafe HTML in summary',
@@ -551,6 +569,7 @@ const rule18_unsafeHtmlContent: RuleFn = (resource, _type, issues) => {
         const sanitized = stripUnsafeHtml(value);
         if (sanitized !== value) {
           issues.push({
+            kind: 'field',
             id: `unsafe-html-content-metadata-${i}`,
             severity: 'warning',
             title: `Potentially unsafe HTML in metadata[${i}]`,
@@ -572,6 +591,7 @@ const rule18_unsafeHtmlContent: RuleFn = (resource, _type, issues) => {
       const sanitized = stripUnsafeHtml(rsValue);
       if (sanitized !== rsValue) {
         issues.push({
+          kind: 'field',
           id: 'unsafe-html-content-requiredStatement',
           severity: 'warning',
           title: 'Potentially unsafe HTML in requiredStatement',

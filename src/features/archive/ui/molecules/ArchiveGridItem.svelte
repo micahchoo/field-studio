@@ -9,7 +9,7 @@
 <script lang="ts">
   import type { IIIFCanvas } from '@/src/shared/types';
   import { getIIIFValue } from '@/src/shared/types';
-  import type { ValidatorIssue } from '@/src/shared/types';
+  import type { TreeValidationIssue } from '@/src/shared/types';
   import type { FileDNA } from '@/src/features/archive/model';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
@@ -32,7 +32,7 @@
     reorderEnabled: boolean;
     fieldMode: boolean;
     cx: { [key: string]: string | undefined };
-    issues?: ValidatorIssue[];
+    issues?: TreeValidationIssue[];
     onToggleSelect?: (id: string) => void;
     onBadgeTooltip: (tooltip: { text: string; x: number; y: number } | null) => void;
   }
@@ -94,7 +94,7 @@
       <div class="absolute top-2 left-2 z-20" title={`${issues.length} issue(s)`}>
         <div class={cn(
           'w-2.5 h-2.5 rounded-full shadow-brutal-sm',
-          issues.some(i => i.level === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
+          issues.some(i => i.severity === 'error') ? 'bg-nb-red' : 'bg-nb-orange'
         )}></div>
       </div>
     {/if}

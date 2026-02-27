@@ -1,5 +1,5 @@
 import { getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, IIIFManifest, isCanvas, isCollection, isManifest } from '@/src/shared/types';
-import type { ValidatorIssue, IssueCategory } from '@/src/shared/types';
+import type { TreeValidationIssue, IssueCategory } from '@/src/shared/types';
 import { validateResource as schemaValidateResource } from '@/utils/iiifSchema';
 import {
   doesInheritBehavior,
@@ -8,7 +8,7 @@ import {
 } from '@/utils/iiifBehaviors';
 
 export type { IssueCategory };
-export type ValidationIssue = ValidatorIssue;
+type ValidationIssue = TreeValidationIssue;
 
 /**
  * ValidationService provides tree-aware IIIF validation.
@@ -36,7 +36,7 @@ export class ValidationService {
                   id: crypto.randomUUID().slice(0, 9),
                   itemId: item.id,
                   itemLabel: getIIIFValue(item.label) || 'Unknown',
-                  level: 'error',
+                  kind: 'tree', severity: 'error',
                   category: 'Identity',
                   message: 'CRITICAL: Duplicate ID detected. This will break most IIIF viewers.',
                   fixable: true
@@ -91,7 +91,7 @@ export class ValidationService {
         id: crypto.randomUUID().slice(0, 9),
         itemId: item.id,
         itemLabel: getIIIFValue(item.label) || 'Untitled',
-        level: 'error' as const,
+        kind: 'tree', severity: 'error' as const,
         category,
         message: err,
         fixable
@@ -101,12 +101,13 @@ export class ValidationService {
 
   validateItem(item: IIIFItem, parent?: IIIFItem, parentType?: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
-    const addIssue = (level: 'error' | 'warning', category: IssueCategory, message: string, fixable: boolean = false) => {
+    const addIssue = (severity: 'error' | 'warning', category: IssueCategory, message: string, fixable: boolean = false) => {
         issues.push({
+            kind: 'tree',
             id: crypto.randomUUID().slice(0, 9),
             itemId: item.id,
             itemLabel: getIIIFValue(item.label) || 'Untitled',
-            level,
+            severity,
             category,
             message,
             fixable
@@ -278,8 +279,8 @@ export function getValidationForField(
   }
 
   // Find the most severe issue (error > warning)
-  const errorIssue = matchingIssues.find(i => i.level === 'error');
-  const warningIssue = matchingIssues.find(i => i.level === 'warning');
+  const errorIssue = matchingIssues.find(i => i.severity === 'error');
+  const warningIssue = matchingIssues.find(i => i.severity === 'warning');
   const primaryIssue = errorIssue || warningIssue;
 
   if (!primaryIssue) {
@@ -288,7 +289,7 @@ export function getValidationForField(
 
   // Build the field validation result
   const result: FieldValidation = {
-    status: primaryIssue.level === 'error' ? 'invalid' : 'valid',
+    status: primaryIssue.severity === 'error' ? 'invalid' : 'valid',
     message: primaryIssue.message,
   };
 

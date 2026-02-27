@@ -233,9 +233,6 @@
     return Object.values(validation.issues).flat();
   });
 
-  // StatusBar now uses the same ValidatorIssue shape
-  const statusBarIssues = $derived.by(() => flatValidationIssues);
-
   const validationIssuesMap = $derived(validation.issues);
 
   // ============================================================================
@@ -965,7 +962,7 @@
       <StatusBar
         totalItems={root?.items?.length ?? 0}
         selectedItem={selectedItem}
-        validationIssues={statusBarIssues}
+        validationIssues={flatValidationIssues}
         {storageUsage}
         onOpenQC={() => dialogs.qcDashboard.open()}
         saveStatus={autoSave.saveStatus}

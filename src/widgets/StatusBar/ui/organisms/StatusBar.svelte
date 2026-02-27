@@ -16,7 +16,7 @@
   // import type { ValidationIssue } from '@/src/entities/manifest/model/validation/validator';
   // import type { DetailedStorageEstimate } from '@/src/shared/services/storage';
 
-  import type { ValidatorIssue } from '@/src/shared/types';
+  import type { TreeValidationIssue } from '@/src/shared/types';
   import {
     formatBytes,
     getStorageBarColor,
@@ -24,10 +24,6 @@
   } from '../../lib/statusBarHelpers';
 
   // --- Stub types (replace with real imports) ---
-  interface StatusBarValidationIssue extends ValidatorIssue {
-    path?: string;
-  }
-
   interface DetailedStorageEstimate {
     usage: number;
     quota: number;
@@ -39,7 +35,7 @@
   interface Props {
     totalItems: number;
     selectedItem: IIIFItem | null;
-    validationIssues: StatusBarValidationIssue[];
+    validationIssues: TreeValidationIssue[];
     storageUsage: { usage: number; quota: number } | null;
     onOpenQC: () => void;
     saveStatus: 'saved' | 'saving' | 'error';

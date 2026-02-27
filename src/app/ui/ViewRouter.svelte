@@ -47,7 +47,7 @@
   import type { ContextualClassNames as StrictCx } from '@/src/shared/lib/contextual-styles';
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import type { AppSettings } from '@/src/shared/stores/appSettings.svelte';
-  import type { ValidatorIssue } from '@/src/shared/types';
+  import type { TreeValidationIssue } from '@/src/shared/types';
   import type { AppMode } from '@/src/shared/stores/appMode.svelte';
 
   import { cn } from '@/src/shared/lib/cn';
@@ -130,7 +130,7 @@
     root: IIIFItem | null;
     onSelect?: (item: IIIFItem) => void;
     onSelectId?: (id: string | null) => void;
-    validationIssuesMap?: Record<string, ValidatorIssue[]>;
+    validationIssuesMap?: Record<string, TreeValidationIssue[]>;
     onUpdateRoot?: (newRoot: IIIFItem) => void;
     onUpdateItem?: (updates: Partial<IIIFItem>) => void;
     onBatchEdit?: (ids: string[]) => void;

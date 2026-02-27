@@ -16,7 +16,7 @@
   import { ModalDialog, Toast } from '@/src/shared/ui/molecules';
   import { toast } from '@/src/shared/stores/toast.svelte';
 
-  import type { IIIFItem, ValidatorIssue, IssueCategory } from '@/src/shared/types';
+  import type { IIIFItem, TreeValidationIssue, IssueCategory } from '@/src/shared/types';
   import { getIIIFValue, isManifest } from '@/src/shared/types';
 
   import {
@@ -52,7 +52,7 @@
   // Props
   // ---------------------------------------------------------------------------
   interface Props {
-    issuesMap: Record<string, ValidatorIssue[]>;
+    issuesMap: Record<string, TreeValidationIssue[]>;
     totalItems: number;
     root: IIIFItem | null;
     onSelect: (id: string) => void;
@@ -81,7 +81,7 @@
   // ---------------------------------------------------------------------------
 
   /** Flatten all issues from the map into a single array */
-  const allIssues = $derived.by((): ValidatorIssue[] => {
+  const allIssues = $derived.by((): TreeValidationIssue[] => {
     return Object.values(issuesMap).flat();
   });
 
@@ -92,7 +92,7 @@
 
   /** Health score: percentage of items without errors */
   const healthScore = $derived.by((): number => {
-    const errorCount = allIssues.filter((i) => i.level === 'error').length;
+    const errorCount = allIssues.filter((i) => i.severity === 'error').length;
     return calculateHealthScore(errorCount, totalItems);
   });
 
@@ -181,7 +181,7 @@
     selectedIssueId = null;
   }
 
-  function handleSelectIssue(issue: ValidatorIssue): void {
+  function handleSelectIssue(issue: TreeValidationIssue): void {
     selectedIssueId = issue.id;
   }
 
@@ -211,7 +211,7 @@
     if (traverse(newRoot)) onUpdate(newRoot);
   }
 
-  function handleHeal(issue: ValidatorIssue): void {
+  function handleHeal(issue: TreeValidationIssue): void {
     if (!root) return;
 
     try {
@@ -403,11 +403,11 @@
                 <div class="flex items-center gap-2 mb-1">
                   <span class={cn(
                     'text-[8px] font-black uppercase px-1.5 py-0.5',
-                    issue.level === 'error'
+                    issue.severity === 'error'
                       ? 'bg-nb-red/20 text-nb-red'
                       : 'bg-nb-orange/20 text-nb-orange'
                   )}>
-                    {issue.level}
+                    {issue.severity}
                   </span>
                   <span class="text-[10px] font-bold truncate text-nb-black">
                     {issue.itemLabel ?? 'Unknown'}

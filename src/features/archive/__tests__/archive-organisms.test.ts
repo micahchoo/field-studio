@@ -229,7 +229,7 @@ describe('ArchiveList — table with items', () => {
   it('shows validation dot for canvas with issues', () => {
     const canvas = makeCanvas('https://example.org/canvas/1');
     const validationIssues = {
-      'https://example.org/canvas/1': [{ id: 'v1', itemId: 'https://example.org/canvas/1', itemLabel: 'Canvas 1', level: 'error' as const, message: 'Missing label', category: 'Metadata' as const, fixable: false }],
+      'https://example.org/canvas/1': [{ id: 'v1', itemId: 'https://example.org/canvas/1', itemLabel: 'Canvas 1', kind: 'tree' as const, severity: 'error' as const, message: 'Missing label', category: 'Metadata' as const, fixable: false }],
     };
     instance = mount(ArchiveList, {
       target,

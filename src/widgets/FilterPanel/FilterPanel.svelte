@@ -30,7 +30,7 @@
     onViewChange?        -- Callback when tab changes
 -->
 <script lang="ts">
-  import type { IIIFItem, ValidatorIssue } from '@/src/shared/types';
+  import type { IIIFItem, TreeValidationIssue } from '@/src/shared/types';
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import { cn } from '@/src/shared/lib/cn';
@@ -47,7 +47,7 @@
     onOpen: (item: IIIFItem) => void;
     onBatchEdit: (ids: string[]) => void;
     onUpdate?: (newRoot: IIIFItem) => void;
-    validationIssues?: Record<string, ValidatorIssue[]>;
+    validationIssues?: Record<string, TreeValidationIssue[]>;
     onReveal?: (id: string, mode: 'collections' | 'viewer' | 'archive') => void;
     onCatalogSelection?: (ids: string[]) => void;
     cx: ContextualClassNames;
