@@ -10,7 +10,6 @@
  *   import { search } from '@/src/shared/stores/search.svelte';
  *   import { auth } from '@/src/shared/stores/auth.svelte';
  *   import { activityLog } from '@/src/shared/stores/activityLog.svelte';
- *   import { imagePipeline } from '@/src/shared/stores/imagePipeline.svelte';
  *
  * Scoped contexts (use in setContext/getContext):
  *   import { setAnnotationContext, getAnnotationContext } from '@/src/shared/stores/contexts';
@@ -30,8 +29,6 @@ export { search } from './search.svelte';
 export type { SearchScope, SearchField } from './search.svelte';
 export { auth } from './auth.svelte';
 export { activityLog } from './activityLog.svelte';
-export { imagePipeline } from './imagePipeline.svelte';
-
 // Scoped contexts
 export {
   setAnnotationContext,

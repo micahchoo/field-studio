@@ -47,11 +47,6 @@ vi.mock('@/src/shared/services/metadataHarvester', () => ({
   extractMetadata: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock('../ingest/tileWorker', () => ({
-  generateDerivativeAsync: vi.fn(),
-  getTileWorkerPool: vi.fn(),
-}));
-
 vi.mock('@/utils/iiifHierarchy', () => ({
   generateId: vi.fn((_type: string) => `https://example.org/generated-id`),
   getRelationshipType: vi.fn(),

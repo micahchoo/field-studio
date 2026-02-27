@@ -15,7 +15,6 @@
  *   • Thumbnail derivatives (thumb/small/medium)
  *   • Ingest checkpoints
  *   • Search index persistence
- *   • Tile pyramid storage for Level-0 IIIF Image API
  *   • Quota monitoring with warning callbacks
  */
 
@@ -203,3 +202,8 @@ class StorageService {
 
 /** Global singleton */
 export const storage = new StorageService();
+
+/** One-time cleanup: delete the orphaned field-studio-tiles database (V5 — tile pipeline removed) */
+export function deleteOrphanedTileDatabase(): void {
+  indexedDB.deleteDatabase('field-studio-tiles');
+}

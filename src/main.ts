@@ -15,6 +15,10 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// One-time cleanup: delete orphaned tile database (V5 — tile pipeline removed)
+import { deleteOrphanedTileDatabase } from '@/src/shared/services/storage';
+deleteOrphanedTileDatabase();
+
 const target = document.getElementById('app');
 if (target) {
   mount(App, { target });
