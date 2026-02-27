@@ -1,5 +1,4 @@
 export { provenanceService, type PropertyChange, type ProvenanceEntry } from './provenanceService';
-export { activityStreamService, type ActivityEntry } from './activityStream';
 export { vaultLog, uiLog, networkLog, ingestLog, storageLog } from './logger';
 export { contentStateService, type ContentState, type ViewportState, type SpecificResource, type PartOf, type Selector, type PointSelector, type FragmentSelector, type ImageApiSelector, type AnnotationSelector } from './contentState';
 export { guidance, type GuidanceTopic } from './guidanceService';

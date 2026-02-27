@@ -100,38 +100,6 @@
   import Inspector from '@/src/features/metadata-edit/ui/organisms/Inspector.svelte';
 
   // ============================================================================
-  // Action Labels — StatusBar last-action indicator
-  // ============================================================================
-
-  const ACTION_LABELS: Record<string, string> = {
-    UPDATE_LABEL: 'Update label',
-    UPDATE_SUMMARY: 'Update summary',
-    UPDATE_METADATA: 'Update metadata',
-    UPDATE_RIGHTS: 'Update rights',
-    UPDATE_NAV_DATE: 'Update date',
-    UPDATE_BEHAVIOR: 'Update behavior',
-    UPDATE_VIEWING_DIRECTION: 'Update direction',
-    ADD_CANVAS: 'Add canvas',
-    REMOVE_CANVAS: 'Remove canvas',
-    REORDER_CANVASES: 'Reorder canvases',
-    ADD_ANNOTATION: 'Add annotation',
-    REMOVE_ANNOTATION: 'Remove annotation',
-    UPDATE_ANNOTATION: 'Update annotation',
-    UPDATE_CANVAS_DIMENSIONS: 'Resize canvas',
-    MOVE_ITEM: 'Move item',
-    BATCH_UPDATE: 'Batch update',
-    RELOAD_TREE: 'Reload tree',
-    MOVE_TO_TRASH: 'Move to trash',
-    RESTORE_FROM_TRASH: 'Restore',
-    EMPTY_TRASH: 'Empty trash',
-    ADD_RANGE: 'Add range',
-    REMOVE_RANGE: 'Remove range',
-    CREATE_BOARD: 'Create board',
-    UPDATE_BOARD_ITEM_POSITION: 'Move board item',
-    REMOVE_BOARD_ITEM: 'Remove board item',
-  };
-
-  // ============================================================================
   // Skip link data
   // ============================================================================
 

@@ -29,7 +29,6 @@ export {
 } from './gridVirtualization';
 
 // Category 2: State Containers (classes)
-export { HistoryStore } from './history.svelte';
 export {
   LayerHistoryStore,
   type PlacedResource,

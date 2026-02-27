@@ -1,40 +1,19 @@
 /**
- * Action System Tests — reduce, ActionHistory, ActionDispatcher
+ * Action System Tests — reduce, ActionHistory
  *
  * Tests the core mutation pipeline: action dispatch, undo/redo with
- * JSON-patch-based history, coalescing, subscriber notifications,
- * and helper utilities.
+ * JSON-patch-based history, coalescing, and action creators.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   reduce,
   ActionHistory,
-  ActionDispatcher,
   actions,
-  createActionHistory,
-  validateAction,
-  executeAction,
 } from '../index';
 import type { Action } from '../types';
 import type { NormalizedState } from '../../vault';
 import type { IIIFCanvas, IIIFManifest } from '@/src/shared/types';
-
-// ---------------------------------------------------------------------------
-// Mock external services that the dispatcher records to
-// ---------------------------------------------------------------------------
-
-vi.mock('@/src/shared/services/provenanceService', () => ({
-  provenanceService: { recordUpdate: vi.fn() },
-}));
-
-vi.mock('@/src/shared/services/activityStream', () => ({
-  activityStream: {
-    recordCreate: vi.fn().mockResolvedValue(undefined),
-    recordUpdate: vi.fn().mockResolvedValue(undefined),
-    recordDelete: vi.fn().mockResolvedValue(undefined),
-  },
-}));
 
 // ---------------------------------------------------------------------------
 // Test fixtures
@@ -358,183 +337,10 @@ describe('ActionHistory', () => {
 });
 
 // ============================================================================
-// 3. ActionDispatcher class
+// 3. Action creators
 // ============================================================================
 
-describe('ActionDispatcher', () => {
-  let dispatcher: ActionDispatcher;
-  let initialState: NormalizedState;
-
-  beforeEach(() => {
-    initialState = buildTestState();
-    dispatcher = new ActionDispatcher(initialState);
-  });
-
-  it('dispatch() updates state and returns true', () => {
-    const newLabel = { en: ['Dispatched Label'] };
-    const ok = dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, newLabel));
-
-    expect(ok).toBe(true);
-    expect(dispatcher.getState().entities.Manifest[MANIFEST_ID].label).toEqual(newLabel);
-  });
-
-  it('failed dispatch returns false and notifies error listeners', () => {
-    const errorCb = vi.fn();
-    dispatcher.onError(errorCb);
-
-    const bogus = { type: 'DOES_NOT_EXIST' } as unknown as Action;
-    const ok = dispatcher.dispatch(bogus);
-
-    expect(ok).toBe(false);
-    expect(errorCb).toHaveBeenCalledTimes(1);
-    expect(errorCb).toHaveBeenCalledWith('Unknown action type', bogus);
-  });
-
-  it('undo()/redo() restore/reapply state', () => {
-    const original = dispatcher.getState().entities.Manifest[MANIFEST_ID].label;
-    const newLabel = { en: ['Changed'] };
-
-    dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, newLabel));
-    expect(dispatcher.getState().entities.Manifest[MANIFEST_ID].label).toEqual(newLabel);
-
-    const undone = dispatcher.undo();
-    expect(undone).toBe(true);
-    expect(dispatcher.getState().entities.Manifest[MANIFEST_ID].label).toEqual(original);
-
-    const redone = dispatcher.redo();
-    expect(redone).toBe(true);
-    expect(dispatcher.getState().entities.Manifest[MANIFEST_ID].label).toEqual(newLabel);
-  });
-
-  it('undo returns false when nothing to undo', () => {
-    expect(dispatcher.undo()).toBe(false);
-  });
-
-  it('redo returns false when nothing to redo', () => {
-    expect(dispatcher.redo()).toBe(false);
-  });
-
-  it('subscribe() receives state + action on dispatch', () => {
-    const listener = vi.fn();
-    const unsub = dispatcher.subscribe(listener);
-
-    const action = actions.updateLabel(MANIFEST_ID, { en: ['Notified'] });
-    dispatcher.dispatch(action);
-
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener).toHaveBeenCalledWith(
-      expect.objectContaining({ rootId: MANIFEST_ID }),
-      action
-    );
-
-    unsub();
-    dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, { en: ['After Unsub'] }));
-    expect(listener).toHaveBeenCalledTimes(1); // no additional call
-  });
-
-  it('subscribeEntity() receives changed entity IDs', () => {
-    const entityCb = vi.fn();
-    dispatcher.subscribeEntity(entityCb);
-
-    dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, { en: ['Entity Change'] }));
-
-    expect(entityCb).toHaveBeenCalledTimes(1);
-    const [_state, ids] = entityCb.mock.calls[0];
-    expect(ids).toBeInstanceOf(Set);
-    expect(ids.has(MANIFEST_ID)).toBe(true);
-  });
-
-  it('onError() receives error + action on failures', () => {
-    const errorCb = vi.fn();
-    dispatcher.onError(errorCb);
-
-    // Canvas with invalid dimensions
-    const badCanvas = makeCanvas('bad', { width: -10, height: 0 });
-    const action = actions.addCanvas(MANIFEST_ID, badCanvas);
-    dispatcher.dispatch(action);
-
-    expect(errorCb).toHaveBeenCalledTimes(1);
-    const [error, failedAction] = errorCb.mock.calls[0];
-    expect(typeof error).toBe('string');
-    expect(failedAction).toBe(action);
-  });
-
-  it('lastChangedIds tracks affected entities', () => {
-    dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, { en: ['Track IDs'] }));
-    expect(dispatcher.lastChangedIds.has(MANIFEST_ID)).toBe(true);
-
-    const newCanvas = makeCanvas('https://example.org/canvas/new');
-    dispatcher.dispatch(actions.addCanvas(MANIFEST_ID, newCanvas));
-    expect(dispatcher.lastChangedIds.has(MANIFEST_ID)).toBe(true);
-  });
-
-  it('undo/redo notify both general and entity listeners', () => {
-    const generalCb = vi.fn();
-    const entityCb = vi.fn();
-    dispatcher.subscribe(generalCb);
-    dispatcher.subscribeEntity(entityCb);
-
-    dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, { en: ['Before Undo'] }));
-    generalCb.mockClear();
-    entityCb.mockClear();
-
-    dispatcher.undo();
-    expect(generalCb).toHaveBeenCalledTimes(1);
-    expect(entityCb).toHaveBeenCalledTimes(1);
-
-    generalCb.mockClear();
-    entityCb.mockClear();
-
-    dispatcher.redo();
-    expect(generalCb).toHaveBeenCalledTimes(1);
-    expect(entityCb).toHaveBeenCalledTimes(1);
-  });
-
-  it('getHistoryStatus() reflects dispatch/undo state', () => {
-    expect(dispatcher.getHistoryStatus().canUndo).toBe(false);
-
-    dispatcher.dispatch(actions.updateLabel(MANIFEST_ID, { en: ['A'] }));
-    expect(dispatcher.getHistoryStatus().canUndo).toBe(true);
-    expect(dispatcher.getHistoryStatus().canRedo).toBe(false);
-
-    dispatcher.undo();
-    expect(dispatcher.getHistoryStatus().canRedo).toBe(true);
-  });
-});
-
-// ============================================================================
-// 4. Helper functions
-// ============================================================================
-
-describe('Helper functions', () => {
-  it('createActionHistory() factory returns ActionHistory', () => {
-    const h = createActionHistory({ maxSize: 50 });
-    expect(h).toBeInstanceOf(ActionHistory);
-    expect(h.canUndo()).toBe(false);
-    expect(h.getStatus().total).toBe(0);
-  });
-
-  it('createActionHistory() with default options', () => {
-    const h = createActionHistory();
-    expect(h).toBeInstanceOf(ActionHistory);
-  });
-
-  it('validateAction() returns valid for known action types', () => {
-    const result = validateAction(actions.updateLabel('some-id', { en: ['Test'] }));
-    // On an empty state UPDATE_LABEL still succeeds (updateEntity is a no-op on missing entity)
-    expect(result.valid).toBe(true);
-  });
-
-  it('validateAction() returns invalid for unknown action', () => {
-    const result = validateAction({ type: 'BOGUS' } as unknown as Action);
-    expect(result.valid).toBe(false);
-    expect(result.error).toBe('Unknown action type');
-  });
-
-  it('executeAction is an alias for reduce', () => {
-    expect(executeAction).toBe(reduce);
-  });
-
+describe('Action creators', () => {
   it('action creators produce correctly typed actions', () => {
     expect(actions.updateLabel('id', { en: ['x'] })).toEqual({
       type: 'UPDATE_LABEL',
