@@ -5,6 +5,11 @@ domains:
   - iiif
   - testing
   - roadmap
+  - vault
+  - persistence
+  - imaging
+  - ui
+  - migration
 governance:
   max_entries: 100
   warn_entries: 150
