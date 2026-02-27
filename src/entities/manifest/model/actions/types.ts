@@ -59,7 +59,9 @@ export type Action =
   // Phase 5: Board Design Actions
   | { type: 'CREATE_BOARD'; boardId: string; title: string; behavior?: string[] }
   | { type: 'UPDATE_BOARD_ITEM_POSITION'; annotationId: string; surfaceCanvasId: string; x: number; y: number; w: number; h: number }
-  | { type: 'REMOVE_BOARD_ITEM'; annotationId: string; surfaceCanvasId: string };
+  | { type: 'REMOVE_BOARD_ITEM'; annotationId: string; surfaceCanvasId: string }
+  // Phase 6: Normalized View Actions
+  | { type: 'GROUP_INTO_MANIFEST'; canvasIds: string[]; manifestId: string; label: LanguageMap };
 
 export interface ActionResult {
   success: boolean;

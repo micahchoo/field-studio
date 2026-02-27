@@ -6,8 +6,10 @@
 -->
 <script lang="ts">
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
-  import type { IIIFItem } from '@/src/shared/types';
+  import type { IIIFItem, EntityType } from '@/src/shared/types';
   import { getIIIFValue, isCanvas } from '@/src/shared/types';
+  import { vault } from '@/src/shared/stores/vault.svelte';
+  import { actions } from '@/src/entities/manifest/model/actions';
   import PaneLayout from '@/src/shared/ui/layout/composites/PaneLayout.svelte';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import Icon from '@/src/shared/ui/atoms/Icon.svelte';
@@ -31,12 +33,10 @@
     cx: ContextualClassNames;
     fieldMode: boolean;
     t: (key: string) => string;
-    root: IIIFItem;
     filmstripMode?: boolean;
     validationIssues?: Map<string, unknown[]>;
     onSelect: (item: IIIFItem) => void;
     onOpen: (item: IIIFItem) => void;
-    onUpdate: (newRoot: IIIFItem) => void;
     onBatchEdit: (ids: string[]) => void;
     showViewerPanel: boolean;
     showInspectorPanel: boolean;
@@ -50,12 +50,10 @@
     cx,
     fieldMode,
     t,
-    root,
     filmstripMode = false,
     validationIssues,
     onSelect,
     onOpen,
-    onUpdate,
     onBatchEdit,
     showViewerPanel,
     showInspectorPanel,
@@ -97,7 +95,7 @@
   });
 
   // ── Derived State ──
-  const canvases = $derived(extractCanvases(root));
+  const canvases = $derived(vault.getEntitiesByType('Canvas' as EntityType));
   const filteredCanvases = $derived(filterAndSort(canvases, filter, sortBy, sortDirection));
   const isEmpty = $derived(canvases.length === 0);
   const hasCanvasSelected = $derived(selectedIds.size > 0);
@@ -157,20 +155,6 @@
       if (stored === 'grid' || stored === 'list' || stored === 'grouped') return stored;
     } catch { /* unavailable */ }
     return 'grid';
-  }
-
-  function extractCanvases(item: IIIFItem): IIIFItem[] {
-    const result: IIIFItem[] = [];
-    if (item.type === 'Canvas') { result.push(item); return result; }
-    if (item.items && Array.isArray(item.items)) {
-      for (const child of item.items) {
-        if (typeof child === 'object' && child !== null && 'type' in child) {
-          if (child.type === 'Canvas') result.push(child as IIIFItem);
-          else if (child.type === 'Manifest' || child.type === 'Collection') result.push(...extractCanvases(child as IIIFItem));
-        }
-      }
-    }
-    return result;
   }
 
   function matchesFilter(item: IIIFItem, filterText: string): boolean {
@@ -255,48 +239,26 @@
   }
 
   function handleReorder(fromIndex: number, toIndex: number) {
-    if (!onUpdate) return;
-    const newRoot = JSON.parse(JSON.stringify(root)) as IIIFItem;
-    const reorderInParent = (parent: IIIFItem): boolean => {
-      if (!parent.items || !Array.isArray(parent.items)) return false;
-      const hasCanvases = parent.items.some(
-        (c: unknown) => typeof c === 'object' && c !== null && 'type' in c && (c as IIIFItem).type === 'Canvas'
-      );
-      if (hasCanvases) {
-        const items = [...parent.items];
-        const [movedItem] = items.splice(fromIndex, 1);
-        items.splice(toIndex, 0, movedItem);
-        parent.items = items;
-        return true;
-      }
-      for (const child of parent.items) {
-        if (typeof child === 'object' && child !== null && 'type' in child) {
-          if (reorderInParent(child as IIIFItem)) return true;
-        }
-      }
-      return false;
-    };
-    if (reorderInParent(newRoot)) onUpdate(newRoot);
+    const canvas = filteredCanvases[fromIndex];
+    if (!canvas) return;
+    const parentId = vault.getParentId(canvas.id);
+    if (!parentId) return;
+
+    const childIds = [...vault.getChildIds(parentId)];
+    const [movedId] = childIds.splice(fromIndex, 1);
+    childIds.splice(toIndex, 0, movedId);
+
+    vault.dispatch(actions.reorderCanvases(parentId, childIds));
   }
 
   function handleGroupIntoManifest() {
     if (selectedIds.size === 0) return;
-    const newRoot = JSON.parse(JSON.stringify(root)) as IIIFItem;
-    const canvasesToMove: IIIFItem[] = [];
-    const removeFromParent = (parent: IIIFItem) => {
-      if (!parent.items) return;
-      for (let i = parent.items.length - 1; i >= 0; i--) {
-        const child = parent.items[i] as IIIFItem;
-        if (selectedIds.has(child.id) && child.type === 'Canvas') canvasesToMove.push(parent.items.splice(i, 1)[0] as IIIFItem);
-        else if (child.items) removeFromParent(child);
-      }
-    };
-    removeFromParent(newRoot);
-    if (canvasesToMove.length === 0) return;
     const manifestId = `urn:field-studio:manifest:${crypto.randomUUID()}`;
-    if (!newRoot.items) newRoot.items = [];
-    newRoot.items.push({ id: manifestId, type: 'Manifest', label: { en: ['Selection Bundle'] }, items: canvasesToMove });
-    onUpdate(newRoot);
+    vault.dispatch(actions.groupIntoManifest(
+      Array.from(selectedIds),
+      manifestId,
+      { en: ['Selection Bundle'] }
+    ));
     archiveState.setSelection(new Set([manifestId]));
   }
 
@@ -306,30 +268,27 @@
   function handleOpenMap() {}
   function handleComposeOnBoard() {}
 
-  function groupCanvasesByManifest(item: IIIFItem): Array<{ manifestId: string; manifestLabel: string; canvases: IIIFItem[] }> {
+  function groupCanvasesByManifest(): Array<{ manifestId: string; manifestLabel: string; canvases: IIIFItem[] }> {
+    const manifests = vault.getEntitiesByType('Manifest' as EntityType);
     const groups: Array<{ manifestId: string; manifestLabel: string; canvases: IIIFItem[] }> = [];
-    function walk(node: IIIFItem) {
-      if (node.type === 'Manifest' && node.items) {
-        const mc = node.items.filter(
-          (c: unknown) => typeof c === 'object' && c !== null && 'type' in c && (c as IIIFItem).type === 'Canvas'
-        ) as IIIFItem[];
-        if (mc.length > 0) groups.push({ manifestId: node.id, manifestLabel: getIIIFValue(node.label) || 'Untitled Manifest', canvases: mc });
-      }
-      if (node.items && Array.isArray(node.items)) {
-        for (const child of node.items) {
-          if (typeof child === 'object' && child !== null && 'type' in child) {
-            const tc = child as IIIFItem;
-            if (tc.type === 'Collection' || tc.type === 'Manifest') walk(tc);
-          }
-        }
+    for (const manifest of manifests) {
+      const childIds = vault.getChildIds(manifest.id);
+      const childCanvases = childIds
+        .map(id => vault.getEntity(id))
+        .filter((e): e is IIIFItem => e !== null && e.type === 'Canvas');
+      if (childCanvases.length > 0) {
+        groups.push({
+          manifestId: manifest.id,
+          manifestLabel: getIIIFValue(manifest.label) || 'Untitled Manifest',
+          canvases: childCanvases,
+        });
       }
     }
-    walk(item);
     return groups;
   }
 </script>
 
-{#if !root || isEmpty}
+{#if !vault.rootId || isEmpty}
   <ArchiveEmptyState {cx} {t} {onOpenImport} {onOpenExternalImport} />
 {:else}
   <PaneLayout variant="default" class={cn('relative', cx.pageBg)}>
@@ -413,7 +372,7 @@
         />
       {:else if view === 'grouped'}
         <ArchiveGroupedView
-          groups={groupCanvasesByManifest(root)}
+          groups={groupCanvasesByManifest()}
           {selectedIds}
           {cx}
           {fieldMode}

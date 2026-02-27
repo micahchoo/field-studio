@@ -354,4 +354,8 @@ export const actions = {
 
   removeBoardItem: (annotationId: string, surfaceCanvasId: string): Action =>
     ({ type: 'REMOVE_BOARD_ITEM', annotationId, surfaceCanvasId }),
+
+  // Phase 6: Normalized View Action Creators
+  groupIntoManifest: (canvasIds: string[], manifestId: string, label: LanguageMap): Action =>
+    ({ type: 'GROUP_INTO_MANIFEST', canvasIds, manifestId, label }),
 };

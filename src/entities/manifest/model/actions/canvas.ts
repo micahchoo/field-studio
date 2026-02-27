@@ -1,6 +1,6 @@
 /**
  * Canvas-related action handlers.
- * Handles: ADD_CANVAS, REMOVE_CANVAS, REORDER_CANVASES, UPDATE_CANVAS_DIMENSIONS
+ * Handles: ADD_CANVAS, REMOVE_CANVAS, REORDER_CANVASES, UPDATE_CANVAS_DIMENSIONS, GROUP_INTO_MANIFEST
  */
 
 import type { Action, ActionResult } from './types';
@@ -8,6 +8,7 @@ import type { NormalizedState } from '../vault';
 import {
   addEntity,
   getEntity,
+  moveEntity,
   removeEntity,
   reorderChildren,
   updateEntity
@@ -97,6 +98,46 @@ export function handleCanvasAction(state: NormalizedState, action: Action): Acti
           oldValue: currentChildren,
           newValue: action.order
         }]
+      };
+    }
+
+    case 'GROUP_INTO_MANIFEST': {
+      if (action.canvasIds.length === 0) {
+        return { success: false, state, error: 'No canvas IDs provided' };
+      }
+
+      const rootId = state.rootId;
+      if (!rootId) {
+        return { success: false, state, error: 'No root entity' };
+      }
+
+      // Validate all canvas IDs exist
+      for (const canvasId of action.canvasIds) {
+        if (!getEntity(state, canvasId)) {
+          return { success: false, state, error: `Canvas not found: ${canvasId}` };
+        }
+      }
+
+      // Create new manifest entity
+      const manifest: IIIFItem = {
+        id: action.manifestId,
+        type: 'Manifest',
+        label: action.label,
+        items: [],
+      };
+
+      // Add manifest as child of root
+      let newState = addEntity(state, manifest, rootId);
+
+      // Move each canvas into the new manifest
+      for (const canvasId of action.canvasIds) {
+        newState = moveEntity(newState, canvasId, action.manifestId);
+      }
+
+      return {
+        success: true,
+        state: newState,
+        changes: [{ property: 'items', oldValue: null, newValue: action.manifestId }],
       };
     }
 

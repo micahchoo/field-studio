@@ -495,9 +495,8 @@
           : 'flex-1'
       )}>
         <svelte:boundary onerror={handleViewError}>
-          {#if root}
+          {#if vault.rootId}
             <ArchiveView
-              {root}
               onSelect={(item) => {
                 onSelect?.(item);
                 onSelectId?.(item.id);
@@ -508,7 +507,6 @@
                 showViewerPanel = true;
               }}
               onBatchEdit={(ids) => onBatchEdit?.(ids)}
-              onUpdate={(newRoot) => onUpdateRoot?.(newRoot)}
               filmstripMode={shouldShowViewer}
               onOpenImport={() => onOpenImport?.()}
               onOpenExternalImport={() => onOpenExternalImport?.()}
