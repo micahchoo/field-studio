@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { IIIFItem, IIIFAnnotation, NormalizedState } from '@/src/shared/types';
+import type { IIIFItem, IIIFAnnotation } from '@/src/shared/types';
 import { Vault } from '@/src/entities/manifest/model/vault';
 import { reduce, ActionHistory } from '@/src/entities/manifest/model/actions';
 import type { Action } from '@/src/entities/manifest/model/actions';
@@ -227,5 +227,112 @@ describe('VaultStore dispatch + ActionHistory integration pattern', () => {
     expect(ok).toBe(false);
     expect(history.canUndo()).toBe(false);
     expect(history.getStatus().total).toBe(0);
+  });
+
+  it('multi-step undo: A→B→C, undo×2 restores A', () => {
+    const manifestId = 'https://example.org/manifest/1';
+
+    // Dispatch B: change label (different type from C to avoid coalescing)
+    dispatchWithHistory(vault, history, {
+      type: 'UPDATE_LABEL',
+      id: manifestId,
+      label: { en: ['Label B'] },
+    });
+
+    // Force non-coalescing by changing action type
+    dispatchWithHistory(vault, history, {
+      type: 'UPDATE_SUMMARY',
+      id: manifestId,
+      summary: { en: ['Summary C'] },
+    });
+
+    expect(history.getStatus().total).toBe(2);
+
+    // Undo×2 should restore original state
+    undoWithHistory(vault, history);
+    undoWithHistory(vault, history);
+
+    const entity = vault.get(manifestId);
+    expect(entity!.label).toEqual({ en: ['Test Manifest'] });
+    expect(entity!.summary).toBeUndefined();
+  });
+
+  it('BATCH_UPDATE applies multiple field changes in single undo entry', () => {
+    const manifestId = 'https://example.org/manifest/1';
+
+    dispatchWithHistory(vault, history, {
+      type: 'BATCH_UPDATE',
+      updates: [
+        { id: manifestId, changes: { label: { en: ['Batch Label'] } } },
+        { id: canvasId, changes: { label: { en: ['Batch Canvas'] } } },
+      ],
+    });
+
+    expect(history.getStatus().total).toBe(1);
+
+    // Both entities updated
+    expect(vault.get(manifestId)!.label).toEqual({ en: ['Batch Label'] });
+    expect(vault.get(canvasId)!.label).toEqual({ en: ['Batch Canvas'] });
+
+    // Single undo reverts both
+    undoWithHistory(vault, history);
+    expect(vault.get(manifestId)!.label).toEqual({ en: ['Test Manifest'] });
+    expect(vault.get(canvasId)!.label).toEqual({ en: ['Test Canvas'] });
+  });
+
+  it('new action after undo truncates redo stack', () => {
+    const manifestId = 'https://example.org/manifest/1';
+
+    // Two distinct actions (different types to avoid coalescing)
+    dispatchWithHistory(vault, history, {
+      type: 'UPDATE_LABEL',
+      id: manifestId,
+      label: { en: ['Step 1'] },
+    });
+    dispatchWithHistory(vault, history, {
+      type: 'UPDATE_SUMMARY',
+      id: manifestId,
+      summary: { en: ['Step 2'] },
+    });
+
+    expect(history.getStatus().total).toBe(2);
+
+    // Undo step 2
+    undoWithHistory(vault, history);
+    expect(history.canRedo()).toBe(true);
+
+    // New action should truncate redo
+    const annotation = makeAnnotation(canvasId);
+    dispatchWithHistory(vault, history, {
+      type: 'ADD_ANNOTATION',
+      canvasId,
+      annotation,
+    });
+
+    // Redo should no longer be available (truncated)
+    expect(history.canRedo()).toBe(false);
+    expect(history.getStatus().total).toBe(2); // label update + annotation
+  });
+
+  it('undo with empty history is a no-op', () => {
+    const stateBefore = vault.getState();
+    const result = undoWithHistory(vault, history);
+
+    expect(result).toBe(false);
+    expect(vault.getState()).toBe(stateBefore);
+  });
+
+  it('redo with empty redo stack is a no-op', () => {
+    dispatchWithHistory(vault, history, {
+      type: 'UPDATE_LABEL',
+      id: 'https://example.org/manifest/1',
+      label: { en: ['Changed'] },
+    });
+
+    const stateBefore = vault.getState();
+    const result = redoWithHistory(vault, history);
+
+    expect(result).toBe(false);
+    expect(vault.getState()).toBe(stateBefore);
   });
 });
