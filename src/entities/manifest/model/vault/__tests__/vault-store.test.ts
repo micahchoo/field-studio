@@ -7,7 +7,8 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { vault } from '@/src/shared/stores/vault.svelte';
-import type { IIIFItem, IIIFCollection } from '@/src/shared/types';
+import { actions } from '@/src/entities/manifest/model/actions';
+import type { IIIFItem, IIIFCanvas, IIIFCollection } from '@/src/shared/types';
 import { resetIds, createMinimalManifest, createFullTree } from './fixtures';
 
 beforeEach(() => {
@@ -34,7 +35,7 @@ describe('vault.state (reactive)', () => {
     const manifest = createMinimalManifest();
     vault.load(manifest);
 
-    vault.update(manifest.id, { label: { en: ['Reactive Update'] } });
+    vault.dispatch(actions.batchUpdate([{ id: manifest.id, changes: { label: { en: ['Reactive Update'] } } }]));
 
     const entity = vault.state.entities.Manifest[manifest.id];
     expect(entity.label).toEqual({ en: ['Reactive Update'] });
@@ -81,7 +82,7 @@ describe('vault.trashedCount', () => {
     vault.load(manifest);
     const canvasId = manifest.items[0].id;
 
-    vault.moveToTrash(canvasId);
+    vault.dispatch(actions.moveToTrash(canvasId));
     expect(vault.trashedCount).toBe(1);
   });
 
@@ -90,10 +91,10 @@ describe('vault.trashedCount', () => {
     vault.load(manifest);
     const canvasId = manifest.items[0].id;
 
-    vault.moveToTrash(canvasId);
+    vault.dispatch(actions.moveToTrash(canvasId));
     expect(vault.trashedCount).toBe(1);
 
-    vault.restoreFromTrash(canvasId);
+    vault.dispatch(actions.restoreFromTrash(canvasId));
     expect(vault.trashedCount).toBe(0);
   });
 });
@@ -124,7 +125,7 @@ describe('vault.getEntity()', () => {
     const manifest = createMinimalManifest();
     vault.load(manifest);
 
-    vault.update(manifest.id, { label: { en: ['Updated via store'] } });
+    vault.dispatch(actions.batchUpdate([{ id: manifest.id, changes: { label: { en: ['Updated via store'] } } }]));
 
     expect(vault.getEntity(manifest.id)!.label).toEqual({ en: ['Updated via store'] });
   });
@@ -136,7 +137,7 @@ describe('vault.getEntity()', () => {
 
     expect(vault.getEntity(canvasId)).not.toBeNull();
 
-    vault.moveToTrash(canvasId);
+    vault.dispatch(actions.moveToTrash(canvasId));
     expect(vault.getEntity(canvasId)).toBeNull();
   });
 
@@ -145,10 +146,10 @@ describe('vault.getEntity()', () => {
     vault.load(manifest);
     const canvasId = manifest.items[0].id;
 
-    vault.moveToTrash(canvasId);
+    vault.dispatch(actions.moveToTrash(canvasId));
     expect(vault.getEntity(canvasId)).toBeNull();
 
-    vault.restoreFromTrash(canvasId);
+    vault.dispatch(actions.restoreFromTrash(canvasId));
     expect(vault.getEntity(canvasId)).not.toBeNull();
     expect(vault.getEntity(canvasId)!.id).toBe(canvasId);
   });
@@ -174,14 +175,14 @@ describe('vault.getChildIds()', () => {
 
     expect(vault.getChildIds(manifest.id)).toHaveLength(1);
 
-    const newCanvas: IIIFItem = {
+    const newCanvas = {
       id: 'https://example.org/canvas/dynamic',
       type: 'Canvas',
       width: 100,
       height: 100,
       items: [],
-    } as unknown as IIIFItem;
-    vault.add(newCanvas, manifest.id);
+    } as unknown as IIIFCanvas;
+    vault.dispatch(actions.addCanvas(manifest.id, newCanvas));
 
     expect(vault.getChildIds(manifest.id)).toHaveLength(2);
   });
@@ -249,7 +250,7 @@ describe('vault peek API (non-reactive)', () => {
     vault.load(manifest);
 
     const snap = vault.snapshot();
-    vault.update(manifest.id, { label: { en: ['Changed'] } });
+    vault.dispatch(actions.batchUpdate([{ id: manifest.id, changes: { label: { en: ['Changed'] } } }]));
 
     vault.restore(snap);
     expect(vault.peekEntity(manifest.id)!.label).toEqual({ en: ['Test Manifest'] });
