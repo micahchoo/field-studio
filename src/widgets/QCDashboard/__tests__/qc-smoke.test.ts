@@ -5,8 +5,9 @@
  * such as health score, category labels, issue messages, and interactive
  * controls. Uses the canonical TreeValidationIssue from shared/types.
  *
- * The healer functions (healIssue, applyHealToTree, safeHealAll) are imported
- * from validationHealer — mocked here so no IIIF side-effects occur on mount.
+ * QCDashboard reads item data from the vault singleton. Tests that need
+ * item lookups (heal, context panel) would need vault.load() — smoke tests
+ * here only verify rendering of passed-in issues and static UI elements.
  *
  * Pattern: mount -> flushSync -> assert visible text / controls -> unmount.
  */
@@ -14,13 +15,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import QCDashboard from '../ui/QCDashboard.svelte';
-import type { IIIFItem, TreeValidationIssue } from '@/src/shared/types';
+import type { TreeValidationIssue } from '@/src/shared/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 // QCDashboard imports healer functions; mock them as no-ops so tests are pure.
 vi.mock('@/src/entities/manifest/model/validation/validationHealer', () => ({
   healIssue: vi.fn((_issue: unknown, root: unknown) => root),
-  applyHealToTree: vi.fn((_issues: unknown, root: unknown) => root),
   safeHealAll: vi.fn((_issues: unknown, root: unknown) => root),
 }));
 
@@ -38,15 +38,6 @@ function makeIssue(overrides: Partial<TreeValidationIssue> = {}): TreeValidation
     fixable: false,
     ...overrides,
   };
-}
-
-function makeCollection(): IIIFItem {
-  return {
-    id: 'collection-1',
-    type: 'Collection',
-    label: { en: ['Test Collection'] },
-    items: [],
-  } as unknown as IIIFItem;
 }
 
 // ── Test lifecycle ────────────────────────────────────────────────────────────
@@ -73,9 +64,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 10,
-        root: makeCollection(),
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -92,9 +81,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 5,
-        root: makeCollection(),
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -110,9 +97,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 0,
-        root: null,
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -130,9 +115,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 0,
-        root: null,
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -147,9 +130,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 3,
-        root: makeCollection(),
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -172,9 +153,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap,
         totalItems: 5,
-        root: makeCollection(),
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -198,9 +177,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap,
         totalItems: 2,
-        root: makeCollection(),
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -216,9 +193,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 0,
-        root: null,
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -248,9 +223,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap,
         totalItems: 3,
-        root: makeCollection(),
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });
@@ -266,9 +239,7 @@ describe('QCDashboard smoke tests', () => {
       props: {
         issuesMap: {},
         totalItems: 0,
-        root: null,
         onSelect: vi.fn(),
-        onUpdate: vi.fn(),
         onClose: vi.fn(),
       },
     });

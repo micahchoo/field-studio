@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import TimelineView from '../ui/organisms/TimelineView.svelte';
 import type { IIIFItem } from '@/src/shared/types';
+import { vault } from '@/src/shared/stores/vault.svelte';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ describe('TimelineView smoke tests', () => {
     target = document.createElement('div');
     document.body.appendChild(target);
     instance = undefined;
+    vault.load(makeCollection());
   });
 
   afterEach(() => {
@@ -75,7 +77,6 @@ describe('TimelineView smoke tests', () => {
     instance = mount(TimelineView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -92,7 +93,6 @@ describe('TimelineView smoke tests', () => {
     instance = mount(TimelineView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -114,7 +114,6 @@ describe('TimelineView smoke tests', () => {
     instance = mount(TimelineView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -133,7 +132,6 @@ describe('TimelineView smoke tests', () => {
     instance = mount(TimelineView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -148,10 +146,11 @@ describe('TimelineView smoke tests', () => {
   });
 
   it('renders without crashing for a dated manifest and shows "Timeline" heading', () => {
+    vault.load(makeManifestWithDate());
+
     instance = mount(TimelineView, {
       target,
       props: {
-        root: makeManifestWithDate(),
         cx,
         fieldMode: false,
         t,
@@ -168,7 +167,6 @@ describe('TimelineView smoke tests', () => {
     instance = mount(TimelineView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: true,
         t,
@@ -183,7 +181,7 @@ describe('TimelineView smoke tests', () => {
   });
 
   it('handles a collection with items that have no navDate gracefully', () => {
-    const collectionWithUndatedItems: IIIFItem = {
+    vault.load({
       id: 'collection-no-dates',
       type: 'Collection',
       label: { en: ['Undated Collection'] },
@@ -195,12 +193,11 @@ describe('TimelineView smoke tests', () => {
           items: [],
         },
       ],
-    } as unknown as IIIFItem;
+    } as unknown as IIIFItem);
 
     instance = mount(TimelineView, {
       target,
       props: {
-        root: collectionWithUndatedItems,
         cx,
         fieldMode: false,
         t,

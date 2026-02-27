@@ -3,7 +3,7 @@
  *
  * Purpose: verify the multi-step export wizard renders user-visible content:
  * dialog title, step label, format selection cards, Cancel button, and
- * format-specific labels. Tests both collection root and null root cases.
+ * format-specific labels. Tests both loaded vault and empty vault cases.
  *
  * External services (exportService, archivalPackageService, etc.) are
  * imported lazily inside async handlers — they are never called on mount,
@@ -16,6 +16,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import ExportDialog from '../ui/organisms/ExportDialog.svelte';
 import type { IIIFItem } from '@/src/shared/types';
+import { vault } from '@/src/shared/stores/vault.svelte';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ describe('ExportDialog smoke tests', () => {
     target = document.createElement('div');
     document.body.appendChild(target);
     instance = undefined;
+    vault.load(makeCollection());
   });
 
   afterEach(() => {
@@ -65,7 +67,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -81,7 +82,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -99,7 +99,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -118,7 +117,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -137,7 +135,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -154,7 +151,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -170,7 +166,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -181,11 +176,17 @@ describe('ExportDialog smoke tests', () => {
     expect(target.textContent).toContain('Digital Preservation');
   });
 
-  it('renders without crashing when root is null (empty manifest)', () => {
+  it('renders without crashing when vault is empty (no manifest loaded)', () => {
+    vault.load({
+      id: 'empty',
+      type: 'Collection',
+      label: { en: ['Empty'] },
+      items: [],
+    } as unknown as IIIFItem);
+
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: null,
         onClose: vi.fn(),
         cx,
         fieldMode: false,
@@ -203,7 +204,6 @@ describe('ExportDialog smoke tests', () => {
     instance = mount(ExportDialog, {
       target,
       props: {
-        root: makeCollection(),
         onClose: vi.fn(),
         cx,
         fieldMode: true,

@@ -34,6 +34,7 @@
   import type { ContextualClassNames } from '@/src/shared/ui/molecules/ViewHeader/types';
   import Button from '@/src/shared/ui/atoms/Button.svelte';
   import { cn } from '@/src/shared/lib/cn';
+  import { vault } from '@/src/shared/stores/vault.svelte';
 
   // Both feature organisms are already migrated to Svelte
   import ArchiveView from '@/src/features/archive/ui/organisms/ArchiveView.svelte';
@@ -42,11 +43,9 @@
   type TabView = 'archive' | 'search';
 
   interface Props {
-    root: IIIFItem | null;
     onSelect: (item: IIIFItem) => void;
     onOpen: (item: IIIFItem) => void;
     onBatchEdit: (ids: string[]) => void;
-    onUpdate?: (newRoot: IIIFItem) => void;
     validationIssues?: Record<string, TreeValidationIssue[]>;
     onReveal?: (id: string, mode: 'collections' | 'viewer' | 'archive') => void;
     onCatalogSelection?: (ids: string[]) => void;
@@ -69,11 +68,9 @@
   }
 
   let {
-    root,
     onSelect,
     onOpen,
     onBatchEdit,
-    onUpdate,
     validationIssues,
     onReveal,
     onCatalogSelection,
@@ -139,15 +136,13 @@
   <!-- Content Area -->
   <div class="flex-1 overflow-hidden">
     {#if activeView === 'archive'}
-      {#if root}
+      {#if vault.rootId}
         <ArchiveView
           {cx}
           {fieldMode}
           {t}
-          {root}
           onSelect={onSelect}
           onOpen={onOpen}
-          onUpdate={onUpdate ?? (() => {})}
           onBatchEdit={onBatchEdit}
           validationIssues={validationIssues ? new Map(Object.entries(validationIssues)) : undefined}
           {showViewerPanel}
@@ -164,7 +159,6 @@
       {/if}
     {:else}
       <SearchView
-        {root}
         onSelect={onSearchSelect}
         {onRevealMap}
         {cx}

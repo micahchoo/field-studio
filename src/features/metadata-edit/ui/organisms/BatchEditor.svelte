@@ -153,7 +153,8 @@
   // ---------------------------------------------------------------------------
 
   function handleApply() {
-    const snapshotSaved = saveBatchSnapshot(vault.export(), ids.length);
+    const exported = vault.export();
+    const snapshotSaved = exported ? saveBatchSnapshot(exported, ids.length) : false;
     if (snapshotSaved) {
       existingSnapshot = loadBatchSnapshot();
     }

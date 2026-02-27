@@ -3,8 +3,8 @@
  *
  * Purpose: verify the component renders user-visible content: the "Search"
  * heading, search input placeholder, filter pills, empty-state tips, and
- * tip keywords. Tests both null-root and manifest-root scenarios, plus
- * adversarial cases like missing root and field mode.
+ * tip keywords. Tests both loaded vault and empty vault scenarios, plus
+ * field mode.
  *
  * Pattern: mount -> flushSync -> assert visible text / ARIA roles -> unmount.
  */
@@ -13,6 +13,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import SearchView from '../ui/organisms/SearchView.svelte';
 import type { IIIFItem } from '@/src/shared/types';
+import { vault } from '@/src/shared/stores/vault.svelte';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 // searchService accesses vault state outside a Svelte component tree — mock it
@@ -59,6 +60,7 @@ describe('SearchView smoke tests', () => {
     target = document.createElement('div');
     document.body.appendChild(target);
     instance = undefined;
+    vault.load(makeManifest());
   });
 
   afterEach(() => {
@@ -71,7 +73,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -87,7 +88,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -104,7 +104,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -121,7 +120,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -142,7 +140,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -159,7 +156,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -175,11 +171,17 @@ describe('SearchView smoke tests', () => {
     expect(target.textContent).toContain('portrait');
   });
 
-  it('renders without crashing when root is null (empty archive)', () => {
+  it('renders without crashing when vault has empty collection', () => {
+    vault.load({
+      id: 'empty-collection',
+      type: 'Collection',
+      label: { en: ['Empty'] },
+      items: [],
+    } as unknown as IIIFItem);
+
     instance = mount(SearchView, {
       target,
       props: {
-        root: null,
         cx,
         fieldMode: false,
         t,
@@ -197,7 +199,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: false,
         t,
@@ -215,7 +216,6 @@ describe('SearchView smoke tests', () => {
     instance = mount(SearchView, {
       target,
       props: {
-        root: makeManifest(),
         cx,
         fieldMode: true,
         t,

@@ -15,6 +15,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import MapView from '../ui/organisms/MapView.svelte';
 import type { IIIFItem } from '@/src/shared/types';
+import { vault } from '@/src/shared/stores/vault.svelte';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ describe('MapView smoke tests', () => {
     target = document.createElement('div');
     document.body.appendChild(target);
     instance = undefined;
+    vault.load(makeCollection());
   });
 
   afterEach(() => {
@@ -66,7 +68,6 @@ describe('MapView smoke tests', () => {
     instance = mount(MapView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -84,7 +85,6 @@ describe('MapView smoke tests', () => {
     instance = mount(MapView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -108,7 +108,6 @@ describe('MapView smoke tests', () => {
     instance = mount(MapView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -127,7 +126,6 @@ describe('MapView smoke tests', () => {
     instance = mount(MapView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -147,7 +145,6 @@ describe('MapView smoke tests', () => {
     instance = mount(MapView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: false,
         t,
@@ -166,7 +163,6 @@ describe('MapView smoke tests', () => {
     instance = mount(MapView, {
       target,
       props: {
-        root: makeCollection(),
         cx,
         fieldMode: true,
         t,
@@ -182,17 +178,16 @@ describe('MapView smoke tests', () => {
   });
 
   it('handles a manifest with no items (no canvases to extract geo data from)', () => {
-    const emptyManifest: IIIFItem = {
+    vault.load({
       id: 'manifest-empty',
       type: 'Manifest',
       label: { en: ['Empty Manifest'] },
       items: [],
-    } as unknown as IIIFItem;
+    } as unknown as IIIFItem);
 
     instance = mount(MapView, {
       target,
       props: {
-        root: emptyManifest,
         cx,
         fieldMode: false,
         t,
