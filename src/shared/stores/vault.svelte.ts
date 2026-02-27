@@ -36,7 +36,7 @@
 
 import { Vault } from '@/src/entities/manifest/model/vault';
 import type { NormalizedState, VaultSnapshot, IIIFItem } from '@/src/shared/types';
-import { reduce } from '@/src/entities/manifest/model/actions';
+import { reduce, ActionHistory } from '@/src/entities/manifest/model/actions';
 import type { Action } from '@/src/entities/manifest/model/actions';
 
 class VaultStore {
@@ -45,6 +45,7 @@ class VaultStore {
   // ──────────────────────────────────────────────
   #raw = $state.raw<NormalizedState>(null!);
   #vault: Vault;
+  #history = new ActionHistory(100);
 
   constructor() {
     this.#vault = new Vault();
@@ -113,7 +114,16 @@ class VaultStore {
   // which triggers subscribe → updates #raw → reactive cascade
   // ──────────────────────────────────────────────
 
-  load(root: IIIFItem): void { this.#vault.load(root); }
+  load(root: IIIFItem): void {
+    const beforeState = this.#vault.getState();
+    this.#vault.load(root);
+    const afterState = this.#vault.getState();
+    this.#history.pushPatched(
+      { type: 'RELOAD_TREE', root } as Action,
+      beforeState,
+      afterState
+    );
+  }
   export(): IIIFItem | null { return this.#vault.export(); }
   update(id: string, updates: Partial<IIIFItem>): void { this.#vault.update(id, updates); }
   add(entity: IIIFItem, parentId: string): void { this.#vault.add(entity, parentId); }
@@ -143,14 +153,32 @@ class VaultStore {
    * Use for annotation and board mutations that need the action system's logic.
    */
   dispatch(action: Action): boolean {
-    const currentState = this.#vault.getState();
-    const result = reduce(currentState, action);
+    const beforeState = this.#vault.getState();
+    const result = reduce(beforeState, action);
     if (result.success) {
-      this.restore({ state: result.state, timestamp: Date.now() });
+      this.#history.pushPatched(action, beforeState, result.state);
+      this.#vault.restore({ state: result.state, timestamp: Date.now() });
       return true;
     }
     return false;
   }
+
+  undo(): boolean {
+    const undoneState = this.#history.undoPatched(this.#vault.getState());
+    if (!undoneState) return false;
+    this.#vault.restore({ state: undoneState, timestamp: Date.now() });
+    return true;
+  }
+
+  redo(): boolean {
+    const redoneState = this.#history.redoPatched(this.#vault.getState());
+    if (!redoneState) return false;
+    this.#vault.restore({ state: redoneState, timestamp: Date.now() });
+    return true;
+  }
+
+  get canUndo(): boolean { return this.#history.canUndo(); }
+  get canRedo(): boolean { return this.#history.canRedo(); }
 }
 
 /** Singleton vault store — import and use directly in any component */
