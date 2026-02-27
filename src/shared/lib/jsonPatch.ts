@@ -125,12 +125,21 @@ export function diffStates(before: unknown, after: unknown): { forward: Patch[];
 }
 
 /**
- * Parse a patch path string into segments.
- * `/entities/Canvas/c1` -> ['entities', 'Canvas', 'c1']
+ * Parse a patch path string into segments (max 3).
+ * Entity IDs are URIs with slashes, so we only split the first two `/`
+ * delimiters and keep the remainder as the third segment.
+ *
+ * `/rootId`                                           -> ['rootId']
+ * `/entities/Canvas`                                  -> ['entities', 'Canvas']
+ * `/entities/Canvas/https://example.org/canvas/1`     -> ['entities', 'Canvas', 'https://example.org/canvas/1']
  */
 function parsePath(patch: Patch): string[] {
   const pathStr = Array.isArray(patch.path) ? patch.path[0] : patch.path;
-  return pathStr.replace(/^\//, '').split('/');
+  const stripped = pathStr.replace(/^\//, '');
+  const parts = stripped.split('/');
+  if (parts.length <= 3) return parts;
+  // Entity IDs may contain slashes — rejoin everything past segment 2
+  return [parts[0], parts[1], parts.slice(2).join('/')];
 }
 
 /**

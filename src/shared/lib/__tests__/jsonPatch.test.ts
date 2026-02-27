@@ -569,6 +569,52 @@ describe('jsonPatch', () => {
       expect(reverted).toEqual(before);
     });
 
+    it('round-trip with URI-based entity IDs containing slashes', () => {
+      const manifest = { id: 'https://example.org/manifest/1', type: 'Manifest', label: { en: ['Test'] } };
+      const canvas = { id: 'https://example.org/canvas/1', type: 'Canvas', label: { en: ['Page 1'] } };
+
+      const before = {
+        entities: {
+          Canvas: { 'https://example.org/canvas/1': canvas },
+          Manifest: { 'https://example.org/manifest/1': manifest },
+          Annotation: {} as Record<string, unknown>,
+        },
+        rootId: 'https://example.org/manifest/1',
+        typeIndex: { 'https://example.org/manifest/1': 'Manifest', 'https://example.org/canvas/1': 'Canvas' },
+        references: { 'https://example.org/manifest/1': ['https://example.org/canvas/1'] },
+      };
+
+      const annotation = { id: 'https://example.org/canvas/1/anno/1', type: 'Annotation', body: 'Hi' };
+      const after = {
+        entities: {
+          Canvas: { 'https://example.org/canvas/1': canvas },
+          Manifest: { 'https://example.org/manifest/1': manifest },
+          Annotation: { 'https://example.org/canvas/1/anno/1': annotation } as Record<string, unknown>,
+        },
+        rootId: 'https://example.org/manifest/1',
+        typeIndex: {
+          'https://example.org/manifest/1': 'Manifest',
+          'https://example.org/canvas/1': 'Canvas',
+          'https://example.org/canvas/1/anno/1': 'Annotation',
+        },
+        references: {
+          'https://example.org/manifest/1': ['https://example.org/canvas/1'],
+          'https://example.org/canvas/1': ['https://example.org/canvas/1/anno/1'],
+        },
+      };
+
+      const { forward, reverse } = diffStates(before, after);
+
+      // Forward: add annotation entity + update typeIndex + update references
+      expect(forward.length).toBeGreaterThan(0);
+
+      const applied = applyPatches(before, forward);
+      expect(applied).toEqual(after);
+
+      const reverted = applyPatches(after, reverse);
+      expect(reverted).toEqual(before);
+    });
+
     it('round-trip with mixed entity and top-level changes', () => {
       const canvas1 = { id: 'c1', label: 'Page 1' };
       const before = {
