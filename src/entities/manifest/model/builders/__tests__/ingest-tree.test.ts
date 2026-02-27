@@ -38,13 +38,6 @@ vi.mock('idb', () => ({
   ),
 }));
 
-// ─── Mock ingestWorkerPool (throws in tests otherwise) ───────────────────────
-vi.mock('@/src/entities/manifest/model/ingest/ingestWorkerPool', () => ({
-  getIngestWorkerPool: vi.fn(),
-  ingestTreeWithWorkers: vi.fn().mockRejectedValue(new Error('Worker pool not available')),
-  IngestWorkerPool: vi.fn(),
-}));
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function makeFile(name: string, content: string = 'data', type?: string): File {

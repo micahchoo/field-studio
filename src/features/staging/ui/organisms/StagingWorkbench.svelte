@@ -29,8 +29,8 @@
   } from '../../model/stagingWorkbenchHelpers';
   import { analyzeForIngest } from '@/src/entities/manifest/model/ingest/ingestAnalyzer';
   import { buildSourceManifests } from '@/src/entities/collection/model/stagingService';
-  import { FEATURE_FLAGS, USE_WORKER_INGEST } from '@/src/shared/constants';
-  import { ingestTreeWithWorkers } from '@/src/entities/manifest/model/ingest/ingestWorkerPool';
+  import { FEATURE_FLAGS } from '@/src/shared/constants';
+  // TODO: Web Worker ingest pipeline (future)
   import { uiLog } from '@/src/shared/services/logger';
   import { terminology } from '@/src/shared/stores';
   import { IngestProgressStore } from '@/src/shared/lib/hooks/ingestProgress.svelte';
@@ -285,38 +285,17 @@
   async function handleIngest() {
     const annotatedTree = applyAnnotationsToTree(initialTree, annotationsMap);
     try {
-      if (USE_WORKER_INGEST) {
-        const opId = `ingest-${Date.now()}`;
-        ingestStore.startOperation(opId, 'Import files', stats.totalFiles);
-        try {
-          const result = await ingestTreeWithWorkers(annotatedTree, {
-            generateThumbnails: true,
-            onProgress: (p: { filesCompleted?: number; filesError?: number }) => { ingestStore.updateProgress(opId, p.filesCompleted ?? 0, p.filesError ?? 0); },
-          });
-          ingestStore.completeOperation(opId);
-          if (result?.report) {
-            const undoRecord: IngestUndoRecord = { operationId: opId, timestamp: Date.now(), createdEntityIds: [],
-              manifestsCreated: result.report.summary?.filesTotal ?? 0, collectionsCreated: 0,
-              canvasesCreated: result.report.summary?.filesTotal ?? 0, filesProcessed: result.report.summary?.filesTotal ?? 0 };
-            completionSummary = undoRecord;
-            try { sessionStorage.setItem('ingest-undo', JSON.stringify(undoRecord)); } catch { /* sessionStorage may be unavailable */ }
-          }
-          onIngest(annotatedTree, merge, () => {});
-          setTimeout(() => ingestStore.clearCompleted(), 3000);
-        } catch (err) { ingestStore.failOperation(opId, err instanceof Error ? err.message : 'Unknown error'); throw err; }
-      } else {
-        const opId = `legacy-ingest-${Date.now()}`;
-        const totalFiles = stats.totalFiles;
-        ingestStore.startOperation(opId, 'Import files', totalFiles);
-        try {
-          await onIngest(annotatedTree, merge, (_msg, pct) => { ingestStore.updateProgress(opId, Math.floor((pct / 100) * totalFiles)); });
-          ingestStore.completeOperation(opId);
-          completionSummary = { operationId: opId, timestamp: Date.now(), createdEntityIds: [],
-            manifestsCreated: stats.totalManifests, collectionsCreated: archiveLayout.root.children.length + 1,
-            canvasesCreated: totalFiles, filesProcessed: totalFiles };
-          setTimeout(() => { ingestStore.clearCompleted(); onCancel(); }, 2000);
-        } catch (err) { ingestStore.failOperation(opId, err instanceof Error ? err.message : 'Unknown error'); throw err; }
-      }
+      const opId = `legacy-ingest-${Date.now()}`;
+      const totalFiles = stats.totalFiles;
+      ingestStore.startOperation(opId, 'Import files', totalFiles);
+      try {
+        await onIngest(annotatedTree, merge, (_msg, pct) => { ingestStore.updateProgress(opId, Math.floor((pct / 100) * totalFiles)); });
+        ingestStore.completeOperation(opId);
+        completionSummary = { operationId: opId, timestamp: Date.now(), createdEntityIds: [],
+          manifestsCreated: stats.totalManifests, collectionsCreated: archiveLayout.root.children.length + 1,
+          canvasesCreated: totalFiles, filesProcessed: totalFiles };
+        setTimeout(() => { ingestStore.clearCompleted(); onCancel(); }, 2000);
+      } catch (err) { ingestStore.failOperation(opId, err instanceof Error ? err.message : 'Unknown error'); throw err; }
     } catch (error) { uiLog.error('Ingest failed:', error instanceof Error ? error : undefined); }
   }
 

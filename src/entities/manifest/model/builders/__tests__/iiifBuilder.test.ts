@@ -52,11 +52,6 @@ vi.mock('../ingest/tileWorker', () => ({
   getTileWorkerPool: vi.fn(),
 }));
 
-vi.mock('../ingest/ingestWorkerPool', () => ({
-  getIngestWorkerPool: vi.fn(),
-  ingestTreeWithWorkers: vi.fn(),
-}));
-
 vi.mock('@/utils/iiifHierarchy', () => ({
   generateId: vi.fn((_type: string) => `https://example.org/generated-id`),
   getRelationshipType: vi.fn(),
