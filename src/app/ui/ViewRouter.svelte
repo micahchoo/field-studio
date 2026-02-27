@@ -654,9 +654,8 @@
     <div class="flex-1 flex min-h-0">
       <div class="flex-1 min-h-0">
         <svelte:boundary onerror={handleViewError}>
-          {#if root}
+          {#if vault.rootId}
             <BoardView
-              {root}
               {cx}
               fieldMode={isFieldMode}
               {t}

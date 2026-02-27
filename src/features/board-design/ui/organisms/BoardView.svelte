@@ -44,7 +44,6 @@
   }
 
   interface Props {
-    root: IIIFItem;
     cx: ContextualClassNames;
     fieldMode?: boolean;
     t: (key: string) => string;
@@ -59,7 +58,6 @@
   }
 
   let {
-    root,
     cx,
     fieldMode = false,
     t,
@@ -223,7 +221,7 @@
       return;
     }
     const item = items[0];
-    const state = contentStateService.createContentState({ manifestId: root.id, canvasId: item.resourceId! });
+    const state = contentStateService.createContentState({ manifestId: vault.rootId!, canvasId: item.resourceId! });
     const encoded = contentStateService.encode(state);
     await navigator.clipboard.writeText(encoded);
   }
