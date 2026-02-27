@@ -78,11 +78,3 @@ export interface HistoryEntry {
   entityId?: string;
   timestamp: number;
 }
-
-/** @deprecated Full-snapshot entries — kept for type compatibility during migration */
-export interface LegacyHistoryEntry {
-  action: Action;
-  beforeState: NormalizedState;
-  afterState: NormalizedState;
-  timestamp: number;
-}

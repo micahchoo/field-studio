@@ -157,11 +157,6 @@ export class ActionHistory {
     }
   }
 
-  /** @deprecated Use pushPatched() instead */
-  push(entry: { action: Action; beforeState: NormalizedState; afterState: NormalizedState }): void {
-    this.pushPatched(entry.action, entry.beforeState, entry.afterState);
-  }
-
   private getActionEntityId(action: Action): string | undefined {
     if ('id' in action && typeof (action as Record<string, unknown>).id === 'string') {
       return (action as Record<string, unknown>).id as string;
@@ -212,18 +207,6 @@ export class ActionHistory {
     }
 
     return applyPatches(currentState, entry.forwardPatches);
-  }
-
-  /** @deprecated Use undoPatched() */
-  undo(): NormalizedState | null {
-    // Cannot apply patches without current state — caller must use undoPatched()
-    return null;
-  }
-
-  /** @deprecated Use redoPatched() */
-  redo(): NormalizedState | null {
-    // Cannot apply patches without current state — caller must use redoPatched()
-    return null;
   }
 
   getStatus(): { position: number; total: number; canUndo: boolean; canRedo: boolean } {
