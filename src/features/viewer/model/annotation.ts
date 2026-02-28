@@ -19,6 +19,8 @@
  */
 
 import type { IIIFAnnotation } from '@/src/shared/types';
+import * as GeoPoint from '@/src/shared/lib/geometry/point';
+import * as Rect from '@/src/shared/lib/geometry/rect';
 
 // ============================================================================
 // Point type (locally defined; matches shared/constants/viewport.Point)
@@ -154,15 +156,7 @@ export const parseSvgSelector = (svgValue: string): Point[] => {
 export const getBoundingBox = (
   points: Point[],
 ): { x: number; y: number; width: number; height: number } => {
-  if (points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  return {
-    x: Math.min(...xs),
-    y: Math.min(...ys),
-    width: Math.max(...xs) - Math.min(...xs),
-    height: Math.max(...ys) - Math.min(...ys),
-  };
+  return Rect.fromPoints(points);
 };
 
 // ============================================================================
@@ -328,10 +322,7 @@ export const simplifyPath = (pts: Point[], tolerance: number): Point[] => {
   const result: Point[] = [pts[0]];
   for (let i = 1; i < pts.length - 1; i++) {
     const prev = result[result.length - 1];
-    const dist = Math.sqrt(
-      Math.pow(pts[i].x - prev.x, 2) + Math.pow(pts[i].y - prev.y, 2),
-    );
-    if (dist > tolerance) result.push(pts[i]);
+    if (GeoPoint.distance(pts[i], prev) > tolerance) result.push(pts[i]);
   }
   result.push(pts[pts.length - 1]);
   return result;

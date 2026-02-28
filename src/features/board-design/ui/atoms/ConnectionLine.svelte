@@ -21,6 +21,7 @@
 -->
 <script module lang="ts">
   // Arch 2.F: Pure helper function shared across all instances
+  import * as Point from '@/src/shared/lib/geometry/point';
 
   /** Build SVG path data for the connection line */
   function buildPath(
@@ -29,20 +30,18 @@
     style: 'straight' | 'elbow' | 'curved',
   ): string {
     if (style === 'curved') {
-      const midX = (from.x + to.x) / 2;
-      const midY = (from.y + to.y) / 2;
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const delta = Point.subtract(to, from);
+      const mid = Point.lerp(from, to, 0.5);
+      const len = Point.length(delta);
       const offset = Math.min(50, len * 0.3);
-      const cx = midX - (dy / len) * offset;
-      const cy = midY + (dx / len) * offset;
-      return `M ${from.x},${from.y} Q ${cx},${cy} ${to.x},${to.y}`;
+      const perp = Point.perpendicular(Point.unit(delta));
+      const control = Point.add(mid, Point.scale(perp, offset));
+      return `M ${from.x},${from.y} Q ${control.x},${control.y} ${to.x},${to.y}`;
     }
 
     if (style === 'elbow') {
-      const midX = (from.x + to.x) / 2;
-      return `M ${from.x},${from.y} H ${midX} V ${to.y} H ${to.x}`;
+      const mid = Point.lerp(from, to, 0.5);
+      return `M ${from.x},${from.y} H ${mid.x} V ${to.y} H ${to.x}`;
     }
 
     return `M ${from.x},${from.y} L ${to.x},${to.y}`;

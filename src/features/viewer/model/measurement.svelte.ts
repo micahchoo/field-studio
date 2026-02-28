@@ -8,6 +8,8 @@
  * Scoped class — each viewer creates its own instance.
  */
 
+import * as GeoPoint from '@/src/shared/lib/geometry/point';
+
 export interface MeasurementPoint {
   x: number;
   y: number;
@@ -40,9 +42,7 @@ export class MeasurementStore {
   /** Current distance in pixels between start and end */
   get currentDistancePx(): number {
     if (!this.#startPoint || !this.#endPoint) return 0;
-    const dx = this.#endPoint.x - this.#startPoint.x;
-    const dy = this.#endPoint.y - this.#startPoint.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    return GeoPoint.distance(this.#startPoint, this.#endPoint);
   }
 
   activate(): void { this.#active = true; }
