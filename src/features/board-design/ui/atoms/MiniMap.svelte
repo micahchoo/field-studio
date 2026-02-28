@@ -35,6 +35,7 @@
 
 <script lang="ts">
   import type { BoardItem } from '../../model';
+  import * as GeoRect from '@/src/shared/lib/geometry/rect';
 
   interface Props {
     items: BoardItem[];
@@ -57,12 +58,7 @@
   // Compute effective bounds from items if not provided
   const effectiveBounds = $derived(
     bounds || (items.length > 0
-      ? {
-          minX: Math.min(...items.map(i => i.x)),
-          minY: Math.min(...items.map(i => i.y)),
-          maxX: Math.max(...items.map(i => i.x + i.w)),
-          maxY: Math.max(...items.map(i => i.y + i.h)),
-        }
+      ? (() => { const r = GeoRect.union(items); return { minX: r.x, minY: r.y, maxX: GeoRect.right(r), maxY: GeoRect.bottom(r) }; })()
       : { minX: 0, minY: 0, maxX: 1000, maxY: 800 })
   );
 
@@ -103,8 +99,8 @@
         class="absolute opacity-70 {itemColor}"
         style:left="{(item.x - effectiveBounds.minX) * scale}px"
         style:top="{(item.y - effectiveBounds.minY) * scale}px"
-        style:width="{Math.max(item.w * scale, 2)}px"
-        style:height="{Math.max(item.h * scale, 2)}px"
+        style:width="{Math.max(item.width * scale, 2)}px"
+        style:height="{Math.max(item.height * scale, 2)}px"
         title={item.label}
       ></div>
     {/each}

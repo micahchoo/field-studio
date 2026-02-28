@@ -16,6 +16,7 @@
 <script lang="ts">
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { AnchorSide, BoardItem, Connection } from '../../model';
+  import * as GeoRect from '@/src/shared/lib/geometry/rect';
   import ConnectionLine from '../atoms/ConnectionLine.svelte';
 
   interface Props {
@@ -52,15 +53,14 @@
    * Falls back to center if no anchor specified.
    */
   function getAnchorPoint(item: BoardItem, anchor: AnchorSide | undefined): { x: number; y: number } {
-    const centerX = item.x + item.w / 2;
-    const centerY = item.y + item.h / 2;
+    const c = GeoRect.center(item);
 
     switch (anchor) {
-      case 'T': return { x: centerX, y: item.y };
-      case 'R': return { x: item.x + item.w, y: centerY };
-      case 'B': return { x: centerX, y: item.y + item.h };
-      case 'L': return { x: item.x, y: centerY };
-      default:  return { x: centerX, y: centerY };
+      case 'T': return { x: c.x, y: item.y };
+      case 'R': return { x: GeoRect.right(item), y: c.y };
+      case 'B': return { x: c.x, y: GeoRect.bottom(item) };
+      case 'L': return { x: item.x, y: c.y };
+      default:  return c;
     }
   }
 

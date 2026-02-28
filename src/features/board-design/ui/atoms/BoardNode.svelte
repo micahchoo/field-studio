@@ -86,7 +86,7 @@
     onSelect: (id: string) => void;
     onDragStart: (id: string, offset: { x: number; y: number }) => void;
     onConnectStart: (id: string) => void;
-    onResizeStart?: (id: string, direction: string, startPos: { x: number; y: number }, startSize: { w: number; h: number }) => void;
+    onResizeStart?: (id: string, direction: string, startPos: { x: number; y: number }, startSize: { width: number; height: number }) => void;
     onDoubleClick?: (id: string) => void;
     onContextMenu?: (e: MouseEvent, id: string) => void;
     onHover?: (id: string | null) => void;
@@ -161,7 +161,7 @@
   function handleResizeMouseDown(e: MouseEvent, direction: string) {
     e.stopPropagation();
     e.preventDefault();
-    onResizeStart?.(id, direction, { x: e.clientX, y: e.clientY }, { w: size.width, h: size.height });
+    onResizeStart?.(id, direction, { x: e.clientX, y: e.clientY }, { width: size.width, height: size.height });
   }
 
   function handleDblClick(e: MouseEvent) {

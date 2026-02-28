@@ -46,8 +46,8 @@ function makeBoardItem(overrides: Partial<BoardItem> = {}): BoardItem {
     resourceId: 'canvas-1',
     x: 100,
     y: 200,
-    w: 200,
-    h: 150,
+    width: 200,
+    height: 150,
     resourceType: 'Canvas',
     label: 'Test Canvas',
     ...overrides,
@@ -210,7 +210,7 @@ describe('Board Selectors', () => {
     });
 
     it('returns bounds for a single item', () => {
-      const item = makeBoardItem({ x: 50, y: 100, w: 200, h: 150 });
+      const item = makeBoardItem({ x: 50, y: 100, width: 200, height: 150 });
       const state = makeBoardState({ items: [item] });
       const bounds = selectBoardBounds(state);
       expect(bounds).toEqual({
@@ -223,9 +223,9 @@ describe('Board Selectors', () => {
 
     it('calculates correct bounds across multiple items', () => {
       const items = [
-        makeBoardItem({ id: 'a', x: 10, y: 20, w: 100, h: 50 }),
-        makeBoardItem({ id: 'b', x: 300, y: 400, w: 200, h: 100 }),
-        makeBoardItem({ id: 'c', x: -50, y: -30, w: 80, h: 60 }),
+        makeBoardItem({ id: 'a', x: 10, y: 20, width: 100, height: 50 }),
+        makeBoardItem({ id: 'b', x: 300, y: 400, width: 200, height: 100 }),
+        makeBoardItem({ id: 'c', x: -50, y: -30, width: 80, height: 60 }),
       ];
       const state = makeBoardState({ items });
       const bounds = selectBoardBounds(state);
@@ -238,7 +238,7 @@ describe('Board Selectors', () => {
     });
 
     it('handles items at the origin', () => {
-      const item = makeBoardItem({ x: 0, y: 0, w: 100, h: 100 });
+      const item = makeBoardItem({ x: 0, y: 0, width: 100, height: 100 });
       const state = makeBoardState({ items: [item] });
       const bounds = selectBoardBounds(state);
       expect(bounds).toEqual({ minX: 0, minY: 0, maxX: 100, maxY: 100 });
@@ -497,17 +497,17 @@ describe('createBoardItem', () => {
     const item = createBoardItem(resource, { x: 100, y: 200 });
     expect(item.x).toBe(100);
     expect(item.y).toBe(200);
-    expect(item.w).toBe(200);
-    expect(item.h).toBe(150);
+    expect(item.width).toBe(200);
+    expect(item.height).toBe(150);
     expect(item.resourceId).toBe('test-canvas-1');
     expect(item.resourceType).toBe('Canvas');
   });
 
   it('creates a board item with custom size', () => {
     const resource = makeIIIFResource('Canvas');
-    const item = createBoardItem(resource, { x: 0, y: 0 }, { w: 400, h: 300 });
-    expect(item.w).toBe(400);
-    expect(item.h).toBe(300);
+    const item = createBoardItem(resource, { x: 0, y: 0 }, { width: 400, height: 300 });
+    expect(item.width).toBe(400);
+    expect(item.height).toBe(300);
   });
 
   it('extracts label from IIIF resource', () => {
@@ -753,8 +753,8 @@ describe('autoArrangeItems', () => {
       // Items should be arranged in 2x2 grid
       // All items get w=200, h=150
       result.forEach((item) => {
-        expect(item.w).toBe(200);
-        expect(item.h).toBe(150);
+        expect(item.width).toBe(200);
+        expect(item.height).toBe(150);
       });
 
       // Row 0: items 0 and 1 should have same y
@@ -800,8 +800,8 @@ describe('autoArrangeItems', () => {
       const expectedY = canvasSize.height / 2 - 150 / 2; // centerY - itemH/2
       result.forEach((item) => {
         expect(item.y).toBe(expectedY);
-        expect(item.w).toBe(200);
-        expect(item.h).toBe(150);
+        expect(item.width).toBe(200);
+        expect(item.height).toBe(150);
       });
 
       // x should increase left to right
@@ -873,8 +873,8 @@ describe('autoArrangeItems', () => {
 
       // All items should have w=200, h=150
       result.forEach((item) => {
-        expect(item.w).toBe(200);
-        expect(item.h).toBe(150);
+        expect(item.width).toBe(200);
+        expect(item.height).toBe(150);
       });
 
       // Items should be spread around the center
@@ -1037,8 +1037,8 @@ describe('exportToManifest', () => {
   it('includes items as canvases', () => {
     const state = makeBoardState({
       items: [
-        makeBoardItem({ id: 'i1', resourceId: 'canvas-1', label: 'Canvas 1', w: 200, h: 150 }),
-        makeBoardItem({ id: 'i2', resourceId: 'canvas-2', label: 'Canvas 2', w: 300, h: 200 }),
+        makeBoardItem({ id: 'i1', resourceId: 'canvas-1', label: 'Canvas 1', width: 200, height: 150 }),
+        makeBoardItem({ id: 'i2', resourceId: 'canvas-2', label: 'Canvas 2', width: 300, height: 200 }),
       ],
     });
     const manifest = exportToManifest(state, 'Test');

@@ -49,6 +49,7 @@
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
   import type { IIIFItem } from '@/src/shared/types';
   import type { BoardItem, Connection, ConnectionType } from '../../model';
+  import * as GeoRect from '@/src/shared/lib/geometry/rect';
   import type { AlignmentGuide } from '../../lib/alignmentGuides';
   import { calculateAlignmentGuides } from '../../lib/alignmentGuides';
   import { canvasDrag, screenToCanvas } from '../../actions/canvasDrag';
@@ -75,7 +76,7 @@
     onSelectItems?: (ids: string[]) => void;
     onMoveItem: (id: string, position: { x: number; y: number }) => void;
     onMoveSelected?: (dx: number, dy: number) => void;
-    onResizeItem?: (id: string, size: { w: number; h: number }) => void;
+    onResizeItem?: (id: string, size: { width: number; height: number }) => void;
     onStartConnection: (fromId: string) => void;
     onCompleteConnection: (toId: string, type?: ConnectionType) => void;
     onAddItem: (resource: IIIFItem, position: { x: number; y: number }) => void;
@@ -188,7 +189,7 @@
     itemId: string,
     direction: string,
     startPos: { x: number; y: number },
-    startSize: { w: number; h: number },
+    startSize: { width: number; height: number },
   ) {
     const item = items.find(i => i.id === itemId);
     resizeData = {
@@ -196,8 +197,8 @@
       direction,
       startMouseX: startPos.x,
       startMouseY: startPos.y,
-      startW: startSize.w,
-      startH: startSize.h,
+      startW: startSize.width,
+      startH: startSize.height,
       startItemX: item?.x ?? 0,
       startItemY: item?.y ?? 0,
     };
@@ -239,7 +240,7 @@
       newY = resizeData.startItemY + heightDelta;
     }
 
-    onResizeItem(resizeData.itemId, { w: newW, h: newH });
+    onResizeItem(resizeData.itemId, { width: newW, height: newH });
 
     // Move item if resizing from n/w/nw/ne/sw corners
     if (dir.includes('n') || dir.includes('w')) {
@@ -339,10 +340,10 @@
       const dragItem = items.find(i => i.id === id);
       if (dragItem) {
         const otherItems = items.filter(i => i.id !== id).map(i => ({
-          x: i.x, y: i.y, width: i.w, height: i.h,
+          x: i.x, y: i.y, width: i.width, height: i.height,
         }));
         const result = calculateAlignmentGuides(
-          { x, y, width: dragItem.w, height: dragItem.h },
+          { x, y, width: dragItem.width, height: dragItem.height },
           otherItems,
         );
         guides = result.guides;
@@ -384,8 +385,8 @@
 
         const selectedItemIds = items
           .filter(item => {
-            const itemRight = item.x + item.w;
-            const itemBottom = item.y + item.h;
+            const itemRight = GeoRect.right(item);
+            const itemBottom = GeoRect.bottom(item);
             const selRight = canvasLeft + canvasWidth;
             const selBottom = canvasTop + canvasHeight;
             return (

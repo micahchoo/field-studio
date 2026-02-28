@@ -20,7 +20,7 @@ function makeBoardItem(overrides: Partial<BoardItem> = {}): BoardItem {
   return {
     id: 'item-1',
     resourceId: 'canvas/1',
-    x: 100, y: 200, w: 200, h: 150,
+    x: 100, y: 200, width: 200, height: 150,
     resourceType: 'Canvas',
     label: 'Test Canvas',
     ...overrides,
@@ -51,7 +51,7 @@ function makeNoteItem(overrides: Partial<BoardItem> = {}): BoardItem {
   return {
     id: 'note-1',
     resourceId: 'note-1',
-    x: 300, y: 400, w: 180, h: 120,
+    x: 300, y: 400, width: 180, height: 120,
     resourceType: 'Text',
     label: 'My Note',
     annotation: 'This is a note about the board layout',
@@ -102,7 +102,7 @@ describe('boardStateToManifest', () => {
   });
 
   it('converts board items to painting annotations with correct xywh target', () => {
-    const item = makeBoardItem({ id: 'item-a', x: 50, y: 75, w: 300, h: 250 });
+    const item = makeBoardItem({ id: 'item-a', x: 50, y: 75, width: 300, height: 250 });
     const state = makeBoardState({ items: [item] });
     const manifest = boardStateToManifest(state, 'board-1', 'Test');
 
@@ -126,7 +126,7 @@ describe('boardStateToManifest', () => {
   });
 
   it('rounds fractional coordinates in xywh fragment', () => {
-    const item = makeBoardItem({ x: 100.7, y: 200.3, w: 150.5, h: 80.9 });
+    const item = makeBoardItem({ x: 100.7, y: 200.3, width: 150.5, height: 80.9 });
     const state = makeBoardState({ items: [item] });
     const manifest = boardStateToManifest(state, 'board-1', 'Test');
 
@@ -294,7 +294,7 @@ describe('boardStateToManifest', () => {
 
 describe('manifestToBoardState', () => {
   it('parses painting annotations back to items with correct x, y, w, h', () => {
-    const item = makeBoardItem({ id: 'item-a', x: 120, y: 340, w: 250, h: 175 });
+    const item = makeBoardItem({ id: 'item-a', x: 120, y: 340, width: 250, height: 175 });
     const state = makeBoardState({ items: [item] });
     const manifest = boardStateToManifest(state, 'board-1', 'Test');
     const result = manifestToBoardState(manifest);
@@ -302,8 +302,8 @@ describe('manifestToBoardState', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0].x).toBe(120);
     expect(result.items[0].y).toBe(340);
-    expect(result.items[0].w).toBe(250);
-    expect(result.items[0].h).toBe(175);
+    expect(result.items[0].width).toBe(250);
+    expect(result.items[0].height).toBe(175);
   });
 
   it('parses commenting annotations back to notes', () => {
@@ -442,8 +442,8 @@ describe('manifestToBoardState', () => {
 describe('round-trip: boardState -> manifest -> boardState', () => {
   it('preserves board items through round-trip', () => {
     const items = [
-      makeBoardItem({ id: 'item-1', resourceId: 'canvas/1', x: 10, y: 20, w: 300, h: 200, label: 'First' }),
-      makeBoardItem({ id: 'item-2', resourceId: 'canvas/2', x: 500, y: 600, w: 150, h: 100, label: 'Second' }),
+      makeBoardItem({ id: 'item-1', resourceId: 'canvas/1', x: 10, y: 20, width: 300, height: 200, label: 'First' }),
+      makeBoardItem({ id: 'item-2', resourceId: 'canvas/2', x: 500, y: 600, width: 150, height: 100, label: 'Second' }),
     ];
     const state = makeBoardState({ items });
     const manifest = boardStateToManifest(state, 'board-rt', 'Round Trip');
@@ -455,8 +455,8 @@ describe('round-trip: boardState -> manifest -> boardState', () => {
     expect(first).toBeDefined();
     expect(first!.x).toBe(10);
     expect(first!.y).toBe(20);
-    expect(first!.w).toBe(300);
-    expect(first!.h).toBe(200);
+    expect(first!.width).toBe(300);
+    expect(first!.height).toBe(200);
     expect(first!.label).toBe('First');
     expect(first!.resourceId).toBe('canvas/1');
     expect(second).toBeDefined();
@@ -496,7 +496,7 @@ describe('round-trip: boardState -> manifest -> boardState', () => {
   it('preserves notes through round-trip', () => {
     const note = makeNoteItem({
       id: 'note-rt',
-      x: 400, y: 500, w: 200, h: 180,
+      x: 400, y: 500, width: 200, height: 180,
       annotation: 'Detailed note content for round-trip testing',
     });
     const state = makeBoardState({ items: [note] });
@@ -508,8 +508,8 @@ describe('round-trip: boardState -> manifest -> boardState', () => {
     expect(notes[0].annotation).toBe('Detailed note content for round-trip testing');
     expect(notes[0].x).toBe(400);
     expect(notes[0].y).toBe(500);
-    expect(notes[0].w).toBe(200);
-    expect(notes[0].h).toBe(180);
+    expect(notes[0].width).toBe(200);
+    expect(notes[0].height).toBe(180);
     expect(notes[0].isNote).toBe(true);
   });
 
