@@ -17,6 +17,7 @@
     pointsToSvgPath,
     type Point,
   } from '@/src/features/viewer/model/annotation';
+  import * as GeoPoint from '@/src/shared/lib/geometry/point';
   import { onMount, onDestroy } from 'svelte';
 
   interface Props {
@@ -84,15 +85,12 @@
 
   function isNearFirstPoint(pt: Point): boolean {
     if (points.length < 3) return false;
-    const first = points[0];
-    const dx = pt.x - first.x;
-    const dy = pt.y - first.y;
     // Convert closeRadius from pixels to canvas coords
     const rect = svgEl?.getBoundingClientRect();
     if (!rect) return false;
     const canvasW = canvas.width ?? rect.width;
     const thresholdCanvas = (closeRadius / rect.width) * canvasW;
-    return Math.sqrt(dx * dx + dy * dy) < thresholdCanvas;
+    return GeoPoint.distance(pt, points[0]) < thresholdCanvas;
   }
 
   function closePolygon() {

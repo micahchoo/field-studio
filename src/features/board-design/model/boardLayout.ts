@@ -6,6 +6,7 @@
  */
 
 import type { BoardItem } from '../stores/boardVault.svelte';
+import * as GeoRect from '@/src/shared/lib/geometry/rect';
 
 export type AlignType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
 
@@ -28,11 +29,11 @@ export function computeAlignment(items: BoardItem[], type: AlignType): MoveComma
       return items.map(i => ({ id: i.id, x: minX, y: i.y }));
     }
     case 'right': {
-      const maxRight = Math.max(...items.map(i => i.x + i.width));
+      const maxRight = Math.max(...items.map(i => GeoRect.right(i)));
       return items.map(i => ({ id: i.id, x: maxRight - i.width, y: i.y }));
     }
     case 'center-h': {
-      const avgX = items.reduce((sum, i) => sum + i.x + i.width / 2, 0) / items.length;
+      const avgX = items.reduce((sum, i) => sum + GeoRect.center(i).x, 0) / items.length;
       return items.map(i => ({ id: i.id, x: avgX - i.width / 2, y: i.y }));
     }
     case 'top': {
@@ -40,11 +41,11 @@ export function computeAlignment(items: BoardItem[], type: AlignType): MoveComma
       return items.map(i => ({ id: i.id, x: i.x, y: minY }));
     }
     case 'bottom': {
-      const maxBottom = Math.max(...items.map(i => i.y + i.height));
+      const maxBottom = Math.max(...items.map(i => GeoRect.bottom(i)));
       return items.map(i => ({ id: i.id, x: i.x, y: maxBottom - i.height }));
     }
     case 'center-v': {
-      const avgY = items.reduce((sum, i) => sum + i.y + i.height / 2, 0) / items.length;
+      const avgY = items.reduce((sum, i) => sum + GeoRect.center(i).y, 0) / items.length;
       return items.map(i => ({ id: i.id, x: i.x, y: avgY - i.height / 2 }));
     }
     default:
@@ -91,10 +92,11 @@ export function computeAutoArrange(items: BoardItem[], arrangement: string): Mov
       const cy = radius + 100;
       return items.map((item, i) => {
         const angle = (2 * Math.PI * i) / items.length - Math.PI / 2;
+        const center = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
         return {
           id: item.id,
-          x: cx + radius * Math.cos(angle) - item.width / 2,
-          y: cy + radius * Math.sin(angle) - item.height / 2,
+          x: center.x - item.width / 2,
+          y: center.y - item.height / 2,
         };
       });
     }

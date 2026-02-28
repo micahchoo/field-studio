@@ -54,6 +54,8 @@ export interface BoardState {
 // Helpers
 // ------------------------------------------------------------------
 
+import * as GeoRect from '@/src/shared/lib/geometry/rect';
+
 let nextId = 0;
 function generateId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${(nextId++).toString(36)}`;
@@ -321,20 +323,17 @@ export class BoardVaultStore {
     }
 
     const padding = 20;
-    const minX = Math.min(...members.map(m => m.x)) - padding;
-    const minY = Math.min(...members.map(m => m.y)) - padding;
-    const maxX = Math.max(...members.map(m => m.x + m.width)) + padding;
-    const maxY = Math.max(...members.map(m => m.y + m.height)) + padding;
+    const bounds = GeoRect.expand(GeoRect.union(members), padding);
 
     const groupId = generateId('group');
 
     const groupItem: BoardItem = {
       id: groupId,
       resourceId: '',
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
       type: 'group',
       label,
     };
