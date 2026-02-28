@@ -7,18 +7,15 @@
  * Snap-to-grid alignment guides for board item dragging.
  */
 
+import * as GeoRect from '@/src/shared/lib/geometry/rect';
+
 export interface AlignmentGuide {
   type: 'horizontal' | 'vertical';
   position: number;
   label?: string;
 }
 
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export type Rect = GeoRect.Rect;
 
 const SNAP_THRESHOLD = 8; // pixels
 
@@ -35,16 +32,10 @@ export function calculateAlignmentGuides(
   let snappedX: number | null = null;
   let snappedY: number | null = null;
 
-  const dragCenter = {
-    x: dragItem.x + dragItem.width / 2,
-    y: dragItem.y + dragItem.height / 2,
-  };
+  const dragCenter = GeoRect.center(dragItem);
 
   for (const item of otherItems) {
-    const itemCenter = {
-      x: item.x + item.width / 2,
-      y: item.y + item.height / 2,
-    };
+    const itemCenter = GeoRect.center(item);
 
     // Vertical guides (alignment on X axis)
     // Left edge to left edge
@@ -53,9 +44,9 @@ export function calculateAlignmentGuides(
       snappedX = item.x;
     }
     // Right edge to right edge
-    if (Math.abs((dragItem.x + dragItem.width) - (item.x + item.width)) < snapThreshold) {
-      guides.push({ type: 'vertical', position: item.x + item.width });
-      snappedX = item.x + item.width - dragItem.width;
+    if (Math.abs(GeoRect.right(dragItem) - GeoRect.right(item)) < snapThreshold) {
+      guides.push({ type: 'vertical', position: GeoRect.right(item) });
+      snappedX = GeoRect.right(item) - dragItem.width;
     }
     // Center to center (vertical)
     if (Math.abs(dragCenter.x - itemCenter.x) < snapThreshold) {
@@ -70,9 +61,9 @@ export function calculateAlignmentGuides(
       snappedY = item.y;
     }
     // Bottom edge to bottom edge
-    if (Math.abs((dragItem.y + dragItem.height) - (item.y + item.height)) < snapThreshold) {
-      guides.push({ type: 'horizontal', position: item.y + item.height });
-      snappedY = item.y + item.height - dragItem.height;
+    if (Math.abs(GeoRect.bottom(dragItem) - GeoRect.bottom(item)) < snapThreshold) {
+      guides.push({ type: 'horizontal', position: GeoRect.bottom(item) });
+      snappedY = GeoRect.bottom(item) - dragItem.height;
     }
     // Center to center (horizontal)
     if (Math.abs(dragCenter.y - itemCenter.y) < snapThreshold) {
