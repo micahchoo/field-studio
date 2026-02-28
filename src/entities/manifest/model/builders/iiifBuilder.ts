@@ -186,13 +186,19 @@ function assetServingUrl(baseUrl: string, assetId: string, isImage: boolean, ext
 }
 
 /**
- * Build a stable asset ID from a manifest ID and file name.
- * Used as the key in storage.saveAsset().
+ * Hash a blob's content with SHA-256 to produce a content-addressable key.
+ * Used as the key in storage.saveAsset() — identical content always produces
+ * the same key, enabling deduplication.
  */
-function buildAssetId(manifestId: string, fileName: string): string {
-  const slug = manifestId.split('/').pop() ?? 'item';
-  const safe = fileName.replace(/[^a-zA-Z0-9._-]/g, '');
-  return `${slug}-${safe}`;
+async function hashBlob(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = new Uint8Array(hashBuffer);
+  let hex = '';
+  for (let i = 0; i < hashArray.length; i++) {
+    hex += hashArray[i].toString(16).padStart(2, '0');
+  }
+  return hex;
 }
 
 /**
@@ -262,11 +268,15 @@ async function processNodeIngest(
       const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
       const mimeType = getMimeTypeString(fileName);
       const isImg = isImageFile(fileName) || isSvgFile(fileName);
-      const assetId = buildAssetId(manifestId, fileName);
+      const assetId = await hashBlob(file);
 
-      // Store the file blob in IndexedDB for service worker serving
+      // Store the file blob — skip if identical content already stored (dedup)
       try {
-        await storage.saveAsset(assetId, file);
+        if (await storage.hasAsset(assetId)) {
+          progress = addLogEntry(progress, `Deduplicated: ${fileName} (already stored)`, 'info');
+        } else {
+          await storage.saveAsset(assetId, file);
+        }
       } catch {
         report.errors.push({ file: fileName, error: 'Asset storage failed' });
         progress = addLogEntry(progress, `Failed to store asset: ${fileName}`, 'error');
