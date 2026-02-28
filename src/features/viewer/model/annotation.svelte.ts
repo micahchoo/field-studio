@@ -32,6 +32,7 @@ import {
   createTimeAnnotation,
   isTimeBasedAnnotation,
 } from './annotation';
+import * as GeoPoint from '@/src/shared/lib/geometry/point';
 
 // ============================================================================
 // AnnotationToolStore -- spatial annotation tool state
@@ -85,12 +86,7 @@ export class AnnotationToolStore {
    */
   readonly canClose = $derived.by(() => {
     if (this.#points.length < 3 || !this.#cursorPoint) return false;
-    const first = this.#points[0];
-    const dist = Math.sqrt(
-      Math.pow(this.#cursorPoint.x - first.x, 2) +
-      Math.pow(this.#cursorPoint.y - first.y, 2),
-    );
-    return dist < 15;
+    return GeoPoint.distance(this.#cursorPoint, this.#points[0]) < 15;
   });
 
   /**
@@ -229,11 +225,7 @@ export class AnnotationToolStore {
     if (this.#mode === 'polygon') {
       // Check if clicking near first point to close polygon
       if (this.#points.length >= 3) {
-        const first = this.#points[0];
-        const dist = Math.sqrt(
-          Math.pow(point.x - first.x, 2) + Math.pow(point.y - first.y, 2),
-        );
-        if (dist < 15) {
+        if (GeoPoint.distance(point, this.#points[0]) < 15) {
           this.#isDrawing = false;
           return;
         }

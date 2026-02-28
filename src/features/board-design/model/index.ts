@@ -10,6 +10,7 @@
  */
 
 import { getIIIFValue, isCanvas, isCollection, isManifest, isRange, type IIIFItem, type IIIFManifest } from '@/src/shared/types';
+import * as GeoPoint from '@/src/shared/lib/geometry/point';
 import { resolveHierarchicalThumbs } from '@/src/utils/imageSourceResolver';
 
 // TYPE_DEBT: resolveHierarchicalThumbs expects IIIFCanvas | Record<string, unknown> but we pass IIIFItem.
@@ -419,10 +420,7 @@ export const autoArrangeItems = (
 export const snapToGrid = (
   pos: { x: number; y: number },
   gridSize: number = 20,
-): { x: number; y: number } => ({
-  x: Math.round(pos.x / gridSize) * gridSize,
-  y: Math.round(pos.y / gridSize) * gridSize,
-});
+): { x: number; y: number } => GeoPoint.roundStep(pos, gridSize);
 
 /**
  * Export board state to IIIF Manifest format

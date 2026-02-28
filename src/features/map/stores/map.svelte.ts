@@ -52,6 +52,8 @@ const DEFAULT_CLUSTER_RADIUS = 40; // pixels
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 20;
 const ZOOM_STEP = 1.5;
+import * as GeoPoint from '@/src/shared/lib/geometry/point';
+
 const BOUNDS_PADDING = 0.1; // 10% padding on each side
 
 // ──────────────────────────────────────────────
@@ -397,9 +399,7 @@ export class MapStore {
         if (clustered.has(j)) continue;
 
         const candidatePixel = this.geoToPixel(items[j].lat, items[j].lng, refWidth, refHeight);
-        const dx = seedPixel.x - candidatePixel.x;
-        const dy = seedPixel.y - candidatePixel.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = GeoPoint.distance(seedPixel, candidatePixel);
 
         if (dist <= radius) {
           clusterItems.push(items[j]);

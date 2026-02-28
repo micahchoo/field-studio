@@ -9,6 +9,7 @@
 -->
 <script lang="ts">
   import type { BoardItem, BoardConnection } from '@/src/features/board-design/stores/boardVault.svelte';
+  import * as GeoRect from '@/src/shared/lib/geometry/rect';
   import type { ContextualClassNames } from '@/src/shared/lib/contextual-styles';
 
   interface Props {
@@ -37,22 +38,18 @@
 
   function connectionPath(fromItem: BoardItem | undefined, toItem: BoardItem | undefined): string {
     if (!fromItem || !toItem) return '';
-    const x1 = fromItem.x + fromItem.width / 2;
-    const y1 = fromItem.y + fromItem.height / 2;
-    const x2 = toItem.x + toItem.width / 2;
-    const y2 = toItem.y + toItem.height / 2;
-    const midX = (x1 + x2) / 2;
-    return `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+    const from = GeoRect.center(fromItem);
+    const to = GeoRect.center(toItem);
+    const midX = (from.x + to.x) / 2;
+    return `M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`;
   }
 
   function pendingConnectionPath(fromItem: BoardItem | undefined): string {
     if (!fromItem) return '';
-    const x1 = fromItem.x + fromItem.width / 2;
-    const y1 = fromItem.y + fromItem.height / 2;
-    const x2 = mousePosition.x;
-    const y2 = mousePosition.y;
-    const midX = (x1 + x2) / 2;
-    return `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+    const from = GeoRect.center(fromItem);
+    const { x: x2, y: y2 } = mousePosition;
+    const midX = (from.x + x2) / 2;
+    return `M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${y2}, ${x2} ${y2}`;
   }
 
   function connectionStrokeColor(type: BoardConnection['type']): string {
@@ -99,8 +96,10 @@
           opacity={editingConnection === conn.id ? 1 : 0.7}
         />
         {#if isAdvanced}
-          {@const mx = (fromItem.x + fromItem.width / 2 + toItem.x + toItem.width / 2) / 2}
-          {@const my = (fromItem.y + fromItem.height / 2 + toItem.y + toItem.height / 2) / 2}
+          {@const fc = GeoRect.center(fromItem)}
+          {@const tc = GeoRect.center(toItem)}
+          {@const mx = (fc.x + tc.x) / 2}
+          {@const my = (fc.y + tc.y) / 2}
           <text
             x={mx}
             y={my - 8}
