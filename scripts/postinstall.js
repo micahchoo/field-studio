@@ -15,9 +15,11 @@ const fs = require('fs');
 const path = require('path');
 
 const hookContent = `#!/bin/sh
-# Post-commit hook - Updates dependency graph after each commit
-echo "🔍 Updating dependency graph..."
-unset LD_LIBRARY_PATH && npx tsx scripts/analyze-imports.ts`;
+# Post-commit hook - Updates dependency graph and health scorecard
+echo "Updating dependency graph..."
+unset LD_LIBRARY_PATH && npx tsx scripts/analyze-imports.ts
+echo "Running health rubric..."
+unset LD_LIBRARY_PATH && npx tsx scripts/health-rubric.ts`;
 
 const hookPath = path.join('.git', 'hooks', 'post-commit');
 

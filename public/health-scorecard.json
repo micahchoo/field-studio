@@ -1,0 +1,1012 @@
+{
+  "generatedAt": "2026-02-28T11:04:59.815Z",
+  "composite": 47,
+  "grade": "red",
+  "dimensions": {
+    "coupling": {
+      "score": 56.63265306122449,
+      "grade": "yellow",
+      "weight": 25,
+      "metrics": {
+        "godModules": [
+          "src/shared/ui/atoms/Button.svelte",
+          "src/shared/ui/atoms/Icon.svelte"
+        ],
+        "godModuleCount": 2,
+        "highFanOutFiles": 30,
+        "highFanOutPct": 5,
+        "top10ConcentrationPct": 43.4,
+        "totalEdges": 1960
+      },
+      "flags": [
+        {
+          "severity": "red",
+          "dimension": "coupling",
+          "message": "src/shared/ui/atoms/Button.svelte has 94 dependents (God module)"
+        },
+        {
+          "severity": "red",
+          "dimension": "coupling",
+          "message": "src/shared/ui/atoms/Icon.svelte has 134 dependents (God module)"
+        }
+      ]
+    },
+    "deadCode": {
+      "score": 54.59579180509413,
+      "grade": "yellow",
+      "weight": 25,
+      "metrics": {
+        "totalOrphans": 43,
+        "effectiveOrphans": 41,
+        "orphanRatioPct": 6.8,
+        "orphanFiles": [
+          "src/app/stores/annotationState.svelte.ts",
+          "src/app/stores/resourceContext.svelte.ts",
+          "src/app/stores/userIntent.svelte.ts",
+          "src/app/ui/BaseTemplate.svelte",
+          "src/app/ui/FieldModeTemplate.svelte",
+          "src/entities/annotation/model/contentSearchService.ts",
+          "src/entities/annotation/model/selectors.ts",
+          "src/entities/canvas/actions.ts",
+          "src/entities/canvas/model/avService.ts",
+          "src/entities/canvas/model/fileIntegrity.ts",
+          "src/entities/canvas/model/imageSourceResolver.ts",
+          "src/entities/canvas/model.ts",
+          "src/entities/collection/actions.ts",
+          "src/entities/collection/model.ts",
+          "src/entities/manifest/actions.ts"
+        ]
+      },
+      "flags": [
+        {
+          "severity": "yellow",
+          "dimension": "deadCode",
+          "message": "41 orphan files (6.8%)"
+        }
+      ]
+    },
+    "circularDeps": {
+      "score": 0,
+      "grade": "red",
+      "weight": 10,
+      "metrics": {
+        "totalCycles": 23,
+        "selfRefCount": 16,
+        "realCycleCount": 7,
+        "shallowCycles": 7,
+        "deepCycles": 0
+      },
+      "flags": [
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/shared/constants/index.ts → src/shared/constants/image.ts → src/shared/constants/index.ts"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/shared/constants/iiif.ts → src/shared/constants/index.ts → src/shared/constants/iiif.ts"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.svelte → src/features/metadata-edit/ui/atoms/MetadataFieldRenderer.svelte → src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.svelte"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/features/staging/ui/molecules/IngestProgressPanel.svelte → src/features/staging/ui/atoms/IngestFileList.svelte → src/features/staging/ui/molecules/IngestProgressPanel.svelte"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/features/board-design/ui/molecules/TemplateItemPicker.svelte → src/features/board-design/ui/organisms/BoardOnboarding.svelte → src/features/board-design/ui/molecules/TemplateItemPicker.svelte"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/features/viewer/ui/atoms/SearchResultItem.svelte → src/features/viewer/ui/molecules/ViewerSearchPanel.svelte → src/features/viewer/ui/atoms/SearchResultItem.svelte"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "circularDeps",
+          "message": "Cycle (depth 2): src/features/viewer/ui/atoms/ViewerToolbarActions.svelte → src/features/viewer/ui/molecules/ViewerToolbar.svelte → src/features/viewer/ui/atoms/ViewerToolbarActions.svelte"
+        }
+      ]
+    },
+    "fsdBoundaries": {
+      "score": 70,
+      "grade": "yellow",
+      "weight": 15,
+      "metrics": {
+        "violations": [
+          {
+            "from": "src/features/export/ui/organisms/ExportDialog.svelte",
+            "to": "src/features/metadata-edit/lib/inspectorValidation.ts",
+            "type": "cross-feature"
+          },
+          {
+            "from": "src/features/staging/model/stagingWorkbenchHelpers.ts",
+            "to": "src/features/ingest/model/csvImporter.ts",
+            "type": "cross-feature"
+          },
+          {
+            "from": "src/features/staging/ui/atoms/FileTreeNode.svelte",
+            "to": "src/features/structure-view/ui/atoms/ExpandButton.svelte",
+            "type": "cross-feature"
+          }
+        ],
+        "violationCount": 3,
+        "upwardCount": 0,
+        "crossFeatureCount": 3
+      },
+      "flags": [
+        {
+          "severity": "yellow",
+          "dimension": "fsdBoundaries",
+          "message": "cross-feature: src/features/export/ui/organisms/ExportDialog.svelte → src/features/metadata-edit/lib/inspectorValidation.ts"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "fsdBoundaries",
+          "message": "cross-feature: src/features/staging/model/stagingWorkbenchHelpers.ts → src/features/ingest/model/csvImporter.ts"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "fsdBoundaries",
+          "message": "cross-feature: src/features/staging/ui/atoms/FileTreeNode.svelte → src/features/structure-view/ui/atoms/ExpandButton.svelte"
+        }
+      ]
+    },
+    "importDepth": {
+      "score": 85.71428571428571,
+      "grade": "green",
+      "weight": 10,
+      "metrics": {
+        "maxDepth": 6,
+        "avgDepth": 3.5,
+        "deepFiles": [],
+        "reachableFromMain": 222,
+        "unreachableFromMain": 380
+      },
+      "flags": []
+    },
+    "barrelHealth": {
+      "score": 0,
+      "grade": "red",
+      "weight": 10,
+      "metrics": {
+        "totalBarrels": 45,
+        "exportStarBarrels": 2,
+        "exportStarRatioPct": 4.4,
+        "overstuffedBarrels": [
+          {
+            "file": "src/entities/manifest/model/vault/index.ts",
+            "exportCount": 59
+          },
+          {
+            "file": "src/features/board-design/model/index.ts",
+            "exportCount": 26
+          },
+          {
+            "file": "src/features/board-design/ui/atoms/index.ts",
+            "exportCount": 21
+          },
+          {
+            "file": "src/features/dependency-explorer/index.ts",
+            "exportCount": 22
+          },
+          {
+            "file": "src/features/metadata-edit/ui/atoms/index.ts",
+            "exportCount": 43
+          },
+          {
+            "file": "src/features/staging/model/index.ts",
+            "exportCount": 25
+          },
+          {
+            "file": "src/features/viewer/model/index.ts",
+            "exportCount": 84
+          },
+          {
+            "file": "src/features/viewer/ui/atoms/index.ts",
+            "exportCount": 43
+          },
+          {
+            "file": "src/features/viewer/ui/molecules/index.ts",
+            "exportCount": 30
+          },
+          {
+            "file": "src/shared/actions/index.ts",
+            "exportCount": 24
+          },
+          {
+            "file": "src/shared/constants/index.ts",
+            "exportCount": 36
+          },
+          {
+            "file": "src/shared/lib/hooks/index.ts",
+            "exportCount": 51
+          },
+          {
+            "file": "src/shared/services/index.ts",
+            "exportCount": 55
+          },
+          {
+            "file": "src/shared/stores/index.ts",
+            "exportCount": 35
+          },
+          {
+            "file": "src/shared/types/index.ts",
+            "exportCount": 81
+          },
+          {
+            "file": "src/shared/ui/layout/index.ts",
+            "exportCount": 37
+          },
+          {
+            "file": "src/shared/ui/molecules/index.ts",
+            "exportCount": 67
+          }
+        ]
+      },
+      "flags": [
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "2/45 barrels use export * (4%)"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/entities/manifest/model/vault/index.ts re-exports 59 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/features/board-design/model/index.ts re-exports 26 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/features/board-design/ui/atoms/index.ts re-exports 21 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/features/dependency-explorer/index.ts re-exports 22 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/features/metadata-edit/ui/atoms/index.ts re-exports 43 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/features/staging/model/index.ts re-exports 25 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/features/viewer/model/index.ts re-exports 84 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/features/viewer/ui/atoms/index.ts re-exports 43 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/features/viewer/ui/molecules/index.ts re-exports 30 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/shared/actions/index.ts re-exports 24 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/shared/constants/index.ts re-exports 36 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/shared/lib/hooks/index.ts re-exports 51 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/shared/services/index.ts re-exports 55 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/shared/stores/index.ts re-exports 35 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/shared/types/index.ts re-exports 81 symbols"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "barrelHealth",
+          "message": "src/shared/ui/layout/index.ts re-exports 37 symbols"
+        },
+        {
+          "severity": "red",
+          "dimension": "barrelHealth",
+          "message": "src/shared/ui/molecules/index.ts re-exports 67 symbols"
+        }
+      ]
+    },
+    "complexity": {
+      "score": 0,
+      "grade": "red",
+      "weight": 5,
+      "metrics": {
+        "over500": [
+          {
+            "file": "src/features/export/model/exportService.ts",
+            "lines": 1545
+          },
+          {
+            "file": "src/app/ui/App.svelte",
+            "lines": 1112
+          },
+          {
+            "file": "src/entities/manifest/model/validation/validationHealer.ts",
+            "lines": 1079
+          },
+          {
+            "file": "src/features/export/model/staticSiteExporter.ts",
+            "lines": 1053
+          },
+          {
+            "file": "src/widgets/NavigationSidebar/ui/organisms/Sidebar.svelte",
+            "lines": 891
+          },
+          {
+            "file": "src/features/metadata-edit/lib/inspectorValidation.ts",
+            "lines": 864
+          },
+          {
+            "file": "src/app/ui/ViewRouter.svelte",
+            "lines": 793
+          },
+          {
+            "file": "src/features/staging/model/index.ts",
+            "lines": 776
+          },
+          {
+            "file": "src/entities/manifest/model/trash/trashService.ts",
+            "lines": 755
+          },
+          {
+            "file": "src/entities/manifest/model/builders/iiifBuilder.ts",
+            "lines": 705
+          },
+          {
+            "file": "src/features/staging/stores/stagingState.svelte.ts",
+            "lines": 682
+          },
+          {
+            "file": "src/shared/services/specBridge.ts",
+            "lines": 661
+          },
+          {
+            "file": "src/features/viewer/model/viewer.svelte.ts",
+            "lines": 658
+          },
+          {
+            "file": "src/entities/annotation/model/contentSearchService.ts",
+            "lines": 629
+          },
+          {
+            "file": "src/features/viewer/model/viewerCompatibility.ts",
+            "lines": 629
+          },
+          {
+            "file": "src/features/export/model/archivalPackageService.ts",
+            "lines": 623
+          },
+          {
+            "file": "src/widgets/QCDashboard/ui/QCDashboard.svelte",
+            "lines": 622
+          },
+          {
+            "file": "src/features/board-design/model/index.ts",
+            "lines": 604
+          },
+          {
+            "file": "src/features/metadata-edit/ui/organisms/Inspector.svelte",
+            "lines": 599
+          },
+          {
+            "file": "src/features/structure-view/stores/structureTree.svelte.ts",
+            "lines": 597
+          },
+          {
+            "file": "src/shared/constants/canopyTemplates.ts",
+            "lines": 591
+          },
+          {
+            "file": "src/shared/types/index.ts",
+            "lines": 561
+          },
+          {
+            "file": "src/widgets/AuthDialog/ui/AuthDialog.svelte",
+            "lines": 556
+          },
+          {
+            "file": "src/entities/canvas/model/imageSourceResolver.ts",
+            "lines": 555
+          },
+          {
+            "file": "src/features/metadata-edit/ui/organisms/BatchEditor.svelte",
+            "lines": 555
+          },
+          {
+            "file": "src/features/board-design/stores/boardVault.svelte.ts",
+            "lines": 547
+          },
+          {
+            "file": "src/features/viewer/actions/annotorious.ts",
+            "lines": 545
+          },
+          {
+            "file": "src/features/board-design/ui/organisms/BoardOnboarding.svelte",
+            "lines": 537
+          },
+          {
+            "file": "src/entities/collection/model/stagingService.ts",
+            "lines": 536
+          },
+          {
+            "file": "src/shared/lib/hooks/stagingState.svelte.ts",
+            "lines": 531
+          },
+          {
+            "file": "src/features/viewer/model/annotation.svelte.ts",
+            "lines": 525
+          },
+          {
+            "file": "src/features/ingest/model/csvImporter.ts",
+            "lines": 515
+          },
+          {
+            "file": "src/entities/canvas/model/avService.ts",
+            "lines": 514
+          },
+          {
+            "file": "src/widgets/KeyboardShortcuts/ui/KeyboardShortcutsOverlay.svelte",
+            "lines": 511
+          },
+          {
+            "file": "src/features/board-design/ui/organisms/BoardCanvas.svelte",
+            "lines": 508
+          }
+        ],
+        "over500Count": 35,
+        "over1000Count": 4,
+        "avgLines": 165
+      },
+      "flags": [
+        {
+          "severity": "red",
+          "dimension": "complexity",
+          "message": "src/app/ui/App.svelte: 1112 lines"
+        },
+        {
+          "severity": "red",
+          "dimension": "complexity",
+          "message": "src/entities/manifest/model/validation/validationHealer.ts: 1079 lines"
+        },
+        {
+          "severity": "red",
+          "dimension": "complexity",
+          "message": "src/features/export/model/exportService.ts: 1545 lines"
+        },
+        {
+          "severity": "red",
+          "dimension": "complexity",
+          "message": "src/features/export/model/staticSiteExporter.ts: 1053 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/app/ui/ViewRouter.svelte: 793 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/entities/annotation/model/contentSearchService.ts: 629 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/entities/canvas/model/avService.ts: 514 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/entities/canvas/model/imageSourceResolver.ts: 555 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/entities/collection/model/stagingService.ts: 536 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/entities/manifest/model/builders/iiifBuilder.ts: 705 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/entities/manifest/model/trash/trashService.ts: 755 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/board-design/model/index.ts: 604 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/board-design/stores/boardVault.svelte.ts: 547 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/board-design/ui/organisms/BoardCanvas.svelte: 508 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/board-design/ui/organisms/BoardOnboarding.svelte: 537 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/export/model/archivalPackageService.ts: 623 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/ingest/model/csvImporter.ts: 515 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/metadata-edit/lib/inspectorValidation.ts: 864 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/metadata-edit/ui/organisms/BatchEditor.svelte: 555 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/metadata-edit/ui/organisms/Inspector.svelte: 599 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/staging/model/index.ts: 776 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/staging/stores/stagingState.svelte.ts: 682 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/structure-view/stores/structureTree.svelte.ts: 597 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/viewer/actions/annotorious.ts: 545 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/viewer/model/annotation.svelte.ts: 525 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/viewer/model/viewer.svelte.ts: 658 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/features/viewer/model/viewerCompatibility.ts: 629 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/shared/constants/canopyTemplates.ts: 591 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/shared/lib/hooks/stagingState.svelte.ts: 531 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/shared/services/specBridge.ts: 661 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/shared/types/index.ts: 561 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/widgets/AuthDialog/ui/AuthDialog.svelte: 556 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/widgets/KeyboardShortcuts/ui/KeyboardShortcutsOverlay.svelte: 511 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/widgets/NavigationSidebar/ui/organisms/Sidebar.svelte: 891 lines"
+        },
+        {
+          "severity": "yellow",
+          "dimension": "complexity",
+          "message": "src/widgets/QCDashboard/ui/QCDashboard.svelte: 622 lines"
+        }
+      ]
+    }
+  },
+  "flags": [
+    {
+      "severity": "red",
+      "dimension": "coupling",
+      "message": "src/shared/ui/atoms/Button.svelte has 94 dependents (God module)"
+    },
+    {
+      "severity": "red",
+      "dimension": "coupling",
+      "message": "src/shared/ui/atoms/Icon.svelte has 134 dependents (God module)"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/entities/manifest/model/vault/index.ts re-exports 59 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/features/metadata-edit/ui/atoms/index.ts re-exports 43 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/features/viewer/model/index.ts re-exports 84 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/features/viewer/ui/atoms/index.ts re-exports 43 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/shared/lib/hooks/index.ts re-exports 51 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/shared/services/index.ts re-exports 55 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/shared/types/index.ts re-exports 81 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "barrelHealth",
+      "message": "src/shared/ui/molecules/index.ts re-exports 67 symbols"
+    },
+    {
+      "severity": "red",
+      "dimension": "complexity",
+      "message": "src/app/ui/App.svelte: 1112 lines"
+    },
+    {
+      "severity": "red",
+      "dimension": "complexity",
+      "message": "src/entities/manifest/model/validation/validationHealer.ts: 1079 lines"
+    },
+    {
+      "severity": "red",
+      "dimension": "complexity",
+      "message": "src/features/export/model/exportService.ts: 1545 lines"
+    },
+    {
+      "severity": "red",
+      "dimension": "complexity",
+      "message": "src/features/export/model/staticSiteExporter.ts: 1053 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "deadCode",
+      "message": "41 orphan files (6.8%)"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/shared/constants/index.ts → src/shared/constants/image.ts → src/shared/constants/index.ts"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/shared/constants/iiif.ts → src/shared/constants/index.ts → src/shared/constants/iiif.ts"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.svelte → src/features/metadata-edit/ui/atoms/MetadataFieldRenderer.svelte → src/features/metadata-edit/ui/molecules/MetadataFieldsPanel.svelte"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/features/staging/ui/molecules/IngestProgressPanel.svelte → src/features/staging/ui/atoms/IngestFileList.svelte → src/features/staging/ui/molecules/IngestProgressPanel.svelte"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/features/board-design/ui/molecules/TemplateItemPicker.svelte → src/features/board-design/ui/organisms/BoardOnboarding.svelte → src/features/board-design/ui/molecules/TemplateItemPicker.svelte"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/features/viewer/ui/atoms/SearchResultItem.svelte → src/features/viewer/ui/molecules/ViewerSearchPanel.svelte → src/features/viewer/ui/atoms/SearchResultItem.svelte"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "circularDeps",
+      "message": "Cycle (depth 2): src/features/viewer/ui/atoms/ViewerToolbarActions.svelte → src/features/viewer/ui/molecules/ViewerToolbar.svelte → src/features/viewer/ui/atoms/ViewerToolbarActions.svelte"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "fsdBoundaries",
+      "message": "cross-feature: src/features/export/ui/organisms/ExportDialog.svelte → src/features/metadata-edit/lib/inspectorValidation.ts"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "fsdBoundaries",
+      "message": "cross-feature: src/features/staging/model/stagingWorkbenchHelpers.ts → src/features/ingest/model/csvImporter.ts"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "fsdBoundaries",
+      "message": "cross-feature: src/features/staging/ui/atoms/FileTreeNode.svelte → src/features/structure-view/ui/atoms/ExpandButton.svelte"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "2/45 barrels use export * (4%)"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/features/board-design/model/index.ts re-exports 26 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/features/board-design/ui/atoms/index.ts re-exports 21 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/features/dependency-explorer/index.ts re-exports 22 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/features/staging/model/index.ts re-exports 25 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/features/viewer/ui/molecules/index.ts re-exports 30 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/shared/actions/index.ts re-exports 24 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/shared/constants/index.ts re-exports 36 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/shared/stores/index.ts re-exports 35 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "barrelHealth",
+      "message": "src/shared/ui/layout/index.ts re-exports 37 symbols"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/app/ui/ViewRouter.svelte: 793 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/entities/annotation/model/contentSearchService.ts: 629 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/entities/canvas/model/avService.ts: 514 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/entities/canvas/model/imageSourceResolver.ts: 555 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/entities/collection/model/stagingService.ts: 536 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/entities/manifest/model/builders/iiifBuilder.ts: 705 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/entities/manifest/model/trash/trashService.ts: 755 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/board-design/model/index.ts: 604 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/board-design/stores/boardVault.svelte.ts: 547 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/board-design/ui/organisms/BoardCanvas.svelte: 508 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/board-design/ui/organisms/BoardOnboarding.svelte: 537 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/export/model/archivalPackageService.ts: 623 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/ingest/model/csvImporter.ts: 515 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/metadata-edit/lib/inspectorValidation.ts: 864 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/metadata-edit/ui/organisms/BatchEditor.svelte: 555 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/metadata-edit/ui/organisms/Inspector.svelte: 599 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/staging/model/index.ts: 776 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/staging/stores/stagingState.svelte.ts: 682 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/structure-view/stores/structureTree.svelte.ts: 597 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/viewer/actions/annotorious.ts: 545 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/viewer/model/annotation.svelte.ts: 525 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/viewer/model/viewer.svelte.ts: 658 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/features/viewer/model/viewerCompatibility.ts: 629 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/shared/constants/canopyTemplates.ts: 591 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/shared/lib/hooks/stagingState.svelte.ts: 531 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/shared/services/specBridge.ts: 661 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/shared/types/index.ts: 561 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/widgets/AuthDialog/ui/AuthDialog.svelte: 556 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/widgets/KeyboardShortcuts/ui/KeyboardShortcutsOverlay.svelte: 511 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/widgets/NavigationSidebar/ui/organisms/Sidebar.svelte: 891 lines"
+    },
+    {
+      "severity": "yellow",
+      "dimension": "complexity",
+      "message": "src/widgets/QCDashboard/ui/QCDashboard.svelte: 622 lines"
+    }
+  ],
+  "trends": {
+    "previousComposite": 47,
+    "delta": 0
+  }
+}
