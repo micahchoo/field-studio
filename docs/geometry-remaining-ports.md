@@ -6,43 +6,27 @@ shaping: true
 
 Callsites not yet refactored to use `src/shared/lib/geometry/`.
 
-## Blocked: BoardItem `w`/`h` vs `width`/`height` type mismatch
+## Resolved: BoardItem `w`/`h` → `width`/`height` (wave 3)
 
-The board-design feature has **two BoardItem types** with different field names:
+Model BoardItem's `w`/`h` fields were renamed to `width`/`height` across 14 files,
+making them Rect-compatible. Geometry primitives were then applied to all unblocked callsites.
 
-| Type | Location | Size fields |
-|------|----------|-------------|
-| `BoardItem` | `model/index.ts:51-65` | `w`, `h` |
-| `BoardItem` | `stores/boardVault.svelte.ts:23-34` | `width`, `height` |
+See `docs/geometry-board-unification.md` for the shaping doc and `docs/geometry-board-slices.md` for slices.
 
-The geometry library's `Rect` interface uses `width`/`height`, making it
-compatible with boardVault's BoardItem but **not** model/index.ts's BoardItem.
+### Ported in wave 3
 
-Unifying these types is a prerequisite for porting the following callsites.
-
-### Files blocked by this mismatch
-
-**`src/features/board-design/model/exporters.ts`**
-- `getBounds()` (line 226-234): `Math.min/max(...items.map(i => i.x + i.w))` — candidate for `Rect.union`
-- PNG export connection centers (lines 53-54): `fromItem.x + fromItem.w / 2` repeated 8x — candidate for `Rect.center`
-- SVG export connection centers (lines 140-143): same `from.x + from.w / 2` pattern
-- SVG bezier math (lines 146-153): `Math.sqrt(dx*dx + dy*dy)` and perpendicular offset — duplicate of ConnectionLine logic, candidate for `Point.distance` + `Point.perpendicular`
-- Connection label midpoints (lines 58-59, 163-164): `(x1 + x2) / 2` — candidate for `Point.lerp`
-
-**`src/features/board-design/model/index.ts`**
-- `selectBoardBounds` (lines 145-148): `Math.min/max(...)` — candidate for `Rect.union`
-- `autoArrangeItems` (lines 338-413): `centerX - totalW / 2` centering patterns — can use `Rect.center` after type unification
-
-**`src/features/board-design/ui/atoms/MiniMap.svelte`**
-- `effectiveBounds` (lines 60-65): `Math.min/max(...items.map(i => i.x + i.w))` — candidate for `Rect.union`
-
-### Resolution path
-
-1. Rename `model/index.ts` BoardItem's `w`/`h` to `width`/`height`
-2. Update all consumers of model/index.ts BoardItem (exporters.ts, MiniMap.svelte, boardLayout.ts, etc.)
-3. Then apply geometry primitives to the callsites listed above
-
-This is a separate refactor scope — the type rename touches 10+ files and should be its own slice.
+| File | What | Primitive |
+|------|------|-----------|
+| `model/index.ts` | `selectBoardBounds` | `Rect.union` + `Rect.right/bottom` |
+| `model/exporters.ts` | `getBounds` | `Rect.union` + `Rect.right/bottom` |
+| `model/exporters.ts` | PNG connection centers | `Rect.center` |
+| `model/exporters.ts` | PNG label midpoints | `Point.lerp` |
+| `model/exporters.ts` | SVG connection centers | `Rect.center` |
+| `model/exporters.ts` | SVG bezier distance | `Point.distance` |
+| `model/exporters.ts` | SVG label midpoints | `Point.lerp` |
+| `ui/atoms/MiniMap.svelte` | effectiveBounds | `Rect.union` + `Rect.right/bottom` |
+| `ui/molecules/ConnectionLayer.svelte` | getAnchorPoint | `Rect.center/right/bottom` |
+| `ui/organisms/BoardCanvas.svelte` | selection bounds | `Rect.right/bottom` |
 
 ## Not worth porting (DOM-specific math)
 
