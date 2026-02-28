@@ -11,7 +11,7 @@
  *
  * TODO (deferred from React source):
  *   • Gzip compression via worker (saves ~60-70% storage)
- *   • OPFS routing for files > 10MB (opfsStorage.ts exists)
+ *   • OPFS routing for files > 10MB ✓ (V1 — size-based routing)
  *   • Thumbnail derivatives (thumb/small/medium)
  *   • Ingest checkpoints
  *   • Search index persistence
@@ -21,6 +21,10 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import type { IIIFItem } from '@/src/shared/types';
 import { storageLog } from './logger';
+import { OPFSStorage } from './opfsStorage';
+
+/** Files larger than this are routed to OPFS instead of IDB */
+export const OPFS_SIZE_THRESHOLD = 10 * 1024 * 1024; // 10 MB
 
 // ============================================================================
 // Database Schema
@@ -51,6 +55,26 @@ interface BiiifDB {
 
 class StorageService {
   #db: IDBPDatabase<BiiifDB> | null = null;
+  #opfs: OPFSStorage | null = null;
+  #opfsInitialized = false;
+
+  private async getOpfs(): Promise<OPFSStorage | null> {
+    if (this.#opfsInitialized) return this.#opfs;
+    this.#opfsInitialized = true;
+
+    if (!OPFSStorage.isSupported()) {
+      storageLog.debug('[StorageService] OPFS not supported, using IDB only');
+      return null;
+    }
+
+    const opfs = new OPFSStorage();
+    const ok = await opfs.initialize();
+    if (ok) {
+      this.#opfs = opfs;
+      storageLog.debug('[StorageService] OPFS initialized for large file storage');
+    }
+    return this.#opfs;
+  }
 
   private async getDb(): Promise<IDBPDatabase<BiiifDB>> {
     if (this.#db) return this.#db;
@@ -154,9 +178,19 @@ class StorageService {
 
   /**
    * Store a media asset blob keyed by its ID/URL.
+   * Files larger than OPFS_SIZE_THRESHOLD are routed to OPFS when available.
    */
   async saveAsset(id: string, blob: Blob): Promise<void> {
     try {
+      if (blob.size > OPFS_SIZE_THRESHOLD) {
+        const opfs = await this.getOpfs();
+        if (opfs) {
+          await opfs.storeFile(id, blob);
+          storageLog.debug(`[StorageService] Asset stored in OPFS (${(blob.size / 1024 / 1024).toFixed(1)}MB): ${id}`);
+          return;
+        }
+        // OPFS unavailable — fall through to IDB
+      }
       const db = await this.getDb();
       await db.put(STORE_FILES, blob, id);
     } catch (e) {
@@ -166,16 +200,64 @@ class StorageService {
 
   /**
    * Retrieve a stored asset blob by its ID/URL.
+   * Checks OPFS first (large files), then falls back to IDB.
    * Returns null if not found.
    */
   async getAsset(id: string): Promise<Blob | null> {
     try {
+      // Check OPFS first (large files)
+      const opfs = await this.getOpfs();
+      if (opfs) {
+        const file = await opfs.getFile(id);
+        if (file) return file;
+      }
+      // Fall back to IDB
       const db = await this.getDb();
       const blob = await db.get(STORE_FILES, id);
       return blob ?? null;
     } catch (e) {
       storageLog.error('[StorageService] getAsset failed', e instanceof Error ? e : undefined);
       return null;
+    }
+  }
+
+  /**
+   * Check if an asset exists in either OPFS or IDB without loading the blob.
+   */
+  async hasAsset(id: string): Promise<boolean> {
+    try {
+      const opfs = await this.getOpfs();
+      if (opfs && await opfs.hasFile(id)) return true;
+      const db = await this.getDb();
+      const key = await db.getKey(STORE_FILES, id);
+      return key !== undefined;
+    } catch (e) {
+      storageLog.error('[StorageService] hasAsset failed', e instanceof Error ? e : undefined);
+      return false;
+    }
+  }
+
+  /**
+   * Get all asset keys from both OPFS and IDB without loading blobs.
+   */
+  async getAllAssetKeys(): Promise<string[]> {
+    try {
+      const keys = new Set<string>();
+
+      const opfs = await this.getOpfs();
+      if (opfs) {
+        const opfsKeys = await opfs.listFiles();
+        for (const k of opfsKeys) keys.add(k);
+      }
+
+      const db = await this.getDb();
+      const idbKeys = await db.getAllKeys(STORE_FILES);
+      for (const k of idbKeys) keys.add(k as string);
+
+      return [...keys];
+    } catch (e) {
+      storageLog.error('[StorageService] getAllAssetKeys failed', e instanceof Error ? e : undefined);
+      return [];
     }
   }
 
