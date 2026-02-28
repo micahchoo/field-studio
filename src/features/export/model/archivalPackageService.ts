@@ -12,6 +12,23 @@
 import { getChildEntities, getIIIFValue, IIIFCanvas, IIIFItem, isCanvas } from '@/src/shared/types';
 import { storage } from '@/src/shared/services/storage';
 
+/**
+ * Extract the storage asset ID from an annotation body serving URL.
+ * iiifBuilder constructs: /image/{assetId} or /media/{assetId}.{ext}
+ */
+function extractAssetIdFromUrl(url: string): string | null {
+  const imageMatch = url.match(/\/image\/([^/?#]+)$/);
+  if (imageMatch) return imageMatch[1];
+
+  const mediaMatch = url.match(/\/media\/([^/?#]+)$/);
+  if (mediaMatch) {
+    // Strip trailing .ext — the assetId already contains the original extension
+    return mediaMatch[1].replace(/\.[^.]+$/, '');
+  }
+
+  return null;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -514,34 +531,24 @@ class ArchivalPackageService {
     digest: string;
     size: number;
   } | null> {
-    // Check for _fileRef (local file)
-    const canvasRecord = canvas as unknown as Record<string, unknown>;
-    if (canvasRecord._fileRef) {
-      const file = canvasRecord._fileRef as File;
-      const content = file;
-      const digest = await this.computeDigest(content, algorithm);
-      return {
-        logicalPath: file.name,
-        content,
-        digest,
-        size: file.size
-      };
-    }
-
-    // Try to get from storage
+    // Get asset from storage (OPFS -> IDB)
     const paintingAnno = canvas.items?.[0]?.items?.[0];
     if (!paintingAnno?.body) return null;
 
     const body = Array.isArray(paintingAnno.body) ? paintingAnno.body[0] : paintingAnno.body;
-    const mediaId = typeof body === 'string' ? body : ('id' in body ? body.id : undefined);
+    const mediaUrl = typeof body === 'string' ? body : ('id' in body ? body.id : undefined);
 
-    if (!mediaId) return null;
+    if (!mediaUrl) return null;
+
+    // Extract assetId from serving URL (/image/{id} or /media/{id}.{ext})
+    const assetId = extractAssetIdFromUrl(mediaUrl);
+    if (!assetId) return null;
 
     // Try to fetch from storage
-    const stored = await storage.getAsset(mediaId);
+    const stored = await storage.getAsset(assetId);
     if (stored) {
       const digest = await this.computeDigest(stored, algorithm);
-      const filename = mediaId.split('/').pop() || 'media';
+      const filename = getIIIFValue(canvas.label) || assetId;
       return {
         logicalPath: filename,
         content: stored,

@@ -63,15 +63,15 @@ describe('extractExtensions', () => {
     const record: Record<string, unknown> = {
       id: 'test',
       type: 'Canvas',
-      _fileRef: 'some-file',
       _blobUrl: 'blob:...',
+      _parentId: 'parent-1',
       unknownProp: true,
     };
 
     const extensions = extractExtensions(record, 'Canvas');
     // Internal _ props are in the "common" known set
-    expect(extensions._fileRef).toBeUndefined();
     expect(extensions._blobUrl).toBeUndefined();
+    expect(extensions._parentId).toBeUndefined();
     expect(extensions.unknownProp).toBe(true);
   });
 });

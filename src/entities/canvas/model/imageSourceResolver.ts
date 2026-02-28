@@ -261,11 +261,10 @@ function isValidUrl(str: string): boolean {
  *
  * Resolution chain:
  * 1. Check for _blobUrl (local blob)
- * 2. Check for _fileRef -> create object URL
- * 3. Check for IIIF Image API service
- * 4. Check for direct body.id URL
- * 5. Check for thumbnail
- * 6. Return placeholder
+ * 2. Check for IIIF Image API service
+ * 3. Check for direct body.id URL
+ * 4. Check for thumbnail
+ * 5. Return placeholder
  */
 export function resolveImageSource(
   canvas: IIIFCanvas | null,
@@ -298,28 +297,6 @@ export function resolveImageSource(
       _blobRef: canvas._blobUrl,
       needsCleanup: false // Already managed elsewhere
     };
-  }
-
-  // 2. Check for file reference
-  if (canvas._fileRef && canvas._fileRef instanceof Blob) {
-    try {
-      const blobUrl = URL.createObjectURL(canvas._fileRef);
-      return {
-        url: blobUrl,
-        type: 'blob',
-        width: canvas.width,
-        height: canvas.height,
-        supportsRegion: false,
-        supportsSizeParam: false,
-        supportsRotation: false,
-        supportsQuality: false,
-        _blobRef: blobUrl,
-        needsCleanup: true // Caller must revoke
-      };
-    } catch (e) {
-      uiLog.warn('Failed to create blob URL from fileRef:', e);
-      // Fall through to other options
-    }
   }
 
   // Get the painting body

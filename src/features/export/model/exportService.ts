@@ -1,6 +1,7 @@
 
 import JSZip from 'jszip';
 import { uiLog } from '@/src/shared/services/logger';
+import { storage } from '@/src/shared/services/storage';
 import { getChildEntities, getIIIFValue, IIIFCanvas, IIIFCollection, IIIFItem, isCollection, isManifest, LanguageMap } from '@/src/shared/types';
 import { validator } from '@/src/entities/manifest/model/validation/validator';
 import {
@@ -34,6 +35,31 @@ import {
 
 /** Default port for local IIIF server */
 export const DEFAULT_IIIF_PORT = 8765;
+
+/**
+ * Extract the storage asset ID from an annotation body serving URL.
+ *
+ * iiifBuilder constructs URLs as:
+ *   - Images: {baseUrl}/image/{assetId}
+ *   - Media:  {baseUrl}/media/{assetId}.{ext}
+ *
+ * The assetId is the key used by storage.saveAsset() / storage.getAsset().
+ */
+function extractAssetIdFromUrl(url: string): string | null {
+    const imageMatch = url.match(/\/image\/([^/?#]+)$/);
+    if (imageMatch) return imageMatch[1];
+
+    const mediaMatch = url.match(/\/media\/([^/?#]+)$/);
+    if (mediaMatch) {
+        // Media URLs append an extra extension: /media/{assetId}.{ext}
+        // The assetId itself already contains the original extension (e.g. "slug-video.mp4"),
+        // so strip the trailing .ext to recover it.
+        const segment = mediaMatch[1];
+        return segment.replace(/\.[^.]+$/, '');
+    }
+
+    return null;
+}
 
 export interface CanopyConfig {
     title: string;
@@ -332,14 +358,14 @@ class ExportService {
 
         // Collect image processing tasks for async generation
         const imageProcessingTasks: Array<{
-            file: File;
+            file: Blob;
             assetId: string;
             imagesBasePath: string;
             imgWidth: number;
             imgHeight: number;
         }> = [];
 
-        const processItem = (item: IIIFItem, originalItem: IIIFItem) => {
+        const processItem = async (item: IIIFItem, originalItem: IIIFItem) => {
             const originalId = item.id;
             const idVal = originalId.split('/').pop() || 'unknown';
             const typeDir = getDirName(item.type);
@@ -355,7 +381,7 @@ class ExportService {
             if (processedItem.items) {
                 // TYPE_DEBT: processedItem from JSON.parse(any); no typed overload for any[].map()
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                processedItem.items = processedItem.items.map((child: any, idx: number) => {
+                processedItem.items = await Promise.all(processedItem.items.map(async (child: any, idx: number) => {
                     if (isCollection(child) || isManifest(child)) {
                         // For Collections: replace embedded content with reference only
                         if (options.format === 'canopy') {
@@ -381,111 +407,121 @@ class ExportService {
                             ? rewriteIds(child, idVal)
                             : JSON.parse(JSON.stringify(child));
 
-                        if (origCanvas && origCanvas._fileRef && origCanvas._fileRef.name && options.includeAssets) {
-                            const filename = origCanvas._fileRef.name;
-                            const baseFileName = filename.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '_');
-                            const assetId = `${idVal}-${baseFileName}`;
-                            const assetPath = `assets/${filename}`;
+                        if (origCanvas && options.includeAssets) {
+                            // Extract asset ID from the painting annotation body URL
+                            const paintingAnno = origCanvas.items?.[0]?.items?.[0];
+                            const rawBody = paintingAnno?.body;
+                            const bodyObj = Array.isArray(rawBody) ? rawBody[0] : rawBody;
+                            const bodyUrl: string | undefined = typeof bodyObj === 'string' ? bodyObj : (bodyObj && 'id' in bodyObj ? bodyObj.id : undefined);
 
-                            // Add original asset
-                            virtualFiles.push({
-                                path: assetPath,
-                                content: origCanvas._fileRef,
-                                type: 'asset'
-                            });
+                            if (bodyUrl) {
+                                // Extract assetId from serving URL patterns:
+                                //   /image/{assetId}  or  /media/{assetId}.{ext}
+                                const assetId = extractAssetIdFromUrl(bodyUrl);
+                                const assetBlob = assetId ? await storage.getAsset(assetId) : null;
 
-                            // Generate IIIF Image API info.json and derivatives
-                            if (origCanvas._fileRef.type.startsWith('image/')) {
-                                const imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
-                                const imgWidth = origCanvas.width || 2000;
-                                const imgHeight = origCanvas.height || 2000;
+                                if (assetBlob) {
+                                    const filename = getIIIFValue(origCanvas.label) || assetId || 'asset';
+                                    const baseFileName = filename.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '_');
+                                    const exportAssetId = `${idVal}-${baseFileName}`;
+                                    const assetPath = `assets/${filename}`;
 
-                                // Queue for async derivative generation
-                                imageProcessingTasks.push({
-                                    file: origCanvas._fileRef,
-                                    assetId,
-                                    imagesBasePath,
-                                    imgWidth,
-                                    imgHeight
-                                });
+                                    // Add original asset
+                                    virtualFiles.push({
+                                        path: assetPath,
+                                        content: assetBlob,
+                                        type: 'asset'
+                                    });
 
-                                // Generate info.json with tile support for deep zoom
-                                // Passes IIIF Image API options for extra qualities/formats
-                                virtualFiles.push({
-                                    path: `${imagesBasePath}/${assetId}/info.json`,
-                                    content: this.generateImageInfoJsonForExport(
-                                        assetId,
-                                        imgWidth,
-                                        imgHeight,
-                                        options.format === 'canopy',
-                                        true, // includeTiles
-                                        options.imageApiOptions,
-                                        undefined, // rights
-                                        iiifPort
-                                    ),
-                                    type: 'info'
-                                });
-                            }
+                                    // Generate IIIF Image API info.json and derivatives
+                                    if (assetBlob.type.startsWith('image/')) {
+                                        const imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
+                                        const imgWidth = origCanvas.width || 2000;
+                                        const imgHeight = origCanvas.height || 2000;
 
-                            // Update painting annotation body with ImageService for deep zoom
-                            const painting = processedCanvas.items?.[0]?.items?.[0];
-                            if (painting && painting.body && !Array.isArray(painting.body)) {
-                                const _imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
-                                const imgWidth = origCanvas.width || 2000;
-                                const imgHeight = origCanvas.height || 2000;
+                                        // Queue for async derivative generation
+                                        imageProcessingTasks.push({
+                                            file: assetBlob,
+                                            assetId: exportAssetId,
+                                            imagesBasePath,
+                                            imgWidth,
+                                            imgHeight
+                                        });
 
-                                if (options.format === 'canopy') {
-                                    // Use ImageService for deep zoom support
-                                    painting.body.id = `${baseUrl}/iiif/images/${assetId}/full/max/0/default.jpg`;
-                                    painting.body.width = imgWidth;
-                                    painting.body.height = imgHeight;
-                                    painting.body.service = [
-                                        createImageServiceReference(`${baseUrl}/iiif/images/${assetId}`, 'level0')
-                                    ];
-                                } else {
-                                    painting.body.id = `../../images/${assetId}/full/max/0/default.jpg`;
-                                    painting.body.width = imgWidth;
-                                    painting.body.height = imgHeight;
-                                    painting.body.service = [
-                                        createImageServiceReference(`../../images/${assetId}`, 'level0')
-                                    ];
+                                        // Generate info.json with tile support for deep zoom
+                                        // Passes IIIF Image API options for extra qualities/formats
+                                        virtualFiles.push({
+                                            path: `${imagesBasePath}/${exportAssetId}/info.json`,
+                                            content: this.generateImageInfoJsonForExport(
+                                                exportAssetId,
+                                                imgWidth,
+                                                imgHeight,
+                                                options.format === 'canopy',
+                                                true, // includeTiles
+                                                options.imageApiOptions,
+                                                undefined, // rights
+                                                iiifPort
+                                            ),
+                                            type: 'info'
+                                        });
+                                    }
+
+                                    // Update painting annotation body with ImageService for deep zoom
+                                    const painting = processedCanvas.items?.[0]?.items?.[0];
+                                    if (painting && painting.body && !Array.isArray(painting.body)) {
+                                        const _imagesBasePath = options.format === 'canopy' ? 'assets/iiif/images' : 'images';
+                                        const imgWidth = origCanvas.width || 2000;
+                                        const imgHeight = origCanvas.height || 2000;
+
+                                        if (options.format === 'canopy') {
+                                            // Use ImageService for deep zoom support
+                                            painting.body.id = `${baseUrl}/iiif/images/${exportAssetId}/full/max/0/default.jpg`;
+                                            painting.body.width = imgWidth;
+                                            painting.body.height = imgHeight;
+                                            painting.body.service = [
+                                                createImageServiceReference(`${baseUrl}/iiif/images/${exportAssetId}`, 'level0')
+                                            ];
+                                        } else {
+                                            painting.body.id = `../../images/${exportAssetId}/full/max/0/default.jpg`;
+                                            painting.body.width = imgWidth;
+                                            painting.body.height = imgHeight;
+                                            painting.body.service = [
+                                                createImageServiceReference(`../../images/${exportAssetId}`, 'level0')
+                                            ];
+                                        }
+                                    }
+
+                                    // Update canvas dimensions if not set properly
+                                    if (!processedCanvas.width || processedCanvas.width === DEFAULT_INGEST_PREFS.defaultCanvasWidth) {
+                                        processedCanvas.width = origCanvas.width || DEFAULT_INGEST_PREFS.defaultCanvasWidth;
+                                        processedCanvas.height = origCanvas.height || DEFAULT_INGEST_PREFS.defaultCanvasHeight;
+                                    }
+
+                                    // Update thumbnail references
+                                    if (processedCanvas.thumbnail && Array.isArray(processedCanvas.thumbnail)) {
+                                        const thumbWidth = 150;
+                                        const aspectRatio = (origCanvas?.height || 2000) / (origCanvas?.width || 2000);
+                                        const thumbHeight = Math.floor(thumbWidth * aspectRatio);
+                                        // TYPE_DEBT: processedCanvas from JSON.parse(any); thumb inferred from any[]
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        processedCanvas.thumbnail = processedCanvas.thumbnail.map((thumb: any) => ({
+                                            ...thumb,
+                                            id: options.format === 'canopy'
+                                                ? `${baseUrl}/iiif/images/${exportAssetId}/full/${thumbWidth},${thumbHeight}/0/default.jpg`
+                                                : `../../images/${exportAssetId}/full/${thumbWidth},${thumbHeight}/0/default.jpg`,
+                                            width: thumbWidth,
+                                            height: thumbHeight
+                                        }));
+                                    }
                                 }
-                            }
-
-                            // Update canvas dimensions if not set properly
-                            if (!processedCanvas.width || processedCanvas.width === DEFAULT_INGEST_PREFS.defaultCanvasWidth) {
-                                processedCanvas.width = origCanvas.width || DEFAULT_INGEST_PREFS.defaultCanvasWidth;
-                                processedCanvas.height = origCanvas.height || DEFAULT_INGEST_PREFS.defaultCanvasHeight;
-                            }
-
-                            // Update thumbnail references
-                            if (processedCanvas.thumbnail && Array.isArray(processedCanvas.thumbnail)) {
-                                const thumbWidth = 150;
-                                const aspectRatio = (origCanvas?.height || 2000) / (origCanvas?.width || 2000);
-                                const thumbHeight = Math.floor(thumbWidth * aspectRatio);
-                                // TYPE_DEBT: processedCanvas from JSON.parse(any); thumb inferred from any[]
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                processedCanvas.thumbnail = processedCanvas.thumbnail.map((thumb: any) => ({
-                                    ...thumb,
-                                    id: options.format === 'canopy'
-                                        ? `${baseUrl}/iiif/images/${assetId}/full/${thumbWidth},${thumbHeight}/0/default.jpg`
-                                        : `../../images/${assetId}/full/${thumbWidth},${thumbHeight}/0/default.jpg`,
-                                    width: thumbWidth,
-                                    height: thumbHeight
-                                }));
                             }
                         }
 
-                        // Remove internal _fileRef from output
-                        delete processedCanvas._fileRef;
                         return processedCanvas;
                     }
                     return child;
-                });
+                }));
             }
-
-            // Remove internal properties
-            delete processedItem._fileRef;
 
             virtualFiles.push({
                 path: `${iiifBasePath}/${typeDir}/${idVal}.json`,
@@ -496,12 +532,12 @@ class ExportService {
             // Recursively process child Collections and Manifests
             for (const origChild of getChildEntities(originalItem)) {
                 if (isCollection(origChild) || isManifest(origChild)) {
-                    processItem(origChild, origChild);
+                    await processItem(origChild, origChild);
                 }
             }
         };
 
-        processItem(root, root);
+        await processItem(root, root);
 
         // Process all image derivatives asynchronously
         // Implements IIIF Image API 3.0 §4 Image Requests

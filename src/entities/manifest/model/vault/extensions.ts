@@ -55,7 +55,7 @@ const KNOWN_IIIF_PROPERTIES: Record<EntityType | 'common', Set<string>> = {
     // Core JSON-LD / Internal
     '@context', 'id', 'type',
     // Internal properties (prefixed with _)
-    '_fileRef', '_blobUrl', '_parentId', '_state', '_filename'
+    '_blobUrl', '_parentId', '_state', '_filename'
   ]),
   Collection: new Set(getAllowedProperties('Collection')),
   Manifest: new Set(getAllowedProperties('Manifest')),

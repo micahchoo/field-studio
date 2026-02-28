@@ -26,6 +26,23 @@ import {
 } from '@/utils';
 import { getDerivativePreset, IIIF_SPEC } from '@/src/shared/constants';
 
+/**
+ * Extract the storage asset ID from an annotation body serving URL.
+ * iiifBuilder constructs: /image/{assetId} or /media/{assetId}.{ext}
+ */
+function extractAssetIdFromUrl(url: string): string | null {
+  const imageMatch = url.match(/\/image\/([^/?#]+)$/);
+  if (imageMatch) return imageMatch[1];
+
+  const mediaMatch = url.match(/\/media\/([^/?#]+)$/);
+  if (mediaMatch) {
+    // Strip trailing .ext — the assetId already contains the original extension
+    return mediaMatch[1].replace(/\.[^.]+$/, '');
+  }
+
+  return null;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -421,8 +438,11 @@ class StaticSiteExporter {
 
     if (!imageId) return files;
 
+    // Extract assetId from serving URL (/image/{id} or /media/{id}.{ext})
+    const assetId = extractAssetIdFromUrl(imageId);
+
     // Try to get the image from storage
-    const imageData = await storage.getAsset(imageId);
+    const imageData = assetId ? await storage.getAsset(assetId) : null;
 
     if (imageData) {
       // Generate info.json (Level 0 - static tiles)

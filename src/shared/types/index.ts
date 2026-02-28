@@ -193,7 +193,6 @@ export interface IIIFItem {
   placeholderCanvas?: IIIFCanvas;
   accompanyingCanvas?: IIIFCanvas;
 
-  _fileRef?: File;
   _blobUrl?: string;
   _parentId?: string;
   _state?: ResourceState;

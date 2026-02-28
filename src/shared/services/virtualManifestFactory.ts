@@ -375,7 +375,6 @@ class VirtualManifestFactory {
     });
 
     if (manifest.items?.[0]) {
-      manifest.items[0]._fileRef = file;
       manifest.items[0]._blobUrl = blobUrl;
     }
 
