@@ -11,6 +11,7 @@
 
 import { getIIIFValue, isCanvas, isCollection, isManifest, isRange, type IIIFItem, type IIIFManifest } from '@/src/shared/types';
 import * as GeoPoint from '@/src/shared/lib/geometry/point';
+import * as GeoRect from '@/src/shared/lib/geometry/rect';
 import { resolveHierarchicalThumbs } from '@/src/utils/imageSourceResolver';
 
 // TYPE_DEBT: resolveHierarchicalThumbs expects IIIFCanvas | Record<string, unknown> but we pass IIIFItem.
@@ -54,8 +55,8 @@ export interface BoardItem {
   resourceId: string;
   x: number;
   y: number;
-  w: number;
-  h: number;
+  width: number;
+  height: number;
   resourceType: string;
   label: string;
   blobUrl?: string;
@@ -143,12 +144,8 @@ export const selectBoardBounds = (
 ): { minX: number; minY: number; maxX: number; maxY: number } | null => {
   if (state.items.length === 0) return null;
 
-  const minX = Math.min(...state.items.map((i) => i.x));
-  const minY = Math.min(...state.items.map((i) => i.y));
-  const maxX = Math.max(...state.items.map((i) => i.x + i.w));
-  const maxY = Math.max(...state.items.map((i) => i.y + i.h));
-
-  return { minX, minY, maxX, maxY };
+  const r = GeoRect.union(state.items);
+  return { minX: r.x, minY: r.y, maxX: GeoRect.right(r), maxY: GeoRect.bottom(r) };
 };
 
 // ============================================================================
@@ -228,14 +225,14 @@ export const enrichBoardItemMeta = (resource: IIIFItem): BoardItemMeta => {
 export const createBoardItem = (
   resource: IIIFItem,
   position: { x: number; y: number },
-  size: { w: number; h: number } = { w: 200, h: 150 }
+  size: { width: number; height: number } = { width: 200, height: 150 }
 ): BoardItem => ({
   id: `board-item-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`,
   resourceId: resource.id,
   x: position.x,
   y: position.y,
-  w: size.w,
-  h: size.h,
+  width: size.width,
+  height: size.height,
   resourceType: resource.type,
   label: getIIIFValue(resource.label) || resource.id,
   blobUrl: resolveHierarchicalThumb(resource, 200) || undefined,
@@ -345,8 +342,8 @@ export const autoArrangeItems = (
           ...item,
           x: startX + col * (itemW + spacing),
           y: startY + row * (itemH + spacing),
-          w: itemW,
-          h: itemH,
+          width: itemW,
+          height: itemH,
         };
       });
     }
@@ -358,8 +355,8 @@ export const autoArrangeItems = (
         ...item,
         x: isVertical ? centerX - itemW / 2 : startPos + i * (itemW + spacing / 2),
         y: isVertical ? startPos + i * (itemH + spacing / 2) : centerY - itemH / 2,
-        w: itemW,
-        h: itemH,
+        width: itemW,
+        height: itemH,
       }));
     }
 
@@ -377,8 +374,8 @@ export const autoArrangeItems = (
             ? (isRight ? startX : startX + itemW + 10)
             : (isRight ? startX + itemW + 10 : startX),
           y: startY + pairIndex * (itemH + spacing * 2),
-          w: itemW,
-          h: itemH,
+          width: itemW,
+          height: itemH,
         };
       });
     }
@@ -391,8 +388,8 @@ export const autoArrangeItems = (
           ...item,
           x: centerX + Math.cos(angle) * radius - itemW / 2,
           y: centerY + Math.sin(angle) * radius - itemH / 2,
-          w: itemW,
-          h: itemH,
+          width: itemW,
+          height: itemH,
         };
       });
     }
@@ -404,8 +401,8 @@ export const autoArrangeItems = (
         ...item,
         x: startX + i * (itemW + spacing),
         y: centerY + (i % 2 === 0 ? -20 : 20) - itemH / 2,
-        w: itemW,
-        h: itemH,
+        width: itemW,
+        height: itemH,
       }));
     }
 
@@ -450,8 +447,8 @@ export const exportToManifest = (
           type: 'Canvas' as const,
           id: item.resourceId,
           label: { en: [item.label] },
-          width: item.w || 1000,
-          height: item.h || 800,
+          width: item.width || 1000,
+          height: item.height || 800,
           items: [],
         };
 

@@ -244,7 +244,7 @@ export function manifestToBoardState(manifest: IIIFManifest): BoardState {
  * Convert a BoardItem to a painting Annotation with xywh fragment selector
  */
 function boardItemToAnnotation(item: BoardItem, surfaceCanvasId: string): IIIFAnnotation {
-  const xywh = `${Math.round(item.x)},${Math.round(item.y)},${Math.round(item.w)},${Math.round(item.h)}`;
+  const xywh = `${Math.round(item.x)},${Math.round(item.y)},${Math.round(item.width)},${Math.round(item.height)}`;
 
   const body: Record<string, unknown> = {
     type: 'SpecificResource',
@@ -275,7 +275,7 @@ function boardItemToAnnotation(item: BoardItem, surfaceCanvasId: string): IIIFAn
  * Convert a note BoardItem to a commenting Annotation
  */
 function noteItemToAnnotation(item: BoardItem, surfaceCanvasId: string): IIIFAnnotation {
-  const xywh = `${Math.round(item.x)},${Math.round(item.y)},${Math.round(item.w)},${Math.round(item.h)}`;
+  const xywh = `${Math.round(item.x)},${Math.round(item.y)},${Math.round(item.width)},${Math.round(item.height)}`;
 
   return {
     id: item.id,
@@ -310,8 +310,8 @@ function annotationToBoardItem(annotation: IIIFAnnotation): BoardItem | null {
     resourceId: source,
     x: xywh.x,
     y: xywh.y,
-    w: xywh.w,
-    h: xywh.h,
+    width: xywh.width,
+    height: xywh.height,
     resourceType,
     label,
     ...(meta && { meta }),
@@ -334,8 +334,8 @@ function annotationToNoteItem(annotation: IIIFAnnotation): BoardItem | null {
     resourceId: annotation.id,
     x: xywh.x,
     y: xywh.y,
-    w: xywh.w,
-    h: xywh.h,
+    width: xywh.width,
+    height: xywh.height,
     resourceType: 'Text',
     label: value.substring(0, 50),
     annotation: value,
@@ -439,14 +439,14 @@ function annotationToConnection(annotation: IIIFAnnotation, items: BoardItem[]):
 // ============================================================================
 
 /** Parse #xywh=x,y,w,h from a target URI */
-function parseXYWH(target: string): { x: number; y: number; w: number; h: number } | null {
+function parseXYWH(target: string): { x: number; y: number; width: number; height: number } | null {
   const match = target.match(/#xywh=(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/);
   if (!match) return null;
   return {
     x: parseFloat(match[1]),
     y: parseFloat(match[2]),
-    w: parseFloat(match[3]),
-    h: parseFloat(match[4]),
+    width: parseFloat(match[3]),
+    height: parseFloat(match[4]),
   };
 }
 

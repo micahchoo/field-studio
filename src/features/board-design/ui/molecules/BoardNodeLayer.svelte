@@ -34,7 +34,7 @@
     /** Callback when connection starts */
     onConnectStart: (id: string) => void;
     /** Callback when resize starts */
-    onResizeStart?: (id: string, direction: string, startPos: { x: number; y: number }, startSize: { w: number; h: number }) => void;
+    onResizeStart?: (id: string, direction: string, startPos: { x: number; y: number }, startSize: { width: number; height: number }) => void;
     /** Callback when item is double-clicked */
     onDoubleClickItem?: (id: string) => void;
     /** Callback when item is right-clicked */
@@ -80,7 +80,7 @@
   <BoardNode
     id={item.id}
     position={{ x: item.x, y: item.y }}
-    size={{ width: item.w, height: item.h }}
+    size={{ width: item.width, height: item.height }}
     resource={item}
     selected={selectedItemId === item.id || (selectedIds?.has(item.id) ?? false)}
     connectingFrom={connectingFrom === item.id}
@@ -101,7 +101,7 @@
   <MetadataTooltip
     meta={hoveredItem.meta}
     visible={true}
-    position={{ x: hoveredItem.x + hoveredItem.w, y: hoveredItem.y }}
+    position={{ x: hoveredItem.x + hoveredItem.width, y: hoveredItem.y }}
     {cx}
     {fieldMode}
   />

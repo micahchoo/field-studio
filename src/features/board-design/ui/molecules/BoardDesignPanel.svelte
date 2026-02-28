@@ -106,7 +106,7 @@
     <!-- Size section -->
     <div class={sectionClass}>
       <p class={labelClass}>Size</p>
-      <span class={valueClass}>{Math.round(boardItem.w)} &times; {Math.round(boardItem.h)}</span>
+      <span class={valueClass}>{Math.round(boardItem.width)} &times; {Math.round(boardItem.height)}</span>
     </div>
 
     <!-- Connections section -->
